@@ -1,19 +1,36 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.
 
-% Contains the list of classes that
-% cannot be compiled
+% return if a gref is an existsing instance
+% TODO: this could be replaced with an API
+% coq.TC.get-class-of-inst i:gref, o:gref
+pred existing-instance i:gref.
+existing-instance InstGR :-
+  coq.env.typeof InstGR InstTy,
+  get-TC-of-inst-type InstTy ClassGR,
+  coq.TC.class? ClassGR,
+  coq.TC.db-for ClassGR DB, 
+  std.mem! DB (tc-instance InstGR _).
+
+pred under-p-global i:term, o:gref.
+under-p-global (global GR) GR.
+under-p-global (pglobal GR _) GR.
+
+pred class-gref i:term, o:gref.
+class-gref T ClassGR :- 
+  under-p-global T ClassGR, 
+  coq.TC.class? ClassGR.
 
 % returns the TC from the type of an instance
-% TODO: This gould be replaced with an api 
+% TODO: This could be replaced with an api 
 % coq.TC.get-class-of-inst i:gref, o:gref
 pred get-TC-of-inst-type i:term, o:gref.
-get-TC-of-inst-type (prod _ _ A) GR:-
-  pi x\ get-TC-of-inst-type (A x) GR.
-get-TC-of-inst-type (app [global TC | _]) TC.
-get-TC-of-inst-type (global TC) TC.
+get-TC-of-inst-type (prod _ _ A) ClassGR:- !,
+  pi x\ get-TC-of-inst-type (A x) ClassGR.
+get-TC-of-inst-type T ClassGR :-
+  coq.safe-dest-app T HD _,
+  not (var HD), class-gref HD ClassGR.
 
 pred drop-last i:list A, i:list A, o:list A.
 drop-last [X | XS] [Y | YS] L :-
@@ -41,6 +58,7 @@ is-instance-term T :-
 % adds a clause to the tc.db DB at the passed grafting
 pred add-tc-db o:id, o:grafting, i:prop.  
 add-tc-db ClauseName Graft PR :-
+  if (not (ground_term PR)) (coq.error "[TC] anomaly: open rule:" PR) true,
   coq.elpi.accumulate _ "tc.db" 
     (clause ClauseName Graft PR); coq.error "cannot add " PR " to tc.db".
 
@@ -87,15 +105,23 @@ no-backtrack [do X | XS] [std.do! [(std.do! X') | XS']] :- !,
   no-backtrack X X', no-backtrack XS XS'.
 no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
 
-pred make-tc i:prop, i:term, i:term, i:list prop, o:prop.
-make-tc _IsHead Ty Inst Hyp Clause :-
-  coq.safe-dest-app Ty (global TC) TL,
-  gref->pred-name TC TC_Str,
+pred get-mode i:gref, o:list string.
+get-mode ClassGR M :- class ClassGR _ _ M, !.
+get-mode ClassGR _ :- coq.error "[TC]" ClassGR "is an unknown class".
+
+pred make-tc.aux i:bool, i:prop, i:list prop, o:prop.
+make-tc.aux _ Head [] Head.
+make-tc.aux tt Head Body (Head :- Body).
+make-tc.aux ff Head Body (Body => Head).
+
+pred make-tc i:term, i:term, i:list prop, i:bool, o:prop.
+make-tc Ty Inst Body IsPositive Clause :-
+  coq.safe-dest-app Ty HD TL,
+  get-TC-of-inst-type HD ClassGR,
+  gref->pred-name ClassGR ClassStr,
   std.append TL [Inst] Args, 
-  coq.elpi.predicate TC_Str Args Q,
-  if2 (Hyp = []) (Clause = Q) 
-      (Hyp = [Hd]) (Clause = (Q :- Hd)) 
-      (Clause = (Q :- Hyp)).
+  coq.elpi.predicate ClassStr Args Head,
+  make-tc.aux IsPositive Head Body Clause.
 
 pred unwrap-prio i:tc-priority, o:int.
 unwrap-prio (tc-priority-given Prio) Prio.
@@ -114,3 +140,74 @@ get-full-path Gr Res' :-
   coq.env.current-section-path SectionPath,
   std.fold SectionPath "" (e\acc\r\ r is acc ^ "." ^ e) Res,
   Res' is Res ^ Path.
+
+pred constant->redflag i:prop, o:coq.redflag.
+constant->redflag (unfold-constant C) (coq.redflags.const C).
+
+pred normalize-ty i:term, o:term.
+:name "normalize-ty"
+normalize-ty G1 G2 :-
+  std.findall (unfold-constant _) UnfoldFindall,
+  std.map UnfoldFindall constant->redflag UnfoldRF,
+  coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.delta | UnfoldRF] RF,
+  @redflags! RF => coq.reduction.lazy.norm G1 G2.
+
+pred dummy.
+
+pred remove-clause i:string.
+remove-clause ClauseName :-
+  add-tc-db _ (replace ClauseName) dummy.
+
+% [section-var->decl.aux L R] auxiliary function for `section-var->decl`
+pred section-var->decl.aux i:list constant, o:list prop.
+section-var->decl.aux [] [].
+section-var->decl.aux [X|XS] [Y|YS] :-
+  coq.env.typeof (const X) Ty,
+  Y = (decl (global (const X)) _ Ty),
+  section-var->decl.aux XS YS.
+
+% [section-var->decl L] decl representing seciton variables with their types
+pred section-var->decl o:list prop.
+section-var->decl L :-
+  section-var->decl.aux {coq.env.section} L.
+
+pred time-is-active i:(list string -> prop).
+:name "time-is-active"
+time-is-active _ :- coq.option.get ["Time", "TC", "Bench"] (coq.option.bool tt), !.
+time-is-active Opt :- is-option-active Opt. 
+
+pred time-aux i:string, i:float.
+time-aux Msg Time :- !, coq.debug "[TC] - Time of" Msg "is" Time.
+
+pred give-res i:prop, o:prop.
+give-res P true :- P.
+give-res _ fail.
+
+pred time-res i:prop, o:float, o:prop.
+time-res P T Res :- std.time (give-res P Res) T.
+
+pred build-msg i:prop, i:string, o:string.
+build-msg true S S :- !.
+build-msg fail S S' :- S' is S ^ " fail".
+
+pred time-it i:(list string -> prop), i:prop, i:string.
+time-it Opt P Msg :- time-is-active Opt, !, time-res P Time Res, build-msg Res Msg Msg', time-aux Msg' Time, Res.
+time-it _ P _ :- P.
+
+kind range-arity type.
+type r-ar nat -> nat -> range-arity.
+
+type tc.prod-range 
+  term ->          % The current qunatified uvar 
+  range-arity ->   % Its minimum and maximal application
+  term.
+
+type tc.maybe-eta-tm 
+  term ->          % The current precompiled subterm
+  list term ->     % The list of FV in the precomp subterm
+  term.
+
+type tc.maybe-llam-tm 
+  term ->          % The current precompiled subterm: shape is app[app[X,PF],NPF]
+  list term ->     % The eta-expanded version of X, from X^{len(PF)} to X^{len(PF)+len(NPF)}
+  term.

@@ -3,28 +3,37 @@
 
 From elpi Require Import elpi.
 
-From elpi.apps.tc Extra Dependency "base.elpi".
-From elpi.apps.tc Extra Dependency "tc_aux.elpi".
-
 (* 
   tc_option.db contains the set of options used by the solver of tc. 
   all the options are set to false by default
 *)
 Elpi Db tc_options.db lp:{{
-  pred oTC-ignore-eta-reduction o:list string. 
-  oTC-ignore-eta-reduction ["TC", "IgnoreEtaReduction"].
-
+  pred oTC-eta-reduce-proof o:list string. 
+  oTC-eta-reduce-proof ["TC", "Eta", "Reduce", "Proof"].
+ 
   % Time taken by only instance search (we time tc-recursive-search) 
   pred oTC-time-instance-search o:list string. 
   oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
+  
+  pred oTC-time-compile-goal o:list string. 
+  oTC-time-compile-goal ["TC", "Time", "Compile", "Query"].
+  
+  pred oTC-time-mode-check o:list string. 
+  oTC-time-mode-check ["TC", "Time", "Mode", "Check"].
 
   % Time taken by the whole search in tc
-  pred oTC-time o:list string.
-  oTC-time ["TC", "Time"].
+  pred oTC-time-msolve o:list string.
+  oTC-time-msolve ["TC", "Time"].
 
   % Time taken to refine the solution
   pred oTC-time-refine o:list string. 
   oTC-time-refine ["TC", "Time", "Refine"].
+
+  pred oTC-time-compile-instance o:list string. 
+  oTC-time-compile-instance ["TC", "Time", "Compile", "Instance"].
+
+  pred oTC-time-compile-class o:list string. 
+  oTC-time-compile-class ["TC", "Time", "Compile", "Class"].
 
   pred oTC-clauseNameShortName o:list string. 
   oTC-clauseNameShortName ["TC", "NameShortPath"].
@@ -37,14 +46,20 @@ Elpi Db tc_options.db lp:{{
 
   pred all-options o:list ((list string) -> prop).
   all-options [
-    oTC-ignore-eta-reduction, oTC-time-refine, oTC-time,
+    oTC-eta-reduce-proof, oTC-time-refine, oTC-time-msolve,
     oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
-    oTC-use-pattern-fragment-compiler
+    oTC-use-pattern-fragment-compiler, oTC-time-compile-goal,
+    oTC-time-mode-check, oTC-time-compile-instance, 
+    oTC-time-compile-class
   ].
 
   pred is-option-active i:(list string -> prop).
+  is-option-active uvar :- !, fail.
   is-option-active Opt :-
     Opt X, coq.option.get X (coq.option.bool tt).
+
+  pred tc-warning-name o:string.
+  tc-warning-name "[TC] Warning".
 }}.
 
 Elpi Db tc.db lp:{{
@@ -58,20 +73,25 @@ Elpi Db tc.db lp:{{
   % [instance Path InstGR ClassGR], ClassGR is the class implemented by InstGR
   pred instance o:list string, o:gref, o:gref.
 
-  % [class ClassGR PredName SearchMode], for each class GR, it contains
+  % [class ClassGR PredName SearchMode Modes], for each class GR, it contains
   % the name of its predicate and its SearchMode 
-  pred class o:gref, o:string, o:search-mode.
+  pred class o:gref, o:string, o:search-mode, o:list string.
 
   % pred on which we graft instances in the database
   pred hook o:string.
   :name "firstHook" hook "firstHook".
   :name "lastHook" hook "lastHook".
+  
+  % [unfold-constant C] constants to be unfolded before goal resolution
+  pred unfold-constant o:constant.
 
   % the set of instances that we are not yet able to compile, 
   % in majority they use universe polimorphism
   pred banned o:gref.
 
-  % [tc-signature TC Modes], returns for each Typeclass TC
-  % its Modes
-  pred tc-mode i:gref, o:list (pair argument_mode string).
+  pred pending-mode o:list string.
+
+  pred dummy.
+
+  pred ho-link o:term, i:term, o:A.
 }}.

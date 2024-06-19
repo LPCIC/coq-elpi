@@ -1,61 +1,31 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.
-accumulate tc_aux.
 
-pred string->coq-mode i:string, o:hint-mode.
-string->coq-mode "bang" mode-ground :- !.
-string->coq-mode "plus" mode-input :- !.
-string->coq-mode "minus" mode-output :- !.
-string->coq-mode "i" mode-input :- !.
-string->coq-mode "o" mode-output :- !.
-string->coq-mode A _ :- coq.error A "is not a valid mode".
-
-pred coq-mode->elpi i:hint-mode, o:pair argument_mode string.
-:name "coq-mode->elpi"
-coq-mode->elpi mode-ground (pr in "term"). % approximation
-coq-mode->elpi mode-input (pr in "term").
-coq-mode->elpi mode-output (pr out "term").
-
-% Here we build the elpi modes a class CL. If CL has either zero or more than
-% one mode, then we consider all its parameter to be in output mode. If the
-% class has exactly one mode, then it is considered for the signature of the
-% predicate for CL 
-pred modes-of-class i:gref, o:list (pair argument_mode string).
-modes-of-class ClassGR Modes :- 
-  coq.hints.modes ClassGR "typeclass_instances" CoqModesList,
-  not (CoqModesList = []),
-  not (CoqModesList = [_,_|_], coq.warning "TC.Modes" "At the moment we only allow TC with at most 1 hint Mode (caused by class" {coq.gref->string ClassGR} ")"),
-  CoqModesList = [HintModesFst],
-  std.append {std.map HintModesFst coq-mode->elpi} [pr out "term"] Modes.
-modes-of-class ClassGR Modes :- 
-  coq.env.typeof ClassGR ClassTy,
-  N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
-  list-init N (x\r\ r = (pr out "term")) Modes.
-
+% The predicate of a class is local if inside a section and readded at section end.
+% This way, section variables are generalized
 pred get-class-locality o:list prop. 
 get-class-locality [@local!] :- coq.env.current-section-path [_ | _], !.
 get-class-locality [@global!].
 
+% [add-class-gr SearchMode ClassGR] adds the predicate for the class with its corresponing mode
+% NOTE: the mode inside TC.declare_mode has the priority over Coq mode or #[mode=(...)] TC.Declare
 pred add-class-gr i:search-mode, i:gref.
+% the predicate for the class has alread been added
+add-class-gr _ ClassGR :- class ClassGR _ _ _, !. 
 add-class-gr SearchMode ClassGR :-
   std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
-  if (class ClassGR _ _) true 
-    (modes-of-class ClassGR Modes, 
-      gref->pred-name ClassGR PredName,
-      get-class-locality Locality, 
-      Locality => (
-        add-tc-db _ _ (tc-mode ClassGR Modes),
-        coq.elpi.add-predicate "tc.db" _ PredName Modes,
-        add-tc-db _ _ (class ClassGR PredName SearchMode))).
+  get-elpi-mode ClassGR EM SM, 
+  gref->pred-name ClassGR PredName,
+  get-class-locality Locality, 
+  Locality => (
+    coq.elpi.add-predicate "tc.db" _ PredName EM,
+    add-tc-db _ _ (class ClassGR PredName SearchMode SM)).
 
 pred add-class-str i:search-mode, i:string.
 add-class-str SearchMode ClassStr :-
   coq.locate ClassStr ClassGR,
   add-class-gr SearchMode ClassGR.
-
-% Following are predicates for TC.declare
 
 pred attr->search-mode o:search-mode. 
 attr->search-mode deterministic :- get-option "deterministic" tt, !.
@@ -77,8 +47,15 @@ get-key-from-option A _ :- coq.error A "should be an option".
 pred declare-class-in-coq i:gref.
 declare-class-in-coq ClassGR :- 
   attr->modes CoqModes,
-  if (CoqModes = []) true 
-    (coq.hints.add-mode ClassGR "typeclass_instances" CoqModes),
+  if (CoqModes = [])
+    (
+      modes-of-class ClassGR EM,
+      std.map EM elpi->string-mode SM
+    )(
+      coq.hints.add-mode ClassGR "typeclass_instances" CoqModes,
+      std.map CoqModes (x\y\string->coq-mode y x) SM',
+      std.append SM' ["o"] SM
+    ),
   % CAVEAT: this triggers the observer
   coq.TC.declare-class ClassGR,
   attr->search-mode SearchMode, 
@@ -86,7 +63,8 @@ declare-class-in-coq ClassGR :-
   % HACK: we override the clauses added by the observer, since it does not know
   % the SearchMode.
   get-class-locality Locality, 
-  Locality => add-tc-db _ (after "0") (class ClassGR PredName SearchMode :- !).
+  
+  Locality => add-tc-db _ (after "0") (class ClassGR PredName SearchMode SM :- !).
 
 pred declare-class i:indt-decl. 
 declare-class D :- !, 
@@ -94,3 +72,56 @@ declare-class D :- !,
   coq.parse-attributes {attributes} 
     [ att "mode" attlist, att "deterministic" bool ] Opts,
   Opts => declare-class-in-coq (indt I).
+
+% Contains some instruction that are executed just after the creation of
+% the predicate for the class
+namespace eta-reduction-aux {
+  pred is-functional i:term.
+  is-functional (prod _ _ _).
+
+  pred replace i:list term, i:term, o:list term, o:term.
+  replace [] _ [] _ :- !.
+  replace [(fun _ _ _ as T) | Xs] X' [X' | Xs] T :- !.
+  replace [X | XS] NEW [X | YS] S :- replace XS NEW YS S.
+
+  % a call to compile builds a new rule for the given class where only one 
+  % parameter P of function type is crafted. Compiled rules have only one
+  % premise where P is possibly eta-contructed at runtime. The absence of bang
+  % in the first rule (after is-functional T) allows to get all rules for and
+  % functional parameter through the std.findall in the main predicate below.
+  pred compile i:gref, i:term, i:bool, i:list term, o:prop.
+  compile ClassGR (prod _ T Bo) ff L (pi name ty body\ Cl body ty name) :-
+    is-functional T, pi name ty body x\ sigma Inp\
+      Inp = (fun name ty body),
+      compile ClassGR (Bo x) tt [Inp|L] (Cl name ty body).
+
+  compile ClassGR (prod _ _ Bo) S L (pi x\ Cl x) :-
+    pi x\ compile ClassGR (Bo x) S [x|L] (Cl x).
+
+  compile ClassGR (sort _) tt L (pi sol new-term\ Cl new-term sol) :-
+    pi solution new-term\ sigma Args Args' Q Q'\
+      std.do![
+        gref->pred-name ClassGR PredName,
+        std.rev [solution | L] Args,
+        replace Args new-term Args' T,
+        coq.elpi.predicate PredName Args Q,
+        coq.elpi.predicate PredName Args' Q',
+        (Cl new-term solution) =
+          (Q :- [coq.reduction.eta-contract T new-term,
+                if (T == new-term) fail (Q')])
+      ].
+
+  % A debug predicate to print the genereted clauses
+  pred generated-clauses.
+
+  pred main i:string.
+  main S :-
+    coq.locate S ClassGR,
+    coq.env.typeof ClassGR ClassTy,
+    % a clause for eta contruction per argument of functional type is created
+    % we get all the rules with the finall
+    std.findall (compile ClassGR ClassTy ff [] _) SFindall,
+    std.map SFindall (x\r\ compile _ _ _ _ r = x) SMap,
+    if generated-clauses (coq.say SMap) true,
+    std.forall SMap (add-tc-db _ _).
+}

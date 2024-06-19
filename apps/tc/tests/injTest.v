@@ -65,13 +65,13 @@ Goal forall (T1 T2 : Type) (f: T1 -> T2),
 Qed. 
 
 Elpi Override TC TC.Solver All.
-(* Elpi Print TC.Solver. *)
 Local Instance inj2_inj_1 `{Inj2 A B C R1 R2 R3 ff} y : Inj R1 R3 (λ x, ff x y).
 Admitted.
 
 Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 ff} x : Inj R2 R3 (ff x).
 Admitted.
 
+(* TODO: This does not work *)
 Goal Inj2 eq eq eq Nat.mul -> Inj eq eq (Nat.mul 0).
   intros.
   apply _.
@@ -89,9 +89,7 @@ Proof.
 apply _.
 Qed.
 
-Elpi Print TC.Solver.
 Set Warnings "+elpi".
-
 
 Elpi Accumulate tc.db lp:{{
   shorten tc-elpi.apps.tc.tests.injTest.{tc-Inj}.

@@ -1,10 +1,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.
-accumulate tc_aux.
-accumulate compiler.
-
 kind enum type.
 type path  string -> string -> enum.
 type addInstPrio int -> string -> enum.
@@ -23,16 +19,19 @@ parse [int N, str Instance] (addInstPrio N Instance).
 pred run-command i:enum.
 :if "debug"
 run-command A :- coq.say A, fail.
-run-command (ignoreClasses ClassName IgnoreClasses) :- 
-  add-tc-or-inst IgnoreClasses [] [ClassName].
-run-command (tcOrInst InstNames) :- 
-  add-tc-or-inst [] [] InstNames.
+run-command (ignoreClasses ClassName IgnoreClasses) :-
+  coq.locate ClassName ClassGR,
+  add-tc-or-inst-gr IgnoreClasses [] [ClassGR].
+run-command (tcOrInst InstNames) :-
+  std.map InstNames coq.locate InstGR,
+  add-tc-or-inst-gr [] [] InstGR.
 run-command (path ClassName Path):- 
   add-path ClassName Path.
-run-command (ignoreInstances ClassName InstNames):- 
-  add-tc-or-inst [] InstNames [ClassName].
+run-command (ignoreInstances ClassName InstNames):-
+  coq.locate ClassName ClassGR,
+  add-tc-or-inst-gr [] InstNames [ClassGR].
 run-command (addInstPrio Prio InstanceName) :-
   coq.locate InstanceName InstGr, 
-  compile InstGr _ _ C,
+  tc.compile.instance-gr InstGr C,
   S is int_to_string Prio,
   add-tc-db _ (before S) C.

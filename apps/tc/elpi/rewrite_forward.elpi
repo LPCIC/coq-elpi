@@ -1,7 +1,6 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.
 
 pred forward i:term, o:term, o:list (pair (list term) term).
 

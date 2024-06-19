@@ -1,93 +1,67 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate base.
+msolve L N :- time-it oTC-time-msolve (coq.ltac.all (coq.ltac.open solve-aux) L N) "msolve".
+msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
 
-pred time-solve i:prop.
-time-solve P :-
-  std.time P Time,
-  if (is-option-active oTC-time) (coq.say "[TC] Total resolution time is:" Time) true.
+pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
+build-query-from-goal Goal Proof Q PostProcess :-
+  tc.compile.goal Goal Goal' PostProcess, !,
+  coq.safe-dest-app Goal' (global TC) TL',
+  std.append TL' [Proof] TL, !,
+  coq.elpi.predicate {gref->pred-name TC} TL Q.
 
-msolve L N :- !,
-  time-solve (coq.ltac.all (coq.ltac.open solve-aux) {std.rev L} N).
+type tc.mode_fail term.
 
-solve A L :- time-solve (solve-aux A L).
+pred refine-proof i:term, i:goal, o:list sealed-goal.
+refine-proof tc.mode_fail G [seal G] :- !.
+refine-proof Proof G GL :-
+  if-true print-solution (coq.say "[TC] The proof is <<<" Proof ">>>"),
+  if-true print-solution-pp (coq.say "[TC] The proof is <<<" {coq.term->string Proof} ">>>"),
+    
+  /*********** CHECK IF THE PROOF TYPECHECKS ***********/
+  time-it oTC-time-refine (@no-tc! => refine.typecheck Proof G GL) "refine.typecheck",
+  
+  if-true print-solution (coq.say "[TC] The proof typechecks").
 
+pred solve-w-modes i:term, o:term.
+solve-w-modes Ty Proof :-
+  time-it oTC-time-mode-check (modes-check Ty) "mode check", !,
+  time-it oTC-time-compile-goal (build-query-from-goal Ty Proof Q PostProcess) "build query",
+  if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q),
+  time-it oTC-time-instance-search (
+    do PostProcess, Q,
+    tc.link.solve-eta, % Trigger eta links
+    tc.link.solve-llam % Trigger llam links
+  ) "instance search".
 
-pred build-context-clauses i:list prop, o:list prop.
-% Add the section's definition to the given context
-% and atomize context hypothesis if needed
-:name "build-context-clauses"
-build-context-clauses Ctx Clauses :-
-  std.map {coq.env.section} 
-    (x\r\ sigma F\ coq.env.typeof (const x) F, 
-          r = (decl (global (const x)) _ F)) SectionCtx,
-  std.append Ctx SectionCtx CtxAndSection,
-  compile-ctx CtxAndSection Clauses. 
-
-pred tc-recursive-search i:term, o:term.
-tc-recursive-search Ty Sol :- 
-  std.time (coq.safe-dest-app Ty (global TC) TL',
-    std.append TL' [Sol] TL,
-    coq.elpi.predicate {gref->pred-name TC} TL Q, Q) Time,
-  if (is-option-active oTC-time-instance-search) (coq.say "[TC] Instance search time is:" Time) true.
-
-:if "solve-print-goal"
-solve (goal Ctx _ Ty _ _) _ :-
-  coq.say "Ctx" Ctx "Ty" Ty, fail.
+solve-w-modes _ tc.mode_fail.
 
 pred solve-aux i:goal, o:list sealed-goal.
-% solve-aux (goal C _ (prod N Ty F) S _ as _G) _L GL :- !,
-%   @pi-decl  N Ty x\
-%     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-%     solve-aux (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L GL,
-%     if (Sol x = app [HD, x]) (S = HD) (S = fun N Ty Sol).
-% solve-aux (goal C _ (prod N Ty F) XX _ as G) _L GL :- !,
-%   % intros_if_needed Prod C [] 
-%   (@pi-decl  N Ty x\
-%     declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-%     solve-aux (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _L _,
-%     coq.safe-dest-app (Sol x) Hd (Args x)),
-%     if (pi x\ last-no-error (Args x) x, std.drop-last 1 (Args x) NewArgs)
-%     (coq.mk-app Hd NewArgs Out, refine Out G GL) (
-%       % coq.say "Not eta" (Sol x) x (fun N Ty Sol),
-%       XX = (fun N Ty Sol)).
-% solve-aux (goal C _ (prod N _ _ as P) _ A as G) _L GL :- !,
-%   declare-evar C T P S',
-%   G' = (goal C T P S' A),
-%   refine (fun N _ _) G' GL1,
-%   coq.ltac.all (coq.ltac.open solve-aux) GL1 _,
-%   refine S' G GL.
-solve-aux (goal C _ (prod N Ty F) _ _ as G) GL :- !,
-  (@pi-decl N Ty x\
-    declare-evar [decl x N Ty|C] (Raw x) (F x) (Sol x),
-    solve-aux (goal [decl x N Ty|C] (Raw x) (F x) (Sol x) []) _),
-    if (pi x\ 
-      % also check the head does not contain x
-      coq.safe-dest-app (Sol x) Hd (Args x), 
-      last-no-error (Args x) x, 
-      std.drop-last 1 (Args x) NewArgs)
-    (coq.mk-app Hd NewArgs Out, refine Out G GL1) (refine (fun N _ _) G GL1),
-    coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
-% solve-aux (goal _ _ (prod N _ _) _ _ as G) GL :- !,
-%   refine (fun N _ _) G GL1,
-%   coq.ltac.all (coq.ltac.open solve-aux) GL1 GL.
-solve-aux (goal Ctx _ Ty Sol _ as G) GL :-
-  var Sol,
-  build-context-clauses Ctx Clauses,
-  % @redflags! coq.redflags.beta => coq.reduction.lazy.norm Ty Ty1,
-  Clauses => if (tc-recursive-search Ty Proof) 
-    (
-      % @no-tc! => coq.elaborate-skeleton X _ X' ok,
-      % coq.say "Solution " X "end" X' "caio",
-      % std.assert! (ground_term X') "solution not complete",
-      % (pi F\ (copy (fun _ _ x\ (app [F, x])) F :- !)) => copy X X',
-      if (is-option-active oTC-ignore-eta-reduction) 
-        (Proof' = Proof) (coq.reduction.eta-contract Proof Proof'),
-      std.time (refine Proof' G GL) Refine-Time, 
-      if (is-option-active oTC-time-refine) (coq.say "[TC] Refine time is:" Refine-Time) true;
-      coq.error "illtyped solution:" {coq.term->string Proof}
-    ) 
-    (GL = [seal G]).
+solve-aux (goal Ctx _ Ty P_ Ag_ as G) GL :-
+  time-it _ (solve-aux1 Ctx Ty Proof) "full instance search",
+  refine-proof Proof G GL.
+
+pred solve-aux1 i:goal-ctx, i:term, o:term.
+:name "solve-aux-intros"
+solve-aux1 Ctx (prod N X T) Proof :- !,
+  @pi-decl N X x\
+    solve-aux1 [decl x N X | Ctx] (T x) (Proof' x),
+    Proof = fun N X Proof'.
+
+:name "solve-aux-conclusion"
+solve-aux1 Ctx TyRaw Proof :-
+  time-it _ (tc.compile.context Ctx CtxClause) "compile context",
+  time-it _ (do-once (normalize-ty TyRaw Ty)) "normalize ty",
+  if-true print-goal (coq.say "The goal is <<<" Ty ">>>"),
+  if-true print-goal-pp (coq.say "The goal is <<<" {coq.term->string Ty} ">>>"),
+  CtxClause => solve-w-modes Ty Proof.
+
+
+pred print-solution.      % Print the solution in HOAS
+pred print-solution-pp.   % Print the solution in coq pp
+pred print-goal.          % Print the goal in HOAS
+pred print-goal-pp.       % Print the goal with coq pp
+pred print-compiled-goal.
 
 main _.

@@ -47,6 +47,8 @@ val float64 : Float64.t Elpi.API.Conversion.t
 val projection : Names.Projection.t Elpi.API.Conversion.t
 
 val debug : CDebug.t
+val elpitime : CDebug.t
+val elpitime_flag : CDebug.flag
 
 type clause_scope = Local | Regular | Global | SuperGlobal
 val pp_scope : Format.formatter -> clause_scope -> unit
@@ -70,3 +72,5 @@ val coq_version_parser : string -> int * int * int
 
 val mp2path: Names.ModPath.t -> string list
 val gr2path: Names.GlobRef.t -> string list
+
+val eta_contract : Environ.env -> Evd.evar_map -> EConstr.t -> EConstr.t

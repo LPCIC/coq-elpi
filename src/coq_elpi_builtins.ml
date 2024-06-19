@@ -958,9 +958,16 @@ let cache_tac_abbrev ~code:elpi_qualid ~name:other_qualid = cache_abbrev_for_tac
   tac_fixed_args = [];
 }
 
+let is_available_option name =
+  let table = Goptions.get_tables () in
+    (* let table = Goptions.get_string_table () in *)
+    match Goptions.OptionMap.find_opt name table with
+    | Some { Goptions.opt_depr = x; _ }  -> Some (Option.has_some x)
+    | None -> None
 
 let cache_goption_declaration (depr,key,value) =
   let open Goptions in
+  if is_available_option key <> None then () else
   let depr = if depr then Some (Deprecation.make ~note:"elpi" ()) else None in
   match value with
   | BoolValue x ->
@@ -1190,54 +1197,6 @@ let coq_print pp msg_f =
      msg_f Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
      state, ())
 
-let eta_contract env sigma t =
-  let unzip l t = EConstr.it_mkLambda t l in
-  let not_occurs n t =
-    let fr = Termops.free_rels sigma t in
-    let rec aux i =
-      if n < i then true
-      else not (Int.Set.mem i fr) && aux (i+1) in
-    aux 1 in
-  (*let not_occurs n t =
-    let rc = not_occurs n t in
-    Printf.eprintf "not_occurs %d %s %b\n" n Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t) rc;
-    rc in*)
-  let eta_condition vl nargs i t =
-    if i < nargs - vl then not_occurs vl t
-    else EConstr.eq_constr_nounivs sigma t (EConstr.mkRel (vl - (i - (nargs - vl)))) in
-  let rec contract env vl t =
-    match EConstr.kind sigma t with
-    | App(hdo,argso) ->
-        let hd = map env hdo in
-        let args = CArray.Smart.map (map env) argso in
-        let nargs = Array.length args in
-        if nargs >= vl &&
-           not_occurs vl hd &&
-           CArray.for_all_i (eta_condition vl nargs) 0 args
-        then
-          let args = Array.sub args 0 (nargs - vl) in
-          (* apperantly negative lift is a thing *)
-          EConstr.Vars.lift (-vl) (EConstr.mkApp(hd,args)), true
-        else
-          if hd == hdo && args == argso then t, false
-          else EConstr.mkApp(hd,args), false
-    | _ -> map env t, false
-  and cross env (o,vl,zip) t =
-    match EConstr.kind sigma t with
-    | Lambda(name,ty,bo) -> cross env (o,vl+1,(name,ty)::zip) bo
-    | _ ->
-        let t', b = contract env vl t in
-        if b then t'
-        else if t == t' then o
-        else unzip zip t'
-  and map env t =
-    match EConstr.kind sigma t with
-    | Lambda _ -> cross env (t,0,[]) t
-    | _ -> Termops.map_constr_with_full_binders env sigma EConstr.push_rel map env t
-  in
-    (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
-    map env t
-
 (*****************************************************************************)
 (*****************************************************************************)
 (*****************************************************************************)
@@ -1304,6 +1263,12 @@ let coq_misc_builtins =
   MLCode(Pred("coq.say",
     VariadicIn(unit_ctx, !> B.any, "Prints a notice message"),
     coq_print pp Feedback.msg_notice
+  ),
+  DocAbove);
+
+  MLCode(Pred("coq.debug",
+    VariadicIn(unit_ctx, !> B.any, "Prints a debug message"),
+    coq_print pp Feedback.msg_debug
   ),
   DocAbove);
 
@@ -1430,7 +1395,7 @@ Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@b
     Out(gref,  "GlobalReference",
     Easy {|locates a global definition, inductive type or constructor via its name.
 It unfolds syntactic notations, e.g. "Notation old_name := new_name."
-It undestands qualified names, e.g. "Nat.t".
+It understands qualified names, e.g. "Nat.t".
 It understands Coqlib Registered names using the "lib:" prefix,
 eg "lib:core.bool.true".
 It's a fatal error if Name cannot be located.|})),
@@ -2629,6 +2594,7 @@ Supported attributes:
     In(gref, "GR",
     Full(global, {|Declare GR as a type class|})),
   (fun gr ~depth { options } _ -> grab_global_env "coq.TC.declare-class" (fun state ->
+     (* CAVEAT: declare_existing_class creates the new class but methods are not added *)
      Record.declare_existing_class gr;
      state, (), []))),
   DocAbove);
@@ -3727,11 +3693,11 @@ Supported attributes:
     In(B.list B.string,"Option",
     Out(B.bool,"Deprecated",
     Easy "checks if Option exists and tells if is deprecated (tt) or not (ff)")),
-  (fun name _ ~depth ->
-    let table = Goptions.get_tables () in
-    match Goptions.OptionMap.find_opt name table with
-    | Some { Goptions.opt_depr = x; _ }  -> !: (Option.has_some x)
-    | None -> raise No_clause)),
+  (fun name _ ~depth -> 
+      match is_available_option name with
+      | None -> raise No_clause
+      | Some e -> !: e)
+    ),
   DocAbove);
 
   MLCode(Pred("coq.option.add",

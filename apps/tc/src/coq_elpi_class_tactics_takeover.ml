@@ -120,11 +120,11 @@ let solve_TC program env sigma depth unique ~best_effort filter =
   | Some (cprogram,_) ->
       match Coq_elpi_vernacular.Interp.run ~static_check:false cprogram (`Fun query) with
       | API.Execute.Success solution ->
-          let sigma, _, _ = Coq_elpi_HOAS.solution2evd sigma solution glss in
+          let sigma, _, _ = Coq_elpi_HOAS.solution2evd ~eta_contract_solution:true sigma solution glss in
           Some(false,sigma)
       | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
       | API.Execute.Failure -> elpi_fails program
-      | exception (Coq_elpi_utils.LtacFail (level, msg)) -> elpi_fails program
+      | exception (Coq_elpi_utils.LtacFail (level, msg)) -> Some(false, sigma)
 
 let handle_takeover coq_solver env sigma (cl: Intpart.set) =
   let t = Unix.gettimeofday () in 

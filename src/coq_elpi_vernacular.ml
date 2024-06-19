@@ -196,6 +196,11 @@ let run_static_check query =
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
   ignore (EC.static_check ~checker query)
 
+let trace_filename_gen (add_counter: string) =
+  "/tmp/traced.tmp" ^ (add_counter) ^ ".json"
+
+let trace_filename = trace_filename_gen ""
+
 let run ~static_check program query =
   let t1 = Unix.gettimeofday () in
   let query =
@@ -207,6 +212,8 @@ let run ~static_check program query =
   if static_check then run_static_check query;
   let t3 = Unix.gettimeofday () in
   let leftovers = API.Setup.trace !trace_options in
+  if (!trace_options <> [] && Sys.file_exists trace_filename) then 
+    Sys.command (Printf.sprintf "mv %s %s" trace_filename (trace_filename_gen (Printf.sprintf "_%.0f" @@ Unix.gettimeofday ()))) |> ignore;
   if leftovers <> [] then
     CErrors.user_err Pp.(str"Unknown trace options: " ++ prlist_with_sep spc str leftovers);
   let exe = EC.optimize query in
@@ -215,6 +222,9 @@ let run ~static_check program query =
   let t5 = Unix.gettimeofday () in
   Coq_elpi_utils.debug Pp.(fun () ->
       str @@ Printf.sprintf
+        "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
+        (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
+  Coq_elpi_utils.elpitime Pp.(fun () -> str @@ Printf.sprintf
         "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
         (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
   rc
@@ -387,7 +397,7 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
   
   let trace_browser _opts =
     trace_options :=
-      [ "-trace-on"; "json"; "/tmp/traced.tmp.json"
+      [ "-trace-on"; "json"; trace_filename
       ; "-trace-at"; "run"; "0"; string_of_int max_int
       ; "-trace-only"; "user"
       ];
@@ -653,7 +663,7 @@ let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
     in
   get_and_compile program |> Option.cata (fun (cprogram, _) ->
     match run ~static_check cprogram (`Fun query) with
-    | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD sigma solution
+    | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD ~eta_contract_solution:false sigma solution
     | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
     | API.Execute.Failure -> elpi_fails program
     | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg

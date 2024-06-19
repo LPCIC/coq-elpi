@@ -2,6 +2,7 @@
 -Q ../../theories elpi
 -I ../../src
 -docroot elpi.apps
+-arg -w -arg -ambiguous-extra-dep
 
 -R theories   elpi.apps.tc
 -R elpi       elpi.apps.tc
@@ -11,6 +12,7 @@ src/coq_elpi_tc_register.ml
 src/coq_elpi_tc_hook.mlg
 src/coq_elpi_class_tactics_takeover.ml
 src/coq_elpi_class_tactics_hacked.ml
+src/coq_elpi_tc_time.ml
 src/elpi_tc_plugin.mlpack
 
 -I src/
@@ -20,3 +22,5 @@ theories/db.v
 theories/add_commands.v
 theories/tc.v
 theories/wip.v
+
+-arg -w -arg -ambiguous-extra-dep

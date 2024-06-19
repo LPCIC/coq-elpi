@@ -38,3 +38,6 @@ clean: Makefile.coq Makefile.test.coq
 
 install:
 	@$(MAKE) -f Makefile.coq $@
+
+ho-test:
+	make tests/test.vo tests/test_HO.vo tests/patternFragment.vo

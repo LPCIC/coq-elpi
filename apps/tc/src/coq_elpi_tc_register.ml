@@ -21,7 +21,16 @@ let gref2elpi_term (gref: GlobRef.t) : Cmd.raw =
 
 (* Returns the elpi term representing the type class received in argument *)
 let observer_class (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
-  [gref2elpi_term x.cl_impl]
+  [Cmd.String "new_class"; gref2elpi_term x.cl_impl]
+
+let observer_default_instance (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
+  [Cmd.String "default_instance";gref2elpi_term x.cl_impl]
+
+let observer_coercion add (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
+  let name2str x = Cmd.String (Names.Name.print x |> Pp.string_of_ppcmds) in
+  let proj = x.cl_projs |> List.map (fun (x: Typeclasses.class_method) -> x.meth_name) in
+  let mode = if add then "add_coercions" else "remove_coercions" in
+  Cmd.String mode :: List.map name2str proj
 
 (** 
   Returns the list of Cmd.raw arguments to be passed to the elpi program in charge 
@@ -42,17 +51,26 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Coq_
     Cmd.String (hint2string loc) in 
   let prio2elpi_int (prio: Typeclasses.hint_info) = 
     Cmd.Int (Option.default (-1) prio.hint_priority) in 
-  [
+  [ Cmd.String "new_instance"; 
     gref2elpi_term instance; 
     gref2elpi_term class_name;
     locality2elpi_string locality;
     prio2elpi_int info
   ]
 
+let class_runner f cl =
+  let actions = [
+    observer_coercion false; 
+    observer_class; 
+    observer_coercion true; 
+    (* observer_default_instance *)
+  ] in
+  List.iter (fun obs -> f (obs cl)) actions
+
 let inObservation =
   Libobject.declare_object @@
     Libobject.local_object "TC_HACK_OBSERVER_CLASSES"
-      ~cache:(fun (run,cl) -> run @@ observer_class cl)
+      ~cache:(fun (run,cl) -> class_runner run cl)
       ~discharge:(fun x -> Some x)
 
 let inObservation1 =
@@ -82,11 +100,20 @@ type action =
   | Activate of qualified_name 
   | Deactivate of qualified_name
 
-let action_manager = function
+let action_manager x = 
+    match x with
   | Create (name, loc_name_atts) -> 
-      let observer = Classes.register_observer ~name (observer_evt loc_name_atts) in 
-      observers := StringMap.add name observer !observers;
-      Classes.activate_observer observer
+      let t1 = Sys.time () in
+      begin
+        try
+          let observer = Classes.register_observer ~name (observer_evt loc_name_atts) in 
+          observers := StringMap.add name observer !observers;
+          Classes.activate_observer observer
+        with e when CErrors.is_anomaly e ->
+          Feedback.msg_warning Pp.(str (Printf.sprintf "%s already registered" name))
+        end;
+        let t2 = Sys.time () in
+      if Coq_elpi_tc_time.get_time_tc_bench () then Feedback.msg_debug Pp.(str @@ Printf.sprintf "[TC] register.ml time is %.5f" (t1 -. t2))
   | Activate observer -> 
       Classes.activate_observer (StringMap.find (build_observer_name observer) !observers)
   | Deactivate observer -> 

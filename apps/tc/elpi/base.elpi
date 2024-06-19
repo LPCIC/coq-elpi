@@ -20,14 +20,17 @@ last-no-error A B :-
 
 % [find L F R] returns the first R in L such that (F R) is valid
 pred find i:list A, i:(A -> prop), o:A.
-find [] _ _ :- std.fatal-error "find element not found".
-find [R | _] F R :- F R.
+find [R | _] F R :- F R, !.
 find [_ | L] F R :- find L F R.
 
 pred find-opt i:list A, i:(A -> prop), o:(option A).
 find-opt [] _ none.
-find-opt [R | _] F (some R) :- F R.
+find-opt [R | _] F (some R) :- F R, !.
 find-opt [_ | L] F R :- find-opt L F R.
+
+pred exists! i:list A, i:(A -> prop).
+exists! [X|_] A :- A X, !.
+exists! [_|L] A :- exists! L A.
 
 pred list-init i:int, i:(int -> A -> prop), o:list A.
 list-init N _ _ :- N < 0, std.fatal-error "list-init negative length".
@@ -60,3 +63,103 @@ do [P|PS] :- P, do PS.
 
 pred do-once i:prop. 
 do-once A :- A, !.
+
+pred if-true i:prop, i:prop.
+if-true A B :- if A B true.
+
+pred if-false i:prop, i:prop.
+if-false A B :- if A true B.
+
+pred std.findall-unary i:(A -> prop), o:list A.
+std.findall-unary P L :-
+  std.findall (P _) V,
+  std.map V (x\y\ P y = x) L.
+
+pred print-repeat-aux i:int, i:string, o:string.
+print-repeat-aux 0 _ S :- coq.say S.
+print-repeat-aux N A S :- N > 0, N1 is N - 1,
+  S' is A ^ S, print-repeat-aux N1 A S'.
+
+pred print-repeat i:int, i:string.
+print-repeat I S :- print-repeat-aux I S "".
+
+pred split-at-not-fatal i:int, i:list A, o:list A, o:list A.
+split-at-not-fatal 0 L [] L :- !.
+split-at-not-fatal N [X|XS] [X|LN] LM :- !, N1 is N - 1, 
+  split-at-not-fatal N1 XS LN LM.
+
+pred undup-same i:list A, o:list A.
+undup-same [] [].
+undup-same [X|Xs] [X|Ys] :-
+  std.forall Xs (x\ not (x == X)), !,
+  undup-same Xs Ys.
+undup-same [_|Xs] Ys :- undup-same Xs Ys.
+
+:index (1)
+pred is-coq-term i:A.
+is-coq-term (sort _).
+is-coq-term (global _).
+is-coq-term (pglobal _ _).
+is-coq-term (app _).
+is-coq-term (fun _ _ _).
+is-coq-term (prod _ _ _ ). 
+is-coq-term (fix _ _ _ _ ). 
+is-coq-term (match _ _ _). 
+is-coq-term (let _ _ _ _).
+is-coq-term (primitive _).
+
+kind nat type.
+type z nat.
+type s nat -> nat.
+type inf nat.
+
+:index (1)
+pred add-nat i:nat, i:nat, o:nat.
+add-nat inf _ inf.
+add-nat _ inf inf.
+add-nat z N N.
+add-nat (s N) M (s P) :- add-nat N M P.
+
+pred max-nat i:nat, i:nat, o:nat.
+max-nat z N N :- !.
+max-nat N z N :- !.
+max-nat inf _ inf :- !.
+max-nat _ inf inf :- !.
+max-nat (s N) (s M) (s P) :- max-nat N M P.
+
+pred min-nat i:nat, i:nat, o:nat.
+min-nat z _ z :- !.
+min-nat _ z z :- !.
+min-nat inf A A :- !.
+min-nat A inf A :- !.
+min-nat (s N) (s M) (s P) :- min-nat N M P.
+
+pred length-nat i:list A, o:nat.
+length-nat [] z.
+length-nat [_|L] (s N) :- length-nat L N.
+
+pred count-prod i:term , o:nat.
+count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
+count-prod _ z.
+
+pred close-prop i:(A -> list prop), o:list prop.
+close-prop (x\ []) [] :- !.
+close-prop (x\ [X | Xs x]) [X| Xs'] :- !, close-prop Xs Xs'.
+close-prop (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, close-prop Xs Xs'. 
+
+pred close-prop-no-prune i:(A -> list prop), o:list prop.
+close-prop-no-prune (x\ []) [] :- !.
+close-prop-no-prune (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, 
+  close-prop-no-prune Xs Xs'. 
+
+% [close-term-ty (x\ L) Ty R] Ty is the type of x
+pred close-term-ty i:(term -> list prop), i:term, o:list prop.
+close-term-ty (x\ []) _ [] :- !.
+close-term-ty (x\ [X | Xs x]) Ty [X| Xs'] :- !, close-term-ty Xs Ty Xs'.
+close-term-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
+  close-term-ty Xs Ty Xs'. 
+
+pred close-term-no-prune-ty i:(term -> list prop), i:term, o:list prop.
+close-term-no-prune-ty (x\ []) _ [] :- !.
+close-term-no-prune-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
+  close-term-no-prune-ty Xs Ty Xs'. 
