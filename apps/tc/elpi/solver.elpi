@@ -24,18 +24,15 @@ refine-proof Proof G GL :-
   
   if-true print-solution (coq.say "[TC] The proof typechecks").
 
-pred solve-w-modes i:term, o:term.
-solve-w-modes Ty Proof :-
-  time-it oTC-time-mode-check (modes-check Ty) "mode check", !,
-  time-it oTC-time-compile-goal (build-query-from-goal Ty Proof Q PostProcess) "build query",
-  if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q),
+pred solve-under-context i:term, o:term.
+solve-under-context Ty Proof :-
+  time-it oTC-time-compile-goal (build-query-from-goal Ty Proof Q PostProcess) "build query", !,
+  if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q), !,
   time-it oTC-time-instance-search (
     do PostProcess, Q,
     tc.link.solve-eta, % Trigger eta links
     tc.link.solve-llam % Trigger llam links
   ) "instance search".
-
-solve-w-modes _ tc.mode_fail.
 
 pred solve-aux i:goal, o:list sealed-goal.
 solve-aux (goal Ctx _ Ty P_ Ag_ as G) GL :-
@@ -45,18 +42,21 @@ solve-aux (goal Ctx _ Ty P_ Ag_ as G) GL :-
 pred solve-aux1 i:goal-ctx, i:term, o:term.
 :name "solve-aux-intros"
 solve-aux1 Ctx (prod N X T) Proof :- !,
-  @pi-decl N X x\
+  @pi-decl _ X x\
     solve-aux1 [decl x N X | Ctx] (T x) (Proof' x),
-    Proof = fun N X Proof'.
+    if (Proof' x = tc.mode_fail) 
+      (Proof = tc.mode_fail)
+      (Proof = fun N X Proof').
 
 :name "solve-aux-conclusion"
 solve-aux1 Ctx TyRaw Proof :-
-  time-it _ (tc.compile.context Ctx CtxClause) "compile context",
-  time-it _ (do-once (normalize-ty TyRaw Ty)) "normalize ty",
+  time-it _ (normalize-ty TyRaw Ty) "normalize ty",
   if-true print-goal (coq.say "The goal is <<<" Ty ">>>"),
   if-true print-goal-pp (coq.say "The goal is <<<" {coq.term->string Ty} ">>>"),
-  CtxClause => solve-w-modes Ty Proof.
-
+  time-it oTC-time-mode-check (modes-check Ty) "mode check", !,
+  time-it _ (tc.compile.context Ctx CtxClause) "compile context", !,
+  CtxClause => solve-under-context Ty Proof.
+solve-aux1 _ _ tc.mode_fail :- if-true (print-solution; print-solution-pp) (coq.say "Invalid mode call").
 
 pred print-solution.      % Print the solution in HOAS
 pred print-solution-pp.   % Print the solution in coq pp
