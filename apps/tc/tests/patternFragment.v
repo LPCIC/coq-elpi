@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 Set TC NameShortPath.
 Set TC CompilerWithPatternFragment.
 
@@ -10,9 +10,9 @@ Class Ex (P : Type -> Type) (A: Type).
 Module M4.
   Local Instance Inst2 A F: (forall (a : Type) (b c : nat), Y (F a b) -> Y (F a c)) -> Z A. Qed.
   Goal Z bool.
-    Elpi Override TC TC.Solver None.
+    Elpi TC Solver Override TC.Solver None.
       Fail apply _.
-    Elpi Override TC TC.Solver All.
+    Elpi TC Solver Override TC.Solver All.
       apply _.
       Unshelve. 
       assumption. (* we keep a, the first arg of F *)
@@ -21,9 +21,9 @@ Module M4.
   Local Instance Inst1: Y (bool * bool). Qed.
 
   Goal Z bool.
-    Elpi Override TC TC.Solver None.
+    Elpi TC Solver Override TC.Solver None.
       Succeed apply _. 
-    Elpi Override TC TC.Solver All.
+    Elpi TC Solver Override TC.Solver All.
       apply _.
       Unshelve. 
       assumption.
@@ -137,7 +137,7 @@ Module M1b.
     exists g, Ex g A /\ g nat = g bool.
 
   Section coq.
-    Elpi Override TC TC.Solver None.
+    Elpi TC Solver Override TC.Solver None.
     Goal goal. 
     Proof.
       intros ???.

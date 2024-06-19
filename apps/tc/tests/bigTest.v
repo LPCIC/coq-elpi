@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 
 (** This file collects type class interfaces, notations, and general theorems
 that are used throughout the whole development. Most importantly it contains
@@ -384,7 +384,7 @@ an explicit class instead of a notation for two reasons:
   Using the [RelDecision], the [f] is hidden under a lambda, which prevents
   unnecessary evaluation. *)
 Class RelDecision {A B} (R : A → B → Prop) :=
-  decide_rel x y :> Decision (R x y).
+  decide_rel x y :: Decision (R x y).
 Global Hint Mode RelDecision ! ! ! : typeclass_instances.
 Global Arguments decide_rel {_ _} _ {_} _ _ : simpl never, assert.
 Notation EqDecision A := (RelDecision (=@{A})).
@@ -480,7 +480,7 @@ Global Instance inj2_inj_1 `{Inj2 A B C R1 R2 R3 f} y : Inj R1 R3 (λ x, f x y).
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
 Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 f} x : Inj R2 R3 (f x).
 Proof. repeat intro; edestruct (inj2 f); eauto. Qed.
-Elpi Override TC - ProperProxy.
+Elpi TC Solver Override TC.Solver Rm ProperProxy.
 
 Lemma cancel_inj `{Cancel A B R1 f g, !Equivalence R1, !Proper (R2 ==> R1) f} :
   Inj R1 R2 g.
@@ -514,8 +514,10 @@ relation [R] instead of [⊆] to support multiple orders on the same type. *)
 Definition strict {A} (R : relation A) : relation A := λ X Y, R X Y ∧ ¬R Y X.
 Global Instance: Params (@strict) 2 := {}.
 
+Set Warnings "-future-coercion-class-field".
+
 Class PartialOrder {A} (R : relation A) : Prop := {
-  partial_order_pre :> PreOrder R;
+  partial_order_pre ::> PreOrder R;
   partial_order_anti_symm :> AntiSymm (=) R
 }.
 Global Hint Mode PartialOrder ! ! : typeclass_instances.
@@ -728,8 +730,8 @@ Proof. intros [] []; reflexivity. Qed.
 Notation "( x ,.)" := (pair x) (only parsing) : stdpp_scope.
 Notation "(., y )" := (λ x, (x,y)) (only parsing) : stdpp_scope.
 
-Notation "p .1" := (fst p) (at level 2, left associativity, format "p .1").
-Notation "p .2" := (snd p) (at level 2, left associativity, format "p .2").
+Notation "p .1" := (fst p) (at level 1, left associativity, format "p .1").
+Notation "p .2" := (snd p) (at level 1, left associativity, format "p .2").
 
 Global Instance: Params (@pair) 2 := {}.
 Global Instance: Params (@fst) 2 := {}.
@@ -802,7 +804,7 @@ Proof.
     [apply (inj f)|apply (inj g)]; congruence.
 Qed.
 
-Elpi Override TC - ProperProxy Proper.
+Elpi TC Solver Override TC.Solver Rm ProperProxy Proper.
 
 Global Instance prod_swap_cancel {A B} :
   Cancel (=) (@prod_swap A B) (@prod_swap B A).

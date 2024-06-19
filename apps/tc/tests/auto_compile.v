@@ -1,6 +1,6 @@
 From elpi.apps Require Import tc.
 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 
 Require Import Bool.
 
@@ -60,7 +60,7 @@ Module S.
   #[export] Instance Cl3 : Cl 3. Qed.
 End S.
 
-Elpi Override TC TC.Solver None.
+Elpi TC Solver Override TC.Solver None.
 Goal S.Cl 1 /\ S.Cl 2 /\ S.Cl 3.
 Proof. 
   split. all:cycle 1.

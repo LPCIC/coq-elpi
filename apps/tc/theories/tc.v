@@ -186,7 +186,9 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Register TC.Solver.
+Elpi TC Solver Activate TC.Solver.
+Elpi TC Solver Override TC.Solver All.
 
 Elpi Register TC Compiler TC.Compiler.
 

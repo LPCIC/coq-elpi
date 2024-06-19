@@ -1,6 +1,6 @@
 From elpi Require Import tc.
 
-Module M.
+Section M.
 Class C (i : Type -> Type).
 
 Context (Q : Type -> Type).
@@ -13,3 +13,5 @@ Goal C Q ->  exists (T : Type -> Type), forall R, C R -> C (T).
   Elpi Trace Browser.
   apply _.
   Show Proof.
+Abort.
+End M.

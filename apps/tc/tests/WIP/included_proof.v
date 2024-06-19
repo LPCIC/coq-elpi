@@ -10,7 +10,7 @@ Class Ord `(E : EqDec A) := { le : A -> A -> bool }.
 
 Class C (A : Set).
 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 Global Instance cInst `{e: EqDec nat} : Ord e -> C nat. Admitted.
 
 (* 
