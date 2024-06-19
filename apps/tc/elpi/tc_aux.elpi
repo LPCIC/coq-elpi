@@ -171,16 +171,28 @@ pred section-var->decl o:list prop.
 section-var->decl L :-
   section-var->decl.aux {coq.env.section} L.
 
-pred time-aux i:(list string -> prop), i:string, i:float.
-time-aux _ Msg Time :- coq.option.get ["Time", "TC", "Bench"] (coq.option.bool tt), !,
-  coq.debug "[TC] Benching - Time of" Msg "is" Time. 
-time-aux Opt Msg Time :- is-option-active Opt, !,
-  coq.say "[TC] Benching - Time of" Msg "is" Time. 
-time-aux _ _ _.
+pred time-is-active i:(list string -> prop).
+:name "time-is-active"
+time-is-active _ :- coq.option.get ["Time", "TC", "Bench"] (coq.option.bool tt), !.
+time-is-active Opt :- is-option-active Opt. 
+
+pred time-aux i:string, i:float.
+time-aux Msg Time :- !, coq.debug "[TC] - Time of" Msg "is" Time.
+
+pred give-res i:prop, o:prop.
+give-res P true :- P.
+give-res _ fail.
+
+pred time-res i:prop, o:float, o:prop.
+time-res P T Res :- std.time (give-res P Res) T.
+
+pred build-msg i:prop, i:string, o:string.
+build-msg true S S :- !.
+build-msg fail S S' :- S' is S ^ " fail".
 
 pred time-it i:(list string -> prop), i:prop, i:string.
-time-it Opt P Msg :-
-  std.time P Time, time-aux Opt Msg Time.
+time-it Opt P Msg :- time-is-active Opt, !, time-res P Time Res, build-msg Res Msg Msg', time-aux Msg' Time, Res.
+time-it _ P _ :- P.
 
 kind range-arity type.
 type r-ar nat -> nat -> range-arity.

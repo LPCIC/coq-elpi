@@ -39,7 +39,7 @@ solve-w-modes _ tc.mode_fail.
 
 pred solve-aux i:goal, o:list sealed-goal.
 solve-aux (goal Ctx _ Ty P_ Ag_ as G) GL :-
-  solve-aux1 Ctx Ty Proof,
+  time-it _ (solve-aux1 Ctx Ty Proof) "full instance search",
   refine-proof Proof G GL.
 
 pred solve-aux1 i:goal-ctx, i:term, o:term.
@@ -51,8 +51,8 @@ solve-aux1 Ctx (prod N X T) Proof :- !,
 
 :name "solve-aux-conclusion"
 solve-aux1 Ctx TyRaw Proof :-
-  tc.compile.context Ctx CtxClause,
-  do-once (normalize-ty TyRaw Ty),
+  time-it _ (tc.compile.context Ctx CtxClause) "compile context",
+  time-it _ (do-once (normalize-ty TyRaw Ty)) "normalize ty",
   if-true print-goal (coq.say "The goal is <<<" Ty ">>>"),
   if-true print-goal-pp (coq.say "The goal is <<<" {coq.term->string Ty} ">>>"),
   CtxClause => solve-w-modes Ty Proof.

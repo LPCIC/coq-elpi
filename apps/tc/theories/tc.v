@@ -112,14 +112,14 @@ Elpi Accumulate lp:{{
   main [str "add_coercions" | Proj] :- !, loop-proj add Proj.
 
   main [str "new_instance", str Inst, str Cl, str Locality, int Prio] :- !,
-    coq.locate Cl GRCl,
+    time-it _ (coq.locate Cl GRCl,
     coq.locate Inst GRInst,
-    add-inst GRInst GRCl Locality Prio.
+    add-inst GRInst GRCl Locality Prio) "Compiler for Instance".
 
   main [str "new_class", str Cl] :- !,
     time-it oTC-time-compile-class (
       coq.locate Cl GR, add-class-gr classic GR
-    ) "Compile Class".
+    ) "Compiler for Class".
 
   % used to build ad-hoc instance for eta-reduction on the argument of 
   % Cl that have function type
