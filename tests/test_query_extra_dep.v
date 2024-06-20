@@ -1,6 +1,6 @@
 From elpi Require Import elpi.
 
-From unreleased Extra Dependency "elpi_elaborator.elpi" as elab.
+From elpi_elpi Extra Dependency "elpi_elaborator.elpi" as elab.
 
 Elpi Command test.
 

@@ -1,4 +1,4 @@
-From unreleased Extra Dependency "elpi_elaborator.elpi" as elab.
+From elpi_elpi Extra Dependency "elpi_elaborator.elpi" as elab.
 
 From elpi Require Import elpi.
 

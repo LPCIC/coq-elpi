@@ -1,3 +1,12 @@
+(*
+waiting for per-file flags
+
+(env
+ (dev
+  (env-vars
+   (COQ_ELPI_ATTRIBUTES "test=yes,str=\"some-string\""))))
+
+*)
 From elpi Require Import elpi.
 
 Elpi Command test.
