@@ -1026,9 +1026,18 @@ let is_available_option name =
     | Some { Goptions.opt_depr = x; _ }  -> Some (Option.has_some x)
     | None -> None
 
+let goption_set name value =
+  let open Goptions in
+  match value with
+  | BoolValue x -> Goptions.set_bool_option_value name x
+  | IntValue x -> Goptions.set_int_option_value name x
+  | StringOptValue None -> Goptions.unset_option_value_gen name
+  | StringOptValue (Some x) -> Goptions.set_string_option_value name x
+  | StringValue _ -> assert false
+    
 let cache_goption_declaration (depr,key,value) =
   let open Goptions in
-  if is_available_option key <> None then () else
+  if is_available_option key <> None then goption_set key value else
   let depr = if depr then Some (Deprecation.make ~note:"elpi" ()) else None in
   match value with
   | BoolValue x ->
@@ -1979,7 +1988,7 @@ Supported attributes:
        let used = Univ.Level.Set.union used (universes_of_udecl state udecl) in
        let sigma = restricted_sigma_of used state in
    
-       let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body sigma in
+       let gr = declare_definition options.using ~cinfo ~info ~opaque ~body sigma in
        let () =
         let lid = CAst.make ~loc:(to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state) (Id.of_string id) in
         match scope with
@@ -3730,14 +3739,7 @@ Supported attributes:
     In(B.list B.string,"Option",
     In(goption,"Value",
     Easy "writes Option. Writing a non existing option is a fatal error.")),
-  (fun name value ~depth ->
-    let open Goptions in
-    match value with
-    | BoolValue x -> Goptions.set_bool_option_value name x
-    | IntValue x -> Goptions.set_int_option_value name x
-    | StringOptValue None -> Goptions.unset_option_value_gen name
-    | StringOptValue (Some x) -> Goptions.set_string_option_value name x
-    | StringValue _ -> assert false)),
+  (fun name value ~depth -> goption_set name value)),
   DocAbove);
 
   MLCode(Pred("coq.option.available?",
