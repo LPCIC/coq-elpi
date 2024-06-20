@@ -2256,7 +2256,7 @@ phase unnecessary.|};
     | Data u1, Data u2 ->
         if Sorts.equal u1 u2 then state, !: u1 +! u2,[]
         else
-          let state, u2 = purge_algebraic_univs_sort state (EConstr.ESorts.make u2) in
+          (* let state, u2 = purge_algebraic_univs_sort state (EConstr.ESorts.make u2) in *)
           add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2,[]
     | _ -> err Pp.(str"coq.sort.leq: called with _ as argument"))),
   DocAbove);
@@ -2270,7 +2270,7 @@ phase unnecessary.|};
     | Data u1, Data u2 ->
       if Sorts.equal u1 u2 then state, !: u1 +! u2,[]
       else
-        let state, u2 = purge_algebraic_univs_sort state (EConstr.ESorts.make u2) in
+        (* let state, u2 = purge_algebraic_univs_sort state (EConstr.ESorts.make u2) in *)
         add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, []
     | _ -> err Pp.(str"coq.sort.eq: called with _ as argument"))),
   DocAbove);
@@ -2312,6 +2312,23 @@ phase unnecessary.|};
   (fun _ ~depth _ _ state ->
      let state, (_,u) = new_univ_level_variable state in
      state, !: u, [])),
+  DocAbove);
+
+  MLCode(Pred("coq.univ.super",
+    In(univ,"U",
+    Out(univ,"U1",
+    Full(unit_ctx,  "relates a univ U to its successor U1"))),
+  (fun u _ ~depth _ _ state ->
+    state, !: (Univ.Universe.super u), [])),
+  DocAbove);
+
+  MLCode(Pred("coq.univ.max",
+    In(univ,"U1",
+    In(univ,"U2",
+    Out(univ,"UMax",
+    Full(unit_ctx,  "relates univs U1 and U2 to their max UMax")))),
+  (fun u1 u2 _ ~depth _ _ state ->
+    state, !: (Univ.Universe.sup u1 u2), [])),
   DocAbove);
 
   MLCode(Pred("coq.univ",

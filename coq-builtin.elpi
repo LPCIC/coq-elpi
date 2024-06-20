@@ -977,6 +977,9 @@ external pred coq.univ.print .
 % [coq.univ.new U] A fresh universe.
 external pred coq.univ.new o:univ.
 
+% [coq.univ.super U U1] relates a univ U to its successor U1
+external pred coq.univ.super i:univ, o:univ.
+
 % [coq.univ Name U] Finds a named unvierse. Can fail.
 external pred coq.univ o:id, o:univ.
 
