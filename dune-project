@@ -32,7 +32,7 @@
   (ocaml (>= 4.09.0))
   stdlib-shims
   (elpi (and (>= 1.18.2) (< 1.20.0~)))
-  (coq (or (and (>= 8.19) (< 8.20~)) (= :dev)))
+  (coq (>= 8.19))
   ppx_optcomp
   (dot-merlin-reader :dev)
   (ocaml-lsp-server :dev)))
