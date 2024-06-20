@@ -1,8 +1,6 @@
 From elpi.apps Require Import cs.
 From Coq Require Import Bool.
 
-Elpi Override CS All.
-
 Structure S (T : Type) : Type :=
   { sort :> T -> T }.
 
