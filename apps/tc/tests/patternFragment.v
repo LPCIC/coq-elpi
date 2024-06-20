@@ -146,6 +146,7 @@ Module M1b.
       apply _.
       Show Proof.
     Abort.
+    Elpi TC Solver Override TC.Solver All.
   End coq.
 
   Section elpi.
@@ -153,7 +154,9 @@ Module M1b.
     Proof.
       intros ???.
       eexists; constructor.
+      Show.
       apply _.
+      Show.
       reflexivity.
       Unshelve.
       apply nat.

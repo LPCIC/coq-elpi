@@ -303,7 +303,6 @@ Module D.
     intros.
     apply _.
     Unshelve.
-    apply nat.
     apply 3.
   Qed.
 
