@@ -280,10 +280,7 @@ namespace tc {
     pred context i:goal-ctx, o:list prop.
     :name "tc-compile-context"
     context Ctx Clauses :-
-      section-var->decl SectionVarsR, % To be reversed in order to keep right priority
-      std.rev SectionVarsR SectionVars, !,
-      std.append Ctx SectionVars CtxAndSection,
-      std.assert! (instance.context CtxAndSection Clauses) "[TC] cannot compile context". 
+      std.assert! (instance.context Ctx Clauses) "[TC] cannot compile context". 
 
     pred instance i:term, i:term, o:prop.
     instance Ty ProofHd Clause :-
