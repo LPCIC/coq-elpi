@@ -1114,6 +1114,7 @@ external pred coq.float->float64 i:float, o:float64.
 % displayed as a match and some Ltac code can see that.
 external pred coq.primitive.projection-unfolded o:projection, 
                                                 o:projection.
+
 % [coq.pstring->string PS S] Transforms a Coq primitive string to an elpi
 % string. It does not fail.
 external pred coq.pstring->string i:pstring, o:string.

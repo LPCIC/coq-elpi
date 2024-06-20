@@ -635,6 +635,7 @@ let detype ?(keepunivs = false) env sigma t =
     | App (hd, args) -> DAst.make @@ GApp (aux env hd, CArray.map_to_list (aux env) args)
     | Int i -> DAst.make @@ GInt i
     | Float i -> DAst.make @@ GFloat i
+    | String s -> DAst.make @@ GString s
     | Array (u, a, d, ty) ->
         DAst.make @@ GArray (detype_instance keepunivs sigma u, CArray.map (aux env) a, aux env d, aux env ty)
     | Const (c, u) -> DAst.make @@ GRef (Names.GlobRef.ConstRef c, detype_instance keepunivs sigma u)
@@ -691,11 +692,14 @@ let detype ?(keepunivs = false) env sigma t =
           let ctx, body = RobustExpand.branch (snd env) sigma (ci.ci_ind, i + 1) u pms br in
           EConstr.it_mkLambda_or_LetIn body ctx
         in
-        let constagsl = get_cstr_tags (snd env) ci [|bl|] in
         let bl = map 0 bl in
         let bl' = aux env bl in
-        let nal, d = it_destRLambda_or_LetIn_names constagsl.(0) bl' in
-
+        let rec decompose accu c = match DAst.get c with
+        | GLambda (na, _, _, _, c) -> decompose (na :: accu) c
+        | _ -> List.rev accu, c
+        in
+        let (nal, d) = decompose [] bl' in
+  
         DAst.make @@ GLetTuple (nal, ((*Anonymous,None*) Name (Names.Id.of_string "xxx"), Some mkGHole), tomatch, d)
     | Case (ci, u, pms, p, iv, c, bl) -> detype_case env (ci, u, pms, p, iv, c, bl)
   and share_names n l env bo ty =
@@ -739,9 +743,9 @@ let detype ?(keepunivs = false) env sigma t =
       (n, aliastyp, Some typ)
     in
     let constructs = Array.init (Array.length bl) (fun i -> (ci.ci_ind, i + 1)) in
-    let constagsl = get_cstr_tags (snd env) ci bl in
-    let eqnl = detype_eqns env constructs constagsl (ci, univs, params, bl) in
-    DAst.make @@ GCases (RegularStyle, pred, [ (tomatch, (alias, aliastyp)) ], eqnl)
+      let constagsl = get_cstr_tags (snd env) ci bl in
+      let eqnl = detype_eqns env constructs constagsl (ci, univs, params, bl) in
+      DAst.make @@ GCases (RegularStyle, pred, [ (tomatch, (alias, aliastyp)) ], eqnl)
   and detype_eqns env constructs consnargsl bl =
     let ci, u, pms, bl = bl in
     CArray.to_list (CArray.map3 (detype_eqn env u pms) constructs consnargsl bl)

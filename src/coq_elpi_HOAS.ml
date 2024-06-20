@@ -2012,7 +2012,8 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             | GlobRef.IndRef i -> i
             | _ -> assert false end
             C.LetStyle in
-        unknown_ind_cinfo in
+        let ci_pp_info = unknown_ind_cinfo.Constr.ci_pp_info in
+        { unknown_ind_cinfo with Constr.ci_pp_info} in
       let { sigma } = S.get engine state in
       begin match ind with
       | `SomeInd ind ->
