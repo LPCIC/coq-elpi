@@ -1,23 +1,43 @@
   $ DEPS="elpi elpi.apps.cs"
   $ . ../setup-project.sh
   $ dune build test.vo
+  File "dune", line 6, characters 0-60:
+  6 | (coq.theory
+  7 |  (name test)
+  8 |  (theories elpi elpi elpi.apps.cs))
   1
        : nat
-  eq_refl : {| sort := id (A:=nat) |} = id (A:=nat)
-       : {| sort := id (A:=nat) |} = id (A:=nat)
+  cs hook start
+  cs hook got proj
+  cs hook got structure
+  cs hook got params & arg 1 0
+  compile solver
+  run solver
+  
+  found solution
+  
+  ahaid
+  eq_refl : {| sort := id |} = id
+       : {| sort := id |} = id
   11
        : nat
-  eq_refl : {| sort := id (A:=nat) |} 1 = id 1
-       : {| sort := id (A:=nat) |} 1 = id 1
-  2
-       : nat
-  eq_refl : {| sort := id (A:=nat) |} = id1 nat
-       : {| sort := id (A:=nat) |} = id1 nat
-  3
-       : nat
-  eq_refl : sort1 nat {| sort := id (A:=nat) |} = id (A:=nat)
-       : sort1 nat {| sort := id (A:=nat) |} = id (A:=nat)
-  4
-       : nat
-  eq_refl : sort1 nat {| sort := id (A:=nat) |} = id1 nat
-       : sort1 nat {| sort := id (A:=nat) |} = id1 nat
+  cs hook start
+  cs hook got proj
+  cs hook got structure
+  cs hook got params & arg 1 1
+  compile solver
+  run solver
+  
+  found solution
+  
+  ahaid
+  eq_refl : {| sort := id |} 1 = id 1
+       : {| sort := id |} 1 = id 1
+  File "./test.v", line 18, characters 0-21:
+  Error:
+  The following term contains unresolved implicit arguments:
+    id
+  More precisely: 
+  - ?A: Cannot infer the implicit parameter A of id whose type is "Type".
+  
+  [1]

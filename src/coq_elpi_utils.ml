@@ -585,7 +585,7 @@ let get_GLambda_name_tgt typ =
   | _ -> (Anonymous, typ)
 
 let detype_primitive_string = function
-  | String s -> DAst.make @@ GString s
+  | EConstr.String s -> DAst.make @@ GString s
   | _ -> assert false
 [%%endif]
 

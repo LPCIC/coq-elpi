@@ -2007,6 +2007,7 @@ let unify ?flags ?(with_ho=true) env evd cv_pb ty1 ty2 =
 
 let compare_heads = compare_heads CONV
 end
+let () = Evarconv.set_evar_conv Evarconv_hacked.evar_conv_x
 module Evarconv = Evarconv_hacked
 open Elpi
 open Elpi_plugin
@@ -2159,8 +2160,4 @@ VERNAC COMMAND EXTEND ElpiCS CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "CS" qualified_name(p) ] -> {
      let () = ignore_unknown_attributes atts in
      add_cs_hook (snd p) }
-	 (*
-| #[ atts = any_attribute ] [ "Elpi" "Override" "CS" qualified_name(p) ] -> {
-     Evarconv.set_evar_conv Evarconv_hacked.evar_conv_x }
-*)
 END
