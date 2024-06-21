@@ -34,5 +34,4 @@
   (elpi (and (>= 1.18.2) (< 1.20.0~)))
   (coq (>= 8.19))
   ppx_optcomp
-  (dot-merlin-reader :dev)
   (ocaml-lsp-server :dev)))

@@ -790,10 +790,19 @@ let in_elpi_fix name rno ty bo =
 
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
+[%%if coq = "8.19"]
+type pstring = string
+let pp_pstring _ = "primitive strings not supported in Coq 8.19"
+let eC_mkString _ = assert false
+[%%else]
+type pstring = Pstring.t
+let pp_pstring = Pstring.to_string
+let eC_mkString = EC.mkString
+[%%endif]
 type primitive_value =
   | Uint63 of Uint63.t
   | Float64 of Float64.t
-  | Pstring of Pstring.t
+  | Pstring of pstring
   | Projection of Projection.t
 
 let primitive_value : primitive_value API.Conversion.t =
@@ -802,10 +811,10 @@ let primitive_value : primitive_value API.Conversion.t =
   ty = API.Conversion.TyName "primitive-value";
   doc = "Primitive values";
   pp = (fun fmt -> function
-    | Uint63 i -> Format.fprintf fmt "Type"
-    | Float64 f -> Format.fprintf fmt "Set"
-    | Pstring s -> Format.fprintf fmt "Set"
-    | Projection p -> Format.fprintf fmt "");
+    | Uint63 i -> Format.fprintf fmt "%s" (Uint63.to_string i)
+    | Float64 f -> Format.fprintf fmt "%s" (Float64.to_string f)
+    | Pstring s -> Format.fprintf fmt "%s" (pp_pstring s)
+    | Projection p -> Format.fprintf fmt "%s" (Projection.to_string p));
   constructors = [
     K("uint63","unsigned integers over 63 bits",A(B.uint63,N),
       B (fun x -> Uint63 x),
@@ -826,6 +835,20 @@ let in_elpi_primitive ~depth state i =
   let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
   state, E.mkApp primitivec i []
  
+[%%if coq = "8.19"]
+let in_elpi_primitive_value ~depth state = function
+  | C.Int i -> in_elpi_primitive ~depth state (Uint63 i)
+  | C.Float f -> in_elpi_primitive ~depth state (Float64 f)
+  | C.Array _ -> nYI "HOAS for persistent arrays"
+  | (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
+[%%else]
+let in_elpi_primitive_value ~depth state = function
+| C.Int i -> in_elpi_primitive ~depth state (Uint63 i)
+| C.Float f -> in_elpi_primitive ~depth state (Float64 f)
+| C.String s -> in_elpi_primitive ~depth state (Pstring s)
+| C.Array _ -> nYI "HOAS for persistent arrays"
+| (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
+[%%endif]
 
 (* ********************************* }}} ********************************** *)
 
@@ -1450,10 +1473,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          state, in_elpi_app ~depth p [|t|]
     | C.Fix _ -> nYI "HOAS for mutual fix"
     | C.CoFix _ -> nYI "HOAS for cofix"
-    | C.Int i -> in_elpi_primitive ~depth state (Uint63 i)
-    | C.Float f -> in_elpi_primitive ~depth state (Float64 f)
-    | C.String s -> in_elpi_primitive ~depth state (Pstring s)
-    | C.Array _ -> nYI "HOAS for persistent arrays"
+    | x -> in_elpi_primitive_value ~depth state x
   in
   debug Pp.(fun () ->
       str"term2lp: depth=" ++ int depth ++
@@ -2046,7 +2066,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       begin match v with
       | Uint63 i -> state, EC.mkInt i, gls
       | Float64 f -> state, EC.mkFloat f, gls
-      | Pstring s -> state, EC.mkString s, gls
+      | Pstring s -> state, eC_mkString s, gls
       | Projection p -> state, EC.UnsafeMonomorphic.mkConst (Names.Projection.constant p), gls
       end
 
@@ -2869,32 +2889,39 @@ let name_universe_level state l =
         { e with sigma }, id
   )
 
+[%%if coq = "8.19"]
+let mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance =
+  let open UState in
+  { univdecl_qualities = [];
+    univdecl_extensible_instance;
+    univdecl_extensible_constraints;
+    univdecl_constraints;
+    univdecl_instance}
+[%%else]
+let mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance =
+  let open UState in
+  { univdecl_qualities = [];
+    univdecl_extensible_instance;
+    univdecl_extensible_qualities = false;
+    univdecl_extensible_constraints;
+    univdecl_constraints;
+    univdecl_instance}
+[%%endif]
+
 let poly_cumul_udecl_variance_of_options state options =
   match options.universe_decl with
   | NotUniversePolymorphic -> state, false, false, UState.default_univ_decl, [| |]
   | Cumulative ((univ_lvlt_var,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
     let univdecl_instance, variance = List.split univ_lvlt_var in
-    let open UState in
     state, true, true,
-    { univdecl_qualities = [];
-      univdecl_extensible_instance;
-      univdecl_extensible_qualities = false;
-      univdecl_extensible_constraints;
-      univdecl_constraints;
-      univdecl_instance},
+    mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
     Array.of_list variance
   | NonCumulative((univ_lvlt,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
     let univdecl_instance = univ_lvlt in
     let variance = List.init (List.length univdecl_instance) (fun _ -> None) in
-    let open UState in
     state, true, false,
-    { univdecl_qualities = [];
-      univdecl_extensible_instance;
-      univdecl_extensible_qualities = false;
-      univdecl_extensible_constraints;
-      univdecl_constraints;
-      univdecl_instance},
-      Array.of_list variance
+    mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
+    Array.of_list variance
 
 [%%if coq = "8.19"]
 let comInductive_interp_mutual_inductive_constr env_ar_params sigma arity =

@@ -49,8 +49,16 @@ val fold_elpi_term :
 
 val uint63 : Uint63.t Elpi.API.Conversion.t
 val float64 : Float64.t Elpi.API.Conversion.t
-val pstring : Pstring.t Elpi.API.Conversion.t
 val projection : Names.Projection.t Elpi.API.Conversion.t
+[%%if coq = "8.19"]
+val pstring : string Elpi.API.Conversion.t
+val pstring_of_string : string -> string option
+val string_of_pstring : string -> string
+[%%else]
+val pstring : Pstring.t Elpi.API.Conversion.t
+val pstring_of_string : string -> Pstring.t option
+val string_of_pstring : Pstring.t -> string
+[%%endif]
 
 val debug : CDebug.t
 val elpitime : CDebug.t

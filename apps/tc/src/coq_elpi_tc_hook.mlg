@@ -37,18 +37,18 @@ VERNAC COMMAND EXTEND ElpiTypeclasses CLASSIFIED AS SIDEFF
 
 | #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "All" ] -> {
      let () = ignore_unknown_attributes atts in
-     set_solver_mode "All" (snd p) [] }
+     set_solver_mode AAll (snd p) [] }
 | #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "None" ] -> {
      let () = ignore_unknown_attributes atts in
-     set_solver_mode "None" (snd p) [] }
+     set_solver_mode ANone (snd p) [] }
 | #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Only" ne_reference_list(cs) ] -> {
      let () = ignore_unknown_attributes atts in
-     set_solver_mode "Set" (snd p) cs }
+     set_solver_mode ASet (snd p) cs }
 | #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Add" reference_list(cs) ] -> {
      let () = ignore_unknown_attributes atts in
-     set_solver_mode "Add" (snd p) cs }
+     set_solver_mode AAdd (snd p) cs }
 | #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Rm" reference_list(cs) ] -> {
      let () = ignore_unknown_attributes atts in
-     set_solver_mode "Rm" (snd p) cs }
+     set_solver_mode ARm (snd p) cs }
 
 END

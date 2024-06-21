@@ -3,3 +3,10 @@
  (public_name coq_elpi_shafile)
  (modules shafile)
  (package coq-elpi))
+
+(executable
+ (name optcomp)
+ (public_name coq_elpi_optcomp)
+ (modules optcomp)
+ (libraries str)
+ (package coq-elpi))

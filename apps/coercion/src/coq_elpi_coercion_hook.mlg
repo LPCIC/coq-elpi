@@ -12,26 +12,30 @@ let relevant = Sorts.Relevant
 let anonR = Context.anonR
 let nameR = Context.nameR
 let annotR = Context.annotR
+let build_expected_type env sigma expected = sigma, expected, false
+let return s g _ = Some (s,g)
 [%%else]
 let relevant = EConstr.ERelevance.relevant
 let anonR = Context.make_annot Names.Name.Anonymous EConstr.ERelevance.irrelevant 
 let nameR x = Context.make_annot (Names.Name.Name x) EConstr.ERelevance.irrelevant 
 let annotR x = Context.make_annot x EConstr.ERelevance.irrelevant 
+let build_expected_type env sigma expected =
+  match expected with
+  | Coercion.Type t -> sigma, t, false
+  | Coercion.Product ->
+    let (sigma, (source, _)) = Evarutil.new_type_evar env sigma Evd.univ_flexible in
+    let (sigma, (target, _)) =
+      let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum (EConstr.annotR (Names.Name (Namegen.default_dependent_ident)) , source)) env in
+      Evarutil.new_type_evar env sigma Evd.univ_flexible in
+    sigma, EConstr.mkProd (annotR (Names.Name (Namegen.default_type_ident)), source, target), true
+  | Coercion.Sort -> let (sigma, t) = Evarutil.new_Type sigma in sigma, t, true
+let return s g t = Some (s,g,t)
 [%%endif]
 
 let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
   let loc = API.Ast.Loc.initial "(unknown)" in
   let atts = [] in
-  let (env, sigma, expected, retype) =
-     match expected with
-     | Coercion.Type t -> (env, sigma, t, false)
-     | Coercion.Product ->
-       let (sigma, (source, _)) = Evarutil.new_type_evar env sigma Evd.univ_flexible in
-       let (sigma, (target, _)) =
-         let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum (EConstr.annotR (Names.Name (Namegen.default_dependent_ident)) , source)) env in
-         Evarutil.new_type_evar env sigma Evd.univ_flexible in
-       (env, sigma, EConstr.mkProd (annotR (Names.Name (Namegen.default_type_ident)), source, target), true)
-     | Coercion.Sort -> let (sigma, t) = Evarutil.new_Type sigma in (env, sigma, t, true) in
+  let sigma, expected, retype = build_expected_type env sigma expected in
   let sigma, goal = Evarutil.new_evar env sigma expected in
   let goal_evar, _ = EConstr.destEvar sigma goal in
   let query ~depth state =
@@ -51,7 +55,7 @@ let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
       let sigma, _, _ = Coq_elpi_HOAS.solution2evd ~eta_contract_solution:false sigma solution gls in
       if Evd.is_defined sigma goal_evar then
         let t = if retype then Retyping.get_type_of env sigma goal else expected in
-        Some (sigma, goal, t)
+        return sigma goal t
       else
         None
     | API.Execute.NoMoreSteps

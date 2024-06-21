@@ -179,7 +179,21 @@ let dest_GLambda = function GLambda(n,_,_,s,t) -> n,s,t | _ -> assert false
 let dest_GLetIn = function GLetIn(n,_,bo,s,t) -> n,bo,s,t | _ -> assert false
 let mkGLambda (n,b,s,t) = GLambda(n,None,b,s,t)
 [%%endif]
-
+ 
+[%%if coq = "8.19"]
+let in_elpi_primitive_value ~depth state = function
+| GInt i -> in_elpi_primitive ~depth state (Uint63 i)
+| GFloat f -> in_elpi_primitive ~depth state (Float64 f)
+| GArray _ -> nYI "HOAS for persistent arrays"
+| (GRef _ | GVar _|GEvar _|GPatVar _|GApp _|GLambda _| GProd _|GLetIn _|GCases _| GLetTuple _|GIf _|GRec _|GSort _| GHole _|GGenarg _|GCast _|GProj _) -> assert false
+[%%else]
+let in_elpi_primitive_value ~depth state = function
+| GInt i -> in_elpi_primitive ~depth state (Uint63 i)
+| GFloat f -> in_elpi_primitive ~depth state (Float64 f)
+| GString s -> in_elpi_primitive ~depth state (Pstring s)
+| GArray _ -> nYI "HOAS for persistent arrays"
+| (GRef _ | GVar _|GEvar _|GPatVar _|GApp _|GLambda _| GProd _|GLetIn _|GCases _| GLetTuple _|GIf _|GRec _|GSort _| GHole _|GGenarg _|GCast _|GProj _) -> assert false
+[%%endif]
 let rec gterm2lp ~depth state x =
   debug Pp.(fun () ->
       str"gterm2lp: depth=" ++ int depth ++
@@ -422,10 +436,7 @@ let rec gterm2lp ~depth state x =
       let state, bo, () = under_ctx (Name name) ty None (nogls gterm2lp) ~depth state bo in
       state, in_elpi_fix (Name name) rno ty bo
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
-  | GInt i -> in_elpi_primitive ~depth state (Uint63 i)
-  | GFloat f -> in_elpi_primitive ~depth state (Float64 f)
-  | GString s -> in_elpi_primitive ~depth state (Pstring s)
-  | GArray _ -> nYI "(glob)HOAS persistent arrays"
+  | x -> in_elpi_primitive_value ~depth state x
 ;;
 
 let lconstr_eoi = Pcoq.eoi_entry Pcoq.Constr.lconstr

@@ -199,5 +199,7 @@ Elpi Export TC.Get_class_info.
 Elpi Export TC.Set_deterministic.
 Elpi Export TC.Unfold.
 
+Set Warnings "elpi".
+
 Elpi TC.AddAllClasses.
 Elpi TC.AddAllInstances.

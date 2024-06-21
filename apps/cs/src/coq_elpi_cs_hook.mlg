@@ -2012,7 +2012,6 @@ open Elpi
 open Elpi_plugin
 open Coq_elpi_arg_syntax
 open Coq_elpi_vernacular
-module Evarconv = Evarconv
 
 let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
 	  let loc = API.Ast.Loc.initial "(unknown)" in
@@ -2135,7 +2134,6 @@ open Elpi
 open Elpi_plugin
 open Coq_elpi_arg_syntax
 open Coq_elpi_vernacular
-module Evarconv = Evarconv
 
 
 let add_cs_hook =

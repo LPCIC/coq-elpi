@@ -1881,15 +1881,6 @@ external pred coq.gref.set.subset i:coq.gref.set, i:coq.gref.set.
 % [coq.gref.set.elements M L] L is M transformed into list
 external pred coq.gref.set.elements i:coq.gref.set, o:list gref.
 
-% [coq.gref.set.choose M X] X is an element of M
-external pred coq.gref.set.choose i:coq.gref.set, o:gref.
-
-% [coq.gref.set.min M X] X is the smallest element of M
-external pred coq.gref.set.min i:coq.gref.set, o:gref.
-
-% [coq.gref.set.max M X] X is the bigger of M
-external pred coq.gref.set.max i:coq.gref.set, o:gref.
-
 % [coq.gref.set.cardinal M N] N is the number of elements of M
 external pred coq.gref.set.cardinal i:coq.gref.set, o:int.
 
@@ -1900,15 +1891,6 @@ external pred coq.gref.set.filter i:coq.gref.set, i:gref -> prop,
 % [coq.gref.set.map M F M1] Map M w.r.t. the predicate F
 external pred coq.gref.set.map i:coq.gref.set, i:gref -> gref -> prop, 
                                o:coq.gref.set.
-
-% [coq.gref.set.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.gref.set.fold i:coq.gref.set, i:A, 
-                                i:gref -> A -> A -> prop, o:A.
-
-% [coq.gref.set.partition M F M1 M2] Partitions M w.r.t. the predicate F, M1
-% is where F holds
-external pred coq.gref.set.partition i:coq.gref.set, i:gref -> prop, 
-                                     o:coq.gref.set, o:coq.gref.set.
 
 % CAVEAT: the type parameter of coq.gref.map must be a closed term
 
@@ -1942,10 +1924,6 @@ external pred coq.gref.map.filter i:coq.gref.map A, i:gref -> A -> prop,
 % [coq.gref.map.map M F M1] Map M w.r.t. the predicate F
 external pred coq.gref.map.map i:coq.gref.map A, 
                                i:gref -> A -> B -> prop, o:coq.gref.map B.
-
-% [coq.gref.map.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.gref.map.fold i:coq.gref.map A, i:C, 
-                                i:gref -> A -> C -> C -> prop, o:C.
 
 kind coq.univ.set type.
 
@@ -1982,15 +1960,6 @@ external pred coq.univ.set.subset i:coq.univ.set, i:coq.univ.set.
 % [coq.univ.set.elements M L] L is M transformed into list
 external pred coq.univ.set.elements i:coq.univ.set, o:list univ.
 
-% [coq.univ.set.choose M X] X is an element of M
-external pred coq.univ.set.choose i:coq.univ.set, o:univ.
-
-% [coq.univ.set.min M X] X is the smallest element of M
-external pred coq.univ.set.min i:coq.univ.set, o:univ.
-
-% [coq.univ.set.max M X] X is the bigger of M
-external pred coq.univ.set.max i:coq.univ.set, o:univ.
-
 % [coq.univ.set.cardinal M N] N is the number of elements of M
 external pred coq.univ.set.cardinal i:coq.univ.set, o:int.
 
@@ -2001,15 +1970,6 @@ external pred coq.univ.set.filter i:coq.univ.set, i:univ -> prop,
 % [coq.univ.set.map M F M1] Map M w.r.t. the predicate F
 external pred coq.univ.set.map i:coq.univ.set, i:univ -> univ -> prop, 
                                o:coq.univ.set.
-
-% [coq.univ.set.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.univ.set.fold i:coq.univ.set, i:A, 
-                                i:univ -> A -> A -> prop, o:A.
-
-% [coq.univ.set.partition M F M1 M2] Partitions M w.r.t. the predicate F, M1
-% is where F holds
-external pred coq.univ.set.partition i:coq.univ.set, i:univ -> prop, 
-                                     o:coq.univ.set, o:coq.univ.set.
 
 % CAVEAT: the type parameter of coq.univ.map must be a closed term
 
@@ -2043,10 +2003,6 @@ external pred coq.univ.map.filter i:coq.univ.map A, i:univ -> A -> prop,
 % [coq.univ.map.map M F M1] Map M w.r.t. the predicate F
 external pred coq.univ.map.map i:coq.univ.map A, 
                                i:univ -> A -> B -> prop, o:coq.univ.map B.
-
-% [coq.univ.map.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.univ.map.fold i:coq.univ.map A, i:C, 
-                                i:univ -> A -> C -> C -> prop, o:C.
 
 kind coq.univ.variable.set type.
 
@@ -2094,18 +2050,6 @@ external pred coq.univ.variable.set.subset i:coq.univ.variable.set,
 external pred coq.univ.variable.set.elements i:coq.univ.variable.set, 
                                              o:list univ.variable.
 
-% [coq.univ.variable.set.choose M X] X is an element of M
-external pred coq.univ.variable.set.choose i:coq.univ.variable.set, 
-                                           o:univ.variable.
-
-% [coq.univ.variable.set.min M X] X is the smallest element of M
-external pred coq.univ.variable.set.min i:coq.univ.variable.set, 
-                                        o:univ.variable.
-
-% [coq.univ.variable.set.max M X] X is the bigger of M
-external pred coq.univ.variable.set.max i:coq.univ.variable.set, 
-                                        o:univ.variable.
-
 % [coq.univ.variable.set.cardinal M N] N is the number of elements of M
 external pred coq.univ.variable.set.cardinal i:coq.univ.variable.set, 
                                              o:int.
@@ -2119,18 +2063,6 @@ external pred coq.univ.variable.set.filter i:coq.univ.variable.set,
 external pred coq.univ.variable.set.map i:coq.univ.variable.set, 
                                         i:univ.variable -> univ.variable -> prop, 
                                         o:coq.univ.variable.set.
-
-% [coq.univ.variable.set.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.univ.variable.set.fold i:coq.univ.variable.set, i:A, 
-                                         i:univ.variable -> A -> A -> prop, 
-                                         o:A.
-
-% [coq.univ.variable.set.partition M F M1 M2] Partitions M w.r.t. the
-% predicate F, M1 is where F holds
-external pred coq.univ.variable.set.partition i:coq.univ.variable.set, 
-                                              i:univ.variable -> prop, 
-                                              o:coq.univ.variable.set, 
-                                              o:coq.univ.variable.set.
 
 % CAVEAT: the type parameter of coq.univ.variable.map must be a closed
 % term
@@ -2172,11 +2104,6 @@ external pred coq.univ.variable.map.filter i:coq.univ.variable.map A,
 external pred coq.univ.variable.map.map i:coq.univ.variable.map A, 
                                         i:univ.variable -> A -> B -> prop, 
                                         o:coq.univ.variable.map B.
-
-% [coq.univ.variable.map.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.univ.variable.map.fold i:coq.univ.variable.map A, i:C, 
-                                         i:univ.variable -> A -> C -> C -> prop, 
-                                         o:C.
 
 % Coq box types for pretty printing:
 % - Vertical block: each break leads to a new line

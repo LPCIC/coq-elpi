@@ -473,7 +473,7 @@ let get_instance env sigma inst_of_tc instance : type_class_instance =
   in
   instances_grefs2istance instance
 
-let warning_tc_hints = CWarnings.create ~name:"TC.hints" ~category:elpi_cat Pp.str
+let warning_tc_hints = CWarnings.create ~name:"elpi.TC.hints" ~category:elpi_cat Pp.str
 
 
 let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list = 
@@ -870,8 +870,8 @@ let warn_deprecated_add_axiom =
            "coq.env.add-section-variable instead"))
 
 [%%if coq = "8.19"]
-let comAssumption_declare_variable id coe ~kind ty ~univs:uentry ~impargs ex ~name:_ =
-  ComAssumption.declare_variable coe ~kind ty uentry impargs ex id;
+let comAssumption_declare_variable id coe ~kind ty ~univs:uentry ~impargs ex ~name =
+  ComAssumption.declare_variable coe ~kind ty uentry impargs ex name;
   GlobRef.VarRef id, UVars.Instance.empty
 let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ~id:_ ty =
   ComAssumption.declare_axiom coe ~local ~kind ty univs impargs inline name
@@ -2609,7 +2609,7 @@ declared as cumulative.|};
     In(Coq_elpi_utils.pstring,"PS",
     Out(B.string,"S",
     Easy "Transforms a Coq primitive string to an elpi string. It does not fail.")),
-    (fun s _ ~depth:_ -> !: (Pstring.to_string s))),
+    (fun s _ ~depth:_ -> !: (string_of_pstring s))),
   DocAbove);
 
   MLCode(Pred("coq.string->pstring",
@@ -2617,7 +2617,7 @@ declared as cumulative.|};
     Out(Coq_elpi_utils.pstring,"PS",
     Easy "Transforms an elpi string into a Coq primitive string. It fails if the lenght of S is greater than the maximal primitive string length.")),
     (fun s _ ~depth:_ ->
-       match Pstring.of_string s with
+       match pstring_of_string s with
        | Some s -> !: s
        | None -> raise No_clause)),
   DocAbove);

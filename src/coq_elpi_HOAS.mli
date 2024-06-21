@@ -205,10 +205,15 @@ val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.abbreviation Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t
 val collect_term_variables : depth:int -> term -> Names.Id.t list
+[%%if coq = "8.19"]
+type pstring = string
+[%%else]
+type pstring = Pstring.t
+[%%endif]
 type primitive_value =
   | Uint63 of Uint63.t
   | Float64 of Float64.t
-  | Pstring of Pstring.t
+  | Pstring of pstring
   | Projection of Projection.t
 val primitive_value : primitive_value Conversion.t
 val in_elpi_primitive : depth:int -> state -> primitive_value -> state * term

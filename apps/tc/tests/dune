@@ -1,6 +1,6 @@
 (coq.theory
  (name elpi.apps.tc.tests)
- (flags -async-proofs-cache force)
+ (flags :standard -async-proofs-cache force)
  (theories elpi elpi.apps.tc))
 
 (include_subdirs qualified)

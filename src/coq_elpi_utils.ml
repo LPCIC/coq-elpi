@@ -188,6 +188,22 @@ let float64 : Float64.t Elpi.API.Conversion.t =
       constants = [];
     }
 
+[%%if coq = "8.19"]
+let pstring : string Elpi.API.Conversion.t =
+  let open Elpi.API.OpaqueData in
+  declare {
+    name = "pstring";
+    doc = "";
+    pp = (fun fmt _ -> Format.fprintf fmt "%S" "primitive strings not supported in Coq 8.19" );
+    compare = (fun _ _ -> 0);
+    hash = (fun _ -> 0);
+    hconsed = false;
+    constants = [];
+  }
+
+let pstring_of_string x = Some x
+let string_of_pstring x = x
+[%%else]
 let pstring : Pstring.t Elpi.API.Conversion.t =
   let open Elpi.API.OpaqueData in
   declare {
@@ -199,6 +215,9 @@ let pstring : Pstring.t Elpi.API.Conversion.t =
     hconsed = false;
     constants = [];
   }
+let pstring_of_string = Pstring.of_string
+let string_of_pstring = Pstring.to_string
+[%%endif]
 
 let debug = CDebug.create ~name:"elpi" ()
 
@@ -327,6 +346,9 @@ let it_destRLambda_or_LetIn_names l c =
     | _ -> nYI "detype eta"
   in
   aux l [] c
+let rec decompose accu c = match DAst.get c with
+| Glob_term.GLambda (na, _, _, c) -> decompose (na :: accu) c
+| _ -> List.rev accu, c
 [%%else]
 let it_destRLambda_or_LetIn_names l c =
   let open Glob_term in
@@ -338,6 +360,10 @@ let it_destRLambda_or_LetIn_names l c =
     | _ -> nYI "detype eta"
   in
   aux l [] c
+let rec decompose accu c = match DAst.get c with
+| Glob_term.GLambda (na, _, _, _, c) -> decompose (na :: accu) c
+| _ -> List.rev accu, c
+
 [%%endif]
 
 [%%if coq = "8.19"]
@@ -523,6 +549,7 @@ let get_GLambda_name_tgt typ =
   match DAst.get typ with
   | Glob_term.GLambda (x, _, t, c) -> (x, c)
   | _ -> (Anonymous, typ)
+let detype_primitive_string _ = assert false
 [%%else]
 let detype_relevance_info sigma na =
   match EConstr.ERelevance.kind sigma na with
@@ -556,6 +583,10 @@ let get_GLambda_name_tgt typ =
   match DAst.get typ with
   | Glob_term.GLambda (x, _, _, t, c) -> (x, c)
   | _ -> (Anonymous, typ)
+
+let detype_primitive_string = function
+  | String s -> DAst.make @@ GString s
+  | _ -> assert false
 [%%endif]
 
 let detype ?(keepunivs = false) env sigma t =
@@ -635,7 +666,6 @@ let detype ?(keepunivs = false) env sigma t =
     | App (hd, args) -> DAst.make @@ GApp (aux env hd, CArray.map_to_list (aux env) args)
     | Int i -> DAst.make @@ GInt i
     | Float i -> DAst.make @@ GFloat i
-    | String s -> DAst.make @@ GString s
     | Array (u, a, d, ty) ->
         DAst.make @@ GArray (detype_instance keepunivs sigma u, CArray.map (aux env) a, aux env d, aux env ty)
     | Const (c, u) -> DAst.make @@ GRef (Names.GlobRef.ConstRef c, detype_instance keepunivs sigma u)
@@ -694,15 +724,12 @@ let detype ?(keepunivs = false) env sigma t =
         in
         let bl = map 0 bl in
         let bl' = aux env bl in
-        let rec decompose accu c = match DAst.get c with
-        | GLambda (na, _, _, _, c) -> decompose (na :: accu) c
-        | _ -> List.rev accu, c
-        in
         let (nal, d) = decompose [] bl' in
   
         DAst.make @@ GLetTuple (nal, ((*Anonymous,None*) Name (Names.Id.of_string "xxx"), Some mkGHole), tomatch, d)
     | Case (ci, u, pms, p, iv, c, bl) -> detype_case env (ci, u, pms, p, iv, c, bl)
-  and share_names n l env bo ty =
+    | s -> detype_primitive_string s
+ and share_names n l env bo ty =
     if n = 0 then (List.rev l, aux env bo, aux env ty)
     else
       match (EConstr.kind sigma bo, EConstr.kind sigma ty) with
