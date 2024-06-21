@@ -1152,7 +1152,7 @@ and evar_eqappr_x ?(rhs_is_already_stuck = false) flags env evd pbty
                  | Some r -> r
                  | None -> raise Not_found
                end
-                 | e -> failwith "argh")
+                 | e -> let () = Feedback.msg_info Pp.(str "cs hook crashed") in failwith "argh")
            with Not_found -> UnifFailure (i,NoCanonicalStructure))
         and f4 i =
           evar_eqappr_x flags env i pbty appr1
@@ -2048,9 +2048,8 @@ let elpi_cs_hook program env sigma (t1, sk1) (t2, sk2) =
 			  ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac_econstr ~depth state in
 		 let state, qatts = atts2impl loc Summary.Stage.Interp ~depth state atts q in
 		 let state = API.State.set Coq_elpi_builtins.tactic_mode state true in
-		 state, (loc, qatts), gls
-    in
-    match Interp.get_and_compile program with
+		 state, (loc, qatts), gls in
+	  match Interp.get_and_compile program with
 	  | None -> None
 	  | Some (cprogram, _) ->
 		 begin try match Interp.run ~static_check:false cprogram (`Fun query) with
