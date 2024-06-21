@@ -8,6 +8,7 @@ Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
 ### Apps/tc
 - Change supports higher order unification
 - Change syntax to register, enable and disable solver
+- Change solutions found in Elpi are eta-contracted
 
 
 # Changelog
