@@ -54,5 +54,5 @@ install:
 .PHONY: install
 
 nix:
-	nix-shell --arg do-nothing true --run "updateNixToolBox & genNixActions"
+	nix-shell --arg do-nothing true --run "updateNixToolBox && genNixActions"
 .PHONY: nix
