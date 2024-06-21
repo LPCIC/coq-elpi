@@ -1,3 +1,15 @@
+# Unreleased
+
+Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
+
+### Build system
+- Change switch to dune
+
+### Apps/tc
+- Change supports higher order unification
+- Change syntax to register, enable and disable solver
+
+
 # Changelog
 
 ## [2.1.1] - 15/05/2024
