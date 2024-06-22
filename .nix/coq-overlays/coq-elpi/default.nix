@@ -62,6 +62,7 @@ in mkCoqDerivation {
   releaseRev = v: "v${v}";
 
   mlPlugin = true;
+  useDune = true;
   propagatedBuildInputs = [ coq.ocamlPackages.dune_3 elpi coq.ocamlPackages.ppx_optcomp ];
 
   meta = {
