@@ -19,23 +19,23 @@
    :src: LPCIC coq-elpi master elpi/elpi-ltac.elpi
 
 .. role:: builtin(elpi-api)
-   :src: LPCIC coq-elpi master coq-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
 
 .. role:: builtin-synterp(elpi-api)
-   :src: LPCIC coq-elpi master coq-builtin-synterp.elpi
+   :src: LPCIC coq-elpi master builtin-doc/coq-builtin-synterp.elpi
 
 .. role:: stdlib(elpi-api)
    :replace: std\.
-   :src: LPCIC coq-elpi master elpi-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/elpi-builtin.elpi
 
 .. role:: stdlibfull(elpi-api)
-   :src: LPCIC coq-elpi master elpi-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/elpi-builtin.elpi
 
 .. role:: elpi-type(ghref)
    :pattern: ^(kind $name|typeabbrev $name)
 
 .. role:: type(elpi-type)
-   :src: LPCIC coq-elpi master coq-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
 
 .. role:: libtype(elpi-type)
    :src: LPCIC coq-elpi master elpi/coq-lib.elpi
@@ -51,16 +51,16 @@
    :pattern: ^type $name
 
 .. role:: constructor(elpi-constructor)
-   :src: LPCIC coq-elpi master coq-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
 
 .. role:: stdconstructor(elpi-constructor)
-   :src: LPCIC coq-elpi master elpi-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/elpi-builtin.elpi
 
 .. role:: elpi-macro(ghref)
    :pattern: ^macro $name
 
 .. role:: macro(elpi-macro)
-   :src: LPCIC coq-elpi master coq-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
 
 .. role:: e(code)
    :language: elpi
@@ -69,7 +69,7 @@
    :pattern: ^namespace $name
 
 .. role:: stdlibns(elpi-ns)
-   :src: LPCIC coq-elpi master elpi-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/elpi-builtin.elpi
 
 .. raw:: html
 
