@@ -98,10 +98,11 @@ let elpi_fails program_name =
     "Please report this inconvenience to the authors of the program."
   ]))
 let solve_TC program env sigma depth unique ~best_effort filter =
-  let loc = API.Ast.Loc.initial "(unknown)" in
   let atts = [] in
   let glss, _ = Evar.Set.partition (filter sigma) (Evd.get_typeclass_evars sigma) in
   let gls = Evar.Set.elements glss in
+  let xx, _  = Evd.evar_source @@ Evd.find_undefined sigma (List.hd gls) in
+  let loc = Option.cata Coq_elpi_utils.of_coq_loc (API.Ast.Loc.initial "(unknown)") xx in
   (* TODO: activate following row to compute new gls
      this row to make goal sort in msolve *)
   (* let evar_deps = List.map (fun e -> 

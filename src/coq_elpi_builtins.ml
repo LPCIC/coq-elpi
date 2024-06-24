@@ -422,13 +422,25 @@ let tc_instance = let open Conv in let open API.AlgebraicData in declare {
       M (fun ~ok ~ko { implementation; priority } -> ok implementation priority));
 ]} |> CConv.(!<)
 
+[%%if coq = "8.19"]
+let clenv_missing sigma ce =
+  let rec nb_hyp sigma c = match EConstr.kind sigma c with
+  | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
+  | _ -> 0 in
+  let miss = Clenv.clenv_missing ce in
+  let nmiss = List.length miss in
+  let hyps = nb_hyp sigma' cty in
+  nmiss, hyps
+[%%else]
+let clenv_missing _ ce =
+  let miss, hyps = Clenv.clenv_missing ce in
+  List.length miss, hyps
+[%%endif]
+
 let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
   match hint_priority with
   | Some p -> UserGiven p
   | None -> 
-    let rec nb_hyp sigma c = match EConstr.kind sigma c with
-    | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
-    | _ -> 0 in
     let merge_context_set_opt sigma ctx = 
       match ctx with
       | None -> sigma
@@ -443,10 +455,8 @@ let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
     let cty = Reductionops.nf_betaiota env sigma cty in
     let sigma' = merge_context_set_opt sigma ctx in
     let ce = Clenv.mk_clenv_from env sigma' (c,cty) in
-    let miss = Clenv.clenv_missing ce in
-    let nmiss = List.length miss in
-    let hyps = nb_hyp sigma' cty in
-    Computed (hyps + nmiss)
+    let nmiss, nhyps = clenv_missing sigma' ce in
+    Computed (nhyps + nmiss)
 
 (* TODO: this algorithm is quite inefficient since we have not yet the
          possibility to get the implementation of an instance from its gref in
