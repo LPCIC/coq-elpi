@@ -42,22 +42,22 @@ Import Coverage.
 Local Notation map T := (T -> T).
 Local Notation map1 T := (forall X Y, (X -> Y) -> T X%type -> T Y%type).
 
-Check empty_map : map empty.
-Check unit_map : map unit.
-Check peano_map : map peano.
-Check option_map : map1 option.
-Check pair_map : forall A B (f : A -> B) C D (g : C -> D), (pair A C) -> (pair B D).
-Check seq_map : map1 seq.
-Check rose_map : map1 rose.
+Redirect "tmp" Check empty_map : map empty.
+Redirect "tmp" Check unit_map : map unit.
+Redirect "tmp" Check peano_map : map peano.
+Redirect "tmp" Check option_map : map1 option.
+Redirect "tmp" Check pair_map : forall A B (f : A -> B) C D (g : C -> D), (pair A C) -> (pair B D).
+Redirect "tmp" Check seq_map : map1 seq.
+Redirect "tmp" Check rose_map : map1 rose.
 Fail Check nest_map.
 Fail Check w_map.
-Check vect_map : forall A B (f : A -> B) i, vect A i -> vect B i.
-Check dyn_map : map dyn.
-Check zeta_map : forall A B (f : A -> B), zeta A -> zeta B.
+Redirect "tmp" Check vect_map : forall A B (f : A -> B) i, vect A i -> vect B i.
+Redirect "tmp" Check dyn_map : map dyn.
+Redirect "tmp" Check zeta_map : forall A B (f : A -> B), zeta A -> zeta B.
 Fail Check beta_map.
-Check iota_map : map iota.
-Check large_map : map large.
-Check prim_int_map : map prim_int.
-Check prim_float_map : map prim_float.
-Check pa_record_map : map1 pa_record.
-Check pr_record_map : map1 pr_record.
+Redirect "tmp" Check iota_map : map iota.
+Redirect "tmp" Check large_map : map large.
+Redirect "tmp" Check prim_int_map : map prim_int.
+Redirect "tmp" Check prim_float_map : map prim_float.
+Redirect "tmp" Check pa_record_map : map1 pa_record.
+Redirect "tmp" Check pr_record_map : map1 pr_record.

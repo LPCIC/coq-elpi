@@ -15,7 +15,7 @@ Global Instance B1 (S : Type) (T : Type) (a : A S T) (c : C S T) : B S T a c. Ad
 
 Elpi AddAllClasses. 
 Elpi AddAllInstances.
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 
 Elpi Accumulate tc.db lp:{{
   pred get-inout-sealed-goal i:argument_mode, i:sealed-goal, o:list term.

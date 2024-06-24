@@ -1,0 +1,36 @@
+(library
+ (name elpi_plugin)
+ (public_name coq-elpi.elpi)
+ (synopsis "Elpi")
+ (flags :standard -w -27)
+ (preprocess (pps ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
+ (libraries coq-core.plugins.ltac coq-core.vernac elpi))
+
+(rule
+  (target coq_elpi_builtins_arg_HOAS.ml)
+  (deps ../elpi/coq-arg-HOAS.elpi)
+  (action (with-stdout-to %{target}
+    (progn
+      (echo "(* Automatically generated from %{deps}, don't edit *)\n")
+	     (echo "let code = {|\n")
+      (cat %{deps})
+	     (echo "|}\n")))))
+
+(rule
+  (target coq_elpi_builtins_HOAS.ml)
+  (deps ../elpi/coq-HOAS.elpi)
+  (action (with-stdout-to %{target}
+    (progn
+      (echo "(* Automatically generated from %{deps}, don't edit *)\n")
+	     (echo "let code = {|\n")
+      (cat %{deps})
+	     (echo "|}\n")))))
+
+(rule
+  (target coq_elpi_config.ml)
+  (action (with-stdout-to %{target}
+    (progn
+      (echo "let elpi2html = \"%{lib:elpi:elpi2html.elpi}\";;")))))
+
+(coq.pp
+ (modules coq_elpi_vernacular_syntax coq_elpi_arg_syntax))

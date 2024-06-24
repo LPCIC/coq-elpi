@@ -1,12 +1,11 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-DECLARE PLUGIN "coq-elpi-tc.plugin"
+DECLARE PLUGIN "coq-elpi.tc"
 
 {
 open Stdarg
 open Elpi_plugin
-open Coq_elpi_tc_time
 open Coq_elpi_arg_syntax
 open Coq_elpi_tc_register
 open Coq_elpi_class_tactics_takeover
@@ -26,28 +25,30 @@ VERNAC COMMAND EXTEND ElpiTypeclasses CLASSIFIED AS SIDEFF
      let () = ignore_unknown_attributes atts in
      deactivate_observer (snd p) }
 
-| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "All" ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Register" qualified_name(p) ] -> {
      let () = ignore_unknown_attributes atts in
-     takeover false [] (snd p) }
-| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "None" ] -> {
+     solver_register(snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Activate" qualified_name(p) ] -> {
      let () = ignore_unknown_attributes atts in
-     takeover true [] (snd p) }
+     solver_activate(snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Deactivate" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     solver_deactivate(snd p) }
 
-
-| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" qualified_name(p) "Only" ne_reference_list(cs) ] -> {
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "All" ] -> {
      let () = ignore_unknown_attributes atts in
-     takeover false cs (snd p) }
-| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" "+" reference_list(cs) ] -> {
+     set_solver_mode AAll (snd p) [] }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "None" ] -> {
      let () = ignore_unknown_attributes atts in
-     takeover_add cs }
-| #[ atts = any_attribute ] [ "Elpi" "Override" "TC" "-" reference_list(cs) ] -> {
+     set_solver_mode ANone (snd p) [] }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Only" ne_reference_list(cs) ] -> {
      let () = ignore_unknown_attributes atts in
-     takeover_rm cs }
-
-| #[ atts = any_attribute ] [ "Elpi" "TC" "Set" "Time" "All" ] -> {
-     time_all true }
-
-| #[ atts = any_attribute ] [ "Elpi" "TC" "Unset" "Time" "All" ] -> {
-     time_all false }
+     set_solver_mode ASet (snd p) cs }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Add" reference_list(cs) ] -> {
+     let () = ignore_unknown_attributes atts in
+     set_solver_mode AAdd (snd p) cs }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Rm" reference_list(cs) ] -> {
+     let () = ignore_unknown_attributes atts in
+     set_solver_mode ARm (snd p) cs }
 
 END

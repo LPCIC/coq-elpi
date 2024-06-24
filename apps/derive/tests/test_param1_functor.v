@@ -46,29 +46,29 @@ Local Notation func2 isT := (forall A P Q, (forall y : A, P y -> Q y) -> forall 
 
 Import Coverage.
 
-Check is_empty_functor : func is_empty.
-Check is_unit_functor : func is_unit.
-Check is_peano_functor : func is_peano.
-Check is_option_functor : func1 is_option.
-Check is_pair_functor : func2 is_pair.
-Check is_seq_functor : func1 is_seq.
-Check is_rose_functor : func1 is_rose.
+Redirect "tmp" Check is_empty_functor : func is_empty.
+Redirect "tmp" Check is_unit_functor : func is_unit.
+Redirect "tmp" Check is_peano_functor : func is_peano.
+Redirect "tmp" Check is_option_functor : func1 is_option.
+Redirect "tmp" Check is_pair_functor : func2 is_pair.
+Redirect "tmp" Check is_seq_functor : func1 is_seq.
+Redirect "tmp" Check is_rose_functor : func1 is_rose.
 Fail Check is_nest_functor : func1 is_nest.
 Fail Check is_w_functor.
 
-Check is_vect_functor : forall A P Q, (forall y : A, P y -> Q y) -> forall i p (v : vect A i), is_vect A P i p v -> is_vect A Q i p v.
-Check is_dyn_functor : func is_dyn.
-Check is_zeta_functor : func1 is_zeta.
-Check is_beta_functor : func1 is_beta.
-Check is_iota_functor : func is_iota.
-Check is_large_functor : func is_large.
-Check is_prim_int_functor : func is_prim_int.
-Check is_prim_float_functor : func is_prim_float.
+Redirect "tmp" Check is_vect_functor : forall A P Q, (forall y : A, P y -> Q y) -> forall i p (v : vect A i), is_vect A P i p v -> is_vect A Q i p v.
+Redirect "tmp" Check is_dyn_functor : func is_dyn.
+Redirect "tmp" Check is_zeta_functor : func1 is_zeta.
+Redirect "tmp" Check is_beta_functor : func1 is_beta.
+Redirect "tmp" Check is_iota_functor : func is_iota.
+Redirect "tmp" Check is_large_functor : func is_large.
+Redirect "tmp" Check is_prim_int_functor : func is_prim_int.
+Redirect "tmp" Check is_prim_float_functor : func is_prim_float.
 
-Check is_fo_record_functor : func is_fo_record.
-Check is_pa_record_functor : func1 is_pa_record.
-Check is_pr_record_functor : func1 is_pr_record.
-Check is_enum_functor : func is_enum.
-Check is_ord_functor : forall n pn, func (is_ord n pn).
-Check is_ord2_functor : forall n pn, func (is_ord2 n pn).
-Check is_val_functor : func is_val.
+Redirect "tmp" Check is_fo_record_functor : func is_fo_record.
+Redirect "tmp" Check is_pa_record_functor : func1 is_pa_record.
+Redirect "tmp" Check is_pr_record_functor : func1 is_pr_record.
+Redirect "tmp" Check is_enum_functor : func is_enum.
+Redirect "tmp" Check is_ord_functor : forall n pn, func (is_ord n pn).
+Redirect "tmp" Check is_ord2_functor : forall n pn, func (is_ord2 n pn).
+Redirect "tmp" Check is_val_functor : func is_val.

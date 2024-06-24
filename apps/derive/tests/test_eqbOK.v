@@ -48,7 +48,7 @@ End Coverage.
 
 Import Coverage.
 
-Check peano_eqb_OK : forall n m, Bool.reflect (n = m) (peano_eqb n m).
-Check seq_eqb_OK : forall A eqA (h : forall a1 a2 : A, Bool.reflect (a1 = a2) (eqA a1 a2)) l1 l2, Bool.reflect (l1 = l2) (seq_eqb A eqA l1 l2).
-Check ord_eqb_OK : forall n (o1 o2 : ord n), Bool.reflect (o1 = o2) (ord_eqb n n o1 o2).
-Check alias_eqb_OK : forall x y : alias, Bool.reflect (x = y) (alias_eqb x y).
+Redirect "tmp" Check peano_eqb_OK : forall n m, Bool.reflect (n = m) (peano_eqb n m).
+Redirect "tmp" Check seq_eqb_OK : forall A eqA (h : forall a1 a2 : A, Bool.reflect (a1 = a2) (eqA a1 a2)) l1 l2, Bool.reflect (l1 = l2) (seq_eqb A eqA l1 l2).
+Redirect "tmp" Check ord_eqb_OK : forall n (o1 o2 : ord n), Bool.reflect (o1 = o2) (ord_eqb n n o1 o2).
+Redirect "tmp" Check alias_eqb_OK : forall x y : alias, Bool.reflect (x = y) (alias_eqb x y).

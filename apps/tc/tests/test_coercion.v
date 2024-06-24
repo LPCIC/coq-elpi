@@ -7,7 +7,7 @@ Module Animals.
 
     Class Animal (i : info).
     
-    Class Bird (i : info) := IsAnimal :> Animal i.
+    Class Bird (i : info) := IsAnimal :: Animal i.
 
     Instance dove : Bird Fly. split. Qed.
 

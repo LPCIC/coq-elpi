@@ -1,6 +1,6 @@
 From elpi.apps Require Import tc.
 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 
 (* Base test *)
 Section S1.

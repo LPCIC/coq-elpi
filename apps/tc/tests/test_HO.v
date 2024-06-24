@@ -2,7 +2,7 @@ From elpi Require Import tc.
 
 Set TC NameShortPath.
 
-Module FO_prod.
+Module FO_prod. Section XX.
   Context (A B : Type) (y : B) (Q : A -> Prop).
   
   Class Ccc (i : Prop).
@@ -12,7 +12,7 @@ Module FO_prod.
   Goal forall (P : nat -> A -> B -> Prop), Ccc (forall x, P 0 x y).
     apply _.
   Qed.
-End FO_prod.
+End XX. End FO_prod.
 
 
 Module FO_app.
@@ -57,7 +57,7 @@ Module FO_app.
   (* Check eq_refl : ex2 = fun T p y => @partial_app T (fun _ => p 0 y) y. *)
 
   Existing Instance partial_app.
-  Elpi Override TC TC.Solver None.
+  Elpi TC Solver Override TC.Solver None.
 
   Lemma ex3 (T : Type) (p : nat -> T -> T -> Prop) y : nice_predicate (fun x => p 0 x y).
     Fail apply _. (* Coq KO *)
@@ -73,7 +73,7 @@ Module FO_app.
 
 End FO_app.
 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 
 Module FO_app1.
 
@@ -90,7 +90,7 @@ Module FO_app1.
 
 End FO_app1.
 
-Module FO_app2.
+Module FO_app2. Section XX.
 
   Context (A B : Type).
 
@@ -106,7 +106,7 @@ Module FO_app2.
     apply _.
   Abort.
 
-End FO_app2.
+End XX. End FO_app2.
 
 Module FO_app3.
   Definition X := Type -> Type.
@@ -238,7 +238,7 @@ Module HO_PF1.
     exists (P : A -> A -> A -> Prop), forall z y , (forall x, Decision (P1 x)) 
       -> Decision (Exists (P z y) l) /\ P z y y = P1 z.
   Proof.
-    Elpi Override TC TC.Solver None.
+    Elpi TC Solver Override TC.Solver None.
     eexists; intros.
     (* epose (H _). *)
     (* clearbody d. *)
@@ -250,7 +250,7 @@ Module HO_PF1.
     apply _.
     Fail reflexivity.
   Abort.
-  Elpi Override TC TC.Solver All.
+  Elpi TC Solver Override TC.Solver All.
 
   Section test.
 
@@ -303,7 +303,6 @@ Module D.
     intros.
     apply _.
     Unshelve.
-    apply nat.
     apply 3.
   Qed.
 
@@ -322,11 +321,11 @@ Module F.
     intros.
     Set Typeclasses Debug.
     Set Debug "tactic-unification".
-    Elpi Override TC TC.Solver None.
+    Elpi TC Solver Override TC.Solver None.
     Fail apply _. (* Here coq's unfication algorithm fails: 
                       it is not able to solce H =~ fun x => ?H x, 
                       even though it is sufficient to eta-expand the lhs *)
-    Elpi Override TC TC.Solver All.
+    Elpi TC Solver Override TC.Solver All.
     apply _.
   Qed.
 
@@ -343,10 +342,10 @@ Module F'.
   Goal forall (T : Type -> Type) (H : forall x, T x), C2 T (fun x => H x) -> D.
     intros.
     Set Debug "tactic-unification".
-    Elpi Override TC TC.Solver None.
+    Elpi TC Solver Override TC.Solver None.
     apply _. (* Here coq succeds: it is able to solce ?H =~ fun x => H x *)
     Restart.
-    Elpi Override TC TC.Solver None.
+    Elpi TC Solver Override TC.Solver None.
     apply _.
   Qed.
 

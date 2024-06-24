@@ -69,8 +69,13 @@ Structure ord u := Ord { oval : nat; prop : leq oval u = true }.
 
 Check fun u => SubType _ _ _ (oval u) _ inlined_sub_rect.
 
+Set Debug "elpi".
 Elpi Query lp:{{ std.do! [
+  coq.say "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   T = {{ fun u => SubType _ _ _ (oval u) _ inlined_sub_rect }},
+  coq.say T,
+    coq.say "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+
   std.assert-ok! (coq.elaborate-skeleton T _ T1) "does not typecheck",
   T1 = {{ fun u => SubType _ _ _ _ (lp:K u) _ }},
   std.assert! (K = global GR, coq.locate "Ord" GR) "not the right constructor"
@@ -83,14 +88,3 @@ Fail Elpi Query lp:{{ std.do! [
   std.assert-ok! (coq.typecheck T _) "does not typecheck",
 ]
 }}.
-
-Section A.
-Variable A : Type.
-Check 1.
-Elpi Accumulate lp:{{
-
-pred p i:term.
-p {{ A }}.
-
-}}.
-End A.

@@ -2,7 +2,7 @@ From elpi.apps Require Import tc.
 Elpi Debug "simple-compiler".
 Set TC NameShortPath.
 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 
 Class A (T1 : Type).
 Class B (T1 : Type).

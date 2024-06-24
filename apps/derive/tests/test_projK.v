@@ -38,39 +38,39 @@ End Coverage.
 
 Import Coverage.
 
-Check projSucc1 : peano -> peano -> peano.
-Check projSome1 : forall A, A -> option A -> A.
-Check projComma1 : forall A B, A -> B -> pair A B -> A.
-Check projComma2 : forall A B, A -> B -> pair A B -> B.
-Check projCons1 : forall A, A -> seq A -> seq A -> A.
-Check projCons2 : forall A, A -> seq A -> seq A -> seq A.
-Check projLeaf1 : forall A, A -> rose A -> A.
-Check projNode1 : forall A, seq (rose A) -> rose A -> seq (rose A).
-Check projConsN1 : forall A, A -> nest (pair A A) -> nest A -> A.
-Check projConsN2 : forall A, A -> nest (pair A A) -> nest A -> nest (pair A A).
-Check projvia1 : forall A, (A -> w A) -> w A -> (A -> w A).
-Check projVCons1 : forall A i, A -> forall j, vect A j -> vect A i -> A.
-Check projVCons2 : forall A i, A -> forall j, vect A j -> vect A i -> peano.
-Check projVCons3 : forall A i, A -> forall j, vect A j -> vect A i -> { w & vect A w }.
-Check projbox1 : forall T, T -> dyn -> Type.
-Check projbox2 : forall T, T -> dyn -> { T : Type & T }.
-Check projEnvelope1 : forall A, A -> A -> zeta A -> A.
-Check eq_refl 0 : projEnvelope1 nat 1 1 (Envelope nat 0 1) = 0.
-Check projEnvelope2 : forall A, A -> A -> zeta A -> A.
-Check eq_refl 0 : projEnvelope2 nat 1 1 (Envelope nat 1 0) = 0.
-Check projRedex1 : forall A, A -> beta A -> A.
-Check projWhy1 : forall n : peano, match n return Type with 
+Redirect "tmp" Check projSucc1 : peano -> peano -> peano.
+Redirect "tmp" Check projSome1 : forall A, A -> option A -> A.
+Redirect "tmp" Check projComma1 : forall A B, A -> B -> pair A B -> A.
+Redirect "tmp" Check projComma2 : forall A B, A -> B -> pair A B -> B.
+Redirect "tmp" Check projCons1 : forall A, A -> seq A -> seq A -> A.
+Redirect "tmp" Check projCons2 : forall A, A -> seq A -> seq A -> seq A.
+Redirect "tmp" Check projLeaf1 : forall A, A -> rose A -> A.
+Redirect "tmp" Check projNode1 : forall A, seq (rose A) -> rose A -> seq (rose A).
+Redirect "tmp" Check projConsN1 : forall A, A -> nest (pair A A) -> nest A -> A.
+Redirect "tmp" Check projConsN2 : forall A, A -> nest (pair A A) -> nest A -> nest (pair A A).
+Redirect "tmp" Check projvia1 : forall A, (A -> w A) -> w A -> (A -> w A).
+Redirect "tmp" Check projVCons1 : forall A i, A -> forall j, vect A j -> vect A i -> A.
+Redirect "tmp" Check projVCons2 : forall A i, A -> forall j, vect A j -> vect A i -> peano.
+Redirect "tmp" Check projVCons3 : forall A i, A -> forall j, vect A j -> vect A i -> { w & vect A w }.
+Redirect "tmp" Check projbox1 : forall T, T -> dyn -> Type.
+Redirect "tmp" Check projbox2 : forall T, T -> dyn -> { T : Type & T }.
+Redirect "tmp" Check projEnvelope1 : forall A, A -> A -> zeta A -> A.
+Redirect "tmp" Check eq_refl 0 : projEnvelope1 nat 1 1 (Envelope nat 0 1) = 0.
+Redirect "tmp" Check projEnvelope2 : forall A, A -> A -> zeta A -> A.
+Redirect "tmp" Check eq_refl 0 : projEnvelope2 nat 1 1 (Envelope nat 1 0) = 0.
+Redirect "tmp" Check projRedex1 : forall A, A -> beta A -> A.
+Redirect "tmp" Check projWhy1 : forall n : peano, match n return Type with 
                     | Zero => peano
                     | Succ _ => unit
                     end -> iota -> peano.
-Check projWhy2 : forall n : peano, match n return Type with 
+Redirect "tmp" Check projWhy2 : forall n : peano, match n return Type with 
                     | Zero => peano
                     | Succ _ => unit
                     end -> iota -> { i : peano & match i with Zero => peano | Succ _ => unit end }.
-Check projPI1.
-Check projPF1.
+Redirect "tmp" Check projPI1.
+Redirect "tmp" Check projPF1.
 
-Check projBuild_fo_record1 : peano -> unit -> fo_record -> peano.
-Check projBuild_fo_record2 : peano -> unit -> fo_record -> unit.
-Check projBuild_pa_record2 : forall A, peano -> A -> pa_record A -> A.
-Check projBuild_pr_record2 : forall A, peano -> A -> pr_record A -> A.
+Redirect "tmp" Check projBuild_fo_record1 : peano -> unit -> fo_record -> peano.
+Redirect "tmp" Check projBuild_fo_record2 : peano -> unit -> fo_record -> unit.
+Redirect "tmp" Check projBuild_pa_record2 : forall A, peano -> A -> pa_record A -> A.
+Redirect "tmp" Check projBuild_pr_record2 : forall A, peano -> A -> pr_record A -> A.

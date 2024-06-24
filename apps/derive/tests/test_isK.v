@@ -38,47 +38,47 @@ End Coverage.
 
 Import Coverage.
 
-Check unit_is_tt : unit -> bool.
+Redirect "tmp" Check unit_is_tt : unit -> bool.
 
-Check peano_is_Zero : peano -> bool.
-Check peano_is_Succ : peano -> bool.
+Redirect "tmp" Check peano_is_Zero : peano -> bool.
+Redirect "tmp" Check peano_is_Succ : peano -> bool.
 
-Check option_is_None : forall A, option A -> bool.
-Check option_is_Some : forall A, option A -> bool.
+Redirect "tmp" Check option_is_None : forall A, option A -> bool.
+Redirect "tmp" Check option_is_Some : forall A, option A -> bool.
 
-Check pair_is_Comma : forall A B, pair A B -> bool.
+Redirect "tmp" Check pair_is_Comma : forall A B, pair A B -> bool.
 
-Check seq_is_Nil : forall A, seq A -> bool.
-Check seq_is_Cons : forall A, seq A -> bool.
+Redirect "tmp" Check seq_is_Nil : forall A, seq A -> bool.
+Redirect "tmp" Check seq_is_Cons : forall A, seq A -> bool.
 
-Check rose_is_Leaf : forall A, rose A -> bool.
-Check rose_is_Node : forall A, rose A -> bool.
+Redirect "tmp" Check rose_is_Leaf : forall A, rose A -> bool.
+Redirect "tmp" Check rose_is_Node : forall A, rose A -> bool.
 
-Check nest_is_NilN : forall A, nest A -> bool.
-Check nest_is_ConsN : forall A, nest A -> bool.
+Redirect "tmp" Check nest_is_NilN : forall A, nest A -> bool.
+Redirect "tmp" Check nest_is_ConsN : forall A, nest A -> bool.
 
-Check w_is_via : forall A, w A -> bool.
+Redirect "tmp" Check w_is_via : forall A, w A -> bool.
 
-Check vect_is_VNil : forall A i, vect A i -> bool.
-Check vect_is_VCons : forall A i, vect A i -> bool.
+Redirect "tmp" Check vect_is_VNil : forall A i, vect A i -> bool.
+Redirect "tmp" Check vect_is_VCons : forall A i, vect A i -> bool.
 
-Check dyn_is_box : dyn -> bool.
+Redirect "tmp" Check dyn_is_box : dyn -> bool.
 
-Check zeta_is_Envelope : forall A, zeta A -> bool.
+Redirect "tmp" Check zeta_is_Envelope : forall A, zeta A -> bool.
 
-Check beta_is_Redex : forall A, beta A -> bool.
+Redirect "tmp" Check beta_is_Redex : forall A, beta A -> bool.
 
-Check iota_is_Why : iota -> bool.
+Redirect "tmp" Check iota_is_Why : iota -> bool.
 
-Check large_is_K1.
-Check large_is_K2.
+Redirect "tmp" Check large_is_K1.
+Redirect "tmp" Check large_is_K2.
 
-Check prim_int_is_PI.
-Check prim_float_is_PF.
+Redirect "tmp" Check prim_int_is_PI.
+Redirect "tmp" Check prim_float_is_PF.
 
-Check fo_record_is_Build_fo_record : fo_record -> bool.
-Check pa_record_is_Build_pa_record : forall A, pa_record A -> bool.
-Check pr_record_is_Build_pr_record : forall A, pr_record A -> bool.
-Check enum_is_E1 : enum -> bool.
+Redirect "tmp" Check fo_record_is_Build_fo_record : fo_record -> bool.
+Redirect "tmp" Check pa_record_is_Build_pa_record : forall A, pa_record A -> bool.
+Redirect "tmp" Check pr_record_is_Build_pr_record : forall A, pr_record A -> bool.
+Redirect "tmp" Check enum_is_E1 : enum -> bool.
 
 

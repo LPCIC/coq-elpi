@@ -18,10 +18,10 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi AddClasses Eqb.
+TC.AddClasses Eqb.
 
 Module test1.
-  Elpi AddInstances Eqb ignoreInstances eqP.
+  TC.AddInstances Eqb ignoreInstances eqP.
   Elpi len_test Eqb 2.
 End test1.
 Reset test1.
@@ -32,7 +32,7 @@ End test2.
 Reset test2.
 
 Module test3.
-  Elpi AddInstances Eqb.
+  TC.AddInstances Eqb.
   Elpi len_test Eqb 3.
 End test3.
 Reset test3.
@@ -48,8 +48,8 @@ Elpi Query TC.Solver lp:{{
 }}. *)
 
 Module test4.
-  Elpi AddAllClasses.
-  Elpi AddAllInstances eqU.
+  TC.AddAllClasses.
+  TC.AddAllInstances eqU.
 
   Elpi Query TC.Solver lp:{{
     EqP = {{:gref eqU}},

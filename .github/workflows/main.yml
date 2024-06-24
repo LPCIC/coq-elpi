@@ -28,11 +28,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        coq_version:
-          - '8.19'
+        coq_version: [8.19.1, dev]
         ocaml_version:
-          - '4.14-flambda'
+          - '4.14.1-flambda'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1

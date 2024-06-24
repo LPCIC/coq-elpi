@@ -6,12 +6,12 @@
 
    license: GNU Lesser General Public License Version 2.1 or later
    ------------------------------------------------------------------------- *)
-From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
-From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
-From elpi.apps.derive Extra Dependency "param1_inhab.elpi" as param1_inhab.
-From elpi.apps.derive Extra Dependency "param1_trivial.elpi" as param1_trivial.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
+From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
+From elpi.apps.derive.elpi Extra Dependency "param1_inhab.elpi" as param1_inhab.
+From elpi.apps.derive.elpi Extra Dependency "param1_trivial.elpi" as param1_trivial.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.param1 derive.param1_congr.
@@ -184,7 +184,7 @@ Elpi Accumulate derive Db derive.param1.trivial.db.
 Elpi Accumulate derive File param1_inhab.
 Elpi Accumulate derive File param1_trivial.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "param1_trivial" "param1_inhab".
 dep1 "param1_trivial" "param1_congr".
 dep1 "param1_inhab" "param1".
@@ -192,6 +192,7 @@ dep1 "param1_inhab" "param1".
 
 #[synterp] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "param1_inhab" (cl\ cl = []) true).
+  derivation _ _ (derive "param1_trivial" (cl\ cl = []) true).
 }}.
 
 Elpi Accumulate derive lp:{{

@@ -1,0 +1,7 @@
+(coq.theory
+ (name elpi.apps.coercion)
+ (package coq-elpi)
+ (theories elpi)
+ (plugins coq-elpi.coercion))
+
+(include_subdirs qualified)

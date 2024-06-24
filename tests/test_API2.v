@@ -109,13 +109,13 @@ Elpi Query lp:{{
 
 }}.
 
-(*
-Fail Elpi Query lp:{{
+Elpi Query lp:{{
   
-  coq.option.add ["Primitive", "Projections"] (coq.option.bool ff) _
+  coq.option.add ["Primitive", "Projections"] (coq.option.bool tt) _,
+  coq.option.get ["Primitive", "Projections"] (coq.option.bool tt)
 
 }}.
-*)
+
 Elpi Query lp:{{
   
   % done in test_API.v

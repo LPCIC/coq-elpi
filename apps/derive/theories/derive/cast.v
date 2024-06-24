@@ -3,7 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi.apps.derive Extra Dependency "cast.elpi" as cast.
+From elpi.apps.derive.elpi Extra Dependency "cast.elpi" as cast.
    
 From elpi Require Export elpi.
 

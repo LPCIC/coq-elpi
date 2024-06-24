@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 Elpi Debug "use-alias".
 
 Class foo (A : Type) := f : Type.

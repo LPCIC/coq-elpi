@@ -1,0 +1,9 @@
+(library
+ (name elpi_cs_plugin)
+ (public_name coq-elpi.cs)
+ (flags :standard -w -27)
+ (preprocess (pps ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
+ (libraries coq-core.plugins.ltac coq-core.vernac coq-elpi.elpi))
+
+(coq.pp
+ (modules coq_elpi_cs_hook))

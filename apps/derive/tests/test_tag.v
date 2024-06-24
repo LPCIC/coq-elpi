@@ -43,25 +43,25 @@ Import PArith.
 
 Local Notation tag X := (X -> positive).
 
-Check empty_tag : tag empty.
-Check unit_tag : tag unit.
-Check peano_tag : tag peano.
-Check option_tag : forall A, tag (option A).
-Check pair_tag : forall A B, tag (pair A B).
-Check seq_tag : forall A, tag (seq A).
-Check rose_tag : forall A, tag (rose A).
-Check nest_tag : forall A, tag (nest A).
-Check w_tag : forall A, tag (w A).
-Check vect_tag : forall A i, tag (vect A i).
-Check dyn_tag : tag dyn.
+Redirect "tmp" Check empty_tag : tag empty.
+Redirect "tmp" Check unit_tag : tag unit.
+Redirect "tmp" Check peano_tag : tag peano.
+Redirect "tmp" Check option_tag : forall A, tag (option A).
+Redirect "tmp" Check pair_tag : forall A B, tag (pair A B).
+Redirect "tmp" Check seq_tag : forall A, tag (seq A).
+Redirect "tmp" Check rose_tag : forall A, tag (rose A).
+Redirect "tmp" Check nest_tag : forall A, tag (nest A).
+Redirect "tmp" Check w_tag : forall A, tag (w A).
+Redirect "tmp" Check vect_tag : forall A i, tag (vect A i).
+Redirect "tmp" Check dyn_tag : tag dyn.
 Fail Check zeta_tag : forall A, tag (zeta A).
-Check beta_tag : forall A, tag (beta A).
-Check iota_tag : tag iota.
-Check large_tag : tag large.
-Check prim_int_tag : tag prim_int.
-Check prim_float_tag : tag prim_float.
-Check pa_record_tag : forall A, tag (pa_record A).
-Check pr_record_tag : forall A, tag (pr_record A).
-Check ord_tag : forall p : peano, tag (ord p).
-Check ord2_tag : forall p : peano, tag (ord2 p).
-Check val_tag : tag val.
+Redirect "tmp" Check beta_tag : forall A, tag (beta A).
+Redirect "tmp" Check iota_tag : tag iota.
+Redirect "tmp" Check large_tag : tag large.
+Redirect "tmp" Check prim_int_tag : tag prim_int.
+Redirect "tmp" Check prim_float_tag : tag prim_float.
+Redirect "tmp" Check pa_record_tag : forall A, tag (pa_record A).
+Redirect "tmp" Check pr_record_tag : forall A, tag (pr_record A).
+Redirect "tmp" Check ord_tag : forall p : peano, tag (ord p).
+Redirect "tmp" Check ord2_tag : forall p : peano, tag (ord2 p).
+Redirect "tmp" Check val_tag : tag val.

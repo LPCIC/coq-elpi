@@ -1,0 +1,15 @@
+(coq.theory
+ (name elpi)
+ (package coq-elpi)
+ (plugins coq-elpi.elpi)
+ (theories elpi_elpi))
+
+(rule
+ (target elpi.v)
+ (deps
+  (glob_files elpi.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+; (include_subdirs qualified)

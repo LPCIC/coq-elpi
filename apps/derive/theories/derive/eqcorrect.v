@@ -3,9 +3,9 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 
-From elpi.apps.derive Extra Dependency "eqcorrect.elpi" as eqcorrect.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqcorrect.elpi" as eqcorrect.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
   
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -56,7 +56,7 @@ Elpi Accumulate derive File derive_hook.
 Elpi Accumulate derive File eqcorrect.
 Elpi Accumulate derive Db derive.eqcorrect.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqcorrect" "induction".
 dep1 "eqcorrect" "eq".
 dep1 "eqcorrect" "eqK".

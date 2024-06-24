@@ -72,27 +72,3 @@ Elpi Accumulate lp:{{
 }}.
 Elpi test.scope (_ * _)%type.
 Fail Elpi test.scope ((_ * _)%type).
-
-Elpi Command test_attlabel.
-Elpi Accumulate lp:{{
-  main _ :-
-    attributes A,
-    coq.parse-attributes A [
-      att "only" attlabel,
-      att "foo.x" string,
-      att "foo.y" bool,
-      ] CL,
-    CL = [get-option "elpi.loc" _, get-option "elpi.phase" _,
-          get-option "only" [get-option "foo" tt],
-          get-option "foo.x" "a",
-          get-option "foo.y" ff].
-}}.
-Elpi Typecheck.
-Elpi Export test_attlabel.
-
-#[only(foo(x="a",y=no))] test_attlabel.
-
-
-
-
-

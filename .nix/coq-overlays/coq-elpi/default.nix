@@ -61,10 +61,9 @@ in mkCoqDerivation {
   release."1.6.0".sha256      = "0kf99i43mlf750fr7fric764mm495a53mg5kahnbp6zcjcxxrm0b";
   releaseRev = v: "v${v}";
 
-  buildFlags = [ "OCAMLWARN=" ];
-
   mlPlugin = true;
-  propagatedBuildInputs = [ coq.ocamlPackages.findlib elpi ];
+  useDune = true;
+  propagatedBuildInputs = [ coq.ocamlPackages.dune_3 coq.ocamlPackages.findlib  elpi coq.ocamlPackages.ppx_optcomp ];
 
   meta = {
     description = "Coq plugin embedding ELPI.";

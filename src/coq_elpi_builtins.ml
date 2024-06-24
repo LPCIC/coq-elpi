@@ -473,7 +473,7 @@ let get_instance env sigma inst_of_tc instance : type_class_instance =
   in
   instances_grefs2istance instance
 
-let warning_tc_hints = CWarnings.create ~name:"TC.hints" ~category:elpi_cat Pp.str
+let warning_tc_hints = CWarnings.create ~name:"elpi.TC.hints" ~category:elpi_cat Pp.str
 
 
 let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list = 
@@ -507,6 +507,13 @@ let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
   let f = ref (fun _ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
+
+let is_global_level env u =
+  try
+    let set = Univ.Level.Set.singleton u in
+    let () = UGraph.check_declared_universes (Environ.universes env) set in
+    true
+  with UGraph.UndeclaredLevel _ -> false
 
 let err_if_contains_alg_univ ~depth t =
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
@@ -862,6 +869,61 @@ let warn_deprecated_add_axiom =
            "section variables is deprecated. Use coq.env.add-axiom or " ^
            "coq.env.add-section-variable instead"))
 
+[%%if coq = "8.19"]
+let comAssumption_declare_variable id coe ~kind ty ~univs:uentry ~impargs ex ~name =
+  ComAssumption.declare_variable coe ~kind ty uentry impargs ex name;
+  GlobRef.VarRef id, UVars.Instance.empty
+let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ~id:_ ty =
+  ComAssumption.declare_axiom coe ~local ~kind ty univs impargs inline name
+let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim:_ x y z =
+  DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected x y z
+  
+let cinfo_make state types using =
+  let using = Option.map  Proof_using.(fun s ->
+    let sigma = get_sigma state in
+    let types = Option.List.cons types [] in
+    let using = using_from_string s in
+    definition_using (get_global_env state) sigma ~fixnames:[] ~using ~terms:types)
+    using in
+  Declare.CInfo.make ?using
+let declare_definition _using ~cinfo ~info ~opaque ~body sigma =
+  Declare.declare_definition ~cinfo ~info ~opaque ~body sigma
+let eval_of_constant c =
+  match c with
+  | Variable v -> Tacred.EvalVarRef v
+  | Constant c -> Tacred.EvalConstRef c
+let eval_to_oeval = function
+| Tacred.EvalVarRef v -> Names.VarKey v
+| Tacred.EvalConstRef c -> Names.ConstKey c
+let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,y,z)
+let pattern_of_glob_constr _ g = Patternops.pattern_of_glob_constr g
+let warns_of_options options = options.deprecation
+[%%else]
+let comAssumption_declare_variable id coe ~kind ty ~univs ~impargs impl ~name:_ =
+  ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:id
+let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name:_ ~id ty =
+  ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name:id ty
+let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
+  DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z
+
+let cinfo_make _ _ _using =
+  Declare.CInfo.make
+let declare_definition using ~cinfo ~info ~opaque ~body sigma =
+  let using = Option.map Proof_using.using_from_string using in
+  Declare.declare_definition ~cinfo ~info ~opaque ~body ?using sigma
+let eval_of_constant c =
+  match c with
+  | Variable v -> Evaluable.EvalVarRef v
+  | Constant c ->
+      match Structures.PrimitiveProjections.find_opt c with
+      | None -> Evaluable.EvalConstRef c
+      | Some p -> Evaluable.EvalProjectionRef p
+let eval_to_oeval = Evaluable.to_kevaluable
+let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
+let pattern_of_glob_constr env g = Patternops.pattern_of_glob_constr env g
+let warns_of_options options = options.user_warns
+[%%endif]
+
 let add_axiom_or_variable api id ty local options state =
   let state, poly, cumul, udecl, _ = poly_cumul_udecl_variance_of_options state options in
   let used = universes_of_term state ty in
@@ -870,23 +932,22 @@ let add_axiom_or_variable api id ty local options state =
     err Pp.(str api ++ str": unsupported attribute @udecl-cumul! or @univpoly-cumul!");
   if poly && local then
     err Pp.(str api ++ str": section variables cannot be universe polymorphic");
-  let uentry = UState.check_univ_decl (Evd.evar_universe_context sigma) udecl ~poly in
+  let univs = UState.check_univ_decl (Evd.evar_universe_context sigma) udecl ~poly in
   let kind = Decls.Logical in
   let impargs = [] in
   let loc = to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state in
-  let variable = CAst.(make ~loc @@ Id.of_string id) in
+  let id = Id.of_string id in
+  let name = CAst.(make ~loc id) in
   if not (is_ground sigma ty) then
     err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
     if local then begin
-      ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) uentry impargs Glob_term.Explicit variable;
-      Dumpglob.dump_definition variable true "var";
-      GlobRef.VarRef(Id.of_string id), UVars.Instance.empty
+      Dumpglob.dump_definition name true "var";
+      comAssumption_declare_variable id Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) ~univs ~impargs Glob_term.Explicit ~name
     end else begin
-      Dumpglob.dump_definition variable false "ax";
-      ComAssumption.declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
-        uentry impargs options.inline
-        variable
+      Dumpglob.dump_definition name false "ax";
+      comAssumption_declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
+        ~univs ~impargs ~inline:options.inline ~name ~id
     end
   in
   gr
@@ -965,9 +1026,18 @@ let is_available_option name =
     | Some { Goptions.opt_depr = x; _ }  -> Some (Option.has_some x)
     | None -> None
 
+let goption_set name value =
+  let open Goptions in
+  match value with
+  | BoolValue x -> Goptions.set_bool_option_value name x
+  | IntValue x -> Goptions.set_int_option_value name x
+  | StringOptValue None -> Goptions.unset_option_value_gen name
+  | StringOptValue (Some x) -> Goptions.set_string_option_value name x
+  | StringValue _ -> assert false
+    
 let cache_goption_declaration (depr,key,value) =
   let open Goptions in
-  if is_available_option key <> None then () else
+  if is_available_option key <> None then goption_set key value else
   let depr = if depr then Some (Deprecation.make ~note:"elpi" ()) else None in
   match value with
   | BoolValue x ->
@@ -1908,13 +1978,7 @@ Supported attributes:
        let scope = if local
         then Locality.Discharge
         else Locality.(Global ImportDefaultBehavior) in
-       let using = Option.map  Proof_using.(fun s ->
-          let sigma = get_sigma state in
-          let types = Option.List.cons types [] in
-          let using = using_from_string s in
-          definition_using (get_global_env state) sigma ~fixnames:[] ~using ~terms:types)
-         options.using in
-       let cinfo = Declare.CInfo.make ?using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
+       let cinfo = cinfo_make state types options.using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
        let info = Declare.Info.make ~scope ~kind ~poly ~udecl () in
 
        let used =
@@ -1924,7 +1988,7 @@ Supported attributes:
        let used = Univ.Level.Set.union used (universes_of_udecl state udecl) in
        let sigma = restricted_sigma_of used state in
    
-       let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body sigma in
+       let gr = declare_definition options.using ~cinfo ~info ~opaque ~body sigma in
        let () =
         let lid = CAst.make ~loc:(to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state) (Id.of_string id) in
         match scope with
@@ -1969,7 +2033,7 @@ and the current module|})))),
 Supported attributes:
 - @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 - @primitive! (default: false, makes records primitive)|}))),
-  (fun (me, uctx, univ_binders, record_info, ind_impls) _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-indt" (fun state ->
+  (fun (default_dep_elim,me, uctx, univ_binders, record_info, ind_impls) _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-indt" (fun state ->
      let sigma = get_sigma state in
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forget to call coq.typecheck-indt-decl?");
@@ -1984,7 +2048,7 @@ Supported attributes:
        in
      let () = Global.push_context_set ~strict:true uctx in
      let mind =
-       DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected me (uentry', ubinders) ind_impls in
+       declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim me (uentry', ubinders) ind_impls in
      let ind = mind, 0 in
      let id, cids = match me.Entries.mind_entry_inds with
        | [ { Entries.mind_entry_typename = id; mind_entry_consnames = cids }] -> id, cids
@@ -2337,9 +2401,9 @@ phase unnecessary.|};
     In(univ, "U",
     Easy "succeeds if U is a global universe"),
   (fun u ~depth ->
-    let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
+    let env = Global.env () in
     match Univ.Universe.level u with
-    | Some l when Univ.Level.Set.mem l global_univs -> ()
+    | Some l when is_global_level env l -> ()
     | _ -> raise No_clause (* err Pp.(Univ.Universe.pr u ++ str " is not global") *)
   )),
   DocAbove);
@@ -2482,6 +2546,7 @@ declared as cumulative.|};
 
   MLData Coq_elpi_utils.uint63;
   MLData Coq_elpi_utils.float64;
+  MLData Coq_elpi_utils.pstring;
   MLData Coq_elpi_utils.projection;
   MLData primitive_value;
 
@@ -2539,6 +2604,23 @@ declared as cumulative.|};
       | NoData, Data q -> !: Projection.(make (repr q) false) +? None
       )),
     DocAbove);
+    
+  MLCode(Pred("coq.pstring->string",
+    In(Coq_elpi_utils.pstring,"PS",
+    Out(B.string,"S",
+    Easy "Transforms a Coq primitive string to an elpi string. It does not fail.")),
+    (fun s _ ~depth:_ -> !: (string_of_pstring s))),
+  DocAbove);
+
+  MLCode(Pred("coq.string->pstring",
+    In(B.string,"S",
+    Out(Coq_elpi_utils.pstring,"PS",
+    Easy "Transforms an elpi string into a Coq primitive string. It fails if the lenght of S is greater than the maximal primitive string length.")),
+    (fun s _ ~depth:_ ->
+       match pstring_of_string s with
+       | Some s -> !: s
+       | None -> raise No_clause)),
+  DocAbove);
 
   LPCode {|
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2786,9 +2868,7 @@ Supported attributes:|} ^ hint_locality_doc)))),
   (fun c (db,_) opaque ~depth:_ {options} _ -> grab_global_env "coq.hints.set-opaque" (fun state ->
     let locality = hint_locality options in
     let transparent = not opaque in
-    let r = match c with
-       | Variable v -> Tacred.EvalVarRef v
-       | Constant c -> Tacred.EvalConstRef c in
+    let r = eval_of_constant c in
      Hints.add_hints ~locality [db] Hints.(HintsTransparencyEntry(HintsReferences [r],transparent));
      state, (), []
     ))),
@@ -2819,7 +2899,7 @@ Supported attributes:|} ^ hint_locality_doc))))),
   let sigma = get_sigma state in
   let hint_pattern = unspec2opt pattern |> Option.map (fun x -> x |>
     Coq_elpi_utils.detype env sigma |>
-    Patternops.pattern_of_glob_constr) in
+    pattern_of_glob_constr env) in
   let info = { Typeclasses.hint_priority; hint_pattern } in
    Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info, true, hint_globref gr]);
    state, (), []
@@ -2980,6 +3060,7 @@ Supported attributes:
 The term must begin with at least Nargs "fun" nodes whose domain is ignored, eg (fun _ _ x\ fun _ _ y\ app[global "add",x,y]).
 Supported attributes:
 - @deprecated! (default: not deprecated)
+- @warn! (default: no warning)
 - @global! (default: false)|})))))),
   (fun name nargs term onlyparsing _ ~depth { env; options } _ -> grab_global_env "coq.notation.add-abbreviation" (fun state ->
        let sigma = get_sigma state in
@@ -3022,7 +3103,8 @@ Supported attributes:
      let vars, nenv, env, body = strip_n_lambas nargs env term in
      let gbody = Coq_elpi_utils.detype env sigma body in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
-     Abbreviation.declare_abbreviation ~local ~onlyparsing options.deprecation name (vars,pat);
+     let warns = warns_of_options options in
+     Abbreviation.declare_abbreviation ~local ~onlyparsing warns name (vars,pat);
      let qname = Libnames.qualid_of_string (Id.to_string name) in
      match Nametab.locate_extended qname with
      | Globnames.TrueGlobal _ -> assert false
@@ -3046,7 +3128,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None)),
+      mkCLocalAssum [lname] (Default Glob_term.Explicit) (CAst.make @@ CHole(None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
@@ -3076,7 +3158,7 @@ Supported attributes:
     let binders, vars = List.split (CList.init nargs (fun i ->
       let name = Coq_elpi_glob_quotation.mk_restricted_name i in
       let lname = CAst.make @@ Name.Name (Id.of_string name) in
-      CLocalAssum([lname],Default Glob_term.Explicit, CAst.make @@ CHole(None)),
+      mkCLocalAssum [lname] (Default Glob_term.Explicit) (CAst.make @@ CHole(None)),
       (CAst.make @@ CRef(Libnames.qualid_of_string name,None), None))) in
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
@@ -3475,9 +3557,7 @@ coq.reduction.lazy.whd_all X Y :-
     Full(global,"Sets the unfolding priority for all the constants in the list CL. See the command Strategy."))),
     (fun csts level ~depth:_ ctx _ -> grab_global_env "coq.strategy.set" (fun state ->
        let local = ctx.options.local = Some true in
-       let csts = csts |> List.map (function
-         | Constant c -> Tacred.EvalConstRef c
-         | Variable v -> Tacred.EvalVarRef v) in
+       let csts = csts |> List.map eval_of_constant in
        Redexpr.set_strategy local [level, csts];
        state, (), []))),
   DocAbove);
@@ -3489,10 +3569,8 @@ coq.reduction.lazy.whd_all X Y :-
     (fun c _ ~depth:_ _ _ state ->
        let env = get_global_env state in
        let oracle = Environ.oracle env in
-       let k = match c with
-         | Constant c -> Names.ConstKey c
-         | Variable v -> Names.VarKey v in
-       !: (Conv_oracle.get_strategy oracle k))),
+       let k = eval_of_constant c in
+       !: (Conv_oracle.get_strategy oracle (eval_to_oeval k)))),
   DocAbove);
 
   LPDoc "-- Coq's tactics --------------------------------------------";
@@ -3679,14 +3757,7 @@ Supported attributes:
     In(B.list B.string,"Option",
     In(goption,"Value",
     Easy "writes Option. Writing a non existing option is a fatal error.")),
-  (fun name value ~depth ->
-    let open Goptions in
-    match value with
-    | BoolValue x -> Goptions.set_bool_option_value name x
-    | IntValue x -> Goptions.set_int_option_value name x
-    | StringOptValue None -> Goptions.unset_option_value_gen name
-    | StringOptValue (Some x) -> Goptions.set_string_option_value name x
-    | StringValue _ -> assert false)),
+  (fun name value ~depth -> goption_set name value)),
   DocAbove);
 
   MLCode(Pred("coq.option.available?",

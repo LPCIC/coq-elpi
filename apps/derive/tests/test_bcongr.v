@@ -42,62 +42,62 @@ End Coverage.
 
 Import Coverage.
 
-Check unit_bcongr_tt : reflect (tt = tt) true.
+Redirect "tmp" Check unit_bcongr_tt : reflect (tt = tt) true.
 
-Check peano_bcongr_Zero : reflect (Zero = Zero) true.
-Check peano_bcongr_Succ : forall x y b, reflect (x = y) b -> reflect (Succ x = Succ y) b.
+Redirect "tmp" Check peano_bcongr_Zero : reflect (Zero = Zero) true.
+Redirect "tmp" Check peano_bcongr_Succ : forall x y b, reflect (x = y) b -> reflect (Succ x = Succ y) b.
 
-Check option_bcongr_None : forall A, reflect (None A = None A) true.
-Check option_bcongr_Some : forall A x y b, reflect (x = y) b -> reflect (Some A x = Some A y) b.
+Redirect "tmp" Check option_bcongr_None : forall A, reflect (None A = None A) true.
+Redirect "tmp" Check option_bcongr_Some : forall A x y b, reflect (x = y) b -> reflect (Some A x = Some A y) b.
 
-Check pair_bcongr_Comma : forall A B x1 x2 b1, reflect (x1 = x2) b1 -> forall y1 y2 b2, reflect (y1 = y2) b2 -> reflect (Comma A B x1 y1 = Comma A B x2 y2) (b1 && b2).
+Redirect "tmp" Check pair_bcongr_Comma : forall A B x1 x2 b1, reflect (x1 = x2) b1 -> forall y1 y2 b2, reflect (y1 = y2) b2 -> reflect (Comma A B x1 y1 = Comma A B x2 y2) (b1 && b2).
 
-Check seq_bcongr_Nil : forall A, reflect (Nil A = Nil A) true.
-Check seq_bcongr_Cons : forall A x y b1, reflect (x = y) b1 -> forall xs ys b2, reflect (xs = ys) b2 -> reflect (Cons A x xs = Cons A y ys) (b1 && b2).
+Redirect "tmp" Check seq_bcongr_Nil : forall A, reflect (Nil A = Nil A) true.
+Redirect "tmp" Check seq_bcongr_Cons : forall A x y b1, reflect (x = y) b1 -> forall xs ys b2, reflect (xs = ys) b2 -> reflect (Cons A x xs = Cons A y ys) (b1 && b2).
 
-Check rose_bcongr_Leaf : forall A x y b, reflect (x = y) b -> reflect (Leaf A x = Leaf A y) b.
-Check rose_bcongr_Node : forall A l1 l2 b, reflect (l1 = l2) b -> reflect (Node A l1 = Node A l2) b.
+Redirect "tmp" Check rose_bcongr_Leaf : forall A x y b, reflect (x = y) b -> reflect (Leaf A x = Leaf A y) b.
+Redirect "tmp" Check rose_bcongr_Node : forall A l1 l2 b, reflect (l1 = l2) b -> reflect (Node A l1 = Node A l2) b.
 
-Check nest_bcongr_NilN : forall A, reflect (NilN A = NilN A) true.
-Check nest_bcongr_ConsN : forall A x y b1, reflect (x = y) b1 -> forall xs ys b2, reflect (xs = ys) b2 -> reflect (ConsN A x xs = ConsN A y ys) (b1 && b2).
+Redirect "tmp" Check nest_bcongr_NilN : forall A, reflect (NilN A = NilN A) true.
+Redirect "tmp" Check nest_bcongr_ConsN : forall A x y b1, reflect (x = y) b1 -> forall xs ys b2, reflect (xs = ys) b2 -> reflect (ConsN A x xs = ConsN A y ys) (b1 && b2).
 
-Check w_bcongr_via : forall A f g b, reflect (f = g) b -> reflect (via A f = via A g) b.
+Redirect "tmp" Check w_bcongr_via : forall A f g b, reflect (f = g) b -> reflect (via A f = via A g) b.
 
 Fail Check vect_bcongr_VNil.
 Fail Check vect_bcongr_VCons.
 
 Fail Check dyn_bcongr_box.
 
-Check zeta_bcongr_Envelope :
+Redirect "tmp" Check zeta_bcongr_Envelope :
   forall A x1 x2 b1, reflect (x1 = x2) b1 ->
     forall y1 y2 b2, reflect (y1 = y2) b2 ->
     reflect (Envelope A x1 y1 = Envelope A x2 y2) (b1 && b2).
 
-Check beta_bcongr_Redex : forall A x y b, reflect (x = y) b -> reflect (Redex A x = Redex A y) b.
+Redirect "tmp" Check beta_bcongr_Redex : forall A x y b, reflect (x = y) b -> reflect (Redex A x = Redex A y) b.
 
 Fail Check iota_bcongr_Why.
 
-Check prim_int_bcongr_PI : forall x y b, reflect (x = y) b -> reflect (PI x = PI y) b.
-Check prim_float_bcongr_PF : forall x y b, reflect (x = y) b -> reflect (PF x = PF y) b.
+Redirect "tmp" Check prim_int_bcongr_PI : forall x y b, reflect (x = y) b -> reflect (PI x = PI y) b.
+Redirect "tmp" Check prim_float_bcongr_PF : forall x y b, reflect (x = y) b -> reflect (PF x = PF y) b.
 
 (* Check large_bcongr_K1. *)
 
-Check fo_record_bcongr_Build_fo_record :
+Redirect "tmp" Check fo_record_bcongr_Build_fo_record :
   forall x1 x2 b1, reflect (x1 = x2) b1 -> 
   forall y1 y2 b2, reflect (y1 = y2) b2 -> 
   reflect (Build_fo_record x1 y1 = Build_fo_record x2 y2) (b1 && b2).
-Check pa_record_bcongr_Build_pa_record :
+Redirect "tmp" Check pa_record_bcongr_Build_pa_record :
   forall A,
   forall x1 x2 b1, reflect (x1 = x2) b1 -> 
   forall y1 y2 b2, reflect (y1 = y2) b2 -> 
   reflect (Build_pa_record A x1 y1 = Build_pa_record A x2 y2) (b1 && b2).
-Check pr_record_bcongr_Build_pr_record :
+Redirect "tmp" Check pr_record_bcongr_Build_pr_record :
   forall A,
   forall x1 x2 b1, reflect (x1 = x2) b1 -> 
   forall y1 y2 b2, reflect (y1 = y2) b2 -> 
   reflect (Build_pr_record A x1 y1 = Build_pr_record A x2 y2) (b1 && b2).
 
-Check enum_bcongr_E1 : reflect (E1 = E1) true.
-Check enum_bcongr_E2 : reflect (E2 = E2) true.
-Check enum_bcongr_E3 : reflect (E3 = E3) true.
+Redirect "tmp" Check enum_bcongr_E1 : reflect (E1 = E1) true.
+Redirect "tmp" Check enum_bcongr_E2 : reflect (E2 = E2) true.
+Redirect "tmp" Check enum_bcongr_E3 : reflect (E3 = E3) true.
 

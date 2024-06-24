@@ -3,12 +3,12 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps.derive Require Import induction param1_functor param1_trivial eqb_core_defs tag fields eqb.
 
-From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
-From elpi.apps.derive Extra Dependency "param1.elpi" as param1.
-From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive Extra Dependency "eqbcorrect.elpi" as eqbcorrect.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
+From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
+From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive.elpi Extra Dependency "eqbcorrect.elpi" as eqbcorrect.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Module Export exports.
 Export ssreflect ssrbool eqb_core_defs. (* go ask the ltac gurus... *)
@@ -98,7 +98,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File eqbcorrect.
 Elpi Accumulate derive Db derive.eqbcorrect.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqbcorrect" "eqb".
 dep1 "eqbcorrect" "induction".
 dep1 "eqbcorrect" "param1_inhab".

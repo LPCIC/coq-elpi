@@ -13,12 +13,12 @@ End Coverage.
 
 Import Coverage.
 
-Check _f1 : Lens fo_record fo_record peano peano.
-Check _f2 : Lens fo_record fo_record unit unit.
-Check @_f3 : forall A, Lens (pa_record A) (pa_record A) peano peano.
-Check @_f4 : forall A, Lens (pa_record A) (pa_record A) A A.
-Check @_pf3 : forall A, Lens (pr_record A) (pr_record A) peano peano.
-Check @_pf4 : forall A, Lens (pr_record A) (pr_record A) A A.
+Redirect "tmp" Check _f1 : Lens fo_record fo_record peano peano.
+Redirect "tmp" Check _f2 : Lens fo_record fo_record unit unit.
+Redirect "tmp" Check @_f3 : forall A, Lens (pa_record A) (pa_record A) peano peano.
+Redirect "tmp" Check @_f4 : forall A, Lens (pa_record A) (pa_record A) A A.
+Redirect "tmp" Check @_pf3 : forall A, Lens (pr_record A) (pr_record A) peano peano.
+Redirect "tmp" Check @_pf4 : forall A, Lens (pr_record A) (pr_record A) A A.
 Goal forall A x, x = @_pf3 A.
 intros; unfold _pf3.
 match goal with

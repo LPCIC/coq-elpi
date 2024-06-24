@@ -15,7 +15,7 @@ Global Instance B1 : B nat nat. Admitted.
 Global Instance C1 {S T : Type} `{B S T, A T S} : C T. Admitted.
 
 Elpi AddAllInstances.
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Override TC.Solver All.
 Goal C nat.
   apply _.
 Qed.

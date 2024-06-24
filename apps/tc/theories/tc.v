@@ -1,19 +1,19 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-Declare ML Module "coq-elpi-tc.plugin".
+Declare ML Module "coq-elpi.tc".
 
-From elpi.apps.tc Extra Dependency "base.elpi" as base.
-From elpi.apps.tc Extra Dependency "tc_aux.elpi" as tc_aux.
-(* From elpi.apps.tc Extra Dependency "compiler.elpi" as compiler. *)
-From elpi.apps.tc Extra Dependency "ho_precompile.elpi" as ho_precompile.
-From elpi.apps.tc Extra Dependency "ho_compile.elpi" as ho_compile.
-From elpi.apps.tc Extra Dependency "compiler1.elpi" as compiler1.
-From elpi.apps.tc Extra Dependency "modes.elpi" as modes.
-From elpi.apps.tc Extra Dependency "unif.elpi" as unif.
-From elpi.apps.tc Extra Dependency "ho_link.elpi" as ho_link.
-From elpi.apps.tc Extra Dependency "solver.elpi" as solver.
-From elpi.apps.tc Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
+From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
+From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
+(* From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler. *)
+From elpi.apps.tc.elpi Extra Dependency "ho_precompile.elpi" as ho_precompile.
+From elpi.apps.tc.elpi Extra Dependency "ho_compile.elpi" as ho_compile.
+From elpi.apps.tc.elpi Extra Dependency "compiler1.elpi" as compiler1.
+From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
+From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
+From elpi.apps.tc.elpi Extra Dependency "ho_link.elpi" as ho_link.
+From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
+From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
 From elpi.apps Require Import db.
 From elpi.apps Require Export add_commands.
@@ -186,7 +186,9 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
-Elpi Override TC TC.Solver All.
+Elpi TC Solver Register TC.Solver.
+Elpi TC Solver Activate TC.Solver.
+Elpi TC Solver Override TC.Solver All.
 
 Elpi Register TC Compiler TC.Compiler.
 
@@ -196,6 +198,8 @@ Elpi Export TC.Compiler.
 Elpi Export TC.Get_class_info.
 Elpi Export TC.Set_deterministic.
 Elpi Export TC.Unfold.
+
+Set Warnings "elpi".
 
 Elpi TC.AddAllClasses.
 Elpi TC.AddAllInstances.

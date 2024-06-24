@@ -46,32 +46,32 @@ Import PArith.
 Notation eq_test T := (T -> T -> bool).
 Notation eq_test2 T1 T2 := (T1 -> T2 -> bool).
 
-Check empty_eqb   : eq_test empty.
-Check unit_eqb    : eq_test unit.
-Check peano_eqb   : eq_test peano.
-Check option_eqb  : forall A, eq_test A -> eq_test (option A).
-Check pair_eqb    : forall A, eq_test A -> forall B, eq_test B -> eq_test (pair A B).
-Check seq_eqb     : forall A, eq_test A -> eq_test (seq A).
-Check rose_eqb    : forall A, eq_test A -> eq_test (rose A).
+Redirect "tmp" Check empty_eqb   : eq_test empty.
+Redirect "tmp" Check unit_eqb    : eq_test unit.
+Redirect "tmp" Check peano_eqb   : eq_test peano.
+Redirect "tmp" Check option_eqb  : forall A, eq_test A -> eq_test (option A).
+Redirect "tmp" Check pair_eqb    : forall A, eq_test A -> forall B, eq_test B -> eq_test (pair A B).
+Redirect "tmp" Check seq_eqb     : forall A, eq_test A -> eq_test (seq A).
+Redirect "tmp" Check rose_eqb    : forall A, eq_test A -> eq_test (rose A).
 Fail Check nest_eqb.
 (* Check w_eqb.   (* Do something but it is stupide*) *)
 Fail Check vect_eqb    : forall A, eq_test A -> forall i, eq_test (vect A i).
 Fail Check dyn_eqb.
 Fail Check zeta_eqb : forall A, eq_test A -> eq_test (zeta A).
-Check beta_eqb : forall A, eq_test A -> eq_test (beta A).
+Redirect "tmp" Check beta_eqb : forall A, eq_test A -> eq_test (beta A).
 Fail Check iota_eqb : eq_test iota.
 (* Check large_eqb   : eq_test large. *)
 (* FIXME : the definition of prim_int_eqb_fields*)
-Check prim_int_eqb    : eq_test prim_int.
+Redirect "tmp" Check prim_int_eqb    : eq_test prim_int.
 Fail Check prim_float_eqb    : eq_test prim_float.
-Check fo_record_eqb : eq_test fo_record.
+Redirect "tmp" Check fo_record_eqb : eq_test fo_record.
 
-Check pa_record_eqb : forall A, eq_test A -> eq_test (pa_record A).
-Check pr_record_eqb : forall A, eq_test A -> eq_test (pr_record A).
-Check enum_eqb : eq_test enum.
-Check sigma_bool_eqb : eq_test sigma_bool.
-Check ord_eqb : forall p1 p2, eq_test2 (ord p1) (ord p2).
-Check ord2_eqb : forall p1 p2, eq_test2 (ord2 p1) (ord2 p2).
-Check val_eqb : eq_test val.
+Redirect "tmp" Check pa_record_eqb : forall A, eq_test A -> eq_test (pa_record A).
+Redirect "tmp" Check pr_record_eqb : forall A, eq_test A -> eq_test (pr_record A).
+Redirect "tmp" Check enum_eqb : eq_test enum.
+Redirect "tmp" Check sigma_bool_eqb : eq_test sigma_bool.
+Redirect "tmp" Check ord_eqb : forall p1 p2, eq_test2 (ord p1) (ord p2).
+Redirect "tmp" Check ord2_eqb : forall p1 p2, eq_test2 (ord2 p1) (ord2 p2).
+Redirect "tmp" Check val_eqb : eq_test val.
 
-Check alias_eqb : eq_test alias.
+Redirect "tmp" Check alias_eqb : eq_test alias.

@@ -30,6 +30,8 @@ type universe_decl_option =
   | NotUniversePolymorphic
   | Cumulative of universe_decl_cumul
   | NonCumulative of universe_decl
+
+[%%if coq = "8.19"] 
 type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
@@ -48,6 +50,26 @@ type options = {
   redflags : RedFlags.reds option;
   no_tc: bool option;
 }
+[%%else]
+type options = {
+  hoas_holes : hole_mapping option;
+  local : bool option;
+  user_warns : UserWarn.t option;
+  primitive : bool option;
+  failsafe : bool; (* readback is resilient to illformed terms *)
+  ppwidth : int;
+  pp : ppoption;
+  pplevel : Constrexpr.entry_relative_level;
+  using : string option;
+  inline : Declaremods.inline;
+  uinstance : uinstanceoption;
+  universe_decl : universe_decl_option;
+  reversible : bool option;
+  keepunivs : bool option;
+  redflags : RedFlags.reds option;
+  no_tc: bool option;
+}
+[%%endif]
 
 type 'a coq_context = {
   (* Elpi representation of the context *)
@@ -109,9 +131,15 @@ val lp2skeleton :
 type coercion_status = Regular | Off | Reversible
 type record_field_spec = { name : Name.t; is_coercion : coercion_status; is_canonical : bool }
 
+[%%if coq = "8.19"]
 val lp2inductive_entry :
   depth:int -> empty coq_context -> constraints -> State.t -> term ->
-  State.t * (Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+  State.t * ('a list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+[%%else]
+val lp2inductive_entry :
+  depth:int -> empty coq_context -> constraints -> State.t -> term ->
+  State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+[%%endif]
 
 val inductive_decl2lp :
   depth:int -> empty coq_context -> constraints -> State.t -> (Names.MutInd.t * UVars.Instance.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
@@ -177,9 +205,15 @@ val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.abbreviation Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t
 val collect_term_variables : depth:int -> term -> Names.Id.t list
+[%%if coq = "8.19"]
+type pstring = string
+[%%else]
+type pstring = Pstring.t
+[%%endif]
 type primitive_value =
   | Uint63 of Uint63.t
   | Float64 of Float64.t
+  | Pstring of pstring
   | Projection of Projection.t
 val primitive_value : primitive_value Conversion.t
 val in_elpi_primitive : depth:int -> state -> primitive_value -> state * term

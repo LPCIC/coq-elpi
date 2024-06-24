@@ -18,7 +18,11 @@ let push_name x = function
       { x with Genintern.genv = Environ.push_named decl x.Genintern.genv }
   | _ -> x
 
+[%%if coq = "8.19"]
 let push_gdecl (name,_,_,_) x = push_name x name
+[%%else]
+let push_gdecl (name,_,_,_,_) x = push_name x name
+[%%endif]
 
 let push_glob_ctx glob_ctx x =
   List.fold_right push_gdecl glob_ctx x
@@ -42,15 +46,34 @@ let intern_global_constr_ty { Ltac_plugin.Tacintern.genv = env } ~intern_env ?(e
 
 let intern_global_context { Ltac_plugin.Tacintern.genv = env } ~intern_env ctx =
   Constrintern.intern_context env ~bound_univs:UnivNames.empty_binders intern_env ctx
-let intern_global_context_synterp (ctx : Constrexpr.local_binder_expr list) : Glob_term.glob_decl list =
+
+[%%if coq = "8.19"]
+let intern_one h =
   let open Constrexpr in
-  let intern_one h =
-    match h with
-    | CLocalAssum(nl,Default bk,_) -> nl |> List.map (fun n -> n.CAst.v,bk,None,mkGHole)
-    | CLocalAssum(nl,Generalized(bk,_),_) -> nl |> List.map (fun n -> n.CAst.v,bk,None,mkGHole)
-    | CLocalDef (n,_,None) -> [n.CAst.v,Glob_term.Explicit,None,mkGHole]
-    | CLocalDef (n,_,Some _) -> [n.CAst.v,Glob_term.Explicit,Some mkGHole,mkGHole]
-    | CLocalPattern _ -> nYI "irrefutable pattern in synterp" in
+  match h with
+  | CLocalAssum(nl,Default bk,_) -> nl |> List.map (fun n -> n.CAst.v,bk,None,mkGHole)
+  | CLocalAssum(nl,Generalized(bk,_),_) -> nl |> List.map (fun n -> n.CAst.v,bk,None,mkGHole)
+  | CLocalDef (n,_,None) -> [n.CAst.v,Glob_term.Explicit,None,mkGHole]
+  | CLocalDef (n,_,Some _) -> [n.CAst.v,Glob_term.Explicit,Some mkGHole,mkGHole]
+  | CLocalPattern _ -> nYI "irrefutable pattern in synterp"
+[%%else]
+let intern_one h =
+  let open Constrexpr in
+  match h with
+  | CLocalAssum(nl,_,Default bk,_) -> nl |> List.map (fun n -> n.CAst.v,None,bk,None,mkGHole)
+  | CLocalAssum(nl,_,Generalized(bk,_),_) -> nl |> List.map (fun n -> n.CAst.v,None,bk,None,mkGHole)
+  | CLocalDef (n,_,_,None) -> [n.CAst.v,None,Glob_term.Explicit,None,mkGHole]
+  | CLocalDef (n,_,_,Some _) -> [n.CAst.v,None,Glob_term.Explicit,Some mkGHole,mkGHole]
+  | CLocalPattern _ -> nYI "irrefutable pattern in synterp"
+[%%endif]
+
+[%%if coq = "8.19"]
+let drop_relevance x = x
+[%%else]
+let drop_relevance (a,_,c,d,e) = (a,c,d,e)
+[%%endif]
+  
+let intern_global_context_synterp (ctx : Constrexpr.local_binder_expr list) : Glob_term.glob_decl list =
   CList.concat_map intern_one ctx |> List.rev
 
 module Cmd = struct
@@ -258,6 +281,14 @@ let univpoly_of ~poly ~cumulative =
 
 let intern_record_decl glob_sign (it : raw_record_decl) = glob_sign, it
 
+[%%if coq = "8.19"]
+let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,y,z)
+let dest_entry (_,_,_,x) = x
+[%%else]
+let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
+let dest_entry (_,_,_,_,x) = x
+[%%endif]
+
 let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
   let name, space = sep_last_qualid name in
   let params = intern_global_context_synterp parameters in
@@ -270,20 +301,26 @@ let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fiel
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
         let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = if inst = Vernacexpr.AddCoercion then Reversible else Off; name } in
         let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
-        let entry = intern_global_context_synterp [Constrexpr.CLocalAssum ([fn],Constrexpr.Default Glob_term.Explicit,x)] in
+        let entry = intern_global_context_synterp [mkCLocalAssum [fn] (Constrexpr.Default Glob_term.Explicit) x] in
         let x = match entry with
-          | [_,_,_,x] -> x
+          | [x] -> dest_entry x
           | _ -> assert false in
         (x, atts) :: acc
     | Vernacexpr.DefExpr _, _ -> Coq_elpi_utils.nYI "DefExpr")
         [] fields in
   { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields; univpoly }
 
+[%%if coq = "8.19"]
+let expr_Type_sort = Glob_term.UAnonymous {rigid=UState.univ_rigid}
+[%%else]
+let expr_Type_sort = Constrexpr_ops.expr_Type_sort
+[%%endif]
+
 let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
   let name, space = sep_last_qualid name in
   let sort = match sort with
     | Some x -> Constrexpr.CSort x
-    | None -> Constrexpr.(CSort (Glob_term.UAnonymous {rigid=UnivRigid})) in
+    | None -> Constrexpr.(CSort expr_Type_sort) in
   let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
   let glob_sign_params = push_glob_ctx params glob_sign in
   let params = List.rev params in
@@ -295,9 +332,9 @@ let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fi
         if pr <> None then Coq_elpi_utils.nYI "priority in record fields";
         let atts = { Coq_elpi_HOAS.is_canonical = canon; is_coercion = if inst = Vernacexpr.AddCoercion then Reversible else Off; name } in
         let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
-        let intern_env, entry = intern_global_context ~intern_env gs [Constrexpr.CLocalAssum ([fn],Constrexpr.Default Glob_term.Explicit,x)] in
+        let intern_env, entry = intern_global_context ~intern_env gs [mkCLocalAssum [fn] (Constrexpr.Default Glob_term.Explicit) x] in
         let x = match entry with
-          | [_,_,_,x] -> x
+          | [x] -> dest_entry x
           | _ -> assert false in
         let gs = push_glob_ctx entry gs in
         gs, intern_env, (x, atts) :: acc
@@ -325,7 +362,7 @@ let raw_indt_decl_to_glob glob_sign ({ finiteness; name; parameters; non_uniform
   let name = Names.Id.of_string name in
   let indexes = match arity with
     | Some x -> x
-    | None -> CAst.make Constrexpr.(CSort (Glob_term.UAnonymous {rigid=UnivRigid})) in
+    | None -> CAst.make Constrexpr.(CSort expr_Type_sort) in
   let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
   let nuparams_given, nuparams =
     match non_uniform_parameters with
@@ -363,6 +400,12 @@ let raw_decl_name_to_glob name =
   let name, space = sep_last_qualid name in
   (space, Names.Id.of_string name)
 
+[%%if coq = "8.19"]
+let interp_red_expr = Ltac_plugin.Tacinterp.interp_redexp
+[%%else]
+let interp_red_expr = Redexpr.interp_redexp_no_ltac
+[%%endif]
+
 let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); body; red; udecl; atts } =
   let env = coq_ctx.env in
   let poly =
@@ -383,7 +426,7 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
   let sigma = get_sigma state in
   match body, typ with
   | Some body, _ ->
-      let sigma, red = option_map_acc (Ltac_plugin.Tacinterp.interp_redexp env) sigma red in
+      let sigma, red = option_map_acc (interp_red_expr env) sigma red in
       let sigma, (body, typ), impargs =
         ComDefinition.interp_definition ~program_mode:false
           env sigma Constrintern.empty_internalization_env bl red body typ
@@ -623,6 +666,7 @@ let do_record_synterp ~depth ~name ~constructorname arity fields state =
   state, in_elpi_indtdecl_record (Name.Name qrecord_name) arity constructor fields
 
 let grecord2lp_synterp ~depth state { Cmd.name; arity; params; constructorname; fields; univpoly } =
+  let params = List.map drop_relevance params in
   let state, r = do_params_synterp ~depth params (do_record_synterp ~depth ~name ~constructorname arity fields) state in
   mk_indt_decl state univpoly r
       
@@ -673,6 +717,8 @@ let drop_unit f ~depth state =
   
 let ginductive2lp_synterp ~depth state { Cmd.finiteness; name; arity; params; nuparams; nuparams_given; constructors; univpoly } =
   let space, indt_name = name in
+  let nuparams = List.map drop_relevance nuparams in
+  let params = List.map drop_relevance params in
   let do_constructor ~depth state (name, ty) =
     let state, ty = do_params_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
     state, in_elpi_indtdecl_constructor (Name.Name name) ty
@@ -689,7 +735,9 @@ let ginductive2lp_synterp ~depth state { Cmd.finiteness; name; arity; params; nu
 let ginductive2lp ~depth state { Cmd.finiteness; name; arity; params; nuparams; nuparams_given; constructors; univpoly } =
   let open Coq_elpi_glob_quotation in
   let space, indt_name = name in
-  let contract state x = contract_params (get_global_env state) (get_sigma state) indt_name params nuparams_given x in
+  let contract state x =
+    let params = List.map drop_relevance params in
+    contract_params (get_global_env state) (get_sigma state) indt_name params nuparams_given x in
   let do_constructor ~depth state (name, ty) =
     let state, ty = do_params nuparams (do_arity (contract state ty)) ~depth state in
     state, in_elpi_indtdecl_constructor (Name.Name name) ty
@@ -719,6 +767,7 @@ let cdeclc = E.Constants.declare_global_symbol "const-decl"
 let ucdeclc = E.Constants.declare_global_symbol "upoly-const-decl"
 
 let gdecl2lp_synterp ~depth state { Cmd.name; params; typ : _; body; udecl } =
+  let params = List.map drop_relevance params in
   let state, typ = do_params_synterp ~depth params (fun state -> state, in_elpi_arity E.mkDiscard) state in
   let body = Option.map (fun _ -> E.mkDiscard) body in
   let name = decl_name2lp name in
@@ -746,6 +795,7 @@ let cdecl2lp ~depth state { Cmd.name; params; typ; body; udecl } =
 let ctxitemc = E.Constants.declare_global_symbol "context-item"
 let ctxendc =  E.Constants.declare_global_symbol "context-end"
 
+[%%if coq = "8.19"]
 let rec do_context_glob_synterp fields ~depth state =
   match fields with
   | [] -> state, E.mkGlobal ctxendc
@@ -756,7 +806,20 @@ let rec do_context_glob_synterp fields ~depth state =
       let state, bo, _ = in_option ~depth state bo in
       let state, imp = in_elpi_imp ~depth state bk in
       state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields]
+[%%else]
+let rec do_context_glob_synterp fields ~depth state =
+  match fields with
+  | [] -> state, E.mkGlobal ctxendc
+  | (name,_,bk,bo,ty) :: fields ->
+      let ty = E.mkDiscard in
+      let bo = Option.map (fun _ -> E.mkDiscard) bo in
+      let state, fields = do_context_glob_synterp fields ~depth state in
+      let state, bo, _ = in_option ~depth state bo in
+      let state, imp = in_elpi_imp ~depth state bk in
+      state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields]
+[%%endif]
 
+[%%if coq = "8.19"]
 let rec do_context_glob fields ~depth state =
   match fields with
   | [] -> state, E.mkGlobal ctxendc
@@ -768,7 +831,19 @@ let rec do_context_glob fields ~depth state =
       let state, bo, _ = in_option ~depth state bo in
       let state, imp = in_elpi_imp ~depth state bk in
       state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields]
-
+[%%else]
+let rec do_context_glob fields ~depth state =
+  match fields with
+  | [] -> state, E.mkGlobal ctxendc
+  | (name,_,bk,bo,ty) :: fields ->
+      let open Coq_elpi_glob_quotation in
+      let state, ty = gterm2lp ~depth state ty in
+      let state, bo = option_map_acc (gterm2lp ~depth) state bo in
+      let state, fields, () = under_ctx name ty bo (nogls (do_context_glob fields)) ~depth state in
+      let state, bo, _ = in_option ~depth state bo in
+      let state, imp = in_elpi_imp ~depth state bk in
+      state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields]
+[%%endif]
 let rec do_context_constr coq_ctx csts fields ~depth state =
   let map s x = constr2lp coq_ctx csts ~depth s (EConstr.of_constr x) in
   match fields with
@@ -807,9 +882,9 @@ let to_list v =
 
 (* if we make coq elaborate an arity, we get a type back. here we try to
    recoved an arity to pass that to elpi *)
+
 let best_effort_recover_arity ~depth state glob_sign typ bl =
   let _, grouped_bl = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env bl in
-  
   let rec aux ~depth state typ gbl =
     match gbl with
     | (name,ik,_,_) :: gbl ->
@@ -822,7 +897,7 @@ let best_effort_recover_arity ~depth state glob_sign typ bl =
       end
     | _ -> state, in_elpi_arity typ
     in
-      aux ~depth state typ (List.rev grouped_bl)
+      aux ~depth state typ (List.map drop_relevance (List.rev grouped_bl))
 
 let in_elpi_string_arg ~depth state x = 
   state, E.mkApp strc (CD.of_string x) [], []

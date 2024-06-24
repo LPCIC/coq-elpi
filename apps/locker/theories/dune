@@ -1,0 +1,6 @@
+(coq.theory
+ (name elpi.apps.locker)
+ (package coq-elpi)
+ (theories elpi elpi.apps.locker.elpi))
+
+(include_subdirs qualified)

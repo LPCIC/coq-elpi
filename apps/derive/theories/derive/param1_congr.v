@@ -6,10 +6,10 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
-From elpi.apps.derive Extra Dependency "paramX_lib.elpi" as paramX.
-From elpi.apps.derive Extra Dependency "param1_congr.elpi" as param1_congr.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
+From elpi.apps.derive.elpi Extra Dependency "param1_congr.elpi" as param1_congr.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export  derive.param1.
@@ -36,7 +36,7 @@ Elpi Typecheck.
 Elpi Accumulate derive File param1_congr.
 Elpi Accumulate derive Db derive.param1.congr.db.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "param1_congr" "param1".
 }}.
 

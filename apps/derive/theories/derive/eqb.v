@@ -3,11 +3,11 @@ From elpi.apps Require Import derive derive.param1.
 From Coq Require Import ssrbool ssreflect Uint63.
 From Coq Require Import PArith.
 
-From elpi.apps.derive Extra Dependency "fields.elpi" as fields.
-From elpi.apps.derive Extra Dependency "eqb.elpi" as eqb.
-From elpi.apps.derive Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "fields.elpi" as fields.
+From elpi.apps.derive.elpi Extra Dependency "eqb.elpi" as eqb.
+From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
+From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 Require Import eqb_core_defs.
 Require Import eqType_ast tag fields.
@@ -67,7 +67,7 @@ Elpi Typecheck.
 Elpi Accumulate derive Db derive.eqb.db.
 Elpi Accumulate derive File eqb.
 
-#[phases=both] Elpi Accumulate derive lp:{{
+#[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqb" "fields".
 }}.
 
