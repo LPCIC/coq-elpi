@@ -63,7 +63,12 @@ in mkCoqDerivation {
 
   mlPlugin = true;
   useDune = true;
-  propagatedBuildInputs = [ coq.ocamlPackages.dune_3 coq.ocamlPackages.findlib  elpi coq.ocamlPackages.ppx_optcomp ];
+  propagatedBuildInputs = [ elpi coq.ocamlPackages.ppx_optcomp ];
+
+  postInstall = ''
+    mkdir -p "$OCAMLFIND_DESTDIR"
+    mv "$out/lib/coq-elpi" "$OCAMLFIND_DESTDIR"
+  '';
 
   meta = {
     description = "Coq plugin embedding ELPI.";
