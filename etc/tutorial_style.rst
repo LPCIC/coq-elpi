@@ -44,7 +44,7 @@
    :src: LPCIC coq-elpi master elpi/coq-lib-common.elpi
 
 .. role:: stdtype(elpi-type)
-   :src: LPCIC coq-elpi master elpi-builtin.elpi
+   :src: LPCIC coq-elpi master builtin-doc/elpi-builtin.elpi
 
 
 .. role:: elpi-constructor(ghref)
