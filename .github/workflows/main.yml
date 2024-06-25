@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        coq_version: [8.19, 8.20-alpha, dev]
+        coq_version: [8.19, 8.20, dev]
         ocaml_version:
           - '4.14-flambda'
     steps:
