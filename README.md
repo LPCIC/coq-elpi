@@ -279,7 +279,7 @@ pred main-interp i:list argument, i:any.
 ```
 Unlike `main` the former outputs a datum while the latter receives it in input.
 During the synterp phase the API `coq.synterp-actions` lists the actions
-performed so far. An excerpt from the [coq-builtin-synterp](coq-builtin-synterp.elpi) file:
+performed so far. An excerpt from the [coq-builtin-synterp](builtin-doc/coq-builtin-synterp.elpi) file:
 ```
 % Action executed during the parsing phase (aka synterp)
 kind synterp-action type.
@@ -468,7 +468,7 @@ Arguments of type `uconstr` are passed raw.
 
 Checked boxes are available, unchecked boxes are planned, missing items are not
 planned. This is a high level list, for the details
-see [coq-builtin](coq-builtin.elpi).
+see [coq-builtin](builtin-doc/coq-builtin.elpi).
 
 - [x] i/o: messages, warnings, errors, Coq version
 - [x] logical environment: read, write, locate
@@ -496,10 +496,10 @@ see [coq-builtin](coq-builtin.elpi).
 
 #### Relevant files
 
-- [coq-builtin](coq-builtin.elpi) documents the HOAS encoding of Coq terms
+- [coq-builtin](builtin-doc/coq-builtin.elpi) documents the HOAS encoding of Coq terms
   and the API to access Coq
-- [coq-builtin-synterp](coq-builtin-synterp.elpi) documents APIs to interact with Coq at parsing time
-- [elpi-buitin](elpi-builtin.elpi) documents Elpi's standard library, you may
+- [coq-builtin-synterp](builtin-doc/coq-builtin-synterp.elpi) documents APIs to interact with Coq at parsing time
+- [elpi-buitin](builtin-doc/elpi-builtin.elpi) documents Elpi's standard library, you may
   look here for list processing code
 - [coq-lib](elpi/coq-lib.elpi) provides some utilities to manipulate Coq terms;
   it is an addendum to coq-builtin
