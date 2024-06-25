@@ -30,9 +30,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        coq_version: [8.19.1, dev]
+        coq_version: [8.19, 8.20, dev]
         ocaml_version:
-          - '4.14.1-flambda'
+          - '4.14-flambda'
     steps:
     - uses: actions/checkout@v2
     - uses: coq-community/docker-coq-action@v1
