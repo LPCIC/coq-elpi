@@ -422,7 +422,7 @@ let tc_instance = let open Conv in let open API.AlgebraicData in declare {
       M (fun ~ok ~ko { implementation; priority } -> ok implementation priority));
 ]} |> CConv.(!<)
 
-[%%if coq = "8.19"]
+[%%if coq = "8.19" || coq = "8.20"]
 let clenv_missing sigma ce cty =
   let rec nb_hyp sigma c = match EConstr.kind sigma c with
   | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
