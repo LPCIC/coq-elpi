@@ -1,34 +1,36 @@
+dune = @dune $(1) $(DUNE_FLAGS)
+
 all:
-	@dune build
+	$(call dune,build)
 .PHONY: all
 
 build-core:
-	@dune build theories
+	$(call dune,build) theories
 .PHONY: build-core
 
 build-apps:
-	@dune build $$(find apps -type d -name theories)
+	$(call dune,build) $$(find apps -type d -name theories)
 .PHONY: build-apps
 
 build:
-	@dune build @install
+	$(call dune,build) @install
 .PHONY: build
 
 test-core:
-	@dune runtest tests
+	$(call dune,runtest) tests
 .PHONY: test-core
 
 test-apps:
-	@dune build $$(find apps -type d -name tests)
+	$(call dune,build) $$(find apps -type d -name tests)
 .PHONY: test-apps
 
 test:
-	@dune runtest
-	@dune build $$(find apps -type d -name tests)
+	$(call dune,runtest)
+	$(call dune,build) $$(find apps -type d -name tests)
 .PHONY: test
 
 examples:
-	@dune build examples
+	$(call dune,build) examples
 .PHONY: examples
 
 doc: build
@@ -45,12 +47,12 @@ doc: build
 	@cp etc/tracer.png doc/
 
 clean:
-	@dune clean
+	$(call dune,clean)
 .PHONY: clean
 
 install:
-	@dune build -p coq-elpi
-	@dune install coq-elpi
+	$(call dune,build) -p coq-elpi
+	$(call dune,install) coq-elpi
 .PHONY: install
 
 nix:
