@@ -27,6 +27,9 @@
       mathcomp-single-planB-src.job = false;
       mathcomp-single-planB.job = false;
       mathcomp-single.job = false;
+
+      deriving.job = false;
+      reglang.job = false;
     };
 
     "coq-master".coqPackages = {
@@ -52,6 +55,9 @@
       mathcomp-single-planB-src.job = false;
       mathcomp-single-planB.job = false;
       mathcomp-single.job = false;
+
+      deriving.job = false;
+      reglang.job = false;
     };
 
   };
