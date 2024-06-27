@@ -1,4 +1,4 @@
-dune = @dune $(1) $(DUNE_FLAGS)
+dune = dune $(1) $(DUNE_$(1)_FLAGS)
 
 all:
 	$(call dune,build)
