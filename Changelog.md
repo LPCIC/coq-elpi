@@ -1,15 +1,27 @@
-# Unreleased
+# [2.2.0] - 28/06/2024
 
 Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
 
 ### Build system
 - Change switch to dune
+- New ppx_optcomp to support multiple Coq version
+- New no need for dot-merlin-reader, OCaml's language server understands dune
 
 ### Apps/tc
 - Change supports higher order unification
 - Change syntax to register, enable and disable solver
 - Change solutions found in Elpi are eta-contracted
 
+### API
+- New `coq.debug`
+- New `coq.pstring->string` and `coq.string->pstring`
+- New `@warn!` attribute for `coq.notation.add-abbreviation`
+- New `coq.*.set.min`, `coq.*.set.max`, `coq.*.set.choose`, `coq.*.set.fold`,
+  `coq.*.set.partition`
+- New `coq.*.map.fold`
+
+### HOAS
+- New `primitive (pstring S)` in Coq 8.20
 
 # Changelog
 
