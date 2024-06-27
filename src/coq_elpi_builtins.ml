@@ -2275,7 +2275,17 @@ denote the same x as before.|};
       CList.map (Option.map (fun x -> Constant x))))),
   DocAbove);
 
-  MLCode(Pred("coq.env.primitive-projections",
+  MLCode(Pred("coq.env.projection?",
+    In(constant, "Constant",
+    Out(B.int, "Number of parameters",
+    Easy "if the constant is a projection, returns the number of parameters of its record.")),
+    (fun c _ ~depth ->
+      let c = match c with Constant t -> t | _ -> raise No_clause in 
+      try !: ((Structures.Structure.find_from_projection c).nparams)
+      with Not_found -> raise No_clause)),
+  DocAbove);
+
+  MLCode(Pred("coq.env.primitive-projection",
     In(inductive, "StructureName",
     Out(list (option (pair projection int)), "Projections",
     Easy "given a record StructureName lists all primitive projections")),
@@ -2287,6 +2297,16 @@ denote the same x as before.|};
             let np = Names.Projection.npars c in
             let na = Names.Projection.arg c in
             Some (c, np + na))))))),
+  DocAbove);
+
+  MLCode(Pred("coq.env.primitive-projection?",
+    In(projection, "Projection",
+    Out(constant, "Compatibility constant",
+    Easy "relates a projection to its compatibility constant.")),
+    (fun p _ ~depth ->
+      let c = Projection.constant p in 
+      try !: (ignore (Structures.Structure.find_from_projection c); Constant c)
+      with Not_found -> raise No_clause)),
   DocAbove);
 
   LPDoc "-- Sorts (and their universe level, if applicable) ----------------";

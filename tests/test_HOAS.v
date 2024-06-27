@@ -197,6 +197,38 @@ Definition x : foo := {| p1 := 3; p2 := false |}.
 Unset Primitive Projections.
 End P.
 
+
+Module P'.
+  Record s (T : Type) := {
+    proj1 : nat;
+    proj2 : nat
+  }.
+
+  Elpi Query  lp:{{
+    global (const C) = {{proj1}},
+    coq.env.projection? C 1.
+  }}.
+End P'.
+
+
+Module P''.
+  #[local] Set Primitive Projections.
+  Record s1 (T : Type) := {
+    proj1 : nat;
+    proj2 : nat
+  }.
+
+  Axiom (X : s1 nat).
+
+  Elpi Query  lp:{{
+    app[primitive (proj P _) | _] = {{X.(proj1 _)}},
+    coq.env.primitive-projection? P C,
+    global (const C) = {{proj1}}.
+  }}.
+
+End P''.
+
+
 Elpi Command primitive_proj.
 Elpi Accumulate lp:{{
   main [str Kind, trm (global (indt I)), trm T, int N, trm V] :- std.do! [
