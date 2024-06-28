@@ -176,7 +176,8 @@ let compile src =
     compile_code src
 
 let get_and_compile ?even_if_empty name : (EC.program * bool) option =
-  P.code ?even_if_empty name |> Option.map (fun src ->
+  let t = Unix.gettimeofday () in
+  let res = P.code ?even_if_empty name |> Option.map (fun src ->
     let prog = compile src in
     let new_hash = Code.hash src in
     let old_hash = try SLMap.find name !programs_tip with Not_found -> 0 in
@@ -187,7 +188,9 @@ let get_and_compile ?even_if_empty name : (EC.program * bool) option =
       | Command { raw_args } -> raw_args
       | Program { raw_args } -> raw_args
       | Tactic -> true in
-    (prog, raw_args))
+      (prog, raw_args)) in
+    Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
+    res
 
 let run_static_check query =
   let checker = 
@@ -218,16 +221,21 @@ let run ~static_check program query =
     CErrors.user_err Pp.(str"Unknown trace options: " ++ prlist_with_sep spc str leftovers);
   let exe = EC.optimize query in
   let t4 = Unix.gettimeofday () in
-  let rc = API.Execute.once ~max_steps:!max_steps exe in
-  let t5 = Unix.gettimeofday () in
-  Coq_elpi_utils.debug Pp.(fun () ->
-      str @@ Printf.sprintf
-        "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
-        (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
-  Coq_elpi_utils.elpitime Pp.(fun () -> str @@ Printf.sprintf
-        "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f\n"
-        (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4));
-  rc
+  let print_debug with_error = 
+    let t5 = Unix.gettimeofday () in
+    let txt = Printf.sprintf "Elpi: query-compilation:%1.4f static-check:%1.4f optimization:%1.4f runtime:%1.4f %s\n"
+        (t2 -. t1) (t3 -. t2) (t4 -. t3) (t5 -. t4) (if with_error then "(with error)" else "(with success)") in
+    Coq_elpi_utils.debug Pp.(fun () -> str txt);
+    Coq_elpi_utils.elpitime Pp.(fun () -> str txt)
+  in
+  try
+    let rc = API.Execute.once ~max_steps:!max_steps exe in
+    print_debug false;
+    rc
+  with e ->
+    let e = Exninfo.capture e in
+    print_debug true;
+    Exninfo.iraise e
 ;;
 
 let elpi_fails program_name =
