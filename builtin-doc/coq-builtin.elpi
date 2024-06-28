@@ -910,10 +910,18 @@ external pred coq.env.end-section .
 % StructureName lists all projections
 external pred coq.env.projections i:inductive, o:list (option constant).
 
+% [coq.env.projection? Constant Number of parameters] if the constant is a
+% projection, returns the number of parameters of its record.
+external pred coq.env.projection? i:constant, o:int.
+
 % [coq.env.primitive-projections StructureName Projections] given a record
 % StructureName lists all primitive projections
 external pred coq.env.primitive-projections i:inductive, 
                                             o:list (option (pair projection int)).
+
+% [coq.env.primitive-projection? Projection Compatibility constant] relates
+% a projection to its compatibility constant.
+external pred coq.env.primitive-projection? i:projection, o:constant.
 
 % -- Sorts (and their universe level, if applicable) ----------------
 

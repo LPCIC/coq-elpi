@@ -19,6 +19,7 @@ Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
 - New `coq.*.set.min`, `coq.*.set.max`, `coq.*.set.choose`, `coq.*.set.fold`,
   `coq.*.set.partition`
 - New `coq.*.map.fold`
+- New `coq.env.projection?` and `coq-env.primitive-projection?`
 
 ### HOAS
 - New `primitive (pstring S)` in Coq 8.20
