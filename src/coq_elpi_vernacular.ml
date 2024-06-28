@@ -233,8 +233,9 @@ let run ~static_check program query =
     print_debug false;
     rc
   with e ->
+    let e = Exninfo.capture e in
     print_debug true;
-    raise e
+    Exninfo.iraise e
 ;;
 
 let elpi_fails program_name =
