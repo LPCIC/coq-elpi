@@ -29,7 +29,7 @@
    "keyword:higher order abstract syntax"
    "logpath:elpi"))
  (depends
-  (ocaml (>= 4.09.0))
+  (ocaml (>= 4.10.0))
   stdlib-shims
   (elpi (and (>= 1.18.2) (< 1.20.0~)))
   (coq (>= 8.19))
