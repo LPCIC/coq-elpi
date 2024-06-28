@@ -2285,7 +2285,7 @@ denote the same x as before.|};
       with Not_found -> raise No_clause)),
   DocAbove);
 
-  MLCode(Pred("coq.env.primitive-projection",
+  MLCode(Pred("coq.env.primitive-projections",
     In(inductive, "StructureName",
     Out(list (option (pair projection int)), "Projections",
     Easy "given a record StructureName lists all primitive projections")),
