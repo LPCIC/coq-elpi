@@ -1655,11 +1655,11 @@ module Solver = struct
       match Coq_elpi_vernacular.Interp.run ~static_check:false cprogram (`Fun query) with
         | API.Execute.Success solution ->
             let sigma, sub_goals, to_shelve = Coq_elpi_HOAS.solution2evd ~eta_contract_solution:true sigma solution (Evar.Set.of_list goals) in
-            let sigma = Evd.shelve sigma (sub_goals @ to_shelve) in
+            let sigma = Evd.shelve sigma sub_goals in
             sub_goals = [], sigma
         | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
         | API.Execute.Failure -> elpi_fails program
-        | exception (Coq_elpi_utils.LtacFail (level, msg)) -> elpi_fails program
+        | exception (Coq_elpi_utils.LtacFail (level, msg)) -> raise Not_found
   }
 
   type action = 
