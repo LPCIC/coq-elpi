@@ -1571,37 +1571,65 @@ let elpi_fails program_name =
     "Please report this inconvenience to the authors of the program."
   ]))
 
+module type M = sig
+  type elt
+  type t
+  val empty : t
+  val diff : t -> t -> t
+  val union : t -> t -> t
+  val add : elt -> t -> t
+  val gr2elt : Names.GlobRef.t -> elt
+  val mem : elt -> t -> bool
+  val of_qualid_list : Libnames.qualid list -> t
+
+end
+
+(* Set of overridden class *)
+module OSet : M = struct
+  module M = GRSet
+
+  type t = M.t
+  type elt = M.elt
+  let empty = M.empty
+  let diff = M.diff
+  let union = M.union
+  let add = M.add
+  let mem = M.mem
+  let gr2elt (x: Names.GlobRef.t) : elt = x
+
+  let of_qualid_list (x: Libnames.qualid list) : t = 
+    let add s x = add (Coq_elpi_utils.locate_simple_qualid x) s in
+    List.fold_left add empty x
+end
 
 module Modes = struct
   
   (** override_mode *)
   type omode =
-    | AllButFor of GRSet.t
-    | Only of GRSet.t
+    | AllButFor of OSet.t
+    | Only of OSet.t
 
   type action =
     | Set of omode
-    | Add of Libnames.qualid list
-    | Rm of Libnames.qualid list
+    | Add of OSet.t
+    | Rm of OSet.t
 
   let omodes = ref (CSMap.empty : omode CSMap.t)
 
   let create_solver_omode solver =
-    omodes := CSMap.add solver (Only GRSet.empty) !omodes
+    omodes := CSMap.add solver (Only OSet.empty) !omodes
 
   let takeover (qname, new_mode,c) =
     let name = qname2str qname in
     if c then create_solver_omode name else
-    let add_str x = GRSet.add (str2gr x) in
-    let grl2set grl = List.fold_right add_str grl GRSet.empty in
     let old_mode = CSMap.find name !omodes in
     let new_mode =
       match old_mode, new_mode with
       | _, Set(mode) -> mode
-      | AllButFor s, Add grl -> AllButFor (GRSet.diff s (grl2set grl))
-      | AllButFor s, Rm grl -> AllButFor (GRSet.union s (grl2set grl))
-      | Only s, Add grl -> Only (GRSet.union s (grl2set grl))
-      | Only s, Rm grl -> Only (GRSet.diff s (grl2set grl))
+      | AllButFor s, Add grl -> AllButFor (OSet.diff s grl)
+      | AllButFor s, Rm grl -> AllButFor (OSet.union s grl)
+      | Only s, Add grl -> Only (OSet.union s grl)
+      | Only s, Rm grl -> Only (OSet.diff s grl)
       in
     omodes := CSMap.set name new_mode !omodes
 
@@ -1627,11 +1655,11 @@ module Solver = struct
       match Coq_elpi_vernacular.Interp.run ~static_check:false cprogram (`Fun query) with
         | API.Execute.Success solution ->
             let sigma, sub_goals, to_shelve = Coq_elpi_HOAS.solution2evd ~eta_contract_solution:true sigma solution (Evar.Set.of_list goals) in
-            let sigma = Evd.shelve sigma (sub_goals @ to_shelve) in
+            let sigma = Evd.shelve sigma sub_goals in
             sub_goals = [], sigma
         | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
         | API.Execute.Failure -> elpi_fails program
-        | exception (Coq_elpi_utils.LtacFail (level, msg)) -> elpi_fails program
+        | exception (Coq_elpi_utils.LtacFail (level, msg)) -> raise Not_found
   }
 
   type action = 
@@ -1643,9 +1671,7 @@ module Solver = struct
     let ei = Evd.find_undefined sigma i in
     let ty = Evd.evar_concl ei in
     match Typeclasses.class_of_constr env sigma ty with
-    | Some (_,(((cl: typeclass),_),_)) -> 
-      let cl_impl = cl.Typeclasses.cl_impl in
-      GRSet.mem cl_impl classes 
+    | Some (_,((cl,_),_)) -> OSet.mem (OSet.gr2elt cl.cl_impl) classes 
     | None -> default
 
   let covered omode env sigma s =
@@ -1668,20 +1694,18 @@ end
  
 
 let set_solver_mode kind qname (l: Libnames.qualid list) = 
+  let l = OSet.of_qualid_list l in
   let cache_solver_mode = Modes.cache_solver_mode in
-  let empty = GRSet.empty in
   match kind with
   | AAdd -> Lib.add_leaf (cache_solver_mode (qname, Add l, false))
   | ARm  -> Lib.add_leaf (cache_solver_mode (qname, Rm l, false))
-  | AAll -> Lib.add_leaf (cache_solver_mode (qname, Set (AllButFor empty), false))
-  | ANone-> Lib.add_leaf (cache_solver_mode (qname, Set (Only empty), false))
-  | ASet -> let set = ref empty in
-      List.iter (fun x -> set := GRSet.add (str2gr x) !set) l;
-      Lib.add_leaf (cache_solver_mode (qname, Set (Only !set), false))
+  | AAll -> Lib.add_leaf (cache_solver_mode (qname, Set (AllButFor OSet.empty), false))
+  | ANone-> Lib.add_leaf (cache_solver_mode (qname, Set (Only OSet.empty), false))
+  | ASet -> Lib.add_leaf (cache_solver_mode (qname, Set (Only l), false))
 
 let solver_register l =
   Lib.add_leaf (Solver.cache_solver (l, Create));
-  Lib.add_leaf (Modes.cache_solver_mode (l, Add [], true))
+  Lib.add_leaf (Modes.cache_solver_mode (l, Add OSet.empty, true))
 
 let solver_activate l = Lib.add_leaf (Solver.cache_solver (l, Activate))
 
