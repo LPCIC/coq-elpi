@@ -1580,7 +1580,8 @@ module type M = sig
   val add : elt -> t -> t
   val gr2elt : Names.GlobRef.t -> elt
   val mem : elt -> t -> bool
-  val strs2set : Libnames.qualid list -> t
+  val of_qualid_list : Libnames.qualid list -> t
+
 end
 
 (* Set of overridden class *)
@@ -1596,11 +1597,9 @@ module OSet : M = struct
   let mem = M.mem
   let gr2elt (x: Names.GlobRef.t) : elt = x
 
-  let strs2set x = 
-    let add_str x = add (str2gr x) in
-    let grl2set grl = List.fold_right add_str grl empty in
-    grl2set x
-
+  let of_qualid_list (x: Libnames.qualid list) : t = 
+    let add s x = add (Coq_elpi_utils.locate_simple_qualid x) s in
+    List.fold_left add empty x
 end
 
 module Modes = struct
@@ -1612,8 +1611,8 @@ module Modes = struct
 
   type action =
     | Set of omode
-    | Add of Libnames.qualid list
-    | Rm of Libnames.qualid list
+    | Add of OSet.t
+    | Rm of OSet.t
 
   let omodes = ref (CSMap.empty : omode CSMap.t)
 
@@ -1627,10 +1626,10 @@ module Modes = struct
     let new_mode =
       match old_mode, new_mode with
       | _, Set(mode) -> mode
-      | AllButFor s, Add grl -> AllButFor (OSet.diff s (OSet.strs2set grl))
-      | AllButFor s, Rm grl -> AllButFor (OSet.union s (OSet.strs2set grl))
-      | Only s, Add grl -> Only (OSet.union s (OSet.strs2set grl))
-      | Only s, Rm grl -> Only (OSet.diff s (OSet.strs2set grl))
+      | AllButFor s, Add grl -> AllButFor (OSet.diff s grl)
+      | AllButFor s, Rm grl -> AllButFor (OSet.union s grl)
+      | Only s, Add grl -> Only (OSet.union s grl)
+      | Only s, Rm grl -> Only (OSet.diff s grl)
       in
     omodes := CSMap.set name new_mode !omodes
 
@@ -1695,17 +1694,18 @@ end
  
 
 let set_solver_mode kind qname (l: Libnames.qualid list) = 
+  let l = OSet.of_qualid_list l in
   let cache_solver_mode = Modes.cache_solver_mode in
   match kind with
   | AAdd -> Lib.add_leaf (cache_solver_mode (qname, Add l, false))
   | ARm  -> Lib.add_leaf (cache_solver_mode (qname, Rm l, false))
   | AAll -> Lib.add_leaf (cache_solver_mode (qname, Set (AllButFor OSet.empty), false))
   | ANone-> Lib.add_leaf (cache_solver_mode (qname, Set (Only OSet.empty), false))
-  | ASet -> Lib.add_leaf (cache_solver_mode (qname, Set (Only (OSet.strs2set l)), false))
+  | ASet -> Lib.add_leaf (cache_solver_mode (qname, Set (Only l), false))
 
 let solver_register l =
   Lib.add_leaf (Solver.cache_solver (l, Create));
-  Lib.add_leaf (Modes.cache_solver_mode (l, Add [], true))
+  Lib.add_leaf (Modes.cache_solver_mode (l, Add OSet.empty, true))
 
 let solver_activate l = Lib.add_leaf (Solver.cache_solver (l, Activate))
 
