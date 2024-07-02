@@ -106,6 +106,8 @@ namespace tc {
       precompile-aux _ (pglobal _ _ as C) A C A :- !.
       precompile-aux _ (sort _ as C) A C A :- !.
       precompile-aux _ (primitive _ as C) A C A :- !.
+      precompile-aux _ (app [global (const C) | _] as T) A (tc.canonical-projection T Scope N) (s A) :- coq.env.projection? C N, !, free-var Scope.
+      precompile-aux _ (app [primitive (proj P _) | _] as T) A (tc.canonical-projection T Scope 0) (s A) :- coq.env.primitive-projection? P _, !, free-var Scope.
 
       % Detect maybe-eta term
       % TODO: should I precompile also the type of the fun and put it in the output term
@@ -173,7 +175,7 @@ namespace tc {
                 (tc.prod-range (prod _ T Bo) 3)
               since x is applied at most 3 times in Bo
                 ==> This helps charging the right number of `eta-link` for map-deduplication rule
-        N is the number of problematic terms in T
+        N is the number of problematic terms in T + nb of projections
     */
     pred instance i:term, o:term, o:nat, o:list univ, o:list univ-instance.
     instance T T' N UnivConstL UnivInstL :-
