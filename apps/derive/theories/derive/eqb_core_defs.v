@@ -5,7 +5,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Open Scope positive_scope.
+Local Open Scope positive_scope.
 
 Section Section.
 Context {A:Type}.
