@@ -24,6 +24,11 @@ namespace tc {
         decompile-term-aux (sort _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (uvar as X) L X L :- !.
         decompile-term-aux (primitive _ as X) L X L :- !.
+        decompile-term-aux (tc.canonical-projection T S _) (pr [X|Xs] L1) Y (pr Xs' L3) :- !,
+          name Y X S,
+          decompile-term-aux T (pr Xs L1) T' (pr Xs' L2),
+          P = coq.unify-eq Y T' ok,
+          L3 = [P | L2].
 
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
