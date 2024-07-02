@@ -105,6 +105,7 @@ namespace tc {
       precompile-aux _ (global _ as C) A C A :- !.
       precompile-aux _ (pglobal _ _ as C) A C A :- !.
       precompile-aux _ (sort _ as C) A C A :- !.
+      precompile-aux _ (primitive _ as C) A C A :- !.
 
       % Detect maybe-eta term
       % TODO: should I precompile also the type of the fun and put it in the output term
@@ -142,7 +143,6 @@ namespace tc {
       %   precompile-aux IsP Ty A Ty1 A1, pi x\ is-name x => precompile-aux IsP (F x) A1 (F1 x) A2.
       % precompile-aux IsP (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
       %   precompile-aux IsP T A T1 A1, precompile-aux IsP Rty A1 Rty1 A2, std.fold-map B A2 (precompile-aux IsP) B1 A3.
-      % precompile-aux _ (primitive _ as C) A C A :- !.
       % precompile-aux IsP (uvar M L as X) A W A1 :- var X, !, std.fold-map L A (precompile-aux IsP) L1 A1, coq.mk-app-uvar M L1 W.
       % % when used in CHR rules
       % precompile-aux IsP (uvar X L) A (uvar X L1) A1 :- std.fold-map L A (precompile-aux IsP) L1 A1.
@@ -226,6 +226,7 @@ namespace tc {
       precompile-aux (global _ as C) A C A :- !.
       precompile-aux (pglobal _ _ as C) A C A :- !.
       precompile-aux (sort _ as C) A C A :- !.
+      precompile-aux (primitive _ as C) A C A :- !.
 
       % Detect maybe-eta term
       precompile-aux (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty' B') Scope) M :-
