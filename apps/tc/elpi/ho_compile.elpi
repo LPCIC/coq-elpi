@@ -121,6 +121,7 @@ namespace tc {
       pred clean-term i:term, o:term.
       clean-term A B :-
         (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
+        (pi t s r \ copy (tc.canonical-projection t s _) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
           std.assert!  (copy A B) "[TC] clean-term error".
