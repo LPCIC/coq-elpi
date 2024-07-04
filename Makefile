@@ -51,7 +51,6 @@ clean:
 .PHONY: clean
 
 install:
-	$(call dune,build) -p coq-elpi
 	$(call dune,install) coq-elpi
 .PHONY: install
 
