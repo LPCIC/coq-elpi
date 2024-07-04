@@ -117,22 +117,22 @@ let tactic_mode : bool State.component = State.declare_component ~name:"coq-elpi
   ~init:(fun () -> false)
   ~start:(fun x -> x) ()  
 let abstract__grab_global_env_keep_sigma api thunk = (); (fun state ->
-  let state, result, gls = thunk state in
-  Coq_elpi_HOAS.grab_global_env state, result, gls)
+  let uctx, state, result, gls = thunk state in
+  Coq_elpi_HOAS.grab_global_env ~uctx state, result, gls)
 
 let grab_global_env__drop_sigma_univs_if_option_is_set options api thunk = (); (fun state ->
   if State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
-  let state, result, gls = thunk state in
+  let uctx, state, result, gls = thunk state in
   match options with
   | { keepunivs = Some false } -> Coq_elpi_HOAS.grab_global_env_drop_univs_and_sigma state, result, gls
-  | _ -> Coq_elpi_HOAS.grab_global_env state, result, gls)
+  | _ -> Coq_elpi_HOAS.grab_global_env ~uctx state, result, gls)
 
 let grab_global_env api thunk = (); (fun state ->
   if State.get tactic_mode state then
     Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
-  let state, result, gls = thunk state in
-  Coq_elpi_HOAS.grab_global_env state, result, gls)
+  let uctx, state, result, gls = thunk state in
+  Coq_elpi_HOAS.grab_global_env ~uctx state, result, gls)
 
 (* This is for stuff that is not monotonic in the env, eg section closing *)
 let grab_global_env_drop_sigma api thunk = (); (fun state ->
@@ -141,7 +141,12 @@ let grab_global_env_drop_sigma api thunk = (); (fun state ->
   let state, result, gls = thunk state in
   Coq_elpi_HOAS.grab_global_env_drop_sigma state, result, gls)
 
-
+let grab_global_env_drop_sigma_keep_univs api thunk = (); (fun state ->
+  if State.get tactic_mode state then
+    Coq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
+  let uctx, state, result, gls = thunk state in
+  Coq_elpi_HOAS.grab_global_env_drop_sigma_keep_univs ~uctx state, result, gls)
+  
 let bool = B.bool
 let int = B.int
 let list = B.list
@@ -534,11 +539,11 @@ let is_global_level env u =
 [%%endif]
 
 let err_if_contains_alg_univ ~depth t =
-  let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
+  let env = Global.env () in
   let is_global u = 
     match Univ.Universe.level u with
     | None -> true
-    | Some l -> Univ.Level.Set.mem l global_univs in
+    | Some l -> is_global_level env l in
   let rec aux ~depth acc t =
     match E.look ~depth t with
     | E.CData c when isuniv c ->
@@ -904,8 +909,6 @@ let cinfo_make state types using =
     definition_using (get_global_env state) sigma ~fixnames:[] ~using ~terms:types)
     using in
   Declare.CInfo.make ?using
-let declare_definition _using ~cinfo ~info ~opaque ~body sigma =
-  Declare.declare_definition ~cinfo ~info ~opaque ~body sigma
 let eval_of_constant c =
   match c with
   | Variable v -> Tacred.EvalVarRef v
@@ -926,9 +929,6 @@ let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_
 
 let cinfo_make _ _ _using =
   Declare.CInfo.make
-let declare_definition using ~cinfo ~info ~opaque ~body sigma =
-  let using = Option.map Proof_using.using_from_string using in
-  Declare.declare_definition ~cinfo ~info ~opaque ~body ?using sigma
 let eval_of_constant c =
   match c with
   | Variable v -> Evaluable.EvalVarRef v
@@ -940,6 +940,22 @@ let eval_to_oeval = Evaluable.to_kevaluable
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let pattern_of_glob_constr env g = Patternops.pattern_of_glob_constr env g
 [%%endif]
+
+[%%if coq = "8.19"]
+let declare_definition hack _using ~cinfo ~info ~opaque ~body sigma =
+  let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body sigma in
+  gr, Option.get !hack
+[%%elif coq = "8.20"]
+let declare_definition hack using ~cinfo ~info ~opaque ~body sigma =
+  let using = Option.map Proof_using.using_from_string using in
+  let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body ?using sigma in
+  gr, Option.get !hack
+[%%else]
+let declare_definition _ using ~cinfo ~info ~opaque ~body sigma =
+  let using = Option.map Proof_using.using_from_string using in
+  Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma
+[%%endif]
+
 
 [%%if coq = "8.20"]
 let warns_of_options options = options.user_warns
@@ -972,7 +988,8 @@ let add_axiom_or_variable api id ty local options state =
         ~univs ~impargs ~inline:options.inline ~name ~id
     end
   in
-  gr
+  let ucsts = match univs with UState.Monomorphic_entry x, _ -> x | _ -> Univ.ContextSet.empty in
+  gr, ucsts
   ;;
 
 type tac_abbrev = {
@@ -1269,7 +1286,7 @@ let dep1 ?inside sigma gr =
   | ConstRef cst ->
       let cb = Environ.lookup_constant cst (Global.env()) in
       let ty = cb.Declarations.const_type in
-      let bo = Global.body_of_constant_body Library.indirect_accessor cb in
+      let bo = Global.body_of_constant_body (Library.indirect_accessor[@warning "-3"]) cb in
       let l =
         match bo with
         | Some (e,_,_) -> [ty; e]
@@ -1360,7 +1377,7 @@ Supported attributes:
      | ConstRef gref ->
        let local = options.local <> Some false in
        Reductionops.ReductionBehaviour.set ~local gref None;
-       state, (), []
+       Univ.ContextSet.empty, state, (), []
      | _ -> err Pp.(str "reset-simplification must be called on constant")))),
   DocAbove)]
 [%%endif]
@@ -2018,8 +2035,8 @@ Supported attributes:
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | B.Given ty ->
        warn_deprecated_add_axiom ();
-       let gr = add_axiom_or_variable "coq.env.add-const" id ty local options state in
-       state, !: (global_constant_of_globref gr), []
+       let gr, uctx = add_axiom_or_variable "coq.env.add-const" id ty local options state in
+       uctx, state, !: (global_constant_of_globref gr), []
      end
     | B.Given body ->
        let sigma = get_sigma state in
@@ -2045,7 +2062,13 @@ Supported attributes:
         then Locality.Discharge
         else Locality.(Global ImportDefaultBehavior) in
        let cinfo = cinfo_make state types options.using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
-       let info = Declare.Info.make ~scope ~kind ~poly ~udecl () in
+
+       (* This is a hack, drop after 8.21 *)
+       let uctx = ref None in
+       let hook = Declare.Hook.make (fun { Declare.Hook.S.uctx = x } -> uctx := Some (UState.context_set x)) in
+       (* End hack *)
+
+       let info = Declare.Info.make ~scope ~kind ~poly ~udecl ~hook () in
 
        let used =
          Univ.Level.Set.union
@@ -2054,14 +2077,14 @@ Supported attributes:
        let used = Univ.Level.Set.union used (universes_of_udecl state udecl) in
        let sigma = restricted_sigma_of used state in
    
-       let gr = declare_definition options.using ~cinfo ~info ~opaque ~body sigma in
+       let gr, uctx = declare_definition uctx options.using ~cinfo ~info ~opaque ~body sigma in
        let () =
         let lid = CAst.make ~loc:(to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state) (Id.of_string id) in
         match scope with
         | Locality.Discharge -> Dumpglob.dump_definition lid true "var"
         | Locality.Global _ -> Dumpglob.dump_definition lid false "def"
        in
-       state, !: (global_constant_of_globref gr), []))),
+       uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.add-axiom",
@@ -2077,8 +2100,8 @@ Supported attributes:
 - @inline! (default: no inlining)
 - @inline-at! N (default: no inlining)|})))),
   (fun id ty _ ~depth {options} _ -> grab_global_env "coq.env.add-axiom" (fun state ->
-     let gr = add_axiom_or_variable "coq.env.add-axiom" id ty false options state in
-     state, !: (global_constant_of_globref gr), []))),
+     let gr, uctx = add_axiom_or_variable "coq.env.add-axiom" id ty false options state in
+     uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.add-section-variable",
@@ -2086,10 +2109,11 @@ Supported attributes:
     CIn(closed_ground_term, "Ty",
     Out(constant, "C",
     Full (global, {|Declare a new section variable: C gets a constant derived from Name
-and the current module|})))),
-  (fun id ty _ ~depth {options} _ -> grab_global_env_drop_sigma "coq.env.add-section-variable" (fun state ->
-     let gr = add_axiom_or_variable "coq.env.add-section-variable" id ty true options state in
-     state, !: (global_constant_of_globref gr), []))),
+and the current module.
+|})))),
+  (fun id ty _ ~depth {options} _ -> grab_global_env_drop_sigma_keep_univs "coq.env.add-section-variable" (fun state ->
+     let gr, uctx = add_axiom_or_variable "coq.env.add-section-variable" id ty true options state in
+     uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.add-indt",
@@ -2152,7 +2176,7 @@ Supported attributes:
            | Names.Name id -> Dumpglob.dump_definition (lid_of id) false "proj"
            | Names.Anonymous -> ()) names;
       end;
-     state, !: ind, []))),
+     uctx,state, !: ind, []))),
   DocAbove);
 
   LPDoc "Interactive module construction";
@@ -2188,7 +2212,7 @@ with a number, starting from 1.
     Full(unit_ctx, "Starts a functor" ^ Coq_elpi_builtins_synterp.synterp_api_doc)))),
   (fun name mp params ~depth _ _ -> grab_global_env "coq.env.begin-module-functor" (fun state ->
      let state, _ = Coq_elpi_builtins_synterp.SynterpAction.pop_BeginModule (name,mp,params) state in
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocNext);
 
   LPCode {|
@@ -2212,7 +2236,7 @@ coq.env.begin-module Name MP :- coq.env.begin-module-functor Name MP [].
     Full(unit_ctx,"Starts a module type functor *E*" ^ Coq_elpi_builtins_synterp.synterp_api_doc))),
   (fun id params ~depth _ _ -> grab_global_env "coq.env.begin-module-type-functor" (fun state ->
     let state, _ = Coq_elpi_builtins_synterp.SynterpAction.pop_BeginModuleType (id,params) state in
-    state, (), []))),
+    Univ.ContextSet.empty, state, (), []))),
   DocNext);
 
   LPCode {|
@@ -2240,7 +2264,7 @@ coq.env.begin-module-type Name :-
     Full(unit_ctx, "Applies a functor *E*" ^ Coq_elpi_builtins_synterp.synterp_api_doc))))))),
   (fun name mp f arguments inline _ ~depth _ _ -> grab_global_env "coq.env.apply-module-functor" (fun state ->
       let state, mp = Coq_elpi_builtins_synterp.SynterpAction.pop_ApplyModule (name,mp,f,arguments,inline) state in
-      state, ?: mp, []))),
+      Univ.ContextSet.empty, state, ?: mp, []))),
   DocNext);
   
   MLCode(Pred("coq.env.apply-module-type-functor",
@@ -2252,7 +2276,7 @@ coq.env.begin-module-type Name :-
     Full(unit_ctx, "Applies a type functor *E*" ^ Coq_elpi_builtins_synterp.synterp_api_doc)))))),
   (fun name f arguments inline _ ~depth _ _ -> grab_global_env "coq.env.apply-module-type-functor" (fun state ->
       let state, mp = Coq_elpi_builtins_synterp.SynterpAction.pop_ApplyModuleType (name,f,arguments,inline) state in
-      state, ?: mp, []))),
+      Univ.ContextSet.empty, state, ?: mp, []))),
   DocNext);
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
@@ -2262,7 +2286,7 @@ coq.env.begin-module-type Name :-
     Full(unit_ctx, "is like the vernacular Include, Inline can be omitted *E*" ^ Coq_elpi_builtins_synterp.synterp_api_doc))),
   (fun mp i ~depth _ _ -> grab_global_env "coq.env.include-module" (fun state ->
       let state, _ = Coq_elpi_builtins_synterp.SynterpAction.pop_IncludeModule (mp,i) state in
-      state, (), []))),
+      Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   (* XXX When Coq's API allows it, call vernacentries directly *)
@@ -2272,7 +2296,7 @@ coq.env.begin-module-type Name :-
     Full(unit_ctx, "is like the vernacular Include Type, Inline can be omitted  *E*" ^ Coq_elpi_builtins_synterp.synterp_api_doc))),
   (fun mp i ~depth _ _ -> grab_global_env "coq.env.include-module-type" (fun state ->
      let state,_ = Coq_elpi_builtins_synterp.SynterpAction.pop_IncludeModuleType (mp,i) state in
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.import-module",
@@ -2280,7 +2304,7 @@ coq.env.begin-module-type Name :-
     Full(unit_ctx, "is like the vernacular Import *E*")),
   (fun mp ~depth _ _ -> grab_global_env "coq.env.import-module" (fun state ->
      let state, _ = Coq_elpi_builtins_synterp.SynterpAction.pop_ImportModule mp state in
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.export-module",
@@ -2288,7 +2312,7 @@ coq.env.begin-module-type Name :-
     Full(unit_ctx, "is like the vernacular Export *E*")),
   (fun mp ~depth _ _ -> grab_global_env "coq.env.export-module" (fun state ->
      let state, _ = Coq_elpi_builtins_synterp.SynterpAction.pop_ExportModule mp state in
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   LPDoc
@@ -2312,7 +2336,7 @@ denote the same x as before.|};
     Full(unit_ctx, "starts a section named Name *E*")),
   (fun id ~depth _ _ -> grab_global_env "coq.env.begin-section" (fun state ->
      let state, _ = Coq_elpi_builtins_synterp.SynterpAction.pop_BeginSection id state in
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.end-section",
@@ -2725,7 +2749,7 @@ Supported attributes:
 - @local! (default: false)|})),
   (fun gr ~depth { options } _ -> grab_global_env "coq.CS.declare-instance" (fun state ->
      Canonical.declare_canonical_structure ?local:options.local gr;
-    state, (), []))),
+    Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
@@ -2764,7 +2788,7 @@ Supported attributes:
   (fun gr ~depth { options } _ -> grab_global_env "coq.TC.declare-class" (fun state ->
      (* CAVEAT: declare_existing_class creates the new class but methods are not added *)
      Record.declare_existing_class gr;
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.elpi.toposort",
@@ -2792,7 +2816,7 @@ Supported attributes:
      let hint_priority = Some priority in
      Classes.existing_instance global gr
           (Some { Hints.empty_hint_info with Typeclasses.hint_priority });
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.TC.db",
@@ -2865,7 +2889,7 @@ NParams can always be omitted, since it is inferred.
      | _, _ ->
         ComCoercion.try_add_new_coercion gr ~local ~reversible
      end;
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.coercion.db",
@@ -2927,7 +2951,7 @@ Supported attributes:|} ^ hint_locality_doc)))),
   (fun gr (db,_) mode ~depth:_ {options} _ -> grab_global_env "coq.hints.add-mode" (fun state ->
      let locality = hint_locality options in
      Hints.add_hints ~locality [db] (Hints.HintsModeEntry(gr,mode));
-     state, (), []
+     Univ.ContextSet.empty, state, (), []
     ))),
   DocAbove);
 
@@ -2956,7 +2980,7 @@ Supported attributes:|} ^ hint_locality_doc)))),
     let transparent = not opaque in
     let r = eval_of_constant c in
      Hints.add_hints ~locality [db] Hints.(HintsTransparencyEntry(HintsReferences [r],transparent));
-     state, (), []
+     Univ.ContextSet.empty, state, (), []
     ))),
   DocAbove);
 
@@ -2988,7 +3012,7 @@ Supported attributes:|} ^ hint_locality_doc))))),
     pattern_of_glob_constr env) in
   let info = { Typeclasses.hint_priority; hint_pattern } in
    Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info, true, hint_globref gr]);
-   state, (), []
+   Univ.ContextSet.empty, state, (), []
   ))),
 DocAbove);
 
@@ -3021,7 +3045,7 @@ Supported attributes:
        | B.Unspec -> Anonymous, Glob_term.Explicit
        | B.Given x -> Anonymous, x))) in
      Impargs.set_implicits local gref imps;
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-default-implicit",
@@ -3034,7 +3058,7 @@ Supported attributes:
   (fun gref ~depth { options } _ -> grab_global_env "coq.arguments.set-default-implicit" (fun state ->
      let local = options.local <> Some false in
      Impargs.declare_implicits local gref;
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.name",
@@ -3062,7 +3086,7 @@ Supported attributes:
        | None -> Names.Name.Anonymous
        | Some x -> Names.(Name.Name (Id.of_string x))) in
      Arguments_renaming.rename_arguments local gref names;
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.scope",
@@ -3087,7 +3111,7 @@ Supported attributes:
         try ignore (CNotation.find_scope k); k
         with CErrors.UserError _ -> CNotation.find_delimiters_scope k)) in
      CNotation.declare_arguments_scope local gref scopes;
-     state, (), []))),
+     Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLData simplification_strategy;
@@ -3118,7 +3142,7 @@ Supported attributes:
      | ConstRef gref ->
        let local = options.local <> Some false in
        compat_reduction_behavior_set ~local gref strategy;
-       state, (), []
+       Univ.ContextSet.empty, state, (), []
      | _ -> err Pp.(str "set-simplification must be called on constant")))),
   DocAbove)
 
@@ -3196,7 +3220,7 @@ Supported attributes:
      let qname = Libnames.qualid_of_string (Id.to_string name) in
      match Nametab.locate_extended qname with
      | Globnames.TrueGlobal _ -> assert false
-     | Globnames.Abbrev sd -> state, !: sd, []))),
+     | Globnames.Abbrev sd -> Univ.ContextSet.empty, state, !: sd, []))),
   DocAbove);
 
   MLCode(Pred("coq.notation.abbreviation",
@@ -3282,7 +3306,7 @@ is equivalent to Elpi Export TacName.|})))),
       let abbrev_name = Coq_elpi_utils.string_split_on_char '.' name in
       let tac_name = Coq_elpi_utils.string_split_on_char '.' tacname in
       Lib.add_leaf @@ inAbbreviationForTactic { abbrev_name; tac_name; tac_fixed_args};
-      state, (), []))),
+      Univ.ContextSet.empty, state, (), []))),
     DocAbove);
 
   MLData Coq_elpi_builtins_synterp.attribute_value;
@@ -3647,7 +3671,7 @@ coq.reduction.lazy.whd_all X Y :-
        let local = ctx.options.local = Some true in
        let csts = csts |> List.map eval_of_constant in
        Redexpr.set_strategy local [level, csts];
-       state, (), []))),
+       Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
   MLCode(Pred("coq.strategy.get",
@@ -3794,7 +3818,9 @@ Supported attributes:
        Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
        
        let state, assignments = set_current_sigma ~depth state sigma in
-       state, !: subgoals, assignments
+
+       (* universe constraints fixed by the code above*)
+       Univ.ContextSet.empty, state, !: subgoals, assignments
       ))),
   DocAbove);
 

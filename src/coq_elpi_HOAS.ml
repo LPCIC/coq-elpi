@@ -864,8 +864,8 @@ module CoqEngine_HOAS : sig
 
   (* when the env changes under the hood, we can adapt sigma or drop it but keep
      its constraints *)
-  val from_env_keep_univ_of_sigma : env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
-  val from_env_keep_univ_and_sigma : env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_keep_univ_of_sigma :  uctx:Univ.ContextSet.t -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_keep_univ_and_sigma : uctx:Univ.ContextSet.t -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
 
 end = struct
 
@@ -882,16 +882,24 @@ let show_coq_engine ?with_univs e = Format.asprintf "%a" (pp_coq_engine ?with_un
 
  let from_env env = from_env_sigma env (Evd.from_env env)
 
- let from_env_keep_univ_and_sigma ~env0 ~env sigma0 =
+
+[%%if coq = "8.19" || coq = "8.20"]
+let demote uctx sigma0 env = 
+      let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
+      UState.demote_global_univs env uctx
+[%%else]
+ let demote uctx sigma0 env =
+   UState.demote_global_univs uctx (Evd.evar_universe_context sigma0)
+[%%endif]
+
+ let from_env_keep_univ_and_sigma ~uctx ~env0 ~env sigma0 =
    assert(env0 != env);
-   let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
-   let uctx = UState.demote_global_univs env uctx in
+   let uctx = demote uctx sigma0 env in
    from_env_sigma env (Evd.set_universe_context sigma0 uctx)
 
-let from_env_keep_univ_of_sigma ~env0 ~env sigma0 =
+let from_env_keep_univ_of_sigma ~uctx ~env0 ~env sigma0 =
    assert(env0 != env);
-   let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
-   let uctx = UState.demote_global_univs env uctx in
+   let uctx = demote uctx sigma0 env in
    from_env_sigma env (Evd.from_ctx uctx)
  
  let init () =
@@ -2243,16 +2251,16 @@ let lp2constr syntactic_constraints coq_ctx ~depth state t =
 let set_sigma state sigma = S.update engine state (fun x -> { x with sigma })
 
 (* We reset the evar map since it depends on the env in which it was created *)
-let grab_global_env state =
+let grab_global_env ~uctx state =
   let env0 = get_global_env state in
   let env = Global.env () in
   if env == env0 then state
   else
     if Environ.universes env0 == Environ.universes env then
-      let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (get_sigma state)) in
+      let state = S.set engine state (CoqEngine_HOAS.from_env_sigma  env (get_sigma state)) in
       state  
     else
-      let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_and_sigma ~env0 ~env (get_sigma state)) in
+      let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_and_sigma ~uctx ~env0 ~env (get_sigma state)) in
       state
 let grab_global_env_drop_univs_and_sigma state =
   let env0 = get_global_env state in
@@ -2267,12 +2275,25 @@ let grab_global_env_drop_sigma state =
   let env0 = get_global_env state in
   let env = Global.env () in
   if env == env0 then state
-  else
-    let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma ~env0 ~env (get_sigma state)) in
+  else begin
+    let sigma = get_sigma state in
+    let ustate = Evd.evar_universe_context sigma in
+    let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_ctx ustate)) in
     let state = UVMap.empty state in
     state
+  end
     
-
+let grab_global_env_drop_sigma_keep_univs ~uctx state =
+  let env0 = get_global_env state in
+  let env = Global.env () in
+  if env == env0 then state
+  else begin
+    let sigma = get_sigma state in
+    let state = S.set engine state (CoqEngine_HOAS.from_env_keep_univ_of_sigma ~uctx ~env0 ~env sigma) in
+    let state = UVMap.empty state in
+    state
+  end
+  
 let solvec = E.Constants.declare_global_symbol "solve"
 let msolvec = E.Constants.declare_global_symbol "msolve"
 let goalc = E.Constants.declare_global_symbol "goal"

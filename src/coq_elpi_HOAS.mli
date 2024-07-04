@@ -296,9 +296,10 @@ val body_of_constant :
   State.t -> Names.Constant.t -> UVars.Instance.t option ->
   State.t * EConstr.t option * UVars.Instance.t option
 
-val grab_global_env : State.t -> State.t
+val grab_global_env : uctx:Univ.ContextSet.t -> State.t -> State.t
 val grab_global_env_drop_univs_and_sigma : State.t -> State.t
 val grab_global_env_drop_sigma : State.t -> State.t
+val grab_global_env_drop_sigma_keep_univs : uctx:Univ.ContextSet.t -> State.t -> State.t
 
 val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
