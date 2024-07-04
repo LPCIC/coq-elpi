@@ -505,11 +505,10 @@ let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
   (fun () -> !f)
 
 let is_global_level env u =
-  try
     let set = Univ.Level.Set.singleton u in
-    let () = UGraph.check_declared_universes (Environ.universes env) set in
-    true
-  with UGraph.UndeclaredLevel _ -> false
+    match UGraph.check_declared_universes (Environ.universes env) set with
+    | Ok () -> true
+    | Error _ -> false
 
 let err_if_contains_alg_univ ~depth t =
   let env = Global.env () in
