@@ -220,6 +220,16 @@ GRAMMAR EXTEND Gram
     [ [ any_kwd -> { !the_kwd }] ];
 END
 
+{
+
+[%%if coq = "8.19" || coq = "8.20"]
+let mkAttributesFlagQualid q = Attributes.FlagIdent (Names.Id.to_string (Libnames.qualid_basename q)) 
+[%%else]
+let mkAttributesFlagQualid q = Attributes.FlagQualid q
+[%%endif]
+
+}
+
 ARGUMENT EXTEND attributes
   PRINTED BY { pr_attributes } 
 END
@@ -236,7 +246,7 @@ GRAMMAR EXTEND Gram GLOBAL: attributes;
   ;
   my_attr_value:
     [ [ "=" ; v = string -> { Attributes.VernacFlagLeaf (Attributes.FlagString v) }
-      | "=" ; v = IDENT -> { Attributes.VernacFlagLeaf (Attributes.FlagIdent v) }
+      | "=" ; v = qualid -> { Attributes.VernacFlagLeaf (mkAttributesFlagQualid v) }
       | "(" ; a = my_attribute_list ; ")" -> { Attributes.VernacFlagList a }
       | -> { Attributes.VernacFlagEmpty } ]
     ]

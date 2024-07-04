@@ -33,7 +33,9 @@ let atts2impl loc phase ~depth state atts q =
   and convert_att att = convert_att_r att.CAst.v
   and convert_atts l = List.map convert_att l
   and convert_att_value = function
-    Attributes.FlagIdent s | Attributes.FlagString s -> AttributeString s
+    | Attributes.FlagIdent s [@if coq = "8.19" || coq = "8.20"] -> AttributeString s
+    | Attributes.FlagQualid q [@if coq <> "8.19" && coq <> "8.20"] -> AttributeString (Libnames.string_of_qualid q)
+    | Attributes.FlagString s -> AttributeString s
   in
   let phase = match phase with Summary.Stage.Interp -> "interp" | Summary.Stage.Synterp -> "synterp" in
   let atts =
