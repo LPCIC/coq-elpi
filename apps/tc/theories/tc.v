@@ -23,21 +23,21 @@ Set Warnings "+elpi".
 Elpi Command TC.Print_instances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
-  pred list-printer i:gref, i:list prop.
-  list-printer _ [].
-  list-printer ClassGR Instances :- 
-    std.map Instances (x\r\ x = instance _ r _) InstancesGR,
+  pred tc.list-printer i:gref, i:list prop.
+  tc.list-printer _ [].
+  tc.list-printer ClassGR Instances :- 
+    std.map Instances (x\r\ x = tc.instance _ r _) InstancesGR,
     coq.say "Instances list for" ClassGR "is:",
     std.forall InstancesGR (x\ coq.say " " x). 
 
   main [str Class] :-
     std.assert! (coq.locate Class ClassGR) "The entered TC not exists",
-    std.findall (instance _ _ ClassGR) Rules,
-    list-printer ClassGR Rules. 
+    std.findall (tc.instance _ _ ClassGR) Rules,
+    tc.list-printer ClassGR Rules. 
   main [] :-
     std.forall {coq.TC.db-tc} (ClassGR\ sigma Rules\
-      std.findall (instance _ _ ClassGR) Rules,
-      list-printer ClassGR Rules
+      std.findall (tc.instance _ _ ClassGR) Rules,
+      tc.list-printer ClassGR Rules
     ).  
 }}.
 Elpi Typecheck.
@@ -58,7 +58,7 @@ Elpi Accumulate File modes.
 Elpi Accumulate File solver.
 Elpi Query lp:{{
   sigma Options\ 
-    all-options Options,
+    tc.all-options Options,
     std.forall Options (x\ sigma L\ x L, 
       if (coq.option.available? L _) true
         (coq.option.add L (coq.option.bool ff) ff)).
@@ -70,7 +70,7 @@ Elpi Query lp:{{
     std.iota 1001 Nums, 
     std.forall Nums (x\ sigma NumStr\
       NumStr is int_to_string x,
-      @global! => add-tc-db NumStr (before "lastHook") (hook NumStr)
+      @global! => tc.add-tc-db NumStr (before "lastHook") (tc.hook NumStr)
     )
 }}.
 
@@ -107,24 +107,24 @@ Elpi Accumulate lp:{{
         instance is created and added to the db
   */
 
-  shorten class-coercion.{add, remove, loop-proj}.
+  shorten tc.class-coercion.{add, remove, loop-proj}.
   main [str "remove_coercions" | Proj] :- !, loop-proj remove Proj.
   main [str "add_coercions" | Proj] :- !, loop-proj add Proj.
 
   main [str "new_instance", str Inst, str Cl, str Locality, int Prio] :- !,
-    time-it _ (coq.locate Cl GRCl,
+    tc.time-it _ (coq.locate Cl GRCl,
     coq.locate Inst GRInst,
-    add-inst GRInst GRCl Locality Prio) "Compiler for Instance".
+    tc.add-inst GRInst GRCl Locality Prio) "Compiler for Instance".
 
   main [str "new_class", str Cl] :- !,
-    time-it oTC-time-compile-class (
-      coq.locate Cl GR, add-class-gr classic GR
+    tc.time-it tc.oTC-time-compile-class (
+      coq.locate Cl GR, tc.add-class-gr tc.classic GR
     ) "Compiler for Class".
 
   % used to build ad-hoc instance for eta-reduction on the argument of 
   % Cl that have function type
   main [str "default_instance", str Cl] :- !,
-    eta-reduction-aux.main Cl.
+    tc.eta-reduction-aux.main Cl.
 
   main A :- coq.error "Fail in TC.Compiler: not a valid input entry" A.
 }}.
@@ -140,9 +140,9 @@ Elpi Accumulate lp:{{
   main [str ClassStr] :- 
     coq.locate ClassStr ClassGR, 
     std.assert! (coq.TC.class? ClassGR) "Should pass the name of a type class",
-    std.assert! (class ClassGR PredName _ Modes) "Cannot find `class ClassGR _ _` in the db",
-    std.assert! (not (instance _ _ ClassGR)) "Cannot set deterministic a class with an already existing instance",
-    add-tc-db _ (after "0") (class ClassGR PredName deterministic Modes :- !).
+    std.assert! (tc.class ClassGR PredName _ Modes) "Cannot find `class ClassGR _ _` in the db",
+    std.assert! (not (tc.instance _ _ ClassGR)) "Cannot set deterministic a class with an already existing instance",
+    tc.add-tc-db _ (after "0") (tc.class ClassGR PredName tc.deterministic Modes :- !).
 }}.
 Elpi Typecheck.
 
@@ -154,7 +154,7 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
     coq.locate ClassStr ClassGR, 
-    class ClassGR PredName SearchMode Modes,
+    tc.class ClassGR PredName SearchMode Modes,
     coq.say "[TC] For " ClassGR ":",
     coq.say "  elpi predicate :" PredName,
     coq.say "  search mode is :" SearchMode,
@@ -173,16 +173,16 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
-  pred add-unfold i:gref.
-  add-unfold (const C) :-
-    if (unfold-constant C) true
-      (add-tc-db _ _ (unfold-constant C)).
-  add-unfold GR :-
+  pred tc.add-unfold i:gref.
+  tc.add-unfold (const C) :-
+    if (tc.unfold-constant C) true
+      (tc.add-tc-db _ _ (tc.unfold-constant C)).
+  tc.add-unfold GR :-
     coq.error "[TC]" GR "is not a constant".
   main L :-
     ErrMsg = "[TC] TC.Unfold accepts a list of string is accepted",
     std.map L (x\r\ sigma R\ std.assert! (str R = x) ErrMsg, coq.locate R r) L',
-    std.forall L' add-unfold.
+    std.forall L' tc.add-unfold.
 }}.
 Elpi Typecheck.
 

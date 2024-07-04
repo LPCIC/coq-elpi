@@ -1,4 +1,6 @@
 namespace tc {
+  shorten tc.{r-ar, range-arity}.
+
   namespace compile {
 
     namespace instance {
@@ -212,10 +214,10 @@ namespace tc {
         i:list prop,
         o:prop.
       compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
-        (pi a b c\ get-TC-of-inst-type (tc.prod-range a c) b :- get-TC-of-inst-type a b) => 
-          get-TC-of-inst-type PTy TC, !,
+        (pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
+          tc.get-TC-of-inst-type PTy TC, !,
         compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
-        if (class TC _ deterministic _)
+        if (tc.class TC _ tc.deterministic _)
           (NewPrem' = do-once NewPrem)
           (NewPrem' = NewPrem),
         compile-ty L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
@@ -260,16 +262,16 @@ namespace tc {
 
       compile-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
         std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
-        make-tc Goal Proof AllPremises tt Clause.
+        tc.make-tc Goal Proof AllPremises tt Clause.
       compile-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
-        make-tc Goal Proof Premises ff Clause1, 
+        tc.make-tc Goal Proof Premises ff Clause1, 
         Clause = (do HOPremisesIn, Clause1, do HOPremisesOut).
 
       pred context i:goal-ctx, o:list prop.
       context [] [].
       context [X | Xs] [Clause | ResTl] :-
         (decl Var _ Ty = X; def Var _ Ty _ = X),
-        is-instance-term Ty, !,
+        tc.is-instance-term Ty, !,
         std.assert! (compile.instance Ty Var Clause) "[TC] cannot compile instance of context",
         context Xs ResTl.
       context [_ | Tl] L :- context Tl L.
@@ -284,8 +286,8 @@ namespace tc {
 
     pred instance i:term, i:term, o:prop.
     instance Ty ProofHd Clause :-
-      time-it oTC-time-compile-instance (
-        normalize-ty Ty Ty',
+      tc.time-it tc.oTC-time-compile-instance (
+        tc.normalize-ty Ty Ty',
         tc.precomp.instance Ty' Ty'' N UnivConst UnivInst,
         instance.main N Ty'' ProofHd UnivConst UnivInst Clause
       ) "Compile Instance".

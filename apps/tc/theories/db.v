@@ -8,90 +8,94 @@ From elpi Require Import elpi.
   all the options are set to false by default
 *)
 Elpi Db tc_options.db lp:{{
-  pred oTC-eta-reduce-proof o:list string. 
-  oTC-eta-reduce-proof ["TC", "Eta", "Reduce", "Proof"].
- 
-  % Time taken by only instance search (we time tc-recursive-search) 
-  pred oTC-time-instance-search o:list string. 
-  oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
+  namespace tc {
+    pred oTC-eta-reduce-proof o:list string. 
+    oTC-eta-reduce-proof ["TC", "Eta", "Reduce", "Proof"].
   
-  pred oTC-time-compile-goal o:list string. 
-  oTC-time-compile-goal ["TC", "Time", "Compile", "Query"].
-  
-  pred oTC-time-mode-check o:list string. 
-  oTC-time-mode-check ["TC", "Time", "Mode", "Check"].
+    % Time taken by only instance search (we time tc-recursive-search) 
+    pred oTC-time-instance-search o:list string. 
+    oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
+    
+    pred oTC-time-compile-goal o:list string. 
+    oTC-time-compile-goal ["TC", "Time", "Compile", "Query"].
+    
+    pred oTC-time-mode-check o:list string. 
+    oTC-time-mode-check ["TC", "Time", "Mode", "Check"].
 
-  % Time taken by the whole search in tc
-  pred oTC-time-msolve o:list string.
-  oTC-time-msolve ["TC", "Time"].
+    % Time taken by the whole search in tc
+    pred oTC-time-msolve o:list string.
+    oTC-time-msolve ["TC", "Time"].
 
-  % Time taken to refine the solution
-  pred oTC-time-refine o:list string. 
-  oTC-time-refine ["TC", "Time", "Refine"].
+    % Time taken to refine the solution
+    pred oTC-time-refine o:list string. 
+    oTC-time-refine ["TC", "Time", "Refine"].
 
-  pred oTC-time-compile-instance o:list string. 
-  oTC-time-compile-instance ["TC", "Time", "Compile", "Instance"].
+    pred oTC-time-compile-instance o:list string. 
+    oTC-time-compile-instance ["TC", "Time", "Compile", "Instance"].
 
-  pred oTC-time-compile-class o:list string. 
-  oTC-time-compile-class ["TC", "Time", "Compile", "Class"].
+    pred oTC-time-compile-class o:list string. 
+    oTC-time-compile-class ["TC", "Time", "Compile", "Class"].
 
-  pred oTC-clauseNameShortName o:list string. 
-  oTC-clauseNameShortName ["TC", "NameShortPath"].
+    pred oTC-clauseNameShortName o:list string. 
+    oTC-clauseNameShortName ["TC", "NameShortPath"].
 
-  pred oTC-debug o:list string.
-  oTC-debug ["TC", "Debug"].
+    pred oTC-debug o:list string.
+    oTC-debug ["TC", "Debug"].
 
-  pred oTC-use-pattern-fragment-compiler o:list string. 
-  oTC-use-pattern-fragment-compiler ["TC", "CompilerWithPatternFragment"].
+    pred oTC-use-pattern-fragment-compiler o:list string. 
+    oTC-use-pattern-fragment-compiler ["TC", "CompilerWithPatternFragment"].
 
-  pred all-options o:list ((list string) -> prop).
-  all-options [
-    oTC-eta-reduce-proof, oTC-time-refine, oTC-time-msolve,
-    oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
-    oTC-use-pattern-fragment-compiler, oTC-time-compile-goal,
-    oTC-time-mode-check, oTC-time-compile-instance, 
-    oTC-time-compile-class
-  ].
+    pred all-options o:list ((list string) -> prop).
+    all-options [
+      oTC-eta-reduce-proof, oTC-time-refine, oTC-time-msolve,
+      oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
+      oTC-use-pattern-fragment-compiler, oTC-time-compile-goal,
+      oTC-time-mode-check, oTC-time-compile-instance, 
+      oTC-time-compile-class
+    ].
 
-  pred is-option-active i:(list string -> prop).
-  is-option-active uvar :- !, fail.
-  is-option-active Opt :-
-    Opt X, coq.option.get X (coq.option.bool tt).
+    pred is-option-active i:(list string -> prop).
+    is-option-active uvar :- !, fail.
+    is-option-active Opt :-
+      Opt X, coq.option.get X (coq.option.bool tt).
 
-  pred tc-warning-name o:string.
-  tc-warning-name "[TC] Warning".
+    pred warning-name o:string.
+    warning-name "[TC] Warning".
+  }
 }}.
 
 Elpi Db tc.db lp:{{
-  % the type of search for a typeclass
-  % deterministic :- no backtrack after having found a solution/fail
-  % classic       :- the classic search, if a path is failing, we backtrack
-  kind search-mode type.
-  type deterministic  search-mode.
-  type classic        search-mode.
+  namespace tc {
+    % the type of search for a typeclass
+    % deterministic :- no backtrack after having found a solution/fail
+    % classic       :- the classic search, if a path is failing, we backtrack
+    kind search-mode type.
+    type deterministic  search-mode.
+    type classic        search-mode.
 
-  % [instance Path InstGR ClassGR], ClassGR is the class implemented by InstGR
-  pred instance o:list string, o:gref, o:gref.
+    % [instance Path InstGR ClassGR], ClassGR is the class implemented by InstGR
+    pred instance o:list string, o:gref, o:gref.
 
-  % [class ClassGR PredName SearchMode Modes], for each class GR, it contains
-  % the name of its predicate and its SearchMode 
-  pred class o:gref, o:string, o:search-mode, o:list string.
+    % [class ClassGR PredName SearchMode Modes], for each class GR, it contains
+    % the name of its predicate and its SearchMode 
+    pred class o:gref, o:string, o:search-mode, o:list string.
 
-  % pred on which we graft instances in the database
-  pred hook o:string.
-  :name "firstHook" hook "firstHook".
-  :name "lastHook" hook "lastHook".
-  
-  % [unfold-constant C] constants to be unfolded before goal resolution
-  pred unfold-constant o:constant.
+    % pred on which we graft instances in the database
+    pred hook o:string.
+    :name "firstHook" hook "firstHook".
+    :name "lastHook" hook "lastHook".
+    
+    % [unfold-constant C] constants to be unfolded before goal resolution
+    pred unfold-constant o:constant.
 
-  % the set of instances that we are not yet able to compile, 
-  % in majority they use universe polimorphism
-  pred banned o:gref.
+    % the set of instances that we are not yet able to compile, 
+    % in majority they use universe polimorphism
+    pred banned o:gref.
 
-  pred pending-mode o:list string.
+    pred pending-mode o:list string.
 
-  pred dummy.
+    pred dummy.
 
-  pred ho-link o:term, i:term, o:A.
+    pred ho-link o:term, i:term, o:A.
+  }
 }}.

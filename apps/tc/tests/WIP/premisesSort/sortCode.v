@@ -74,7 +74,7 @@ Elpi Accumulate tc.db lp:{{
   compile-aux1 Ty I ListVar [] Types IsPositive IsHead Clause tt :- !,
     sort-and-compile-premises I Ty Types ListVar IsPositive Premises,
     coq.mk-app I {std.rev ListVar} AppInst,
-    make-tc IsHead Ty AppInst Premises Clause.
+    tc.make-tc IsHead Ty AppInst Premises Clause.
   compile-aux1 Ty I ListVar [] Types IsPositive IsHead Clause tt :- !,
     sort-and-compile-premises I Ty Types ListVar IsPositive Premises,
     coq.mk-app I {std.rev ListVar} AppInst,

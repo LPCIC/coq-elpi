@@ -1,37 +1,39 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-kind enum type.
-type path  string -> string -> enum.
-type addInstPrio int -> string -> enum.
-type tcOrInst list string -> enum.
-type ignoreInstances, ignoreClasses  string -> list string -> enum.
+namespace tc {
+  kind enum type.
+  type path  string -> string -> enum.
+  type addInstPrio int -> string -> enum.
+  type tcOrInst list string -> enum.
+  type ignoreInstances, ignoreClasses  string -> list string -> enum.
 
-pred parse i:list argument, o:enum.
-parse [str ClassName, str "path", str Path] (path ClassName Path).
-parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassName Res) :-
-  args->str-list InstNames Res.
-parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :-
-  args->str-list ClassNames Res.
-parse ClassNames (tcOrInst Res) :- args->str-list ClassNames Res.
-parse [int N, str Instance] (addInstPrio N Instance).
+  pred parse i:list argument, o:enum.
+  parse [str ClassName, str "path", str Path] (path ClassName Path).
+  parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassName Res) :-
+    args->str-list InstNames Res.
+  parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :-
+    args->str-list ClassNames Res.
+  parse ClassNames (tcOrInst Res) :- args->str-list ClassNames Res.
+  parse [int N, str Instance] (addInstPrio N Instance).
 
-pred run-command i:enum.
-:if "debug"
-run-command A :- coq.say A, fail.
-run-command (ignoreClasses ClassName IgnoreClasses) :-
-  coq.locate ClassName ClassGR,
-  add-tc-or-inst-gr IgnoreClasses [] [ClassGR].
-run-command (tcOrInst InstNames) :-
-  std.map InstNames coq.locate InstGR,
-  add-tc-or-inst-gr [] [] InstGR.
-run-command (path ClassName Path):- 
-  add-path ClassName Path.
-run-command (ignoreInstances ClassName InstNames):-
-  coq.locate ClassName ClassGR,
-  add-tc-or-inst-gr [] InstNames [ClassGR].
-run-command (addInstPrio Prio InstanceName) :-
-  coq.locate InstanceName InstGr, 
-  tc.compile.instance-gr InstGr C,
-  S is int_to_string Prio,
-  add-tc-db _ (before S) C.
+  pred run-command i:enum.
+  :if "debug"
+  run-command A :- coq.say A, fail.
+  run-command (ignoreClasses ClassName IgnoreClasses) :-
+    coq.locate ClassName ClassGR,
+    tc.add-tc-or-inst-gr IgnoreClasses [] [ClassGR].
+  run-command (tcOrInst InstNames) :-
+    std.map InstNames coq.locate InstGR,
+    tc.add-tc-or-inst-gr [] [] InstGR.
+  run-command (path ClassName Path):- 
+    tc.add-path ClassName Path.
+  run-command (ignoreInstances ClassName InstNames):-
+    coq.locate ClassName ClassGR,
+    tc.add-tc-or-inst-gr [] InstNames [ClassGR].
+  run-command (addInstPrio Prio InstanceName) :-
+    coq.locate InstanceName InstGr, 
+    tc.compile.instance-gr InstGr C,
+    S is int_to_string Prio,
+    tc.add-tc-db _ (before S) C.
+}
