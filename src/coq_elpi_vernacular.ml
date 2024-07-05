@@ -36,6 +36,8 @@ let atts2impl loc phase ~depth state atts q =
     | Attributes.FlagIdent s [@if coq = "8.19" || coq = "8.20"] -> AttributeString s
     | Attributes.FlagQualid q [@if coq <> "8.19" && coq <> "8.20"] -> AttributeString (Libnames.string_of_qualid q)
     | Attributes.FlagString s -> AttributeString s
+    | Attributes.FlagBool true  [@if coq <> "8.19" && coq <> "8.20"]-> AttributeString "yes"
+    | Attributes.FlagBool false [@if coq <> "8.19" && coq <> "8.20"]-> AttributeString "no"
   in
   let phase = match phase with Summary.Stage.Interp -> "interp" | Summary.Stage.Synterp -> "synterp" in
   let atts =
