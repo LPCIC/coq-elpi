@@ -518,12 +518,20 @@ let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
   (fun x -> f := x),
   (fun () -> !f)
 
+[%%if coq = "8.19" || coq = "8.20"]
 let is_global_level env u =
   try
     let set = Univ.Level.Set.singleton u in
     let () = UGraph.check_declared_universes (Environ.universes env) set in
     true
   with UGraph.UndeclaredLevel _ -> false
+[%%else]
+let is_global_level env u =
+  let set = Univ.Level.Set.singleton u in
+  match UGraph.check_declared_universes (Environ.universes env) set with
+  | Ok () -> true
+  | Error _ -> false
+[%%endif]
 
 let err_if_contains_alg_univ ~depth t =
   let global_univs = UGraph.domain (Environ.universes (Global.env ())) in
