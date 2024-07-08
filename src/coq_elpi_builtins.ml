@@ -939,9 +939,13 @@ let eval_of_constant c =
 let eval_to_oeval = Evaluable.to_kevaluable
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let pattern_of_glob_constr env g = Patternops.pattern_of_glob_constr env g
-let warns_of_options options = options.user_warns
 [%%endif]
 
+[%%if coq = "8.20"]
+let warns_of_options options = options.user_warns
+[%%elif coq <> "8.19"]
+let warns_of_options options = options.user_warns |> Option.map UserWarn.with_empty_qf
+[%%endif]
 let add_axiom_or_variable api id ty local options state =
   let state, poly, cumul, udecl, _ = poly_cumul_udecl_variance_of_options state options in
   let used = universes_of_term state ty in
