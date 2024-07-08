@@ -1,5 +1,6 @@
 (coq.theory
  (name elpi.apps.eltac.tests)
+ (package coq-elpi-tests)
  (theories elpi elpi.apps.eltac))
 
 (include_subdirs qualified)
