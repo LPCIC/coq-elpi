@@ -53,3 +53,6 @@ apps/cs/src/coq_elpi_cs_hook.ml
 *.timing
 _build
 tmp.out
+coq-elpi-tests.opam
+coq-elpi-tests.install
+coq-elpi.install

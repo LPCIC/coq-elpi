@@ -35,3 +35,9 @@
   (coq (>= 8.19))
   ppx_optcomp
   (ocaml-lsp-server :dev)))
+
+(package
+ (name coq-elpi-tests)
+ (synopsis "Technical package to run tests")
+ (description "Do not install")
+ (depends coq-elpi))
