@@ -111,6 +111,16 @@ namespace tc {
   get-mode ClassGR M :- tc.class ClassGR _ _ M, !.
   get-mode ClassGR _ :- coq.error "[TC]" ClassGR "is an unknown class".
 
+  /* 
+  [make-tc.aux B Sol Head Body Rule] builds the rule with the given Head and body
+                                    paying attention to the positivity of the
+                                    clause  
+  Note: if the Rule being constructed is negative (B = ff), then Rules returns a
+        solution Sol used inside the proof. If the solution is already given, we
+        do not run the premise. This would ask Sol to be ground (ground_term S).
+        Here, for performance issues, we simply check that the solution is not a
+        flexible term
+  */
   pred make-tc.aux i:bool, i:term, i:prop, i:list prop, o:prop.
   make-tc.aux tt _ Head [] Head :- !.
   make-tc.aux ff Sol Head [] P :- !, P = if (var Sol) Head true.
