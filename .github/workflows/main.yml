@@ -46,9 +46,8 @@ jobs:
             opam update -y
             opam install -y -j 2 $PACKAGE --deps-only
           endGroup
-        uninstall: |
-          echo skipping unintall, running all tests
-          make test
+        script: |
+          make
   
   play:
     runs-on: ubuntu-latest
