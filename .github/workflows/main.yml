@@ -40,6 +40,7 @@ jobs:
     - uses: avsm/setup-ocaml@v2
       with:
         ocaml-compiler: ${{ matrix.ocaml_version }}
+    - run: opam repo add coq-dev https://coq.inria.fr/opam/core-dev
     - run: opam install coq-core.${{ matrix.coq_version }}
     - run: opam install coq-stdlib.${{ matrix.coq_version }}
     - run: opem repo add coq-dev https://coq.inria.fr/opam/core-dev
