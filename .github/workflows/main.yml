@@ -46,8 +46,8 @@ jobs:
             opam update -y
             opam install -y -j 2 $PACKAGE --deps-only
           endGroup
-        script: |
-          make
+        after_script: |
+          opam install ./coq-elpi-tests.opam
   
   play:
     runs-on: ubuntu-latest
