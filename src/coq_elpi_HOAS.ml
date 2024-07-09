@@ -3039,12 +3039,20 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
           Univ.Level.Set.union acc
             (universes_of_term state t))
         used (nuparams @ params) in
-    let sigma = restricted_sigma_of used state in
+      let sigma = restricted_sigma_of used state in
+      let flags = {
+        ComInductive.poly;
+        cumulative;
+        template = Some false;
+        auto_prop_lowering = false;
+        finite = finiteness;
+      }
+      in
 
       state, comInductive_interp_mutual_inductive_constr
       env_ar_params sigma arity
         ~sigma
-        ~template:(Some false)
+        ~flags
         ~udecl
         ~variances
         ~ctx_params:(nuparams @ params)
@@ -3052,10 +3060,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         ~arities:[arity]
         ~constructors:[knames, ktypes]
         ~env_ar_params
-        ~cumulative
-        ~poly
-        ~private_ind
-        ~finite:finiteness |> comInductive_interp_mutual_inductive_constr_post
+        ~private_ind |> comInductive_interp_mutual_inductive_constr_post
       in
     let mind = { mind with
       Entries.mind_entry_record =
