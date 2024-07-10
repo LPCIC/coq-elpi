@@ -49,17 +49,34 @@ Module M3.
 
   Set Warnings "+elpi".
 
-  Elpi Accumulate TC.Solver lp:{{
-    :after "0"
-    tc-elpi.apps.tc.tests.hyp_in_conl.M3.tc-A _ :- !, coq.error "Should not check for tc-A".
-    tc-elpi.apps.tc.tests.hyp_in_conl.M3.tc-B _ _ :- !, coq.error "Should not check for tc-B".
-  }}.
-  Elpi Typecheck TC.Solver.
-
   Section s.
-    Context (A : A) (B : B A).
+    Elpi Accumulate TC.Solver lp:{{
+      :before "0" tc-elpi.apps.tc.tests.hyp_in_conl.M3.tc-A _   :- coq.say "In tc-A", fail.
+      :before "0" tc-elpi.apps.tc.tests.hyp_in_conl.M3.tc-B _ _ :- coq.say "In tc-B", fail.
+    }}.
+    Elpi Typecheck TC.Solver.
+    Local Instance AX : A := {}.
+    Local Instance BX : A -> (B AX) := {}.
 
-    Definition d : C A B := _.
+    Elpi Accumulate TC.Solver lp:{{ print-goal. print-solution. }}.
+    Definition d : C AX (BX _) := _.
+    Definition d' : C _ (BX _) := _.
+    Definition d'' : C AX _ := _.
+
+    Check (c _ _) : C AX _.
+
+    (* 
+      Here we give the solver a partial solution with a hole in it. This hole
+      correspond to the premise of the typeclass B (an instance of A). Due to
+      the var condition on the resolution of rule's premises, the premise of
+      `C`, that is, `B X` is not solved since we have the partial solution `BX
+      _`. (see: [here](https://github.com/LPCIC/coq-elpi/blob/889bd3fc16c31f35c850edf5a0df2f70ea9c655a/apps/tc/elpi/tc_aux.elpi#L124))
+    *)
+    Elpi Query TC.Solver lp:{{
+      S = {{c AX (BX _)}},
+      solve-aux1 [] {{C _ _}} S.
+    }}.
+
   End s.
 
 End M3.
