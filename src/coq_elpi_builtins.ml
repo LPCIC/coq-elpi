@@ -1427,7 +1427,7 @@ line option|}))),
         match E.look ~depth x with 
         | E.CData x when API.RawOpaqueData.is_loc x ->
           let loc = API.RawOpaqueData.to_loc x in
-          Some loc, if loc.source_name = "(stdin)" then rest else args
+          Some loc, args
         | _ -> None, args
       in
      err ?loc Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
