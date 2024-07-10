@@ -44,6 +44,7 @@ jobs:
     - run: opam install coq-core.${{ matrix.coq_version }}
     - run: opam install coq-stdlib.${{ matrix.coq_version }}
     - run: opam install ./coq-elpi.opam --deps-only --with-test -y
+    - run: eval $(opam env)
     - run: make build
     - run: make test
 
