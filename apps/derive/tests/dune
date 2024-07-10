@@ -1,5 +1,6 @@
 (coq.theory
  (name elpi.apps.derive.tests)
+ (flags -w -default-output-directory)
  (theories elpi elpi.apps.derive))
 
 (include_subdirs qualified)
