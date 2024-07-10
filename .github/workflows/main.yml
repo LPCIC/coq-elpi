@@ -25,40 +25,27 @@ env:
   OPAM_SUITE: ${{ inputs.suite }}
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      #fail-fast: false
       matrix:
-        coq_version: [ '8.19' , '8.20' , 'dev' ]
+        coq_version: [ '8.19.2' , '8.20+rc1' , 'dev' ]
         ocaml_version:
-          - '4.14-flambda'
-    steps:
-    - uses: actions/checkout@v2
-    - uses: coq-community/docker-coq-action@v1
-      with:
-        opam_file: './coq-elpi.opam'
-        coq_version: ${{ matrix.coq_version }}
-        ocaml_version: ${{ matrix.ocaml_version }}
-        export: 'OPAMWITHTEST'
-        install: |
-          startGroup "Install dependencies"
-            opam pin add -n -y -k path $PACKAGE $WORKDIR
-            opam update -y
-            opam install -y -j 2 $PACKAGE --deps-only
-          endGroup
-      env:
-        OPAMWITHTEST: 'true'
-
-  play:
-    runs-on: ubuntu-latest
+          - '4.14.x'
+          - '5.2.x'
     steps:
     - uses: actions/checkout@v2
     - uses: avsm/setup-ocaml@v2
       with:
-        ocaml-compiler: 5.1.x
-    - run: |
-        opam install ./coq-elpi.opam
+        ocaml-compiler: ${{ matrix.ocaml_version }}
+    - run: opam repo add coq-dev https://coq.inria.fr/opam/core-dev
+    - run: opam install coq-core.${{ matrix.coq_version }}
+    - run: opam install coq-stdlib.${{ matrix.coq_version }}
+    - run: opam install ./coq-elpi.opam --deps-only --with-test -y
+    - run: opam exec make build
+    - run: opam exec make test
 
   release:
     runs-on: ubuntu-latest

@@ -23,9 +23,9 @@ namespace force-llam {
   % of other premises. 
   compile-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
     coq.safe-dest-app Goal Class Args,
-    get-mode {get-TC-of-inst-type Class} Modes,
+    tc.get-mode {tc.get-TC-of-inst-type Class} Modes,
     force-llam.modes Modes Args ForceLlam,
-    make-tc Goal Proof Premises ff Clause1, 
+    tc.make-tc Goal Proof Premises ff Clause1, 
     Prems = [HOPremisesIn, ForceLlam, [Clause1], HOPremisesOut],
     std.flatten Prems AllPremises,
     Clause = do AllPremises.

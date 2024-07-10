@@ -7,7 +7,7 @@ Section test_max_arity.
         (prod `a` _ c3 \
           app [global _, app [c1, c3], c2]) c3 \
         app [global _, c1, c2]),
-    pi x\ tc.precomp.instance.get-range-arity x _ (T x) (r-ar z (s z)).
+    pi x\ tc.precomp.instance.get-range-arity x _ (T x) (tc.r-ar z (s z)).
   }}.
 End test_max_arity.
 
@@ -292,9 +292,9 @@ Module HO_scope_check1.
 
   Elpi Query TC.Solver lp:{{
     sigma X Q\ % To avoid printing in console
-      build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
+      tc.build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
       (pi A L T\ 
-        tc.link.scope-check (uvar _ L) (fun _ _ (x\ app [{{g}}|_] as T)) :- !, 
+        tc.link.eta.scope-check (uvar _ L) (fun _ _ (x\ app [{{g}}|_] as T)) :- !, 
           std.assert! (not (prune A L, A = T)) "[TC] Should fail by Scope Check", 
           fail) =>
       not Q.
@@ -411,7 +411,7 @@ Module Llam_4.
 
   Fail Elpi Query TC.Solver lp:{{
     sigma X Q\ % To avoid printing in console
-      build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
+      tc.build-query-from-goal {{c1 (fun x => f x lp:X)}} _ Q _,
       not Q.
   }}.
 End Llam_4.

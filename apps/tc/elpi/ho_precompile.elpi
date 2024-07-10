@@ -1,4 +1,5 @@
 namespace tc {
+  shorten tc.{r-ar, range-arity}.
 
   namespace precomp {
 
@@ -96,7 +97,7 @@ namespace tc {
       get-range-arity-aux A B _ :- coq.error "Count maximal arity failure" A B.
 
       pred get-range-arity i:term, i:term, i:term, o:range-arity.
-      get-range-arity _ Ty _ (r-ar z N) :- get-TC-of-inst-type Ty _, !, count-prod Ty N.
+      get-range-arity _ Ty _ (r-ar z N) :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
       get-range-arity B _ T N :- !, get-range-arity-aux B T N. 
 
       pred precompile-aux i:positivity, i:term, i:nat, o:term, o:nat.

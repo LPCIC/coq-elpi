@@ -36,9 +36,9 @@ Elpi Accumulate tc.db lp:{{
   C = [sigma x\ get_other A x, already_explored A x | C1].
 
   :after "firstHook"
-  make-tc IsHead Ty Inst Hyp Clause :- !,
+  tc.make-tc IsHead Ty Inst Hyp Clause :- !,
     app [global TC | TL] = Ty,
-    gref->pred-name TC TC_Str,
+    tc.gref->pred-name TC TC_Str,
     std.append TL [Inst] Args, 
     coq.elpi.predicate TC_Str Args Q,
     if (not IsHead) (Hyp = Hyp') (under_extra TC Hyp Hyp'),

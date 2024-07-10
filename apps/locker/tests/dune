@@ -1,5 +1,6 @@
 (coq.theory
  (name elpi.apps.locker.tests)
+ (package coq-elpi-tests)
  (theories elpi elpi.apps.locker))
 
 (include_subdirs qualified)

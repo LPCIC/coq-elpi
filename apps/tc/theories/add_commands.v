@@ -19,19 +19,29 @@ Set Warnings "+elpi".
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
+Elpi Typecheck.
 Elpi Accumulate Db tc_options.db.
+Elpi Typecheck.
 Elpi Accumulate File base.
+Elpi Typecheck.
 Elpi Accumulate File tc_aux.
+Elpi Typecheck.
 Elpi Accumulate File ho_precompile.
-Elpi Accumulate File ho_compile.
+Elpi Typecheck.
 Elpi Accumulate File unif.
+Elpi Typecheck.
 Elpi Accumulate File ho_link.
+Elpi Typecheck.
+Elpi Accumulate File ho_compile.
+Elpi Typecheck.
 Elpi Accumulate File compiler1.
+Elpi Typecheck.
 Elpi Accumulate File modes.
+Elpi Typecheck.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
-    time-it _ (std.forall {coq.TC.db-tc} (x\ add-tc-or-inst-gr [] L1 [x])) "TC.AddAllInstances".
+    tc.time-it _ (std.forall {coq.TC.db-tc} (x\ tc.add-tc-or-inst-gr [] L1 [x])) "TC.AddAllInstances".
 }}.
 Elpi Typecheck.
 
@@ -49,7 +59,7 @@ Elpi Accumulate File modes.
 Elpi Accumulate File parser_addInstances.
 Elpi Accumulate lp:{{
   main Arguments :- 
-    parse Arguments Res, run-command Res.
+    tc.parse Arguments Res, tc.run-command Res.
 }}.
 Elpi Typecheck.
 
@@ -64,7 +74,7 @@ Elpi Accumulate lp:{{
   % Ignore is the list of classes we do not want to add
   main IgnoreStr :-
     std.map IgnoreStr (x\r\ sigma S\ str S = x, coq.locate S r) IgnoreGR,
-    time-it _ (std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (add-class-gr classic x))) "TC.AddAllClasses".
+    tc.time-it _ (std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (tc.add-class-gr tc.classic x))) "TC.AddAllClasses".
 }}.
 Elpi Typecheck.
 
@@ -76,14 +86,14 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
-  pred add-all-classes i:list argument , i:search-mode.
-  add-all-classes L S :-
-    time-it _ (std.forall {args->str-list L} (add-class-str S)) "TC.AddClasses".
+  pred tc.add-all-classes i:list argument , i:tc.search-mode.
+  tc.add-all-classes L S :-
+    tc.time-it _ (std.forall {args->str-list L} (tc.add-class-str S)) "TC.AddClasses".
 
   main L :-
     std.mem {attributes} (attribute "deterministic" _),
-    add-all-classes L deterministic.
-  main L :- add-all-classes L classic.
+    tc.add-all-classes L tc.deterministic.
+  main L :- tc.add-all-classes L tc.classic.
   main _ :- coq.error "This commands accepts: [classic|deterministic]? TC-names*".
 }}.
 Elpi Typecheck.
@@ -94,15 +104,15 @@ Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
-  pred addHook i:grafting, i:string. 
-  addHook Grafting NewName :- 
-    @global! => add-tc-db NewName Grafting (hook NewName).
+  pred tc.addHook i:grafting, i:string. 
+  tc.addHook Grafting NewName :- 
+    @global! => tc.add-tc-db NewName Grafting (tc.hook NewName).
 
   main [str "before", str OldHook, str NewHook] :-
-    addHook (before OldHook) NewHook. 
+    tc.addHook (before OldHook) NewHook. 
   
   main [str "after", str OldHook, str NewHook] :-
-    addHook (after OldHook) NewHook. 
+    tc.addHook (after OldHook) NewHook. 
 
   main [Graft, int OldHook, NewHook] :-
      main [Graft, str {calc (int_to_string OldHook)}, NewHook]. 
@@ -127,10 +137,10 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
-  main _ :- coq.warning "TC.Declare" {tc-warning-name} 
+  main _ :- coq.warning "TC.Declare" {tc.warning-name} 
 "This command does not fully mirror the watned behavior if the class has methods
 with implicit arguments (those implicits will be neglected)", fail.
-  main [indt-decl D] :- declare-class D.
+  main [indt-decl D] :- tc.declare-class D.
   main _ :- coq.error "Argument should be an inductive type".
 }}.
 Elpi Typecheck.
@@ -146,7 +156,7 @@ Elpi Accumulate lp:{{
   main M :- 
     % the "o" added at the end of M stands for the solution of the goal 
     std.append M [str "o"] M1,
-    add-pending-mode {args->str-list M1}.
+    tc.add-pending-mode {args->str-list M1}.
 }}.
 Elpi Typecheck.
 

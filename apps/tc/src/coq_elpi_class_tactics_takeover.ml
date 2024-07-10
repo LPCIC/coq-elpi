@@ -101,7 +101,10 @@ let solve_TC program env sigma depth unique ~best_effort filter =
   let atts = [] in
   let glss, _ = Evar.Set.partition (filter sigma) (Evd.get_typeclass_evars sigma) in
   let gls = Evar.Set.elements glss in
-  let xx, _  = Evd.evar_source @@ Evd.find_undefined sigma (List.hd gls) in
+  let xx  =
+    match gls with
+    | [] -> None
+    | g::_ -> Evd.evar_source @@ Evd.find_undefined sigma g |> fst in
   let loc = Option.cata Coq_elpi_utils.of_coq_loc (API.Ast.Loc.initial "(unknown)") xx in
   (* TODO: activate following row to compute new gls
      this row to make goal sort in msolve *)
@@ -126,7 +129,7 @@ let solve_TC program env sigma depth unique ~best_effort filter =
       match Coq_elpi_vernacular.Interp.run ~static_check:false cprogram (`Fun query) with
       | API.Execute.Success solution ->
           let sigma, sub_goals, to_shelve = Coq_elpi_HOAS.solution2evd ~eta_contract_solution:true sigma solution glss in
-          let sigma = Evd.shelve sigma (sub_goals @ to_shelve) in
+          let sigma = Evd.shelve sigma sub_goals in
           Some (sub_goals = [], sigma)
     | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
       | API.Execute.Failure -> elpi_fails program

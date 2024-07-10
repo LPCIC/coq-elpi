@@ -1,67 +1,69 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+main _.
 
-msolve L N :- time-it oTC-time-msolve (coq.ltac.all (coq.ltac.open solve-aux) L N) "msolve".
+msolve L N :- tc.time-it tc.oTC-time-msolve (coq.ltac.all (coq.ltac.open tc.solve-aux) L N) "msolve".
 msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
 
-pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
-build-query-from-goal Goal Proof Q PostProcess :-
-  tc.compile.goal Goal Goal' PostProcess, !,
-  coq.safe-dest-app Goal' (global TC) TL',
-  std.append TL' [Proof] TL, !,
-  coq.elpi.predicate {gref->pred-name TC} TL Q.
+namespace tc {
+  pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
+  build-query-from-goal Goal Proof Q PostProcess :-
+    tc.compile.goal Goal Goal' PostProcess, !,
+    coq.safe-dest-app Goal' (global TC) TL',
+    std.append TL' [Proof] TL, !,
+    coq.elpi.predicate {tc.gref->pred-name TC} TL Q.
 
-type tc.mode_fail term.
+  type tc.mode_fail term.
 
-pred refine-proof i:term, i:goal, o:list sealed-goal.
-refine-proof tc.mode_fail G [seal G] :- !.
-refine-proof Proof G GL :-
-  if-true print-solution (coq.say "[TC] The proof is <<<" Proof ">>>"),
-  if-true print-solution-pp (coq.say "[TC] The proof is <<<" {coq.term->string Proof} ">>>"),
+  pred refine-proof i:term, i:goal, o:list sealed-goal.
+  refine-proof tc.mode_fail G [seal G] :- !.
+  refine-proof Proof G GL :-
+    if-true print-solution (coq.say "[TC] The proof is <<<" Proof ">>>"),
+    if-true print-solution-pp (coq.say "[TC] The proof is <<<" {coq.term->string Proof} ">>>"),
+      
+    /*********** CHECK IF THE PROOF TYPECHECKS ***********/
+    tc.time-it tc.oTC-time-refine (@no-tc! => refine.typecheck Proof G GL) "refine.typecheck",
     
-  /*********** CHECK IF THE PROOF TYPECHECKS ***********/
-  time-it oTC-time-refine (@no-tc! => refine.typecheck Proof G GL) "refine.typecheck",
-  
-  if-true print-solution (coq.say "[TC] The proof typechecks").
+    if-true print-solution (coq.say "[TC] The proof typechecks").
 
-pred solve-under-context i:term, o:term.
-solve-under-context Ty Proof :-
-  time-it oTC-time-compile-goal (build-query-from-goal Ty Proof Q PostProcess) "build query", !,
-  if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q), !,
-  time-it oTC-time-instance-search (
-    do PostProcess, Q,
-    tc.link.solve-eta, % Trigger eta links
-    tc.link.solve-llam % Trigger llam links
-  ) "instance search".
+  pred solve-under-context i:term, o:term.
+  solve-under-context Ty Proof :-
+    tc.time-it tc.oTC-time-compile-goal (build-query-from-goal Ty Proof Q PostProcess) "build query", !,
+    if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q), !,
+    tc.time-it tc.oTC-time-instance-search (
+      do PostProcess, Q,
+      tc.link.solve-eta, % Trigger eta links
+      tc.link.solve-llam % Trigger llam links
+    ) "instance search".
 
-pred solve-aux i:goal, o:list sealed-goal.
-solve-aux (goal Ctx _ Ty P_ Ag_ as G) GL :-
-  time-it _ (solve-aux1 Ctx Ty Proof) "full instance search",
-  refine-proof Proof G GL.
+  pred solve-aux i:goal, o:list sealed-goal.
+  solve-aux (goal Ctx _ Ty P_ Ag_ as G) GL :-
+    tc.time-it _ (solve-aux1 Ctx Ty Proof) "full instance search",
+    refine-proof Proof G GL.
 
-pred solve-aux1 i:goal-ctx, i:term, o:term.
-:name "solve-aux-intros"
-solve-aux1 Ctx (prod N X T) Proof :- !,
-  @pi-decl _ X x\
-    solve-aux1 [decl x N X | Ctx] (T x) (Proof' x),
-    if (Proof' x = tc.mode_fail) 
-      (Proof = tc.mode_fail)
-      (Proof = fun N X Proof').
+  pred solve-aux1 i:goal-ctx, i:term, o:term.
+  :name "solve-aux-intros"
+  solve-aux1 Ctx (prod N X T) Proof :- !,
+    @pi-decl _ X x\
+      solve-aux1 [decl x N X | Ctx] (T x) (Proof' x),
+      if (Proof' x = tc.mode_fail) 
+        (Proof = tc.mode_fail)
+        (Proof = fun N X Proof').
 
-:name "solve-aux-conclusion"
-solve-aux1 Ctx TyRaw Proof :-
-  time-it _ (normalize-ty TyRaw Ty) "normalize ty",
-  if-true print-goal (coq.say "The goal is <<<" Ty ">>>"),
-  if-true print-goal-pp (coq.say "The goal is <<<" {coq.term->string Ty} ">>>"),
-  time-it oTC-time-mode-check (modes-check Ty) "mode check", !,
-  time-it _ (tc.compile.context Ctx CtxClause) "compile context", !,
-  CtxClause => solve-under-context Ty Proof.
-solve-aux1 _ _ tc.mode_fail :- if-true (print-solution; print-solution-pp) (coq.say "Invalid mode call").
+  :name "solve-aux-conclusion"
+  solve-aux1 Ctx TyRaw Proof :-
+    tc.time-it _ (tc.normalize-ty TyRaw Ty) "normalize ty",
+    if-true print-goal (coq.say "The goal is <<<" Ty ">>>"),
+    if-true print-goal-pp (coq.say "The goal is <<<" {coq.term->string Ty} ">>>"),
+    tc.time-it tc.oTC-time-mode-check (tc.modes-check Ty) "mode check", !,
+    tc.time-it _ (tc.compile.context Ctx CtxClause) "compile context", !,
+    CtxClause => solve-under-context Ty Proof.
+  solve-aux1 _ _ tc.mode_fail :- if-true (print-solution; print-solution-pp) (coq.say "Invalid mode call").
 
-pred print-solution.      % Print the solution in HOAS
-pred print-solution-pp.   % Print the solution in coq pp
-pred print-goal.          % Print the goal in HOAS
-pred print-goal-pp.       % Print the goal with coq pp
-pred print-compiled-goal.
+  pred print-solution.      % Print the solution in HOAS
+  pred print-solution-pp.   % Print the solution in coq pp
+  pred print-goal.          % Print the goal in HOAS
+  pred print-goal-pp.       % Print the goal with coq pp
+  pred print-compiled-goal.
 
-main _.
+}
