@@ -1,4 +1,4 @@
-if [ -z "$DEPS" ]; then DEPS="elpi"; else DEPS="elpi $DEPS"; fi
+if [ -z "$DEPS" ]; then DEPS="elpi_elpi elpi"; else DEPS="elpi_elpi elpi $DEPS"; fi
 
 cat > dune <<EOF
 (env
