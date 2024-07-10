@@ -41,6 +41,7 @@ doc: build
 		    --frontend coq+rst \
 			--output-directory doc \
 		    --pygments-style vs \
+			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi_elpi elpi_elpi \
 			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi elpi \
 			$(tut) &&) true
 	@cp stlc.html doc/

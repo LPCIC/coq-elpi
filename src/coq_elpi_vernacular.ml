@@ -194,12 +194,30 @@ let get_and_compile ?even_if_empty name : (EC.program * bool) option =
     Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
     res
 
+[%%if coq = "8.19" || coq = "8.20"]
+let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,CErrors.iprint ei)))
+[%%else]
+let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,[],CErrors.iprint ei)))
+[%%endif]
+
 let run_static_check query =
   let checker = 
     let elpi = P.ensure_initialized () in
     P.assemble_units ~elpi (P.checker()) in
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
-  ignore (EC.static_check ~checker query)
+  let _ : bool =
+    try EC.static_check ~checker query
+    with e ->
+      let ei = Exninfo.capture e in
+      let loc = Loc.get_loc (snd ei) in
+      (* The loc is not "Loc.mergeable" with the loc of the Elpi Typecheck
+         command, hence we generate an error feedback on the right loc *)
+      feedback_error loc ei;
+      Exninfo.iraise ei
+    in
+  ()
+
+
 
 let trace_filename_gen (add_counter: string) =
   "/tmp/traced.tmp" ^ (add_counter) ^ ".json"

@@ -9,12 +9,22 @@ error [] _ :- !.
 :before "default-typechecking-error"
 error [pr L M] tt :- !, coq.error L M.
 :before "default-typechecking-error"
+error [pr L M|MS] tt :- Msgs = [pr L M|MS], all-same-loc L Msgs, !, coq.error L "At least one of the following errors holds:" {error-concat-noloc Msgs}.
+:before "default-typechecking-error"
 error Msgs tt :- !, coq.error "At least one of the following errors holds:" {error-concat Msgs}.
 
 pred error-concat i:list string, o:string.
-error-concat [] "\n".
-error-concat [pr L X] R :- error-concat XS Rest, term_to_string L LS, R is LS ^ " " ^ X.
-error-concat [pr L X|XS] R :- error-concat XS Rest, term_to_string L LS, R is LS ^ " " ^ X ^ "\n" ^ Rest.
+error-concat L R :- std.string.concat "\n" {std.map L error-pp-wloc} R.
+pred error-concat-noloc i:list string, o:string.
+error-concat-noloc L R :- std.string.concat "\n" {std.map L error-pp-noloc} R.
+
+pred error-pp-wloc i:pair loc string, o:string.
+error-pp-wloc (pr L S) R :- R is {std.any->string L} ^ " " ^ S.
+pred error-pp-noloc i:pair loc string, o:string.
+error-pp-noloc (pr _ S) R :- R is "- " ^ S.
+
+pred all-same-loc i:loc, i:list (pair loc string).
+all-same-loc L XS :- std.forall XS (x\sigma s\x = pr L s).
 
 :before "default-typechecking-warning"
 warning L M :- !, coq.warning "elpi" "elpi.typecheck" L M.
