@@ -23,7 +23,7 @@ namespace tc {
         decompile-term-aux (pglobal _ _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (sort _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (uvar as X) L X L :- !.
-        decompile-term-aux (primitive _ as X) L X L :- !.
+        decompile-term-aux (primitive (proj P _)) L (global (const Y)) L :- !, coq.env.primitive-projection? P Y.
         decompile-term-aux (tc.canonical-projection T S _) (pr [X|Xs] L1) Y (pr Xs' L3) :- !,
           name Y X S,
           decompile-term-aux T (pr Xs L1) T' (pr Xs' L2),
@@ -334,7 +334,8 @@ namespace tc {
         get-uva-pair-arity Y L Z.
 
       pred decompile-problematic-term i:term, i:list prop, o:term, o:list prop.
-      decompile-problematic-term (primitive _ as C) A C A :- !.
+      decompile-problematic-term (primitive (proj P _)) A (global (const Y)) A :- !, 
+        coq.env.primitive-projection? P Y.
       
       decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
         prune V S, !, fold-map T L T' L2.

@@ -100,3 +100,22 @@ Module CS5.
     apply (ofe_any nat).
   Qed.
 End CS5.
+
+Module CS6.
+  #[projections(primitive=yes)]
+  Structure ofe := Ofe { ofe_car : Type; }.
+
+  #[projections(primitive=no)] (* TODO: Putting primitive to yes leads to a unification error. Why? *)
+  Structure cmra := { cmra_car :> Type; }.
+  Canonical Structure cmra_ofeO (A : cmra) : ofe := Ofe A.
+
+  Class C (I : Type).
+  Instance c : forall (A : ofe), C ((A).(ofe_car)) := {}.
+
+  Section s.
+    Context {cmra : cmra}.
+    Goal C (cmra_car cmra).
+      apply _.
+    Qed.
+  End s.
+End CS6.
