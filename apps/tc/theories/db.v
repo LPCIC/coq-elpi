@@ -78,6 +78,7 @@ Elpi Db tc.db lp:{{
 
     % [class ClassGR PredName SearchMode Modes], for each class GR, it contains
     % the name of its predicate and its SearchMode 
+    :index (5)
     pred class o:gref, o:string, o:search-mode, o:list string.
 
     % pred on which we graft instances in the database
