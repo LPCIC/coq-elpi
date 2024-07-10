@@ -136,8 +136,10 @@ Module FO_app3.
     apply _.
     Show Proof.
     Fail reflexivity.
+  Abort.
     (* ============= We restart and try the good sol ============= *)
-    Restart.
+
+  Goal exists (R : Type -> Type) , C (fun x => R nat) /\ R bool = f nat.
     exists (fun x => f nat).
     split.
     apply _.
@@ -303,7 +305,7 @@ Module D.
     intros.
     apply _.
     Unshelve.
-    apply 3.
+    all:    try apply 3; try apply nat.
   Qed.
 
 End D.
@@ -344,7 +346,9 @@ Module F'.
     Set Debug "tactic-unification".
     Elpi TC Solver Override TC.Solver None.
     apply _. (* Here coq succeds: it is able to solce ?H =~ fun x => H x *)
-    Restart.
+    Abort.
+
+  Goal forall (T : Type -> Type) (H : forall x, T x), C2 T (fun x => H x) -> D.
     Elpi TC Solver Override TC.Solver None.
     apply _.
   Qed.
