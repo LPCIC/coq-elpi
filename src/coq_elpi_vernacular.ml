@@ -199,7 +199,19 @@ let run_static_check query =
     let elpi = P.ensure_initialized () in
     P.assemble_units ~elpi (P.checker()) in
   (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
-  ignore (EC.static_check ~checker query)
+  let _ : bool =
+    try EC.static_check ~checker query
+    with e ->
+      let ei = Exninfo.capture e in
+      let loc = Loc.get_loc (snd ei) in
+      (* The loc is not "Loc.mergeable" with the loc of the Elpi Typecheck
+         command, hence we generate an error feedback on the right loc *)
+      Feedback.(feedback (Message(Error,loc,CErrors.iprint ei)));
+      Exninfo.iraise ei
+    in
+  ()
+
+
 
 let trace_filename_gen (add_counter: string) =
   "/tmp/traced.tmp" ^ (add_counter) ^ ".json"

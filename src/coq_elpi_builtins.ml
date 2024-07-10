@@ -1420,7 +1420,17 @@ line option|}))),
     VariadicIn(unit_ctx, !> B.any, "Prints and *aborts* the program. It is a fatal error for Elpi and Ltac"),
   (fun args ~depth _hyps _constraints _state ->
      let pp = pp ~depth in
-     err Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
+     let loc, args =
+      match args with
+      | [] -> None, args
+      | x :: rest ->
+        match E.look ~depth x with 
+        | E.CData x when API.RawOpaqueData.is_loc x ->
+          let loc = API.RawOpaqueData.to_loc x in
+          Some loc, if loc.source_name = "(stdin)" then rest else args
+        | _ -> None, args
+      in
+     err ?loc Pp.(str (pp2string (P.list ~boxed:true pp " ") args)))),
   DocAbove);
 
   MLCode(Pred("coq.version",
