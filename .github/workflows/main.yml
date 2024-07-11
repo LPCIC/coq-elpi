@@ -42,7 +42,9 @@ jobs:
         ocaml-compiler: ${{ matrix.ocaml_version }}
     - run: opam repo add coq-dev https://coq.inria.fr/opam/core-dev
     - run: opam install coq-core.${{ matrix.coq_version }}
+    - run: opam pin add coq-core ${{ matrix.coq_version }}
     - run: opam install coq-stdlib.${{ matrix.coq_version }}
+    - run: opam pin add coq-stdlib ${{ matrix.coq_version }}
     - run: opam install ./coq-elpi.opam --deps-only --with-test -y
     - run: opam exec make build
     - run: opam exec make test
