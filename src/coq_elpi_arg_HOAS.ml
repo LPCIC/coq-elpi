@@ -231,9 +231,10 @@ let univpoly_of ~poly ~cumulative =
   | true, false -> Poly
   | false, _ -> Mono
 
+[%%if coq = "8.19" || coq = "8.20"]
   let of_coq_inductive_definition id =
     let open Vernacentries.Preprocessed_Mind_decl in
-    let { flags; udecl; typing_flags; private_ind; uniform; inductives } = id in
+    let { flags;  typing_flags; private_ind; uniform; inductives } = id in
     if List.length inductives != 1 then nYI "mutual inductives";
     let inductive = List.hd inductives in
     let (((name),(parameters,non_uniform_parameters),arity,constructors),notations) = inductive in
@@ -243,7 +244,7 @@ let univpoly_of ~poly ~cumulative =
           List.map (function (Vernacexpr.(_,NoCoercion,NoInstance),c) -> c
             | _ -> CErrors.user_err Pp.(str "coercion and instance flags not supported"))
             constructors in
-    let { ComInductive.template; cumulative; poly; finite } = flags in
+    let { template; udecl; cumulative; poly; finite } = flags in
     if template <> None then nYI "raw template polymorphic inductives";
     if udecl <> None then nYI "raw universe polymorphic inductives with universe declaration";
     {
@@ -255,9 +256,37 @@ let univpoly_of ~poly ~cumulative =
       constructors;
       univpoly = univpoly_of ~poly ~cumulative
     }
+[%%else]
+let of_coq_inductive_definition id =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  let { flags; udecl; typing_flags; private_ind; uniform; inductives } = id in
+  if List.length inductives != 1 then nYI "mutual inductives";
+  let inductive = List.hd inductives in
+  let (((name),(parameters,non_uniform_parameters),arity,constructors),notations) = inductive in
+  if notations != [] then CErrors.user_err Pp.(str "notations not supported");
+  let name = [Names.Id.to_string name.CAst.v] in
+  let constructors =
+        List.map (function (Vernacexpr.(_,NoCoercion,NoInstance),c) -> c
+          | _ -> CErrors.user_err Pp.(str "coercion and instance flags not supported"))
+          constructors in
+  let { ComInductive.template; cumulative; poly; finite } = flags in
+  if template <> None then nYI "raw template polymorphic inductives";
+  if udecl <> None then nYI "raw universe polymorphic inductives with universe declaration";
+  {
+    finiteness = finite;
+    name;
+    parameters;
+    non_uniform_parameters;
+    arity;
+    constructors;
+    univpoly = univpoly_of ~poly ~cumulative
+  }
+[%%endif]
+
+[%%if coq = "8.19" || coq = "8.20"]
   let of_coq_record_definition id =
     let open Vernacentries.Preprocessed_Mind_decl in
-    let { flags; udecl; primitive_proj; kind; records; } : record = id in
+    let { flags; primitive_proj; kind; records; } : record = id in
     if List.length records != 1 then nYI "mutual inductives";
     let open Record.Ast in
     let { name; is_coercion; binders : Constrexpr.local_binder_expr list; cfs; idbuild; sort; default_inhabitant_id : Names.Id.t option; } = List.hd records in
@@ -267,7 +296,7 @@ let univpoly_of ~poly ~cumulative =
       match sort.CAst.v with
       | Constrexpr.CSort s -> s
       | _ -> CErrors.user_err ?loc:sort.CAst.loc Pp.(str "only explicits sorts are supported")) in
-    let { ComInductive.template; cumulative; poly; finite } = flags in
+    let { template; udecl; cumulative; poly; finite } = flags in
     if template <> None then nYI "raw template polymorphic inductives";
     if udecl <> None then nYI "raw universe polymorphic inductives with universe declaration";
     {
@@ -277,8 +306,32 @@ let univpoly_of ~poly ~cumulative =
       constructor = Some idbuild;
       fields = cfs;
       univpoly = univpoly_of ~poly ~cumulative
-    } 
-
+    }   
+[%%else]
+let of_coq_record_definition id =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  let { flags; udecl; primitive_proj; kind; records; } : record = id in
+  if List.length records != 1 then nYI "mutual inductives";
+  let open Record.Ast in
+  let { name; is_coercion; binders : Constrexpr.local_binder_expr list; cfs; idbuild; sort; default_inhabitant_id : Names.Id.t option; } = List.hd records in
+  if is_coercion = Vernacexpr.AddCoercion then CErrors.user_err Pp.(str "coercion flag not supported");
+  let name = [Names.Id.to_string name.CAst.v] in
+  let sort = sort |> Option.map (fun sort ->
+    match sort.CAst.v with
+    | Constrexpr.CSort s -> s
+    | _ -> CErrors.user_err ?loc:sort.CAst.loc Pp.(str "only explicits sorts are supported")) in
+  let { ComInductive.template; cumulative; poly; finite } = flags in
+  if template <> None then nYI "raw template polymorphic inductives";
+  if udecl <> None then nYI "raw universe polymorphic inductives with universe declaration";
+  {
+    name;
+    parameters = binders;
+    sort;
+    constructor = Some idbuild;
+    fields = cfs;
+    univpoly = univpoly_of ~poly ~cumulative
+  } 
+[%%endif]
 let intern_record_decl glob_sign (it : raw_record_decl) = glob_sign, it
 
 [%%if coq = "8.19"]
@@ -996,8 +1049,14 @@ let handle_template_polymorphism = function
   | Some false -> Some false
   | Some true -> err Pp.(str "#[universes(template)] is not supported")
 
+[%%if coq = "8.19" || coq = "8.20"]
+let handle_template_polymorphism flags =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  { flags with template = handle_template_polymorphism flags.template }
+[%%else]
 let handle_template_polymorphism flags =
   { flags with ComInductive.template = handle_template_polymorphism flags.ComInductive.template }
+[%%endif]
 
 let in_elpi_cmd_synterp ~depth ?calldepth state (x : Cmd.raw) =
   let open Cmd in
@@ -1024,6 +1083,43 @@ let in_elpi_cmd_synterp ~depth ?calldepth state (x : Cmd.raw) =
   | Term raw_term ->
       state, E.mkApp trmc E.mkDiscard [], []
 
+[%%if coq = "8.19" || coq = "8.20"]
+let dest_rdecl raw_rdecl =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  let { flags = ({ template; poly; cumulative; udecl; finite } as flags); primitive_proj; kind; records } = raw_rdecl in
+  flags, udecl, primitive_proj, kind, records
+let interp_structure ~flags udecl kind ~primitive_proj x =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  let { template; poly; cumulative; finite } = flags in
+  Record.interp_structure ~template udecl kind ~cumulative ~poly ~primitive_proj finite x
+[%%else]
+let dest_rdecl (raw_rdecl : Cmd.raw_record_decl) =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  let { flags; udecl; primitive_proj; kind; records } = raw_rdecl in
+  flags, udecl, primitive_proj, kind, records
+let interp_structure ~flags udecl kind ~primitive_proj x =
+  Record.interp_structure ~flags udecl kind ~primitive_proj x
+[%%endif]
+
+[%%if coq = "8.19" || coq = "8.20"]
+let dest_idecl raw_indt =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  let { flags = ({ udecl } as flags); typing_flags; uniform; private_ind; inductives } = raw_indt in
+  flags, udecl, typing_flags, uniform, private_ind, inductives
+let interp_mutual_inductive ~flags ~env ~uniform ~private_ind ?typing_flags ~udecl x =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  let { template; poly; cumulative; finite } = flags in
+  ComInductive.interp_mutual_inductive ~env ~template ~cumulative ~poly ~uniform ~private_ind ?typing_flags udecl x finite
+[%%else]
+let dest_idecl raw_indt =
+  let open Vernacentries.Preprocessed_Mind_decl in
+  let { flags; udecl; typing_flags; uniform; private_ind; inductives } = raw_indt in
+  flags, udecl, typing_flags, uniform, private_ind, inductives
+let interp_mutual_inductive ~flags ~env ~uniform ~private_ind ?typing_flags ~udecl x =
+  ComInductive.interp_mutual_inductive ~env ~flags ~uniform ~private_ind ?typing_flags udecl x
+[%%endif]
+
+
 let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   let open Cmd in
   let hyps = [] in
@@ -1035,12 +1131,11 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let state, t = grecord2lp ~depth state glob_rdecl in
       state, t, []
   | RecordDecl (_ist,(glob_sign,raw_rdecl)) ->
-      let open Vernacentries.Preprocessed_Mind_decl in
-      let { flags; udecl; primitive_proj; kind; records } = raw_rdecl in
+      let flags, udecl, primitive_proj, kind, records = dest_rdecl raw_rdecl in
       let flags = handle_template_polymorphism flags in
       (* Definitional type classes cannot be interpreted using this function (why?) *)
       let kind = if kind = Vernacexpr.Class true then Vernacexpr.Class false else kind in
-      let e = Record.interp_structure ~flags udecl kind ~primitive_proj records in
+      let e = interp_structure ~flags udecl kind ~primitive_proj records in
       record_entry2lp ~depth coq_ctx E.no_constraints state ~loose_udecl:(udecl = None) e
   | IndtDecl (_ist,(glob_sign,raw_indt)) when raw ->
       let raw_indt = of_coq_inductive_definition raw_indt in
@@ -1049,15 +1144,12 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let state, t = ginductive2lp ~depth state glob_indt in
       state, t, []
   | IndtDecl (_ist,(glob_sign,raw_indt)) -> 
-      let open Vernacentries.Preprocessed_Mind_decl in
-      let { flags; udecl; typing_flags; uniform; private_ind; inductives } = raw_indt in
+      let flags, udecl, typing_flags, uniform, private_ind, inductives = dest_idecl raw_indt in
       let flags = handle_template_polymorphism flags in
       let e =
         match inductives with
         | [mind_w_not] ->
-            ComInductive.interp_mutual_inductive ~env:coq_ctx.env
-              ~flags ~uniform ~private_ind ?typing_flags
-              udecl [mind_w_not]
+            interp_mutual_inductive ~flags ~env:coq_ctx.env ~uniform ~private_ind ?typing_flags ~udecl [mind_w_not]
         | _ -> nYI "(HOAS) mutual inductives"
       in
       inductive_entry2lp ~depth coq_ctx E.no_constraints state ~loose_udecl:(udecl = None) e
