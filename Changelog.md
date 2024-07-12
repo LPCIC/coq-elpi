@@ -1,3 +1,23 @@
+# [2.2.1] - 12/07/2024
+
+Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
+
+### Error reporting
+- Fix type checking errors on inline code are now reported on the correct line
+  in LSP based interfaces
+
+### Build system
+- Fix various missing dependencies
+- Fix rebuild before installation
+- Change CI no more use of docker images
+- Change silence `default-output-directory` warning
+
+### Apps/tc
+- Change organize the code inside a `tc` namespace
+
+### Apps/derive
+- Change do not leak `positive_scope` open
+
 # [2.2.0] - 28/06/2024
 
 Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
