@@ -19,25 +19,15 @@ Set Warnings "+elpi".
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
-Elpi Typecheck.
 Elpi Accumulate Db tc_options.db.
-Elpi Typecheck.
 Elpi Accumulate File base.
-Elpi Typecheck.
 Elpi Accumulate File tc_aux.
-Elpi Typecheck.
 Elpi Accumulate File ho_precompile.
-Elpi Typecheck.
 Elpi Accumulate File unif.
-Elpi Typecheck.
 Elpi Accumulate File ho_link.
-Elpi Typecheck.
 Elpi Accumulate File ho_compile.
-Elpi Typecheck.
 Elpi Accumulate File compiler1.
-Elpi Typecheck.
 Elpi Accumulate File modes.
-Elpi Typecheck.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
