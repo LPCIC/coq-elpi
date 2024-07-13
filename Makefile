@@ -13,7 +13,7 @@ build-apps:
 .PHONY: build-apps
 
 build:
-	$(call dune,build) @install
+	$(call dune,build) -p coq-elpi @install
 .PHONY: build
 
 test-core:
