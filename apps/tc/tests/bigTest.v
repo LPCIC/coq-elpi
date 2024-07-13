@@ -882,7 +882,7 @@ instances *)
 Section prod_setoid.
   Context `{Equiv A, Equiv B}.
   Elpi Accumulate TC.Solver lp:{{
-    shorten tc-Coq.Classes.RelationClasses.{tc-Equivalence}.
+    shorten tc-Stdlib.Classes.RelationClasses.{tc-Equivalence}.
     :after "lastHook"
     tc-Equivalence A RA R :-
       RA = {{@equiv _ (@prod_equiv _ _ _ _)}},
@@ -910,7 +910,7 @@ Section prod_setoid.
       std.map L1 remove_equiv_prod_equiv L2.
     remove_equiv_prod_equiv A A.
 
-    shorten tc-Coq.Classes.Morphisms.{tc-Proper}.
+    shorten tc-Stdlib.Classes.Morphisms.{tc-Proper}.
     
     :after "lastHook" 
     tc-Proper A B C R :-
@@ -1043,7 +1043,7 @@ Elpi Accumulate TC.Solver lp:{{
       std.map L1 remove_equiv_sum_equiv L2.
     remove_equiv_sum_equiv A A.
     
-    shorten tc-Coq.Classes.Morphisms.{tc-Proper}.
+    shorten tc-Stdlib.Classes.Morphisms.{tc-Proper}.
     :after "lastHook" 
     tc-Proper A B C R :-
       B = {{ @respectful _ _ _ _ }},
