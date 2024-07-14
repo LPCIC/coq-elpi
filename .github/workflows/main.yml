@@ -104,4 +104,4 @@ jobs:
           git config --global user.name coqelpibot
           git config --global user.email coqelpibot@inria.fr
           TAG=`git tag --sort=-v:refname|head -1`
-          opam-publish --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam --no-browser -v ${TAG##v}	https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz
+          opam-publish --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam --no-browser -v ${TAG##v}	coq-elpi.opam https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz
