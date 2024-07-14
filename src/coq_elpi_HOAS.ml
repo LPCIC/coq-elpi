@@ -2924,18 +2924,34 @@ let poly_cumul_udecl_variance_of_options state options =
     Array.of_list variance
 
 [%%if coq = "8.19"]
-let comInductive_interp_mutual_inductive_constr env_ar_params sigma arity =
+let comInductive_interp_mutual_inductive_constr env_ar_params sigma arity ~cumulative ~poly ~template ~finite =
   let arityconcl =
     match Reductionops.sort_of_arity env_ar_params sigma arity with
     | exception Reduction.NotArity -> None
     | s -> Some s in
-  ComInductive.interp_mutual_inductive_constr ~arityconcl:[arityconcl]
+  ComInductive.interp_mutual_inductive_constr ~arityconcl:[arityconcl] ~cumulative ~poly ~template ~finite 
+[%%elif coq = "8.20"]
+let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~template ~finite = 
+  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~cumulative ~poly ~template ~finite 
+[%%else]
+let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~template ~finite =
+  let flags = {
+    ComInductive.poly;
+    cumulative;
+    template = Some false;
+    auto_prop_lowering = false;
+    finite;
+  }
+  in
+  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~flags
+[%%endif]
+
+[%%if coq = "8.19"]
 let comInductive_interp_mutual_inductive_constr_post (a,b,c) = [],a,b,c 
 [%%else]
-let comInductive_interp_mutual_inductive_constr _ _ _ = 
-  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly]
 let comInductive_interp_mutual_inductive_constr_post x = x
 [%%endif]
+
 let lp2inductive_entry ~depth coq_ctx constraints state t =
 
   let lp2constr coq_ctx ~depth state t =
@@ -3039,7 +3055,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
           Univ.Level.Set.union acc
             (universes_of_term state t))
         used (nuparams @ params) in
-    let sigma = restricted_sigma_of used state in
+      let sigma = restricted_sigma_of used state in
 
       state, comInductive_interp_mutual_inductive_constr
       env_ar_params sigma arity
