@@ -218,8 +218,8 @@ the latter is an integer. The label <code class="e elpi">o<span class="err">:</s
 is a mode declaration, which we will explain later (ignore it for now).</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p><a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L17">int</a> is the built-in data type of integers</p>
-<p class="last">Integers come with usual arithmetic operators, see the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L75">calc</a> built-in.</p>
+<p><a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L17">int</a> is the built-in data type of integers</p>
+<p class="last">Integers come with usual arithmetic operators, see the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L75">calc</a> built-in.</p>
 </div>
 <p>In order to run our program we have to write a query,
 i.e. a predicate expression containing variables such as:</p>
@@ -247,14 +247,14 @@ predicate expressions.</p>
 
   age alice <span class=" -ElpiVariable">A</span><span class="k k-ElpiKeyword">,</span> coq.say <span class="s2">&quot;The age of alice is&quot;</span> <span class=" -ElpiVariable">A</span>
 
-<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The age of alice <span class="kr">is</span> <span class="mi">20</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">A = <span class="mi">20</span></blockquote></div></div></small></span></pre><p><a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/coq-builtin.elpi#L529">coq.say</a> is a built-in predicate provided by Coq-Elpi which
+<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The age of alice <span class="kr">is</span> <span class="mi">20</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">A = <span class="mi">20</span></blockquote></div></div></small></span></pre><p><a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/coq-builtin.elpi#L529">coq.say</a> is a built-in predicate provided by Coq-Elpi which
 prints its arguments.
 You can look at the output buffer of Coq to see the value for <code class="e elpi"><span class="n-ElpiVariable">A</span></code> or hover
 or toggle the little bubble after <code class="highlight coq"><span class="o">}}.</span></code> if you are reading the tutorial with a
 web browser.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p><a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L20">string</a> is a built-in data type</p>
+<p><a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L20">string</a> is a built-in data type</p>
 <p class="last">Strings are delimited by double quotes and <tt class="docutils literal">\</tt> is the escape symbol.</p>
 </div>
 <p>The predicate <code class="e elpi">age</code> represents a <em>relation</em> (in contrast to a function)
@@ -872,8 +872,8 @@ typical of functional programming are available, with some caveats.</p>
 <div class="section" id="spilling-relation-composition">
 <h2><a class="toc-backref" href="#toc-entry-12">Spilling (relation composition)</a></h2>
 <p>Chaining &quot;relations&quot; can be painful, especially when
-they look like functions. Here we use <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L500">std.append</a>
-and <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L488">std.rev</a> to build a palindrome:</p>
+they look like functions. Here we use <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L500">std.append</a>
+and <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L488">std.rev</a> to build a palindrome:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> function <span class="si">lp:{{</span>
 
 <span class="k k-ElpiKeyword">pred</span> <span class=" -ElpiFunction">make-palindrome</span> <span class="k k-ElpiMode">i:</span><span class="kt">list</span> <span class="kt">A</span>, <span class="k k-ElpiMode">o:</span><span class="kt">list</span> <span class="kt">A</span>.
@@ -926,20 +926,20 @@ Actually the latter is elaborated into the former.</p>
 <div class="section" id="apis-for-built-in-data">
 <h2><a class="toc-backref" href="#toc-entry-13">APIs for built-in data</a></h2>
 <p>Functions about built-in data types are available via the
-<a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L75">calc</a> predicate or its infix version <code class="e elpi"><span class="k-ElpiKeyword">is</span></code>. Example:</p>
+<a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L75">calc</a> predicate or its infix version <code class="e elpi"><span class="k-ElpiKeyword">is</span></code>. Example:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk19" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk19"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
    calc ( <span class="s2">&quot;result &quot;</span> <span class="k k-ElpiKeyword">^</span> <span class="s2">&quot;=&quot;</span> ) <span class=" -ElpiVariable">X</span><span class="k k-ElpiKeyword">,</span>
    <span class=" -ElpiVariable">Y</span> <span class="k k-ElpiKeyword">is</span> <span class="m m-ElpiInteger">3</span> <span class="k k-ElpiKeyword">+</span> <span class="m m-ElpiInteger">2</span><span class="k k-ElpiKeyword">,</span>
    coq.say <span class=" -ElpiVariable">X</span> <span class=" -ElpiVariable">Y</span> 
 
-<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">result = <span class="mi">5</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">X = result =</blockquote><blockquote class="alectryon-message">Y = <span class="mi">5</span></blockquote></div></div></small></span></pre><p>The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L75">calc</a> predicate works nicely with spilling:</p>
+<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">result = <span class="mi">5</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">X = result =</blockquote><blockquote class="alectryon-message">Y = <span class="mi">5</span></blockquote></div></div></small></span></pre><p>The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L75">calc</a> predicate works nicely with spilling:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1a" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1a"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span> coq.say <span class="s2">&quot;result =&quot;</span> {calc (<span class="m m-ElpiInteger">2</span> <span class="k k-ElpiKeyword">+</span> <span class="m m-ElpiInteger">3</span>)} <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">result = <span class="mi">5</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">Spilled_1 = <span class="mi">5</span></blockquote></div></div></small></span></pre></div>
 <div class="section" id="allocation-of-variables">
 <h2><a class="toc-backref" href="#toc-entry-14">Allocation of variables</a></h2>
 <p>The language let's one use λ-abstraction also to write anonymous rules
 but one has to be wary of where variables are bound (allocated really).</p>
-<p>In our example we use the higher order predicate <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L547">std.map</a>:</p>
+<p>In our example we use the higher order predicate <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L547">std.map</a>:</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">pred</span> <span class="n-ElpiFunction">std.map</span> <span class="k-ElpiMode">i:</span><span class="kt">list</span> <span class="kt">A</span>, <span class="k-ElpiMode">i:</span><span class="kt">(A</span> <span class="err">-</span><span class="kt">&gt;</span> <span class="kt">B</span> <span class="err">-</span><span class="kt">&gt;</span> <span class="kt">prop)</span>, <span class="k-ElpiMode">o:</span><span class="kt">list</span> <span class="kt">B</span>.
 </pre>
@@ -983,7 +983,7 @@ good2 <span class=" -ElpiVariable">L</span> <span class=" -ElpiVariable">Result<
   good2 <span class="k k-ElpiKeyword">[</span><span class="m m-ElpiInteger">1</span><span class="k k-ElpiKeyword">,</span><span class="m m-ElpiInteger">2</span><span class="k k-ElpiKeyword">,</span><span class="m m-ElpiInteger">3</span><span class="k k-ElpiKeyword">]</span> <span class=" -ElpiVariable">R3</span>
 
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">R1 = X0</blockquote><blockquote class="alectryon-message">R2 = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</blockquote><blockquote class="alectryon-message">R3 = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</blockquote></div></div></small></span></pre><p>The problem with <code class="e elpi">bad</code> is that <code class="e elpi"><span class="n-ElpiVariable">TMP</span></code> is fresh each time the rule
-is used, but not every time the anonymous rule passed to <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L547">map</a>
+is used, but not every time the anonymous rule passed to <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L547">map</a>
 is used. Technically <code class="e elpi"><span class="n-ElpiVariable">TMP</span></code> is quantified (allocated) where <code class="e elpi"><span class="n-ElpiVariable">L</span></code>
 and <code class="e elpi"><span class="n-ElpiVariable">Result</span></code> are.</p>
 <p>There are two ways to quantify <code class="e elpi"><span class="n-ElpiVariable">TMP</span></code> correctly, that is inside the
@@ -1470,7 +1470,7 @@ inconvenience to the authors of the program.</blockquote></div></div></small><sp
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">A = X0</blockquote><blockquote class="alectryon-message">B = X0</blockquote><blockquote class="alectryon-message">C = X0</blockquote></div></div></small></span></pre></div>
 <div class="section" id="backtracking-1">
 <h3><a class="toc-backref" href="#toc-entry-21">Backtracking</a></h3>
-<p>Backtracking can lead to weird execution traces. The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L679">std.do!</a> predicate
+<p>Backtracking can lead to weird execution traces. The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L679">std.do!</a> predicate
 should be used to write non-backtracking code.</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">pred</span> <span class="n-ElpiFunction">not-a-backtracking-one</span>.
@@ -1483,8 +1483,8 @@ not-a-backtracking-one <span class="k-ElpiKeyword">:-</span> condition<span clas
 <p>In the example above once <code class="e elpi">condition</code> holds we start a sequence of
 steps which we will not reconsider. Locally, backtracking is still
 available, e.g. between <code class="e elpi">generate</code> and <code class="e elpi">test</code>.
-See also the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L691">std.spy-do!</a> predicate which prints each and every step,
-and the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/56b874cd941dd8c51de8cd9c35e107cbb1c6a0b6/builtin-doc/elpi-builtin.elpi#L462">std.spy</a> one which can be used to spy on a single one.</p>
+See also the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L691">std.spy-do!</a> predicate which prints each and every step,
+and the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/68e32cbe368f6ec1be5bb316bee717033c656b05/builtin-doc/elpi-builtin.elpi#L462">std.spy</a> one which can be used to spy on a single one.</p>
 </div>
 <div class="section" id="unification-variables-v-s-imperative-variables">
 <h3><a class="toc-backref" href="#toc-entry-22">Unification variables v.s. Imperative variables</a></h3>
