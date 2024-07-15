@@ -1,3 +1,11 @@
+# [2.2.2] - 15/07/2024
+
+Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
+
+### Packaging
+- Fix release script to just publish coq-elpi (and not coq-elpi-tests)
+- Fix opam constraints by adding upper bound
+
 # [2.2.1] - 12/07/2024
 
 Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
