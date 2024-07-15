@@ -32,7 +32,7 @@
   (ocaml (>= 4.10.0))
   stdlib-shims
   (elpi (and (>= 1.18.2) (< 1.20.0~)))
-  (coq (>= 8.19))
+  (coq (and (>= 8.19) (< 8.21)))
   ppx_optcomp
   (ocaml-lsp-server :dev)))
 
