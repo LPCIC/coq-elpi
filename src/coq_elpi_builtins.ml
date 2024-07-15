@@ -1331,6 +1331,40 @@ let coq_header_builtins =
 |};
   ]
 
+[%%if coq = "8.19" || coq = "8.20" ]
+let compat_reduction_behavior_set ~local gref strategy =
+  Reductionops.ReductionBehaviour.set ~local gref strategy
+[%%else]
+let compat_reduction_behavior_set ~local gref strategy =
+  Reductionops.ReductionBehaviour.set ~local gref (Some strategy)
+[%%endif]
+
+[%%if coq = "8.19" || coq = "8.20" ]
+let compat_reset_simplification = []
+[%%else]
+let compat_reset_simplification =
+  let open API.BuiltIn in
+  let open Pred in
+  let open Notation in
+  let open CConv in
+  let pp ~depth = P.term depth in
+  [MLCode(Pred("coq.arguments.reset-simplification",
+    In(gref,"GR",
+    Full(global,
+{|resets the behavior of the simplification tactics.
+Also resets the ! and / modifiers for the Arguments command.
+Supported attributes:
+- @global! (default: false)|})),
+  (fun gref ~depth { options } _ -> grab_global_env "coq.arguments.reset-simplification" (fun state ->
+     match gref with
+     | ConstRef gref ->
+       let local = options.local <> Some false in
+       Reductionops.ReductionBehaviour.set ~local gref None;
+       state, (), []
+     | _ -> err Pp.(str "reset-simplification must be called on constant")))),
+  DocAbove)]
+[%%endif]
+
 let coq_misc_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -3083,10 +3117,12 @@ Supported attributes:
      match gref with
      | ConstRef gref ->
        let local = options.local <> Some false in
-       Reductionops.ReductionBehaviour.set ~local gref strategy;
+       compat_reduction_behavior_set ~local gref strategy;
        state, (), []
      | _ -> err Pp.(str "set-simplification must be called on constant")))),
-  DocAbove);
+  DocAbove)
+
+  ] @ compat_reset_simplification @ [
 
   MLCode(Pred("coq.locate-abbreviation",
     In(id, "Name",
