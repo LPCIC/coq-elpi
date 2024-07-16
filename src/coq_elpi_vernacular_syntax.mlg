@@ -106,7 +106,42 @@ END
 
 (* Syntax **************************************************************** *)
 
-VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
+{
+let classify_named_vernac (_,p) = Vernacextend.VtSideff([Names.Id.of_string_soft @@ String.concat "." p],VtNow)
+}
+
+VERNAC COMMAND EXTEND ElpiNamed
+| #[ atts = any_attribute ] [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] => { classify_named_vernac p } SYNTERP AS atts 
+   { 
+     let atts = validate_attributes raw_args_attributes atts in
+     EV.Synterp.create_program ~atts ~init:s p;
+     atts
+   } -> {
+     EV.Interp.create_program ~atts ~init:s p
+   }
+| #[ atts = any_attribute ] [ "Elpi" "Command" qualified_name(p) ] => { classify_named_vernac p }  SYNTERP AS atts
+   { 
+     let atts = validate_attributes raw_args_attributes atts in
+     EV.Synterp.create_command ~atts p;
+     atts
+   } -> {
+     EV.Interp.create_command ~atts p }
+| #[ atts = any_attribute ] [ "Elpi" "Tactic" qualified_name(p) ] => { classify_named_vernac p }  SYNTERP AS _ 
+   { 
+     let () = ignore_unknown_attributes atts in
+     EV.Synterp.create_tactic p
+   } -> {
+     EV.Interp.create_tactic p }
+| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] => { classify_named_vernac d }  SYNTERP AS atts
+   { 
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.create_db ~atts d ~init:s;
+     atts
+   } -> {
+     EV.Interp.create_db ~atts d ~init:s }
+END
+
+VERNAC COMMAND EXTEND ElpiUnnamed CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" "File" ne_ident_list(ids) ] SYNTERP AS atts {
      let atts = validate_attributes skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_extra_deps ~atts  ids;
@@ -261,35 +296,6 @@ VERNAC COMMAND EXTEND Elpi CLASSIFIED AS SIDEFF
      atts
    } -> {
      EV.Interp.print  ~atts (snd p) s }
-
-| #[ atts = any_attribute ] [ "Elpi" "Program" qualified_name(p) elpi_string(s) ] SYNTERP AS atts 
-   { 
-     let atts = validate_attributes raw_args_attributes atts in
-     EV.Synterp.create_program ~atts ~init:s p;
-     atts
-   } -> {
-     EV.Interp.create_program ~atts ~init:s p
-   }
-| #[ atts = any_attribute ] [ "Elpi" "Command" qualified_name(p) ] SYNTERP AS atts
-   { 
-     let atts = validate_attributes raw_args_attributes atts in
-     EV.Synterp.create_command ~atts p;
-     atts
-   } -> {
-     EV.Interp.create_command ~atts p }
-| #[ atts = any_attribute ] [ "Elpi" "Tactic" qualified_name(p) ] SYNTERP AS _ 
-   { 
-     let () = ignore_unknown_attributes atts in
-     EV.Synterp.create_tactic p
-   } -> {
-     EV.Interp.create_tactic p }
-| #[ atts = any_attribute ] [ "Elpi" "Db" qualified_name(d) elpi_string(s) ] SYNTERP AS atts
-   { 
-     let atts = validate_attributes synterp_attribute atts in
-     EV.Synterp.create_db ~atts d ~init:s;
-     atts
-   } -> {
-     EV.Interp.create_db ~atts d ~init:s }
 
 | #[ atts = any_attribute ] [ "Elpi" "Typecheck" ] SYNTERP AS _ 
    { 
