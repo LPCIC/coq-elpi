@@ -561,6 +561,12 @@ module SynterpAction = struct
 
   type 'a replay = 'a -> State.t -> State.t * ModPath.t option 
 
+  [%%if coq = "8.19" || coq = "8.20"]
+  let interp_close_section = Lib.Interp.close_section
+  [%%else]
+  let interp_close_section = Declaremods.Interp.close_section
+  [%%endif]
+
   let replay1 action state =
     match action with
     | BeginModule((name,_,_),binders_ast,ty) ->
@@ -597,7 +603,7 @@ module SynterpAction = struct
         let loc = to_coq_loc @@ State.get invocation_site_loc state in
         Dumpglob.dump_reference ~loc
           (DirPath.to_string (Lib.current_dirpath true)) "<>" "sec";
-        Lib.Interp.close_section ();
+        interp_close_section ();
         (Coq_elpi_HOAS.grab_global_env_drop_sigma state, None)
     | ImportModule mp ->
         Declaremods.import_module ~export:Lib.Import Libobject.unfiltered mp;
@@ -926,6 +932,12 @@ let attribute_value = let open API.AlgebraicData in let open CConv in declare {
 
 let attribute = attribute attribute_value
 
+[%%if coq = "8.19" || coq = "8.20"]
+let synterp_close_section = Lib.Synterp.close_section
+[%%else]
+let synterp_close_section = Declaremods.Synterp.close_section
+[%%endif]
+
 let coq_synterp_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -1149,7 +1161,7 @@ coq.env.begin-module-type Name :-
   MLCode(Pred("coq.env.end-section",
     Full(unit_ctx, "end the current section *E*"),
   (fun ~depth _ _ state ->
-     Lib.Synterp.close_section ();
+     synterp_close_section ();
      let state = SynterpAction.(push EndSection) state in
      state, (), [])),
   DocAbove);
