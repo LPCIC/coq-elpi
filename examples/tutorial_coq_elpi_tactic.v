@@ -20,7 +20,7 @@ Tutorial on Coq tactics
    evars in the Coq jargon).
 
    This software, "coq-elpi", is a Coq plugin embedding Elpi and
-   exposing to the extension language Coq spefic data types (e.g. terms)
+   exposing to the extension language Coq specific data types (e.g. terms)
    and API (e.g. to declare a new inductive type).
 
    In order to get proper syntax highlighting using VSCode please install the
@@ -74,7 +74,7 @@ The first one `Elpi Tactic show.` sets the current program to `show`.
 Since it is declared as a `Tactic` some code is loaded automatically:
 
 * APIs (eg :builtin:`coq.say`) and data types (eg Coq :type:`term` s) are loaded from
-  `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_
+  `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi>`_
 * some utilities, like :lib:`copy` or :libred:`whd1` are loaded from
   `elpi-command-template.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi>`_
   
@@ -112,7 +112,7 @@ Abort.
 
 In the Elpi code up there :e:`Proof` is the hole for the current goal,
 :e:`Type` the statement to be proved and :e:`Ctx` the proof context (the list of
-hypotheses). Since we don't assign :e:`Proof` the tactic makes no progess.
+hypotheses). Since we don't assign :e:`Proof` the tactic makes no progress.
 Elpi prints somethinglike this:
 
 .. mquote:: .s(elpi).msg{Goal:*X0 c0 c1*}
@@ -135,7 +135,7 @@ the variable has :e:`c0` and :e:`c1` in scope (the proof term can use them).
 Finally we see the type of the goal `x + 1 = y`.
 
 The :e:`_Trigger` component, which we did not print, is a variable that, when
-assigned, trigger the elaboration of its value against the type of the goal
+assigned, triggers the elaboration of its value against the type of the goal
 and obtains a value for :e:`Proof` this way.
 
 Keeping in mind that the :builtin:`solve` predicate relates one goal to a list of
@@ -225,7 +225,7 @@ the statement features an explicit conjunction.
 
 |*)
 
-About conj. (* remak the implicit arguments *)
+About conj. (* remark the implicit arguments *)
 
 Elpi Tactic split.
 Elpi Accumulate lp:{{
@@ -236,8 +236,8 @@ Elpi Accumulate lp:{{
 
   solve _ _ :-
     % This signals a failure in the Ltac model. A failure
-    % in Elpi, that is no more cluases to try, is a fatal
-    % error that cannot be catch by Ltac combinators like repeat.
+    % in Elpi, that is no more clauses to try, is a fatal
+    % error that cannot be caught by Ltac combinators like repeat.
     coq.ltac.fail _ "not a conjunction".
 }}.
 Elpi Typecheck.
@@ -245,7 +245,7 @@ Elpi Typecheck.
 Lemma test_split : exists t : Prop, True /\ True /\ t.
 Proof. (* .in *)
 eexists.
-repeat elpi split. (* The failure is catched by Ltac's repeat *)
+repeat elpi split. (* The failure is caught by Ltac's repeat *)
 (* Remark that the last goal is left untouched, since
    it did not match the pattern {{ _ /\ _ }}. *)
 all: elpi blind.
@@ -269,7 +269,7 @@ of code passing to it the desired
 arguments. Then it builds the list of subgoals.
 
 Here we pass an integer, which in turn is passed to `fail`, and a term,
-which is turn is passed to `apply`.
+which in turn is passed to `apply`.
 
 |*)
 
@@ -327,7 +327,7 @@ have to be put between parentheses.
    :e:`X0`.
 
 See the :type:`argument` data type
-for a detailed decription of all the arguments a tactic can receive.
+for a detailed description of all the arguments a tactic can receive.
 
 Now let's write a tactic which behaves pretty much like the :libtac:`refine`
 one from Coq, but prints what it does using the API :builtin:`coq.term->string`.
@@ -368,7 +368,7 @@ It is customary to use the Tactic Notation command to attach a nicer syntax
 to Elpi tactics.
 
 In particular `elpi tacname` accepts as arguments the following `bridges
-for Ltac values <https://coq.inria.fr/doc/proof-engine/ltac.html#syntactic-values>`_ :
+for Ltac values <https://coq.inria.fr/doc/master/refman/proof-engine/ltac.html#syntactic-values>`_ :
 
 * `ltac_string:(v)` (for `v` of type `string` or `ident`)
 * `ltac_int:(v)` (for `v` of type `int` or `integer`)
@@ -410,16 +410,16 @@ Failure
 ========
 
 The :builtin:`coq.error` aborts the execution of both
-Elpi and any enclosing LTac context. This failure cannot be catched
-by LTac.
+Elpi and any enclosing Ltac context. This failure cannot be caught
+by Ltac.
 
 On the contrary the :builtin:`coq.ltac.fail` builtin can be used to
-abort the execution of Elpi code in such a way that LTac can catch it.
-This API takes an integer akin to LTac's fail depth together with
+abort the execution of Elpi code in such a way that Ltac can catch it.
+This API takes an integer akin to Ltac's fail depth together with
 the error message to be displayed to the user.
 
 Library functions of the `assert!` family call, by default, :builtin:`coq.error`.
-The flag `@ltacfail! N` can be set to alter this behavior and turn erros into
+The flag `@ltacfail! N` can be set to alter this behavior and turn errors into
 calls to `coq.ltac.fail N`.
 
 |*)
@@ -485,8 +485,8 @@ As we hinted before, Elpi's equality is alpha equivalence. In the second
 goal the assumption has type `Q` but the goal has type `id Q` which is
 convertible (unifiable, for Coq's unification) to `Q`.
 
-Let's improve our tactic looking for an assumption which is unifiable with
-the goal, an not just alpha convertible. The :builtin:`coq.unify-leq`
+Let's improve our tactic by looking for an assumption which is unifiable with
+the goal, and not just alpha convertible. The :builtin:`coq.unify-leq`
 calls Coq's unification for types (on which cumulativity applies, hence the
 `-leq` suffix). The :stdlib:`std.mem` utility, thanks to backtracking,
 eventually finds an hypothesis that satisfies the following predicate
@@ -571,7 +571,7 @@ Abort.
 (*|
 
 This first approximation only prints the term it found, or better the first
-intance of the given term.
+instance of the given term.
 
 Now lets focus on :lib:`copy`. An excerpt:
 
@@ -904,7 +904,7 @@ tactic, here the precise type definition:
 
    typeabbrev tactic (sealed-goal -> (list sealed-goal -> prop)).
 
-A few tacticals can be fond in the
+A few tacticals can be found in the
 `elpi-ltac.elpi file <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi>`_.
 For example this is the code of :libtac:`try`:
 

@@ -185,7 +185,7 @@ hence unification succeeds.
 
 See also the `Wikipedia page on Unification <https://en.wikipedia.org/wiki/Unification_(computer_science)#Syntactic_unification_of_first-order_terms>`_.
 
-Since the first part of the query is succesful the rest of
+Since the first part of the query is successful the rest of
 the query is run: the value of :e:`P` is printed as well as
 the :e:`"is 23 years old"` string.
 
@@ -232,7 +232,7 @@ but the third one has no solution, so unification fails.
 Backtracking
 ------------
 
-When failure occurs all assignements are undone (i.e. :e:`P` is unset again)
+When failure occurs all assignments are undone (i.e. :e:`P` is unset again)
 and the next rule in the program is tried. This operation is called
 *backtracking*.
 
@@ -248,7 +248,7 @@ This one also fails. The unification problem for the last rule is:
 
    age P 20 = age alice 20
 
-This one works, and the assigment :e:`P = alice` is kept as the result
+This one works, and the assignment :e:`P = alice` is kept as the result
 of the first part of the query. Then :e:`P` is printed and the program
 ends.
 
@@ -293,7 +293,7 @@ Elpi Query lp:{{
 
    The :e:`not(P)` predicate tries to solve the query :e:`P`: it fails if
    :e:`P` succeeds, and succeeds if :e:`P` fails. In any case no trace is left
-   of the computation for :e:`P`. E.g. :e:`not(X = 1, 2 < 1)` suceeds, but
+   of the computation for :e:`P`. E.g. :e:`not(X = 1, 2 < 1)` succeeds, but
    the assignment for :e:`X` is undone. See also the section
    about the `foundations`_ of λProlog.
 
@@ -562,7 +562,7 @@ Elpi Bound Steps 0.
 :e:`pi x\ ` and :e:`=>`
 -----------------------
 
-We have seen how to implement subtitution using the binders of λProlog.
+We have seen how to implement substitution using the binders of λProlog.
 More often than not we need to move under binders rather than remove them by
 substituting some term in place of the bound variable. 
 
@@ -653,7 +653,7 @@ universally quantified, we use :e:`A2`, :e:`B2`... this time):
 * the :e:`=>` connective adds the rule :e:`of c2 A2` the program
 * the new query :e:`of c1 B2` is run.
 
-The (hypotetical) rule :e:`of c1 A1` is used:
+The (hypothetical) rule :e:`of c1 A1` is used:
 
 * unification assigns :e:`A1` to :e:`B2`
 
@@ -686,7 +686,7 @@ First, the rule for elpi:`fun` is selected:
 
 Then it's the turn of typing the application:
 
-* the query :e:`of c1 (arr A2 B2)` assignes to :e:`A1` the
+* the query :e:`of c1 (arr A2 B2)` assigns to :e:`A1` the
   value :e:`arr A2 B2`.  This means that the
   hypothetical rule is now :e:`of c1 (arr A2 B2)`.
 * the query :e:`of c1 A2` fails because the unification
@@ -915,7 +915,7 @@ Elpi Query lp:{{ sum X (s z) (s (s z)), (X = z ; X = s z) }}.
 
 (*|
 
-In this example the computation suspends, then makes progess,
+In this example the computation suspends, then makes progress,
 then suspends again... 
 
 |*)
@@ -1296,7 +1296,7 @@ Debugging
 =========
 
 The most sophisticated debugging feature can be used via
-the Visual Sudio Code extension ``gares.elpi-lang`` and its
+the Visual Studio Code extension ``gares.elpi-lang`` and its
 ``Elpi Tracer`` tab.
 
 ---------------
@@ -1328,7 +1328,7 @@ the load icon, in the upper right corner of the Elpi Tracer panel.
    the extension settings in order to get a correct display.
 
 The trace browser displays, on the left column, a list of cards corresponding
-to a step perfoemd by the interpreter. The right side of the
+to a step performed by the interpreter. The right side of the
 panel gives more details about the selected step. In the image below one
 can see the goal, the rule being applied, the assignments performed by the
 unification of the rule's head with the goal, the subgoals generated.
@@ -1539,7 +1539,7 @@ fails, because :e:`X` cannot be at the same time 3 and 9. Initially
 asserting that 3 (the value hold by :e:`X`) is equal to 9.
 The second call to :e:`is` does not change the value carried by :e:`X`!
    
-Unification, and hence the :e:`=` pradicate, plays two roles.
+Unification, and hence the :e:`=` predicate, plays two roles.
 When :e:`X` is unset, :e:`X = v` sets the variable.
 When :e:`X` is set to :e:`u`, :e:`X = v` checks if the value
 of :e:`X` is equal to :e:`u`: it is equivalent to  :e:`u = v`.

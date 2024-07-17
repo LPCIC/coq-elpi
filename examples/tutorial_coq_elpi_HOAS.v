@@ -20,7 +20,7 @@ Tutorial on the HOAS for Coq terms
    evars in the Coq jargon).
 
    This software, "coq-elpi", is a Coq plugin embedding Elpi and
-   exposing to the extension language Coq spefic data types (e.g. terms)
+   exposing to the extension language Coq specific data types (e.g. terms)
    and API (e.g. to declare a new inductive type).
 
    In order to get proper syntax highlighting using VSCode please install the
@@ -52,7 +52,7 @@ Elpi Command tutorial_HOAS. (* .none *)
 (*|
 
 The full syntax of Coq terms can be found in
-`coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_
+`coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi>`_
 together with a detailed documentation of the encoding of contexts and the
 APIs one can use to interact with Coq. This tutorial, and the two more
 that focus on commands and tactics, are a gentle introduction to all that.
@@ -65,7 +65,7 @@ syntax tree of Coq terms.
 Constructor :e:`global`
 -----------------------
 
-Let's start with the :type:`gref` data type (for global rerence).
+Let's start with the :type:`gref` data type (for global reference).
 
 .. code:: elpi
 
@@ -382,7 +382,7 @@ Elpi Query lp:{{
    
 It is quite frequent to put Coq variables in the scope of an Elpi
 unification variable, and this can be done by simply writing
-`lp:(X a b)` which is a shorhand for `lp:{{ X {{ a }} {{ b }} }}`.
+`lp:(X a b)` which is a shorthand for `lp:{{ X {{ a }} {{ b }} }}`.
 
 .. warning:: writing `lp:X a b` (without parentheses) would result in a
    Coq application, not an Elpi one

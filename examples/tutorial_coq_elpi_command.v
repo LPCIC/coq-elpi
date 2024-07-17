@@ -20,7 +20,7 @@ Tutorial on Coq commands
    evars in the Coq jargon).
    
    This software, "coq-elpi", is a Coq plugin embedding Elpi and
-   exposing to the extension language Coq spefic data types (e.g. terms)
+   exposing to the extension language Coq specific data types (e.g. terms)
    and API (e.g. to declare a new inductive type).
    
    In order to get proper syntax highlighting using VSCode please install the
@@ -63,7 +63,7 @@ The first one `Elpi Command hello.` sets the current program to hello.
 Since it is declared as a `Command` some code is loaded automatically:
 
 * APIs (eg :builtin:`coq.say`) and data types (eg Coq :type:`term` s) are loaded from
-  `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/coq-builtin.elpi>`_
+  `coq-builtin.elpi <https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi>`_
 * some utilities, like :lib:`copy` or :libred:`whd1` are loaded from
   `elpi-command-template.elpi <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi>`_
 
@@ -168,7 +168,7 @@ Finally note that the type of the second field
 sees :e:`c0` (the value of the first field).
 
 See the :type:`argument` data type
-for a detailed decription of all the arguments a command can receive.
+for a detailed description of all the arguments a command can receive.
 
 ------------------------
 Processing raw arguments
@@ -179,7 +179,7 @@ so that no elaboration has been performed.
 This can be achieved by using the 
 `#[arguments(raw)]` attributed when the command is declared.
 
-Then, thre are two ways to process term arguments:
+Then, there are two ways to process term arguments:
 typechecking and elaboration.
     
 |*)
@@ -267,7 +267,7 @@ Synthesizing a term
 
 Synthesizing a term typically involves reading an existing declaration
 and writing a new one. The relevant APIs are in the `coq.env.*` namespace
-and are named after the global refence they manipulate, eg :builtin:`coq.env.const`
+and are named after the global reference they manipulate, eg :builtin:`coq.env.const`
 for reading and :builtin:`coq.env.add-const` for writing.
 
 Here we implement a little command that given an inductive type name
@@ -612,7 +612,7 @@ Elpi Accumulate lp:{{
 
 The first attribute, :e:`elpi.loc` is always present and corresponds to the
 location in the source file of the command. Then we find an attribute for
-:e:`"this"` holding the emptry string and an attribute for :e:`"more.stuff"` holding
+:e:`"this"` holding the empty string and an attribute for :e:`"more.stuff"` holding
 the string :e:`"33"`.
 
 Attributes are usually validated (parsed) and turned into regular options
@@ -699,7 +699,7 @@ Fail Go nowhere.  (* .fails *)
 Reporting errors
 ----------------
 
-Last, (good) Elpi programs should fail reporting intellegible error messages,
+Last, (good) Elpi programs should fail reporting intelligible error messages,
 as the previous one.
 
 |*)
