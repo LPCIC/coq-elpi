@@ -14,9 +14,13 @@ let elpi_cs_hook program env sigma ((proji, u), params1, c1) (t2, args2) =
      let sigma, (goal_ty, _) = Evarutil.new_type_evar env sigma Evd.UnivRigid in
 	  let sigma, goal = Evarutil.new_evar env sigma goal_ty in
 	  let goal_evar, _ = EConstr.destEvar sigma goal in
+    let nparams = Structures.Structure.projection_nparams proji in
 	  let query ~depth state =
 		 let state, (loc, q), gls =
-			Coq_elpi_HOAS.goals2query sigma [goal_evar] loc ~main:(Coq_elpi_HOAS.Solve [EConstr.mkApp (EConstr.mkConstU (proji, u), Array.of_list params1); rhs])
+      let lhs = match params1 with
+        | Some params1 -> EConstr.mkApp (EConstr.mkConstU (proji, u), Array.of_list params1)
+        | None -> EConstr.mkConstU (proji, u) in
+			Coq_elpi_HOAS.goals2query sigma [goal_evar] loc ~main:(Coq_elpi_HOAS.Solve [lhs; rhs])
 			  ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac_econstr ~depth state in
 		 let state, qatts = atts2impl loc Summary.Stage.Interp ~depth state atts q in
 		 let state = API.State.set Coq_elpi_builtins.tactic_mode state true in
@@ -34,7 +38,6 @@ let elpi_cs_hook program env sigma ((proji, u), params1, c1) (t2, args2) =
 			  let args_type = List.rev_map Context.Rel.Declaration.get_type args_goal in
 			  let args_type = List.map EConstr.of_constr args_type in
            let args = snd (Constr.decompose_app_list t) in
-           let nparams = List.length params1 in
            let params, projs = CList.chop nparams args in
            let i = Structures.Structure.projection_number env proji in
            let lhs = List.nth projs i in
