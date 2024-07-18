@@ -93,7 +93,8 @@ namespace tc {
     if (tc.is-option-active tc.oTC-clauseNameShortName)
       (Path = "")
       (coq.gref->path Gr [Hd | Tl], 
-        std.fold Tl Hd (x\acc\r\ r is acc ^ "." ^ x) Path', 
+        if (Hd = "Coq") (Hd' = "Stdlib") (Hd' = Hd),
+        std.string.concat "." [Hd'|Tl] Path',
         Path is Path' ^ ".tc-"),
     % CAVEAT : Non-ascii caractars can't be part of a pred
     %          name, we replace ö with o

@@ -1,4 +1,5 @@
 From elpi.apps Require Import coercion.
+#[warning="-deprecated-from-Coq"]
 From Coq Require Import Arith ssreflect.
 
 Ltac my_solver := trivial with arith.
