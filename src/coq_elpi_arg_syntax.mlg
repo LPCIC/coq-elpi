@@ -222,7 +222,7 @@ END
 
 {
 
-[%%if coq = "8.19" || coq = "8.20"]
+[%%if coq = "8.20"]
 let mkAttributesFlagQualid q = Attributes.FlagIdent (Names.Id.to_string (Libnames.qualid_basename q)) 
 [%%else]
 let mkAttributesFlagQualid q = Attributes.FlagQualid q
