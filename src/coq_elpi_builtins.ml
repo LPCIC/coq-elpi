@@ -427,7 +427,7 @@ let tc_instance = let open Conv in let open API.AlgebraicData in declare {
       M (fun ~ok ~ko { implementation; priority } -> ok implementation priority));
 ]} |> CConv.(!<)
 
-[%%if coq = "8.19" || coq = "8.20"]
+[%%if coq = "8.20"]
 let clenv_missing sigma ce cty =
   let rec nb_hyp sigma c = match EConstr.kind sigma c with
   | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
@@ -523,7 +523,7 @@ let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
   (fun x -> f := x),
   (fun () -> !f)
 
-[%%if coq = "8.19" || coq = "8.20"]
+[%%if coq = "8.20"]
 let is_global_level env u =
   try
     let set = Univ.Level.Set.singleton u in
@@ -892,34 +892,6 @@ let warn_deprecated_add_axiom =
            "section variables is deprecated. Use coq.env.add-axiom or " ^
            "coq.env.add-section-variable instead"))
 
-[%%if coq = "8.19"]
-let comAssumption_declare_variable id coe ~kind ty ~univs:uentry ~impargs ex ~name =
-  ComAssumption.declare_variable coe ~kind ty uentry impargs ex name;
-  GlobRef.VarRef id, UVars.Instance.empty
-let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ~id:_ ty =
-  ComAssumption.declare_axiom coe ~local ~kind ty univs impargs inline name
-let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim:_ x y z =
-  DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected x y z
-  
-let cinfo_make state types using =
-  let using = Option.map  Proof_using.(fun s ->
-    let sigma = get_sigma state in
-    let types = Option.List.cons types [] in
-    let using = using_from_string s in
-    definition_using (get_global_env state) sigma ~fixnames:[] ~using ~terms:types)
-    using in
-  Declare.CInfo.make ?using
-let eval_of_constant c =
-  match c with
-  | Variable v -> Tacred.EvalVarRef v
-  | Constant c -> Tacred.EvalConstRef c
-let eval_to_oeval = function
-| Tacred.EvalVarRef v -> Names.VarKey v
-| Tacred.EvalConstRef c -> Names.ConstKey c
-let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,y,z)
-let pattern_of_glob_constr _ g = Patternops.pattern_of_glob_constr g
-let warns_of_options options = options.deprecation
-[%%else]
 let comAssumption_declare_variable id coe ~kind ty ~univs ~impargs impl ~name:_ =
   ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:id
 let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name:_ ~id ty =
@@ -939,13 +911,8 @@ let eval_of_constant c =
 let eval_to_oeval = Evaluable.to_kevaluable
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let pattern_of_glob_constr env g = Patternops.pattern_of_glob_constr env g
-[%%endif]
 
-[%%if coq = "8.19"]
-let declare_definition hack _using ~cinfo ~info ~opaque ~body sigma =
-  let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body sigma in
-  gr, Option.get !hack
-[%%elif coq = "8.20"]
+[%%if coq = "8.20"]
 let declare_definition hack using ~cinfo ~info ~opaque ~body sigma =
   let using = Option.map Proof_using.using_from_string using in
   let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body ?using sigma in
@@ -959,7 +926,7 @@ let declare_definition _ using ~cinfo ~info ~opaque ~body sigma =
 
 [%%if coq = "8.20"]
 let warns_of_options options = options.user_warns
-[%%elif coq <> "8.19"]
+[%%else]
 let warns_of_options options = options.user_warns |> Option.map UserWarn.with_empty_qf
 [%%endif]
 let add_axiom_or_variable api id ty local options state =
@@ -1348,7 +1315,7 @@ let coq_header_builtins =
 |};
   ]
 
-[%%if coq = "8.19" || coq = "8.20" ]
+[%%if coq = "8.20" ]
 let compat_reduction_behavior_set ~local gref strategy =
   Reductionops.ReductionBehaviour.set ~local gref strategy
 [%%else]
@@ -1356,7 +1323,7 @@ let compat_reduction_behavior_set ~local gref strategy =
   Reductionops.ReductionBehaviour.set ~local gref (Some strategy)
 [%%endif]
 
-[%%if coq = "8.19" || coq = "8.20" ]
+[%%if coq = "8.20" ]
 let compat_reset_simplification = []
 [%%else]
 let compat_reset_simplification =

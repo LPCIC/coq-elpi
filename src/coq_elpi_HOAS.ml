@@ -330,52 +330,6 @@ type universe_decl_option =
   | NotUniversePolymorphic
   | Cumulative of universe_decl_cumul
   | NonCumulative of universe_decl
-[%%if coq = "8.19"] 
-type options = {
-  hoas_holes : hole_mapping option;
-  local : bool option;
-  deprecation : Deprecation.t option;
-  primitive : bool option;
-  failsafe : bool; (* readback is resilient to illformed terms *)
-  ppwidth : int;
-  pp : ppoption;
-  pplevel : Constrexpr.entry_relative_level;
-  using : string option;
-  inline : Declaremods.inline;
-  uinstance : uinstanceoption;
-  universe_decl : universe_decl_option;
-  reversible : bool option;
-  keepunivs : bool option;
-  redflags : RedFlags.reds option;
-  no_tc: bool option;
-}
-let default_options () = {
-  hoas_holes = Some Verbatim;
-  local = None;
-  deprecation = None;
-  primitive = None;
-  failsafe = false;
-  ppwidth = Option.default 80 (Topfmt.get_margin ());
-  pp = Normal;
-  pplevel = Constrexpr.LevelSome;
-  using = None;
-  inline = Declaremods.NoInline;
-  uinstance = NoInstance;
-  universe_decl = NotUniversePolymorphic;
-  reversible = None;
-  keepunivs = None;
-  redflags = None;
-  no_tc = None;
-}
-let make_options ~hoas_holes ~local ~warn:_ ~depr ~primitive ~failsafe ~ppwidth
-  ~pp ~pplevel ~using ~inline ~uinstance ~universe_decl ~reversible ~keepunivs
-  ~redflags ~no_tc = 
-  { hoas_holes; local; deprecation = depr; primitive; failsafe; ppwidth; pp;
-    pplevel; using; inline; uinstance; universe_decl; reversible; keepunivs;
-    redflags; no_tc; }
-let make_warn ~note ?cats () = ()
-
-[%%else]
 type options = {
   hoas_holes : hole_mapping option;
   local : bool option;
@@ -420,7 +374,6 @@ let make_options ~hoas_holes ~local ~warn ~depr ~primitive ~failsafe ~ppwidth
     pplevel; using; inline; uinstance; universe_decl; reversible; keepunivs;
     redflags; no_tc; }
 let make_warn = UserWarn.make_warn
-[%%endif]
 
 type 'a coq_context = {
   section : Names.Id.t list;
@@ -463,17 +416,10 @@ fun ~depth dbl name ~names ->
   | Name.Name id when Id.Set.mem id names -> Name.Name (mk_fresh dbl)
   | Name.Name id as x -> x
 
-[%%if coq = "8.19" ]
-let relevant = Sorts.Relevant
-let anonR = Context.anonR
-let nameR = Context.nameR
-let annotR = Context.annotR
-[%%else]
 let relevant = EConstr.ERelevance.relevant
 let anonR = Context.make_annot Names.Name.Anonymous EConstr.ERelevance.irrelevant 
 let nameR x = Context.make_annot (Names.Name.Name x) EConstr.ERelevance.irrelevant 
 let annotR x = Context.make_annot x EConstr.ERelevance.irrelevant 
-[%%endif]
     
 let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) relevant
 
@@ -790,15 +736,11 @@ let in_elpi_fix name rno ty bo =
 
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
-[%%if coq = "8.19"]
-type pstring = string
-let pp_pstring _ = "primitive strings not supported in Coq 8.19"
-let eC_mkString _ = assert false
-[%%else]
+
 type pstring = Pstring.t
 let pp_pstring = Pstring.to_string
 let eC_mkString = EC.mkString
-[%%endif]
+
 type primitive_value =
   | Uint63 of Uint63.t
   | Float64 of Float64.t
@@ -835,20 +777,13 @@ let in_elpi_primitive ~depth state i =
   let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
   state, E.mkApp primitivec i []
  
-[%%if coq = "8.19"]
-let in_elpi_primitive_value ~depth state = function
-  | C.Int i -> in_elpi_primitive ~depth state (Uint63 i)
-  | C.Float f -> in_elpi_primitive ~depth state (Float64 f)
-  | C.Array _ -> nYI "HOAS for persistent arrays"
-  | (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
-[%%else]
+
 let in_elpi_primitive_value ~depth state = function
 | C.Int i -> in_elpi_primitive ~depth state (Uint63 i)
 | C.Float f -> in_elpi_primitive ~depth state (Float64 f)
 | C.String s -> in_elpi_primitive ~depth state (Pstring s)
 | C.Array _ -> nYI "HOAS for persistent arrays"
 | (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
-[%%endif]
 
 (* ********************************* }}} ********************************** *)
 
@@ -883,7 +818,7 @@ let show_coq_engine ?with_univs e = Format.asprintf "%a" (pp_coq_engine ?with_un
  let from_env env = from_env_sigma env (Evd.from_env env)
 
 
-[%%if coq = "8.19" || coq = "8.20"]
+[%%if coq = "8.20"]
 let demote uctx sigma0 env = 
       let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
       UState.demote_global_univs env uctx
@@ -2910,15 +2845,7 @@ let name_universe_level state l =
         { e with sigma }, id
   )
 
-[%%if coq = "8.19"]
-let mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance =
-  let open UState in
-  { univdecl_qualities = [];
-    univdecl_extensible_instance;
-    univdecl_extensible_constraints;
-    univdecl_constraints;
-    univdecl_instance}
-[%%else]
+
 let mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance =
   let open UState in
   { univdecl_qualities = [];
@@ -2927,7 +2854,6 @@ let mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraint
     univdecl_extensible_constraints;
     univdecl_constraints;
     univdecl_instance}
-[%%endif]
 
 let poly_cumul_udecl_variance_of_options state options =
   match options.universe_decl with
@@ -2944,14 +2870,7 @@ let poly_cumul_udecl_variance_of_options state options =
     mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
     Array.of_list variance
 
-[%%if coq = "8.19"]
-let comInductive_interp_mutual_inductive_constr env_ar_params sigma arity ~cumulative ~poly ~template ~finite =
-  let arityconcl =
-    match Reductionops.sort_of_arity env_ar_params sigma arity with
-    | exception Reduction.NotArity -> None
-    | s -> Some s in
-  ComInductive.interp_mutual_inductive_constr ~arityconcl:[arityconcl] ~cumulative ~poly ~template ~finite 
-[%%elif coq = "8.20"]
+[%%if coq = "8.20"]
 let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~template ~finite = 
   ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~cumulative ~poly ~template ~finite 
 [%%else]
@@ -2968,11 +2887,8 @@ let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~templat
   ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~flags
 [%%endif]
 
-[%%if coq = "8.19"]
-let comInductive_interp_mutual_inductive_constr_post (a,b,c) = [],a,b,c 
-[%%else]
+
 let comInductive_interp_mutual_inductive_constr_post x = x
-[%%endif]
 
 let lp2inductive_entry ~depth coq_ctx constraints state t =
 
@@ -3686,56 +3602,6 @@ type module_item =
   | Functor of Names.ModPath.t * Names.ModPath.t list
   | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
-[%%if coq = "8.19"]
-let rec in_elpi_module_item ~depth path state (name, item) =
-  let open Declarations in
-  match item with
-  | SFBconst _ ->
-      [Gref (GlobRef.ConstRef (Constant.make2 path name))]
-  | SFBmind { mind_packets } ->
-      CList.init (Array.length mind_packets) (fun i -> Gref (GlobRef.IndRef (MutInd.make2 path name,i)))
-  | SFBmodule ({ mod_mp; mod_type = NoFunctor _ } as b) -> [Module (mod_mp,in_elpi_module ~depth state b) ]
-  | SFBmodule { mod_mp; mod_type = MoreFunctor _ as l } -> [Functor(mod_mp,functor_params l)]
-  | SFBmodtype { mod_mp; mod_type = NoFunctor _ }  -> [ModuleType mod_mp]
-  | SFBmodtype { mod_mp; mod_type = MoreFunctor _ as l }  -> [FunctorType (mod_mp,functor_params l)]
-
-and functor_params x =
-  let open Declarations in
-  match x with
-  | MoreFunctor(_,{ mod_type_alg = Some (MENoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
-  | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
-
-and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> module_item list =
-  fun ~depth state { Declarations.
-  mod_mp;             (* Names.module_path *)
-  mod_expr;           (* Declarations.module_implementation *)
-  mod_type;           (* Declarations.module_signature *)
-  mod_type_alg;       (* Declarations.module_expression option *)
-  mod_delta;          (* Mod_subst.delta_resolver *)
-  mod_retroknowledge; (* Retroknowledge.action list *)
-} ->
-  match mod_type with
-  | Declarations.MoreFunctor _ -> nYI "functors"
-  | Declarations.NoFunctor contents ->
-      let l =
-        CList.map (in_elpi_module_item ~depth mod_mp state) contents in
-      CList.flatten l
-
-let rec in_elpi_modty_item (name, item) = match item with
-  | Declarations.SFBconst _ ->
-      [ Label.to_string name ]
-  | Declarations.SFBmind _ ->
-      [ Label.to_string name ]
-  | Declarations.SFBmodule mb -> in_elpi_modty mb
-  | Declarations.SFBmodtype _ -> []
-
-and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
-  fun { Declarations.mod_type; (* Declarations.modty_signature *) } ->
-  match mod_type with
-  | Declarations.MoreFunctor _ -> nYI "functors"
-  | Declarations.NoFunctor contents ->
-      CList.flatten (CList.map in_elpi_modty_item contents)
-[%%else]
 let rec in_elpi_module_item ~depth path state (name, item) =
   let open Declarations in
   match item with
@@ -3786,7 +3652,6 @@ and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
   | Declarations.MoreFunctor _ -> nYI "functors"
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map in_elpi_modty_item contents)
-[%%endif]
 
 let in_elpi_module ~depth s (x : Declarations.module_body) = in_elpi_module ~depth s x
 

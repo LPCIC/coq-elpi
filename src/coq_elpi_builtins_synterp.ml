@@ -567,7 +567,7 @@ module SynterpAction = struct
 
   type 'a replay = 'a -> State.t -> State.t * ModPath.t option 
 
-  [%%if coq = "8.19" || coq = "8.20"]
+  [%%if coq = "8.20"]
   let interp_close_section = Lib.Interp.close_section
   [%%else]
   let interp_close_section = Declaremods.Interp.close_section
@@ -938,7 +938,7 @@ let attribute_value = let open API.AlgebraicData in let open CConv in declare {
 
 let attribute = attribute attribute_value
 
-[%%if coq = "8.19" || coq = "8.20"]
+[%%if coq = "8.20"]
 let synterp_close_section = Lib.Synterp.close_section
 [%%else]
 let synterp_close_section = Declaremods.Synterp.close_section
