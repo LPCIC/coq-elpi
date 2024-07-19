@@ -3614,7 +3614,7 @@ let get_current_env_sigma ~depth hyps constraints state =
 let get_global_env_current_sigma ~depth hyps constraints state =
   let state, _, changed, gls = elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth constraints state in
   let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps state) state in
-  let coq_ctx = { coq_ctx with env = Environ.push_context_set (Evd.universe_context_set (get_sigma state)) coq_ctx.env } in
+  let coq_ctx = { coq_ctx with env = Environ.set_universes (Evd.universes (get_sigma state)) coq_ctx.env } in
   state, coq_ctx, get_sigma state, gls
 ;;
 
