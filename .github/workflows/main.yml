@@ -37,9 +37,11 @@ jobs:
           - '5.2.x'
     steps:
     - uses: actions/checkout@v2
-    - uses: avsm/setup-ocaml@v2
+    - uses: avsm/setup-ocaml@v3
       with:
         ocaml-compiler: ${{ matrix.ocaml_version }}
+        opam-pin: false
+        opam-local-packages:
     - run: opam repo add coq-dev https://coq.inria.fr/opam/core-dev
     - run: opam install coq-core.${{ matrix.coq_version }}
     - run: opam install coq-stdlib.${{ matrix.coq_version }}
