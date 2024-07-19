@@ -1507,7 +1507,7 @@ let coq_locate_builtins =
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%|};
     LPDoc "-- Environment: names -----------------------------------------------";
     LPDoc {|To make the API more precise we use different data types for the names of global objects.
-Note: [ctype \"bla\"] is an opaque data type and by convention it is written [@bla].|};
+Note: [ctype "bla"] is an opaque data type and by convention it is written [@bla].|};
   
     MLData constant;
     MLData inductive;
