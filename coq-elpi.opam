@@ -21,7 +21,7 @@ depends: [
   "elpi" {>= "1.18.2" & < "1.20.0~"}
   "coq" {>= "8.19" & < "8.21"}
   "ppx_optcomp"
-  "ocaml-lsp-server" {dev}
+  "ocaml-lsp-server" {with-dev-setup}
   "odoc" {with-doc}
 ]
 build: [
