@@ -34,7 +34,7 @@
   (elpi (and (>= 1.18.2) (< 1.20.0~)))
   (coq (and (>= 8.19) (< 8.21)))
   ppx_optcomp
-  (ocaml-lsp-server :dev)))
+  (ocaml-lsp-server :with-dev-setup)))
 
 (package
  (name coq-elpi-tests)
