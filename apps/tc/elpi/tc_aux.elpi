@@ -111,23 +111,24 @@ namespace tc {
   get-mode ClassGR M :- tc.class ClassGR _ _ M, !.
   get-mode ClassGR _ :- coq.error "[TC]" ClassGR "is an unknown class".
 
-  pred make-tc.aux i:bool, i:prop, i:list prop, o:prop.
-  make-tc.aux _ Head [] Head.
-  make-tc.aux tt Head Body (Head :- Body).
-  make-tc.aux ff Head Body (Body => Head).
+  pred make-tc.aux i:bool, i:term, i:prop, i:list prop, o:prop.
+  make-tc.aux tt _ Head [] Head :- !.
+  make-tc.aux ff Sol Head [] P :- !, P = if (var Sol) Head true.
+  make-tc.aux tt _ Head Body (Head :- Body) :- !.
+  make-tc.aux ff Sol Head Body P :- !, P = if (var Sol) (Body => Head) true.
 
   pred make-tc i:term, i:term, i:list prop, i:bool, o:prop.
-  make-tc Ty Inst Body IsPositive Clause :-
-    coq.safe-dest-app Ty HD TL,
-    get-TC-of-inst-type HD ClassGR,
+  make-tc Goal Sol RuleBody IsPositive Rule :-
+    coq.safe-dest-app Goal Class Args,
+    get-TC-of-inst-type Class ClassGR,
     gref->pred-name ClassGR ClassStr,
-    std.append TL [Inst] Args, 
-    coq.elpi.predicate ClassStr Args Head,
-    make-tc.aux IsPositive Head Body Clause.
+    std.append Args [Sol] ArgsSol, 
+    coq.elpi.predicate ClassStr ArgsSol RuleHead,
+    make-tc.aux IsPositive Sol RuleHead RuleBody Rule.
 
-  pred unwrap-prio i:tc-priority, o:int.
-  unwrap-prio (tc-priority-given Prio) Prio.
-  unwrap-prio (tc-priority-computed Prio) Prio.
+    pred unwrap-prio i:tc-priority, o:int.
+    unwrap-prio (tc-priority-given Prio) Prio.
+    unwrap-prio (tc-priority-computed Prio) Prio.
 
   % returns the priority of an instance from the gref of an instance
   pred get-inst-prio i:gref, o:int.
