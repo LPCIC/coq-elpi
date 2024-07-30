@@ -3194,7 +3194,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
-               (id, ((Notation_ops.constr_some_level,([],[])),Id.Set.empty,Notation_term.NtnTypeConstr)) :: vars in
+               (id, Notation_term.(NtnTypeVar (((Notation_ops.constr_some_level,([],[])),Id.Set.empty),NtnTypeVarConstr NtnConstrForConstrAndPatternForPattern))) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
@@ -3205,7 +3205,7 @@ Supported attributes:
          let nenv =
            {
               Notation_term.ninterp_var_type = Id.Map.empty;
-              ninterp_rec_vars = Id.Map.empty;
+              ninterp_raw_types = [];
            } in
          aux vars nenv env nargs term
      in
