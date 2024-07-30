@@ -24,10 +24,15 @@ namespace tc {
         decompile-term-aux (sort _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (uvar as X) L X L :- !.
         decompile-term-aux (primitive _ as X) L X L :- !.
+        decompile-term-aux (tc.coercion T S) (pr [X|Xs] L1) Y (pr Xs' L3) :- !,
+          name Y X S,
+          decompile-term-aux T (pr Xs L1) T' (pr Xs' L2),
+          P = tc.link.cs Y T',
+          L3 = [P | L2].
         decompile-term-aux (tc.canonical-projection T S _) (pr [X|Xs] L1) Y (pr Xs' L3) :- !,
           name Y X S,
           decompile-term-aux T (pr Xs L1) T' (pr Xs' L2),
-          P = coq.unify-eq Y T' ok,
+          P = tc.link.cs Y T',
           L3 = [P | L2].
 
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
@@ -124,6 +129,7 @@ namespace tc {
         (pi t s r \ copy (tc.canonical-projection t s _) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
+        (pi t s r \ copy (tc.coercion t s) r :- !, copy t r, !) =>
           std.assert!  (copy A B) "[TC] clean-term error".
 
       pred main 
@@ -316,6 +322,8 @@ namespace tc {
 
       %                    Type     Var    Cnt    uvar-pair-list
       pred make-pairs-aux i:term, i:term, o:list prop.
+      make-pairs-aux Ty (fun _ _ IBo) L' :- !,
+        pi x\ make-pairs-aux Ty (IBo x) (L x), close-prop-no-prune L L'.
       make-pairs-aux (prod _ Ty Bo) V [pi x\ uvar-pair x Ty X' :- x == V, ! | L] :- !,
         pi x\ make-pairs-aux (Bo x) X' L.
       make-pairs-aux _ _ [].
@@ -335,11 +343,18 @@ namespace tc {
 
       pred decompile-problematic-term i:term, i:list prop, o:term, o:list prop.
       decompile-problematic-term (primitive _ as C) A C A :- !.
-      
-      decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
-        prune V S, !, fold-map T L T' L2.
 
-      decompile-problematic-term (tc.prod-range T _) A T' A' :-
+      % there is no need to decompile T since no precompilation is done inside coercions
+      decompile-problematic-term (tc.coercion T S) L1 Y [tc.link.cs Y T|L1] :- !,
+        prune Y S.
+      % there is no need to decompile T since no precompilation is done inside CS
+      decompile-problematic-term (tc.canonical-projection T S _) L1 Y [tc.link.cs Y T|L1] :- !,
+        prune Y S.
+
+      decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :- !,
+        prune V S, fold-map T L T' L2.
+
+      decompile-problematic-term (tc.prod-range T _) A T' A' :- !,
         fold-map T A T' A'.
 
       decompile-problematic-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
@@ -399,6 +414,10 @@ namespace tc {
         build-eta-links-of-vars-aux Hd S L',
         build-eta-links-of-vars Vars L'',
         std.append L' L'' L.
+      build-eta-links-of-vars [fun _ Ty Bo|Vars] L :-
+        (pi x\ build-eta-links-of-vars [Bo x] (L' x), close-term-no-prune-ty L' Ty L''),
+        build-eta-links-of-vars Vars L''',
+        std.append L'' L''' L.
     }
     
     %          Goal    Goal'      Links

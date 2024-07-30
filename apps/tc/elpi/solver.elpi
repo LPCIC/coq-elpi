@@ -32,6 +32,7 @@ namespace tc {
     if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q), !,
     tc.time-it tc.oTC-time-instance-search (
       do PostProcess, Q,
+      tc.link.solve-cs,
       tc.link.solve-eta, % Trigger eta links
       tc.link.solve-llam % Trigger llam links
     ) "instance search".

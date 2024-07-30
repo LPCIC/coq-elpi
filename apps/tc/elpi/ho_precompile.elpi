@@ -106,6 +106,7 @@ namespace tc {
       precompile-aux _ (pglobal _ _ as C) A C A :- !.
       precompile-aux _ (sort _ as C) A C A :- !.
       precompile-aux _ (primitive _ as C) A C A :- !.
+      precompile-aux _ T A (tc.coercion T Scope) (s A) :- coq.safe-dest-app T HD _, tc.coercion-unify HD, !, free-var Scope.
       precompile-aux _ (app [global (const C) | _] as T) A (tc.canonical-projection T Scope N) (s A) :- coq.env.projection? C N, !, free-var Scope.
       precompile-aux _ (app [primitive (proj P _) | _] as T) A (tc.canonical-projection T Scope 0) (s A) :- coq.env.primitive-projection? P _, !, free-var Scope.
 
@@ -229,12 +230,20 @@ namespace tc {
       precompile-aux (pglobal _ _ as C) A C A :- !.
       precompile-aux (sort _ as C) A C A :- !.
       precompile-aux (primitive _ as C) A C A :- !.
+      
+      precompile-aux T A (tc.coercion T Scope) A :- 
+        coq.safe-dest-app T HD _, tc.coercion-unify HD, !, names Scope.
+      precompile-aux (app [global (const C) | _] as T) A (tc.canonical-projection T Scope N) A :- 
+        coq.env.projection? C N, !, names Scope.
+      precompile-aux (app [primitive (proj P _) | _] as T) A (tc.canonical-projection T Scope 0) A :- 
+        coq.env.primitive-projection? P _, !, names Scope.
+
 
       % Detect maybe-eta term
       precompile-aux (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty' B') Scope) M :-
         maybe-eta T, !,
         names Scope,
-        (pi x\ precompile-aux (B x) N (B' x) M'),
+        std.assert! (pi x\ precompile-aux (B x) N (B' x) (MM x), close-term-no-prune-fun MM Ty M') "[TC] should not fail1",
         precompile-aux Ty M' Ty' M.
 
       % Detect maybe-beta term
@@ -244,10 +253,9 @@ namespace tc {
         names Scope1,
         std.fold-map NPF N precompile-aux NPF1 M. 
 
-      % In the goal there are 
       precompile-aux (prod Name Ty B) N (tc.prod-range (prod Name Ty' B') (r-ar z MaxAr)) P :- !,
         count-prod Ty MaxAr,
-        std.assert! (pi x\ precompile-aux (B x) N (B' x) M) "[TC] should not fail",
+        std.assert! (pi x\ precompile-aux (B x) N (B' x) (MM x), close-term-no-prune-fun MM Ty M) "[TC] should not fail2",
         precompile-aux Ty M Ty' P.
 
       % Working with fun

@@ -163,3 +163,8 @@ pred close-term-no-prune-ty i:(term -> list prop), i:term, o:list prop.
 close-term-no-prune-ty (x\ []) _ [] :- !.
 close-term-no-prune-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
   close-term-no-prune-ty Xs Ty Xs'. 
+
+pred close-term-no-prune-fun i:(term -> list term), i:term, o:list term.
+close-term-no-prune-fun (x\ []) _ [] :- !.
+close-term-no-prune-fun (x\ [X x | Xs x]) Ty [fun _ Ty X | Xs'] :- 
+  close-term-no-prune-fun Xs Ty Xs'.
