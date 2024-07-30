@@ -277,6 +277,54 @@ Module HO_10.
   Qed.
 End HO_10.
 
+Module HO_11.
+  Class Unit (i : Prop).
+  Instance i F : Unit (forall (f : Prop), F f) := {}.
+  Goal Unit (forall x, x).
+    apply _.
+  Qed.
+End HO_11.
+
+Module HO_12.
+  Class Unit (i : Prop).
+  Instance i : Unit (forall x, x) := {}.
+  Set Printing Existential Instances.
+  Goal forall (y: Prop), exists (F: Prop -> Prop), Unit (forall x, F x).
+    intros.
+    eexists ?[F].
+    Unshelve.
+    2: { refine (fun x => _); shelve. }
+    simpl.
+    Set Printing Existential Instances.
+    apply _.
+  Qed.
+End HO_12.
+
+Module HO_13.
+  Class Unit (i : Prop).
+  Class PP (i : Prop -> Prop -> Prop).
+  Axiom f : Prop -> Prop -> Prop.
+  Instance i F : PP (fun x y => F y x) -> Unit (forall (x y: Prop), F y x) := {}.
+  Instance j : PP (fun x y => f y x) := {}.
+  Check _ : (Unit (forall x y, _)).
+
+  Goal exists (X: Prop -> Prop -> Prop), Unit (forall x y, X x y).
+    eexists.
+    Unshelve.
+    2: { refine (fun _ _ => _); shelve. }
+    simpl.
+    apply _.
+  Qed.
+
+  Elpi Query TC.Solver lp:{{
+    std.spy-do![Goal = {{Unit (forall x y, lp:(F x y))}},
+    tc.build-query-from-goal Goal Proof Q PP,
+    do PP, Q,
+    std.assert! (Proof = {{i f j}}) "Error"].
+  }}.
+End HO_13.
+
+
 Module HO_scope_check1.
   Axiom f : Type -> (Type -> Type) -> Type.
   Axiom g : Type -> Type -> Type.
@@ -566,6 +614,3 @@ Module CoqUvar4.
     apply _.
   Qed.
 End CoqUvar4.
-
-(* TODO: add test with negative premise having a variable with type (M A) where M and A are coq uvar,
-         this is in order to clean-term with llam *)

@@ -220,4 +220,12 @@ namespace tc {
     list term ->  % The list of FV in the precomp subterm
     int ->
     term.
+
+  :index (5)
+  pred coercion-unify i:term.
+
+  type coercion
+    term ->
+    list term ->
+    term.
 }
