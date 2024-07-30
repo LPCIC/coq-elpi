@@ -7,14 +7,6 @@ open Elpi_plugin
 open Coq_elpi_arg_syntax
 open Coq_elpi_vernacular
 
-[%%if coq = "8.19" ]
-let relevant = Sorts.Relevant
-let anonR = Context.anonR
-let nameR = Context.nameR
-let annotR = Context.annotR
-let build_expected_type env sigma expected = sigma, expected, false
-let return s g _ = Some (s,g)
-[%%else]
 let relevant = EConstr.ERelevance.relevant
 let anonR = Context.make_annot Names.Name.Anonymous EConstr.ERelevance.irrelevant 
 let nameR x = Context.make_annot (Names.Name.Name x) EConstr.ERelevance.irrelevant 
@@ -30,7 +22,6 @@ let build_expected_type env sigma expected =
     sigma, EConstr.mkProd (annotR (Names.Name (Namegen.default_type_ident)), source, target), true
   | Coercion.Sort -> let (sigma, t) = Evarutil.new_Type sigma in sigma, t, true
 let return s g t = Some (s,g,t)
-[%%endif]
 
 let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
   let loc = API.Ast.Loc.initial "(unknown)" in

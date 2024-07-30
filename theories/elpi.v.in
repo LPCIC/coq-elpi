@@ -50,10 +50,8 @@ Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
 Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
 
 From Coq Require PrimFloat PrimInt63.
-#[skip="8.19"] From Coq Require PrimString.
-#[only="8.19"] From Coq Require String.
+From Coq Require PrimString.
 
 Register Coq.Floats.PrimFloat.float as elpi.float64.
 Register Coq.Numbers.Cyclic.Int63.PrimInt63.int as elpi.uint63.
-#[skip="8.19"] Register Coq.Strings.PrimString.string as elpi.pstring.
-#[only="8.19"] Register Coq.Strings.String.string as elpi.pstring.
+Register Coq.Strings.PrimString.string as elpi.pstring.
