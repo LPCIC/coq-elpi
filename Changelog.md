@@ -1,7 +1,10 @@
-# unreleased
+# [2.2.3] - 30/07/2024
+
+Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
 
 ### API
 - New `coq.arguments.reset-simplification`
+- Change some speedup concerning universes
 
 # [2.2.2] - 15/07/2024
 
