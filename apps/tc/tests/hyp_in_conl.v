@@ -58,7 +58,6 @@ Module M3.
     Local Instance AX : A := {}.
     Local Instance BX : A -> (B AX) := {}.
 
-    Elpi Accumulate TC.Solver lp:{{ print-goal. print-solution. }}.
     Definition d : C AX (BX _) := _.
     Definition d' : C _ (BX _) := _.
     Definition d'' : C AX _ := _.
@@ -74,7 +73,7 @@ Module M3.
     *)
     Elpi Query TC.Solver lp:{{
       S = {{c AX (BX _)}},
-      solve-aux1 [] {{C _ _}} S.
+      tc.solve-aux1 [] {{C _ _}} S.
     }}.
 
   End s.
