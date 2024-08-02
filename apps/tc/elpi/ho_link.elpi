@@ -131,10 +131,24 @@ namespace tc {
     }
 
     namespace cs {
+      pred reduce-cs i:term, i:term, i:term, i:constant.
+      reduce-cs V (app [ProjT, T]) Record Proj :-
+        coq.unify-eq T Record Err, Err = ok,
+        Q = [coq.redflags.const Proj],
+        coq.redflags.add coq.redflags.nored [coq.redflags.delta, coq.redflags.beta, coq.redflags.match | Q] RF,
+        @redflags! RF => coq.reduction.lazy.whd (app [ProjT, Record]) V',
+        not (V' = match _ _ _), !,
+        cs V V'.
+      reduce-cs V T _ _ :- V = T.
+
       pred cs i:term, i:term.
-      % TODO: suspend link on vars in T
-      cs V T :- var V, !, get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
-      cs T1 T2 :- coq.unify-eq T1 T2 ok.
+      cs T1 T2 :- not (var T1), !, coq.unify-eq T1 T2 ok.
+      cs (uvar _ as V) (app [_, Arg] as T) :- not (ground_term Arg), !, get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
+      cs (uvar _ as V) (app [HD | _] as T) :- 
+        if (HD = global (const Proj), tc.proj->record Proj Record)
+          (reduce-cs V T Record Proj)
+          (coq.unify-eq V T ok).
+      cs T1 T2 :- not (T2 = app _), !, coq.unify-eq T1 T2 ok.
 
       % pred unify-rebinding-names i:list prop, i:list prop, i:term, i:term.
       % unify-rebinding-names [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.

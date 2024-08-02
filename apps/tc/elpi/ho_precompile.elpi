@@ -224,6 +224,17 @@ namespace tc {
       split-pf [X|Xs] Old [X|Ys] L :- name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
       split-pf Xs _ [] Xs.
 
+      pred used i:term, i:term.
+      used X (uvar _ S) :- std.mem! S X, !.
+      used X (fun _ _ Bo) :- pi x\ used X (Bo x).
+
+      pred close-term-prune-safe-fun i:(term -> list term), i:term, o:list term.
+      close-term-prune-safe-fun (x\ []) _ [] :- !.
+      close-term-prune-safe-fun (x\ [X x | Xs x]) Ty [fun _ _ X | Xs'] :- 
+        pi x\ used x (X x), !, close-term-prune-safe-fun Xs Ty Xs'.
+      close-term-prune-safe-fun (x\ [X | Xs x]) Ty [X | Xs'] :-
+        close-term-prune-safe-fun Xs Ty Xs'.
+
       pred precompile-aux i:term, i:list term, o:term, o:list term.
       precompile-aux X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
       precompile-aux (global _ as C) A C A :- !.
@@ -243,7 +254,7 @@ namespace tc {
       precompile-aux (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty' B') Scope) M :-
         maybe-eta T, !,
         names Scope,
-        std.assert! (pi x\ precompile-aux (B x) N (B' x) (MM x), close-term-no-prune-fun MM Ty M') "[TC] should not fail1",
+        std.assert! (pi x\ precompile-aux (B x) N (B' x) (MM x), close-term-prune-safe-fun MM Ty M') "[TC] should not fail1",
         precompile-aux Ty M' Ty' M.
 
       % Detect maybe-beta term
@@ -255,7 +266,7 @@ namespace tc {
 
       precompile-aux (prod Name Ty B) N (tc.prod-range (prod Name Ty' B') (r-ar z MaxAr)) P :- !,
         count-prod Ty MaxAr,
-        std.assert! (pi x\ precompile-aux (B x) N (B' x) (MM x), close-term-no-prune-fun MM Ty M) "[TC] should not fail2",
+        std.assert! (pi x\ precompile-aux (B x) N (B' x) (MM x), close-term-prune-safe-fun MM Ty M) "[TC] should not fail2",
         precompile-aux Ty M Ty' P.
 
       % Working with fun
