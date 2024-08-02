@@ -289,6 +289,14 @@ Module HO_12.
   Class Unit (i : Prop).
   Instance i : Unit (forall x, x) := {}.
   Set Printing Existential Instances.
+
+  Elpi Accumulate TC.Solver lp:{{
+    % TODO: this rule should be removed if https://github.com/LPCIC/elpi/issues/256
+    % is solved
+    tc-elpi.apps.tc.tests.test.HO_12.tc-Unit {{forall (x:Prop), lp:(X x)}} {{i}} :-
+      X = (x\x).
+  }}.
+
   Goal forall (y: Prop), exists (F: Prop -> Prop), Unit (forall x, F x).
     intros.
     eexists ?[F].
