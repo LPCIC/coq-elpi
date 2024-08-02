@@ -18,6 +18,7 @@ namespace tc {
   pred refine-proof i:term, i:goal, o:list sealed-goal.
   refine-proof tc.mode_fail G [seal G] :- !.
   refine-proof Proof G GL :-
+    if-true print-goal-after-search (coq.say "[TC] The goal after instance search is <<<" G ">>>"),
     if-true print-solution (coq.say "[TC] The proof is <<<" Proof ">>>"),
     if-true print-solution-pp (coq.say "[TC] The proof is <<<" {coq.term->string Proof} ">>>"),
       
@@ -65,6 +66,7 @@ namespace tc {
   pred print-solution-pp.   % Print the solution in coq pp
   pred print-goal.          % Print the goal in HOAS
   pred print-goal-pp.       % Print the goal with coq pp
+  pred print-goal-after-search.          % Print the goal in HOAS after instance search
   pred print-compiled-goal.
 
 }

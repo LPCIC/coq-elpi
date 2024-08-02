@@ -99,5 +99,8 @@ Elpi Db tc.db lp:{{
     pred dummy.
 
     pred ho-link o:term, i:term, o:A.
+
+    % relates a projection to the its record
+    pred proj->record i:constant, o:term.
   }
 }}.
