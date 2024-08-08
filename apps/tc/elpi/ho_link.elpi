@@ -144,6 +144,10 @@ namespace tc {
       pred cs i:term, i:term.
       cs T1 T2 :- not (var T1), !, coq.unify-eq T1 T2 ok.
       cs (uvar _ as V) (app [_, Arg] as T) :- not (ground_term Arg), !, get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
+      cs (uvar _ as V) (app [HD, _Arg] as T) :- 
+        tc.coercion-unify HD, !, 
+        get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
+
       cs (uvar _ as V) (app [HD | _] as T) :- 
         if (HD = global (const Proj), tc.proj->record Proj Record)
           (reduce-cs V T Record Proj)
