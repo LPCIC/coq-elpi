@@ -19,25 +19,15 @@ Set Warnings "+elpi".
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
-Elpi Typecheck.
 Elpi Accumulate Db tc_options.db.
-Elpi Typecheck.
 Elpi Accumulate File base.
-Elpi Typecheck.
 Elpi Accumulate File tc_aux.
-Elpi Typecheck.
 Elpi Accumulate File ho_precompile.
-Elpi Typecheck.
 Elpi Accumulate File unif.
-Elpi Typecheck.
 Elpi Accumulate File ho_link.
-Elpi Typecheck.
 Elpi Accumulate File ho_compile.
-Elpi Typecheck.
 Elpi Accumulate File compiler1.
-Elpi Typecheck.
 Elpi Accumulate File modes.
-Elpi Typecheck.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
@@ -160,8 +150,36 @@ Elpi Accumulate lp:{{
 }}.
 Elpi Typecheck.
 
+Elpi Command TC.AddRecordFields.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File base.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate  lp:{{
+  pred tc.add_tc.records_unif.aux i:int, i:term, i:list term, i:constant, o:prop.
+  tc.add_tc.records_unif.aux 0 T Args ProjConstant P :- !,
+    coq.mk-app T Args T',
+    P = tc.proj->record ProjConstant T'.
+  tc.add_tc.records_unif.aux N T Args ProjConstant (pi x\ P x) :- N > 0, !,
+    N1 is N - 1, pi x\ tc.add_tc.records_unif.aux N1 T [x|Args] ProjConstant (P x).
+
+  pred tc.add_tc.records_unif.aux' i:option constant, i:term, i:int.
+  tc.add_tc.records_unif.aux' none _ _.
+  tc.add_tc.records_unif.aux' (some ProjConstant) RecordConstr N :-
+    tc.add_tc.records_unif.aux N RecordConstr [] ProjConstant P, tc.add-tc-db _ _ P.
+
+  pred tc.add_tc.records_unif i:term, o:term, i:int.
+  tc.add_tc.records_unif (global (indt K)) RecordConstr N :-
+    coq.env.projections K Projs,
+    std.forall Projs (x\ tc.add_tc.records_unif.aux' x RecordConstr N).
+
+  main [trm T1, trm T2, int N] :- !, tc.add_tc.records_unif T1 T2 N.
+  main L :- coq.error L.
+}}.
+Elpi Typecheck.
 
 Elpi Export TC.AddAllClasses.
+Elpi Export TC.AddRecordFields.
 Elpi Export TC.AddAllInstances.
 Elpi Export TC.AddClasses.
 Elpi Export TC.AddInstances.
