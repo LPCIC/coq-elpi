@@ -236,19 +236,17 @@ namespace tc {
         close-term-prune-safe-fun Xs Ty Xs'.
 
       pred precompile-aux i:term, i:list term, o:term, o:list term.
-      precompile-aux X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
       precompile-aux (global _ as C) A C A :- !.
       precompile-aux (pglobal _ _ as C) A C A :- !.
       precompile-aux (sort _ as C) A C A :- !.
       precompile-aux (primitive _ as C) A C A :- !.
       
-      precompile-aux T A (tc.coercion T Scope) A :- 
-        coq.safe-dest-app T HD _, tc.coercion-unify HD, !, names Scope.
+      precompile-aux (app [HD | _] as T) A (tc.coercion T Scope) A :- 
+        tc.coercion-unify HD, !, names Scope.
       precompile-aux (app [global (const C) | _] as T) A (tc.canonical-projection T Scope N) A :- 
         coq.env.projection? C N, !, names Scope.
       precompile-aux (app [primitive (proj P _) | _] as T) A (tc.canonical-projection T Scope 0) A :- 
         coq.env.primitive-projection? P _, !, names Scope.
-
 
       % Detect maybe-eta term
       precompile-aux (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty' B') Scope) M :-
@@ -257,7 +255,7 @@ namespace tc {
         std.assert! (pi x\ precompile-aux (B x) N (B' x) (MM x), close-term-prune-safe-fun MM Ty M') "[TC] should not fail1",
         precompile-aux Ty M' Ty' M.
 
-      % Detect maybe-beta term
+      % Detect maybe-llam term
       precompile-aux (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope1) [X|M] :-
         var X _ Scope, split-pf XS Scope PF NPF, 
         not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
@@ -281,7 +279,8 @@ namespace tc {
       precompile-aux (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
         precompile-aux T A T1 A1, precompile-aux Rty A1 Rty1 A2, std.fold-map B A2 precompile-aux B1 A3.
       precompile-aux (primitive _ as C) A C A :- !.
-      precompile-aux X A X [X|A] :- var X, !.
+      precompile-aux (uvar _ _ as X) A X [X|A] :- !.
+      precompile-aux X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
     }
 
     pred goal i:term, o:term, o:list term.
