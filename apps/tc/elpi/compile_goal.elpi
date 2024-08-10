@@ -1,6 +1,4 @@
 namespace tc {
-  shorten tc.{r-ar, range-arity}.
-
   namespace compile {
     namespace goall {
       :index (_ _ 1)
@@ -76,7 +74,7 @@ namespace tc {
       compile-full-aux (app [primitive (proj P _) | _] as G) L G' [tc.link.cs G' G | L] :- coq.env.primitive-projection? P _, !.
 
       % Link for eta-redex
-      compile-full-aux (fun Name Ty Bo as G) L G' [tc.link.eta G' (fun Name Ty' Bo') | L'] :- maybe-eta G, !,
+      compile-full-aux (fun Name_ Ty Bo as G) L G' [tc.link.eta G' (fun `_` Ty' Bo') | L'] :- maybe-eta G, !,
         compile-full-aux Ty L Ty' LTy,
         compile-full-aux-close Bo Ty LTy Bo' L'.
 
@@ -111,37 +109,16 @@ namespace tc {
       %       a |- Z x y a w =L (app[Y x y a, c w d])  
       %       The returned variable is Z x y a w
 
-      pred free-names i:term, o:list term.
-      free-names T L :-
-        names N,
-        (pi T L\ fold-map T L T [T|L] :- name T, std.mem! N T, !) => fold-map T [] _ L',
-        undup {std.rev L'} L.
-
-      :index(_ _ _ _ 3)
-      % TODO: the argument Ty is unused, i.e. the binders of the eta links have no type...
-      %                           LHS      Scope      Ty          Names        PF         NPF        OLDLINKS    NEW_VAR
-      pred build-eta-llam-links i:term, i:list term, o:term, i:list term, i:list term, i:list term, i:list prop, o:term, o:list prop.
-      build-eta-llam-links LHS _ _       Names []  NPF OL HD [tc.link.llam T (app [LHS | NPF]) | OL] :- !,
-        std.assert! (not (NPF = [])) "[TC] NPF List should not be empty",
-        prune T Names,
-        var T HD _. 
-      build-eta-llam-links LHS SC _Ty       _    [X] []  OL HD [tc.link.eta LHS (fun _ _ (x\ V x)) | OL] :- !,
-        prune V SC, var (V X) HD _. % TODO...
-      build-eta-llam-links LHS SC _Ty Names [X|XS] NPF OL HD [tc.link.eta LHS (fun _ _ (x\ LHS' x)) | L] :- !,
-      % TODO: unfold Ty if needed...
-        std.append SC [X] SC',
-        prune LHS' SC, build-eta-llam-links (LHS' X) SC' _ Names XS NPF OL HD L.
-
       % Link for beta-redex (Uvar in PF)
       % BUILD CHAIN OF LINKS-ETA from X to V...
       % TODO: to avoid too many chain for the same var, maybe pass a list into the fold
       compile-full-aux (app [(uvar _ Scope as V) | S] as T) L G' L'' :- !,
         % By construction the scope of a uvar is a list of distinct name
         std.fold-map S L compile-full-aux S' L', % LS = Links built for S
-        % std.assert-ok! (coq.typecheck V Ty) "Not typecheckable variable",
+        coq.typecheck V Ty ok,
         split-pf S' Scope PF NPF,
         free-names T Names,
-        build-eta-llam-links V Scope _ Names PF NPF L' G'' L'',
+        tc.link.build-eta-llam-links V Scope Ty Names PF NPF L' G'' L'',
         prune G' Names,
         var G' G'' Names.
 

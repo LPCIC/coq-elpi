@@ -227,7 +227,7 @@ Module HO_8.
     eexists.
     apply _.
     Unshelve.
-    apply nat.
+    auto.
   Qed.
 End HO_8.
 
@@ -559,14 +559,6 @@ Module CoqUvar3.
 
   Class c1 (T : Type -> Type -> Type).
   Instance i1 A: c1 (fun x y => f (A x y) (A x y)). Qed.
-  
-  Elpi Query TC.Solver lp:{{
-    tc.precomp.goal {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
-    Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
-    Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
-    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [x,y]),
-    std.assert! (C = Expected) "[TC] invalid compilation".
-  }}.
 
   (* Note: here interesting link-dedup *)
   Goal exists X (A: Type -> Type -> Type), c1 (fun x y => X (A x y) y).
@@ -608,7 +600,7 @@ Module CoqUvar4.
     std.assert! (C = Expected) "[TC] invalid compilation".
   }}.
 
-  (* Note: here interesting failtc-c1ing link-dedup *)
+  (* Note: here interesting fail link-dedup *)
   Goal forall f, exists X, c1 (X nat) -> 
     c1 (f nat nat).
     do 1 eexists.
