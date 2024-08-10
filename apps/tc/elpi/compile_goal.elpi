@@ -35,11 +35,6 @@ namespace tc {
       pred maybe-eta i:term.
       maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
 
-      pred split-pf i:list term, i:list term, o:list term, o:list term.
-      split-pf [] _ [] [] :- !.
-      split-pf [X|Xs] Old [X|Ys] L :- name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
-      split-pf Xs _ [] Xs.
-
       pred used i:term, i:term.
       used X (uvar _ S) :- std.mem! S X, !.
       used X (fun _ _ Bo) :- pi x\ used X (Bo x).
@@ -86,41 +81,10 @@ namespace tc {
         compile-full-aux Ty L Ty' LTy,
         compile-full-aux-close Bo Ty LTy Bo' L'.
 
-      % NOTE: when compiling t = (app [X, x, y]) and [x,y] are distinct_names,
-      %       then the coq variable has not [x,y] in scope, it is applied to
-      %       them. Note also that t is a problematic term that cannot be
-      %       exposed to the else unification algorithm.  
-      %       The solution is to build the following links:  
-      %       X =η (λa.Y a)
-      %       a |- Y a =η (λb.Z a b)
-      %       and expose a variable W at toplevel having Z has head and [x, y]
-      %       as scope
-
-      % NOTE: when compiling t = (app [X, a, x]) where a is a constant and x a
-      %       name, we build a llam link.  
-      %       The link will be: T x =L X a x  
-      %       the exposed variable in the term will be T x
-
-      % NOTE: here a combination of eta and llam:  
-      %       let t = (app [X x y, z, c, w, d]) where X is a coq var with x and
-      %       y in scope, z and w are names and c, d are constants.  
-      %       In this case, the links should be:  
-      %       X x y =η (λa.Y x y a)  
-      %       a |- Z x y a w =L (app[Y x y a, c w d])  
-      %       The returned variable is Z x y a w
-
-      % Link for beta-redex (Uvar in PF)
-      % BUILD CHAIN OF LINKS-ETA from X to V...
       % TODO: to avoid too many chain for the same var, maybe pass a list into the fold
-      compile-full-aux (app [(uvar _ Scope as V) | S] as T) L G' L'' :- !,
-        % By construction the scope of a uvar is a list of distinct name
-        std.fold-map S L compile-full-aux S' L', % LS = Links built for S
-        coq.typecheck V Ty ok,
-        split-pf S' Scope PF NPF,
-        free-names T Names,
-        tc.link.build-eta-llam-links V Scope Ty Names PF NPF L' G'' L'',
-        prune G' Names,
-        var G' G'' Names.
+      compile-full-aux (app [(uvar _ _ as V) | S]) L G' L'' :- !,
+        std.fold-map S L compile-full-aux S' L', % L' = Links built for S
+        tc.link.build-eta-llam-links (app [V|S']) L' G' L''.
 
       compile-full-aux (app L) A (app L1) A1 :- !, std.fold-map L A compile-full-aux L1 A1.
 
