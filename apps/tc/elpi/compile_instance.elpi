@@ -119,7 +119,7 @@ namespace tc {
         (pi x\ is-name x => precompile-aux is_neg_fix (B x) N' (B' x) M).
 
       precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
-        if (is-uvar X) (Sc = []) (var X _ Sc), split-pf XS Sc PF NPF, 
+        is-uvar X, split-pf XS [] PF NPF, 
         not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
         free-var Scope,
         std.fold-map NPF N (precompile-aux is_neg_fix) NPF1 M. 
@@ -237,27 +237,11 @@ namespace tc {
           std.fold-map NPF (pr XS L1) decompile-term-aux Tl (pr XS' L2), 
           NL = tc.link.llam Y (app [Hd|Tl]).
 
-        % Maybe-llam when H is a hole appearing in the shelved goals
-        % This happens when the instance to be compiled comes from the context
-        % Example: Goal exists (X : T1 -> T2), forall a, c (X a) -> ...
-        %            intros; eexists. (* In the context we have the instance `H: c (?X a)` *)
-        decompile-term-aux (tc.maybe-llam-tm (app[app[V | PF] | NPF] as T) S_) L G'' (pr XS' L'') :-  !,
-          var V _ Scope, !,
-          std.fold-map NPF L decompile-term-aux NPF' (pr XS' L'),
-          free-names T Names,
-          coq.typecheck V Ty ok,
-          tc.link.build-eta-llam-links V Scope Ty Names PF NPF' L' G' L'',
-          prune G'' Names,
-          var G'' G' Names.
-
-        % HO var when H is a hole appearing in the shelved goals
-        decompile-term-aux (app [V|PF] as T) (pr XS' L') G'' (pr XS' L'') :-
-          var V _ Scope, !,
-          free-names T Names,
-          coq.typecheck V Ty ok,
-          tc.link.build-eta-llam-links V Scope Ty Names PF [] L' G' L'',
-          prune G'' Names,
-          var G'' G' Names.
+        % Here we have a coq evar applied to some terms. In this case, we build
+        % eta-llam links after the decompilation of S.
+        decompile-term-aux (app [(uvar _ _ as V)|S]) PR H (pr XS L') :- !,
+          std.fold-map S PR decompile-term-aux S' (pr XS L),
+          tc.link.build-eta-llam-links (app [V|S']) L H L'.
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty' Bo') (pr XS2 L3) :- !,
           (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),

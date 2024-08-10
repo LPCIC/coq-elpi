@@ -606,7 +606,7 @@ Module CoqUvar4.
     tc.precomp.instance {{c1 (fun x y => lp:X (lp:A x y) y)}} C _ _ _,
     Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
     Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
-    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [y,x]),
+    Body2 = (x\y\ app [X, (Y x y), y]),
     std.assert! (C = Expected) "[TC] invalid compilation".
   }}.
 

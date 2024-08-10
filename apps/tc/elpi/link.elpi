@@ -9,28 +9,58 @@ namespace tc {
       (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
         fold-map T [] _ R.
 
-    % [build-eta-llam-links LHS Scope Ty Names PF NPF OldLinks NewVar NewLinks]
-    % Builds the eta/llam links at runtime for a term having the shape 
-    % `app[(uvar X Scope as V) | L]`.
-    % LHS should be V, Scope the scope of V, TODO: finish to document this...
+    pred split-pf i:list term, i:list term, o:list term, o:list term.
+    split-pf [] _ [] [] :- !.
+    split-pf [X|Xs] Old [X|Ys] L :- name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
+    split-pf Xs _ [] Xs.
+
+    % [build-eta-llam-links.aux LHS Scope Ty Names PF NPF OldLinks NewVar NewLinks]
     :index(_ _ _ _ 3)
-    % TODO: the argument Ty is unused, i.e. the binders of the eta links have no type...
-    %                           LHS      Scope      Ty          Names        PF         NPF        OldLinks    NewVar
-    pred build-eta-llam-links i:term, i:list term, o:term, i:list term, i:list term, i:list term, i:list prop, o:term, o:list prop.
-    build-eta-llam-links LHS _ _       Names []  NPF OL HD [tc.link.llam T (app [LHS | NPF]) | OL] :- !,
+    pred build-eta-llam-links.aux i:term, i:list term, o:term, i:list term, i:list term, i:list term, i:list prop, o:term, o:list prop.
+    build-eta-llam-links.aux LHS _ _       Names []  NPF OL HD [llam T (app [LHS | NPF]) | OL] :- !,
       std.assert! (not (NPF = [])) "[TC] NPF List should not be empty",
       prune T Names,
       var T HD _. 
-    build-eta-llam-links LHS SC (prod _ Ty _)       _    [X] []  OL HD [tc.link.eta LHS (fun `_` Ty (x\ V x)) | OL] :- !,
+    build-eta-llam-links.aux LHS SC (prod _ Ty _)       _    [X] []  OL HD [eta LHS (fun `_` Ty (x\ V x)) | OL] :- !,
       prune V SC, var (V X) HD _.
-    build-eta-llam-links LHS SC (prod _ Ty Bo) Names [X|XS] NPF OL HD [tc.link.eta LHS (fun `_` Ty (x\ LHS' x)) | L] :- !,
+    build-eta-llam-links.aux LHS SC (prod _ Ty Bo) Names [X|XS] NPF OL HD [eta LHS (fun `_` Ty (x\ LHS' x)) | L] :- !,
     % TODO: unfold Ty if needed...
       std.append SC [X] SC',
-      prune LHS' SC, build-eta-llam-links (LHS' X) SC' (Bo X) Names XS NPF OL HD L.
-    build-eta-llam-links LHS SC Ty Names ([_|_] as PF) NPF OL HD L :-
+      prune LHS' SC, build-eta-llam-links.aux (LHS' X) SC' (Bo X) Names XS NPF OL HD L.
+    build-eta-llam-links.aux LHS SC Ty Names ([_|_] as PF) NPF OL HD L :-
       Ty' = prod _ _ _, coq.unify-eq Ty Ty' ok, !,
-      build-eta-llam-links LHS SC Ty' Names PF NPF OL HD L.
+      build-eta-llam-links.aux LHS SC Ty' Names PF NPF OL HD L.
+    
+    % [build-eta-llam-links T OldLinks X NewLinks]  
+    % T = app[(uvar _ Scope) | S] this term is problematic and asks for the
+    % creation of eta- and/or llam-links. Below some examples:
 
+    % eta: when compiling t = (app [X, x, y]) and [x,y] are distinct_names, then
+    %     the coq variable has not [x,y] in scope: it is applied to them.  
+    %     The solution is to build the following links:  
+    %     NewLinks = [X =η (λa.Y a),     a |- Y a =η (λb.Z a b)]
+    %     and the exposed variable is G, given by `var G Z [x, y]`
+
+    % llam: when compiling t = (app [X, a, x]) where a is a constant and x a
+    %       name, we build a llam link.  
+    %       The link will be: NewLinks ] = [T x =L X a x]  
+    %       and the exposed variable is G, given by `var G T [x]`
+
+    % eta-llam: here a combination of eta and llam:  
+    %       let t = (app [X x y, z, c, w, d]) where X is a coq var with x and y
+    %       in scope, z and w are names and c, d are constants.  
+    %       In this case, the links should be:  
+    %       NewLinks = [X x y =η (λa.Y x y a),   a |- Z x y a w =L (app[Y x y a, c w d])]  
+    %       and the exposed variable is G, given by `var Z T [x, y, z, w]`  
+    pred build-eta-llam-links i:term, i:list prop, o:term, o:list prop.
+    build-eta-llam-links (app[(uvar _ Scope as V) | S] as T) Links G NewLinks :- !,
+      coq.typecheck V Ty ok,
+      split-pf S Scope PF NPF,
+      free-names T Names,
+      build-eta-llam-links.aux V Scope Ty Names PF NPF Links LhsHd NewLinks,
+      prune G Names,
+      var G LhsHd Names.
+    build-eta-llam-links T _ _ _ :- coq.error "[TC] invalid call to build-eta-llam-links:" T.
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ETA LINK                                                                 %
