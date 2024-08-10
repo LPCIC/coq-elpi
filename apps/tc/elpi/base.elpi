@@ -90,10 +90,13 @@ split-at-not-fatal N [X|XS] [X|LN] LM :- !, N1 is N - 1,
 
 pred undup-same i:list A, o:list A.
 undup-same [] [].
-undup-same [X|Xs] [X|Ys] :-
-  std.forall Xs (x\ not (x == X)), !,
-  undup-same Xs Ys.
-undup-same [_|Xs] Ys :- undup-same Xs Ys.
+undup-same [X|Xs] Ys :- std.exists Xs (x\ x == X), !, undup-same Xs Ys.
+undup-same [X|Xs] [X|Ys] :- undup-same Xs Ys.
+
+pred undup i:list A, o:list A.
+undup [] [].
+undup [X|Xs] Ys :- std.mem! Xs X, !, undup Xs Ys.
+undup [X|Xs] [X|Ys] :- undup Xs Ys.
 
 :index (1)
 pred is-coq-term i:any.
@@ -168,3 +171,9 @@ pred close-term-no-prune-fun i:(term -> list term), i:term, o:list term.
 close-term-no-prune-fun (x\ []) _ [] :- !.
 close-term-no-prune-fun (x\ [X x | Xs x]) Ty [fun _ Ty X | Xs'] :- 
   close-term-no-prune-fun Xs Ty Xs'.
+
+pred free-names i:term, o:list term.
+free-names T L :-
+  names N,
+  (pi T L\ fold-map T L T [T|L] :- name T, std.mem! N T, !) => fold-map T [] _ L',
+  undup {std.rev L'} L.

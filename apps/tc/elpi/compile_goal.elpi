@@ -1,0 +1,178 @@
+namespace tc {
+  shorten tc.{r-ar, range-arity}.
+
+  namespace compile {
+    namespace goall {
+      :index (_ _ 1)
+      pred may-contract-to i:list term, i:term, i:term.
+      may-contract-to _ N N :- !.
+      % TODO: here we should do var V _ Scope and use scope: N can be in Scope but not in S
+      may-contract-to L N (app [V|S]) :- var V, !,
+        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
+      may-contract-to L N (app [N|A]) :-
+        std.length A {std.length L},
+        std.forall2 {std.rev L} A (may-contract-to []).
+      may-contract-to L N (fun _ _ B) :-
+        pi x\ may-contract-to [x|L] N (B x).
+
+      :index (_ 1)
+      pred occurs-rigidly i:term, i:term.
+      occurs-rigidly N N :- name N, !.
+      occurs-rigidly _ (app [N|_]) :- var N, !, fail.
+      occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
+      occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
+
+      pred maybe-eta-aux i:term, i:list term.
+      % TODO: here we should do var V _ Scope and use Scope: an elt in L can appear in Scope
+      maybe-eta-aux (app[V|S]) L :- var V, !,
+        std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
+      maybe-eta-aux (app [_|A]) L :-
+        SplitLen is {std.length A} - {std.length L},
+        split-at-not-fatal SplitLen A HD TL,
+        std.forall L (x\ not (exists! HD (occurs-rigidly x))),
+        std.forall2 {std.rev L} TL (may-contract-to []). 
+      maybe-eta-aux (fun _ _ B) L :-
+        pi x\ maybe-eta-aux (B x) [x|L].
+
+      pred maybe-eta i:term.
+      maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
+
+      pred split-pf i:list term, i:list term, o:list term, o:list term.
+      split-pf [] _ [] [] :- !.
+      split-pf [X|Xs] Old [X|Ys] L :- name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
+      split-pf Xs _ [] Xs.
+
+      pred used i:term, i:term.
+      used X (uvar _ S) :- std.mem! S X, !.
+      used X (fun _ _ Bo) :- pi x\ used X (Bo x).
+
+      pred close-term-prune-safe-fun i:(term -> list term), i:term, o:list term.
+      close-term-prune-safe-fun (x\ []) _ [] :- !.
+      close-term-prune-safe-fun (x\ [X x | Xs x]) Ty [fun _ _ X | Xs'] :-
+        pi x\ used x (X x), !, close-term-prune-safe-fun Xs Ty Xs'.
+      close-term-prune-safe-fun (x\ [X | Xs x]) Ty [X | Xs'] :-
+        close-term-prune-safe-fun Xs Ty Xs'.
+
+      pred compile-full-aux-close i:(term -> term), i:term, i:list prop, o:(term -> term), o:list prop.
+      compile-full-aux-close Bo Ty L Bo' L' :-
+        (pi x\ compile-full-aux (Bo x) [] (Bo' x) (BoL x)),
+      % TODO: maybe attach to the links the list of used binders, to simply make this check?
+      % Maybe L' is a pair list links and list binders per link, this way we can easily prune
+        close-term-no-prune-ty BoL Ty BoL',
+        std.append L BoL' L'.
+
+      pred compile-full-aux i:term, i:list prop, o:term, o:list prop.
+      compile-full-aux (global _ as G) L G L :- !.
+      compile-full-aux (pglobal _ _ as G) L G L :- !.
+      compile-full-aux (sort _ as G) L G L :- !.
+
+      % Link for coercion
+      compile-full-aux (app [HD|_] as G) L G' [tc.link.cs G' G | L] :- tc.coercion-unify HD, !.
+      
+      % Link for canonical structure
+      compile-full-aux (app [global (const C) | _] as G) L G' [tc.link.cs G' G | L] :- coq.env.projection? C _, !.
+      
+      % Link for primitive projection
+      compile-full-aux (app [primitive (proj P _) | _] as G) L G' [tc.link.cs G' G | L] :- coq.env.primitive-projection? P _, !.
+
+      % Link for eta-redex
+      compile-full-aux (fun Name Ty Bo as G) L G' [tc.link.eta G' (fun Name Ty' Bo') | L'] :- maybe-eta G, !,
+        compile-full-aux Ty L Ty' LTy,
+        compile-full-aux-close Bo Ty LTy Bo' L'.
+
+      compile-full-aux (fun Name Ty Bo) L (fun Name Ty' Bo') L' :- !,
+        compile-full-aux Ty L Ty' LTy,
+        compile-full-aux-close Bo Ty LTy Bo' L'.
+
+      compile-full-aux (prod Name Ty Bo) L (prod Name Ty' Bo') L' :- !,
+        compile-full-aux Ty L Ty' LTy,
+        compile-full-aux-close Bo Ty LTy Bo' L'.
+
+      % NOTE: when compiling t = (app [X, x, y]) and [x,y] are distinct_names,
+      %       then the coq variable has not [x,y] in scope, it is applied to
+      %       them. Note also that t is a problematic term that cannot be
+      %       exposed to the else unification algorithm.  
+      %       The solution is to build the following links:  
+      %       X =η (λa.Y a)
+      %       a |- Y a =η (λb.Z a b)
+      %       and expose a variable W at toplevel having Z has head and [x, y]
+      %       as scope
+
+      % NOTE: when compiling t = (app [X, a, x]) where a is a constant and x a
+      %       name, we build a llam link.  
+      %       The link will be: T x =L X a x  
+      %       the exposed variable in the term will be T x
+
+      % NOTE: here a combination of eta and llam:  
+      %       let t = (app [X x y, z, c, w, d]) where X is a coq var with x and
+      %       y in scope, z and w are names and c, d are constants.  
+      %       In this case, the links should be:  
+      %       X x y =η (λa.Y x y a)  
+      %       a |- Z x y a w =L (app[Y x y a, c w d])  
+      %       The returned variable is Z x y a w
+
+      pred free-names i:term, o:list term.
+      free-names T L :-
+        names N,
+        (pi T L\ fold-map T L T [T|L] :- name T, std.mem! N T, !) => fold-map T [] _ L',
+        undup {std.rev L'} L.
+
+      :index(_ _ _ _ 3)
+      % TODO: the argument Ty is unused, i.e. the binders of the eta links have no type...
+      %                           LHS      Scope      Ty          Names        PF         NPF        OLDLINKS    NEW_VAR
+      pred build-eta-llam-links i:term, i:list term, o:term, i:list term, i:list term, i:list term, i:list prop, o:term, o:list prop.
+      build-eta-llam-links LHS _ _       Names []  NPF OL HD [tc.link.llam T (app [LHS | NPF]) | OL] :- !,
+        std.assert! (not (NPF = [])) "[TC] NPF List should not be empty",
+        prune T Names,
+        var T HD _. 
+      build-eta-llam-links LHS SC _Ty       _    [X] []  OL HD [tc.link.eta LHS (fun _ _ (x\ V x)) | OL] :- !,
+        prune V SC, var (V X) HD _. % TODO...
+      build-eta-llam-links LHS SC _Ty Names [X|XS] NPF OL HD [tc.link.eta LHS (fun _ _ (x\ LHS' x)) | L] :- !,
+      % TODO: unfold Ty if needed...
+        std.append SC [X] SC',
+        prune LHS' SC, build-eta-llam-links (LHS' X) SC' _ Names XS NPF OL HD L.
+
+      % Link for beta-redex (Uvar in PF)
+      % BUILD CHAIN OF LINKS-ETA from X to V...
+      % TODO: to avoid too many chain for the same var, maybe pass a list into the fold
+      compile-full-aux (app [(uvar _ Scope as V) | S] as T) L G' L'' :- !,
+        % By construction the scope of a uvar is a list of distinct name
+        std.fold-map S L compile-full-aux S' L', % LS = Links built for S
+        % std.assert-ok! (coq.typecheck V Ty) "Not typecheckable variable",
+        split-pf S' Scope PF NPF,
+        free-names T Names,
+        build-eta-llam-links V Scope _ Names PF NPF L' G'' L'',
+        prune G' Names,
+        var G' G'' Names.
+
+      compile-full-aux (app L) A (app L1) A1 :- !, std.fold-map L A compile-full-aux L1 A1.
+
+      compile-full-aux (let N T B F) A (let N T1 B1 F1) A3 :- !,
+        compile-full-aux T A T1 A1, compile-full-aux B A1 B1 A2,
+        compile-full-aux-close F T A2 F1 A3.
+      
+      compile-full-aux (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+        compile-full-aux Ty A Ty1 A1, 
+        compile-full-aux-close F Ty A1 F1 A2.
+      
+      compile-full-aux (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+        compile-full-aux T A T1 A1,
+        compile-full-aux Rty A1 Rty1 A2,
+        std.fold-map B A2 compile-full-aux B1 A3.
+      
+      compile-full-aux (uvar _ _ as X) A X A :- !.
+      compile-full-aux X A X A :- name X, !.
+
+      compile-full-aux A B _ _ :- coq.error "Fail to compile-full-aux" A B.
+
+      % takes a term t and returns a term t' and a list of links.
+      pred compile-full i:term, o:term, o:list prop.
+      compile-full Goal Goal' Links :- compile-full-aux Goal [] Goal' Links.
+    }
+
+    pred goal' i:term, o:term, o:list prop.
+    :name "compile-goal'"
+    goal' Goal Goal' Links :- 
+      goall.compile-full-aux Goal [] Goal' Links.
+  }
+}

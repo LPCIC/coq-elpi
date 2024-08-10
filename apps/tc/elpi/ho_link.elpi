@@ -1,5 +1,9 @@
 namespace tc {
   namespace link {
+    pred relocate i:list term, i:list term, i:term, o:term.
+    relocate [] [] T T' :- copy T T'.
+    relocate [X|Xs] [Y|Ys] T T' :- (copy Y X :- !) => relocate Xs Ys T T'.
+
     pred get-vars i:term, o:list term.
     get-vars T R :-
       (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
@@ -61,12 +65,6 @@ namespace tc {
       pred scope-check i:term, i:term.
       scope-check (uvar _ L) T :- prune A L, A = T, !.
 
-      pred relocate i:list term, i:list term, i:term, o:term.
-      relocate [] [] T T' :- copy T T', coq.say "Copy result is" T T'.
-      relocate [X|Xs] [Y|Ys] T T' :-
-        coq.say "Charging" (copy Y X),
-        (copy Y X :- !) => relocate Xs Ys T T'.
-
       pred collect-store o:list prop.
       pred collect-store-aux i:list prop, o:list prop.
 
@@ -80,24 +78,14 @@ namespace tc {
       unify-eta A (fun _ _ _ as B) :- !, eta-expand A A', unify-eta A' B.
       unify-eta A B :- A = B.
 
-      constraint eta uvar relocate fun collect-store-aux solve-eta {
+      constraint eta solve-eta {
         rule solve-eta \ (eta A B) <=> (unify-eta A B).
         rule \ solve-eta.
-        % rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
-        %     \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
-        %     | (
-        %       pi x\ relocate L1 L2 (B2 x) (B2' x)
-        %       % coq.say "Deduplicating" 
-        %       %   (eta (uvar X L1) (fun _ T1 B1)) 
-        %       %   (eta (uvar X L2) (fun _ T2 B2))
-        %       %   "B2' is" (B2')
-        %     )  
-        % <=> (N1 : G1 ?- B1 = B2').
-
-        % TODO: link collect do not work since it closes links and 
-        %       therefore variables are prune
-        % rule \ (tc.link.eta A B) (collect-store-aux L R) | (coq.say A B {names}) <=> (collect-store-aux [tc.link.eta A B|L] R).
-        % rule \ (collect-store-aux L R) <=> (R = L).
+        % If two eta links have same lhs they rhs should unify
+        rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
+            \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
+            | (pi x\ relocate L1 L2 (B2 x) (B2' x))  
+        <=> (N1 : G1 ?- B1 = B2').
       }
 
       pred eta i:term, i:term.
@@ -114,7 +102,9 @@ namespace tc {
     namespace llam {
       pred llam i:term, i:term.
       llam A (uvar _ S as T) :- distinct_names S, !, A = T.
-      llam A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, declare_constraint (llam A (app [H|L])) [_,A|Vars].
+      llam A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, 
+        coq.say "Declaring constraint" (llam A (app [H|L])) [_,A|Vars],
+        declare_constraint (llam A (app [H|L])) [_,A|Vars].
       llam (fun _ _ _ as F) (app [H | TL]) :- 
         var H _ Scope, !, 
           std.drop-last 1 TL TL', 
@@ -124,9 +114,14 @@ namespace tc {
           pi x\ llam F Bo'.
       llam A B :- !, tc.unify-eq A B.
 
-      constraint solve-llam solve-llam-t llam {
+      constraint solve-llam llam {
         rule solve-llam \ (llam A B) <=> (A = B).
         rule \ solve-llam.
+        % If two llam links have same lhs they rhs should unify
+        rule (N1 : G1 ?- llam (uvar X L1) T1) 
+            \ (N2 : G2 ?- llam (uvar X L2) T2) 
+            | (pi x\ relocate L1 L2 T2 T2')  
+        <=> (N1 : G1 ?- T1 = T2'). % TODO: instead of elpi unif, should use heuristics...
       }
     }
 
@@ -153,13 +148,6 @@ namespace tc {
           (reduce-cs V T Record Proj)
           (coq.unify-eq V T ok).
       cs T1 T2 :- not (T2 = app _), !, coq.unify-eq T1 T2 ok.
-
-      % pred unify-rebinding-names i:list prop, i:list prop, i:term, i:term.
-      % unify-rebinding-names [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
-      % unify-rebinding-names [N|NS] T1 [V|VS] T2 C :- !, copy N V => unify-rebinding-names NS T1 VS T2 C.
-      % unify-rebinding-names [] T1 VS T2 C :- !, unify-rebinding-names [] {coq.subst-prod VS T1} [] T2 C. % FIXME: reduction
-      % unify-rebinding-names [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
-      %   assert! (pi x\ F x = F1) "restriction bug", unify-rebinding-names NS F1 [] T2 C.
 
       pred unify-under-ctx i:list term, i:list term, i:term, i:term, i:term, i:term.
       unify-under-ctx [] [] A B V1 V2 :- copy A A', copy V1 V1', !, coq.unify-eq A' B ok, !, V1' = V2.

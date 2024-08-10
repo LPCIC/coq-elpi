@@ -7,8 +7,8 @@ msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
 
 namespace tc {
   pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
-  build-query-from-goal Goal Proof Q PostProcess :-
-    tc.compile.goal Goal Goal' PostProcess, !,
+  build-query-from-goal Goal Proof Q Links :-
+    tc.compile.goal' Goal Goal' Links, !,
     coq.safe-dest-app Goal' (global TC) TL',
     std.append TL' [Proof] TL, !,
     coq.elpi.predicate {tc.gref->pred-name TC} TL Q.
@@ -29,10 +29,11 @@ namespace tc {
 
   pred solve-under-context i:term, o:term.
   solve-under-context Ty Proof :-
-    tc.time-it tc.oTC-time-compile-goal (build-query-from-goal Ty Proof Q PostProcess) "build query", !,
-    if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q), !,
+    tc.time-it tc.oTC-time-compile-goal (build-query-from-goal Ty Proof Q Links) "build query", !,
+    if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q),
+    if-true print-links (coq.say "[TC] the links are" Links),
     tc.time-it tc.oTC-time-instance-search (
-      do PostProcess, Q,
+      do Links, Q,
       tc.link.solve-cs,
       tc.link.solve-eta, % Trigger eta links
       tc.link.solve-llam % Trigger llam links
@@ -59,6 +60,7 @@ namespace tc {
     if-true print-goal-pp (coq.say "The goal is <<<" {coq.term->string Ty} ">>>"),
     tc.time-it tc.oTC-time-mode-check (tc.modes-check Ty) "mode check", !,
     tc.time-it _ (tc.compile.context Ctx CtxClause) "compile context", !,
+    if-true print-ctx (coq.say "The context is" CtxClause),
     CtxClause => solve-under-context Ty Proof.
   solve-aux1 _ _ tc.mode_fail :- if-true (print-solution; print-solution-pp) (coq.say "Invalid mode call").
 
@@ -68,5 +70,7 @@ namespace tc {
   pred print-goal-pp.       % Print the goal with coq pp
   pred print-goal-after-search.          % Print the goal in HOAS after instance search
   pred print-compiled-goal.
+  pred print-links.
+  pred print-ctx.
 
 }

@@ -1,4 +1,5 @@
 From elpi Require Import tc.
+Set Warnings "+elpi".
 
 Section test_max_arity.
   Elpi Query TC.Solver lp:{{
@@ -222,8 +223,10 @@ Module HO_81.
     (* Failure is good, since here we simply check that the number of 
       uvar-pair built by tc.precomp is zero. This is because the type
       of ?X is Type (i.e. it has `arity` zero) *)
-    Fail apply _.
-  Abort.
+    apply _.
+    Unshelve.
+    apply nat.
+  Qed.
 End HO_81.
 
 Module HO_8.
