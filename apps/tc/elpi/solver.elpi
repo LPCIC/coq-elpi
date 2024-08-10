@@ -8,7 +8,7 @@ msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
 namespace tc {
   pred build-query-from-goal i:term, i:term, o:prop, o:list prop.
   build-query-from-goal Goal Proof Q Links :-
-    tc.compile.goal' Goal Goal' Links, !,
+    tc.compile.goal Goal Goal' Links, !,
     coq.safe-dest-app Goal' (global TC) TL',
     std.append TL' [Proof] TL, !,
     coq.elpi.predicate {tc.gref->pred-name TC} TL Q.

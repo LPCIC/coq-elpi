@@ -145,32 +145,10 @@ pred count-prod i:term , o:nat.
 count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
 count-prod _ z.
 
-pred close-prop i:(A -> list prop), o:list prop.
-close-prop (x\ []) [] :- !.
-close-prop (x\ [X | Xs x]) [X| Xs'] :- !, close-prop Xs Xs'.
-close-prop (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, close-prop Xs Xs'. 
-
-pred close-prop-no-prune i:(A -> list prop), o:list prop.
-close-prop-no-prune (x\ []) [] :- !.
-close-prop-no-prune (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, 
-  close-prop-no-prune Xs Xs'. 
-
-% [close-term-ty (x\ L) Ty R] Ty is the type of x
-pred close-term-ty i:(term -> list prop), i:term, o:list prop.
-close-term-ty (x\ []) _ [] :- !.
-close-term-ty (x\ [X | Xs x]) Ty [X| Xs'] :- !, close-term-ty Xs Ty Xs'.
-close-term-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
-  close-term-ty Xs Ty Xs'. 
-
-pred close-term-no-prune-ty i:(term -> list prop), i:term, o:list prop.
-close-term-no-prune-ty (x\ []) _ [] :- !.
-close-term-no-prune-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
-  close-term-no-prune-ty Xs Ty Xs'. 
-
-pred close-term-no-prune-fun i:(term -> list term), i:term, o:list term.
-close-term-no-prune-fun (x\ []) _ [] :- !.
-close-term-no-prune-fun (x\ [X x | Xs x]) Ty [fun _ Ty X | Xs'] :- 
-  close-term-no-prune-fun Xs Ty Xs'.
+pred close-prop-no-prune-pi-decl i:(term -> list prop), i:term, o:list prop.
+close-prop-no-prune-pi-decl (x\ []) _ [] :- !.
+close-prop-no-prune-pi-decl (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
+  close-prop-no-prune-pi-decl Xs Ty Xs'. 
 
 pred free-names i:term, o:list term.
 free-names T L :-

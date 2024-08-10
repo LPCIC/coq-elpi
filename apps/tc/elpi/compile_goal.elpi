@@ -1,6 +1,6 @@
 namespace tc {
   namespace compile {
-    namespace goall {
+    namespace goal {
       :index (_ _ 1)
       pred may-contract-to i:list term, i:term, i:term.
       may-contract-to _ N N :- !.
@@ -56,7 +56,7 @@ namespace tc {
         (pi x\ compile-full-aux (Bo x) [] (Bo' x) (BoL x)),
       % TODO: maybe attach to the links the list of used binders, to simply make this check?
       % Maybe L' is a pair list links and list binders per link, this way we can easily prune
-        close-term-no-prune-ty BoL Ty BoL',
+        close-prop-no-prune-pi-decl BoL Ty BoL',
         std.append L BoL' L'.
 
       pred compile-full-aux i:term, i:list prop, o:term, o:list prop.
@@ -147,9 +147,9 @@ namespace tc {
       compile-full Goal Goal' Links :- compile-full-aux Goal [] Goal' Links.
     }
 
-    pred goal' i:term, o:term, o:list prop.
-    :name "compile-goal'"
-    goal' Goal Goal' Links :- 
-      goall.compile-full-aux Goal [] Goal' Links.
+    pred goal i:term, o:term, o:list prop.
+    :name "compile-goal"
+    goal Goal Goal' Links :- 
+      goal.compile-full-aux Goal [] Goal' Links.
   }
 }
