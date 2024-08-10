@@ -4,12 +4,11 @@
 From elpi.apps.tc Require Import db.
 
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
-From elpi.apps.tc.elpi Extra Dependency "ho_precompile.elpi" as ho_precompile.
-From elpi.apps.tc.elpi Extra Dependency "ho_compile.elpi" as ho_compile.
-From elpi.apps.tc.elpi Extra Dependency "compiler1.elpi" as compiler1.
+From elpi.apps.tc.elpi Extra Dependency "compile_instance.elpi" as compile_instance.
+From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
 From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
-From elpi.apps.tc.elpi Extra Dependency "ho_link.elpi" as ho_link.
+From elpi.apps.tc.elpi Extra Dependency "link.elpi" as link.
 From elpi.apps.tc.elpi Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
@@ -19,14 +18,9 @@ Set Warnings "+elpi".
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File ho_precompile.
-Elpi Accumulate File unif.
-Elpi Accumulate File ho_link.
-Elpi Accumulate File ho_compile.
-Elpi Accumulate File compiler1.
-Elpi Accumulate File modes.
+Elpi Accumulate File base tc_aux.
+Elpi Accumulate File unif modes link.
+Elpi Accumulate File compile_instance compiler.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
@@ -37,13 +31,9 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File ho_precompile.
-Elpi Accumulate File ho_compile.
-Elpi Accumulate File unif.
-Elpi Accumulate File ho_link.
-Elpi Accumulate File compiler1.
-Elpi Accumulate File modes.
+Elpi Accumulate File base tc_aux.
+Elpi Accumulate File unif modes link.
+Elpi Accumulate File compile_instance compiler.
 Elpi Accumulate File parser_addInstances.
 Elpi Accumulate lp:{{
   main Arguments :- 
@@ -54,8 +44,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddAllClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
+Elpi Accumulate File base tc_aux modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   % Ignore is the list of classes we do not want to add
@@ -68,8 +57,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
+Elpi Accumulate File base tc_aux modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   pred tc.add-all-classes i:list argument , i:tc.search-mode.
@@ -87,7 +75,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddHook.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
+Elpi Accumulate File base tc_aux.
 Elpi Accumulate lp:{{
   pred tc.addHook i:grafting, i:string. 
   tc.addHook Grafting NewName :- 
@@ -117,8 +105,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Declare.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
+Elpi Accumulate File base tc_aux modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main _ :- coq.warning "TC.Declare" {tc.warning-name} 
@@ -132,8 +119,7 @@ with implicit arguments (those implicits will be neglected)", fail.
 Elpi Command TC.Pending_mode.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
+Elpi Accumulate File base tc_aux modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main M :- 
@@ -146,8 +132,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddRecordFields.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
+Elpi Accumulate File base tc_aux.
 Elpi Accumulate  lp:{{
   pred tc.add_tc.records_unif.aux i:int, i:term, i:list term, i:constant, o:prop.
   tc.add_tc.records_unif.aux 0 T Args ProjConstant P :- !,
