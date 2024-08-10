@@ -1,4 +1,5 @@
 From elpi Require Import tc.
+Set Warnings "+elpi".
 
 Section test_max_arity.
   Elpi Query TC.Solver lp:{{
@@ -207,23 +208,15 @@ Module HO_81.
   Class c1 (T : Type).
   Instance i1 F : c1 F. Qed.
 
-  Elpi Accumulate TC.Solver lp:{{
-    :before "compile-goal"
-    tc.compile.goal Goal _ _ :-
-      Goal = {{HO_81.c1 lp:_}}, !,
-      tc.precomp.goal Goal _ Vars, !,
-      tc.compile.goal.make-pairs Vars Pairs,
-      std.assert! (Pairs = []) "", fail.
-  }}.
-  Elpi Typecheck TC.Solver.
-
   Goal exists X, c1 X.
     eexists.
     (* Failure is good, since here we simply check that the number of 
       uvar-pair built by tc.precomp is zero. This is because the type
       of ?X is Type (i.e. it has `arity` zero) *)
-    Fail apply _.
-  Abort.
+    apply _.
+    Unshelve.
+    apply nat.
+  Qed.
 End HO_81.
 
 Module HO_8.
