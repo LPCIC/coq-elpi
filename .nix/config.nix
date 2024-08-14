@@ -5,6 +5,7 @@
   bundles = {
 
     "coq-8.19".coqPackages = {
+      coq.override.version = "8.19";
       
       hierarchy-builder.override.version = "master";
       hierarchy-builder-shim.job = false;
@@ -33,6 +34,7 @@
     };
 
     "coq-master".coqPackages = {
+      coq.override.version = "master";
       
       hierarchy-builder.override.version = "master";
       hierarchy-builder-shim.job = false;
