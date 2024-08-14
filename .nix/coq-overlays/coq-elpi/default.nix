@@ -11,7 +11,7 @@ with builtins; with lib; let
     { case = "8.17"; out = { version = "1.17.0"; };}
     { case = "8.18"; out = { version = "v1.18.1"; };}
     { case = "8.19"; out = { version = "v1.18.2"; };}
-  ] {} );
+  ] { version = "v1.19.4"; } );
 in mkCoqDerivation {
   pname = "elpi";
   repo  = "coq-elpi";

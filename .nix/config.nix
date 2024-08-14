@@ -34,6 +34,8 @@
 
     "coq-master".coqPackages = {
       
+      coq.override.version = "master";
+
       hierarchy-builder.override.version = "master";
       hierarchy-builder-shim.job = false;
 
