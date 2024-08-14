@@ -28,6 +28,17 @@ let common-bundles = {
       coq.override.version = "master";
     };
       
+    "coq-master-min-elpi" = {
+      coqPackages = common-bundles // {
+        coq.override.version = "master";
+      };
+      ocamlPackages = {
+        # when updating this, don't forget to update dune-project
+        # then use it to regenerate coq-elpi.opam
+        elpi.override.version = "v1.18.2";
+      };
+    };
+
   };
 
   cachix.coq = {};
