@@ -10,7 +10,6 @@ let
     { case = "8.16"; out = { version = "1.17.0"; };}
     { case = "8.17"; out = { version = "1.17.0"; };}
     { case = "8.18"; out = { version = "1.18.1"; };}
-    { case = "8.19"; out = { version = "1.18.1"; };}
     { case = "8.20"; out = { version = "2.0.3"; };}
   ] {} );
 in (mkCoqDerivation {
@@ -78,6 +77,10 @@ in (mkCoqDerivation {
     maintainers = [ lib.maintainers.cohencyril ];
     license = lib.licenses.lgpl21Plus;
   };
+
+  preBuild = ''
+    make elpi/dune || true
+  '';
 }).overrideAttrs (o:
   lib.optionalAttrs (o.version != null
     && (o.version == "dev" || lib.versions.isGe "2.2.0" o.version))
