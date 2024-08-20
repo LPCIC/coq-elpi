@@ -198,7 +198,7 @@ namespace tc {
       cs (uvar _ as V) (app [HD | _] as T) :- 
         if (HD = global (const Proj), tc.proj->record Proj Record)
           (reduce-cs V T Record Proj)
-          (coq.unify-eq V T ok).
+          (coq.unify-eq V T ok), !.
       cs T1 T2 :- not (T2 = app _), !, coq.unify-eq T1 T2 ok.
 
       pred unify-under-ctx i:list term, i:list term, i:term, i:term, i:term, i:term.
