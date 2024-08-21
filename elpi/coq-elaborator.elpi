@@ -37,13 +37,13 @@ pred propagate-Prop-constraint-inward i:term.
 propagate-Prop-constraint-inward {{ forall x : lp:Ty, lp:(F x) }} :- !,
   @pi-decl `x` Ty x\
     propagate-Prop-constraint-inward (F x).
-propagate-Prop-constraint-inward {{ lp:A /\ lp:B }} :- !,
+propagate-Prop-constraint-inward {{ Logic.and lp:A lp:B }} :- !,
   propagate-Prop-constraint-inward A,
   propagate-Prop-constraint-inward B.
-propagate-Prop-constraint-inward {{ lp:A \/ lp:B }} :- !,
+propagate-Prop-constraint-inward {{ Logic.or lp:A lp:B }} :- !,
   propagate-Prop-constraint-inward A,
   propagate-Prop-constraint-inward B.
-propagate-Prop-constraint-inward {{ ~ lp:A }} :- !,
+propagate-Prop-constraint-inward {{ Logic.not lp:A }} :- !,
   propagate-Prop-constraint-inward A.
 propagate-Prop-constraint-inward (uvar as X) :- !,
   coq.typecheck X {{ Prop }} ok.
