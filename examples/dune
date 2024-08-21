@@ -2,6 +2,8 @@
  (package coq-elpi)
  (name elpi_examples)
  (plugins coq-elpi.elpi)
- (theories elpi))
+ (theories elpi Coq)
+ (stdlib no)
+ )
 
 ; (include_subdirs qualified)

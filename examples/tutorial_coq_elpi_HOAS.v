@@ -45,6 +45,7 @@ HOAS for Gallina
 
 |*)
 
+From Coq Require Import Prelude.  (* .none *)
 From elpi Require Import elpi.  (* .none *)
 
 Elpi Command tutorial_HOAS. (* .none *)

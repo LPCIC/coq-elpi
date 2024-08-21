@@ -3,6 +3,7 @@
    from a given module.
 *)
 
+From Coq Require Import Prelude.
 From elpi Require Import elpi.
 
 Elpi Tactic reduce.

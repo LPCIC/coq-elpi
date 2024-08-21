@@ -1,3 +1,4 @@
+From Coq Require Import Datatypes Logic Specif.
 From elpi Require Import elpi.
 
 (* Define a command to turn records into nested sigma types, suggested

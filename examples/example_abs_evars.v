@@ -1,3 +1,4 @@
+From Coq Require Import Prelude.
 From elpi Require Import elpi.
 
 (** Closing a term with holes with binders *)
