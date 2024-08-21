@@ -1,6 +1,9 @@
 (coq.theory
  (name elpi_elpi) ; FIXME
- (package coq-elpi))
+ (package coq-elpi)
+ (stdlib no)
+ (theories Coq)
+ )
 
 (rule
  (target dummy.v)
