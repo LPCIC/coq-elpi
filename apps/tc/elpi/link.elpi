@@ -17,17 +17,17 @@ namespace tc {
     % [build-eta-llam-links.aux LHS Scope Ty Names PF NPF OldLinks NewVar NewLinks]
     :index(_ _ _ _ 3)
     pred build-eta-llam-links.aux i:term, i:list term, o:term, i:list term, i:list term, i:list term, i:list prop, o:term, o:list prop.
+    build-eta-llam-links.aux _   _ _       _     []  []  _  _  _ :-coq.error "MH?".
     build-eta-llam-links.aux LHS _ _       Names []  NPF OL HD [llam T (app [LHS | NPF]) | OL] :- !,
-      std.assert! (not (NPF = [])) "[TC] NPF List should not be empty",
-      prune T Names,
-      var T HD _. 
+      prune T Names, var T HD _. 
     build-eta-llam-links.aux LHS SC (prod _ Ty _)       _    [X] []  OL HD [eta LHS (fun `_` Ty (x\ V x)) | OL] :- !,
       prune V SC, var (V X) HD _.
     build-eta-llam-links.aux LHS SC (prod _ Ty Bo) Names [X|XS] NPF OL HD [eta LHS (fun `_` Ty (x\ LHS' x)) | L] :- !,
-    % TODO: unfold Ty if needed...
       std.append SC [X] SC',
       prune LHS' SC, build-eta-llam-links.aux (LHS' X) SC' (Bo X) Names XS NPF OL HD L.
     build-eta-llam-links.aux LHS SC Ty Names ([_|_] as PF) NPF OL HD L :-
+      % Ty is expected to be of (forall x, ...), however, this can be hidden 
+      % under a definition to be unfolded. The unify-eq below is to perform the unfold
       Ty' = prod _ _ _, coq.unify-eq Ty Ty' ok, !,
       build-eta-llam-links.aux LHS SC Ty' Names PF NPF OL HD L.
     
@@ -73,7 +73,7 @@ namespace tc {
       :index (_ _ 1)
       pred may-contract-to i:list term, i:term, i:term.
       may-contract-to _ N N :- name N, !.
-      may-contract-to L N V :- var V _ S, !,
+      may-contract-to L N (uvar _ S) :- !,
           std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
       may-contract-to L N (app [N|A]) :-
         std.length A {std.length L},
@@ -81,14 +81,15 @@ namespace tc {
       may-contract-to L N (fun _ _ B) :-
         pi x\ may-contract-to [x|L] N (B x).
 
+      :index (_ 1)
       pred occurs-rigidly i:term, i:term.
       occurs-rigidly N N :- name N, !.
-      occurs-rigidly _ V :- var V, !, fail.
+      occurs-rigidly _ (uvar _) :- !, fail.
       occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
       occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
       pred maybe-eta-aux i:term, i:list term.
-      maybe-eta-aux V L :- var V _ S, std.forall L (std.mem! S).
+      maybe-eta-aux (uvar _ S) L :- std.forall L (std.mem! S).
       maybe-eta-aux (app [_|A]) L :-
         SplitLen is {std.length A} - {std.length L},
         split-at-not-fatal SplitLen A HD TL,
@@ -106,7 +107,7 @@ namespace tc {
       unify-left-right A A' :- A = A'.
 
       pred progress-eta-left i:term, o:term.
-      progress-eta-left A _ :- var A, !, fail.
+      progress-eta-left (uvar _) _ :- !, fail.
       progress-eta-left (fun _ _ A) (fun _ _ A).
       progress-eta-left A A' :- (name A; is-coq-term A), !, eta-expand A A'.
 
@@ -118,12 +119,6 @@ namespace tc {
       pred scope-check i:term, i:term.
       scope-check (uvar _ L) T :- prune A L, A = T, !.
 
-      pred collect-store o:list prop.
-      pred collect-store-aux i:list prop, o:list prop.
-
-      collect-store L :- collect-store-aux [] L.
-      collect-store-aux X L :- declare_constraint (collect-store-aux X L) [_].
-
       pred unify-eta i:term, i:term.
       % unify-eta A B :- coq.say "Unify-eta" "A"A"B"B, fail.
       unify-eta (uvar _ _ as A) B :- !, A = B, !.
@@ -132,33 +127,39 @@ namespace tc {
       unify-eta A B :- A = B.
 
       constraint eta solve-eta {
-        rule solve-eta \ (eta A B) <=> (unify-eta A B).
+        rule solve-eta \ (eta A B _) <=> (unify-eta A B).
         rule \ solve-eta.
         % If two eta links have same lhs they rhs should unify
-        rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1)) 
-            \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2)) 
-            | (pi x\ relocate L1 L2 (B2 x) (B2' x))  
+        rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1) _) 
+            \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2) _) 
+            | (pi x\ relocate L1 L2 (B2 x) (B2' x))
         <=> (N1 : G1 ?- B1 = B2').
       }
 
-      pred eta i:term, i:term.
-      eta _ B :- var B, coq.error "[TC] link.eta error, flexible rhs".
-      eta A (fun _ _ B as T) :- not (var A), not (var B), !, unify-left-right A T. 
-      eta A B :- progress-eta-right B B', !, A = B'. 
-      eta A B :- progress-eta-left A A', !, A' = B.
-      eta A B :- scope-check A B, get-vars B Vars, declare_constraint (eta A B) [_,A|Vars].
+      :index (0 1)
+      pred eta i:term, i:term, i:list term.
+      eta _ uvar _ :- coq.error "[TC] link.eta error, flexible rhs".
+      eta A (fun _ _ B as T) _ :- not (var A), not (var B), !, unify-left-right A T.
+      eta A B _ :- progress-eta-right B B', !, A = B'. 
+      eta A B _ :- progress-eta-left A A', !, A' = B.
+      eta (uvar _ as A) B Vars :- 
+        scope-check A B, std.filter Vars (x\ var x) Vars', 
+        declare_constraint (eta A B Vars') [_,A|Vars'].
     }
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % LLAM LINK                                                                %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     namespace llam {
+      % A llam link is suspended on its lhs and the head of its rhs
+      % Note: to avoid not pf elpi variable, the coq term `app[A, x, t]` where
+      % A is a uvar, x a name and t a term, is represented with the llam rhs:
+      % app[A' x, t] instead of (A' x t).
       pred llam i:term, i:term.
       llam A (uvar _ S as T) :- distinct_names S, !, A = T.
-      llam A (app [H|L] as T) :- var A, var H, !, get-vars T Vars, 
-        declare_constraint (llam A (app [H|L])) [_,A|Vars].
-      llam (fun _ _ _ as F) (app [H | TL]) :- 
-        var H _ Scope, !, 
+      llam (uvar _ as A) (app [(uvar HD _)|_] as T) :- !, 
+        declare_constraint (llam A T) [_,A,HD].
+      llam (fun _ _ _ as F) (app [(uvar _ Scope as H) | TL]) :- !, 
           std.drop-last 1 TL TL', 
           H = fun _ _Ty (x\ Bo'),  % TODO give a valid _Ty: should be: (Ty of dropped -> Ty of F)
           prune H' Scope,
@@ -177,6 +178,9 @@ namespace tc {
       }
     }
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % CS LINK                                                                  %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     namespace cs {
       pred reduce-cs i:term, i:term, i:term, i:constant.
       reduce-cs V (app [ProjT, T]) Record Proj :-
@@ -216,36 +220,12 @@ namespace tc {
       }
     }
 
-    namespace cs {
-      pred cs i:term, i:term.
-      % TODO: suspend link on vars in T
-      cs V T :- var V, !, get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
-      cs T1 T2 :- coq.unify-eq T1 T2 ok.
-
-      % pred unify-rebinding-names i:list prop, i:list prop, i:term, i:term.
-      % unify-rebinding-names [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
-      % unify-rebinding-names [N|NS] T1 [V|VS] T2 C :- !, copy N V => unify-rebinding-names NS T1 VS T2 C.
-      % unify-rebinding-names [] T1 VS T2 C :- !, unify-rebinding-names [] {coq.subst-prod VS T1} [] T2 C. % FIXME: reduction
-      % unify-rebinding-names [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
-      %   assert! (pi x\ F x = F1) "restriction bug", unify-rebinding-names NS F1 [] T2 C.
-
-      pred unify-under-ctx i:list term, i:list term, i:term, i:term, i:term, i:term.
-      unify-under-ctx [] [] A B V1 V2 :- copy A A', copy V1 V1', !, coq.unify-eq A' B ok, !, V1' = V2.
-      unify-under-ctx [X|XS] [Y|YS] A B V1 V2:- (copy X Y :- !) => unify-under-ctx XS YS A B V1 V2.
-
-      % TODO: there could be two same variables suspended on non unifyable
-      % terms, this should be detected and raise a failure.
-      % An example of this is in test/canonical_struct.v
-      constraint cache def decl coq.unify-eq ?- solve-cs cs {
-        rule solve-cs \ (Ctx ?- cs A B) <=> (Ctx => coq.unify-eq A B ok).
-        rule (Ctx1 ?- cs (uvar A L1 as X) T1) \ (Ctx2 ?- cs (uvar A L2 as Y) T2) <=>
-          (Ctx2 => unify-under-ctx L1 L2 T1 T2 X Y).
-        rule \ solve-cs.
-      }
-    }
-
+    % The last argument contain the list of vars on which the link is
+    % suspended. In order to avoid a call to get-vars if the link is to be 
+    % re-suspended, we explicetely pass this list once when the link is 
+    % created
     pred eta i:term, i:term.
-    eta A B :- eta.eta A B.
+    eta A B :- !, get-vars B V, eta.eta A B [A|V].
 
     pred solve-eta.
     solve-eta :- declare_constraint solve-eta [_].
