@@ -77,7 +77,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base tc_aux.
 Elpi Accumulate File unif modes link.
-Elpi Accumulate File compile_instance compiler.
+Elpi Accumulate File compile_instance compiler compile_goal.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
 
