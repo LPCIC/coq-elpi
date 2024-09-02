@@ -589,27 +589,55 @@ let detype_primitive_string = function
   | _ -> assert false
 [%%endif]
 
+[%%if coq = "8.19" || coq = "8.20" ]
+let fresh (names, e) sigma name ty =
+  let open EConstr in
+  let open Names.Name in
+  let mk_fresh was =
+    let id = Namegen.next_name_away was names in
+    (Name id, (Names.Id.Set.add id names, e))
+  in
+  match name with
+  | Anonymous ->
+      let noccurs sigma i = function None -> true | Some t -> Vars.noccurn sigma i t in
+      let name, names = Namegen.compute_displayed_name_in_gen noccurs e sigma names name ty in
+      (name, (names, e))
+  | Name id when Names.Id.Set.mem id names -> mk_fresh name
+  | Name id as x -> (x, (Names.Id.Set.add id names, e))
+
+let names_of_env env =
+  let namesr = Environ.rel_context env |> Context.Rel.to_vars in
+  let namesv = Environ.named_context env |> Context.Named.to_vars in
+  Names.Id.Set.union namesr namesv
+[%%else]
+let fresh (names, e) sigma name ty =
+  let open EConstr in
+  let open Names.Name in
+  let mk_fresh was =
+    let id, names = Namegen.Generator.next_name_away Namegen.Generator.fresh was names in
+    (Name id, (names, e))
+  in
+  match name with
+  | Anonymous ->
+      let noccurs sigma i = function None -> true | Some t -> Vars.noccurn sigma i t in
+      let name, names = Namegen.compute_displayed_name_in_gen Namegen.Generator.fresh noccurs e sigma names name ty in
+      (name, (names, e))
+  | Name id when Nameops.Fresh.mem id names -> mk_fresh name
+  | Name id as x -> (x, (Nameops.Fresh.add id names, e))
+
+let names_of_env env =
+  let namesr = Environ.rel_context env |> Context.Rel.to_vars in
+  let namesv = Environ.named_context env |> Context.Named.to_vars in
+  Names.Id.Set.fold (fun id accu -> Nameops.Fresh.add id accu) namesr (Nameops.Fresh.of_set namesv)
+[%%endif]
+
 let detype ?(keepunivs = false) env sigma t =
   let open Glob_term in
   let open EConstr in
   let open Context.Rel.Declaration in
   debug Pp.(fun () -> str "detype: " ++ Printer.pr_econstr_env env sigma t);
 
-  let fresh (names, e) name ty =
-    let open Names.Name in
-    let mk_fresh was =
-      let id = Namegen.next_name_away was names in
-      (Name id, (Names.Id.Set.add id names, e))
-    in
-    match name with
-    | Anonymous ->
-        let noccurs sigma i = function None -> true | Some t -> Vars.noccurn sigma i t in
-        let name, names = Namegen.compute_displayed_name_in_gen noccurs e sigma names name ty in
-        (name, (names, e))
-    | Name id when Names.Id.Set.mem id names -> mk_fresh name
-    | Name id as x -> (x, (Names.Id.Set.add id names, e))
-  in
-
+  let fresh (names, e) name ty = fresh (names, e) sigma name ty in
   let push_rel d env c =
     let name = Context.Rel.Declaration.get_name d in
     let r = Context.Rel.Declaration.get_relevance d in
@@ -801,14 +829,18 @@ let detype ?(keepunivs = false) env sigma t =
     buildrec Names.Id.Set.empty [] env (List.length ctx) branch
   in
 
-  let namesr = Environ.rel_context env |> Context.Rel.to_vars in
-  let namesv = Environ.named_context env |> Context.Named.to_vars in
-  let x = aux (Names.Id.Set.union namesr namesv, env) t in
+  let x = aux (names_of_env env, env) t in
   x
 
+[%%if coq = "8.19" || coq = "8.20" ]
 let detype_closed_glob env sigma closure =
   let gbody = Detyping.detype_closed_glob Names.Id.Set.empty env sigma closure in
   fix_detype gbody
+[%%else]
+let detype_closed_glob env sigma closure =
+  let gbody = Detyping.detype_closed_glob env sigma closure in
+  fix_detype gbody
+[%%endif]
 
 type qualified_name = string list
 
