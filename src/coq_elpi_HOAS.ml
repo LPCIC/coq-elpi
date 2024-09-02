@@ -2962,6 +2962,7 @@ let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~templat
     template = Some false;
     auto_prop_lowering = false;
     finite;
+    mode = None;
   }
   in
   ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~flags
