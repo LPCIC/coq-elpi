@@ -6,6 +6,7 @@ From elpi.apps.tc Require Import db.
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc.elpi Extra Dependency "compile_instance.elpi" as compile_instance.
 From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc.elpi Extra Dependency "compile_goal.elpi" as compile_goal.
 From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
 From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc.elpi Extra Dependency "link.elpi" as link.
@@ -20,7 +21,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base tc_aux.
 Elpi Accumulate File unif modes link.
-Elpi Accumulate File compile_instance compiler.
+Elpi Accumulate File compile_instance compiler compile_goal.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
@@ -33,7 +34,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base tc_aux.
 Elpi Accumulate File unif modes link.
-Elpi Accumulate File compile_instance compiler.
+Elpi Accumulate File compile_instance compiler compile_goal.
 Elpi Accumulate File parser_addInstances.
 Elpi Accumulate lp:{{
   main Arguments :- 
