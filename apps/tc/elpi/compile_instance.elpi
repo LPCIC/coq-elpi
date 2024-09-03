@@ -1,6 +1,16 @@
 namespace tc {
   shorten tc.{r-ar, range-arity}.
 
+  % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
+  pred clean-term i:term, o:term.
+  clean-term A B :-
+    (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
+    (pi t s r \ copy (tc.canonical-projection t s _) r :- !, copy t r, !) =>
+    (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
+    (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
+    (pi t s r \ copy (tc.coercion t s) r :- !, copy t r, !) =>
+      std.assert!  (copy A B) "[TC] clean-term error".
+
   namespace precomp {
 
     namespace instance {
@@ -245,13 +255,13 @@ namespace tc {
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty' Bo') (pr XS2 L3) :- !,
           (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
-          close-prop-no-prune-pi-decl L1x Ty L1,
+          close-prop-no-prune-pi-decl L1x {clean-term Ty} L1,
           decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
           std.append L1 L2 L3.
 
         decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty' Bo') (pr XS2 L3) :- !,
           (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
-          close-prop-no-prune-pi-decl L1x Ty L1,
+          close-prop-no-prune-pi-decl L1x {clean-term Ty} L1,
           decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
           std.append L1 L2 L3.
 
@@ -277,16 +287,6 @@ namespace tc {
           decompile-term-aux T (pr L []) R (pr L' Links).
 
       }
-
-      % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
-      pred clean-term i:term, o:term.
-      clean-term A B :-
-        (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
-        (pi t s r \ copy (tc.canonical-projection t s _) r :- !, copy t r, !) =>
-        (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
-        (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
-        (pi t s r \ copy (tc.coercion t s) r :- !, copy t r, !) =>
-          std.assert!  (copy A B) "[TC] clean-term error".
 
       pred main 
         i:nat,                % the number of problematic terms
