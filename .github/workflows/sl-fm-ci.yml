@@ -1,0 +1,24 @@
+name: Remote
+
+on:
+  push:
+    branches: ["main", "skylabs-*"]
+  pull_request:
+    types: [synchronize,opened,reopened]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    name: "Trigger"
+    steps:
+      - name: Check out ci repository
+        uses: actions/checkout@v5
+        with:
+          repository: SkylabsAI/ci
+          ref: main
+          token: ${{ secrets.FM_CI_TOKEN }}
+          path: ./action
+      - name: "Trigger remote CI"
+        uses: ./action/trigger
+        with:
+          FM_CI_TOKEN: ${{ secrets.FM_CI_TOKEN }}
