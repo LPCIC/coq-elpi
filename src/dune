@@ -8,7 +8,7 @@
 
 (rule
   (target coq_elpi_builtins_arg_HOAS.ml)
-  (deps ../elpi/coq-arg-HOAS.elpi)
+  (deps ../elpi/coq-arg-HOAS.elpi (package elpi))
   (action (with-stdout-to %{target}
     (progn
       (echo "(* Automatically generated from %{deps}, don't edit *)\n")

@@ -195,7 +195,7 @@ Print f.
 Print expanded_f.
 
 (* so that we can see the new "copy" clause *)
-Elpi Print record.expand.
+Elpi Print record.expand "elpi_examples/record.expand".
 
 Definition g t l s h := (forall x y, op t x y = false) /\ f true t l s = h.
 

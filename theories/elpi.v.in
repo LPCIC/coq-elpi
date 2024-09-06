@@ -6,11 +6,11 @@ Declare ML Module "coq-elpi.elpi".
 Elpi Document Builtins.
 
 (* Load once and forall these files in this .vo, to ease redistribution *)
-Elpi Checker "coq://elpi_elpi/coq-elpi-checker.elpi" "coq://elpi_elpi/coq-elpi-checker.elpi".
+Elpi Checker "elpi_elpi/coq-elpi-checker.elpi" "elpi_elpi/coq-elpi-checker.elpi".
 
-Elpi Printer "elpi2html.elpi" "elpi2html.elpi". (* this one is from elpi *)
-Elpi Template Command "coq://elpi_elpi/elpi-command-template-synterp.elpi" "coq://elpi_elpi/elpi-command-template.elpi".
-Elpi Template Tactic "coq://elpi_elpi/elpi-tactic-template.elpi".
+Elpi Printer "elpi_elpi/elpi2html.elpi" "elpi_elpi/elpi2html.elpi".
+Elpi Template Command "elpi_elpi/elpi-command-template-synterp.elpi" "elpi_elpi/elpi-command-template.elpi".
+Elpi Template Tactic "elpi_elpi/elpi-tactic-template.elpi".
 
 (* Special constant used for HOAS of holes, see coq-bultins.elpi *)
 Lemma hole : True. Proof. exact I. Qed.

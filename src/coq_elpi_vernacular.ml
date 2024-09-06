@@ -433,25 +433,20 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
       Pp.(strbrk "Now click \"Start watching\" in the Elpi Trace Browser panel and then execute the Command/Tactic/Query you want to trace. Also try \"F1 Elpi\".")
   let trace_browser ~atts opts = skip ~ph:atts trace_browser opts
       
-  let print name args =
+  let print ~name ~args output =
     let elpi = P.ensure_initialized () in
-    get_and_compile name |> Option.iter (fun (program, _) ->
-      let args, fname, fname_txt =
-        let default_fname = String.concat "." name ^ ".html" in
-        let default_fname_txt = String.concat "." name ^ ".txt" in
-        let default_blacklist = [
-          "elaborator.elpi";"reduction.elpi";
-          "coq-builtin.elpi";"coq-lib.elpi";"coq-HOAS.elpi"
-        ] in
-        match args with
-        | [] -> default_blacklist, default_fname, default_fname_txt
-        | [x] -> default_blacklist, x ^ ".html", x ^ ".txt"
-        | x :: xs -> xs, x ^ ".html", x ^ ".txt" in
-      let args = List.map API.RawOpaqueData.of_string args in
-      let query_ast = Interp.parse_goal ~elpi (API.Ast.Loc.initial "(print)") "true." in
-      let query = EC.query program query_ast in
-      let oc = open_out fname_txt in
-      let fmt = Format.formatter_of_out_channel oc in
+    get_and_compile name |> Option.iter @@ fun (program, _) ->
+    let fname =
+      Coq_elpi_programs.resolve_file_path
+        ~must_exist:false ~allow_absolute:false ~only_elpi:false output
+    in
+    let fname_html = fname ^ ".html" in
+    let fname_txt = fname ^ ".txt" in
+    let args = List.map API.RawOpaqueData.of_string args in
+    let query_ast = Interp.parse_goal ~elpi (API.Ast.Loc.initial "(print)") "true." in
+    let query = EC.query program query_ast in
+    let oc = open_out fname_txt in
+    let fmt = Format.formatter_of_out_channel oc in
     EPP.program fmt query;
     Format.pp_print_flush fmt ();
     close_out oc;
@@ -466,11 +461,12 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
       assert(depth=0); (* else, we should lift the terms down here *)
       let q = ET.mkApp main_quotedc
         (EU.list_to_lp_list quotedP)
-        [API.RawOpaqueData.of_string fname; EU.list_to_lp_list args] in
+        [API.RawOpaqueData.of_string fname_html; EU.list_to_lp_list args] in
       state, (loc,q), [] in
     ignore @@ run_and_print ~print:false ~static_check:false ["Elpi";"Print"]
-      (P.assemble_units ~elpi [P.printer ()]) (`Fun q))
-  let print ~atts name args = skip ~ph:atts (print name) args
+      (P.assemble_units ~elpi [P.printer ()]) (`Fun q)
+  let print ~atts ~name ~args output =
+    skip ~ph:atts (print ~name ~args) output
       
 
   let create_command ~atts:(raw_args) n =
@@ -546,7 +542,7 @@ module type Common = sig
   val trace         : atts:phase option -> int -> int -> string list -> string list -> unit
   val trace_browser : atts:phase option -> string list -> unit
   val bound_steps   : atts:phase option -> int -> unit
-  val print         : atts:phase option -> qualified_name -> string list -> unit
+  val print         : atts:phase option -> name:qualified_name -> args:string list -> string -> unit
 
   val create_program : atts:bool option -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
   val create_command : atts:bool option -> program_name -> unit

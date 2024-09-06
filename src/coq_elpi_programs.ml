@@ -630,68 +630,82 @@ let coq_synterp_builtins =
       Coq_elpi_builtins.coq_misc_builtins @
       Coq_elpi_builtins_synterp.coq_synterp_builtins
     end
-    
 
-let file_resolver =
-  let error_cannot_resolve dp file =
-    raise (Failure (
-      "Cannot resolve " ^  Names.DirPath.to_string dp ^
-      " in loadpath:\n" ^ String.concat "\n" (List.map (fun t ->
-      "- " ^ Names.DirPath.to_string (Loadpath.logical t) ^
-      " -> " ^ Loadpath.physical t) (Loadpath.get_load_paths ())))) in
-  let error_found_twice logpath file abspath other =
-    raise (Failure (
-      "File " ^ file ^ " found twice in loadpath " ^ logpath ^ ":\n" ^
-      "- " ^ abspath ^ "\n- " ^ other ^ "\n")) in
-  let error_file_not_found logpath file paths =
-    raise (Failure (
-      "File " ^ file ^ " not found in loadpath " ^ logpath ^ ", mapped to:\n" ^
-      String.concat "\n" (List.map (fun t -> "- " ^ t) paths))) in
-  let ensure_only_one_path_contains logpath file (paths as allpaths) =
-    let rec aux found paths =
-      match paths, found with
-      | [], None -> error_file_not_found logpath file allpaths
-      | [], Some abspath -> abspath
-      | x :: xs, None ->
-          let abspath = x ^ "/" ^ file in
-          if Sys.file_exists abspath then aux (Some abspath) xs
-          else aux None xs
-      | x :: xs, Some other ->
-          let abspath = x ^ "/" ^ file in
-          if Sys.file_exists abspath then error_found_twice logpath file abspath other
-          else aux found xs
+let resolve_file_path ~must_exist ~allow_absolute ~only_elpi file =
+  (* Handle absolute paths, as bound by "Extra Dependency". *)
+  if allow_absolute && not (Filename.is_relative file) then
+    if not must_exist || Sys.file_exists file then file else
+    let msg = "The referenced absolute path " ^ file ^ " does not exist." in
+    CErrors.user_err (Pp.str msg)
+  else
+  (* Split filename into a logical path, and a remaining relative path. *)
+  let (logpath, relpath) =
+    (* Remove "coq://" prefix for backward compatibility. *)
+    let path =
+      if String.length file >= 6 && String.sub file 0 6 = "coq://" then
+        String.sub file 6 (String.length file - 6)
+      else file
     in
-      aux None paths in 
-    let legacy_paths = 
-      let build_dir = Filename.dirname Coq_elpi_config.elpi2html in
-      let installed_dirs =
-        let valid_dir d = try Sys.is_directory d with Sys_error _ -> false in
-        let user_contrib =
-          if Sys.backend_type = Sys.Other "js_of_ocaml" then "../.."
-          else
-            let env = Boot.Env.init () in
-            Boot.Env.(user_contrib env |> Path.to_string) in
-        user_contrib :: Envars.coqpath
-        |> List.map (fun p -> p ^ "/elpi/")
-        |> ((@) [".";".."]) (* Hem, this sucks *)
-        |> List.filter valid_dir
-      in
-      "." :: build_dir :: installed_dirs in
-  let legacy_resolver = API.Parse.std_resolver ~paths:legacy_paths () in
-fun ?cwd ~unit:file () ->
-  if Str.(string_match (regexp_string "coq://") file 0) then
-    let logpath_file = String.(sub file 6 (length file - 6)) in
-    match string_split_on_char '/' logpath_file with
-    | [] -> assert false
-    | logpath :: rest ->
-        let dp = string_split_on_char '.' logpath |> CList.rev_map Names.Id.of_string_soft |> Names.DirPath.make in
-        match Loadpath.find_with_logical_path dp with
-        | _ :: _ as paths ->
-            let paths = List.map Loadpath.physical paths in
-            ensure_only_one_path_contains logpath (String.concat "/" rest) paths
-        | [] -> error_cannot_resolve dp file
-  else legacy_resolver ?cwd ~unit:file ()
-;;
+    (* Remove ".elpi" extension if applicable. *)
+    let path =
+      if only_elpi && Filename.check_suffix path ".elpi" then
+        String.sub path 0 (String.length path - 5)
+      else path
+    in
+    match String.split_on_char '/' path with
+    | logpath :: ((_ :: _) as relpath) ->
+        let logpath =
+          let logpath = String.split_on_char '.' logpath in
+          let logpath = List.rev_map Names.Id.of_string logpath in
+          Names.DirPath.make logpath
+        in
+        let relpath =
+          let relpath = String.concat "/" relpath in
+          if only_elpi then relpath ^ ".elpi" else relpath
+        in
+        (logpath, relpath)
+    | _ ->
+        let msg =
+          "File reference " ^ file ^ " is ill-formed, and cannot be resolved."
+        in
+        CErrors.user_err (Pp.str msg)
+  in
+  (* Lookup the directory path in Coq's state. *)
+  let loadpath =
+    match Loadpath.find_with_logical_path logpath with
+    | p :: [] -> p
+    | []      ->
+        let msg =
+          "No loadpath found with logical name " ^
+          Names.DirPath.to_string logpath ^
+          ", cannot resolve file reference " ^ file ^ "."
+        in
+        CErrors.user_err (Pp.str msg)
+    | ps      ->
+        let msg =
+          "Multiple loadpaths found with logical name " ^
+          Names.DirPath.to_string logpath ^
+          ", while resolving file reference " ^ file ^ ":\n" ^
+          String.concat "\n" (List.map (fun lp ->
+            Printf.sprintf "- %s -> %s"
+              (Names.DirPath.to_string (Loadpath.logical lp))
+              (Loadpath.physical lp)
+          ) ps)
+        in
+        CErrors.user_err (Pp.str msg)
+  in
+  (* Assemble the file path. *)
+  let resolved = Filename.concat (Loadpath.physical loadpath) relpath in
+  if not must_exist || Sys.file_exists resolved then resolved else
+  let msg =
+    "File reference " ^ file ^ " was resolved to " ^ resolved ^
+    " but the file does not exist."
+  in
+  CErrors.user_err (Pp.str msg)
+
+let file_resolver ?cwd:_ ~unit:file () =
+  resolve_file_path ~must_exist:true ~allow_absolute:true ~only_elpi:true file
+
 (***********************************************************************)
 
 module Synterp : Programs = struct
@@ -747,4 +761,4 @@ let document_builtins () =
   API.BuiltIn.document_file coq_interp_builtins;
   API.BuiltIn.document_file coq_synterp_builtins;
   API.BuiltIn.document_file ~header:"% Generated file, do not edit" elpi_builtins
-  
+

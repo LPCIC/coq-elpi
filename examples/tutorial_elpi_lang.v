@@ -1443,7 +1443,7 @@ predicate.
 
 |*)
 
-Elpi Print stlc.
+Elpi Print stlc "elpi_examples/stlc".
 
 (*|
 
