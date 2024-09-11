@@ -1,18 +1,25 @@
-let common-bundles = {
-  hierarchy-builder.override.version = "master";
-  mathcomp.override.version = "master";
-  odd-order.override.version = "master";
-  mathcomp-analysis.override.version = "master";
-  mathcomp-finmap.override.version = "master";
-  mathcomp-classical.override.version = "master";
-  mathcomp-bigenough.override.version = "master";
+with builtins; with (import <nixpkgs> {}).lib;
+let master = [
+    "coqeal"
+    "hierarchy-builder"
+    "mathcomp"
+    "mathcomp-analysis"
+    "mathcomp-bigenough"
+    "mathcomp-classical"
+    "mathcomp-finmap"
+    "mathcomp-real-closed"
+    "multinomials"
+    "odd-order"
+  ];
+  common-bundles = listToAttrs (forEach master (p:
+    { name = p; value.override.version = "master"; }))
+  // {
+    mathcomp-single-planB-src.job = false;
+    mathcomp-single-planB.job = false;
+    mathcomp-single.job = false;
 
-  mathcomp-single-planB-src.job = false;
-  mathcomp-single-planB.job = false;
-  mathcomp-single.job = false;
-
-  deriving.job = false;
-  reglang.job = false;
+    deriving.job = false;
+    reglang.job = false;
 }; in
 {
   format = "1.0.0";
