@@ -135,9 +135,22 @@ let located = let open Conv in let open API.AlgebraicData in declare {
 let list = B.list
 let pair = B.pair
 let option = B.option
+
+let invocation_site_loc : API.Ast.Loc.t State.component =
+  State.declare_component ~name:"coq-elpi:invocation-site-loc" ~descriptor:interp_state
+  ~pp:(fun fmt x -> Format.fprintf fmt "%a" API.Ast.Loc.pp x)
+  ~init:(fun () -> API.Ast.Loc.initial "(should-not-happen)")
+  ~start:(fun x -> x) ()
+let invocation_site_loc_synterp : API.Ast.Loc.t State.component =
+  State.declare_component ~name:"coq-elpi:invocation-site-loc" ~descriptor:synterp_state
+  ~pp:(fun fmt x -> Format.fprintf fmt "%a" API.Ast.Loc.pp x)
+  ~init:(fun () -> API.Ast.Loc.initial "(should-not-happen)")
+  ~start:(fun x -> x) ()
+
 type accumulation_item = qualified_name * API.Ast.program * Id.t list * Coq_elpi_utils.clause_scope
 let accumulate_clauses ~clauses_for_later ~accumulate_to_db ~preprocess_clause ~scope ~dbname clauses ~depth ~options state =
-  let loc = API.Ast.Loc.initial "(elpi.add_clause)" in
+  let invocation_loc = State.get invocation_site_loc_synterp state in
+  let loc = API.Ast.Loc.initial ("elpi.add_clause: " ^ API.Ast.Loc.show invocation_loc) in
   let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
   let clauses scope =
    clauses |> CList.rev_map (fun (name,graft,clause) ->
@@ -239,17 +252,6 @@ let current_path, current_section_path =
      let sections = Libnames.drop_dirpath_prefix base base_w_sections in
      !: (mp2path (Names.ModPath.MPfile sections)))),
   DocAbove)
-  
-let invocation_site_loc : API.Ast.Loc.t State.component =
-  State.declare_component ~name:"coq-elpi:invocation-site-loc" ~descriptor:interp_state
-  ~pp:(fun fmt x -> Format.fprintf fmt "%a" API.Ast.Loc.pp x)
-  ~init:(fun () -> API.Ast.Loc.initial "(should-not-happen)")
-  ~start:(fun x -> x) ()
-let invocation_site_loc_synterp : API.Ast.Loc.t State.component =
-  State.declare_component ~name:"coq-elpi:invocation-site-loc" ~descriptor:synterp_state
-  ~pp:(fun fmt x -> Format.fprintf fmt "%a" API.Ast.Loc.pp x)
-  ~init:(fun () -> API.Ast.Loc.initial "(should-not-happen)")
-  ~start:(fun x -> x) ()
   
 module SynterpAction = struct
   open Declaremods

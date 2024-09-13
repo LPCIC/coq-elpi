@@ -279,7 +279,9 @@ Abort.
 Elpi Tactic test_att.
 Elpi Accumulate lp:{{
   solve _ _ :-
+  coq.say "YYYYYYYYYYYYYYYYYYYYYYYYYYYY" {attributes},
     coq.parse-attributes {attributes} [ att "foo" bool, att "bar" bool ] Opts,
+    coq.say "XXXXXXXXXXXXXXXXXXXXXXXXXXX" Opts,
     Opts => get-option "foo" tt.
 }}.
 Elpi Typecheck.

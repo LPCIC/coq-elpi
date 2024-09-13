@@ -92,7 +92,6 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.param1 <object name>".
 }}. 
 Elpi Typecheck.
-
 Module Export exports.
 Elpi derive.param1 eq.
 End exports.

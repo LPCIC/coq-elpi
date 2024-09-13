@@ -3,6 +3,11 @@
 /* ------------------------------------------------------------------------- */
 
 % Author: Cyril Cohen
+pred reali-done i:gref.
+
+:index(3)
+pred reali i:term, o:term.
+type realiR term -> term -> prop.
 
 shorten std.{forall, forall2, do!, rev, map2, map}.
 
