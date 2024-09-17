@@ -5,7 +5,7 @@ Module NAT.
   TC.Unfold Nat.succ.
   Class nat2 (T : nat -> nat).
 
-  Elpi Accumulate tc.db lp:{{
+  Elpi Accumulate TC.Solver lp:{{
     % Just to print what is beeing normalized
     :after "firstHook"
     tc.normalize-ty T _ :- coq.say "Normalizing" T, fail.
