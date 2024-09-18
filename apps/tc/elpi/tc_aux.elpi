@@ -156,9 +156,9 @@ namespace tc {
 
   pred dummy.
 
-  pred remove-clause i:string.
-  remove-clause ClauseName :-
-    add-tc-db _ (replace ClauseName) dummy.
+  pred remove-clause i:string, i:prop.
+  remove-clause ClauseName P :-
+    add-tc-db _ (remove ClauseName) P.
 
   % [section-var->decl.aux L R] auxiliary function for `section-var->decl`
   pred section-var->decl.aux i:list constant, o:list prop.
