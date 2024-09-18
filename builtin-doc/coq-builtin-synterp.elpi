@@ -314,6 +314,7 @@ type clause id -> grafting -> prop -> clause.
 kind grafting type.
 type before id -> grafting.
 type after id -> grafting.
+type remove id -> grafting.
 type replace id -> grafting.
 
 % Specify to which module the clause should be attached to
