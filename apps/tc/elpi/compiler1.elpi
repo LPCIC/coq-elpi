@@ -51,7 +51,7 @@ namespace tc {
     %       TC.AddAllInstances or TC.AddInstances InstName
     if (is-local; has-context-deps Inst) 
       (LocalityStr = "Local") 
-      (LocalityStr = "Global"),
+      (LocalityStr = "Export"),
     add-inst Inst TC LocalityStr Prio.
 
   % [add-inst->db IgnoreClassDepL ForceAdd Inst] compiles and add the Inst to
