@@ -88,10 +88,11 @@ Elpi Accumulate lp:{{
       Class Bird := IsAnimal :> Animal.
     ```
     The instance IsAnimal of type Bird -> Animal, is compiled before the
-    predicate for Bird; hence, Bird is not recognize as a premise of IsAnimal.
+    predicate for Bird; hence, it is not possible to add the premise
+    tc-Bird for the IsAnimal instance...
     This problem is due to the order in which the registers for Instance and
     Class creation are run.
-    The solution is to do the following two jobs when a class C is created:
+    The solution is to do the following jobs when a class C is created:
       1: for every projection P of C, if P is a coercion, the wrongly 
         compiled instance is replaced with a `dummy` clause.
       2: the predicate for the class is created
