@@ -23,20 +23,23 @@ Set Warnings "+elpi".
 Elpi Command TC.Print_instances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
+  pred tc.list-printer-aux i:prop.
+  tc.list-printer-aux (tc.instance _ InstGR _ Locality) :-
+    coq.say InstGR "with locality" Locality.
+
   pred tc.list-printer i:gref, i:list prop.
   tc.list-printer _ [].
   tc.list-printer ClassGR Instances :- 
-    std.map Instances (x\r\ x = tc.instance _ r _) InstancesGR,
     coq.say "Instances list for" ClassGR "is:",
-    std.forall InstancesGR (x\ coq.say " " x). 
+    std.forall Instances tc.list-printer-aux. 
 
   main [str Class] :-
     std.assert! (coq.locate Class ClassGR) "The entered TC not exists",
-    std.findall (tc.instance _ _ ClassGR) Rules,
+    std.findall (tc.instance _ _ ClassGR _) Rules,
     tc.list-printer ClassGR Rules. 
   main [] :-
     std.forall {coq.TC.db-tc} (ClassGR\ sigma Rules\
-      std.findall (tc.instance _ _ ClassGR) Rules,
+      std.findall (tc.instance _ _ ClassGR _) Rules,
       tc.list-printer ClassGR Rules
     ).  
 }}.
@@ -141,7 +144,7 @@ Elpi Accumulate lp:{{
     coq.locate ClassStr ClassGR, 
     std.assert! (coq.TC.class? ClassGR) "Should pass the name of a type class",
     std.assert! (tc.class ClassGR PredName _ Modes) "Cannot find `class ClassGR _ _` in the db",
-    std.assert! (not (tc.instance _ _ ClassGR)) "Cannot set deterministic a class with an already existing instance",
+    std.assert! (not (tc.instance _ _ ClassGR _)) "Cannot set deterministic a class with an already existing instance",
     tc.add-tc-db _ (after "0") (tc.class ClassGR PredName tc.deterministic Modes :- !).
 }}.
 Elpi Typecheck.

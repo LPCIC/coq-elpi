@@ -66,7 +66,7 @@ namespace tc {
 
   pred remove-pending-mode.
   remove-pending-mode :-
-    tc.remove-clause @pending-mode! (pending-mode []).
+    tc.remove-clause @pending-mode! (pending-mode []) [].
 
   pred check-pending-mode-arity i:gref, i:list A.
   check-pending-mode-arity GR L :-

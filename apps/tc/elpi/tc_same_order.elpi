@@ -12,7 +12,7 @@ pred correct_instance_order i:(list gref), i:(list prop).
 correct_instance_order [] _.
 correct_instance_order [TC | TL] ElpiInst :-
   coq.TC.db-for TC CoqInst,
-  std.map-filter ElpiInst (x\r\ sigma I\ x = tc.instance _ I TC, r = I) ElpiInstTC,
+  std.map-filter ElpiInst (x\r\ sigma I\ x = tc.instance _ I TC _, r = I) ElpiInstTC,
   if (correct_instance_order_aux TC CoqInst ElpiInstTC) 
     (correct_instance_order TL ElpiInst)
     (coq.error "Error in import order\n" 
@@ -20,5 +20,5 @@ correct_instance_order [TC | TL] ElpiInst :-
 
 :name "tc-same-order-main"
 main _ :-
-  std.findall (tc.instance _ _ _) ElpiInst,
+  std.findall (tc.instance _ _ _ _) ElpiInst,
   correct_instance_order {coq.TC.db-tc} ElpiInst.

@@ -28,7 +28,7 @@ namespace tc {
     tc.get-full-path Inst ClauseName,
     Locality => (
       tc.add-tc-db ClauseName Grafting Clause, 
-      tc.add-tc-db _ Grafting (tc.instance SectionPath Inst TC)).
+      tc.add-tc-db _ Grafting (tc.instance SectionPath Inst TC Locality)).
   add-inst.aux Inst _ _ _ :- 
     @global! => tc.add-tc-db _ _ (tc.banned Inst),
     coq.error "Not-added" "TC_solver" "[TC] Not yet able to compile" Inst "...".
@@ -61,7 +61,7 @@ namespace tc {
   add-inst->db _ tt Inst :- !, add-inst>db.aux Inst.
   add-inst->db _ _ Inst :- 
     tc.banned Inst, !, (coq.warning "tc.banned-inst" "TC-warning" Inst "is tc.banned").
-  add-inst->db _ _ Inst :- tc.instance _ Inst _, !. % the instance has already been added
+  add-inst->db _ _ Inst :- tc.instance _ Inst _ _, !. % the instance has already been added
   add-inst->db IgnoreClassDepL _ Inst :-
     get-class-dependencies Inst Dep,
     std.exists Dep (std.mem IgnoreClassDepL), !,
@@ -93,13 +93,11 @@ namespace tc {
   pred remove-inst i:gref.
   remove-inst InstGR :- 
     tc.get-full-path InstGR ClauseName,
-    coq.env.typeof InstGR InstTy,
-    tc.get-TC-of-inst-type InstTy ClassGR,
+    tc.instance _ InstGR ClassGR Locality,
     tc.gref->pred-name ClassGR PredName,
     coq.env.typeof ClassGR ClassTy,
     coq.elpi.predicate PredName {build-args ClassTy} Clause,
-    coq.say "Removing" ClauseName "(which is replaced with" Clause ")",
-    tc.remove-clause ClauseName Clause.
+    tc.remove-clause ClauseName Clause Locality.
 
   pred is-in-path i:string, i:gref. 
   is-in-path Path GR :- 

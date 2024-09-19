@@ -42,9 +42,9 @@ namespace tc {
   :name "MySectionEndHook"
   instances-of-current-section InstsFiltered :-
     coq.env.current-section-path SectionPath,
-    std.findall (tc.instance SectionPath _ _) Insts,
+    std.findall (tc.instance SectionPath _ _ _) Insts,
     coq.env.section SectionVars,
-    std.map-filter Insts (x\r\ sigma X\ tc.instance _ r _ = x, const X = r, not(std.mem SectionVars X)) InstsFiltered.
+    std.map-filter Insts (x\r\ sigma X\ tc.instance _ r _ _ = x, const X = r, not(std.mem SectionVars X)) InstsFiltered.
 
   pred is-instance-gr i:gref.
   is-instance-gr GR :-
@@ -156,9 +156,9 @@ namespace tc {
 
   pred dummy.
 
-  pred remove-clause i:string, i:prop.
-  remove-clause ClauseName P :-
-    add-tc-db _ (remove ClauseName) P.
+  pred remove-clause i:string, i:prop, i:list prop.
+  remove-clause ClauseName P Locality :-
+    Locality => add-tc-db _ (remove ClauseName) P.
 
   % [section-var->decl.aux L R] auxiliary function for `section-var->decl`
   pred section-var->decl.aux i:list constant, o:list prop.

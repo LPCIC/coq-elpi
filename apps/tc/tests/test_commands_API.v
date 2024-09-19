@@ -7,7 +7,7 @@ Elpi Accumulate lp:{{
   pred count i:gref, i:int.
   count GR Len :-
     if (const _ = GR)
-      (std.findall (tc.instance _ _ GR) Cl,
+      (std.findall (tc.instance _ _ GR _) Cl,
       std.assert! ({std.length Cl} = Len) 
       "Unexpected number of instances")
       true. 

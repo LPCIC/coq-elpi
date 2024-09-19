@@ -48,8 +48,8 @@ Goal M.B 10. apply _. Qed.
 Elpi Query TC.Solver lp:{{
   % Small test for instance order
   sigma I L\
-  std.findall (tc.instance _ _ _) I,
-  std.map-filter I (x\y\ x = tc.instance _ y {{:gref M.B}}) 
+  std.findall (tc.instance _ _ _ _) I,
+  std.map-filter I (x\y\ x = tc.instance _ y {{:gref M.B}} _) 
     [{{:gref M.W}}, {{:gref M.Y}}, {{:gref M.Z}}].
 }}.
 
