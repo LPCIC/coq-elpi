@@ -67,3 +67,26 @@ Module Vehicle.
   Qed.
 
 End Vehicle.
+
+Module foo.
+  Class B (i : nat).
+
+  Section s.
+    (* Class with coercion depending on section parameters *)
+    Context (A : Type).
+    Class C (i : nat) : Set := {
+      f (x : A) :: B i
+    }.
+  End s.
+End foo.
+
+Module foo1.
+  Class B (i : nat).
+
+  Section s.
+    (* Class with coercion not depending on section parameters *)
+    Class C (i : nat) : Set := {
+      f :: B i
+    }.
+  End s.
+End foo1.
