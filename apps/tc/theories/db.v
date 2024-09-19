@@ -74,6 +74,7 @@ Elpi Db tc.db lp:{{
     type classic        search-mode.
 
     % [instance Path InstGR ClassGR Locality], ClassGR is the class implemented by InstGR
+    % Locality is either the empty list, or [@local!], or [@global!]
     pred instance o:list string, o:gref, o:gref, o:list prop.
 
     % [class ClassGR PredName SearchMode Modes], for each class GR, it contains

@@ -49,20 +49,17 @@ Module Vehicle.
 
   Class Wheels (i: nat).
 
-  Class Boat.
-
-  Class NoWheels `{Wheels 0} := {
+  Class NoWheels := {
     (* the first argument of no_wheels is implicit! *)
-    no_wheels : Boat;
+    wheels0 :: Wheels 0;
   }.
 
-  Arguments no_wheels {_}.
+  Class Boat := {
+    wheels :: NoWheels
+  }.
 
-  Instance f `{H : Wheels 0} : NoWheels. Admitted.
-
-  Goal Wheels 0 -> Boat.
+  Goal Boat -> Wheels 0.
     intros.
-    apply no_wheels.
     apply _.
   Qed.
 
@@ -89,4 +86,23 @@ Module foo1.
       f :: B i
     }.
   End s.
+
+  Goal C 3 -> B 3.
+    apply _.
+  Abort.
 End foo1.
+
+Module localCoercion.
+  Class B (i : nat).
+  Section s.
+    Class C (i : nat) : Set := {
+      #[local] f :: B i
+    }.
+    Goal C 3 -> B 3.
+      apply _.
+    Qed.
+  End s.
+  Goal C 3 -> B 3.
+    Fail apply _.
+  Abort.
+End localCoercion.
