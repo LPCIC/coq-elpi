@@ -1,6 +1,8 @@
 /* map over a container                                                      */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+pred param1-functor-db i:term, i:term, o:term.
+pred param1-functor-for i:inductive, o:gref, o:list bool.
 
 shorten std.{assert!, do!, length, split-at, drop-last, rev, append}.
 

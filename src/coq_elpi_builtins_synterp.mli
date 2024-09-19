@@ -87,14 +87,14 @@ val set_accumulate_to_db_synterp :
 val prop : Data.term Conversion.t
 val id : string Conversion.t
 
-type clause = string option * ([ `After | `Before | `Replace ] * string) option * Data.term
+type clause = string option * ([ `After | `Before | `Remove | `Replace ] * string) option * Data.term
 
 val clause : clause Conversion.t
 
 type scope = ExecutionSite | CurrentModule | Library
 
 val scope : scope Conversion.t
-val grafting : ([ `After | `Before | `Replace ] * string) Conversion.t
+val grafting : ([ `After | `Before | `Remove | `Replace ] * string) Conversion.t
 val options : (Coq_elpi_HOAS.options, Data.constraints) ContextualConversion.ctx_readback
 val locate_module : BuiltIn.declaration
 val locate_module_type : BuiltIn.declaration

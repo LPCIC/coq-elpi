@@ -121,7 +121,8 @@ Inductive rtree A : Type :=
   Leaf (n : A) | Node (l : list rtree).
 
 Module XXX.
-Elpi derive rtree.
+derive list.
+derive rtree.
 End XXX.
 
 Fail Check XXX.rtree_is_rtree_map.
@@ -161,8 +162,10 @@ Redirect "tmp" Check Pred.Pred_to_Predinv : forall T, Pred T -> Pred.Predinv T.
 (* #286 *)
 Module Import derive_container.
 Unset Implicit Arguments.
+Import XXX.
 derive
 Inductive wimpls {A} `{rtree A} := Kwi (x:A) (y : x = x) : wimpls | Kwa.
+
 End derive_container.
 About wimpls.wimpls.
 About wimpls.Kwi.

@@ -12,8 +12,8 @@ Elpi Accumulate lp:{{
   % contains the number of instances that are not 
   % imported from other files
   main [int Len] :-
-    std.findall (tc.instance _ _ _) Insts,
-    std.map Insts (x\r\ tc.instance _ r _ = x) R,
+    std.findall (tc.instance _ _ _ _) Insts,
+    std.map Insts (x\r\ tc.instance _ r _ _ = x) R,
     WantedLength is {origial_tc} + Len,
     std.assert! ({std.length R} = WantedLength) 
       "Unexpected number of instances",
@@ -22,7 +22,7 @@ Elpi Accumulate lp:{{
 }}.
 
 Elpi Query TC.Solver lp:{{
-  std.findall (tc.instance _ _ _) Rules,
+  std.findall (tc.instance _ _ _ _) Rules,
   std.length Rules Len,
   coq.elpi.accumulate _ "tc.db" (clause _ _ (origial_tc Len)).
 }}.

@@ -10,8 +10,8 @@ Instance Inst2 : A 100 | 1512. Qed.
 
 Elpi Query TC.Solver lp:{{
   sigma InstL GrefL\
-  std.findall (tc.instance _ _ {{:gref A}}) InstL, 
-  std.map InstL (x\r\ x = tc.instance _ r _) GrefL, 
+  std.findall (tc.instance _ _ {{:gref A}} _) InstL, 
+  std.map InstL (x\r\ x = tc.instance _ r _ _) GrefL, 
   GrefL = [{{:gref Inst2}}, {{:gref Inst1}}].
 }}.
 

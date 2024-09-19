@@ -3,6 +3,10 @@
 /* ------------------------------------------------------------------------- */
 
 % Author: Cyril Cohen
+pred param-done i:gref.
+:index(3)
+pred param i:term, o:term, o:term.
+type paramR term -> term -> term -> prop.
 
 shorten std.{forall, forall2, do!, rev, map2, map}.
 
