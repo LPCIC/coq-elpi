@@ -158,7 +158,8 @@ namespace tc {
 
   pred remove-clause i:string, i:prop, i:list prop.
   remove-clause ClauseName P Locality :-
-    Locality => add-tc-db _ (remove ClauseName) P.
+    %Locality => add-tc-db _ (remove ClauseName) P.
+    Locality => add-tc-db _ (replace ClauseName) (P :- fail).
 
   % [section-var->decl.aux L R] auxiliary function for `section-var->decl`
   pred section-var->decl.aux i:list constant, o:list prop.
