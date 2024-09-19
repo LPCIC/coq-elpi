@@ -371,6 +371,10 @@ namespace tc {
         pi x y\ name-pair P x (s N) => is-uvar x => add-link-eta-dedup F (r-ar M N) P PTy [pr x y|Acc] PremR (Clause x y).
       add-link-eta-dedup _ Ar P PTy _ _ _ :- coq.error "[TC] add-link-eta-dedup error" Ar P PTy. 
 
+      pred deterministic-prem i:gref, i:prop, o:prop.
+      deterministic-prem TC P (do-once P) :- tc.class TC _ tc.deterministic _, !.
+      deterministic-prem _ P P.
+
       pred compile-premise
         i:list term,
         o:list term,
@@ -382,16 +386,14 @@ namespace tc {
         i:list term,
         i:list prop,
         o:prop.
-      compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
-        ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
-          tc.get-TC-of-inst-type PTy TC), !,
+      compile-premise L L2 P PTy ProofHd IsPositive ITy ProofArgsR PremR Clause :-
+        (pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
+          tc.get-TC-of-inst-type PTy TC, !,
         compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
-        if (tc.class TC _ tc.deterministic _)
-          (NewPrem' = do-once NewPrem)
-          (NewPrem' = NewPrem),
-        compile-ty L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
-      compile-premise L L1 _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :-
-        compile-ty L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
+        deterministic-prem TC NewPrem NewPrem',
+        compile-ty L1 L2 ProofHd IsPositive ITy ProofArgsR [NewPrem' | PremR] Clause.
+      compile-premise L L1 _ _ ProofHd IsPositive ITy ProofArgsR PremR Clause :-
+        compile-ty L L1 ProofHd IsPositive ITy ProofArgsR PremR Clause. 
 
       pred compile-ty 
         i:list term,
@@ -402,39 +404,38 @@ namespace tc {
         i:list term,
         i:list prop,
         o:prop.
-      compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
+      compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofArgsR PremR Clause :- !,
         std.do![
           if (IsPositive = tt) 
             (Clause = (pi x\ C x), E = is-uvar) 
             (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
           pi p\ sigma F\
-            F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
+            F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofArgsR],
             decl p N Ty' =>
             name-pair p p z => E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
         ].
-      compile-ty L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
+      compile-ty L L2 ProofHd IsPositive Goal ProofArgsR PremR Clause :-
         std.do![    
-          coq.mk-app ProofHd {std.rev ProofTlR} Proof,
-          decompile.decompile-term L L1 Proof Proof' Prem1,
-          decompile.decompile-term L1 L2 Goal Goal' Prem2,
-          compile-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
+          coq.mk-app ProofHd {std.rev ProofArgsR} Proof,
+          decompile.decompile-term L L1 Proof Proof' EmptyLinks,
+          std.assert! (EmptyLinks = []) "[TC] should be empty", 
+          decompile.decompile-term L1 L2 Goal Goal' Links,
+          compile-conclusion IsPositive Goal' Proof' Links {std.rev PremR} Clause
         ].
 
       pred compile-conclusion 
         i:bool,             % tt if the term is in positive position
         i:term,             % the goal (invariant: it is a constant or a application)
         i:term,             % the proof
-        i:list prop,        % the list of HOPremises in input mode
-        i:list prop,        % the list of HOPremises in output mode
+        i:list prop,        % the list of links
         i:list prop,        % the premises
         o:prop.             % the compiled clause for the instance
 
-      compile-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
-        std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
+      compile-conclusion tt Goal Proof Links Premises Clause :-
+        std.append Links Premises AllPremises,
         tc.make-tc Goal Proof AllPremises tt Clause.
-      compile-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
-        tc.make-tc Goal Proof Premises ff Clause1, 
-        Clause = (do HOPremisesIn, Clause1, do HOPremisesOut).
+      compile-conclusion ff Goal Proof Links Premises (do Links, Clause) :-
+        tc.make-tc Goal Proof Premises ff Clause.
 
       pred context i:goal-ctx, o:list prop.
       context [] [].
@@ -465,9 +466,9 @@ namespace tc {
     % If the instance is polymorphic, we wrap its gref into the pglobal constructor
     instance-gr InstGR (pi x\ Clause x) :- coq.env.univpoly? InstGR _, !,
       coq.env.typeof InstGR Ty,
-      pi x\ tc.compile.instance Ty (pglobal InstGR x) (Clause x).
+      pi x\ instance Ty (pglobal InstGR x) (Clause x).
     instance-gr InstGR Clause :-
       coq.env.typeof InstGR Ty,
-      tc.compile.instance Ty (global InstGR) Clause.
+      instance Ty (global InstGR) Clause.
   }
 }

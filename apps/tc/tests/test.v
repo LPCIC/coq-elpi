@@ -17,7 +17,7 @@ Module test_link_eta_generation.
   Class d (T : Type) (T : Type -> Type -> Type -> Type).
   Elpi Accumulate TC.Solver lp:{{
     :after "0" 
-    tc.compile.instance.compile-conclusion _ (app [H|_]) _ _ _ Premises _ :-
+    tc.compile.instance.compile-conclusion _ (app [H|_]) _ _ Premises _ :-
       H = {{test_link_eta_generation.c}}, !,
       std.assert! (Premises = [do [tc.link.eta _ _] | _]) "[TC] Wrong number of eta links",
       coq.say "Good padding from here",
@@ -25,7 +25,7 @@ Module test_link_eta_generation.
   }}.
   Elpi Query TC.Solver lp:{{
     ToCompile = {{forall (T : Type -> Type -> Type -> Type), (forall (a: Type), d a T) -> c T}},
-    not (tc.compile.instance ToCompile _ _).
+    pi x\ not (tc.compile.instance ToCompile x _).
   }}.
 End test_link_eta_generation.
 
