@@ -158,6 +158,7 @@ let accumulate_clauses ~clauses_for_later ~accumulate_to_db ~preprocess_clause ~
   let clauses scope =
    clauses |> CList.rev_map (fun (name,graft,clause) ->
      let vars, clause = preprocess_clause ~depth clause in
+     let graft = Option.map (function `Remove, _ -> nYI "clause removal" | ((`Replace | `Before | `After), _) as x -> x) graft in
      let clause = U.clause_of_term ?name ?graft ~depth loc clause in
      (dbname,clause,vars,scope)) in
   let local = (options : options).local = Some true in
