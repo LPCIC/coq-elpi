@@ -10,3 +10,10 @@
  (modules optcomp)
  (libraries str)
  (package coq-elpi))
+
+(executable
+ (name version_parser)
+ (public_name coq_elpi_version_parser)
+ (modules version_parser)
+ (libraries str)
+ (package coq-elpi))
