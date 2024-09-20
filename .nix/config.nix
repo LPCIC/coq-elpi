@@ -27,15 +27,6 @@ let master = [
   default-bundle = "coq-8.20";
   bundles = {
 
-    "coq-8.19" = {
-      coqPackages = common-bundles // {
-        coq.override.version = "8.19";
-      };
-      ocamlPackages = {
-        elpi.override.version = "v1.19.5";
-      };
-    };
-
     "coq-8.20" = {
       coqPackages = common-bundles // {
         coq.override.version = "8.20";

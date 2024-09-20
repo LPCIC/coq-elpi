@@ -87,17 +87,6 @@ let string_split_on_char c s =
   in
   aux 0 0
 
-[%%if coq = "8.19"]
-let rec mk_gforall ty = function
-  | (name, bk, None, t) :: ps -> DAst.make @@ Glob_term.GProd (name, bk, t, mk_gforall ty ps)
-  | (name, _, Some bo, t) :: ps -> DAst.make @@ Glob_term.GLetIn (name, bo, Some t, mk_gforall ty ps)
-  | [] -> ty
-
-let rec mk_gfun ty = function
-  | (name, bk, None, t) :: ps -> DAst.make @@ Glob_term.GLambda (name, bk, t, mk_gfun ty ps)
-  | (name, _, Some bo, t) :: ps -> DAst.make @@ Glob_term.GLetIn (name, bo, Some t, mk_gfun ty ps)
-  | [] -> ty
-[%%else]
 let rec mk_gforall ty = function
   | (name, r, bk, None, t) :: ps -> DAst.make @@ Glob_term.GProd (name, r, bk, t, mk_gforall ty ps)
   | (name, r, _, Some bo, t) :: ps -> DAst.make @@ Glob_term.GLetIn (name, r, bo, Some t, mk_gforall ty ps)
@@ -107,8 +96,6 @@ let rec mk_gfun ty = function
   | (name, r, bk, None, t) :: ps -> DAst.make @@ Glob_term.GLambda (name, r, bk, t, mk_gfun ty ps)
   | (name, r, _, Some bo, t) :: ps -> DAst.make @@ Glob_term.GLetIn (name, r, bo, Some t, mk_gfun ty ps)
   | [] -> ty
-
-[%%endif]
 
 let manual_implicit_of_binding_kind name = function
   | Glob_term.NonMaxImplicit -> CAst.make (Some (name, false))
@@ -121,11 +108,7 @@ let binding_kind_of_manual_implicit x =
   | Some (_, true) -> Glob_term.MaxImplicit
   | None -> Glob_term.Explicit
 
-[%%if coq = "8.19"]
-let manual_implicit_of_gdecl (name, bk, _, _) = manual_implicit_of_binding_kind name bk
-[%%else]
 let manual_implicit_of_gdecl (name, _, bk, _, _) = manual_implicit_of_binding_kind name bk
-[%%endif]
 
 let lookup_inductive env i =
   let mind, indbo = Inductive.lookup_mind_specif env i in
@@ -188,22 +171,6 @@ let float64 : Float64.t Elpi.API.Conversion.t =
       constants = [];
     }
 
-[%%if coq = "8.19"]
-let pstring : string Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
-  declare {
-    name = "pstring";
-    doc = "";
-    pp = (fun fmt _ -> Format.fprintf fmt "%S" "primitive strings not supported in Coq 8.19" );
-    compare = (fun _ _ -> 0);
-    hash = (fun _ -> 0);
-    hconsed = false;
-    constants = [];
-  }
-
-let pstring_of_string x = Some x
-let string_of_pstring x = x
-[%%else]
 let pstring : Pstring.t Elpi.API.Conversion.t =
   let open Elpi.API.OpaqueData in
   declare {
@@ -217,7 +184,6 @@ let pstring : Pstring.t Elpi.API.Conversion.t =
   }
 let pstring_of_string = Pstring.of_string
 let string_of_pstring = Pstring.to_string
-[%%endif]
 
 let debug = CDebug.create ~name:"elpi" ()
 
@@ -286,20 +252,6 @@ let detype_level sigma l =
   let open Glob_term in
   UNamed (detype_level_name sigma l)
 
-[%%if coq = "8.19"]
-let detype_universe sigma u = List.map (Util.on_fst (detype_level_name sigma)) (Univ.Universe.repr u)
-
-let detype_sort ku sigma x =
-  let open Sorts in
-  let open Glob_term in
-  match x with
-  | Prop -> UNamed (None, [ (GProp, 0) ])
-  | SProp -> UNamed (None, [ (GSProp, 0) ])
-  | Set -> UNamed (None, [ (GSet, 0) ])
-  | Type u when ku -> UNamed (None, detype_universe sigma u)
-  | QSort (q, u) when ku -> UNamed (Some (detype_qvar sigma q), detype_universe sigma u)
-  | _ -> UAnonymous { rigid = UState.UnivRigid }
-[%%else]
 let detype_universe sigma u =
   Glob_term.UNamed (List.map (Util.on_fst (detype_level_name sigma)) (Univ.Universe.repr u))
 let detype_sort ku sigma x =
@@ -313,7 +265,6 @@ let detype_sort ku sigma x =
   | Type u when ku -> None, detype_universe sigma u
   | QSort (q, u) when ku -> Some (detype_qvar sigma q), detype_universe sigma u
   | _ -> glob_Type_sort
-[%%endif]
 
 (*
 let detype_relevance_info sigma na =
@@ -335,21 +286,6 @@ let detype_instance ku sigma l =
       let us = List.map (detype_level sigma) (Array.to_list us) in
       Some (qs, us)
 
-[%%if coq = "8.19"]
-let it_destRLambda_or_LetIn_names l c =
-  let open Glob_term in
-  let rec aux l nal c =
-    match (DAst.get c, l) with
-    | _, [] -> (List.rev nal, c)
-    | GLambda (na, _, _, c), false :: l -> aux l (na :: nal) c
-    | GLetIn (na, _, _, c), true :: l -> aux l (na :: nal) c
-    | _ -> nYI "detype eta"
-  in
-  aux l [] c
-let rec decompose accu c = match DAst.get c with
-| Glob_term.GLambda (na, _, _, c) -> decompose (na :: accu) c
-| _ -> List.rev accu, c
-[%%else]
 let it_destRLambda_or_LetIn_names l c =
   let open Glob_term in
   let rec aux l nal c =
@@ -364,94 +300,6 @@ let rec decompose accu c = match DAst.get c with
 | Glob_term.GLambda (na, _, _, _, c) -> decompose (na :: accu) c
 | _ -> List.rev accu, c
 
-[%%endif]
-
-[%%if coq = "8.19"]
-
-(** Reimplementation of kernel case expansion functions in more lenient way *)
-module RobustExpand : sig
-  val return_clause :
-    Environ.env ->
-    Evd.evar_map ->
-    Names.Ind.t ->
-    EConstr.EInstance.t ->
-    EConstr.t array ->
-    EConstr.case_return ->
-    EConstr.rel_context * EConstr.t
-
-  val branch :
-    Environ.env ->
-    Evd.evar_map ->
-    Names.Construct.t ->
-    EConstr.EInstance.t ->
-    EConstr.t array ->
-    EConstr.case_branch ->
-    EConstr.rel_context * EConstr.t
-end = struct
-  open Context.Rel.Declaration
-  open Declarations
-  open UVars
-  open Constr
-  open Vars
-
-  let instantiate_context u subst nas ctx =
-    let rec instantiate i ctx =
-      match ctx with
-      | [] -> []
-      | LocalAssum (_, ty) :: ctx ->
-          let ctx = instantiate (pred i) ctx in
-          let ty = substnl subst i (subst_instance_constr u ty) in
-          LocalAssum (nas.(i), ty) :: ctx
-      | LocalDef (_, ty, bdy) :: ctx ->
-          let ctx = instantiate (pred i) ctx in
-          let ty = substnl subst i (subst_instance_constr u ty) in
-          let bdy = substnl subst i (subst_instance_constr u bdy) in
-          LocalDef (nas.(i), ty, bdy) :: ctx
-    in
-    let () = if not (Int.equal (Array.length nas) (List.length ctx)) then raise_notrace Exit in
-    instantiate (Array.length nas - 1) ctx
-
-  let return_clause env sigma ind u params ((nas, p), _) =
-    try
-      let u = EConstr.Unsafe.to_instance u in
-      let params = EConstr.Unsafe.to_constr_array params in
-      let () = if not @@ Environ.mem_mind (fst ind) env then raise_notrace Exit in
-      let mib = Environ.lookup_mind (fst ind) env in
-      let mip = mib.mind_packets.(snd ind) in
-      let paramdecl = subst_instance_context u mib.mind_params_ctxt in
-      let paramsubst = subst_of_rel_context_instance paramdecl params in
-      let realdecls, _ = CList.chop mip.mind_nrealdecls mip.mind_arity_ctxt in
-      let self =
-        let args = Context.Rel.instance mkRel 0 mip.mind_arity_ctxt in
-        let inst = Instance.(abstract_instance (length u)) in
-        mkApp (mkIndU (ind, inst), args)
-      in
-      let realdecls = LocalAssum (Context.anonR, self) :: realdecls in
-      let realdecls = instantiate_context u paramsubst nas realdecls in
-      (List.map EConstr.of_rel_decl realdecls, p)
-    with e when CErrors.noncritical e ->
-      let dummy na = LocalAssum (na, EConstr.mkProp) in
-      (List.rev (CArray.map_to_list dummy nas), p)
-
-  let branch env sigma (ind, i) u params (nas, br) =
-    try
-      let u = EConstr.Unsafe.to_instance u in
-      let params = EConstr.Unsafe.to_constr_array params in
-      let () = if not @@ Environ.mem_mind (fst ind) env then raise_notrace Exit in
-      let mib = Environ.lookup_mind (fst ind) env in
-      let mip = mib.mind_packets.(snd ind) in
-      let paramdecl = subst_instance_context u mib.mind_params_ctxt in
-      let paramsubst = subst_of_rel_context_instance paramdecl params in
-      let ctx, _ = mip.mind_nf_lc.(i - 1) in
-      let ctx, _ = CList.chop mip.mind_consnrealdecls.(i - 1) ctx in
-      let ctx = instantiate_context u paramsubst nas ctx in
-      (List.map EConstr.of_rel_decl ctx, br)
-    with e when CErrors.noncritical e ->
-      let dummy na = LocalAssum (na, EConstr.mkProp) in
-      (List.rev (CArray.map_to_list dummy nas), br)
-end
-
-[%%else]
 
 module RobustExpand :
 sig
@@ -536,21 +384,6 @@ let branch env sigma (ind, i) u params (nas, br) =
 
 end
 
-[%%endif]
-
-[%%if coq = "8.19"]
-let mk_glob_decl_g _ na x y z = Context.binder_name na, x, y, z
-let mkGProd _ na x y z = Glob_term.GProd(Context.binder_name na, x, y, z)
-let mkGLambda _ na x y z = Glob_term.GLambda(Context.binder_name na, x, y, z)
-let mkGLetIn _ na x y z = Glob_term.GLetIn(Context.binder_name na, x, y, z)
-let get_ind_tags _ ci _ = ci.Constr.ci_pp_info.ind_tags
-let get_cstr_tags _ ci _ = ci.Constr.ci_pp_info.cstr_tags
-let get_GLambda_name_tgt typ =
-  match DAst.get typ with
-  | Glob_term.GLambda (x, _, t, c) -> (x, c)
-  | _ -> (Anonymous, typ)
-let detype_primitive_string _ = assert false
-[%%else]
 let detype_relevance_info sigma na =
   match EConstr.ERelevance.kind sigma na with
     | Relevant -> Some Glob_term.GRelevant
@@ -587,7 +420,6 @@ let get_GLambda_name_tgt typ =
 let detype_primitive_string = function
   | Constr.String s -> DAst.make @@ Glob_term.GString s
   | _ -> assert false
-[%%endif]
 
 [%%if coq = "8.19" || coq = "8.20" ]
 let fresh (names, e) sigma name ty =

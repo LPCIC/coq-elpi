@@ -35,15 +35,6 @@ let get_ctx, set_ctx, _update_ctx =
 
 let set_coq_ctx_hyps s (x,h) = set_ctx s (Some (upcast @@ x, h))
 
-[%%if coq = "8.19"]
-let glob_intros ctx bo =
-  List.fold_right (fun (name,_,ov,ty) bo ->
-     DAst.make
-     (match ov with
-     | None -> GLambda(name,Explicit,ty,bo)
-     | Some v -> GLetIn(name,v,Some ty,bo)))
-   ctx bo
-[%%else]
 let glob_intros ctx bo =
   List.fold_right (fun (name,r,_,ov,ty) bo ->
      DAst.make
@@ -51,17 +42,7 @@ let glob_intros ctx bo =
      | None -> GLambda(name,r,Explicit,ty,bo)
      | Some v -> GLetIn(name,r,v,Some ty,bo)))
    ctx bo
-[%%endif]
 
-[%%if coq = "8.19"]
-let glob_intros_prod ctx bo =
-  List.fold_right (fun (name,_,ov,ty) bo ->
-     DAst.make
-     (match ov with
-     | None -> GProd(name,Explicit,ty,bo)
-     | Some v -> GLetIn(name,v,Some ty,bo)))
-   ctx bo
-[%%else]
 let glob_intros_prod ctx bo =
   List.fold_right (fun (name,r,_,ov,ty) bo ->
      DAst.make
@@ -69,7 +50,6 @@ let glob_intros_prod ctx bo =
      | None -> GProd(name,r,Explicit,ty,bo)
      | Some v -> GLetIn(name,r,v,Some ty,bo)))
    ctx bo
-[%%endif]
 
 
 (* HACK: names not visible by evars *)
@@ -162,15 +142,6 @@ let glob_level loc state = function
 let nogls f ~depth state x = let state, x = f ~depth state x in state, x, ()
 let noglsk f ~depth state = let state, x = f ~depth state in state, x, ()
 
-[%%if coq = "8.19"]
-let rigid_anon_type = function GSort(UAnonymous {rigid=UnivRigid}) -> true | _ -> false
-let named_type = function GSort(UNamed _) -> true | _ -> false
-let name_of_type = function GSort(UNamed u) -> snd u | _ -> assert false
-let dest_GProd = function GProd(n,_,s,t) -> n,s,t | _ -> assert false
-let dest_GLambda = function GLambda(n,_,s,t) -> n,s,t | _ -> assert false
-let dest_GLetIn = function GLetIn(n,bo,s,t) -> n,bo,s,t | _ -> assert false
-let mkGLambda (n,b,s,t) = GLambda(n,b,s,t)
-[%%else]
 let rigid_anon_type = function GSort(None, UAnonymous {rigid=UnivRigid}) -> true | _ -> false
 let named_type = function GSort(None, UNamed _) -> true | _ -> false
 let name_of_type = function GSort(None, UNamed u) -> u | _ -> assert false
@@ -178,7 +149,6 @@ let dest_GProd = function GProd(n,_,_,s,t) -> n,s,t | _ -> assert false
 let dest_GLambda = function GLambda(n,_,_,s,t) -> n,s,t | _ -> assert false
 let dest_GLetIn = function GLetIn(n,_,bo,s,t) -> n,bo,s,t | _ -> assert false
 let mkGLambda (n,b,s,t) = GLambda(n,None,b,s,t)
-[%%endif]
  
 let rec gterm2lp ~depth state x =
   debug Pp.(fun () ->
@@ -424,7 +394,7 @@ let rec gterm2lp ~depth state x =
   | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
   | GInt i -> in_elpi_primitive ~depth state (Uint63 i)
   | GFloat f -> in_elpi_primitive ~depth state (Float64 f)
-  | GString s [@if coq <> "8.19"] -> in_elpi_primitive ~depth state (Pstring s)
+  | GString s -> in_elpi_primitive ~depth state (Pstring s)
   | GArray _ -> nYI "HOAS for persistent arrays"
 ;;
 
@@ -474,11 +444,7 @@ let rec do_params params kont ~depth state =
       let state, imp = in_elpi_imp ~depth state imp in
       state, in_elpi_parameter name ~imp src tgt
 
-[%%if coq = "8.19"]
-let drop_relevance x = x
-[%%else]
 let drop_relevance (a,_,c,d,e) = (a,c,d,e)
-[%%endif]
     
 let do_params params k ~depth s = do_params (List.map drop_relevance params) k ~depth s
 

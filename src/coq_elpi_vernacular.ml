@@ -33,8 +33,8 @@ let atts2impl loc phase ~depth state atts q =
   and convert_att att = convert_att_r att.CAst.v
   and convert_atts l = List.map convert_att l
   and convert_att_value = function
-    | Attributes.FlagIdent s [@if coq = "8.19" || coq = "8.20"] -> AttributeString s
-    | Attributes.FlagQualid q [@if coq <> "8.19" && coq <> "8.20"] -> AttributeString (Libnames.string_of_qualid q)
+    | Attributes.FlagIdent s [@if coq = "8.20"] -> AttributeString s
+    | Attributes.FlagQualid q [@if coq <> "8.20"] -> AttributeString (Libnames.string_of_qualid q)
     | Attributes.FlagString s -> AttributeString s
   in
   let phase = match phase with Summary.Stage.Interp -> "interp" | Summary.Stage.Synterp -> "synterp" in
@@ -194,7 +194,7 @@ let get_and_compile ?even_if_empty name : (EC.program * bool) option =
     Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
     res
 
-[%%if coq = "8.19" || coq = "8.20"]
+[%%if coq = "8.20"]
 let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,CErrors.iprint ei)))
 [%%else]
 let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,[],CErrors.iprint ei)))
