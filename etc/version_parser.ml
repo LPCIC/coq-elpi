@@ -8,7 +8,7 @@ let main () =
   let l =
     match l with
     | l when List.for_all is_number l -> l
-    | ["%%VERSION_NUM%%"] -> ["99";"99";"99"]
+    | ( [""] | ["%%VERSION_NUM%%"] ) -> ["99";"99";"99"]
     | _ -> Printf.eprintf "version_parser: cannot parse: %s\n" v; exit 1 in
   let open Format in
   printf "(%a)%!" (pp_print_list ~pp_sep:(fun fmt () -> pp_print_string fmt ", ") pp_print_string) l
