@@ -110,6 +110,21 @@ module type Programs = sig
   val db_inspect : qualified_name -> int
 end
 
+(** [resolve_file_path ~must_exist ~allow_absolute ~only_elpi file] interprets
+    file path [file] according to the Coq directory path configuration, taking
+    into account the -Q and -R Coq options. If [file] is an absolute path, the
+    functions returns [file] unchanged if [allow_absolute] is set, and gives a
+    user error otherwise. Otherwise, [file] is expected to be of the following
+    form: <coq_dir_path>/<rel_path>. The <coq_dir_path> part is expected to be
+    a logical Coq directory, as mapped with -Q or -R. The <rel_path> part is a
+    relative path from the corresponding directory. When [must_exist] is true,
+    a user error is given when the resolved file does not exist (even if it is
+    handled as an absolute path). When [only_elpi] is true, the function gives
+    a path to a file with the ".elpi" extension, even in the case where [file]
+    does not have an extension. *)
+val resolve_file_path :
+  must_exist:bool -> allow_absolute:bool -> only_elpi:bool -> string -> string
+
 module Synterp : Programs
 module Interp : Programs
 

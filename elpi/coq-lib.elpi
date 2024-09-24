@@ -6,7 +6,7 @@ shorten std.{fatal-error, fatal-error-w-data, debug-print, unsafe-cast}.
 shorten std.{rev, map, append, appendR, map2, forall-ok, take, do-ok!, lift-ok}.
 shorten std.{ omap, take-last, intersperse, map-ok, string.concat }.
 
-accumulate elpi/coq-lib-common.
+accumulate elpi_elpi/coq-lib-common.
 
 :before "stop:begin"
 stop S :- get-option "ltac:fail" N, !, coq.ltac.fail N S.

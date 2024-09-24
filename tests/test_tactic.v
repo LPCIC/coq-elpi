@@ -17,9 +17,9 @@ Proof.
 Abort.
 
 Elpi Command foo.
-Elpi Print foo.
+Elpi Print foo "elpi.tests/foo".
 Elpi Tactic foobar.
-Elpi Print foobar.
+Elpi Print foobar "elpi.tests/foobar".
 
 
 
@@ -134,7 +134,7 @@ solve (goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _) _ :-
 .
 }}.
 Elpi Typecheck.
-Elpi Print test_typecheck_in_ctx.
+Elpi Print test_typecheck_in_ctx "elpi.tests/test_typecheck_in_ctx".
 
 Section T.
 Variable a : nat.

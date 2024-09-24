@@ -48,7 +48,7 @@ let () = Coq_elpi_glob_quotation.get_elpi_code_appArg  :=
 
 let rec inlogpath q = function
   | [] -> []
-  | x :: xs -> ("coq://" ^ Libnames.string_of_qualid q ^ "/" ^ x) :: inlogpath q xs
+  | x :: xs -> (Libnames.string_of_qualid q ^ "/" ^ x) :: inlogpath q xs
 
 let warning_legacy_accumulate_gen =
   CWarnings.create ~default:CWarnings.AsError ~name:"elpi.accumulate-syntax" ~category:Coq_elpi_utils.elpi_depr_cat (fun has_from ->
@@ -290,12 +290,12 @@ VERNAC COMMAND EXTEND ElpiUnnamed CLASSIFIED AS SIDEFF
    } -> {
      EV.Interp.bound_steps  ~atts steps }
 
-| #[ atts = any_attribute ] [ "Elpi" "Print" qualified_name(p) string_list(s) ] SYNTERP AS atts {
+| #[ atts = any_attribute ] [ "Elpi" "Print" qualified_name(p) string(output) string_list(args) ] SYNTERP AS atts {
      let atts = validate_attributes synterp_attribute atts in
-     EV.Synterp.print ~atts (snd p) s;
+     EV.Synterp.print ~atts ~name:(snd p) ~args output;
      atts
    } -> {
-     EV.Interp.print  ~atts (snd p) s }
+     EV.Interp.print  ~atts ~name:(snd p) ~args output; }
 
 | #[ atts = any_attribute ] [ "Elpi" "Typecheck" ] SYNTERP AS _ 
    { 

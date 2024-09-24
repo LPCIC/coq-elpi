@@ -42,7 +42,7 @@ module type Common = sig
   val trace         : atts:phase option -> int -> int -> string list -> string list -> unit
   val trace_browser : atts:phase option -> string list -> unit
   val bound_steps   : atts:phase option -> int -> unit
-  val print         : atts:phase option -> qualified_name -> string list -> unit
+  val print         : atts:phase option -> name:qualified_name -> args:string list -> string -> unit
 
   val create_program : atts:bool option -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
   val create_command : atts:bool option -> program_name -> unit

@@ -172,7 +172,7 @@ Definition upair : Set := unit * unit.
 Elpi derive.param1 upair.
 Definition uplist := list upair.
 Elpi derive.param1 uplist.
-Elpi Print derive.param1.
+Elpi Print derive.param1 "elpi.apps.derive.tests/derive.param1".
 #[warning="-non-recursive"]
 Fixpoint bar (pl : uplist) (id : unit) : option unit := None unit.
 Elpi derive.param1 bar.

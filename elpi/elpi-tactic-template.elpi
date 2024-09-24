@@ -2,11 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate elpi/coq-lib.  % basic term manipulation routines
-accumulate elpi/elpi-reduction.    % whd, hd-beta, ...
+accumulate elpi_elpi/coq-lib.  % basic term manipulation routines
+accumulate elpi_elpi/elpi-reduction.    % whd, hd-beta, ...
 
 % Since the elaborator written in Elpi is not ready, we fallback to the Coq one
 % accumulate engine/elaborator.   % of, unify
-accumulate elpi/coq-elaborator.
+accumulate elpi_elpi/coq-elaborator.
 
-accumulate elpi/elpi-ltac.           % refine, or, thenl, ...
+accumulate elpi_elpi/elpi-ltac.           % refine, or, thenl, ...

@@ -2,4 +2,4 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-accumulate elpi/coq-lib-common.
+accumulate elpi_elpi/coq-lib-common.

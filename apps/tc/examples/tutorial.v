@@ -55,7 +55,7 @@ Section Foo.
           context
   *)
 
-  Elpi Print TC.Solver.
+  Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
 End Foo.
 
 (* 
@@ -89,7 +89,7 @@ Module Backtrack.
   
   Goal A 3. Fail apply _. Abort.
 
-  Elpi Print TC.Solver.
+  Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
 End Backtrack.
 
 TC.Print_instances.

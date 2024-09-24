@@ -26,7 +26,7 @@ Elpi AddAllInstances.
 
 Elpi TC Solver Override TC.Solver All.
 
-Elpi Print TC.Solver.
+Elpi Print TC.Solver "elpi.apps.tc.tests/TC.Solver".
 Goal C bool.
   apply _.
 Qed.

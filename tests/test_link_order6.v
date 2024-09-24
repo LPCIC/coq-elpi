@@ -25,5 +25,5 @@ Elpi Accumulate lp:{{
 Elpi Typecheck.
 Elpi add 5.
 Elpi add 5.
-Elpi Print foo "tests/test_link_order6".
+Elpi Print foo "elpi.tests/test_link_order6".
 

@@ -1,3 +1,14 @@
+# Development version
+
+### Build system
+- Support dune workspace build with `elpi`
+
+### Misc
+- Resolve `.elpi` files based on Coq's resolver. Paths are now expected to be
+  of the form `<coq_dir_path>/<rel_path>`, where `<coq_dir_path>` part is a
+  logical Coq directory (as mapped with `-Q` or `-R`), and `<rel_path>` is a
+  relative path from the corresponding directory.
+
 # [2.2.3] - 30/07/2024
 
 Requires Elpi 1.19.2 and Coq 8.19 or Coq 8.20.
