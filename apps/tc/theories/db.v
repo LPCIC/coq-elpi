@@ -105,6 +105,11 @@ Elpi Db tc.db lp:{{
 
     % relates a projection to the its record
     pred proj->record i:constant, o:term.
+    
+    :index (5)
+    pred coercion-unify i:term.
+
+    pred time-is-active i:(list string -> prop).
   }
 }}.
 From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
