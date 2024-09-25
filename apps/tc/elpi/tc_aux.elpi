@@ -174,7 +174,6 @@ namespace tc {
   section-var->decl L :-
     section-var->decl.aux {coq.env.section} L.
 
-  pred time-is-active i:(list string -> prop).
   :name "time-is-active"
   time-is-active _ :- coq.option.get ["Time", "TC", "Bench"] (coq.option.bool tt), !.
   time-is-active Opt :- tc.is-option-active Opt. 
@@ -220,9 +219,6 @@ namespace tc {
     list term ->  % The list of FV in the precomp subterm
     int ->
     term.
-
-  :index (5)
-  pred coercion-unify i:term.
 
   type coercion
     term ->
