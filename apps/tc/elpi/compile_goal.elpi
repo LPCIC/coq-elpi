@@ -111,6 +111,9 @@ namespace tc {
       compile-full Goal Goal' Links :- compile-full-aux Goal [] Goal' Links.
     }
 
+    % [goal T T' L] takes a term T and returns a new term T' where problematic
+    % subterms (see this: https://dl.acm.org/doi/10.1145/3678232.3678233)
+    % are replaced with fresh variables. The list of links is L
     pred goal i:term, o:term, o:list prop.
     :name "compile-goal"
     goal Goal Goal' Links :- 
