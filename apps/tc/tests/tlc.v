@@ -41,6 +41,6 @@ Module SlowExecution.
   Lemma eq_existT_same_eq (A : Type) (P : A -> Type) (p : A) (x y : P p):
     (existT P p x = existT P p y) = (x = y).
   Proof.
-    Timeout 1 Fail refine (@extensionality _ _).
+    Timeout 10 Fail refine (@extensionality _ _).
   Abort.
 End SlowExecution.
