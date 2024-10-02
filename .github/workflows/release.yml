@@ -22,7 +22,9 @@ on:
         options:
         - released
         - extra-dev
-
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 env:
   OPAM_SUITE: ${{ inputs.suite }}
 
