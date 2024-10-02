@@ -103,7 +103,8 @@ Elpi Db tc.db lp:{{
     pred link.llam i:term, i:term.
 
 
-    % relates a projection to the its record
+    % relates a projection to the its record type fully applied to fresh
+    % variables, eg, rules have the shape: (pi P1 ... PN\ proj->record {{p}} {{r P1 .. PN}})
     pred proj->record i:constant, o:term.
     
     :index (5)
