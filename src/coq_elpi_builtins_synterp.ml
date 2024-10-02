@@ -2,6 +2,8 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
+[%%import "coq_elpi_config.mlh"]
+
 module API = Elpi.API
 module State = API.State
 module Conv = API.Conversion
@@ -150,6 +152,12 @@ let invocation_site_loc_synterp : API.Ast.Loc.t State.component =
   ~init:(fun () -> API.Ast.Loc.initial "(should-not-happen)")
   ~start:(fun x -> x) ()
 
+[%%if elpi >= (1, 20, 0)]
+let compat_graft x = x
+[%%else]
+let compat_graft = Option.map (function `Remove, _ -> nYI "clause removal" | ((`Replace | `Before | `After), _) as x -> x)
+[%%endif]
+
 type accumulation_item = qualified_name * API.Ast.program * Id.t list * Coq_elpi_utils.clause_scope
 let accumulate_clauses ~clauses_for_later ~accumulate_to_db ~preprocess_clause ~scope ~dbname clauses ~depth ~options state =
   let invocation_loc = State.get invocation_site_loc_synterp state in
@@ -158,7 +166,7 @@ let accumulate_clauses ~clauses_for_later ~accumulate_to_db ~preprocess_clause ~
   let clauses scope =
    clauses |> CList.rev_map (fun (name,graft,clause) ->
      let vars, clause = preprocess_clause ~depth clause in
-     let graft = Option.map (function `Remove, _ -> nYI "clause removal" | ((`Replace | `Before | `After), _) as x -> x) graft in
+     let graft = compat_graft graft in
      let clause = U.clause_of_term ?name ?graft ~depth loc clause in
      (dbname,clause,vars,scope)) in
   let local = (options : options).local = Some true in
