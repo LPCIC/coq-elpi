@@ -102,11 +102,15 @@ Elpi Db tc.db lp:{{
 
     % relates a projection to the its record type fully applied to fresh
     % variables, eg, rules have the shape: (pi P1 ... PN\ proj->record {{p}} {{r P1 .. PN}})
+    % MANUALLY INSERTED by TC.AddRecordFields
     pred proj->record i:constant, o:term.
     
+    % tells if a term is a coercion
+    % MANUALLY INSERTED by Elpi Accumulate
     :index (5)
     pred coercion-unify i:term.
 
+    % Used to print bench infos
     pred time-is-active i:(list string -> prop).
   }
 }}.
