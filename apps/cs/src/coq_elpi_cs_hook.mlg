@@ -62,6 +62,11 @@ open Elpi_plugin
 open Coq_elpi_arg_syntax
 open Coq_elpi_vernacular
 
+[%%if coq = "8.20"]
+let adapt_hook f : Evarconv.hook = fun env sigma (s,l,t) x -> f env sigma (s,Some l,t) x
+[%%else]
+let adapt_hook f : Evarconv.hook = f
+[%%endif]
 
 let add_cs_hook =
   let cs_hook_program = Summary.ref ~name:"elpi-cs" None in
@@ -70,7 +75,7 @@ let add_cs_hook =
     | None -> None
     | Some h -> elpi_cs_hook h env sigma proj pat in
   let name = "elpi-cs" in
-  Evarconv.register_hook ~name cs_hook;
+  Evarconv.register_hook ~name (adapt_hook cs_hook);
   let inCs =
     let cache program =
       cs_hook_program := Some program;
