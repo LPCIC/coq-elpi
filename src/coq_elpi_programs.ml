@@ -714,7 +714,7 @@ module Synterp : Programs = struct
     let in_stage x = x ^ "-synterp"
     let init () =
       API.Setup.init ~state:synterp_state ~hoas:synterp_hoas
-        ~quotations:synterp_quotations ~builtins:[coq_synterp_builtins;elpi_builtins] ~file_resolver ()
+        ~quotations:synterp_quotations ~builtins:[elpi_builtins;coq_synterp_builtins] ~file_resolver ()
   end
   include SourcesStorage(S)
 
@@ -736,7 +736,7 @@ module Interp : Programs = struct
     let in_stage x = x ^ "-interp"
     let init () =
       API.Setup.init ~state:interp_state ~hoas:interp_hoas
-        ~quotations:interp_quotations ~builtins:[coq_interp_builtins;elpi_builtins] ~file_resolver ()
+        ~quotations:interp_quotations ~builtins:[elpi_builtins;coq_interp_builtins] ~file_resolver ()
   end)
 
 let () = Coq_elpi_builtins.set_accumulate_to_db_interp (fun clauses_to_add ->
