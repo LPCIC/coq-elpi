@@ -2103,7 +2103,7 @@ Supported attributes:
        | Polymorphic_ind_entry uctx ->
           (Polymorphic_entry uctx, UState.Polymorphic_entry uctx, univ_binders)
        in
-     let () = Global.push_context_set ~strict:true uctx in
+     let () = Global.push_context_set uctx in
      let mind =
        declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim me (uentry', ubinders) ind_impls in
      let ind = mind, 0 in
