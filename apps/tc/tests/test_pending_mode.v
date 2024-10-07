@@ -36,7 +36,7 @@ Module ground1.
 
   Goal exists (x : Type), C (list x). 
     eexists.
-    apply _.
+    Fail apply _.
   Abort.
 End ground1.
 
@@ -47,7 +47,7 @@ Module ground2.
 
   Goal exists (x : Type), C (list x). 
     eexists. 
-    apply _.
+    Fail apply _.
   Abort.
 End ground2.
 
@@ -64,14 +64,14 @@ Module ground3.
 End ground3.
 
 Module ground4.
-  Elpi TC.Pending_mode - +.
+  Elpi TC.Pending_mode ! !.
   Class C {i : Type} (f : i -> i -> Prop).
   Instance i {X : Type}: C (@eq X). Qed.
   Hint Mode C ! ! : typeclass_instances.
 
   Goal exists (X : Type), @C (list X) eq. 
     eexists.
-     apply _.
+    apply _.
   Abort.
 End ground4.
 

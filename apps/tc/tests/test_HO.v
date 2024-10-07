@@ -200,7 +200,7 @@ Module HO_PF1.
     Proof.
       eexists; intros.
       Elpi Bound Steps 30000.
-      Set Typeclasses Debug.
+      (* Set Typeclasses Debug. *)
       apply _.
       Unshelve.
       auto.
@@ -321,7 +321,7 @@ Module F.
 
   Goal forall (T : Type -> Type) (H : forall x, T x), C1 T H -> D.
     intros.
-    Set Typeclasses Debug.
+    (* Set Typeclasses Debug. *)
     Set Debug "tactic-unification".
     Elpi TC Solver Override TC.Solver None.
     Fail apply _. (* Here coq's unfication algorithm fails: 

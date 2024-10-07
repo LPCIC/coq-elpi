@@ -191,8 +191,8 @@ let get_and_compile ?even_if_empty name : (EC.program * bool) option =
       | Program { raw_args } -> raw_args
       | Tactic -> true in
       (prog, raw_args)) in
-    Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
-    res
+  Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
+  res
 
 [%%if coq = "8.20"]
 let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,CErrors.iprint ei)))
