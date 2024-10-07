@@ -240,6 +240,14 @@ VERNAC COMMAND EXTEND ElpiUnnamed CLASSIFIED AS SIDEFF
    } -> {
      EV.Interp.accumulate_db ~atts  ~program:(snd p) (snd d) }
 
+| #[ atts = any_attribute ] [ "Elpi" "Compile" qualified_name_list(pl) ] SYNTERP AS atts {
+     let atts = validate_attributes synterp_attribute atts in
+     EV.Synterp.compile  ~atts (pl |> List.map snd);
+     atts
+   } -> {
+     EV.Interp.compile  ~atts (pl |> List.map snd) }
+
+
 | #[ atts = any_attribute ] [ "Elpi" "Debug" string_list(s) ] SYNTERP AS atts {
      let atts = validate_attributes synterp_attribute atts in
      EV.Synterp.debug  ~atts s;
