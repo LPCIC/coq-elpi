@@ -55,6 +55,7 @@ Let's define a simple tactic that prints the current goal.
 
 |*)
 
+From Coq Require Import Prelude.
 From elpi Require Import elpi.
 
 Elpi Tactic show.

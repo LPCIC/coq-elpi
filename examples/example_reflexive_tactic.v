@@ -9,6 +9,7 @@
 
 *)
 
+From Coq Require Import Prelude.
 From elpi Require elpi.
 Require Arith ZArith Psatz List ssreflect.
 
