@@ -1348,8 +1348,17 @@ external func coq.hints.set-opaque constant, string, bool.
 % transparent (ff) in DB
 external func coq.hints.opaque constant, string -> bool.
 
-% [coq.hints.add-resolve GR DB Priority Pattern] Like Hint Resolve GR |
+% [coq.hints.add-resolve-hnf GR DB Priority Pattern] Like Hint Resolve GR |
 % Priority Pattern : DB.
+% Supported attributes:
+% - @local! (default is export)
+% - @global! (discouraged, may become deprecated)
+external func coq.hints.add-resolve-hnf gref, string, int, term.
+
+% [coq.hints.add-resolve GR DB Priority Pattern] Almost like Hint Resolve GR
+% | Priority Pattern : DB.
+% Never reduces the type of [GR]. See [coq.hints.add-resolve-hnf] for a
+% version that mimics `Hint Resolve` perfectly.
 % Supported attributes:
 % - @local! (default is export)
 % - @global! (discouraged, may become deprecated)

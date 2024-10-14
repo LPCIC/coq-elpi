@@ -3493,7 +3493,7 @@ Supported attributes:|} ^ hint_locality_doc)))),
      | Constant c -> !: (not @@ TransparentState.is_transparent_constant tr c))),
   DocAbove);
 
-  MLCode(Pred("coq.hints.add-resolve",
+  MLCode(Pred("coq.hints.add-resolve-hnf",
   In(gref, "GR",
   In(hint_db, "DB",
   In(B.unspec B.int, "Priority",
@@ -3507,6 +3507,25 @@ Supported attributes:|} ^ hint_locality_doc))))),
   let hint_pattern = unspec2opt pattern |> Option.map (Rocq_elpi_utils.detype_to_pattern env sigma) in
   let info = { Typeclasses.hint_priority; hint_pattern } in
    Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info, true, hint_globref gr]);
+   Univ.ContextSet.empty, state, (), []
+  ))),
+DocAbove);
+
+  MLCode(Pred("coq.hints.add-resolve",
+  In(gref, "GR",
+  In(hint_db, "DB",
+  In(B.unspec B.int, "Priority",
+  CIn(B.unspecC closed_term, "Pattern",
+  Full(global,{|Almost like Hint Resolve GR | Priority Pattern : DB.
+Never reduces the type of [GR]. See [coq.hints.add-resolve-hnf] for a version that mimics `Hint Resolve` perfectly.
+Supported attributes:|} ^ hint_locality_doc))))),
+(fun gr (db,_) priority pattern ~depth:_ {env;options} _ -> grab_global_env "coq.hints.add-resolve" (fun state ->
+  let locality = hint_locality options in
+  let hint_priority = unspec2opt priority in
+  let sigma = get_sigma state in
+  let hint_pattern = unspec2opt pattern |> Option.map (Rocq_elpi_utils.detype_to_pattern env sigma) in
+  let info = { Typeclasses.hint_priority; hint_pattern } in
+   Hints.add_hints ~locality [db] Hints.(Hints.HintsResolveEntry[info, false, hint_globref gr]);
    Univ.ContextSet.empty, state, (), []
   ))),
 DocAbove);
