@@ -656,7 +656,7 @@ Outside the pattern fragment
 
 This encoding of evars is such that the programmer does not need to care
 much about them: no need to carry around an assignment/typing map like the
-Evar map, no need to declared new variables there, etc. The programmer
+Evar map, no need to declare new variables there, etc. The programmer
 can freely call Coq API passing an Elpi term containing holes.
 
 There is one limitation, though. The rest of this tutorial describes it
