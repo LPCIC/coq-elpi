@@ -1,4 +1,5 @@
 From elpi Require Import tc.
+Set Warnings "+elpi".
 
 Section test_max_arity.
   Elpi Query TC.Solver lp:{{
@@ -16,7 +17,7 @@ Module test_link_eta_generation.
   Class d (T : Type) (T : Type -> Type -> Type -> Type).
   Elpi Accumulate TC.Solver lp:{{
     :after "0" 
-    tc.compile.instance.compile-conclusion _ (app [H|_]) _ _ _ Premises _ :-
+    tc.compile.instance.compile-conclusion _ (app [H|_]) _ _ Premises _ :-
       H = {{test_link_eta_generation.c}}, !,
       std.assert! (Premises = [do [tc.link.eta _ _] | _]) "[TC] Wrong number of eta links",
       coq.say "Good padding from here",
@@ -24,7 +25,7 @@ Module test_link_eta_generation.
   }}.
   Elpi Query TC.Solver lp:{{
     ToCompile = {{forall (T : Type -> Type -> Type -> Type), (forall (a: Type), d a T) -> c T}},
-    not (tc.compile.instance ToCompile _ _).
+    pi x\ not (tc.compile.instance ToCompile x _).
   }}.
 End test_link_eta_generation.
 
@@ -207,23 +208,15 @@ Module HO_81.
   Class c1 (T : Type).
   Instance i1 F : c1 F. Qed.
 
-  Elpi Accumulate TC.Solver lp:{{
-    :before "compile-goal"
-    tc.compile.goal Goal _ _ :-
-      Goal = {{HO_81.c1 lp:_}}, !,
-      tc.precomp.goal Goal _ Vars, !,
-      tc.compile.goal.make-pairs Vars Pairs,
-      std.assert! (Pairs = []) "", fail.
-  }}.
-  Elpi Typecheck TC.Solver.
-
   Goal exists X, c1 X.
     eexists.
     (* Failure is good, since here we simply check that the number of 
       uvar-pair built by tc.precomp is zero. This is because the type
       of ?X is Type (i.e. it has `arity` zero) *)
-    Fail apply _.
-  Abort.
+    apply _.
+    Unshelve.
+    apply nat.
+  Qed.
 End HO_81.
 
 Module HO_8.
@@ -234,7 +227,7 @@ Module HO_8.
     eexists.
     apply _.
     Unshelve.
-    apply nat.
+    auto.
   Qed.
 End HO_8.
 
@@ -276,6 +269,62 @@ Module HO_10.
     auto.
   Qed.
 End HO_10.
+
+Module HO_11.
+  Class Unit (i : Prop).
+  Instance i F : Unit (forall (f : Prop), F f) := {}.
+  Goal Unit (forall x, x).
+    apply _.
+  Qed.
+End HO_11.
+
+Module HO_12.
+  Class Unit (i : Prop).
+  Instance i : Unit (forall x, x) := {}.
+  Set Printing Existential Instances.
+
+  Elpi Accumulate TC.Solver lp:{{
+    % TODO: this rule should be removed if https://github.com/LPCIC/elpi/issues/256
+    % is solved
+    tc-elpi.apps.tc.tests.test.HO_12.tc-Unit {{forall (x:Prop), lp:(X x)}} {{i}} :-
+      X = (x\x).
+  }}.
+
+  Goal forall (y: Prop), exists (F: Prop -> Prop), Unit (forall x, F x).
+    intros.
+    eexists ?[F].
+    Unshelve.
+    2: { refine (fun x => _); shelve. }
+    simpl.
+    Set Printing Existential Instances.
+    apply _.
+  Qed.
+End HO_12.
+
+Module HO_13.
+  Class Unit (i : Prop).
+  Class PP (i : Prop -> Prop -> Prop).
+  Axiom f : Prop -> Prop -> Prop.
+  Instance i F : PP (fun x y => F y x) -> Unit (forall (x y: Prop), F y x) := {}.
+  Instance j : PP (fun x y => f y x) := {}.
+  Check _ : (Unit (forall x y, _)).
+
+  Goal exists (X: Prop -> Prop -> Prop), Unit (forall x y, X x y).
+    eexists.
+    Unshelve.
+    2: { refine (fun _ _ => _); shelve. }
+    simpl.
+    apply _.
+  Qed.
+
+  Elpi Query TC.Solver lp:{{
+    std.spy-do![Goal = {{Unit (forall x y, lp:(F x y))}},
+    tc.build-query-from-goal Goal Proof Q PP,
+    do PP, Q,
+    std.assert! (Proof = {{i f j}}) "Error"].
+  }}.
+End HO_13.
+
 
 Module HO_scope_check1.
   Axiom f : Type -> (Type -> Type) -> Type.
@@ -510,14 +559,6 @@ Module CoqUvar3.
 
   Class c1 (T : Type -> Type -> Type).
   Instance i1 A: c1 (fun x y => f (A x y) (A x y)). Qed.
-  
-  Elpi Query TC.Solver lp:{{
-    tc.precomp.goal {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
-    Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
-    Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
-    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [x,y]),
-    std.assert! (C = Expected) "[TC] invalid compilation".
-  }}.
 
   (* Note: here interesting link-dedup *)
   Goal exists X (A: Type -> Type -> Type), c1 (fun x y => X (A x y) y).
@@ -555,17 +596,14 @@ Module CoqUvar4.
     tc.precomp.instance {{c1 (fun x y => lp:X (lp:A x y) y)}} C _ _ _,
     Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
     Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
-    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [y,x]),
+    Body2 = (x\y\ app [X, (Y x y), y]),
     std.assert! (C = Expected) "[TC] invalid compilation".
   }}.
 
-  (* Note: here interesting failtc-c1ing link-dedup *)
+  (* Note: here interesting fail link-dedup *)
   Goal forall f, exists X, c1 (X nat) -> 
     c1 (f nat nat).
     do 1 eexists.
     apply _.
   Qed.
 End CoqUvar4.
-
-(* TODO: add test with negative premise having a variable with type (M A) where M and A are coq uvar,
-         this is in order to clean-term with llam *)

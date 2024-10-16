@@ -12,7 +12,7 @@ Module M.
 
   Goal exists i, C i.
     eexists.
-    Set Typeclasses Debug.
+    (* Set Typeclasses Debug. *)
     (* Here backtracking is done *)
     apply m.
   Qed.
@@ -32,7 +32,7 @@ Module M1.
 
   Goal exists i, C i.
     eexists.
-    Set Typeclasses Debug.
+    (* Set Typeclasses Debug. *)
     apply m.
     (* 
       Note: in coq the following command fails since apply is a single entry
