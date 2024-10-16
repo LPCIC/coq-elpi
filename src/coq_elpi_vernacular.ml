@@ -147,6 +147,7 @@ let compile src =
     try
       lookup_code 0 h src
     with Not_found ->
+      Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: compile: cache miss")));
       match src with
       | Code.Base { base = (k,u) } ->
           let elpi = P.ensure_initialized () in
@@ -166,6 +167,7 @@ let compile src =
     try
       lookup_chunk bh h src
     with Not_found ->
+      Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: compile: cache miss")));
       match src with
       | Chunk.Base { base = (k,u) } ->
           let prog = P.extend_w_units ~base [u] in
@@ -199,6 +201,14 @@ let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,CErrors.iprint
 [%%else]
 let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,[],CErrors.iprint ei)))
 [%%endif]
+
+  let compile pl =
+    let t0 = Unix.gettimeofday () in
+    Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: compile: filling cache")));
+    List.iter (fun p -> ignore(get_and_compile p)) pl;
+    Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: compile: filled: %4.3f" (Unix.gettimeofday () -. t0))))
+
+  let compile ~atts:ph pl = skip ~ph compile pl
 
 let run_static_check query =
   let checker = 
@@ -533,11 +543,13 @@ module type Common = sig
   val accumulate_db          : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> ?program:qualified_name -> qualified_name -> unit
   val accumulate_to_db       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
   
+  
   val load_checker : string -> unit
   val load_printer : string -> unit
   val load_tactic : string -> unit
   val load_command : string -> unit
-
+  
+  val compile : atts:phase option -> qualified_name list -> unit
   val debug         : atts:phase option -> string list -> unit
   val trace         : atts:phase option -> int -> int -> string list -> string list -> unit
   val trace_browser : atts:phase option -> string list -> unit
