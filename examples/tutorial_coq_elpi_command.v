@@ -44,6 +44,7 @@ Let's create a simple command, called "hello", which prints :e:`"Hello"`
 followed by the arguments we pass to it:
 
 |*)
+From Coq Require Import Prelude.
 From elpi Require Import elpi.
 
 Elpi Command hello.

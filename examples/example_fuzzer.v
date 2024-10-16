@@ -1,3 +1,4 @@
+From Coq Require Import Prelude.
 From elpi Require Import elpi.
 
 (** Intrinsically typed data type and semantics, from software foundations.

@@ -2,7 +2,9 @@
  (name elpi)
  (package coq-elpi)
  (plugins coq-elpi.elpi)
- (theories elpi_elpi))
+ (theories elpi_elpi Coq)
+ (stdlib no)
+ )
 
 (rule
  (target elpi.v)
