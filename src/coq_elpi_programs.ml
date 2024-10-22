@@ -304,6 +304,7 @@ let in_source : Names.Id.t -> string option * EC.compilation_unit * EC.flags -> 
     cache_function  = cache;
     open_function = simple_open import;
     discharge_function = (fun o -> Some o);
+    classify_function = (fun _ -> Keep);
   }
 ;;
 
@@ -495,6 +496,7 @@ let get ?(fail_if_not_exists=false) p =
     let open Libobject in
     declare_object { (default_object "ELPI-LP-COMMAND") with
       load_function = (fun _ x -> lp_command_ast := Some x);
+      classify_function = (fun _ -> Keep);
     }
   let load_command s =
     let elpi = ensure_initialized () in
@@ -514,6 +516,7 @@ let get ?(fail_if_not_exists=false) p =
     let open Libobject in
     declare_object { (default_object "ELPI-LP-TACTIC") with
       load_function = (fun _ x -> lp_tactic_ast := Some x);
+      classify_function = (fun _ -> Keep);
     }
   let load_tactic s =
     let elpi = ensure_initialized () in
@@ -548,6 +551,7 @@ let get ?(fail_if_not_exists=false) p =
     let open Libobject in
     declare_object { (default_object "ELPI-LP-CHECKER") with
       load_function = (fun _ x -> lp_checker_ast := Some x);
+      classify_function = (fun _ -> Keep);
     }
   
   let load_checker s =
@@ -566,6 +570,7 @@ let get ?(fail_if_not_exists=false) p =
     let open Libobject in
     declare_object { (default_object "ELPI-LP-PRINTER") with
       load_function = (fun _ x -> lp_printer_ast := Some x);
+      classify_function = (fun _ -> Keep);
     }
   let load_printer s =
     let elpi = ensure_initialized () in
