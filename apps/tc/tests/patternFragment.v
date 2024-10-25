@@ -70,14 +70,14 @@ End M3.
     solve-aux (goal _ _ TyRaw _ _ as G) GL :- not (var TyRaw),
       if (TyRaw = app [global C|_], coq.TC.class? C) fail (GL = [seal G]).
   }}.
-  Elpi Typecheck TC.Solver.
+  
   Module M6.
     Class and (a : Prop) (b : Prop).
     Instance andI {a b : Prop} : a -> b -> and a b. Qed.
     Local Instance Inst2 A F: and (F = fun _ _ => nat)
       (forall (a b c: Type), Y (F a b) -> Y (F b c)) -> Z A. Qed.
     Goal Z bool.
-      Elpi Typecheck TC.Solver.
+      
       Elpi Bound Steps 1000.
       Elpi Accumulate  TC.Solver lp:{{
         print-solution.

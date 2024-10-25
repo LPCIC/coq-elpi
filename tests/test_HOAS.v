@@ -8,7 +8,7 @@ solve G GS :- pi x\
   print_constraints,
   refine {{ fun w : _ => _ }} G GS.
 }}.
-Elpi Typecheck.
+
 
 Lemma test (x : nat) : bool -> True.
 Proof.
@@ -29,7 +29,7 @@ solve (goal [decl T _ _ | _ ] _ _ _ _ as G) GS :-
   coq.say GS.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test  : (forall b: ( forall b : bool, b = b), True) -> True.
 Proof.
@@ -48,7 +48,7 @@ Elpi Command kwd.
 Elpi Accumulate lp:{{
   main L :- coq.say L.
 }}.
-Elpi Typecheck.
+
 
 Elpi kwd fun in as 4 end match return => : := { } ; , | "x" 1 H (fun x => match x as y in False return nat with end).
 
@@ -122,7 +122,7 @@ main [trm T] :-
   std.assert! (coq.reduction.lazy.whd_all T T1) "normal form is not an opinion",
   coq.say "Raw term:" T "\nNice term:" {coq.term->string T} "\nRed:" {coq.term->string T1}.
 }}.
-Elpi Typecheck.
+
 
 From Coq Require Import PrimInt63.
 Open Scope int63_scope.
@@ -246,7 +246,7 @@ Elpi Accumulate lp:{{
     std.assert! (unwind {whd T []} V) "wrong value",
   ].
 }}.
-Elpi Typecheck.
+
 
 Elpi primitive_proj "primitive" (@P.foo) (P.x.(P.p1)) 1 (3%nat).
 Elpi primitive_proj "primitive" (@P.foo) (P.x.(P.p2)) 2 (false).
@@ -266,7 +266,7 @@ main [trm X] :-
   coq.elaborate-skeleton X _ _ ok.
 
 }}.
-Elpi Typecheck.
+
 Elpi ifte (if true then 1 else 2).
 
 (* gref quotations *)

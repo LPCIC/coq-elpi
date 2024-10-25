@@ -46,7 +46,7 @@ Elpi Accumulate lp:{{
     Opts => locker.key-lock ID Bo Ty (some UnivDecl).
   main _ :- coq.error "Usage: lock Definition ...".
 }}.
-Elpi Typecheck.
+
 Elpi Export lock.
 
 (** [mlock] locks a definition behind a module type
@@ -88,5 +88,5 @@ Elpi Accumulate lp:{{
   main [upoly-const-decl ID (some Bo) Ty UD] :- !, locker.module-lock ID Bo Ty (some UD).
   main _ :- coq.error "Usage: mlock Definition ...".
 }}.
-Elpi Typecheck.
+
 Elpi Export mlock.

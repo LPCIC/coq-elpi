@@ -16,7 +16,7 @@ Elpi Accumulate lp:{{
     coq.locate E GR,
     count GR Len.
 }}.
-Elpi Typecheck.
+
 
 TC.AddClasses Eqb.
 
@@ -53,6 +53,6 @@ Module test4.
 
   Elpi Query TC.Solver lp:{{
     EqP = {{:gref eqU}},
-    std.assert! (not (instance _ EqP _)) "EqP should not be in the DB".
+    std.assert! (not (tc.instance _ EqP _ _)) "EqP should not be in the DB".
   }}.
 End test4.

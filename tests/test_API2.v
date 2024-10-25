@@ -13,7 +13,7 @@ main [str "length", int I] :-
   std.assert! (std.length L I) "wrong number of clauses".
 
 }}.
-Elpi Typecheck.
+
 
 Fail Elpi declare.testX "mem" "GLOBAL".
 Elpi declare.testX "length" 0.
@@ -69,7 +69,7 @@ main [trm (primitive (float64 P))] :- !, coq.say {coq.float64->float P}.
 main X :- coq.error "not a primitive-value" X.
 
 }}.
-Elpi Typecheck.
+
 
 Elpi Command vp.
 Elpi Accumulate lp:{{
@@ -78,7 +78,7 @@ main [int I] :- !, coq.say {coq.int->uint63 I}.
 main [] :- !, coq.say {coq.float->float64 1.2}.
 
 }}.
-Elpi Typecheck.
+
 
 From Coq Require Import PrimFloat Uint63.
 
@@ -386,3 +386,33 @@ Elpi Query lp:{{
      test {{ fun z => S (fun x y => z z x y) }} {{ fun z => S (z z) }},
    ].
 }}.
+
+
+Elpi Db foo.db lp:{{ 
+  pred p o:int.
+  p 1.
+}}.
+Elpi Accumulate foo.db lp:{{
+  p 2.
+}}.
+Elpi Command query_foo.
+Elpi Accumulate Db Header foo.db.
+Elpi Accumulate lp:{{
+main _ :-
+  std.findall (p _) [p 1, p 2].
+}}.
+Elpi Accumulate Db foo.db.
+
+Elpi query_foo.
+
+
+Elpi Command acc_foo.
+Elpi Accumulate Db Header foo.db.
+Elpi Accumulate lp:{{
+pred r i:list int.
+main _ :-
+  coq.elpi.accumulate _ "foo.db" (clause _ _ (r [])).
+}}.
+Elpi Accumulate Db foo.db.
+
+Fail Elpi acc_foo. (* since r has no type in foo.db *)

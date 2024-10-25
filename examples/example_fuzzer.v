@@ -91,7 +91,7 @@ main [str IN, str OUT ] :-
   coq.env.add-indt Decl _.
 
 }}.
-Elpi Typecheck.
+
 
 Elpi fuzz eval eval1.
 

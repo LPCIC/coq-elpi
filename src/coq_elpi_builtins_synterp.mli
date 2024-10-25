@@ -82,7 +82,7 @@ val clauses_for_later_synterp :
   (qualified_name * Ast.program * Id.t list * Coq_elpi_utils.clause_scope) list State.component
 
 val set_accumulate_to_db_synterp :
-  ((qualified_name * Ast.program * Id.t list * Coq_elpi_utils.clause_scope) list -> unit) -> unit
+  (loc:Loc.t -> (qualified_name * Ast.program * Id.t list * Coq_elpi_utils.clause_scope) list -> unit) -> unit
 
 val prop : Data.term Conversion.t
 val id : string Conversion.t
@@ -130,7 +130,7 @@ type accumulation_item = qualified_name * Ast.program * Id.t list * Coq_elpi_uti
 
 val accumulate_clauses :
   clauses_for_later:accumulation_item list State.component ->
-  accumulate_to_db:(accumulation_item list -> unit) ->
+  accumulate_to_db:(loc:Loc.t -> accumulation_item list -> unit) ->
   preprocess_clause:(depth:int -> Data.term -> Id.t list * Data.term) ->
   scope:scope Elpi.Builtin.unspec ->
   dbname:string ->

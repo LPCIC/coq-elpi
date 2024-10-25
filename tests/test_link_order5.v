@@ -10,7 +10,7 @@ Elpi Accumulate lp:{{
   main [].
   main [_] :- coq.say {std.findall (p _)}.
 }}.
-Elpi Typecheck.
+
 
 Elpi Command add.
 Elpi Accumulate Db foo.db.
@@ -22,7 +22,7 @@ Elpi Accumulate lp:{{
       %coq.say "accum" N,
       coq.elpi.accumulate current "foo.db" (clause _ _ (p N)) ).
 }}.
-Elpi Typecheck.
+
 Elpi add 5.
 Elpi add 5.
 Elpi Print foo "elpi.tests/test_link_order5".

@@ -148,6 +148,7 @@ box.aux (inductive Ind F) I L :- pi x\ box.aux2 I Ind x (F x) L.
 
 pred args-of o:constructor, o:arguments.
 
+pred box.aux2 i:term, i:inductive, i:trm, o:list constructor, o:list box-spec.
 box.aux2 _ _ _ [] [].
 box.aux2 I Ind X [constructor _ Args|MoreKs] [same-box K|MoreBoxes] :- args-of K Args, !,
   box.aux2 I Ind X MoreKs MoreBoxes.

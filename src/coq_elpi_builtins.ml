@@ -116,6 +116,13 @@ let tactic_mode : bool State.component = State.declare_component ~name:"coq-elpi
   ~pp:(fun fmt x -> Format.fprintf fmt "%b" x)
   ~init:(fun () -> false)
   ~start:(fun x -> x) ()  
+
+let base =
+  API.State.declare_component ~name:"coq-elpi:base" ~descriptor:interp_state
+    ~init:(fun () -> None)
+    ~pp:(fun fmt -> function Some _ -> () | None -> ())
+    ~start:(fun x -> x) ()
+
 let abstract__grab_global_env_keep_sigma api thunk = (); (fun state ->
   let uctx, state, result, gls = thunk state in
   Coq_elpi_HOAS.grab_global_env ~uctx state, result, gls)
@@ -478,7 +485,7 @@ let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_insta
   List.map (get_instance env tc) instances_grefs
 
 let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
-  let f = ref (fun _ -> assert false) in
+  let f = ref (fun ~loc:_ _ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -572,7 +579,7 @@ let argument_mode = let open Conv in let open API.AlgebraicData in declare {
   
 
 let set_accumulate_text_to_db_interp, get_accumulate_text_to_db_interp =
-  let f = ref (fun _ _ _ -> assert false) in
+  let f = ref (fun ~loc:_ _ _ _ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -3169,7 +3176,9 @@ Supported attributes:
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
     let geta = Constrintern.intern_constr env sigma eta in
-    let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
+    let base = Option.get @@ State.get base state in
+    let loc = to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state in
+    let teta = Coq_elpi_glob_quotation.runtime_gterm2lp ~loc ~base ~depth geta state in
     let t =
       let rec aux ~depth n t =
         if n = 0 then t
@@ -3199,7 +3208,9 @@ Supported attributes:
     let eta = CAst.(make @@ CLambdaN(binders,make @@ CApp(make @@ CRef(Libnames.qualid_of_string (KerName.to_string sd),None),vars))) in
     let sigma = get_sigma state in
     let geta = Constrintern.intern_constr env sigma eta in
-    let state, teta = Coq_elpi_glob_quotation.gterm2lp ~depth state geta in
+    let base = Option.get @@ State.get base state in
+    let loc = to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state in
+    let teta = Coq_elpi_glob_quotation.runtime_gterm2lp ~loc ~base ~depth geta state in
     state, !: nargs +! teta, []
   )),
   DocAbove);
@@ -4040,8 +4051,9 @@ Supported attributes:
         mode ^ "(" ^ ty ^ ")") in
       let spec = String.concat ", " spec in
       let text = indexing ^ "pred " ^ predname ^ " " ^ spec ^ "." in
-      let scope = if local then Local else if super_global then SuperGlobal else Regular in 
-      f dbname text scope;
+      let scope = if local then Local else if super_global then SuperGlobal else Regular in
+      let loc = to_coq_loc @@ State.get Coq_elpi_builtins_synterp.invocation_site_loc state in
+      f ~loc dbname text scope;
       state, (), []
       )),
   DocAbove);
@@ -4052,10 +4064,12 @@ Supported attributes:
     Out(B.poly "prop","Pred",
     Full(global,"Pred is the application of PredName to Args")))),
     (fun name args _ ~depth _ _ state ->
-      let state, p = Elpi.API.Quotation.term_at ~depth state name in
-      match E.look ~depth p with
-      | Const c -> state, !: (E.mkAppL c args), []
-      | _ -> U.type_error ("predicate name expected, got " ^ name) 
+      try
+        let c = Elpi.API.RawQuery.global_name_to_constant state name in
+        match args with
+        | [] -> state, !: (E.mkGlobal c), []
+        | x :: xs -> state, !: (E.mkApp c x xs), []
+      with Not_found -> U.type_error ("predicate name expected, got " ^ name) 
       )),
   DocAbove);
 

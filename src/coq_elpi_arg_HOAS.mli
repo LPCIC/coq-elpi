@@ -98,7 +98,10 @@ val to_ltac_tactic : Elpi.API.RawOpaqueData.t -> Tac.top_ltac_tactic
 
 (* for tactics *)
 val in_elpi_tac :
-  depth:int -> ?calldepth:int -> 
+  loc:Loc.t ->
+  base: Elpi.API.Compile.program ->
+  depth:int ->
+  ?calldepth:int -> 
   Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context ->
   Coq_elpi_HOAS.hyp list ->
   Evd.evar_map ->
@@ -108,6 +111,7 @@ val in_elpi_tac :
 
 (* for coercions *)
 val in_elpi_tac_econstr :
+  base:unit ->
   depth:int -> ?calldepth:int -> 
   Coq_elpi_HOAS.full Coq_elpi_HOAS.coq_context ->
   Coq_elpi_HOAS.hyp list ->
@@ -118,7 +122,10 @@ val in_elpi_tac_econstr :
 
 (* for commands *)
 val in_elpi_cmd :
-  depth:int -> ?calldepth:int -> 
+  loc:Loc.t ->
+  depth:int ->
+  base:Elpi.API.Compile.program ->
+  ?calldepth:int -> 
   Coq_elpi_HOAS.empty Coq_elpi_HOAS.coq_context ->
   Elpi.API.State.t ->
   raw:bool ->

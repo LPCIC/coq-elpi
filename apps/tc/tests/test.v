@@ -215,7 +215,7 @@ Module HO_81.
       tc.compile.goal.make-pairs Vars Pairs,
       std.assert! (Pairs = []) "", fail.
   }}.
-  Elpi Typecheck TC.Solver.
+  
 
   Goal exists X, c1 X.
     eexists.

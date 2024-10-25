@@ -48,7 +48,7 @@ main [str S] :-
   derive.eqType.ast.main I _.
 
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eqType.db.

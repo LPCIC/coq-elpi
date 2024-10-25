@@ -24,11 +24,10 @@ Elpi test.program1 "hello my" Dear.
 Elpi test.program1 "hello" too many args.
 
 Elpi Command test.program3.
-Elpi Accumulate lp:{{
+Fail Elpi Accumulate lp:{{
   main.
 }}.
-
-Fail Elpi Typecheck.
+(* Fail  *)
 
 Elpi Command test.att.
 Elpi Accumulate lp:{{
@@ -43,7 +42,7 @@ Elpi Accumulate lp:{{
     coq.say CL.
 
 }}.
-Elpi Typecheck.
+
 #[foo="bar"]
 Elpi test.att.
 
@@ -58,7 +57,7 @@ Elpi Accumulate lp:{{
     attributes A, coq.parse-attributes A [att "foo" attmap] CL,
     CL = [get-option "elpi.loc" _, get-option "elpi.phase" _, get-option "foo" [get-option "A" "3", get-option "b_2" "yes"]].
 }}.
-Elpi Typecheck.
+
 Elpi Export test.axx.
 
 #[foo(A="3", b_2="yes")] test.axx.

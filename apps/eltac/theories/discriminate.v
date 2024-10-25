@@ -15,6 +15,6 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: eltac.discriminate <equation>".
 }}.
-Elpi Typecheck.
+
 
 Tactic Notation "eltac.discriminate" constr(T) := elpi discriminate ltac_term:(T).

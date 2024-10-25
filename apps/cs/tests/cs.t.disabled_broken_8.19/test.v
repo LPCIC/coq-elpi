@@ -9,7 +9,6 @@ Elpi Accumulate canonical_solution lp:{{
 cs _ {{ sort lp:T }} {{ @id lp:T }} {{ Build_S lp:T (@id lp:T) }}.
 
 }}.
-Elpi Typecheck canonical_solution.
 
 Check 1.
 Check eq_refl _ : (sort nat _) = @id nat.

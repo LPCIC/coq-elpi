@@ -12,6 +12,7 @@ namespace derive.bcongr {
 
 % links an assumption to the two terms being compared and the boolean value
 % for them:   forall x y b (H : reflext (x = y) b), ----> (arg H x y b)
+kind arg type.
 type arg term -> term -> term -> term -> arg.
 
 pred bo-args i:term, i:term, i:term, i:list arg, o:term.

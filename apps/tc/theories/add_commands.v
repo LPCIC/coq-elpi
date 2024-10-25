@@ -19,31 +19,31 @@ Set Warnings "+elpi".
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
-Elpi Typecheck.
+
 Elpi Accumulate Db tc_options.db.
-Elpi Typecheck.
+
 Elpi Accumulate File base.
-Elpi Typecheck.
+
 Elpi Accumulate File tc_aux.
-Elpi Typecheck.
+
 Elpi Accumulate File ho_precompile.
-Elpi Typecheck.
+
 Elpi Accumulate File unif.
-Elpi Typecheck.
+
 Elpi Accumulate File ho_link.
-Elpi Typecheck.
+
 Elpi Accumulate File ho_compile.
-Elpi Typecheck.
+
 Elpi Accumulate File compiler1.
-Elpi Typecheck.
+
 Elpi Accumulate File modes.
-Elpi Typecheck.
+
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
     tc.time-it _ (std.forall {coq.TC.db-tc} (x\ tc.add-tc-or-inst-gr [] L1 [x])) "TC.AddAllInstances".
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.AddInstances.
 Elpi Accumulate Db tc.db.
@@ -61,7 +61,7 @@ Elpi Accumulate lp:{{
   main Arguments :- 
     tc.parse Arguments Res, tc.run-command Res.
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.AddAllClasses.
 Elpi Accumulate Db tc.db.
@@ -76,7 +76,7 @@ Elpi Accumulate lp:{{
     std.map IgnoreStr (x\r\ sigma S\ str S = x, coq.locate S r) IgnoreGR,
     tc.time-it _ (std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (tc.add-class-gr tc.classic x))) "TC.AddAllClasses".
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.AddClasses.
 Elpi Accumulate Db tc.db.
@@ -96,7 +96,7 @@ Elpi Accumulate lp:{{
   main L :- tc.add-all-classes L tc.classic.
   main _ :- coq.error "This commands accepts: [classic|deterministic]? TC-names*".
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.AddHook.
 Elpi Accumulate Db tc.db.
@@ -127,7 +127,7 @@ Elpi Accumulate lp:{{
               " - OldName is the name of an existing hook"
               " - NewName is the name of the new hook".
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.Declare.
 Elpi Accumulate Db tc.db.
@@ -143,7 +143,7 @@ with implicit arguments (those implicits will be neglected)", fail.
   main [indt-decl D] :- tc.declare-class D.
   main _ :- coq.error "Argument should be an inductive type".
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.Pending_mode.
 Elpi Accumulate Db tc.db.
@@ -158,7 +158,7 @@ Elpi Accumulate lp:{{
     std.append M [str "o"] M1,
     tc.add-pending-mode {args->str-list M1}.
 }}.
-Elpi Typecheck.
+
 
 
 Elpi Export TC.AddAllClasses.

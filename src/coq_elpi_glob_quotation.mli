@@ -6,39 +6,47 @@
 open Elpi.API
 open RawData
 
-val gterm2lp :
-  depth:int -> State.t -> Glob_term.glob_constr -> State.t * term
-
-
+val coq : Ast.Scope.language
+  
+(* The context used to interpret Var("x") nodes in all the APIs below *)
+val set_coq_ctx_hyps : State.t -> [> `Options ] Coq_elpi_HOAS.coq_context * Coq_elpi_HOAS.hyp list -> State.t
 
 val under_ctx :
-  Names.Name.t ->
-  term ->
-  term option ->
-  (depth:int -> State.t -> State.t * 'b * 'c) ->
+  Names.Name.t -> term -> term option ->
+  k:(depth:int -> State.t -> State.t * 'b * 'c) ->
   depth:int -> State.t -> State.t * 'b * 'c
 
-val do_term :
+val gterm2lp :
+  loc:Loc.t ->
+  base:Compile.program -> 
   Glob_term.glob_constr ->
   depth:int -> State.t -> State.t * term
-val do_params :
+val gparams2lp :
+  loc:Loc.t ->
+  base:Compile.program -> 
   Glob_term.glob_decl list ->
-  (depth:int -> State.t -> State.t * term) ->
+  k:(depth:int -> State.t -> State.t * term) ->
   depth:int -> State.t -> State.t * term
-val do_arity :
+val garity2lp :
+  loc:Loc.t ->
+  base:Compile.program -> 
   Glob_term.glob_constr ->
   depth:int -> State.t -> State.t * term
-
-val do_record :
+val grecord2lp :
+  loc:Loc.t ->
+  base:Compile.program -> 
   name:string list * Names.Id.t ->
   constructorname:Names.Id.t option ->
   Glob_term.glob_constr ->
   (Glob_term.glob_constr * Coq_elpi_HOAS.record_field_spec) list ->
   depth:int -> State.t -> State.t * term
 
-(* The context used to interpret Var("x") nodes *)
-val set_coq_ctx_hyps : State.t -> [> `Options ] Coq_elpi_HOAS.coq_context * Coq_elpi_HOAS.hyp list -> State.t
-
+val runtime_gterm2lp :
+  loc:Loc.t ->
+  base:Compile.program -> 
+  Glob_term.glob_constr ->
+  depth:int -> State.t -> term
+  
 (* Used for anti-quotations *)
 val is_elpi_code : (Genarg.glob_generic_argument -> bool) ref
 val get_elpi_code : (Genarg.glob_generic_argument -> Ast.Loc.t * string) ref

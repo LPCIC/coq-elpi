@@ -24,6 +24,7 @@ Register eq_f as elpi.derive.eq_f.
 Elpi Db derive.bcongr.db lp:{{
 
 type bcongr-db constructor -> term -> prop.
+type stop string -> prop.
 
 :name "bcongr-db:fail"
 bcongr-db K _ :-
@@ -49,9 +50,9 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.bcongr <inductive type name>".
 }}.
-Elpi Typecheck. 
+ 
 
-Elpi Typecheck.
+
       
 (* hook into derive *)
 Elpi Accumulate derive Db derive.bcongr.db.

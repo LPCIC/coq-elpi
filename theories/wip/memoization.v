@@ -47,7 +47,7 @@ Elpi Accumulate lp:{{
     if (GS = []) (memo-db DB, stash_in_safe DB (item Ty Proof)) true.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma l4 :
      (False \/ True)

@@ -92,7 +92,7 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.eqbcorrect <inductive name>".
 
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File eqbcorrect.

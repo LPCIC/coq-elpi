@@ -45,7 +45,7 @@ main [indt-decl (record Name _Sort Kname Fields)] :-
   coq.env.add-const Kname K KTy _ _.
 
 }}.
-Elpi Typecheck.
+
 Elpi Export UM.expand.
 
 (* From now on UM.expand is a regular command taking as the only argument

@@ -34,7 +34,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.idx2inv <inductive type name> [<separator>]".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.idx2inv.db.

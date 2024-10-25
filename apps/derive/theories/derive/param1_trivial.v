@@ -71,6 +71,10 @@ Elpi Db derive.param1.trivial.db lp:{{
 
   pred param1-trivial-done i:inductive.
   pred param1-inhab-done i:inductive.
+  :index (3)
+  pred reali i:term, o:term.
+  pred coq.mk-app i:term, i:list term, o:term.
+  pred coq.sort? i:term.
 
   type param1-inhab-db term -> term -> prop.
   
@@ -158,7 +162,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.param1.trivial <inductive type name>".
 }}.
-Elpi Typecheck.
+
  
 Elpi Command derive.param1.inhab.
 Elpi Accumulate File derive_hook.
@@ -176,7 +180,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.param1.inhab <inductive type name>".
 }}.
-Elpi Typecheck.
+
 
 
 (* hook into derive *)

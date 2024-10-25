@@ -1,5 +1,13 @@
 
 
+
+kind implicit_kind type.
+kind field-attribute type.
+kind upoly-decl type.
+kind upoly-decl-cumul type.
+
+        
+
 % -- Misc ---------------------------------------------------------
 
 % [coq.info ...] Prints an info message
@@ -107,6 +115,7 @@ kind record-decl type.
 %
 % See also the arity->term predicate in coq-lib.elpi
 
+kind arity type.
 type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
 type arity term -> arity.
 
@@ -180,11 +189,11 @@ typeabbrev id string.
 
 
 % Name of a module /*E*/
-typeabbrev modpath (ctype "modpath").
+kind modpath type.
 
 
 % Name of a module type /*E*/
-typeabbrev modtypath (ctype "modtypath").
+kind modtypath type.
 
 
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
@@ -362,6 +371,10 @@ type include-module modpath -> synterp-action.
 type include-module-type modtypath -> synterp-action.
 type import-module modpath -> synterp-action.
 type export-module modpath -> synterp-action.
+
+% Synterp action group
+kind group type.
+
 
 % [coq.synterp-actions A] Get the list of actions performed during the
 % parsing phase (aka synterp) up to now.

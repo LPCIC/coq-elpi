@@ -13,6 +13,7 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 
 Elpi Db derive.projK.db lp:{{
+type stop string -> prop.
 
 type projK-db constructor -> int -> term -> prop.
 
@@ -35,7 +36,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.projK <inductive type name> [<output prefix>]".
 }}.
-Elpi Typecheck.
+
 
 
 (* hook into derive *)

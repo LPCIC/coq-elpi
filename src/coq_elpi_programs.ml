@@ -9,22 +9,24 @@ module EP = API.Parse
 open Coq_elpi_utils
 type program_name = Loc.t * qualified_name
 type cunit = Names.KerName.t * EC.compilation_unit
-
+let pp_cunit fmt (kn,_) = Format.fprintf fmt "%s" Names.KerName.(debug_to_string kn)
 module SLMap = Map.Make(struct type t = qualified_name let compare = compare_qualified_name end)
 module SLSet = Set.Make(struct type t = qualified_name let compare = compare_qualified_name end)
 
 type src =
   | File of src_file
   | EmbeddedString of src_string
-  | Database of qualified_name
+  | DatabaseBody of qualified_name
+  | DatabaseHeader of src_db_header
 and src_file = {
   fname : string;
   fast : cunit;
 }
 and src_string = {
-  sloc : API.Ast.Loc.t;
-  sdata : string;
   sast : cunit;
+}
+and src_db_header = {
+  dast : cunit;
 }
 
 let alpha = 65599
@@ -41,10 +43,11 @@ module Chunk = struct
       base : cunit;
     }
     | Snoc of {
-      source_rev : cunit list;
+      source_rev : cunit list; [@printer fun _ _ -> ()]
       prev : t;
       hash : int
     }
+  [@@deriving show]
   let hash = function
     | Base { hash } -> hash
     | Snoc { hash } -> hash
@@ -52,6 +55,10 @@ module Chunk = struct
   let snoc source_rev prev =
     let hash = (hash_list hash_cunit (hash prev) source_rev) in
     Snoc { hash; prev; source_rev }
+
+  let rec base = function
+    | Base { base } -> base
+    | Snoc { prev } -> base prev
 
   let eq x y = x == y
 end
@@ -73,6 +80,7 @@ type 'db t =
     prev : 'db t;
     hash : int
   }
+  [@@deriving show]
 let hash = function
   | Base { hash } -> hash
   | Snoc { hash } -> hash
@@ -94,12 +102,12 @@ let snoc_opt source prev =
 
 let snoc_db f chunks prev =
   let hash = hash prev in
-  let hash = combine_hash (f chunks) hash in
+  let hash = combine_hash hash (f chunks) in
   Snoc_db { hash; prev; chunks }
    
-let snoc_db_opt chunks prev =
+let snoc_db_opt f chunks prev =
   match prev with
-  | Some prev -> snoc_db (fun _ -> 0) chunks prev
+  | Some prev -> snoc_db f chunks prev
   | None -> assert false
 
 let rec map f = function
@@ -168,12 +176,13 @@ let group_clauses l =
 module type Programs = sig
   val debug_vars : API.Compile.StrSet.t ref
   val cc_flags : unit -> API.Compile.flags
-  val unit_from_file   : elpi:API.Setup.elpi -> string -> cunit
-  val unit_from_string : elpi:API.Setup.elpi -> API.Ast.Loc.t -> string -> cunit
-  val assemble_units : elpi:API.Setup.elpi -> API.Compile.compilation_unit list -> API.Compile.program
-  val extend_w_units : base:API.Compile.program -> API.Compile.compilation_unit list -> API.Compile.program
-  val parse_goal : elpi:API.Setup.elpi -> API.Ast.Loc.t -> string -> API.Ast.query
-  val intern_unit : (string option * API.Compile.compilation_unit * API.Compile.flags) -> cunit
+  val unit_from_file   : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string -> cunit
+  val unit_from_string : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> API.Ast.Loc.t -> string -> cunit
+  val unit_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Ast.program -> cunit
+  (* val assemble_units : elpi:API.Setup.elpi -> API.Compile.compilation_unit list -> API.Compile.program *)
+  val extend_w_units : base:API.Compile.program -> loc:Loc.t -> API.Compile.compilation_unit list -> API.Compile.program
+  val parse_goal : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> API.Ast.query
+  (* val intern_unit : (string option * API.Compile.compilation_unit * API.Compile.flags) -> cunit *)
 
   val db_exists : qualified_name -> bool
   val program_exists : qualified_name -> bool
@@ -183,18 +192,15 @@ module type Programs = sig
 
   val init_program : program_name -> src -> unit
   val init_db : program_name -> cunit -> unit
+  val header_of_db : qualified_name -> cunit
 
   val accumulate : qualified_name -> src list -> unit
   val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
-  val load_checker : string -> unit
-  val load_printer : string -> unit
-  val load_command : string -> unit
-  val load_tactic : string -> unit
+  val load_command : loc:Loc.t -> string -> unit
+  val load_tactic : loc:Loc.t -> string -> unit
 
   val ensure_initialized : unit -> API.Setup.elpi
 
-  val checker : unit -> API.Compile.compilation_unit list
-  val printer : unit -> API.Compile.compilation_unit
   val tactic_init : unit -> src
   val command_init : unit -> src
 
@@ -204,6 +210,9 @@ module type Programs = sig
   val stage : Summary.Stage.t
 
   val db_inspect : qualified_name -> int
+
+  val get_and_compile_existing_db : loc:Loc.t -> qualified_name -> EC.program
+  val get_and_compile : loc:Loc.t -> ?even_if_empty:bool -> qualified_name -> (EC.program * bool) option
 
 end
 
@@ -321,15 +330,12 @@ let intern_unit (hash,u,flags) =
 
 (* Source files can be large, and loaded multiple times since many entry point
    can be implemented in the same file. We share (in memory) the parsed file. *)
-let unit_from_ast ~elpi ~flags h ast =
-  try
-    let u = EC.unit ~elpi ~flags ast in
-    intern_unit (h,u,flags)
-  with EC.CompileError(oloc, msg) ->
-    let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ cut () ++ str msg)
-
-let unit_from_file ~elpi x : cunit =
+let unit_from_ast ~elpi ~flags h ~base ~loc ast =
+  handle_elpi_compiler_errors ~loc (fun () ->
+    let u = EC.unit ~elpi ~flags ~base ast in
+    intern_unit (h,u,flags))
+  
+let unit_from_file ~elpi ~base ~loc x : cunit =
   let flags = cc_flags () in
   let hash = Digest.(to_hex @@ file (EP.resolve_file ~elpi ~unit:x ())) in
   try
@@ -338,45 +344,29 @@ let unit_from_file ~elpi x : cunit =
     if flags <> cf then raise Not_found; (* TODO ERROR *)
     kn,u
   with Not_found ->
-    try
+    handle_elpi_compiler_errors ~loc (fun () ->
       let program = EP.program ~elpi ~files:[x] in
-      unit_from_ast ~elpi ~flags (Some hash) program
-    with
-    | Sys_error msg ->
-      CErrors.user_err (Pp.str msg)
-    | EP.ParseError(oloc, msg) ->
-      let loc = Coq_elpi_utils.to_coq_loc oloc in
-      CErrors.user_err ~loc Pp.(str (API.Ast.Loc.show oloc) ++ cut () ++ str msg)
+      let loc = Loc.initial Loc.ToplevelInput in
+      unit_from_ast ~elpi ~flags (Some hash) ~base ~loc program)
 
-let unit_from_string ~elpi loc x : cunit =
+let unit_from_string ~elpi ~base ~loc xloc x : cunit =
   let flags = cc_flags () in
   let hash = Digest.(to_hex @@ string x) in
-  try (* TODO: ERROR SAME HASH *)
-    let ast = EP.program_from ~elpi ~loc (Lexing.from_string x) in
-    unit_from_ast ~elpi ~flags (Some hash) ast
-  with
-  | EP.ParseError(oloc, msg) ->
-    let loc = Coq_elpi_utils.to_coq_loc loc in
-    CErrors.user_err ~loc Pp.(str (API.Ast.Loc.show oloc) ++ str msg)
+  (* TODO: ERROR SAME HASH *)
+  handle_elpi_compiler_errors ~loc (fun () ->
+    let ast = EP.program_from ~elpi ~loc:xloc (Lexing.from_string x) in
+    unit_from_ast ~elpi ~flags (Some hash) ~base ~loc ast)
 
-let parse_goal ~elpi loc text =
-  try EP.goal ~elpi ~loc ~text
-  with EP.ParseError(oloc, msg) ->
-    let loc = Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ~loc Pp.(str (API.Ast.Loc.show oloc) ++ str msg)
+let parse_goal ~elpi ~loc tloc text =
+  handle_elpi_compiler_errors ~loc (fun () ->
+    EP.goal ~elpi ~loc:tloc ~text)
 
-let assemble_units ~elpi units =
-  try EC.assemble ~elpi ~flags:(cc_flags ()) units
-  with EC.CompileError(oloc, msg) ->
-    let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ str msg)
-
-let extend_w_units ~base units =
-  try EC.extend ~flags:(cc_flags ()) ~base units
-  with EC.CompileError(oloc, msg) ->
-    let loc = Option.map Coq_elpi_utils.to_coq_loc oloc in
-    CErrors.user_err ?loc Pp.(str (Option.default "" @@ Option.map API.Ast.Loc.show oloc) ++ str msg)
-
+let assemble_units ~base ~loc units =
+  List.fold_left (fun base u ->
+    handle_elpi_compiler_errors ~loc (fun () ->
+      EC.extend ~base ~flags:(cc_flags ()) u))
+    base units
+let extend_w_units = assemble_units
 let program_src : program SLMap.t ref =
   Summary.ref ~name:("elpi-programs-src") SLMap.empty
 
@@ -410,11 +400,13 @@ let get ?(fail_if_not_exists=false) p =
       (* undup *)
       | File { fast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
       | EmbeddedString { sast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
-      | Database n  when SLSet.mem n dbs -> units, dbs, prog
+      | DatabaseHeader { dast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
+      | DatabaseBody n  when SLSet.mem n dbs -> units, dbs, prog
       (* add *)
       | File { fast = (kn,_ as u) } -> (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
       | EmbeddedString { sast = (kn,_ as u) } -> (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
-      | Database n ->  units, SLSet.add n dbs, Some (Code.snoc_db_opt n prog)
+      | DatabaseHeader { dast = (kn,_ as u) } ->  (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
+      | DatabaseBody n ->  units, SLSet.add n dbs, Some (Code.snoc_db_opt Hashtbl.hash n prog)
       in
     let prog = Option.get prog in
     { units; dbs; sources_rev = prog; empty = empty && from = Initialization }
@@ -449,6 +441,9 @@ let get ?(fail_if_not_exists=false) p =
       Not_found ->
         CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name))))
     
+  let db_code n : Chunk.t option =
+    SLMap.find_opt n !db_name_src |> Option.map (fun ({ sources_rev } : db) -> sources_rev)
+
   let append_to_db name kname c =
     try
       let (db : db) = SLMap.find name !db_name_src in
@@ -500,6 +495,9 @@ let get ?(fail_if_not_exists=false) p =
   let init_db qualid init =
     add_to_db qualid [init] [] Coq_elpi_utils.SuperGlobal
     
+  let header_of_db qulid =
+    Chunk.base @@ (SLMap.find qulid !db_name_src).sources_rev
+
   (* templates *)
   let lp_command_ast = Summary.ref ~name:("elpi-lp-command") None
   let in_lp_command_src : src -> Libobject.obj =
@@ -508,11 +506,11 @@ let get ?(fail_if_not_exists=false) p =
       load_function = (fun _ x -> lp_command_ast := Some x);
       classify_function = (fun _ -> Keep);
     }
-  let load_command s =
+  let load_command ~loc s =
     let elpi = ensure_initialized () in
     let ast = File {
       fname = s;
-      fast = unit_from_file ~elpi s
+      fast = unit_from_file ~elpi ~loc ~base:EC.(empty_base ~elpi) s
     } in
     lp_command_ast := Some ast;
     Lib.add_leaf (in_lp_command_src ast)
@@ -528,11 +526,11 @@ let get ?(fail_if_not_exists=false) p =
       load_function = (fun _ x -> lp_tactic_ast := Some x);
       classify_function = (fun _ -> Keep);
     }
-  let load_tactic s =
+  let load_tactic ~loc s =
     let elpi = ensure_initialized () in
     let ast = File {
       fname = s;
-      fast = unit_from_file ~elpi s
+      fast = unit_from_file ~elpi ~loc ~base:(EC.empty_base ~elpi) s
     } in
     lp_tactic_ast := Some ast;
     Lib.add_leaf (in_lp_tactic_ast ast)
@@ -555,43 +553,7 @@ let get ?(fail_if_not_exists=false) p =
     else
     init_db qualid init
   ;;
-  
-  let lp_checker_ast = Summary.ref ~name:("elpi-lp-checker") None
-  let in_lp_checker_ast : cunit list -> Libobject.obj =
-    let open Libobject in
-    declare_object { (default_object "ELPI-LP-CHECKER") with
-      load_function = (fun _ x -> lp_checker_ast := Some x);
-      classify_function = (fun _ -> Keep);
-    }
-  
-  let load_checker s =
-    let elpi = ensure_initialized () in
-    let basic_checker = unit_from_string ~elpi (Elpi.API.Ast.Loc.initial "(elpi-checker)") Elpi.Builtin_checker.code in
-    let coq_checker = unit_from_file ~elpi s in
-    let p = [basic_checker;coq_checker] in
-    Lib.add_leaf (in_lp_checker_ast p)
-  let checker () =
-    match !lp_checker_ast with
-    | None -> CErrors.user_err Pp.(str "Elpi Checker was not called")
-    | Some l -> List.map snd l
-  
-  let lp_printer_ast = Summary.ref ~name:("elpi-lp-printer") None
-  let in_lp_printer_ast : cunit -> Libobject.obj =
-    let open Libobject in
-    declare_object { (default_object "ELPI-LP-PRINTER") with
-      load_function = (fun _ x -> lp_printer_ast := Some x);
-      classify_function = (fun _ -> Keep);
-    }
-  let load_printer s =
-    let elpi = ensure_initialized () in
-    let ast = unit_from_file ~elpi s in
-    lp_printer_ast := Some ast;
-    Lib.add_leaf (in_lp_printer_ast ast)
-  let printer () =
-    match !lp_printer_ast with
-    | None -> CErrors.user_err Pp.(str "Elpi Printer was not called")
-    | Some l -> snd l
-  
+    
   let accumulate p (v : src list) =
     if not (program_exists p) then
       CErrors.user_err Pp.(str "No Elpi Program named " ++ pr_qualified_name p);
@@ -608,6 +570,148 @@ let get ?(fail_if_not_exists=false) p =
   let db_inspect name =
     try Names.KNset.cardinal (SLMap.find name !db_name_src).units
   with Not_found -> -1
+    
+  let unit_from_ast ~elpi ~base ~loc h ast =
+    unit_from_ast ~elpi ~base h ~loc ast ~flags:(cc_flags ())
+
+
+
+(* Units are marshalable, but programs are not *)
+
+let compiler_cache_code = Summary.ref ~local:true
+  ~name:("elpi-compiler-cache-code")
+  Int.Map.empty
+let compiler_cache_chunk = Summary.ref ~local:true
+  ~name:("elpi-compiler-cache-chunk")
+  Int.Map.empty
+
+let programs_tip = Summary.ref ~local:true
+  ~name:("elpi-compiler-cache-gc")
+  SLMap.empty
+
+(* lookup/cache for hash h shifted over base b *)
+
+type cache_stats = { lookups : int; hits : int }
+let cache_stats = ref { lookups = 0; hits = 0 }
+
+let find_with_stats k t =
+  let { lookups; hits } = !cache_stats in
+  try
+    let rc = Int.Map.find k t in
+    cache_stats := { lookups = lookups + 1; hits = hits + 1 };
+    rc
+  with Not_found ->
+    cache_stats := { lookups = lookups + 1; hits };
+    raise Not_found
+
+let () = at_exit (fun () ->
+  let { lookups; hits } = !cache_stats in
+  Coq_elpi_utils.debug Pp.(fun () ->
+    str(Format.asprintf "Compiler cache: lookups=%d, hits=%d\n" lookups hits))
+)
+
+let lookup b h src r cmp pp =
+  let h = combine_hash b h in
+  let p, src' = find_with_stats h !r in
+  if cmp src src' then p else
+    let () = Format.eprintf "@[%a@]%!" pp src in
+    let () = Format.eprintf "@[%a@]%!" pp src' in
+    assert false
+
+let cache b h prog src r =
+  let h = combine_hash b h in
+  r := Int.Map.add h (prog,src) !r;
+  prog
+
+let uncache b h r =
+  let h = combine_hash b h in
+  r := Int.Map.remove h !r
+    
+let lookup_code b h src = lookup b h src compiler_cache_code (Code.eq Chunk.eq) (Code.pp Chunk.pp)
+let lookup_chunk b h src = lookup b h src compiler_cache_chunk Chunk.eq Chunk.pp
+
+let cache_code b h prog src = cache b h prog src compiler_cache_code
+let cache_chunk b h prog src = cache b h prog src compiler_cache_chunk
+  
+let recache_code b h1 h2 p src =
+  uncache b h1 compiler_cache_code;
+  cache_code b h2 p src
+
+let recache_chunk b h1 h2 p src =
+  uncache b h1 compiler_cache_chunk;
+  cache_chunk b h2 p src
+
+let compile ~loc src =
+  let rec compile_code src =
+    let h = Code.hash src in
+    try
+      lookup_code 0 h src
+    with Not_found ->
+      match src with
+      | Code.Base { base = (k,u) } ->
+          let elpi = ensure_initialized () in
+          let prog = extend_w_units ~base:(EC.empty_base ~elpi) ~loc [u] in
+          cache_code 0 h prog src
+      | Code.Snoc { prev; source } ->
+          let base = compile_code prev in
+          let prog = extend_w_units ~base ~loc [snd source] in
+          if Code.cache src then cache_code 0 h prog src else prog
+      | Code.Snoc_db { prev; chunks } ->
+          let base = compile_code prev in
+          let prog = compile_chunk (Code.hash prev) base chunks in
+          prog
+  and compile_chunk bh base src =
+    (* DBs have to be re-based on top of base, hence bh *)
+    let h = Chunk.hash src in
+    try
+      lookup_chunk bh h src
+    with Not_found ->
+      match src with
+      | Chunk.Base _ ->
+          base (* the base of dbs is accumulated with a Snoc so to avoid accumulating it twice when "Accumulate Db Header" is followed by "Accumulate Db" *)
+      | Chunk.Snoc { prev; source_rev } ->
+          let base = compile_chunk bh base prev in
+          let prog = extend_w_units ~base ~loc (List.rev_map snd source_rev) in
+          recache_chunk bh (Chunk.hash prev) h prog src
+  in
+    compile_code src
+
+let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
+  let t = Unix.gettimeofday () in
+  let res = code ?even_if_empty name |> Option.map (fun src ->
+    let prog = compile ~loc src in
+    let new_hash = Code.hash src in
+    let old_hash = try SLMap.find name !programs_tip with Not_found -> 0 in
+    programs_tip := SLMap.add name new_hash !programs_tip;
+    let prog = recache_code 0 old_hash new_hash prog src in
+    let raw_args =
+      match get_nature name with
+      | Command { raw_args } -> raw_args
+      | Program { raw_args } -> raw_args
+      | Tactic -> true in
+      (prog, raw_args)) in
+    Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
+    res
+
+  let rec compile_db ~loc src =
+    let h = Chunk.hash src in
+    try
+      lookup_chunk 0 h src
+    with Not_found ->
+      match src with
+      | Chunk.Base { base = (k,u) } ->
+          let elpi = ensure_initialized () in
+          let prog = extend_w_units ~loc ~base:(EC.empty_base ~elpi) [u] in
+          cache_chunk 0 h prog src
+      | Chunk.Snoc { prev; source_rev } ->
+          let base = compile_db ~loc prev in
+          let prog = extend_w_units ~loc ~base (List.rev_map snd source_rev) in
+          cache_chunk 0 h prog src
+    
+  let get_and_compile_existing_db ~loc name : EC.program =
+    match db_code name with
+    | None -> err Pp.(str "Unknown Db " ++ pr_qualified_name name)
+    | Some db -> compile_db ~loc db
     
 end
 
@@ -642,6 +746,15 @@ let coq_synterp_builtins =
   API.BuiltIn.declare
     ~file_name:"coq-builtin-synterp.elpi"
     begin
+      [
+        API.BuiltIn.LPCode {|
+kind implicit_kind type.
+kind field-attribute type.
+kind upoly-decl type.
+kind upoly-decl-cumul type.
+
+        |}
+      ] @
       Coq_elpi_builtins.coq_misc_builtins @
       Coq_elpi_builtins_synterp.coq_synterp_builtins
     end
@@ -733,12 +846,12 @@ module Synterp : Programs = struct
   end
   include SourcesStorage(S)
 
-  let () = Coq_elpi_builtins_synterp.set_accumulate_to_db_synterp (fun clauses_to_add ->
+  let () = Coq_elpi_builtins_synterp.set_accumulate_to_db_synterp (fun ~loc clauses_to_add ->
     let elpi = ensure_initialized () in
-    let flags = cc_flags () in
     let clauses_to_add = clauses_to_add |> group_clauses |>
       List.map (fun (dbname,asts,vs,scope) ->
-        let units = List.map (unit_from_ast ~elpi ~flags None) asts in
+        let base = get_and_compile_existing_db ~loc dbname in
+        let units = List.map (unit_from_ast ~elpi ~base None ~loc) asts in
         dbname,units,vs,scope) in
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
       accumulate_to_db dbname units vs ~scope))
@@ -754,20 +867,20 @@ module Interp : Programs = struct
         ~quotations:interp_quotations ~builtins:[elpi_builtins;coq_interp_builtins] ~file_resolver ()
   end)
 
-let () = Coq_elpi_builtins.set_accumulate_to_db_interp (fun clauses_to_add ->
+let () = Coq_elpi_builtins.set_accumulate_to_db_interp (fun ~loc clauses_to_add ->
   let elpi = ensure_initialized () in
-  let flags = cc_flags () in
   let clauses_to_add = clauses_to_add |> group_clauses |>
     List.map (fun (dbname,asts,vs,scope) ->
-      let units = List.map (unit_from_ast ~elpi ~flags None) asts in
+      let base = get_and_compile_existing_db ~loc dbname in
+      let units = List.map (unit_from_ast ~elpi ~base None ~loc) asts in
       dbname,units,vs,scope) in
   clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
     accumulate_to_db dbname units vs ~scope))
   
-let () = Coq_elpi_builtins.set_accumulate_text_to_db_interp (fun n txt scope ->
-  let elpi = ensure_initialized () in
-  let loc = API.Ast.Loc.initial "(elpi.add_predicate)" in
-  let u = unit_from_string ~elpi loc txt in
+let () = Coq_elpi_builtins.set_accumulate_text_to_db_interp (fun ~loc n txt scope ->
+      let elpi = ensure_initialized () in
+      let base = get_and_compile_existing_db ~loc n in
+      let u = unit_from_string ~elpi ~base ~loc (of_coq_loc loc) txt in
   accumulate_to_db n [u] [] ~scope)
 
 end

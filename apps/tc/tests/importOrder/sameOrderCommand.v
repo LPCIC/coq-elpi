@@ -12,6 +12,6 @@ Elpi Accumulate File base.
 Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
 Elpi Accumulate File tc_same_order.
-Elpi Typecheck.
+
 
 Elpi TC Solver Override TC.Solver All.

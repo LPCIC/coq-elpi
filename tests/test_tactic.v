@@ -7,7 +7,7 @@ Elpi Accumulate lp:{{
     coq.ltac.open (refine {{ id _ }}) G2 GL,
     coq.say G2.
 }}.
-Elpi Typecheck.
+
 
 Lemma foo (P : Prop) :
 P -> P.
@@ -35,7 +35,7 @@ Elpi Accumulate lp:{{
 
 }}.
 
-Elpi Typecheck.
+
 
 Section foo.
 
@@ -67,7 +67,7 @@ Elpi Accumulate lp:{{
   solve (goal _Ctx _Solution _T _RefinedSolution _ as G) [seal G].
 
 }}.
-Elpi Typecheck.
+
 
 Elpi Tactic intro.
 Elpi Accumulate lp:{{
@@ -77,7 +77,7 @@ Elpi Accumulate lp:{{
     refine (fun N Src_ Tgt_) G GS.
 
 }}.
-Elpi Typecheck.
+
 
 Elpi Tactic refl.
 Elpi Accumulate lp:{{
@@ -86,7 +86,7 @@ Elpi Accumulate lp:{{
     Solution = {{refl_equal _}}.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test_tactics (T : Type) (x : T) : forall e : x=x, e = e.
 Proof.
@@ -109,7 +109,7 @@ Elpi Accumulate lp:{{
     coq.say "hello".
 
 }}.
-Elpi Typecheck.
+
 
 Definition one : nat.
 Proof.
@@ -133,7 +133,7 @@ solve (goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _) _ :-
     coq.say [H,HT]
 .
 }}.
-Elpi Typecheck.
+
 Elpi Print test_typecheck_in_ctx "elpi.tests/test_typecheck_in_ctx".
 
 Section T.
@@ -156,7 +156,7 @@ solve (goal _ Ev T _ [str Msg, int N, trm X, str Q]) _ :-
   Ev = X.
 
 }}.
-Elpi Typecheck.
+
 
 Section T1.
 Variable a : nat.
@@ -181,7 +181,7 @@ solve (goal _ _ _ _ []) _ :-
   coq.env.add-const "xxx" _ {{ nat }} _ _.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test_impure : True.
 Proof.
@@ -196,7 +196,7 @@ Elpi Accumulate lp:{{
 solve (goal _ _ _ _ A) _ :- coq.say A, print_constraints.
 
 }}.
-Elpi Typecheck.
+
 
 Tactic Notation "test_cl" constr_list(X) := elpi test.notation ltac_term_list:(X).
 Tactic Notation "test_ocl" open_constr_list(X) := elpi test.notation ltac_term_list:(X).
@@ -270,7 +270,7 @@ Elpi Accumulate lp:{{
   solve G GL :-
     coq.ltac.thenl [coq.ltac.open myexists, coq.ltac.open myrefl] (seal G) GL.
 }}.
-Elpi Typecheck.
+
 
 Goal exists x, x = 1.
 elpi test_sideeff.
@@ -284,7 +284,7 @@ Elpi Accumulate lp:{{
     coq.say "XXXXXXXXXXXXXXXXXXXXXXXXXXX" Opts,
     Opts => get-option "foo" tt.
 }}.
-Elpi Typecheck.
+
 
 Tactic Notation "#[" attributes(A) "]" "testatt" := ltac_attributes:(A) elpi test_att.
 Tactic Notation "testatt" "#[" attributes(A) "]" := ltac_attributes:(A) elpi test_att.
@@ -311,7 +311,7 @@ Elpi Accumulate lp:{{
   msolve GL New :- coq.say {attributes},
     coq.ltac.all (coq.ltac.open type-arg) GL New.
 }}.
-Elpi Typecheck.
+
 
 Goal (forall x : nat, x = x) /\ (forall x : bool, x = x).
 split; intro x.
@@ -359,7 +359,7 @@ Elpi Tactic t.
 Elpi Accumulate lp:{{
   solve G _ :- coq.say G.
 }}.
-Elpi Typecheck.
+
 
 Tactic Notation "t1" constr(h) := idtac h.
 Tactic Notation "t2" constr(h) := elpi t ltac_term:(h).
@@ -381,7 +381,7 @@ Elpi Accumulate lp:{{
   solve (goal C R T P [tac F, tac X]) GL :-
     coq.ltac.call-ltac1 F (goal C R T P [tac X]) GL.
 }}.
-Elpi Typecheck.
+
 
 Tactic Notation "foo" simple_intropattern_list(l) :=
   elpi app ltac_tactic:(let f x := x in f) ltac_tactic:( intros l ).
@@ -396,14 +396,15 @@ Abort.
 
 Elpi Tactic fresh1.
 Elpi Accumulate lp:{{
-  solve (goal _ _ {{ forall _ : lp:Ty, _ }} _ _ as G) GL :-
+  solve (goal _ _ {{ forall x : lp:Ty, _ }} _ _ as G) GL :-
     coq.ltac.fresh-id "x" Ty ID,
     coq.id->name ID N,
     refine (fun N _ _) G GL.
 }}.
-Elpi Typecheck.
+
 Goal forall x z y, x = 1 + y + z.
 intros x x0.
+Elpi Trace.
 elpi fresh1.
 Check x1.
 Abort.

@@ -54,7 +54,7 @@ Module M3.
       :before "0" tc-elpi.apps.tc.tests.hyp_in_conl.M3.tc-A _   :- coq.say "In tc-A", fail.
       :before "0" tc-elpi.apps.tc.tests.hyp_in_conl.M3.tc-B _ _ :- coq.say "In tc-B", fail.
     }}.
-    Elpi Typecheck TC.Solver.
+    
     Local Instance AX : A := {}.
     Local Instance BX : A -> (B AX) := {}.
 

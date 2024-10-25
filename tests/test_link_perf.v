@@ -10,7 +10,7 @@ Elpi Accumulate lp:{{
   main [].
   main [_] :- coq.say {std.findall (p _)}.
 }}.
-Elpi Typecheck.
+
 
 Elpi Command add.
 Elpi Accumulate Db foo.db.
@@ -21,7 +21,7 @@ Elpi Accumulate lp:{{
       new_int N,
       coq.elpi.accumulate _ "foo.db" (clause _ _ (p N)) ).
 }}.
-Elpi Typecheck.
+
 
 (* HB pattern *)
 

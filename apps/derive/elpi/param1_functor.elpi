@@ -61,6 +61,7 @@ bo-k-args ParamsRev K _ Args Tys R :-
   coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
   (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R).
 
+pred bo-k-args.aux i:term, i:list term, i:list term, i:term, o:term.
 bo-k-args.aux K [A,PA|Args] [_,TPA|Types] {{ forall x (px : lp:(TPB x)), lp:(Ty x px) }} R :-
   not(same_term TPA (TPB A)), param1-functor-db TPA (TPB A) F, !,
   coq.mk-app K [A, {{ lp:F lp:PA }}] KAPFA,
@@ -127,7 +128,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :-
     coq.mk-app Ity2 [a] Ity2A,
       decl a A Sty1 => bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) [a|Ps] (Bo a).
 
-pred map-pi i:A, o:list B.
+pred map-pi i:any, o:list prop.
 map-pi (x\ []) [].
 map-pi (x\ [X x| XS x]) [pi x\ X x | YS] :- map-pi XS YS.
 

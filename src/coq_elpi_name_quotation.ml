@@ -7,19 +7,21 @@ open Coq_elpi_utils
 open Coq_elpi_HOAS
 open Names
 
-let to_name src =
-    if src = "_" then in_elpi_name Name.Anonymous
-    else in_elpi_name (Name.Name (Id.of_string src))
+let to_name ~loc src =
+    if src = "_" then in_elpiast_name ~loc Name.Anonymous
+    else in_elpiast_name ~loc (Name.Name (Id.of_string src))
 
 (* Install the quotation *)
 let () =
-  let f ~depth state _loc src = state, to_name src in
-  API.Quotation.register_named_quotation ~descriptor:interp_quotations ~name:"name" f;
-  API.Quotation.register_named_quotation ~descriptor:synterp_quotations ~name:"name" f
+  let f ~language state loc src = to_name ~loc src in
+  let _ = API.Quotation.register_named_quotation ~descriptor:interp_quotations ~name:"name" f in
+  let _ = API.Quotation.register_named_quotation ~descriptor:synterp_quotations ~name:"name" f in
+  ()
 
 let () =
-  let f state s =
+  let f ~language state loc s =
     let src = String.sub s 1 (String.length s - 2) in
-    state, to_name src in
-  API.Quotation.declare_backtick ~descriptor:interp_quotations ~name:"Name.t" f;
-  API.Quotation.declare_backtick ~descriptor:synterp_quotations ~name:"Name.t" f
+    to_name ~loc src in
+  let _ = API.Quotation.declare_backtick ~descriptor:interp_quotations ~name:"Name.t" f in
+  let _ = API.Quotation.declare_backtick ~descriptor:synterp_quotations ~name:"Name.t" f in
+  ()

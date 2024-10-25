@@ -30,7 +30,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.map <inductive type name>".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.map.db.

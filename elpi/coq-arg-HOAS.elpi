@@ -73,6 +73,7 @@ kind record-decl type.
 %
 % See also the arity->term predicate in coq-lib.elpi
 
+kind arity type.
 type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
 type arity term -> arity.
 

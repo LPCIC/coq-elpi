@@ -155,12 +155,13 @@ expand R GR NGR X Y Clause :-
 % generated. Since we don't know it yet (Coq tells us in response to coq.env.add-const)
 % we postulate a name for that constant "nc" and later replace it with the real one "NC"
 pred expand-gref i:inductive, i:gref, i:string, o:prop.
-expand-gref Record (const C) Name Clause :- !,
+expand-gref Record (const C) Name Clause :- !, std.do! [
   std.assert! (coq.env.const C (some Bo) _) "only transparent constants can be expanded",
   (pi nc\ expand Record (const C) nc Bo NewBo (NClause nc)),
   std.assert-ok! (coq.typecheck NewBo _) "illtyped",
   coq.env.add-const Name NewBo _ _ NC,
-  Clause = NClause (const NC).
+  Clause = NClause (const NC),
+].
 
 expand-gref _ (indt _) _ _ :- coq.error "Not implemented yet".
 
@@ -179,7 +180,7 @@ main [str R, str In, str Prefix] :- !,
 
 main _ :- coq.error "usage: Elpi record.expand record_name global_term prefix".
 }}.
-Elpi Typecheck.
+
 
 Record r := { T :> Type; X := T; op : T -> X -> bool }.
 
@@ -190,7 +191,7 @@ Definition f b (t : r) (q := negb b) := fix rec (l1 l2 : list t) :=
   | _, _ => q
   end.
 
-Elpi record.expand r f "expanded_".
+Elpi record.expand r f "expanded_". 
 Print f.
 Print expanded_f.
 

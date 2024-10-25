@@ -38,7 +38,6 @@ cs _ {{ sort lp:Sol }} {{ nat }} :-
   Sol = {{ Build_S nat }}.
 
 }}.
-Elpi Typecheck canonical_solution.
 
 Check eq_refl _ : (sort _) = nat.
 ```

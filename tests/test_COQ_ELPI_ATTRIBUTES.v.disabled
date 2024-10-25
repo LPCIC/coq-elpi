@@ -19,7 +19,7 @@ main _ :-
            get-option "elpi.str" "some-string").
 
 }}.
-Elpi Typecheck.
+
 Elpi Export test.
 
 test.

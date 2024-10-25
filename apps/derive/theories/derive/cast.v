@@ -20,7 +20,7 @@ main [int N] :-
 
 }}.
 
-Elpi Typecheck.
+
 
 Elpi derive.cast 2.
 Elpi derive.cast 3.

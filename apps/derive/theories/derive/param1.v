@@ -52,6 +52,7 @@ Register is_float64 as elpi.derive.is_float64.
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
 Elpi Db derive.param1.db lp:{{
+type stop string -> prop.
 
 pred reali-done i:gref.
 
@@ -91,7 +92,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.param1 <object name>".
 }}. 
-Elpi Typecheck.
+
 Module Export exports.
 Elpi derive.param1 eq.
 End exports.

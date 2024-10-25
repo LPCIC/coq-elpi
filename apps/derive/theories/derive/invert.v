@@ -22,7 +22,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.invert <inductive type name> [<output name>]".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File invert.

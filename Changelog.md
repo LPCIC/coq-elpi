@@ -1,5 +1,11 @@
 # Development version
 
+### Vernacular
+- `Elpi Accumulate Db Header <db>` to accumulate just the `Db` declaration
+  but no code added after that
+- `Elpi Typecheck` is deprecated and is a no-op since `Elpi Accumulate`
+  performs type checking incrementally
+
 ### Build system
 - Support dune workspace build with `elpi`
 

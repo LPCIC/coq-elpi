@@ -16,6 +16,8 @@ Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
 
 Elpi Db derive.eq.db lp:{{
+  type stop string -> prop.
+  type whd1 term -> term -> prop.
 
 % full resolution (composes with eq functions for parameters)
 type eq-db term -> term -> term -> prop.
@@ -50,7 +52,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.eq <inductive type name> [<output name>]".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eq.db.

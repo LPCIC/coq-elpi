@@ -39,7 +39,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.eqOK <inductive name> [<output name>]".
 }}.  
-Elpi Typecheck.
+
 
   
 (* hook into derive *)

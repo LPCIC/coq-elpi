@@ -17,7 +17,7 @@ Elpi Accumulate lp:{{
   main [str S] :- coq.say "Phone prefix for" S "is" {phone_prefix S}, !.
   main [str S] :- coq.error "No prefix for" S.
 }}.
-Elpi Typecheck.
+
 
 Elpi print_db.
 Elpi print_db USA.
@@ -29,7 +29,7 @@ Elpi Accumulate lp:{{
   main [str S, int N] :-
     coq.elpi.accumulate _ "phonebook.db" (clause _ _ (phone_prefix S N)).
 }}.
-Elpi Typecheck.
+
 
 Elpi add_db France 33.
 Elpi add_db Italy 39.
@@ -66,21 +66,21 @@ Elpi Accumulate lp:{{
     std.forall TastyConditions (i\
       coq.elpi.accumulate _ "food.db" (clause _ _ (tasty Name :- i))).
 }}.
-Elpi Typecheck.
+
 
 Elpi Command is_sweet.
 Elpi Accumulate Db food.db.
 Elpi Accumulate lp:{{
   main [str Name] :- if (sweet Name) (coq.say "sweet!") (coq.say "brr").
 }}.
-Elpi Typecheck.
+
 
 Elpi Command is_tasty.
 Elpi Accumulate Db food.db.
 Elpi Accumulate lp:{{
   main [str Name] :- if (tasty Name) (coq.say "yummy!") (coq.say "bohf").
 }}.
-Elpi Typecheck.
+
 
 Elpi add_recipy "pie"   "potato" "salmon".
 Elpi add_recipy "jam"   "apricot".

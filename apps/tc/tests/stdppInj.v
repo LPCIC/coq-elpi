@@ -173,7 +173,7 @@ Section prod_setoid.
       coq.unify-eq RC Res ok,
       tc-Inj2 A B C RA RB Res F S.
   }}.
-  Elpi Typecheck TC.Solver.
+  
 
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
 End prod_setoid.
@@ -215,7 +215,7 @@ Elpi Accumulate TC.Solver lp:{{
   tc-Inj A B RA {{@equiv (sum _ _) (@sum_equiv _ _ _ _)}} S C :-
     tc-Inj A B RA {{sum_relation _ _}} S C.
 }}.
-Elpi Typecheck TC.Solver.
+
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.
@@ -230,7 +230,7 @@ Elpi Accumulate TC.Solver lp:{{
     coq.unify-eq G F ok, 
     tc-Inj A B RA RB G X.
 }}.
-Elpi Typecheck TC.Solver.
+
 
 Definition f := Nat.add 0.
 Global Instance h: Inj eq eq f. 
@@ -248,7 +248,7 @@ Elpi Accumulate TC.Solver lp:{{
 }}. 
 Set Warnings "+elpi".
 
-Elpi Typecheck TC.Solver.
+
 Goal Inj eq eq (compose (@id nat) id).
 apply _.
 Qed.

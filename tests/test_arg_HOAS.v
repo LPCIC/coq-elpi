@@ -49,7 +49,7 @@ main [ctx-decl (context-item "T" _ _ none t\
 
 main Args :- coq.error Args.
 }}.
-Elpi Typecheck.
+
 
 #[arguments(raw)]
 Elpi Command raw_declarations.
@@ -101,7 +101,7 @@ main [ctx-decl (context-item "T" _ _ none t\
 
 main Args :- coq.error Args.
 }}.
-Elpi Typecheck.
+
 
 (*****************************************)
 
@@ -378,7 +378,7 @@ Elpi Accumulate lp:{{
       .
 
 }}.
-Elpi Typecheck.
+
 
 Elpi bug_394
   Definition D `{l : L} : Prop := True
