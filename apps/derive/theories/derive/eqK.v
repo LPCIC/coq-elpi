@@ -35,6 +35,7 @@ Register bool_discr as elpi.bool_discr.
 
 Elpi Db derive.eqK.db lp:{{
 
+type stop string -> prop.
 type eqK-db constructor -> term -> prop.
 
 :name "eqK-db:fail"
@@ -60,7 +61,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.eqK <inductive type name> [<prefix>]".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eqK.db.

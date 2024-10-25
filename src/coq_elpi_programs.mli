@@ -11,16 +11,19 @@ type program_name = Loc.t * qualified_name
 type src =
   | File of src_file
   | EmbeddedString of src_string
-  | Database of qualified_name
+  | DatabaseBody of qualified_name
+  | DatabaseHeader of src_db_header
 and src_file = {
   fname : string;
   fast : cunit;
 }
 and src_string = {
-  sloc : Ast.Loc.t;
-  sdata : string;
   sast : cunit;
 }
+and src_db_header = {
+  dast : cunit;
+}
+
 type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
 
 
@@ -37,6 +40,8 @@ module Chunk : sig
     }
   val hash : t -> int
   val eq : t -> t -> bool
+  val pp : Format.formatter -> t -> unit
+
 end
   
 module Code : sig
@@ -59,6 +64,7 @@ module Code : sig
   val hash : 'db t -> int
   val cache : 'db t -> bool
   val eq : ('db -> 'db -> bool) -> 'db t -> 'db t -> bool
+  val pp : (Format.formatter -> 'db -> unit) -> Format.formatter -> 'db t -> unit
   val snoc_opt : cunit -> 'db t option -> 'db t
 end
 
@@ -72,12 +78,11 @@ module type Programs = sig
 
   val debug_vars : Compile.StrSet.t ref
   val cc_flags : unit -> Compile.flags
-  val unit_from_file   : elpi:Setup.elpi -> string -> cunit
-  val unit_from_string : elpi:Setup.elpi -> Ast.Loc.t -> string -> cunit
-  val assemble_units : elpi:Setup.elpi -> Compile.compilation_unit list -> Compile.program
-  val extend_w_units : base:Compile.program -> Compile.compilation_unit list -> Compile.program
-  val parse_goal : elpi:Setup.elpi -> Ast.Loc.t -> string -> Ast.query
-  val intern_unit : (string option * Compile.compilation_unit * Compile.flags) -> cunit
+  val unit_from_file   : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string -> cunit
+  val unit_from_string : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> Ast.Loc.t -> string -> cunit
+  val unit_from_ast    : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Ast.program -> cunit
+  val extend_w_units : base:Compile.program -> loc:Loc.t -> Compile.compilation_unit list -> Compile.program
+  val parse_goal : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Ast.query
 
   val db_exists : qualified_name -> bool
   val program_exists : qualified_name -> bool
@@ -87,19 +92,16 @@ module type Programs = sig
 
   val init_program : program_name -> src -> unit
   val init_db : program_name -> cunit -> unit
+  val header_of_db : qualified_name -> cunit
 
   val accumulate : qualified_name -> src list -> unit
   val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
 
-  val load_checker : string -> unit
-  val load_printer : string -> unit
-  val load_command : string -> unit
-  val load_tactic : string -> unit
+  val load_command : loc:Loc.t -> string -> unit
+  val load_tactic : loc:Loc.t -> string -> unit
 
   val ensure_initialized : unit -> Setup.elpi
 
-  val checker : unit -> Compile.compilation_unit list
-  val printer : unit -> Compile.compilation_unit
   val tactic_init : unit -> src
   val command_init : unit -> src
 
@@ -108,6 +110,11 @@ module type Programs = sig
   val in_stage : string -> string
   val stage : Summary.Stage.t
   val db_inspect : qualified_name -> int
+
+  val get_and_compile_existing_db : loc:Loc.t -> qualified_name -> Compile.program
+  val get_and_compile : loc:Loc.t -> ?even_if_empty:bool -> qualified_name -> (Compile.program * bool) option
+
+
 end
 
 (** [resolve_file_path ~must_exist ~allow_absolute ~only_elpi file] interprets

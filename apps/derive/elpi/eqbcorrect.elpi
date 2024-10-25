@@ -2,6 +2,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+type feqb.trm->term trm -> term -> prop.
+type stop string -> prop.
+
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
 
@@ -86,7 +89,7 @@ main (const C) Prefix [Clause] :- std.do! [
   std.assert-ok! (coq.typecheck Refl _) "eqbcorrect: illtyped refl",
   NameR is Prefix ^ "eqb_refl",
   NameC is Prefix ^ "eqb_correct",
-  X = global (const C),
+  X = (global (const C) : term),
   coq.ensure-fresh-global-id NameR FNameR,
   coq.ensure-fresh-global-id NameC FNameC,
   coq.env.add-const FNameC Correct {{ @eqb_correct  lp:X lp:F }} @transparent! CC,
@@ -182,7 +185,7 @@ common (inductive I Ks) ParamsRev Ind O :- std.do! [
   coq.mk-app (global (const ConstructC)) Params Construct,
   coq.mk-app (global (const ConstructPC)) Params ConstructP,
   eqb-fields Ty Ty EqbFields,
-  Common = {{ lp:Pred_body lp:Ty lp:Tag lp:Fields_t lp:Fields lp:Construct lp:ConstructP lp:EqbFields }},
+  Common = ({{ lp:Pred_body lp:Ty lp:Tag lp:Fields_t lp:Fields lp:Construct lp:ConstructP lp:EqbFields }} : term),
   std.assert-ok! (coq.typecheck Common CommonTy) "WTF",
 
   mk-reali (global (indt I)) IR, % param1-db, really
@@ -198,7 +201,7 @@ common (inductive I Ks) ParamsRev Ind O :- std.do! [
     std.do! [
       std.map (Ks i) (branch Params) (LS c),
       std.append (LS c) [x, app[Is_full,x]] (Args x c),
-      R x c = app [Ind, {{ lp:Pred_on lp:Ty lp:Cmp }} | Args x c],
+      R x c = (app [Ind, {{ lp:Pred_on lp:Ty lp:Cmp }} | Args x c] : term),
     ]),
   O = {{ fun (x :lp:Ty) (common : lp:CommonTy := lp:Common) => lp:(R x common) }},
 ].
@@ -244,7 +247,7 @@ common-aux (inductive I Ks) ParamsRev Ind O :- std.do! [
   coq.mk-app (global (const ConstructC)) Params Construct,
   coq.mk-app (global (const ConstructPC)) Params ConstructP,
   eqb-fields Ty Ty EqbFields,
-  Common = {{ lp:Pred_body lp:Ty lp:Tag lp:Fields_t lp:Fields lp:Construct lp:ConstructP lp:EqbFields }},
+  Common = ({{ lp:Pred_body lp:Ty lp:Tag lp:Fields_t lp:Fields lp:Construct lp:ConstructP lp:EqbFields }} : term),
   std.assert-ok! (coq.typecheck Common CommonTy) "WTF",
   prove Db Ty {{ fun (i : lp:Ty) (Hi : lp:Pred_on lp:Ty lp:Cmp i) => Hi }} => 
   reali Ty {{ lp:Pred_on lp:Ty lp:Cmp }} => 
@@ -308,8 +311,8 @@ args (stop TY) K As Hs Bs 0 {{ lp:B : lp:Pred_on lp:T lp:Cmp lp:K }} :- % no tri
   std.assert! (common-body Common) "anomaly, no let for common body proof",
   coq.mk-app Common [K,{{ fun (x : lp:Fields_t (lp:Tag lp:K)) => lp:(Proof x) }}] B,
   @pi-decl `x` {{ lp:Fields_t (lp:Tag lp:K) }} x\
-    HYP  = (x\ {{ @eq bool (lp:EqbFields (lp:Tag lp:K) (lp:Fields lp:K) lp:x) true }}),
-    GOAL = (x\ {{ @eq (option lp:T) (@Some lp:T lp:K) (lp:Construct (lp:Tag lp:K) lp:x) }}),
+    HYP  = (x\ {{ @eq bool (lp:EqbFields (lp:Tag lp:K) (lp:Fields lp:K) lp:x) true }} : term -> term),
+    GOAL = (x\ {{ @eq (option lp:T) (@Some lp:T lp:K) (lp:Construct (lp:Tag lp:K) lp:x) }} : term -> term),
     correct-proof x {{ lp:Fields_t (lp:Tag lp:K) }} HYP GOAL As Bs Hs (Proof x)
 ].
 args (stop TY) K _As _Hs _Bs _ {{ lp:B : lp:Pred_on lp:T lp:Cmp lp:K }} :-
@@ -339,7 +342,7 @@ cp.bs As Bs Hs G K _ Vs Ts {{ @impliesP lp:Bools lp:P lp:Next }} :-
 
 pred cp.curry i:list term, i:list term, i:list term, i:list term, i:list term, i:list term, i:list term, i:(term -> term), i:term, o:term.
 cp.curry [B|Bs] As [V|Vs] OVs Ts Hs Hs2 G K W :- std.do! [
-  TyH = {{ @eq bool (lp:B lp:V) true }},
+  TyH = ({{ @eq bool (lp:B lp:V) true }} : term),
   (@pi-decl `h` TyH h\ cp.curry Bs As Vs OVs Ts Hs [h|Hs2] G K (R h)),
   W = {{ fun h : lp:TyH => lp:(R h) }},
 ].
@@ -347,7 +350,7 @@ cp.curry [] As [] Vs Ts Hs Hs2 G K R :- std.do! [
   mktlistcorrect {std.rev Ts} {{ tnil }} Types,
   mkrewpred Ts K G P,
   (pi x\ sigma X\G x = {{ @eq lp:T lp:LHS lp:X }}),
-  End = {{ @eq_refl lp:T lp:LHS }},
+  End = ({{ @eq_refl lp:T lp:LHS }} : term),
   mkeqns {std.rev As} Vs {std.rev Hs} {std.rev Hs2} Eqns,
   coq.mk-app {{ @eq_ind_r_nP lp:Types lp:P }} {std.append Eqns [End]} R,
 ].
@@ -380,7 +383,7 @@ args (stop TY) K _As Hs Bs _ {{ lp:B : lp:Pred_on lp:T lp:Cmp lp:K }} :-
   mk-eqb-for T Cmp,
   std.assert! (common-body Common) "anomaly, no let for common body proof",
   mkblistrefl {std.rev Bs} {{ bnil }} Bools,
-  Proof = app [ {{ @eqb_refl_statementP }} , Bools | Hs ],
+  Proof = (app [ {{ @eqb_refl_statementP }} , Bools | Hs ] : term),
   coq.mk-app Common [K,Proof] B,
 ].
 

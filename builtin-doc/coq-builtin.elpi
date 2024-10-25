@@ -88,6 +88,7 @@ kind record-decl type.
 %
 % See also the arity->term predicate in coq-lib.elpi
 
+kind arity type.
 type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
 type arity term -> arity.
 
@@ -562,15 +563,15 @@ external pred coq.version o:string, o:int, o:int, o:int.
 % [@bla].
 
 % Global constant name
-typeabbrev constant (ctype "constant").
+kind constant type.
 
 
 % Inductive type name
-typeabbrev inductive (ctype "inductive").
+kind inductive type.
 
 
 % Inductive constructor name
-typeabbrev constructor (ctype "constructor").
+kind constructor type.
 
 
 % Global objects: inductive types, inductive constructors, definitions
@@ -585,11 +586,11 @@ typeabbrev id string.
 
 
 % Name of a module /*E*/
-typeabbrev modpath (ctype "modpath").
+kind modpath type.
 
 
 % Name of a module type /*E*/
-typeabbrev modtypath (ctype "modtypath").
+kind modtypath type.
 
 
 % Result of coq.locate-all
@@ -957,7 +958,7 @@ external pred coq.env.primitive-projection? i:projection, o:constant.
 % phase unnecessary.
 
 % universe level (algebraic: max, +1, univ.variable)
-typeabbrev univ (ctype "univ").
+kind univ type.
 
 
 % Sorts (kinds of types)
@@ -999,7 +1000,7 @@ external pred coq.univ.constraints o:list univ-constraint.
 % -- Universe variables ------
 
 % universe level variable
-typeabbrev univ.variable (ctype "univ.variable").
+kind univ.variable type.
 
 
 % [coq.univ.variable U L] relates a univ.variable L to a univ U
@@ -1028,7 +1029,7 @@ external pred coq.univ.variable.of-term i:term, o:coq.univ.variable.set.
 % term (of the instance it contains) with another one.
 
 % Universes level instance for a universe-polymorphic constant
-typeabbrev univ-instance (ctype "univ-instance").
+kind univ-instance type.
 
 
 % [coq.univ-instance UI UL] relates a univ-instance UI and a list of
@@ -1082,16 +1083,16 @@ type upoly-decl-cumul list univ-variance -> bool ->
 
 % -- Primitive --------------------------------------------------------
 
-typeabbrev uint63 (ctype "uint63").
+kind uint63 type.
 
 
-typeabbrev float64 (ctype "float64").
+kind float64 type.
 
 
-typeabbrev pstring (ctype "pstring").
+kind pstring type.
 
 
-typeabbrev projection (ctype "projection").
+kind projection type.
 
 
 % Primitive values
@@ -1368,7 +1369,7 @@ external pred coq.arguments.set-simplification i:gref,
 external pred coq.locate-abbreviation i:id, o:abbreviation.
 
 % Name of an abbreviation
-typeabbrev abbreviation (ctype "abbreviation").
+kind abbreviation type.
 
 
 % [coq.notation.add-abbreviation Name Nargs Body OnlyParsing Abbreviation]
@@ -1477,7 +1478,7 @@ type coq.redflags.const constant ->
                         coq.redflag. % enable/disable unfolding
 
 % Set of flags for lazy, cbv, ... reductions
-typeabbrev coq.redflags (ctype "coq.redflags").
+kind coq.redflags type.
 
 type coq.redflags.all coq.redflags.
 type coq.redflags.allnolet coq.redflags.
@@ -1577,7 +1578,7 @@ external pred coq.strategy.get i:constant, o:conversion_strategy.
 % -- Coq's tactics --------------------------------------------
 
 % LTac1 tactic expression
-typeabbrev ltac1-tactic (ctype "ltac1-tactic").
+kind ltac1-tactic type.
 
 
 % [coq.ltac.fail Level ...] Interrupts the Elpi program and calls Ltac's
@@ -1656,7 +1657,7 @@ external pred coq.option.add i:list string, i:coq.option, i:bool.
 % between backticks, e.g. `x` or `_` for anonymous. Important: these are
 % just printing hints with no meaning, hence in elpi two name are always
 % related: `x` = `y`
-typeabbrev name (ctype "name").
+kind name type.
 
 
 % [coq.name-suffix Name Suffix NameSuffix] suffixes a Name with a string or
@@ -1831,7 +1832,7 @@ type import-module modpath -> synterp-action.
 type export-module modpath -> synterp-action.
 
 % Synterp action group
-typeabbrev group (ctype "group").
+kind group type.
 
 
 % [coq.next-synterp-action A] Get the next action performed during parsing

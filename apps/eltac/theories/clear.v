@@ -14,7 +14,7 @@ Elpi Accumulate lp:{{
   ].
   solve (goal _ _ _ _ Args) _ :- coq.error "clear expects 1 name, you passed:" Args.
 }}.
-Elpi Typecheck.
+
 Tactic Notation "eltac.clear" hyp(V) := elpi clear ltac_term:(V).
 
 Elpi Tactic clearbody.
@@ -36,5 +36,5 @@ Elpi Accumulate lp:{{
     % actually do E1 := E, while E = (let `x` T E1 x\x) forces elpi
     % to go the other way around
 }}.
-Elpi Typecheck.
+
 Tactic Notation "eltac.clearbody" hyp_list(V) := elpi clearbody ltac_term_list:(V).

@@ -25,7 +25,7 @@ Elpi Accumulate lp:{{
       coq.env.end-module _,
       true.
 }}.
-Elpi Typecheck.
+
 Elpi Export test.
 test.
 Check d1. Check d2.

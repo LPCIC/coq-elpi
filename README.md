@@ -183,13 +183,23 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `Elpi Program <qname> <code>` lower level primitive letting one crate a
   command/tactic with a custom preamble `<code>`.
 - `From some.load.path Extra Dependency <filename> as <fname>`.
-- `Elpi Accumulate [<dbname>|<qname>] [<code>|File <fname>|Db <dbname>]`
+- `Elpi Accumulate [<dbname>|<qname>] [<code>|File <fname>|Db [Header] <dbname>]`
   adds code to the current program (or `<dbname>` or `<qname>` if specified).
   The code can be verbatim, from a file or a Db.
   File names `<fname>` must have been previously declared with the above command.
   It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
   a no op if the Coq version is matched (or not) by the given regular expression.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
+  Accumulating `Db Header <dbname>`, instead of `Db <dbname>`, accumulates
+  only the first chunk of code associated with Db, typically the type
+  declaration of the predicates that live in the Db. When defining a command
+  or tactic it can be useful to first accumulate the Db header, then some
+  code (possibly calling the predicate living in the Db), and finally
+  accumulating the (full) Db.
+  Note that when a command is executed it may need to be (partially)
+  recompiled, e.g. if the Db was updated. In this case all the code accumulated
+  after the Db (but not after its header) may need to be recompiled. Hence
+  we recommend to accumulate Dbs last.
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)

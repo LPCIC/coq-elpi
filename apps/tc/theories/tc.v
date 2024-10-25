@@ -43,7 +43,7 @@ Elpi Accumulate lp:{{
       tc.list-printer ClassGR Rules
     ).  
 }}.
-Elpi Typecheck.
+
 
 Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
@@ -66,7 +66,7 @@ Elpi Query lp:{{
       if (coq.option.available? L _) true
         (coq.option.add L (coq.option.bool ff) ff)).
 }}.
-Elpi Typecheck.
+
 
 Elpi Query lp:{{
   sigma Nums\ 
@@ -131,7 +131,7 @@ Elpi Accumulate lp:{{
 
   main A :- coq.error "Fail in TC.Compiler: not a valid input entry" A.
 }}.
-Elpi Typecheck.
+
 
 (* Command allowing to set if a TC is deterministic. *)
 Elpi Command TC.Set_deterministic.
@@ -147,7 +147,7 @@ Elpi Accumulate lp:{{
     std.assert! (not (tc.instance _ _ ClassGR _)) "Cannot set deterministic a class with an already existing instance",
     tc.add-tc-db _ (after "0") (tc.class ClassGR PredName tc.deterministic Modes :- !).
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.Get_class_info.
 Elpi Accumulate Db tc.db.
@@ -168,7 +168,7 @@ Elpi Accumulate lp:{{
   main [] :- coq.error "[TC] Get_class_info accepts only one argument of type str". 
   main L :- coq.error "[TC] Uncaught error on input" L. 
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.Unfold.
 Elpi Accumulate Db tc_options.db.
@@ -187,7 +187,7 @@ Elpi Accumulate lp:{{
     std.map L (x\r\ sigma R\ std.assert! (str R = x) ErrMsg, coq.locate R r) L',
     std.forall L' tc.add-unfold.
 }}.
-Elpi Typecheck.
+
 
 Elpi TC Solver Register TC.Solver.
 Elpi TC Solver Activate TC.Solver.

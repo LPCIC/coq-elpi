@@ -95,7 +95,7 @@ The name and the grafting specification can be left unspecified.|};
 } |> CConv.(!<)
 
 let set_accumulate_to_db_synterp, get_accumulate_to_db_synterp =
-  let f = ref (fun _ -> assert false) in
+  let f = ref (fun ~loc:_ _ -> assert false) in
   (fun x -> f := x),
   (fun () -> !f)
 
@@ -161,7 +161,7 @@ let compat_graft = Option.map (function `Remove, _ -> nYI "clause removal" | ((`
 type accumulation_item = qualified_name * API.Ast.program * Id.t list * Coq_elpi_utils.clause_scope
 let accumulate_clauses ~clauses_for_later ~accumulate_to_db ~preprocess_clause ~scope ~dbname clauses ~depth ~options state =
   let invocation_loc = State.get invocation_site_loc_synterp state in
-  let loc = API.Ast.Loc.initial ("elpi.add_clause: " ^ API.Ast.Loc.show invocation_loc) in
+  let loc = invocation_loc in
   let dbname = Coq_elpi_utils.string_split_on_char '.' dbname in
   let clauses scope =
    clauses |> CList.rev_map (fun (name,graft,clause) ->
@@ -183,7 +183,7 @@ let accumulate_clauses ~clauses_for_later ~accumulate_to_db ~preprocess_clause ~
   | B.Given CurrentModule ->
        let scope = if local then Local else Regular in
        let f = accumulate_to_db in
-       f (clauses scope);
+       f ~loc:(to_coq_loc loc) (clauses scope);
        state, (), []
 
 let locate_module, locate_module_type =
@@ -521,7 +521,11 @@ module SynterpAction = struct
     let open Notation in
     let open CConv in
   
-    [MLData action;
+    [
+      
+     MLData action;
+     MLData Tree.group;
+ 
      MLCode (Pred("coq.synterp-actions",
        Out(list action,"A",
        Read(unit_ctx,"Get the list of actions performed during the parsing phase (aka synterp) up to now.")),

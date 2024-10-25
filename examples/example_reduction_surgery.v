@@ -26,7 +26,7 @@ solve (goal _ _ Ty _ [str M] as G) GS :-
   refine {{ _ : lp:Ty1 }} G GS. % to leave a vmcast one needs to call ltac1
 
 }}.
-Elpi Typecheck.
+
 
 
 Module ToRed.

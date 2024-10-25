@@ -16,6 +16,6 @@ Elpi Accumulate lp:{{
 
 }}.
 
-Elpi Typecheck.
+
 
 Tactic Notation "eltac.constructor" := elpi constructor.

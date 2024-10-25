@@ -130,6 +130,8 @@ keep-only-label (attribute L _) (attribute L (leaf-str "")).
 coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,
   CS => parse-attributes.aux L "" O, !.
+
+pred parse-attributes.aux i:list attribute, i:string, o:list prop.
 parse-attributes.aux [] _ [].
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attlist), !,

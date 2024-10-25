@@ -17,6 +17,11 @@ val elpi_cat : CWarnings.category
 val elpi_depr_cat : CWarnings.category
 
 val err : ?loc:Elpi.API.Ast.Loc.t -> Pp.t -> 'a
+
+(* CompileError, ParserError, Gramlib.Error (coq parser inside quotations) and Sys_error *)
+val handle_elpi_compiler_errors :
+  loc:Loc.t -> (unit -> 'b) -> 'b
+
 exception LtacFail of int * Pp.t
 val ltac_fail_err : ?loc:Elpi.API.Ast.Loc.t -> int -> Pp.t -> 'a
 val nYI : string -> 'a
@@ -46,6 +51,11 @@ val uint63 : Uint63.t Elpi.API.Conversion.t
 val float64 : Float64.t Elpi.API.Conversion.t
 val projection : Names.Projection.t Elpi.API.Conversion.t
 val pstring : Pstring.t Elpi.API.Conversion.t
+val uint63c : Uint63.t Elpi.API.RawOpaqueData.cdata
+val float64c : Float64.t Elpi.API.RawOpaqueData.cdata
+val projectionc : Names.Projection.t Elpi.API.RawOpaqueData.cdata
+val pstringc : Pstring.t Elpi.API.RawOpaqueData.cdata
+
 val pstring_of_string : string -> Pstring.t option
 val string_of_pstring : Pstring.t -> string
 

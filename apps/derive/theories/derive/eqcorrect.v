@@ -22,7 +22,8 @@ Register uint63_eq_correct as elpi.derive.uint63_eq_correct.
 
 Elpi Db derive.eqcorrect.db lp:{{
   type eqcorrect-db gref -> term -> prop.
-
+  type stop string -> prop.
+  
 eqcorrect-db X {{ lib:elpi.derive.uint63_eq_correct }} :- {{ lib:num.int63.type }} = global X, !.
 eqcorrect-db X _ :- {{ lib:num.float.type }} = global X, !, stop "float64 comparison is not syntactic".
 
@@ -49,7 +50,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.eqcorrect <inductive type name> [<suffix>]".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File derive_hook.

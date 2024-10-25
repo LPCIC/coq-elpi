@@ -10,6 +10,6 @@ Elpi Accumulate lp:{{
 
 }}.
 
-Elpi Typecheck.
+
 
 Tactic Notation "eltac.assumption" := elpi assumption.

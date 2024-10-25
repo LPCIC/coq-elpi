@@ -50,13 +50,15 @@ pred unif i:term, i:stack, i:term, i:stack, i:bool, i:cumul.
 unif X CX Y CY D M :-
   coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
 
-pred swap i:bool, i:(A -> B -> prop), i:A, i:B.
+pred swap i:bool, i:(A -> A -> prop), i:A, i:A.
 swap tt F A B :- F B A.
 swap ff F A B :- F A B.
 
 % flexible cases
-@tail-cut-if "unif:greedy" (unif (uvar V L) [] T D _ _) (!, (bind-list L {unwind T D} V)).
-@tail-cut-if "unif:greedy" (unif X C (uvar V L) [] _ _) (!, bind-list L {unwind X C} V).
+unif (uvar V L) [] T D _ _ :- get-option "unif:greedy" tt, !, bind-list L {unwind T D} V, !.
+unif (uvar V L) [] T D _ _ :-                              !, bind-list L {unwind T D} V.
+unif X C (uvar V L) [] _ _ :- get-option "unif:greedy" tt, !, bind-list L {unwind X C} V, !.
+unif X C (uvar V L) [] _ _ :-                              !, bind-list L {unwind X C} V.
 
 unif (sort prop) [] (sort (uvar as Y)) [] _ _ :- !, Y = prop.
 unif X [] (sort (uvar as Y)) [] M U :- !,
@@ -166,7 +168,7 @@ key (pglobal _ _) :- !.
 key C :- name C, !.
 key (primitive _) :- !.
 
-pred bind-list i:list term, i:term, o:A.
+pred bind-list i:list term, i:term, o:any.
 bind-list [] T T' :- bind T T1, T1 = T'.
 bind-list [app [C| AS] |VS] T R :- key C, !,
   pi x\
@@ -345,15 +347,15 @@ canonical? [].
 canonical? [N|NS] :- name N, not(mem NS N), canonical? NS.
 
 constraint declare-evar evar decl def cache rm-evar {
- rule (E1 : G1 ?- evar _ T1 (uvar K L1)) % canonical
-    \ (E2 : G2 ?- evar _ T2 (uvar K L2)) % actual
+ rule (E1 :> G1 ?- evar _ T1 (uvar K L1)) % canonical
+    \ (E2 :> G2 ?- evar _ T2 (uvar K L2)) % actual
     | (canonical? L1, utc L1 T1 L2 T2 Condition,
         coq.say "CHR: Uniqueness of typing of" K "+" L1 "<->" L2,
         coq.say E1 "|>" G1 "|-" K L1 ":" T1,
         coq.say E2 "|>" G2 "|-" K L2 ":" T2,
         coq.say E2 "|>" G2 "|-" Condition "\n"
        )
-  <=> (E2 : G2 ?- Condition).
+  <=> (E2 :> G2 ?- Condition).
 }
 
 

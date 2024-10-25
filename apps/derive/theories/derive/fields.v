@@ -28,9 +28,12 @@ pred box-for o:constructor, o:inductive, o:constructor.
 
 (* standalone *)
 Elpi Command derive.fields.
+Elpi Accumulate Db Header derive.eqType.db.
+Elpi Accumulate Db Header derive.tag.db.
+Elpi Accumulate Db Header derive.fields.db.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File fields.
 Elpi Accumulate File eqType.
+Elpi Accumulate File fields.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate Db derive.fields.db.
@@ -47,7 +50,7 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.fields <inductive name> [<prefix>]".
 
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File fields.

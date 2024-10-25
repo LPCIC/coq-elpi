@@ -4,7 +4,7 @@ From Coq Require Import Arith ssreflect.
 
 Ltac my_solver := trivial with arith.
 
-Elpi Accumulate coercion.db lp:{{
+Elpi Accumulate coercion lp:{{
 
 coercion _ X Ty {{ @sig lp:Ty lp:P }} Solution :- std.do! [
   % we unfold letins since the solve is dumb
@@ -17,7 +17,6 @@ coercion _ X Ty {{ @sig lp:Ty lp:P }} Solution :- std.do! [
 ].
 
 }}.
-Elpi Typecheck coercion.
 
 Goal {x : nat | x > 0}.
 apply: 3.

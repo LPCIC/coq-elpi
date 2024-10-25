@@ -25,6 +25,6 @@ Elpi Accumulate lp:{{
 
 }}.
 
-Elpi Typecheck.
+
 
 Tactic Notation "eltac.cycle" int(n) := elpi cycle ltac_int:(n).

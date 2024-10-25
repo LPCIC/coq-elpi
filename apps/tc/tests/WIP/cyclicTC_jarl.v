@@ -44,7 +44,7 @@ Elpi Accumulate tc.db lp:{{
     if (not IsHead) (Hyp = Hyp') (under_extra TC Hyp Hyp'),
     Clause = (Q :- Hyp').
 }}.
-Elpi Typecheck TC.Solver.
+
 
 Elpi AddAllClasses.
 Elpi AddAllInstances.
@@ -59,7 +59,7 @@ Elpi Accumulate lp:{{
       (clause _ _ (get_other B A)).
   main L :- coq.say L.
 }}.
-Elpi Typecheck.
+
 
 Elpi AddRecursivelyDependantTC (A) (B).
 

@@ -42,7 +42,7 @@ Elpi Accumulate lp:{{
   main L :- 
     std.forall {args->str-list L} add-lemma->forward.
 }}.
-Elpi Typecheck.
+
 
 Elpi Command AddAlias.
 Elpi Accumulate Db tc.db.
@@ -55,4 +55,4 @@ Elpi Accumulate lp:{{
   main [trm New, trm Old] :-
     add-tc-db _ _ (alias New Old).
 }}.
-Elpi Typecheck. *)
+ *)

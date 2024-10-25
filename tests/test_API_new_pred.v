@@ -19,7 +19,7 @@ main [str P] :-
   Q,
   coq.say "Result" Q.
 }}.
-Elpi Typecheck.
+
 
 Elpi Command declare_pred.
 Elpi Accumulate lp:{{
@@ -33,7 +33,7 @@ main [str P|Args] :-
   make-args Args Spec,
   coq.elpi.add-predicate "search.db" _ P Spec.
 }}.
-Elpi Typecheck.
+
 
 Elpi Command accumulate_pred.
 Elpi Accumulate Db search.db.
@@ -42,7 +42,7 @@ main [str P,int I] :-
   coq.elpi.predicate P [I] Q,
   coq.elpi.accumulate _ "search.db" (clause _ _ Q).
 }}.
-Elpi Typecheck.
+
 
 Elpi search "p" 1.
 Fail Elpi search "p" 2.

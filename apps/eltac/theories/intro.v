@@ -14,7 +14,7 @@ Elpi Accumulate lp:{{
 
 }}.
 
-Elpi Typecheck.
+
 
 Tactic Notation "eltac.intro" string(ID) := elpi intro ltac_string:(ID).
 Tactic Notation "eltac.intro" ident(ID) := elpi intro ltac_string:(ID).

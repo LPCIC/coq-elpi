@@ -12,4 +12,3 @@ From elpi.apps Require Export
   derive.bcongr
   derive.eqOK
 .
-Elpi Typecheck derive.

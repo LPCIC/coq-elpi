@@ -101,7 +101,7 @@ Elpi Accumulate tc.db lp:{{
     tc-Inj T1 T2 R1 R3 G S.
 }}.
 
-Elpi Typecheck TC.Solver.
+
 
 Goal Inj eq eq (compose fInj gInj). apply _. Qed.
 Goal Inj eq eq (fun x => fInj (gInj x)). apply _. Qed.  

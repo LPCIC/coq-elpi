@@ -9,6 +9,7 @@ module U  = API.Utils
 module P  = API.RawPp
 module S  = API.State
 module F = API.FlexibleData
+module A = API.Ast.Term
 
 module C = Constr
 module EC = EConstr
@@ -24,8 +25,8 @@ open Coq_elpi_utils
 (* {{{ CData ************************************************************** *)
 
 (* names *)
-let namein, isname, nameout, name =
-  let { CD.cin; isc; cout }, name  = CD.declare {
+let namein, naminc, isname, nameout, name =
+  let { CD.cin; cino; isc; cout }, name  = CD.declare {
     CD.name = "name";
     doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two name are always related: `x` = `y`";
     pp = (fun fmt x ->
@@ -35,9 +36,15 @@ let namein, isname, nameout, name =
     hconsed = false;
     constants = [];
   } in
-  cin, isc, cout, name
+  cin, cino, isc, cout, name
 ;;
 let in_elpi_name x = namein x
+let in_elpiast_name ~loc x = A.mkOpaque ~loc @@ naminc x
+let coq_language = ref API.Quotation.elpi_language
+let set_coq coq = coq_language := coq
+let name_of_name = function
+  | Names.Name.Anonymous -> None
+  | Names.Name.Name id -> Some (API.Ast.Name.from_string @@ Names.Id.to_string id, !coq_language)
 
 let is_coq_name ~depth t =
   match E.look ~depth t with
@@ -136,8 +143,8 @@ let new_univ_level_variable ?(flexible=false) state =
 (* We patch data_of_cdata by forcing all output universes that
  * are unification variables to be a Coq universe variable, so that
  * we can always call Coq's API *)
-let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
-  let { CD.cin = univin; isc = isuniv; cout = univout }, univ_to_be_patched = CD.declare {
+let isuniv, univout, univino, (univ : Univ.Universe.t API.Conversion.t) =
+  let { CD.cin = univin; cino = univino; isc = isuniv; cout = univout }, univ_to_be_patched = CD.declare {
     CD.name = "univ";
     doc = "universe level (algebraic: max, +1, univ.variable)";
     pp = (fun fmt x ->
@@ -149,7 +156,7 @@ let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
     constants = [];
   } in
   (* turn UVars into fresh universes *)
-  isuniv, univout, { univ_to_be_patched with
+  isuniv, univout, univino, { univ_to_be_patched with
   API.Conversion.readback = begin fun ~depth state t ->
     match E.look ~depth t with
     | E.UnifVar (b,args) ->
@@ -166,6 +173,10 @@ let isuniv, univout, (univ : Univ.Universe.t API.Conversion.t) =
     | _ -> univ_to_be_patched.API.Conversion.readback ~depth state t
   end
 }
+
+let propc = E.Constants.declare_global_symbol "prop"
+let spropc = E.Constants.declare_global_symbol "sprop"
+let typc = E.Constants.declare_global_symbol "typ"
 
 let sort =
   let open API.AlgebraicData in  declare {
@@ -204,6 +215,12 @@ let sort =
   ]
 } |> API.ContextualConversion.(!<)
 
+let ast_sort ~loc = function
+  | Sorts.Prop -> A.mkGlobal ~loc propc
+  | Sorts.SProp -> A.mkGlobal ~loc spropc
+  | Sorts.Set -> A.mkAppGlobal ~loc typc (A.mkOpaque ~loc @@ univino Univ.Universe.type0) []
+  | Sorts.Type u -> A.mkAppGlobal ~loc typc (A.mkOpaque ~loc @@ univino u) []
+  | _ -> assert false
 
 let universe_level_variable =
   let { CD.cin = levelin }, universe_level_variable_to_patch = CD.declare {
@@ -450,9 +467,9 @@ let global_constant_of_globref = function
   | GlobRef.ConstRef x -> Constant x
   | x -> CErrors.anomaly Pp.(str"not a global constant: " ++ (Printer.pr_global x))
 
-let ({ CD.isc = isconstant; cout = constantout; cin = constantin },constant),
-    ({ CD.isc = isinductive; cout = inductiveout; cin = inductivein },inductive),
-    ({ CD.isc = isconstructor; cout = constructorout; cin = constructorin },constructor) =
+let ({ CD.isc = isconstant; cout = constantout; cin = constantin; cino = constantino },constant),
+    ({ CD.isc = isinductive; cout = inductiveout; cin = inductivein; cino = inductiveino },inductive),
+    ({ CD.isc = isconstructor; cout = constructorout; cin = constructorin; cino = constructorino },constructor) =
   let open API.RawOpaqueData in
   declare {
     name = "constant";
@@ -486,14 +503,17 @@ let ({ CD.isc = isconstant; cout = constantout; cin = constantin },constant),
     constants = [];
   }
 ;;
+let inductiveina ~loc x = A.mkOpaque ~loc (inductiveino x)
+let constantina ~loc x = A.mkOpaque ~loc (constantino x)
+let constructorina ~loc x = A.mkOpaque ~loc (constructorino x)
 
 let compare_instances x y =
   let qx, ux = UVars.Instance.to_array x
   and qy, uy = UVars.Instance.to_array y in
   Util.Compare.(compare [(CArray.compare Sorts.Quality.compare, qx, qy); (CArray.compare Univ.Level.compare, ux, uy)])
 
-let uinstancein, isuinstance, uinstanceout, uinstance =
-  let { CD.cin; isc; cout }, uinstance = CD.declare {
+let uinstancein, uinstanceino, isuinstance, uinstanceout, uinstance =
+  let { CD.cin; cino; isc; cout }, uinstance = CD.declare {
     CD.name = "univ-instance";
     doc = "Universes level instance for a universe-polymorphic constant";
     pp = (fun fmt x ->
@@ -504,8 +524,10 @@ let uinstancein, isuinstance, uinstanceout, uinstance =
     hconsed = false;
     constants = [];
   } in
-  cin, isc, cout, uinstance
+  cin, cino, isc, cout, uinstance
 ;;
+
+let uinstanceina ~loc x = A.mkOpaque ~loc (uinstanceino x)
 
 let collect_term_variables ~depth t =
   let rec aux ~depth acc t =
@@ -619,9 +641,20 @@ let in_elpi_gr ~depth s r =
   with Not_found ->
     let s, t, gl = gref.API.Conversion.embed ~depth s r in
     assert (gl = []);
-    let x = E.mkApp globalc t [] in
+    let x = E.mkAppGlobal globalc t [] in
     GrefCache.add cache r x;
     x
+
+let in_elpiast_gref ~loc r =
+  match r with
+  | GlobRef.IndRef i -> A.mkAppGlobal ~loc indtc (inductiveina ~loc i) []
+  | GlobRef.ConstructRef c -> A.mkAppGlobal ~loc indcc (constructorina ~loc c) []
+  | GlobRef.VarRef v -> A.mkAppGlobal ~loc constc (constantina ~loc (Variable v)) []
+  | GlobRef.ConstRef c -> A.mkAppGlobal ~loc constc (constantina ~loc (Constant c)) []
+
+let in_elpiast_gr ~loc r =
+  assert_in_elpi_gref_consistent ~poly:false r;
+  A.mkAppGlobal ~loc globalc (in_elpiast_gref ~loc r) []
 
 let in_elpi_poly_gr ~depth s r i =
   assert_in_elpi_gref_consistent ~poly:true r;
@@ -630,6 +663,11 @@ let in_elpi_poly_gr ~depth s r i =
   assert (gl = []);
   E.mkApp pglobalc t [i]
 
+let in_elpiast_poly_gr ~loc r i =
+  assert_in_elpi_gref_consistent ~poly:true r;
+  let t = in_elpiast_gref ~loc r in
+  A.mkAppGlobal ~loc pglobalc t [i]
+
 let in_elpi_poly_gr_instance ~depth s r i =
   assert_in_elpi_gref_consistent ~poly:true r;
   let open API.Conversion in
@@ -637,6 +675,11 @@ let in_elpi_poly_gr_instance ~depth s r i =
   assert (gl = []);
   in_elpi_poly_gr ~depth s r i
 
+let in_elpiast_poly_gr_instance ~loc r i =
+  assert_in_elpi_gref_consistent ~poly:true r;
+  let i = uinstanceina ~loc i in
+  in_elpiast_poly_gr ~loc r i
+  
 let in_coq_gref ~depth ~origin ~failsafe s t =
   try
     let s, t, gls = gref.API.Conversion.readback ~depth s t in
@@ -695,31 +738,48 @@ let in_coq_modpath ~depth t =
 let lamc   = E.Constants.declare_global_symbol "fun"
 let in_elpi_lam n s t = E.mkApp lamc (in_elpi_name n) [s;E.mkLam t]
 
+let in_elpiast_lam ~loc n s t =
+  A.mkAppGlobal ~loc lamc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name n) t]
+
 let prodc  = E.Constants.declare_global_symbol "prod"
 let in_elpi_prod n s t = E.mkApp prodc (in_elpi_name n) [s;E.mkLam t]
+let in_elpiast_prod ~loc n s t =
+  A.mkAppGlobal ~loc prodc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name n) t]
 
 let letc   = E.Constants.declare_global_symbol "let"
 let in_elpi_let n b s t = E.mkApp letc (in_elpi_name n) [s;b;E.mkLam t]
+let in_elpiast_let ~loc n ~ty:s ~bo:b t =
+  A.mkAppGlobal ~loc letc (in_elpiast_name ~loc n) [s;b;A.mkLam ~loc (name_of_name n) t]
 
 (* other *)
 let appc   = E.Constants.declare_global_symbol "app"
 
-let in_elpi_app_Arg ~depth hd args =
-    match E.look ~depth hd, args with
-    | E.Const c, [] -> assert false
-    | E.Const c, x :: xs -> E.mkApp c x xs
-    | E.App(c,x,xs), _ -> E.mkApp c x (xs@args)
-    | _ -> assert false
+let in_elpi_app_Arg ~depth hd args = E.mkAppMoreArgs ~depth hd args
 
 let flatten_appc ~depth hd (args : E.term list) =
+  if E.isApp ~depth hd then
   match E.look ~depth hd with
   | E.App(c,x,[]) when c == appc ->
       E.mkApp appc (U.list_to_lp_list (U.lp_list_to_list ~depth x @ args)) []
-  | _ -> E.mkApp appc (U.list_to_lp_list (hd :: args)) []
+  | _ -> 
+    E.mkApp appc (U.list_to_lp_list (hd :: args)) []
+  else
+    E.mkApp appc (U.list_to_lp_list (hd :: args)) []
 
 let in_elpi_appl ~depth hd (args : E.term list) =
   if args = [] then hd
   else flatten_appc ~depth hd args
+
+let flatten_appc_ast ~loc hd args =
+  match hd with
+  | { A.it = A.App(g,c,x,[]); loc } when API.Ast.Name.is_global c appc ->
+      A.mkAppGlobal ~loc appc (A.ne_list_to_lp_list (A.lp_list_to_list x @ args)) []
+  | { loc } -> A.mkAppGlobal ~loc appc (A.ne_list_to_lp_list (hd :: args)) []
+  
+let in_elpiast_appl ~loc hd args =
+  if args = [] then hd
+  else flatten_appc_ast ~loc hd args
+
 
 let in_elpi_app ~depth hd (args : E.term array) =
   in_elpi_appl ~depth hd (Array.to_list args)
@@ -729,11 +789,17 @@ let matchc = E.Constants.declare_global_symbol "match"
 let in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs =
   E.mkApp matchc t [rt; U.list_to_lp_list bs]
 
+let in_elpiast_match ~loc t rt bs =
+  A.mkAppGlobal ~loc matchc t [rt;A.list_to_lp_list ~loc bs]
+
 let fixc   = E.Constants.declare_global_symbol "fix"
 
 let in_elpi_fix name rno ty bo =
   E.mkApp fixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam bo]
 
+let in_elpiast_fix ~loc n rno ty bo =
+  A.mkAppGlobal ~loc fixc (in_elpiast_name ~loc n) [A.mkOpaque ~loc @@ CD.int.cino rno; ty; A.mkLam ~loc (name_of_name n) bo]
+  
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
 
@@ -746,6 +812,19 @@ type primitive_value =
   | Float64 of Float64.t
   | Pstring of pstring
   | Projection of Projection.t
+
+let ui63c = E.Constants.declare_global_symbol "uint63"
+let fl64c = E.Constants.declare_global_symbol "float64"
+let pstrc = E.Constants.declare_global_symbol "pstring"
+let projc = E.Constants.declare_global_symbol "proj"
+
+let uint63ina ~loc x =     A.mkAppGlobal ~loc primitivec (A.mkAppGlobal ~loc ui63c (A.mkOpaque ~loc (uint63c.cino x)) []) []
+let float64ina ~loc x =    A.mkAppGlobal ~loc primitivec (A.mkAppGlobal ~loc fl64c (A.mkOpaque ~loc (float64c.cino x)) []) []
+let projectionina ~loc p =
+  let n = Names.Projection.(arg p + npars p) in
+  A.mkAppGlobal ~loc primitivec (A.mkAppGlobal ~loc projc
+    (A.mkOpaque ~loc (projectionc.cino p)) [A.mkOpaque ~loc @@ CD.int.cino n]) []
+let pstringina ~loc x =    A.mkAppGlobal ~loc primitivec (A.mkAppGlobal ~loc pstrc (A.mkOpaque ~loc (pstringc.cino x)) []) []
 
 let primitive_value : primitive_value API.Conversion.t =
   let module B = Coq_elpi_utils in
@@ -777,10 +856,15 @@ let in_elpi_primitive ~depth state i =
   let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
   state, E.mkApp primitivec i []
  
+let in_elpiast_primitive ~loc = function
+  | Uint63 i -> uint63ina ~loc i
+  | Float64 f -> float64ina ~loc f
+  | Pstring s -> pstringina ~loc s
+  | Projection p -> projectionina ~loc p
 
 let in_elpi_primitive_value ~depth state = function
-| C.Int i -> in_elpi_primitive ~depth state (Uint63 i)
-| C.Float f -> in_elpi_primitive ~depth state (Float64 f)
+| C.Int i ->    in_elpi_primitive ~depth state (Uint63 i)
+| C.Float f ->  in_elpi_primitive ~depth state (Float64 f)
 | C.String s -> in_elpi_primitive ~depth state (Pstring s)
 | C.Array _ -> nYI "HOAS for persistent arrays"
 | (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
@@ -987,6 +1071,8 @@ let purge_algebraic_univs_sort state s =
   | x -> state, x
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
+let in_elpiast_flex_sort ~loc t =
+  A.mkAppGlobal ~loc sortc (A.mkAppGlobal ~loc typc t []) []
 
 let sort = { sort with API.Conversion.embed = (fun ~depth state s ->
   let state, s = purge_algebraic_univs_sort state (EConstr.ESorts.make s) in
@@ -997,6 +1083,9 @@ let in_elpi_sort ~depth state s =
   assert(gl=[]);
   state, E.mkApp sortc s []
 
+let in_elpiast_sort ~loc state s =
+  A.mkAppGlobal ~loc sortc (ast_sort ~loc s) []
+ 
 
 (* ********************************* }}} ********************************** *)
 
@@ -1328,9 +1417,15 @@ let mk_pi_arrow hyp rest =
 let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
 
+let in_elpiast_decl ~loc ~v name ~ty =
+  A.mkAppGlobal ~loc declc v [in_elpiast_name ~loc name;ty]
+
 let mk_def ~depth name ~bo ~ty =
   E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo]
 
+let in_elpiast_def ~loc ~v name ~ty ~bo =
+  A.mkAppGlobal ~loc defc v [in_elpiast_name ~loc name;ty;bo]
+  
 let rec constr2lp coq_ctx ~calldepth ~depth state t =
   assert(depth >= coq_ctx.proof_len);
   let { sigma } = S.get engine state in
@@ -1518,7 +1613,7 @@ and generate_actual_goals state = function
   | RmEvar (k,raw_ev,ev) :: rest ->
       let state, rest = generate_actual_goals state rest in
       (*let state = UVMap.remove_host k state in*)
-      state, API.RawData.RawGoal (E.mkAppL rm_evarc [raw_ev; ev]) :: rest
+      state, API.RawData.RawGoal (E.mkAppGlobalL rm_evarc [raw_ev; ev]) :: rest
   | (API.Conversion.Unify _ | API.RawData.RawGoal _) as x :: xs ->
       let state, xs = generate_actual_goals state xs in
       state, x :: xs
@@ -2243,7 +2338,7 @@ let mk_goal hyps rev ty ev args =
 let in_elpi_goal state ~args ~hyps ~raw_ev ~ty ~ev =
   mk_goal hyps raw_ev ty ev args
 
-let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg state k =
+let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg ~base state k =
   let calldepth = depth in
   let env = get_global_env state in
   let sigma = get_sigma state in
@@ -2254,7 +2349,7 @@ let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg state k =
     under_coq2elpi_ctx ~calldepth state goal_ctx
       ~mk_ctx_item:(fun _ t -> E.mkApp nablac (E.mkLam t) [])
       (fun coq_ctx hyps ~depth state ->
-            let state, args, gls_args = API.Utils.map_acc (in_elpi_tac_arg ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
+            let state, args, gls_args = API.Utils.map_acc (in_elpi_tac_arg ~base ~depth ?calldepth:(Some calldepth) coq_ctx [] sigma) state args in
             let args = List.flatten args in
             let state, hyps, raw_ev, ev, goal_ty, gls =
               in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
@@ -2262,7 +2357,7 @@ let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg state k =
           state, E.mkApp sealc (in_elpi_goal state ~args ~hyps ~raw_ev ~ty:goal_ty ~ev) [], gls_args @ gls) in
   state, g, evar_decls @ gls
 
-let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth state =
+let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth ~base state =
 
   let state = S.set engine state (from_env_sigma (get_global_env state) sigma) in
 
@@ -2271,7 +2366,7 @@ let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth state
       if not (Evd.is_undefined sigma goal) then
         err Pp.(str (Printf.sprintf "Evar %d is not a goal" (Evar.repr goal)));
 
-      sealed_goal2lp ~depth:calldepth ~in_elpi_tac_arg ~args state goal) state goals in
+      sealed_goal2lp ~depth:calldepth ~in_elpi_tac_arg ~args ~base state goal) state goals in
 
   let state, ek = F.Elpi.make ~name:"NewGoals" state in
   let newgls = E.mkUnifVar ek ~args:[] state in
@@ -2281,13 +2376,13 @@ let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth state
       (E.mkApp msolvec (U.list_to_lp_list gl) [newgls])
       [E.mkApp allc (E.mkApp openc (E.mkConst solvec) []) [U.list_to_lp_list gl;newgls]] in
 
-  state, (loc, query), gls
+  state, query, gls
 ;;
 
 let sealed_goal2lp ~depth state goal =
-  sealed_goal2lp ~depth ~args:[] ~in_elpi_tac_arg:(fun ~depth ?calldepth _ _ _ _ _ -> assert false) state goal
+  sealed_goal2lp ~depth ~args:[] ~base:() ~in_elpi_tac_arg:(fun ~base ~depth ?calldepth _ _ _ _ _ -> assert false) state goal
 
-let customtac2query sigma goals loc text ~depth:calldepth state =
+let customtac2query sigma goals loc text ~depth:calldepth ~base state =
   match goals with
   | [] | _ :: _ :: _ ->
      CErrors.user_err Pp.(str "elpi query can only be used on one goal")
@@ -2304,19 +2399,21 @@ let customtac2query sigma goals loc text ~depth:calldepth state =
     let state, query, gls =
       under_coq2elpi_ctx ~calldepth state goal_ctx
       (fun coq_ctx hyps ~depth state ->
-          let state, q = API.Quotation.lp ~depth state loc text in
+          let q = API.Quotation.elpi ~language:API.Quotation.elpi_language state loc text in
+          let _amap, q = API.RawQuery.term_to_raw_term state base ~depth q in
           state, q, []) in
     debug Pp.(fun () -> str"engine: " ++ str (show_coq_engine (S.get engine state)));
-    state, (loc, query), evar_decls @ gls
+    state, query, evar_decls @ gls
 ;;
 
 type 'arg tactic_main = Solve of 'arg list | Custom of string
 
-let goals2query sigma goals loc ~main ~in_elpi_tac_arg ~depth state =
-  match main with
-  | Solve args -> solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth state
-  | Custom text -> customtac2query sigma goals loc text ~depth state 
-
+let solvegoals2query sigma goals loc ~main:args ~in_elpi_tac_arg ~depth ~base state =
+  solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth ~base state
+    
+let txtgoals2query sigma goals loc ~main:text ~depth ~base state =
+  customtac2query sigma goals loc text ~depth ~base state
+  
 let eat_n_lambdas ~depth t upto state =
   let open E in
   let rec aux n t =

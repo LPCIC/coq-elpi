@@ -77,7 +77,7 @@ Elpi Accumulate lp:{{
     N is N' + 1, % Plus one for the solution
     add-tc-pred TC_Gr N.
 }}.
-Elpi Typecheck.
+
 
 Elpi Command compile.
 Elpi Accumulate Db tc.db.
@@ -89,7 +89,7 @@ Elpi Accumulate lp:{{
     coq.say Cl,
     coq.elpi.accumulate _ "tc.db" (clause _ _ Cl).
 }}.
-Elpi Typecheck.
+
 
 Elpi Tactic solver.
 Elpi Accumulate Db tc.db.
@@ -108,7 +108,7 @@ Elpi Accumulate lp:{{
       ) 
       (GL = [seal G]).
 }}.
-Elpi Typecheck.
+
 
 Class EqSimpl (T : Type) := {eqb : T -> T -> bool}.
 

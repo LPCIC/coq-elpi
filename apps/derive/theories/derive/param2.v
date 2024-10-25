@@ -19,6 +19,7 @@ Register store_param as param2.store_param.
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
 Elpi Db derive.param2.db lp:{{
+type stop string -> prop.
 
     pred param-done i:gref.
 
@@ -52,7 +53,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.param2 <object name>".
 }}. 
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File param2.

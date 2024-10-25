@@ -31,7 +31,7 @@ main _ :-
   coq.say "NES: registered namespaces" NS.
 
 }}.
-Elpi Typecheck.
+
 Elpi Export NES.Status.
 
 Elpi Command NES.Begin.
@@ -45,7 +45,7 @@ Elpi Command NES.Begin.
 
 }}.
 #[interp] Elpi Accumulate lp:{{ main _ :- nes.begin-path. }}.
-Elpi Typecheck.
+
 Elpi Export NES.Begin.
 
 Elpi Command NES.End.
@@ -59,7 +59,7 @@ Elpi Command NES.End.
 
 }}.
 #[interp] Elpi Accumulate lp:{{ main _ :- nes.end-path. }}.
-Elpi Typecheck.
+
 Elpi Export NES.End.
 
 
@@ -74,7 +74,7 @@ Elpi Command NES.Open.
 
 }}.
 #[interp] Elpi Accumulate lp:{{ main _ :- nes.open-path. }}.
-Elpi Typecheck.
+
 Elpi Export NES.Open.
 
 (* List the contents a namespace *)
@@ -93,7 +93,7 @@ Elpi Command NES.List.
   main _ :- coq.error "usage: NES.List <DotSeparatedPath>".
 
 }}.
-Elpi Typecheck.
+
 Elpi Export NES.List.
 
 (* NES.List with types *)
@@ -118,5 +118,5 @@ Elpi Accumulate lp:{{
   main _ :- coq.error "usage: NES.Print <DotSeparatedPath>".
 
 }}.
-Elpi Typecheck.
+
 Elpi Export NES.Print.

@@ -24,7 +24,8 @@ let main_interpc = ET.Constants.declare_global_symbol "main-interp"
 let main_synterpc = ET.Constants.declare_global_symbol "main-synterp"
 let attributesc = ET.Constants.declare_global_symbol "attributes"
 
-let atts2impl loc phase ~depth state atts q =
+let atts2impl ~depth loc phase
+ state atts q =
   let open Coq_elpi_builtins_synterp in
   let rec convert_att_r = function
     | (name,Attributes.VernacFlagEmpty) -> name, AttributeEmpty
@@ -79,6 +80,11 @@ let skip ?only ~ph ~phase f x =
   in
     if exec1 && exec2 then f x else ()
 
+type query =
+  | Ast of (API.Data.state -> API.Data.state) * API.Ast.query
+  | Fun of (API.Data.state -> API.Data.state * API.RawData.term * Elpi.API.Conversion.extra_goals)
+
+
 module Compiler(P : Programs) = struct
 
   module Summary = struct
@@ -98,141 +104,21 @@ module Compiler(P : Programs) = struct
     if n <= 0 then max_steps := default_max_step else max_steps := n
   let bound_steps ~atts:ph n = skip ~ph bound_steps n
 
-(* Units are marshalable, but programs are not *)
-
-let compiler_cache_code = Summary.ref ~local:true
-  ~name:("elpi-compiler-cache-code")
-  Int.Map.empty
-let compiler_cache_chunk = Summary.ref ~local:true
-  ~name:("elpi-compiler-cache-chunk")
-  Int.Map.empty
-
-let programs_tip = Summary.ref ~local:true
-  ~name:("elpi-compiler-cache-gc")
-  SLMap.empty
-
-(* lookup/cache for hash h shifted over base b *)
-
-let lookup b h src r cmp =
-  let h = combine_hash b h in
-  let p, src' = Int.Map.find h !r in
-  if cmp src src' then p else assert false
-
-let cache b h prog src r =
-  let h = combine_hash b h in
-  r := Int.Map.add h (prog,src) !r;
-  prog
-
-let uncache b h r =
-  let h = combine_hash b h in
-  r := Int.Map.remove h !r
-    
-let lookup_code b h src = lookup b h src compiler_cache_code (Code.eq Chunk.eq)
-let lookup_chunk b h src = lookup b h src compiler_cache_chunk Chunk.eq
-
-let cache_code b h prog src = cache b h prog src compiler_cache_code
-let cache_chunk b h prog src = cache b h prog src compiler_cache_chunk
-  
-let recache_code b h1 h2 p src =
-  uncache b h1 compiler_cache_code;
-  cache_code b h2 p src
-
-let recache_chunk b h1 h2 p src =
-  uncache b h1 compiler_cache_chunk;
-  cache_chunk b h2 p src
-
-let compile src =
-  let rec compile_code src =
-    let h = Code.hash src in
-    try
-      lookup_code 0 h src
-    with Not_found ->
-      match src with
-      | Code.Base { base = (k,u) } ->
-          let elpi = P.ensure_initialized () in
-          let prog = P.assemble_units ~elpi [u] in
-          cache_code 0 h prog src
-      | Code.Snoc { prev; source } ->
-          let base = compile_code prev in
-          let prog = P.extend_w_units ~base [snd source] in
-          if Code.cache src then cache_code 0 h prog src else prog
-      | Code.Snoc_db { prev; chunks } ->
-          let base = compile_code prev in
-          let prog = compile_chunk (Code.hash prev) base chunks in
-          prog
-  and compile_chunk bh base src =
-    (* DBs have to be re-based on top of base, hence bh *)
-    let h = Chunk.hash src in
-    try
-      lookup_chunk bh h src
-    with Not_found ->
-      match src with
-      | Chunk.Base { base = (k,u) } ->
-          let prog = P.extend_w_units ~base [u] in
-          cache_chunk bh h prog src
-      | Chunk.Snoc { prev; source_rev } ->
-          let base = compile_chunk bh base prev in
-          let prog = P.extend_w_units ~base (List.rev_map snd source_rev) in
-          recache_chunk bh (Chunk.hash prev) h prog src
-  in
-    compile_code src
-
-let get_and_compile ?even_if_empty name : (EC.program * bool) option =
-  let t = Unix.gettimeofday () in
-  let res = P.code ?even_if_empty name |> Option.map (fun src ->
-    let prog = compile src in
-    let new_hash = Code.hash src in
-    let old_hash = try SLMap.find name !programs_tip with Not_found -> 0 in
-    programs_tip := SLMap.add name new_hash !programs_tip;
-    let prog = recache_code 0 old_hash new_hash prog src in
-    let raw_args =
-      match P.get_nature name with
-      | Command { raw_args } -> raw_args
-      | Program { raw_args } -> raw_args
-      | Tactic -> true in
-      (prog, raw_args)) in
-    Coq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
-    res
-
-[%%if coq = "8.20"]
-let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,CErrors.iprint ei)))
-[%%else]
-let feedback_error loc ei = Feedback.(feedback (Message(Error,loc,[],CErrors.iprint ei)))
-[%%endif]
-
-let run_static_check query =
-  let checker = 
-    let elpi = P.ensure_initialized () in
-    P.assemble_units ~elpi (P.checker()) in
-  (* We turn a failure into a proper error in etc/coq-elpi_typechecker.elpi *)
-  let _ : bool =
-    try EC.static_check ~checker query
-    with e ->
-      let ei = Exninfo.capture e in
-      let loc = Loc.get_loc (snd ei) in
-      (* The loc is not "Loc.mergeable" with the loc of the Elpi Typecheck
-         command, hence we generate an error feedback on the right loc *)
-      feedback_error loc ei;
-      Exninfo.iraise ei
-    in
-  ()
-
-
-
 let trace_filename_gen (add_counter: string) =
   "/tmp/traced.tmp" ^ (add_counter) ^ ".json"
 
 let trace_filename = trace_filename_gen ""
 
-let run ~static_check program query =
+let run ~loc program query =
   let t1 = Unix.gettimeofday () in
+
   let query =
+    handle_elpi_compiler_errors ~loc (fun () ->
     match query with
-    | `Ast (f,query_ast) -> API.RawQuery.compile_ast program query_ast f
-    | `Fun query_builder -> API.RawQuery.compile program query_builder in
+    | Ast (f,query_ast) -> API.RawQuery.compile_ast program query_ast f
+    | Fun query_builder -> API.RawQuery.compile_raw_term program query_builder) in
   let t2 = Unix.gettimeofday () in
   let _ = API.Setup.trace [] in
-  if static_check then run_static_check query;
   let t3 = Unix.gettimeofday () in
   let leftovers = API.Setup.trace !trace_options in
   if (!trace_options <> [] && Sys.file_exists trace_filename) then 
@@ -268,9 +154,9 @@ let elpi_fails program_name =
     "Please report this inconvenience to the authors of the program."
   ]))
    
-let run_and_print ~print ~static_check program_name program_ast query_ast : _ * Coq_elpi_builtins_synterp.SynterpAction.RZipper.zipper =
+let run_and_print ~print ~loc program_name program_ast query_ast : _ * Coq_elpi_builtins_synterp.SynterpAction.RZipper.zipper =
   let open API.Data in let open Coq_elpi_utils in
-  match run ~static_check program_ast query_ast
+  match run ~loc program_ast query_ast
   with
   | API.Execute.Failure -> elpi_fails program_name
   | API.Execute.NoMoreSteps ->
@@ -306,12 +192,14 @@ let run_and_print ~print ~static_check program_name program_ast query_ast : _ * 
         | Summary.Stage.Synterp -> Coq_elpi_builtins_synterp.clauses_for_later_synterp
         | Summary.Stage.Interp  -> Coq_elpi_builtins.clauses_for_later_interp)
         state in
+
+    (* TODO: this code is duplicate, see set_accumulate_to_db_* *)
     let elpi = P.ensure_initialized () in
-    let flags = P.cc_flags() in
     let clauses_to_add = clauses_to_add |> group_clauses |>
       List.map (fun (dbname,asts,vs,scope) ->
-      let units = asts |> List.map (fun ast -> EC.unit ~elpi ~flags ast) in
-      let units = units |> List.map (fun unit -> P.intern_unit (None,unit,flags)) in
+        let base = P.get_and_compile_existing_db ~loc dbname in
+        (* maybe this should be a fold otherwise all clauses have to be independent (the second cannot mention the first one) *)
+        let units = asts |> List.map (fun ast -> P.unit_from_ast ~elpi None ~base ~loc ast) in
       dbname,units,vs,scope) in
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
       P.accumulate_to_db dbname units vs ~scope);
@@ -323,30 +211,27 @@ let run_and_print ~print ~static_check program_name program_ast query_ast : _ * 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
 let set_current_program n =
   current_program := Some n
-
-let typecheck_program ?program () =
-  match Option.append program !current_program with
-  | None -> ()
-  | Some program ->
-      let elpi = P.ensure_initialized () in
-      get_and_compile program |> Option.iter (fun (program, _) ->
-        let query_ast = P.parse_goal ~elpi (API.Ast.Loc.initial "(typecheck)") "true." in
-        let query = EC.query program query_ast in
-        let _ = API.Setup.trace !trace_options in
-        run_static_check query)
   
 let current_program () =
   match !current_program with
   | None -> CErrors.user_err Pp.(str "No current Elpi Program")
   | Some x -> x
 
-let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, query) =
-  let elpi = P.ensure_initialized () in
-  get_and_compile ~even_if_empty:true program |> Option.map (fun (program_ast, _) ->
-    let query_ast = `Ast (st_setup, P.parse_goal ~elpi loc query) in
-    run_and_print ~print:true ~static_check:true program program_ast query_ast)
+let get_base ~loc ~elpi program : [ `Program of EC.program | `Db of EC.program ]=
+  if P.db_exists program then
+    `Db (P.get_and_compile_existing_db ~loc program)
+  else
+    match P.get_and_compile ~loc ~even_if_empty:true program with
+    | None -> CErrors.user_err ~loc Pp.(str "Unknown program " ++ pr_qualified_name program)
+    | Some (base, _) -> `Program base
 
-  let accumulate_extra_deps ?(program=current_program()) ids =
+let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x) (qloc, query) =
+  let elpi = P.ensure_initialized () in
+  P.get_and_compile ~loc ~even_if_empty:true program |> Option.map (fun (base, _) ->
+    let query_ast = Ast (st_setup base, P.parse_goal ~loc ~elpi qloc query) in
+    run_and_print ~print:true ~loc program base query_ast)
+
+  let accumulate_extra_deps ~loc ?(program=current_program()) ids =
     let elpi = P.ensure_initialized () in
     let s = ids |> List.map (fun id ->
       try ComExtraDeps.query_extra_dep id
@@ -357,26 +242,26 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
           str" is unknown; please add a directive like 'From .. Extra Dependency .. as " ++
           Names.Id.print id ++ str"'.")) in
     try
-      let new_src_ast = List.map (fun fname -> P.unit_from_file ~elpi fname) s in
-      if P.db_exists program then
+      match get_base ~loc ~elpi program with
+      | `Db base ->
+        let new_src_ast = List.map (fun fname -> P.unit_from_file ~elpi ~loc ~base fname) s in
         P.accumulate_to_db program new_src_ast [] ~scope:Coq_elpi_utils.Regular
-      else
-        let new_src_ast = List.map2 (fun fname funit ->
-          File {
-            fname;
-            fast = funit;
-          }) s new_src_ast in
+      | `Program base ->
+        let new_src_ast = List.map (fun fname -> P.unit_from_file ~loc ~elpi ~base fname) s in
+        let new_src_ast = List.map2 (fun fname funit -> File { fname; fast = funit; }) s new_src_ast in
         P.accumulate program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
-  let accumulate_extra_deps ~atts:(only,ph) ?program ids = skip ~only ~ph (accumulate_extra_deps ?program) ids
+  let accumulate_extra_deps ~atts:(only,ph) ~loc ?program ids = skip ~only ~ph (accumulate_extra_deps ~loc ?program) ids
     
-  let accumulate_files ?(program=current_program()) s =
+  let accumulate_files ~loc ?(program=current_program()) s =
     let elpi = P.ensure_initialized () in
     try
-      let new_src_ast = List.map (fun fname -> P.unit_from_file ~elpi fname) s in
-      if P.db_exists program then
+      match get_base ~loc ~elpi program with
+      | `Db base ->
+        let new_src_ast = List.map (fun fname -> P.unit_from_file ~loc ~elpi ~base fname) s in
         P.accumulate_to_db program new_src_ast [] ~scope:Coq_elpi_utils.Regular
-      else
+      | `Program base ->
+        let new_src_ast = List.map (fun fname -> P.unit_from_file ~loc ~elpi ~base fname) s in
         let new_src_ast = List.map2 (fun fname funit ->
           File {
             fname;
@@ -384,31 +269,40 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
           }) s new_src_ast in
         P.accumulate program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
-  let accumulate_files ~atts:(only,ph) ?program s = skip ~only ~ph (accumulate_files ?program) s
+  let accumulate_files ~atts:(only,ph) ~loc ?program s = skip ~only ~ph (accumulate_files ~loc ?program) s
   
-  let accumulate_string ?(program=current_program()) (loc,s) =
+  let accumulate_string ~loc ?(program=current_program()) (sloc,s) =
     let elpi = P.ensure_initialized () in
-    let new_ast = P.unit_from_string ~elpi loc s in
-    if P.db_exists program then
+    match get_base ~elpi ~loc program with
+    | `Db base ->
+      let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
       P.accumulate_to_db program [new_ast] [] ~scope:Coq_elpi_utils.Regular
-    else
-      P.accumulate program [EmbeddedString { sloc = loc; sdata = s; sast = new_ast}]
-  let accumulate_string ~atts:(only,ph) ?program loc = skip ~only ~ph (accumulate_string ?program) loc
+    | `Program base ->
+      let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
+      P.accumulate program [EmbeddedString { sast = new_ast}]
+  let accumulate_string ~atts:(only,ph) ~loc ?program sloc = skip ~only ~ph (accumulate_string ~loc ?program) sloc
   
   
-  let accumulate_db ?(program=current_program()) name =
+  let accumulate_db ~loc ?(program=current_program()) name =
     let _ = P.ensure_initialized () in
-    if P.db_exists name then P.accumulate program [Database name]
+    if P.db_exists name then P.accumulate program [DatabaseHeader { dast = P.(header_of_db name) };DatabaseBody name]
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
-  let accumulate_db ~atts:(only,ph) ?program name = skip ~only ~ph (accumulate_db ?program) name
+  let accumulate_db ~atts:(only,ph) ~loc ?program name = skip ~only ~ph (accumulate_db ~loc ?program) name
   
+  let accumulate_db_header ~loc ?(program=current_program()) name =
+    let _ = P.ensure_initialized () in
+    if P.db_exists name then P.accumulate program [DatabaseHeader { dast = P.(header_of_db name) }]
+    else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
+  let accumulate_db_header ~atts:(only,ph) ~loc ?program name = skip ~only ~ph (accumulate_db_header ~loc ?program) name
   
-  let accumulate_to_db db (loc,s) idl ~scope =
+  let accumulate_to_db ~loc db (sloc,s) idl ~scope =
     let elpi = P.ensure_initialized () in
-    let new_ast = P.unit_from_string ~elpi loc s in
-    if P.db_exists db then P.accumulate_to_db db [new_ast] idl ~scope
-    else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 
-  let accumulate_to_db ~atts:(only,ph) db loc idl ~scope = skip ~only ~ph (accumulate_to_db db loc ~scope) idl
+    match get_base ~elpi ~loc db with
+    | `Db base ->
+       let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
+       P.accumulate_to_db db [new_ast] idl ~scope
+    | _ -> CErrors.user_err Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 
+  let accumulate_to_db ~atts:(only,ph) ~loc db sloc idl ~scope = skip ~only ~ph (accumulate_to_db ~loc db sloc ~scope) idl
   
 
   let mk_trace_opts start stop preds =
@@ -433,65 +327,44 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
       Pp.(strbrk "Now click \"Start watching\" in the Elpi Trace Browser panel and then execute the Command/Tactic/Query you want to trace. Also try \"F1 Elpi\".")
   let trace_browser ~atts opts = skip ~ph:atts trace_browser opts
       
-  let print ~name ~args output =
-    let elpi = P.ensure_initialized () in
-    get_and_compile name |> Option.iter @@ fun (program, _) ->
+  let print ~loc ~name ~args output =
+    P.get_and_compile ~loc name |> Option.iter @@ fun (program, _) ->
     let fname =
       Coq_elpi_programs.resolve_file_path
         ~must_exist:false ~allow_absolute:false ~only_elpi:false output
     in
-    let fname_html = fname ^ ".html" in
     let fname_txt = fname ^ ".txt" in
-    let args = List.map API.RawOpaqueData.of_string args in
-    let query_ast = Interp.parse_goal ~elpi (API.Ast.Loc.initial "(print)") "true." in
-    let query = EC.query program query_ast in
     let oc = open_out fname_txt in
     let fmt = Format.formatter_of_out_channel oc in
-    EPP.program fmt query;
+    EPP.program fmt program;
     Format.pp_print_flush fmt ();
-    close_out oc;
-    let loc = { API.Ast.Loc.
-      source_name = "(Elpi Print)";
-      source_start = 0;
-      source_stop = 0;
-      line = -1;
-      line_starts_at = 0; } in
-    let q ~depth state =
-      let state, quotedP, _  = API.Quotation.quote_syntax_compiletime state query in
-      assert(depth=0); (* else, we should lift the terms down here *)
-      let q = ET.mkApp main_quotedc
-        (EU.list_to_lp_list quotedP)
-        [API.RawOpaqueData.of_string fname_html; EU.list_to_lp_list args] in
-      state, (loc,q), [] in
-    ignore @@ run_and_print ~print:false ~static_check:false ["Elpi";"Print"]
-      (P.assemble_units ~elpi [P.printer ()]) (`Fun q)
-  let print ~atts ~name ~args output =
-    skip ~ph:atts (print ~name ~args) output
-      
+    close_out oc
+  let print ~atts ~loc ~name ~args output =
+    skip ~ph:atts (print ~loc ~name ~args) output
 
-  let create_command ~atts:(raw_args) n =
+  let create_command ~atts:(raw_args) ~loc:_ n =
     let raw_args = Option.default false raw_args in
     let _ = P.ensure_initialized () in
     P.declare_program n (Command { raw_args });
     P.init_program n (P.command_init());
     set_current_program (snd n)
 
-  let create_tactic n =
+  let create_tactic ~loc:_ n =
     let _ = P.ensure_initialized () in
     P.declare_program n Tactic;
     if P.stage = Summary.Stage.Interp then P.init_program n (P.tactic_init ());
     set_current_program (snd n)
 
-  let create_program ~atts:(raw_args) n ~init:(loc,s) =
+  let create_program ~atts:(raw_args) ~loc n ~init:(sloc,s) =
     let raw_args = Option.default false raw_args in
     let elpi = P.ensure_initialized () in
     P.declare_program n (Program { raw_args });
-    let unit = P.unit_from_string ~elpi loc s in
-    let init = EmbeddedString { sloc = loc; sdata = s; sast = unit} in
+    let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
+    let init = EmbeddedString { (*sloc = loc; sdata = s;*) sast = unit} in
     P.init_program n init;
     set_current_program (snd n)
 
-  let create_db ~atts n ~init:(loc,s) =
+  let create_db ~atts ~loc n ~init:(sloc,s) =
     let do_init =
       match atts with
       | None -> same_phase Interp P.stage
@@ -499,55 +372,44 @@ let run_in_program ?(program = current_program ()) ?(st_setup=fun x -> x) (loc, 
     let elpi = P.ensure_initialized () in
     if do_init then begin
       P.declare_db n;
-      let unit = P.unit_from_string ~elpi loc s in
+      let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
       P.init_db n unit  
     end
 
   let load_command = P.load_command
   let load_tactic = P.load_tactic
-  let load_printer = P.load_printer
-  let load_checker = P.load_checker
-
-  let get_and_compile qn = get_and_compile ?even_if_empty:None qn
+  
+  let get_and_compile ~loc qn = P.get_and_compile ?even_if_empty:None qn ~loc
 
 end
 
 module type Common = sig
-  val typecheck_program : ?program:qualified_name -> unit -> unit
   val get_and_compile :
-    qualified_name -> (Elpi.API.Compile.program * bool) option
-  val run : static_check:bool ->
+    loc:Loc.t -> qualified_name -> (Elpi.API.Compile.program * bool) option
+  val run : loc:Loc.t ->
     Elpi.API.Compile.program ->
-     [ `Ast of (Elpi.API.State.t -> Elpi.API.State.t) * Elpi.API.Ast.query
-     | `Fun of
-         depth:int ->
-         Elpi.API.State.t ->
-         Elpi.API.State.t *
-         (Elpi.API.Ast.Loc.t * Elpi.API.Data.term) *
-         Elpi.API.Conversion.extra_goals ] ->
-    unit Elpi.API.Execute.outcome  
+     query ->
+    Elpi.API.Execute.outcome  
 
-  val accumulate_files       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> ?program:qualified_name -> string list -> unit
-  val accumulate_extra_deps  : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> ?program:qualified_name -> Names.Id.t list -> unit
-  val accumulate_string      : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
-  val accumulate_db          : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> ?program:qualified_name -> qualified_name -> unit
-  val accumulate_to_db       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
-  
-  val load_checker : string -> unit
-  val load_printer : string -> unit
-  val load_tactic : string -> unit
-  val load_command : string -> unit
+  val accumulate_files       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
+  val accumulate_extra_deps  : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> Names.Id.t list -> unit
+  val accumulate_string      : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
+  val accumulate_db          : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
+  val accumulate_db_header   : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
+  val accumulate_to_db       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
+  val load_tactic : loc:Loc.t -> string -> unit
+  val load_command : loc:Loc.t -> string -> unit
 
   val debug         : atts:phase option -> string list -> unit
   val trace         : atts:phase option -> int -> int -> string list -> string list -> unit
   val trace_browser : atts:phase option -> string list -> unit
   val bound_steps   : atts:phase option -> int -> unit
-  val print         : atts:phase option -> name:qualified_name -> args:string list -> string -> unit
+  val print         : atts:phase option -> loc:Loc.t -> name:qualified_name -> args:string list -> string -> unit
 
-  val create_program : atts:bool option -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
-  val create_command : atts:bool option -> program_name -> unit
-  val create_tactic : program_name -> unit
-  val create_db : atts:phase option -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+  val create_program : atts:bool option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+  val create_command : atts:bool option -> loc:Loc.t -> program_name -> unit
+  val create_tactic : loc:Loc.t -> program_name -> unit
+  val create_db : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
 
 end
 
@@ -559,11 +421,12 @@ module Synterp = struct
       (ET.mkApp main_synterpc (EU.list_to_lp_list args) [syndata])
       [ET.mkApp mainc (EU.list_to_lp_list args) []]
   
-  let run_program loc name ~atts args =
-    get_and_compile name |> Option.map (fun (program, raw_args) ->
-      let loc = Coq_elpi_utils.of_coq_loc loc in
+  let run_program ~loc name ~atts args =
+    get_and_compile ~loc name |> Option.map (fun (program, raw_args) ->
       let initial_synterp_state = Vernacstate.Synterp.freeze () in
-      let query ~depth state =
+      let query state =
+        let loc = Coq_elpi_utils.of_coq_loc loc in
+        let depth = 0 in
         let state, args, gls = EU.map_acc
           (Coq_elpi_arg_HOAS.in_elpi_cmd_synterp ~depth)
           state args in
@@ -571,14 +434,14 @@ module Synterp = struct
         let data = ET.mkUnifVar ek ~args:[] state in
         let state, q = atts2impl loc Summary.Stage.Synterp ~depth state atts (main_syterp args data) in
         let state = API.State.set Coq_elpi_builtins_synterp.invocation_site_loc_synterp state loc in
-        state, (loc, q), gls in
+        state, q, gls in
       try
-        let relocate, synterplog = run_and_print ~print:false ~static_check:false name program (`Fun query) in
+        let relocate, synterplog = run_and_print ~loc ~print:false name program (Fun query) in
         initial_synterp_state, relocate "NewData", synterplog
       with Coq_elpi_builtins_synterp.SynterpAction.Error x -> err x)
 
-  let run_in_program ?program query =
-    try run_in_program ?program query |> Option.map (fun (_,x) -> x)
+  let run_in_program ~loc ?program query =
+    try run_in_program ~loc ?program query |> Option.map (fun (_,x) -> x)
     with Coq_elpi_builtins_synterp.SynterpAction.Error x -> err x
     
 end
@@ -597,18 +460,16 @@ module Interp = struct
   let missing_synterp = let open Pp in
     fnl() ++
     strbrk "The command lacks code for the synterp phase. In order to add code to this phase use '#[synterp] Elpi Accumulate'. See also https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html#parsing-and-execution"
- 
- 
-  let run_program loc name ~atts ~syndata args =
-    get_and_compile name |> Option.iter (fun (program, raw_args) ->
-      let loc = Coq_elpi_utils.of_coq_loc loc in
+  
+  let run_program ~loc name ~atts ~syndata args =
+    get_and_compile ~loc name |> Option.iter (fun (program, raw_args) ->
       let env = Global.env () in
       let sigma = Evd.from_env env in
       let args = args
         |> List.map (Coq_elpi_arg_HOAS.Cmd.glob (Genintern.empty_glob_sign ~strict:true env))
         |> List.map (Coq_elpi_arg_HOAS.Cmd.interp (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
       in
-      let initial_synterp_state, synterplog, synterm=
+      let initial_synterp_state, synterplog, synterm =
         match syndata with
         | None ->
           let initial_synterp_state = Vernacstate.Synterp.freeze () in
@@ -616,25 +477,28 @@ module Interp = struct
           Coq_elpi_builtins_synterp.SynterpAction.RZipper.empty,
           fun ~target:_ ~depth -> Stdlib.Result.Ok ET.mkDiscard
         | Some (initial_synterp_state,relocate_term,log) -> initial_synterp_state, log, relocate_term in
-      let query ~depth state =
+      let query state =
+        let depth = 0 in
         let state, args, gls = EU.map_acc
-          (Coq_elpi_arg_HOAS.in_elpi_cmd ~depth ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state))
+          (Coq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:program ~raw:raw_args Coq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state))
           state args in
+        let loc = Coq_elpi_utils.of_coq_loc loc in
         let synterm =
-          match synterm ~target:state ~depth with
+          match synterm ~target:program ~depth with
           | Stdlib.Result.Ok x -> x
           | Stdlib.Result.Error s -> err Pp.(str"Data returned by the synterp phase cannot be passed to the interp phase due to unknown symbol: " ++ str s) in
           
         let state, q = atts2impl loc Summary.Stage.Interp ~depth state atts (main_interp args synterm) in
+        let state = API.State.set Coq_elpi_builtins.base state (Some program) in
         let state = API.State.set Coq_elpi_builtins.tactic_mode state false in
         let state = API.State.set Coq_elpi_builtins_synterp.invocation_site_loc state loc in
         let state = API.State.set Coq_elpi_builtins_synterp.SynterpAction.read state synterplog in
-        state, (loc, q), gls in
+        state, q, gls in
       let final_synterp_state = Vernacstate.Synterp.freeze () in
       Vernacstate.Synterp.unfreeze initial_synterp_state;
       try begin
         try 
-            let _, synterp_left = run_and_print ~print:false ~static_check:false name program (`Fun query) in
+            let _, synterp_left = run_and_print ~loc ~print:false name program (Fun query) in
             match Coq_elpi_builtins_synterp.SynterpAction.RZipper.is_empty synterp_left with
             | `Empty -> Vernacstate.Synterp.unfreeze final_synterp_state
             | `Group g ->
@@ -652,14 +516,15 @@ module Interp = struct
         Vernacstate.Synterp.unfreeze final_synterp_state;
         (match fst e with
          | CErrors.UserError _ -> ()
-         | _ -> Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.print (fst e)));
+         | _ -> Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.iprint e));
         Exninfo.iraise e)
   
-  let run_in_program ?program ~syndata query =
-    let st_setup state =
+  let run_in_program ~loc ?program ~syndata query =
+    let st_setup base state =
       let syndata = Option.default (Coq_elpi_builtins_synterp.SynterpAction.RZipper.empty) syndata in
+      let state = API.State.set Coq_elpi_builtins.base state (Some base) in
       API.State.set Coq_elpi_builtins_synterp.SynterpAction.read state syndata in
-    try ignore @@ run_in_program ?program ~st_setup query
+    try ignore @@ run_in_program ~loc ?program ~st_setup query
     with
     | Coq_elpi_builtins_synterp.SynterpAction.Error x when syndata = None -> err Pp.(x ++ missing_synterp)
     | Coq_elpi_builtins_synterp.SynterpAction.Error x -> err x
@@ -669,38 +534,41 @@ end
 
 open Tacticals
 
-let run_tactic_common loc ?(static_check=false) program ~main ?(atts=[]) () =
+let run_tactic_common ~loc program ~main ?(atts=[]) () =
   let open Proofview in
   let open Notations in
   let open Interp in
   Unsafe.tclGETGOALS >>= fun gls ->
   let gls = CList.map Proofview.drop_state gls in
   Proofview.tclEVARMAP >>= fun sigma ->
-  let query ~depth state = 
-    let state, (loc, q), gls =
-      Coq_elpi_HOAS.goals2query sigma gls loc ~main
-        ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac ~depth state in
-    let state, qatts = atts2impl loc Summary.Stage.Interp ~depth state atts q in
+  let query ~base state =
+    let loc = of_coq_loc loc in
+    let depth = 0 in
+    let state, main_query, gls = main ~base sigma gls state in
+    let state, main_query = atts2impl ~depth loc Summary.Stage.Interp state atts main_query in
     let state = API.State.set Coq_elpi_builtins.tactic_mode state true in
     let state = API.State.set Coq_elpi_builtins_synterp.invocation_site_loc state loc in
-    state, (loc, qatts), gls
+    state, main_query, gls
     in
-  get_and_compile program |> Option.cata (fun (cprogram, _) ->
-    match run ~static_check cprogram (`Fun query) with
+  get_and_compile ~loc program |> Option.cata (fun (cprogram, _) ->
+    match run ~loc cprogram (Fun (query ~base:cprogram)) with
     | API.Execute.Success solution -> Coq_elpi_HOAS.tclSOLUTION2EVD ~eta_contract_solution:false sigma solution
     | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
     | API.Execute.Failure -> elpi_fails program
     | exception (Coq_elpi_utils.LtacFail (level, msg)) -> tclFAILn level msg
     | exception (CErrors.UserError _ as e) -> let e = Exninfo.capture e in Exninfo.iraise e
-    | exception e when CErrors.noncritical e -> let e = Exninfo.capture e in (Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.print (fst e)); Exninfo.iraise e))
+    | exception e when CErrors.noncritical e -> let e = Exninfo.capture e in (Feedback.msg_debug Pp.(str "elpi lets escape exception: " ++ CErrors.iprint e); Exninfo.iraise e))
   tclIDTAC
 
-let run_tactic loc program ~atts _ist args =
-  let loc = Coq_elpi_utils.of_coq_loc loc in
-  run_tactic_common loc program ~main:(Coq_elpi_HOAS.Solve args) ~atts ()
+let run_tactic ~loc program ~atts _ist args =
+  run_tactic_common ~loc program ~atts ~main:(fun ~base sigma gls state ->
+    Coq_elpi_HOAS.solvegoals2query sigma gls (Coq_elpi_utils.of_coq_loc loc) ~main:args ~base
+        ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.(in_elpi_tac ~loc) ~depth:0 state) ()
 
-let run_in_tactic ?(program = Interp.current_program ()) (loc,query) _ist =
-  run_tactic_common loc ~static_check:true program ~main:(Coq_elpi_HOAS.Custom query) ()
+let run_in_tactic ~loc ?(program = Interp.current_program ()) (qloc,query) _ist =
+  run_tactic_common ~loc program ~main:(fun ~base sigma gls state ->
+    Coq_elpi_HOAS.txtgoals2query sigma gls qloc ~main:query ~base ~depth:0 state)
+  ()
 
 let loc_merge l1 l2 =
   try Loc.merge l1 l2
@@ -737,9 +605,9 @@ let cache_program (nature,p,q) =
 
         (fun loc0 args loc1 ?loc ~atts () ->
           let loc = Option.default (loc_merge loc0 loc1) loc in
-          let syndata = Synterp.run_program loc p ~atts args in
+          let syndata = Synterp.run_program ~loc p ~atts args in
           Vernactypes.vtdefault (fun () ->
-             Interp.run_program loc p ~atts ~syndata args))
+             Interp.run_program ~loc p ~atts ~syndata args))
     in
     Egramml.extend_vernac_command_grammar ~undoable:true ext
 

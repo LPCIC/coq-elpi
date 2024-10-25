@@ -20,7 +20,6 @@ From elpi.apps Require Export
   derive.eqbcorrect
   derive.eqbOK
 . 
-Elpi Typecheck derive.
 
 (* we derive the Coq prelude *)
 

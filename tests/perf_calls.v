@@ -16,7 +16,7 @@ main [int N] :-
   loop N {coq.locate "x"}.
 
 }}.
-Elpi Typecheck.
+
 Elpi Export perf.
 
 Timeout 1 perf 3000.

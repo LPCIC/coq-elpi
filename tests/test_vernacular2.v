@@ -5,7 +5,6 @@ Elpi test.program1 "hello" x y.
 
 #[fwd_compat_attr] Elpi Command foo.
 #[fwd_compat_attr] Elpi Accumulate " main _ :- coq.say {attributes}. ".
-#[fwd_compat_attr] Elpi Typecheck.
 #[fwd_compat_attr] Elpi Export foo.
 #[fwd_compat_attr] Elpi Query lp:{{ true }}.
 #[fwd_compat_attr] Elpi foo.
@@ -30,7 +29,7 @@ Elpi Accumulate lp:{{
     mk-lem Name
   ].
 }}.
-Elpi Typecheck.
+
 Elpi Export the_command.
 
 Elpi Tactic elpi_tac.
@@ -41,7 +40,7 @@ Elpi Accumulate lp:{{
   ].
   solve _ _ :- coq.ltac.fail _ "failed".
 }}.
-Elpi Typecheck.
+
 
 Ltac ltac1_that_calls_elpi :=
   elpi elpi_tac;

@@ -66,7 +66,7 @@ Elpi Accumulate lp:{{
     coq.env.add-const N BO1 TY1 @transparent! _,
   ].
 }}.
-Elpi Typecheck.
+
 
 Elpi test.API2 Inductive ind1 (A : T1) | (B : Type) :=
   K1 : ind1 B -> ind1 B | K2 : A -> ind1 B | K3 (a : A) : ind1 B.
@@ -182,7 +182,7 @@ Elpi Accumulate lp:{{
     std.assert! (U = V) "elaboration refreshes",
     coq.say U V.
 }}.
-Elpi Typecheck.
+
 
 Elpi detype #[universes(polymorphic)] Definition f@{u|Set < u} (x : Type@{u}) := x.
 

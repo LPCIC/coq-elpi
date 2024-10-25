@@ -91,7 +91,7 @@ solve (goal _ _ T _ [] as G) GL :-
 refine R G GL.
 
 }}.
-Elpi Typecheck.
+
 Elpi Export abs_evars.
 
 Fail Lemma test : forall x, x = x.

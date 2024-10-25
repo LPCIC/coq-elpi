@@ -14,6 +14,7 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 Elpi Db derive.eqbOK.db lp:{{
 
   pred eqbok-for o:gref, o:constant.
+  type stop string -> prop.
 
 }}.
 
@@ -38,7 +39,7 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.eqbOK <inductive name/alias>".
 
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive  *)
 Elpi Accumulate derive File eqbOK.

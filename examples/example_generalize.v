@@ -8,11 +8,6 @@ Elpi Accumulate lp:{{
 % we add a new constructor to terms to represent terms to be abstracted
 type abs int -> term.
 
-% example rule, abstracts all 1s. We place it at the beginning of fold-map, see
-% coq-lib.elpi for the full definition of fold-map
-:before "fold-map:start"
-fold-map {{ 1 }} N (abs M) M :- !, M is N + 1.
-
 % bind back abstracted subterms
 pred bind i:int, i:term, o:term.
 bind M T T1 :- M > 0,
@@ -24,14 +19,16 @@ bind M T T1 :- M > 0,
 bind 0 T T1 :- copy T T1.         % we perform all the replacements
 
 main [trm T] :- std.do! [
-  fold-map T 0 T1 M,
+  % example rule, abstracts all 1s.
+  (pi N M\ fold-map {{ 1 }} N (abs M) M :- !, M is N + 1)
+    => fold-map T 0 T1 M,
   bind M T1 T2,
   coq.say {coq.term->string T} "===>" {coq.term->string T2},
 ].
  
 
 }}.
-Elpi Typecheck.
+
 
 Elpi generalize (3 + 7).
 (* prints: 

@@ -113,5 +113,5 @@ Elpi Accumulate lp:{{
     coq.error "Usage:  derive <inductive type/definition>\n\tderive Inductive name Params : Arity := Constructors.".
 }}.
 
-Elpi Typecheck.
+
 Elpi Export derive.

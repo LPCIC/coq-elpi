@@ -155,9 +155,27 @@ val in_elpi_let : Name.t -> term -> term -> term -> term
 val in_elpi_appl : depth:int -> term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
-
-
 val in_elpi_name : Name.t -> term
+
+val set_coq : Elpi.API.Ast.Scope.language -> unit
+
+(* gref *)
+val in_elpiast_gref : loc:Ast.Loc.t -> Names.GlobRef.t -> Ast.Term.t
+(* term *)
+val in_elpiast_gr : loc:Ast.Loc.t -> Names.GlobRef.t -> Ast.Term.t
+val in_elpiast_poly_gr : loc:Ast.Loc.t -> Names.GlobRef.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_poly_gr_instance : loc:Ast.Loc.t -> Names.GlobRef.t -> UVars.Instance.t -> Ast.Term.t
+val in_elpiast_flex_sort : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_sort : loc:Ast.Loc.t -> state -> Sorts.t -> Ast.Term.t
+val in_elpiast_prod : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_lam : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_let : loc:Ast.Loc.t -> Names.Name.t -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_appl : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t list -> Ast.Term.t
+val in_elpiast_match : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t list -> Ast.Term.t
+val in_elpiast_fix : loc:Ast.Loc.t -> Names.Name.t -> int -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_name : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t
+val in_elpiast_decl : loc:Ast.Loc.t -> v:Ast.Term.t -> Names.Name.t -> ty:Ast.Term.t -> Ast.Term.t
+val in_elpiast_def : loc:Ast.Loc.t -> v:Ast.Term.t -> Names.Name.t -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t
 
 val in_coq_name : depth:int -> term -> Name.t
 val is_coq_name : depth:int -> term -> bool
@@ -186,6 +204,8 @@ type primitive_value =
   | Projection of Projection.t
 val primitive_value : primitive_value Conversion.t
 val in_elpi_primitive : depth:int -> state -> primitive_value -> state * term
+val in_elpiast_primitive : loc:Ast.Loc.t -> primitive_value -> Ast.Term.t 
+
 val uinstance : UVars.Instance.t Conversion.t
 
 val universe_constraint : Univ.univ_constraint Conversion.t
@@ -282,13 +302,16 @@ val update_sigma : State.t -> (Evd.evar_map -> Evd.evar_map) -> State.t
 
 type hyp = { ctx_entry : term; depth : int }
 
-type 'arg tactic_main = Solve of 'arg list | Custom of string
-val goals2query :
-  Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:'a tactic_main ->
-  in_elpi_tac_arg:(depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
-  depth:int -> State.t -> State.t * (Elpi.API.Ast.Loc.t * term) * Conversion.extra_goals
-val tclSOLUTION2EVD : eta_contract_solution:bool -> Evd.evar_map -> 'a Elpi.API.Data.solution -> unit Proofview.tactic
-val solution2evd : eta_contract_solution:bool -> Evd.evar_map -> 'a Elpi.API.Data.solution -> Evar.Set.t -> Evd.evar_map * Evar.t list * Evar.t list
+val solvegoals2query :
+  Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:'a list ->
+  in_elpi_tac_arg:(base:'base -> depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
+  depth:int -> base:'base -> State.t -> State.t * term * Conversion.extra_goals
+val txtgoals2query :
+  Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:string ->
+  depth:int -> base:Elpi.API.Compile.program -> State.t -> State.t * term * Conversion.extra_goals
+
+val tclSOLUTION2EVD : eta_contract_solution:bool -> Evd.evar_map -> Elpi.API.Data.solution -> unit Proofview.tactic
+val solution2evd : eta_contract_solution:bool -> Evd.evar_map -> Elpi.API.Data.solution -> Evar.Set.t -> Evd.evar_map * Evar.t list * Evar.t list
 
 val show_coq_engine : ?with_univs:bool -> State.t -> string
 val show_coq_elpi_engine_mapping : State.t -> string

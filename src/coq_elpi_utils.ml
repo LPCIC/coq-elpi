@@ -11,9 +11,25 @@ let interp_quotations = API.Quotation.new_quotations_descriptor ()
 let interp_hoas = API.RawData.new_hoas_descriptor ()
 let interp_state = API.State.new_state_descriptor ()
 
+let source_name_of_fname = function
+  | Loc.InFile { dirpath = None; file } -> Format.asprintf "%s" file 
+  | Loc.InFile { dirpath = Some dp; file } -> Format.asprintf "%s|%s" dp file 
+  | Loc.ToplevelInput -> "(stdin)" 
+
+let fname_of_source_name s =
+  if s = "(stdin)" then Loc.ToplevelInput
+  else
+    try
+      let i = String.index s '|' in
+      let len = String.length s in
+      let dp = String.sub s 0 i in
+      let file = String.sub s (i+1) (len-i-1) in
+      Loc.InFile { dirpath = Some dp; file }
+    with Not_found -> Loc.InFile { dirpath = None; file = s }
+
 let of_coq_loc l =
   {
-    API.Ast.Loc.source_name = (match l.Loc.fname with Loc.InFile { file } -> file | Loc.ToplevelInput -> "(stdin)");
+    API.Ast.Loc.source_name = source_name_of_fname l.Loc.fname;
     source_start = l.Loc.bp;
     source_stop = l.Loc.ep;
     line = l.Loc.line_nb;
@@ -21,11 +37,47 @@ let of_coq_loc l =
   }
 
 let to_coq_loc { API.Ast.Loc.source_name; line; line_starts_at; source_start; source_stop } =
-  Loc.create (Loc.InFile { dirpath = None; file = source_name }) line line_starts_at source_start source_stop
+  Loc.create (fname_of_source_name source_name) line line_starts_at source_start source_stop
 
 let err ?loc msg =
   let loc = Option.map to_coq_loc loc in
   CErrors.user_err ?loc msg
+
+let pp_oloc = function
+  | None -> Pp.mt ()
+  | Some loc -> Pp.str @@ Format.asprintf "%a " API.Ast.Loc.pp loc
+
+(* If the error comes from another file (see Loc.mergeable) Coq drops the precise loc
+   and reports it on the whole execution site. If so, we print the
+   more precise loc as part of the error message. *)
+let patch_loc_source execution_loc error_loc =
+  match execution_loc, error_loc with
+  | _, None -> Pp.mt (), execution_loc
+  | { Loc.fname },Some ({ Loc.fname = elpiname } as elpiloc) when fname <> elpiname ->
+      (* external file *)
+      Pp.(Loc.pr elpiloc ++ spc ()), execution_loc
+  | _, Some elpiloc -> Pp.mt (), elpiloc
+
+let handle_elpi_compiler_errors ~loc f =
+  try f ()
+  with
+  | Sys_error msg ->
+    CErrors.user_err ~loc (Pp.str msg)
+  | Elpi.API.Compile.CompileError(oloc, msg) as e ->
+    let _,info = Exninfo.capture e in
+    let extra_msg, loc = patch_loc_source loc (Option.map to_coq_loc oloc) in
+    CErrors.user_err ~info ~loc Pp.(hv 0 (extra_msg ++ str msg))
+  | Elpi.API.Parse.ParseError(oloc, msg) as e ->
+    let _,info = Exninfo.capture e in
+    let extra_msg, loc = patch_loc_source loc (Some (to_coq_loc oloc)) in
+    CErrors.user_err ~info ~loc Pp.(hv 0 (extra_msg ++ str msg))
+  | Gramlib.Grammar.Error _ as e ->
+    let _,info = Exninfo.capture e in
+    let cloc = Loc.get_loc info in
+    let msg = CErrors.print_no_report e in
+    let extra_msg, loc = patch_loc_source loc cloc in
+    CErrors.user_err ~info ~loc Pp.(hv 0 (extra_msg ++ msg))
+
 
 exception LtacFail of int * Pp.t
 
@@ -145,8 +197,8 @@ let locate_gref s =
     let qualid = Libnames.qualid_of_string s in
     locate_simple_qualid qualid
 
-let uint63 : Uint63.t Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
+let (uint63c, uint63) : Uint63.t Elpi.API.RawOpaqueData.cdata * Uint63.t Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
   declare
     {
       name = "uint63";
@@ -158,8 +210,8 @@ let uint63 : Uint63.t Elpi.API.Conversion.t =
       constants = [];
     }
 
-let float64 : Float64.t Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
+let (float64c, float64) : Float64.t Elpi.API.RawOpaqueData.cdata * Float64.t Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
   declare
     {
       name = "float64";
@@ -171,8 +223,8 @@ let float64 : Float64.t Elpi.API.Conversion.t =
       constants = [];
     }
 
-let pstring : Pstring.t Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
+let (pstringc, pstring) : Pstring.t Elpi.API.RawOpaqueData.cdata * Pstring.t Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
   declare {
     name = "pstring";
     doc = "";
@@ -189,8 +241,8 @@ let debug = CDebug.create ~name:"elpi" ()
 
 let elpitime_flag, elpitime = CDebug.create_full ~name:"elpitime" ()
 
-let projection : Names.Projection.t Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
+let (projectionc, projection) : Names.Projection.t Elpi.API.RawOpaqueData.cdata * Names.Projection.t Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
   declare
     {
       name = "projection";
