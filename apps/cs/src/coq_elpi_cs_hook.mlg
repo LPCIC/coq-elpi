@@ -57,11 +57,6 @@ let elpi_cs_hook program env sigma ((proji, u), params1, c1) (t2, args2) =
 		 | API.Execute.Failure -> None
 		 end
 
-open Elpi
-open Elpi_plugin
-open Coq_elpi_arg_syntax
-open Coq_elpi_vernacular
-
 [%%if coq = "8.20"]
 let adapt_hook f : Evarconv.hook = fun env sigma (s,l,t) x -> f env sigma (s,Some l,t) x
 [%%else]
