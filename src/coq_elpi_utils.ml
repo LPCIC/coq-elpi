@@ -256,7 +256,6 @@ let detype_universe sigma u =
   Glob_term.UNamed (List.map (Util.on_fst (detype_level_name sigma)) (Univ.Universe.repr u))
 let detype_sort ku sigma x =
   let open Sorts in
-  let open Glob_term in
   let open Glob_ops in
   match x with
   | SProp -> glob_SProp_sort
@@ -313,7 +312,6 @@ end =
 struct
 open Vars
 open Names
-open EConstr
 open Declarations
 open UVars
 open Constr
