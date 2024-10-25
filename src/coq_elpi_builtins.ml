@@ -579,7 +579,7 @@ let preprocess_clause ~depth clause =
         E.mkLam (subst ~depth:(depth+1) m x)
     | E.Builtin(c,xs) ->
         E.mkBuiltin c (List.map (subst ~depth m) xs)
-    | E.UnifVar _ -> assert false
+    | E.UnifVar _ -> CErrors.anomaly Pp.(str"accumulating non-closed clauses is forbidden")
     | E.Const _ | E.Nil | E.CData _ -> t
     in
   let clause = 
