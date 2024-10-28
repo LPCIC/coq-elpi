@@ -2,7 +2,7 @@ From elpi Require Import tc.
 Require Import Bool.
 
 Module m1.
-  Elpi TC.Pending_mode +.
+  #[mode(g)] Elpi TC.Pending_attributes.
   Class C (i : nat).
   Instance C0 : C 0. Qed.
   Goal exists x, C x. eexists. Fail apply _. Abort.
@@ -10,8 +10,8 @@ Module m1.
   Instance C0' : C' 0. Qed.
   Goal exists x, C' x. eexists. apply _. Abort.
 
-  Elpi TC.Pending_mode +.
-  Fail Elpi TC.Pending_mode +.
+  #[mode(g)] TC.Pending_attributes.
+  Fail #[mode(g)] TC.Pending_attributes.
 
   Class C'' (i : nat).
   Instance C0'' : C'' 0. Qed.
@@ -19,7 +19,7 @@ Module m1.
 End m1.
 
 Module ground.
-  Elpi TC.Pending_mode +.
+  #[mode(g)] TC.Pending_attributes.
   Class C (i : Type).
   Instance i : C (list nat). Qed.
 
@@ -30,7 +30,7 @@ Module ground.
 End ground.
 
 Module ground1.
-  Elpi TC.Pending_mode +.
+  #[mode(g)] TC.Pending_attributes.
   Class C (i : Type).
   Instance i x: C x. Qed.
 
@@ -41,7 +41,7 @@ Module ground1.
 End ground1.
 
 Module ground2.
-  Elpi TC.Pending_mode +.
+  #[mode(g)] TC.Pending_attributes.
   Class C (i : Type).
   Instance i (x: Type): C (list x). Qed.
 
@@ -52,7 +52,7 @@ Module ground2.
 End ground2.
 
 Module ground3.
-  Elpi TC.Pending_mode + +.
+  #[mode(g,g)] TC.Pending_attributes.
   Class C {i : Type} (f : i -> i -> Prop).
   Instance i {X : Type}: C (@eq X). Qed.
   Hint Mode C ! ! : typeclass_instances.
@@ -64,10 +64,9 @@ Module ground3.
 End ground3.
 
 Module ground4.
-  Elpi TC.Pending_mode - +.
+  #[mode(o,g)] TC.Pending_attributes.
   Class C {i : Type} (f : i -> i -> Prop).
   Instance i {X : Type}: C (@eq X). Qed.
-  Hint Mode C ! ! : typeclass_instances.
 
   Goal exists (X : Type), @C (list X) eq. 
     eexists.
@@ -76,10 +75,9 @@ Module ground4.
 End ground4.
 
 Module rigid_head1.
-  Elpi TC.Pending_mode !.
+  #[mode(i)] TC.Pending_attributes.
   Class C (i : Type).
   Instance i: C (list nat). Qed.
-  Hint Mode C ! : typeclass_instances.
 
   Goal exists (x : Type), C (list x). 
     eexists.
@@ -88,15 +86,15 @@ Module rigid_head1.
 
   Goal exists (x : Type), C x. 
     eexists.
+    (* This fails since x is flex and mode i accepts only terms with rigid head *)
     Fail apply _.
   Abort.
 End rigid_head1.
 
 Module rigid_head2.
-  Elpi TC.Pending_mode ! !.
+  #[mode(i,i)] TC.Pending_attributes.
   Class C {i : Type} (f : i -> i -> Prop).
   Instance i {X : Type}: C (@eq X). Qed.
-  Hint Mode C ! ! : typeclass_instances.
 
   Goal exists (X : Type), C (@eq X). 
     eexists.
@@ -106,7 +104,7 @@ End rigid_head2.
 
 Module simplEq.
 
-  TC.Pending_mode "!".
+  #[mode(i)] TC.Pending_attributes.
   Class MyEqb A : Type := eqb : A -> A -> bool.
   (* Global Hint Mode MyEqb ! : typeclass_instances. *)
 
@@ -122,7 +120,7 @@ Module simplEq.
 End simplEq.
 
 Module force_input_link.
-  TC.Pending_mode "+".
+  #[mode(g)] TC.Pending_attributes.
   Class A (i: nat -> nat -> nat).
 
   Global Hint Mode A + : typeclass_instances.
@@ -140,7 +138,7 @@ End force_input_link.
 
 Module force_input_link_HO_var1.
 
-  TC.Pending_mode !.
+  #[mode(i)] TC.Pending_attributes.
   Class A (i: Type).
   Global Hint Mode A ! : typeclass_instances. (*Mode also added in elpi*)
 
@@ -163,7 +161,7 @@ End force_input_link_HO_var1.
 
 Module force_input_link_HO_var2.
 
-  TC.Pending_mode !.
+  #[mode(i)] TC.Pending_attributes.
   Class A (i: Type).
   Global Hint Mode A ! : typeclass_instances. (*Mode also added in elpi*)
 
@@ -184,7 +182,7 @@ End force_input_link_HO_var2.
 
 Module force_input_link_HO_var3.
 
-  TC.Pending_mode !.
+  #[mode(i)] TC.Pending_attributes.
   Class A (i: Type).
   Global Hint Mode A ! : typeclass_instances. (*Mode also added in elpi*)
 

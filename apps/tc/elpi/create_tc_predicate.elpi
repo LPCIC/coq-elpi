@@ -4,41 +4,30 @@
 namespace tc {
   shorten tc.{search-mode}.
 
-  % The predicate of a class is local if inside a section and readded at section end.
-  % This way, section variables are generalized
+  % The predicate of a class is local if inside a section and readded at section
+  % end. This way, section variables are generalized
   pred get-class-locality o:list prop. 
   get-class-locality [@local!] :- coq.env.current-section-path [_ | _], !.
   get-class-locality [@global!].
 
-  % [add-class-gr SearchMode ClassGR] adds the predicate for the class with its corresponing mode
-  % NOTE: the mode inside TC.declare_mode has the priority over Coq mode or #[mode=(...)] TC.Declare
-  pred add-class-gr i:search-mode, i:gref.
-  % the predicate for the class has alread been added
-  add-class-gr _ ClassGR :- tc.class ClassGR _ _ _, !. 
-  add-class-gr SearchMode ClassGR :-
+  % [declare-class-in-elpi SearchMode ClassGR] adds the elpi predicate for the
+  % given class  
+  pred declare-class-in-elpi i:gref.
+  declare-class-in-elpi ClassGR :- tc.class ClassGR _ _ _, !. % Nothing is done since the predicate already exists
+  declare-class-in-elpi ClassGR :-
     std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
-    tc.get-elpi-mode ClassGR EM SM, 
+    tc.pending.get Mode Functionality_ SearchMode,
+    tc.get-elpi-mode ClassGR Mode EM SM,
     tc.gref->pred-name ClassGR PredName,
     get-class-locality Locality, 
     Locality => (
       coq.elpi.add-predicate "tc.db" _ PredName EM,
       tc.add-tc-db _ _ (tc.class ClassGR PredName SearchMode SM)).
 
-  pred add-class-str i:search-mode, i:string.
-  add-class-str SearchMode ClassStr :-
+  pred add-class-str i:string.
+  add-class-str ClassStr :-
     coq.locate ClassStr ClassGR,
-    add-class-gr SearchMode ClassGR.
-
-  pred attr->search-mode o:search-mode. 
-  attr->search-mode tc.deterministic :- get-option "deterministic" tt, !.
-  attr->search-mode tc.classic.
-
-  pred attr->modes o:list hint-mode.
-  attr->modes CoqModes :- 
-    get-option "mode" L,
-    std.map L get-key-from-option RawModes, 
-    std.map RawModes tc.string->coq-mode CoqModes, !.
-  attr->modes [].
+    declare-class-in-elpi ClassGR.
 
   pred get-key-from-option i:prop, o:string. 
   get-key-from-option (get-option A tt) A :- !.
@@ -46,38 +35,53 @@ namespace tc {
   get-key-from-option (get-option "o" ff) "i" :- !.
   get-key-from-option A _ :- coq.error A "should be an option".
 
+
+  /* 
+    CAVEAT: TC.Declare does not trasmit implicit arguments are not transmitted to the new created
+    class in Coq.
+
+    NOTE: when we declare a class in Coq, the listener (TC.Compiler) will be
+    called in order to add the corresponding predicate in the elpi database.
+    However, this call to the listener is not aware of the attributes (Modes,
+    SearchMode, Functionality...) passed to the pragma TC.Declare. Therefore the
+    `tc.class ClassGR PredName SearchMode RawModes'` is needed and has higher
+    priority of the tc.class rule added by the subsequent call to
+    `declare-class-in-coq`
+  */
   pred declare-class-in-coq i:gref.
   declare-class-in-coq ClassGR :- 
-    attr->modes CoqModes,
-    if (CoqModes = [])
+    % TODO: Functional should be taken into account
+    tc.pending.att-parser-for-pred (tc.pending.modes RawModes) _Functional SearchMode,
+
+    if (RawModes = [])
       (
-        tc.modes-of-class ClassGR EM,
-        std.map EM tc.elpi->string-mode SM
+        % now modes declared with Pending_attributes command, take the one
+        % declared in Coq
+        tc.modes-of-class ClassGR RawModes'
       )(
-        coq.hints.add-mode ClassGR "typeclass_instances" CoqModes,
-        std.map CoqModes (x\y\tc.string->coq-mode y x) SM',
-        std.append SM' ["o"] SM
+        % The next row is a conversion from string list to hint-mode list
+        std.map RawModes tc.string->coq-mode CoqModes,
+        % the last is the output carrying the instance of the rule
+        % this information must not be transmitted to coq mode signature
+        std.drop-last 1 CoqModes CoqModes',
+        coq.hints.add-mode ClassGR "typeclass_instances" CoqModes',
+        RawModes = RawModes'
       ),
-    % CAVEAT: this triggers the observer
-    coq.TC.declare-class ClassGR,
-    attr->search-mode SearchMode, 
-    tc.gref->pred-name ClassGR PredName,
-    % HACK: we override the clauses added by the observer, since it does not know
-    % the SearchMode.
-    get-class-locality Locality, 
     
-    Locality => tc.add-tc-db _ (after "0") (tc.class ClassGR PredName SearchMode SM :- !).
+    % this triggers the observer TC.Compiler
+    coq.TC.declare-class ClassGR,
+    tc.gref->pred-name ClassGR PredName,
+    get-class-locality Locality, 
+    Locality => tc.add-tc-db _ (after "0") (tc.class ClassGR PredName SearchMode RawModes' :- !).
 
   pred declare-class i:indt-decl. 
   declare-class D :- !, 
     coq.env.add-indt D I,
-    coq.parse-attributes {attributes} 
-      [ att "mode" attlist, att "deterministic" bool ] Opts,
-    Opts => declare-class-in-coq (indt I).
+    declare-class-in-coq (indt I).
 
-  % Contains some instruction that are executed just after the creation of
-  % the predicate for the class
-  namespace eta-reduction-aux {
+  % Contains some instruction that are executed just after the creation of the
+  % predicate for the class
+  namespace dead-code-eta-reduction-aux {
     pred is-functional i:term.
     is-functional (prod _ _ _).
 

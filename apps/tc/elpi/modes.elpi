@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 namespace tc {
   shorten tc.{pending-mode}.
 
@@ -6,56 +9,75 @@ namespace tc {
   typeabbrev string-modeL (list string).
   macro @pending-mode! :- "pending mode".
 
-  pred string->coq-mode o:string, o:hint-mode.
-  string->coq-mode uvar uvar :- coq.error "[TC] string->coq-mode". 
-  string->coq-mode "!" mode-input :- !.
-  string->coq-mode "+" mode-ground :- !.
-  string->coq-mode "-" mode-output :- !.
-  string->coq-mode "bang" mode-ground :- !.
-  string->coq-mode "plus" mode-input :- !.
-  string->coq-mode "minus" mode-output :- !.
-  string->coq-mode "i" mode-input :- !.
-  string->coq-mode "o" mode-output :- !.
-  string->coq-mode A _ :- coq.error A "is not a valid mode".
+  pred is-mode-ground i:string.
+  is-mode-ground "plus".
+  is-mode-ground "ground".
+  is-mode-ground "g".
+  is-mode-ground "+".
 
-  pred coq->elpi-mode i:hint-mode, o:elpi-mode.
-  :name "coq->elpi-mode"
-  coq->elpi-mode mode-ground (pr in "term"). % approximation
-  /*
-    The coq input-mode corresponds to the elpi mode out
-    Instance : option_equiv : ∀ {A : Type}, Equiv A → Equiv (option A)
-    Mode:      Equiv !
-    Check _ :  forall x, Equiv A -> Equiv (option _). 
-    In coq, the Check gives the instance option_equiv
-    In elpi, we would have the rule: `tc-Equiv (option A) (option_equiv A B) :- tc-equiv A B.`
-            since the argument in first position of the premise is flexible, then we have a failure
-  */
-  coq->elpi-mode mode-input (pr out "term").
-  coq->elpi-mode mode-output (pr out "term").
+  pred is-mode-ouput i:string.
+  is-mode-ouput "o".
+  is-mode-ouput "-".
+  is-mode-ouput "minus".
+
+  pred is-mode-input i:string.
+  is-mode-input "bang".
+  is-mode-input "i".
+  is-mode-input "!".
+
+  pred string->coq-mode i:string, o:hint-mode.
+  string->coq-mode S mode-ground :- is-mode-ground S, !.
+  string->coq-mode S mode-output :- is-mode-ouput S, !.
+  string->coq-mode S mode-input  :- is-mode-input S, !.
+  string->coq-mode A B :- coq.error "[TC] string->coq-mode:" A "," B "is not a valid mode".
 
   pred string->elpi-mode i:string, o:elpi-mode.
-  string->elpi-mode S R :- coq->elpi-mode {string->coq-mode S} R, !.
-  string->elpi-mode _ (pr out "term").
+  string->elpi-mode uvar uvar :- coq.error "[TC] string->elpi-mode call with 2 flex args".
 
-  pred elpi->string-mode i:elpi-mode, o:string.
-  elpi->string-mode (pr in _) "i" :- !.
-  elpi->string-mode (pr out _) "o".
+  /*  
+    this is an approximation!
+    the input mode of coq tests that the arg has a rigid head.
+    e.g. (tc-Eq (list nat) => tc-Eq (list X))
+    in coq succeeds, in elpi it does not...
+    to solve the issue we cast coq-input in elpi-output :-)
+  */
+  string->elpi-mode S (pr out "term")  :- is-mode-input S, !.
+
+  /* 
+    here another approximation!
+    the ground-mode of coq tests that the args is ground.
+    e.g (tc-CatchAll X => tc-CatchAll (list X))
+    succeeds in elpi but not in coq...
+  */
+  string->elpi-mode S (pr in "term")  :- is-mode-ground S, !.
+
+  /*
+    output is the only compatible mode!
+  */
+  string->elpi-mode S (pr out "term") :- is-mode-ouput S, !.
+  string->elpi-mode A B :- coq.error "[TC] the call `string->elpi-mode" A B "` is not valid".
+
+  pred coq->string-mode i:hint-mode, o:string.
+  coq->string-mode mode-ground "g".
+  coq->string-mode mode-input "i".
+  coq->string-mode mode-output "o".
 
   % Here we build the elpi modes a class CL. If CL has either zero or more than
   % one mode, then we consider all its parameter to be in output mode. If the
   % class has exactly one mode, then it is considered for the signature of the
   % predicate for CL 
-  pred modes-of-class i:gref, o:list (elpi-mode).
+  pred modes-of-class i:gref, o:list string.
   modes-of-class ClassGR Modes :- 
     coq.hints.modes ClassGR "typeclass_instances" CoqModesList,
-    not (CoqModesList = []),
-    not (CoqModesList = [_,_|_], coq.warning "TC.Modes" "At the moment we only allow TC with at most 1 hint Mode (caused by class" {coq.gref->string ClassGR} ")"),
+    if (CoqModesList = [_,_|_])
+      (coq.warning "TC.Modes" "an elpi predicate has one mode, the class" {coq.gref->string ClassGR} "has" {std.length CoqModesList} "(all arguments will be put in output mode)", fail)
+      true,
     CoqModesList = [HintModesFst],
-    std.append {std.map HintModesFst coq->elpi-mode} [pr out "term"] Modes.
+    std.append {std.map HintModesFst coq->string-mode} ["o"] Modes.
   modes-of-class ClassGR Modes :- 
     coq.env.typeof ClassGR ClassTy,
     N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
-    list-init N (x\r\ r = (pr out "term")) Modes.
+    list-init N (x\r\ r = "o") Modes.
 
   pred add-pending-mode i:list string.
   add-pending-mode _ :-
@@ -75,15 +97,15 @@ namespace tc {
     N' is N + 1,
     std.assert! (std.length L N') "Pending mode invalid for class GR".
 
-  pred get-elpi-mode i:gref, o:elpi-modeL, o:string-modeL.
-  get-elpi-mode ClassGR EM SM :-
-    pending-mode SM, !,
-    check-pending-mode-arity ClassGR SM, 
-    remove-pending-mode,
+  pred get-elpi-mode i:gref, i:tc.pending.modes, o:elpi-modeL, o:string-modeL.
+  % empty pending mode list, means that we look for modes declared in coq
+  get-elpi-mode ClassGR (tc.pending.modes []) EM SM :- !,
+    modes-of-class ClassGR SM, 
     std.map SM string->elpi-mode EM.
-  get-elpi-mode ClassGR EM SM :-
-    modes-of-class ClassGR EM, 
-    std.map EM elpi->string-mode SM.
+  % we have 
+  get-elpi-mode ClassGR (tc.pending.modes SM) EM SM :-
+    check-pending-mode-arity ClassGR SM, 
+    std.map SM string->elpi-mode EM.
 
   pred get-evars i:term, o:list term.
   get-evars T L :-
@@ -96,14 +118,24 @@ namespace tc {
   action-to-accumulate _ T [evars HD] :- var T HD _, !.
   action-to-accumulate _ _ [].
 
-  pred mode-check i:string, i:term.
-  % heuristic: if we are in "+" mode, then all evars in T should only be 
-  %            in that argument
-  mode-check "+" T :- !, 
+  pred mode-check-ground i:term.
+  % heuristic: all evars in T should only be in that argument
+  mode-check-ground T :-
     std.findall-unary evars L,
     get-evars T EV,
     std.forall EV (x\ std.forall L (x'\ not (x == x'))).
-  mode-check "!" uvar :- !, fail.
+
+  pred mode-check i:string, i:term.
+  % approximation only at top level we check that the argument in ground mode
+  % (for Coq) is groud. During the recursive calls, since we use elpi input
+  % mode, we don't verify this property anymore
+  mode-check S T :- is-mode-ground S, !, mode-check-ground T.
+
+  % approximation: only at top level we check that the argument in input mode
+  % (for Coq) is not flex (i.e. has a rigid head). During the recursive calls,
+  % since we use elpi output mode (see rules for string->elpi-mode) we stop
+  % verifying this property
+  mode-check S uvar :- is-mode-input S, !, fail.
   mode-check _ _.
 
   pred modes-check.aux i:list string, i:list term.
@@ -116,6 +148,8 @@ namespace tc {
       P => modes-check.aux XS YS            % accumulate P and iterate of XS YS 
     ].
 
+  % used by the solver to check that the top level arguments respects the modes
+  % declared in coq
   pred modes-check i:term.
   modes-check (global _).
   modes-check (pglobal _ _).
@@ -124,4 +158,8 @@ namespace tc {
     tc.get-mode ClassGR M,
     std.drop-last 1 M M',
     modes-check.aux M' Args.
+
+  pred get-mode i:gref, o:list string.
+  get-mode ClassGR M :- tc.class ClassGR _ _ M, !.
+  get-mode ClassGR _ :- coq.error "[TC]" ClassGR "is an unknown class".
 }

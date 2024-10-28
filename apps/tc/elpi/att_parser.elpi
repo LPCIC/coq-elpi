@@ -1,0 +1,119 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+/*
+  This file aims to parse the attributes passed to a class. These parsed
+  attributes are stored in the tc.pending.atts predicate.
+
+  A new pending.atts rule is built with the command TC.Pending_attributes
+
+  We call atts "pending" since atts are meant to add the wanted attributes to
+  the signature of the incoming class declaration (remember that a class in coq
+  is translated as a predicate in elpi). After the creation of the predicate the
+  pending attribute rule is removed. 
+
+  NOTE: it is forbidden to have two rules for tc.pending.atts in the same
+  database
+*/
+namespace tc {
+  namespace pending {
+
+    shorten tc.pending.{atts, modes, functionality}.
+    shorten tc.{no-backtrack}.
+
+    pred default-atts o:modes, o:functionality, o:tc.search-mode.
+    default-atts (modes []) (functionality ff) (tc.no-backtrack ff).
+
+    namespace internal {
+      % returns the bool associated to an option.
+      % by default, if not specified, ff is returned
+      pred get-bool-opt i:string, o:bool.
+      get-bool-opt S B :- get-option S B, !.
+      get-bool-opt _ ff.
+
+      namespace modes {
+        /*
+          for each option returns its value. Note that no check (for now) is
+          done to verify if the value is a valid mode. moreover, if mode is `i`
+          (resp. `o`) with flag `ff`, we return its negated version, i.e. `o`
+          (resp. `o`)
+        */
+        pred get-option->modes-string i:prop, o:string. 
+        get-option->modes-string (get-option A tt) A :- !.
+        get-option->modes-string (get-option "i" ff) "o" :- !.
+        get-option->modes-string (get-option "o" ff) "i" :- !.
+        get-option->modes-string A _ :- coq.error "[tc] cannot parse" A.
+
+        pred from-att o:modes.
+        from-att (modes Modes') :-
+          get-option "mode" L,
+          std.map L get-option->modes-string Modes, !,
+          % adding 'o' to the end of modes for the proof of instance search
+          std.append Modes ["o"] Modes'.
+        % By default, if modes are not specified, we return the empty list
+        from-att (modes []).
+      }
+
+      % [give-attribute S P R] looks for the value (of type bool) of the attribute
+      %       called S, and returns the predicate P applied to this value
+      pred give-attribute i:string, i:(bool -> B), o:B.
+      give-attribute S P (P B) :- get-bool-opt S B. 
+    }
+
+    macro @functional :- "functional".
+    macro @no-backtrack :- "no_backtrack".
+    macro @mode :- "mode".
+    macro @pending-atts! :- "pending-atts".
+
+    /*
+      parses the attributes list to retrive the declared mode, functionality and
+      search-mode. This parsing operation is for attributes of new predicates.
+      If an attribute is not provided the default value will be returned.
+
+      to extend the attribute parse:
+      - add the new label in the list passed to parse-attributes
+      - add the new value as ouput of this signature
+      - changes will be needed for the implementation of pending.atts and
+        declare-class-in-elpi predicates.
+    */
+    pred att-parser-for-pred o:modes, o:functionality, o:tc.search-mode.
+    att-parser-for-pred Modes Functional NoBacktrack :-
+      coq.parse-attributes {attributes}
+        [ att @mode attlist, 
+          att @no-backtrack bool,
+          att @functional bool, 
+          att-ignore-unknown ] Opts, !,
+      Opts => (
+        internal.modes.from-att Modes,
+        internal.give-attribute @no-backtrack no-backtrack NoBacktrack,
+        internal.give-attribute @functional functionality Functional,
+        true).
+
+    % parse attributes with att-parser-for-pred and accumulate the
+    % corressponing tc.pending.atts clause in the database
+    pred att-add.
+    att-add :-
+      atts _ _ _,
+      coq.error "[TC] an already pending attribute instruction exists".
+    att-add :- att-acc {att-parser-for-pred}, !.
+
+    % accumulates a pending.atts in the database
+    pred att-acc i:modes, i:functionality, i:tc.search-mode. 
+    att-acc Modes Functional NoBacktrack :-
+      tc.add-tc-db @pending-atts! _ (atts Modes Functional NoBacktrack).
+
+    % returns and remove the pending attributes from the database
+    pred get o:modes, o:functionality, o:tc.search-mode.
+    get Modes Functional NoBacktrack :-
+      atts Modes Functional NoBacktrack, !, att-rm.
+    get Modes Functional NoBacktrack :-
+      default-atts Modes Functional NoBacktrack.
+
+    % removes the pending attributes from the database. this removal is done
+    % after a new predicate (class) has been declared
+    pred att-rm.
+    att-rm :-
+      default-atts Modes Functional NoBacktrack,
+      tc.remove-clause @pending-atts! (atts Modes Functional NoBacktrack) [].
+  }
+}

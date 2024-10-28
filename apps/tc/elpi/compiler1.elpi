@@ -89,7 +89,7 @@ namespace tc {
   build-args (prod _ _ Bo) [{{0}} | TL] :- !, build-args (Bo _) TL.
   build-args _ [{{0}}].
 
-  % [remove-inst GR] remove an instance from the DB by replacing it with `dummy`
+  % [remove-inst GR] remove an instance from the DB
   pred remove-inst i:gref.
   remove-inst InstGR :- 
     tc.get-full-path InstGR ClauseName,

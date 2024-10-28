@@ -5,8 +5,8 @@ Set TC NameShortPath.
 
 Module A.
 
+  #[no_backtrack] TC.Pending_attributes.
   Class C (n : nat) := {}.
-  Elpi TC.Set_deterministic C.
   Elpi TC.Get_class_info C.
   Local Instance c_1 : C 1 | 10 := {}.
   Local Instance c_2 : C 2 | 1 := {}.
@@ -28,8 +28,8 @@ End A.
 
 Module B.
 
+  #[no_backtrack] TC.Pending_attributes.
   Class A (T : Set) := f : T -> T.
-  Elpi TC.Set_deterministic A.
 
   Global Instance A1 : A bool := {f x := x}.
   Global Instance A2 `(A bool) : A (bool * bool) := 

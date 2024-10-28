@@ -14,6 +14,7 @@ From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
 From elpi.apps.tc.elpi Extra Dependency "ho_link.elpi" as ho_link.
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
+From elpi.apps.tc.elpi Extra Dependency "att_parser.elpi" as att_parser.
 
 From elpi.apps Require Import db.
 From elpi.apps Require Export add_commands.
@@ -59,6 +60,7 @@ Elpi Accumulate File compiler1.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File modes.
 Elpi Accumulate File solver.
+Elpi Accumulate File att_parser.
 Elpi Query lp:{{
   sigma Options\ 
     tc.all-options Options,
@@ -89,6 +91,7 @@ Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
 Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
+Elpi Accumulate File att_parser.
 Elpi Accumulate lp:{{
 
   /* 
@@ -103,8 +106,9 @@ Elpi Accumulate lp:{{
     This problem is due to the order in which the registers for Instance and
     Class creation are run.
     The solution is to do the following two jobs when a class C is created:
-      1: for every projection P of C, if P is a coercion, the wrongly 
-        compiled instance is replaced with a `dummy` clause.
+      1: for every projection P of C, if P is a coercion, P is wrongly
+        compiled since it doesn't have C as hypothesis. Therefore P is 
+        removed from the elpi db.
       2: the predicate for the class is created
       3: for every projection P of C, if P is a coercion, the correct
         instance is created and added to the db
@@ -121,31 +125,15 @@ Elpi Accumulate lp:{{
 
   main [str "new_class", str Cl] :- !,
     tc.time-it tc.oTC-time-compile-class (
-      coq.locate Cl GR, tc.add-class-gr tc.classic GR
+      coq.locate Cl GR, tc.declare-class-in-elpi GR
     ) "Compiler for Class".
 
   % used to build ad-hoc instance for eta-reduction on the argument of 
   % Cl that have function type
-  main [str "default_instance", str Cl] :- !,
-    tc.eta-reduction-aux.main Cl.
+  % main [str "default_instance", str Cl] :- !,
+  %   tc.eta-reduction-aux.main Cl.
 
   main A :- coq.error "Fail in TC.Compiler: not a valid input entry" A.
-}}.
-Elpi Typecheck.
-
-(* Command allowing to set if a TC is deterministic. *)
-Elpi Command TC.Set_deterministic.
-Elpi Accumulate Db tc.db.
-Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate lp:{{
-  main [str ClassStr] :- 
-    coq.locate ClassStr ClassGR, 
-    std.assert! (coq.TC.class? ClassGR) "Should pass the name of a type class",
-    std.assert! (tc.class ClassGR PredName _ Modes) "Cannot find `class ClassGR _ _` in the db",
-    std.assert! (not (tc.instance _ _ ClassGR _)) "Cannot set deterministic a class with an already existing instance",
-    tc.add-tc-db _ (after "0") (tc.class ClassGR PredName tc.deterministic Modes :- !).
 }}.
 Elpi Typecheck.
 
@@ -199,7 +187,6 @@ Elpi Export TC.Print_instances.
 Elpi Export TC.Solver.
 Elpi Export TC.Compiler.
 Elpi Export TC.Get_class_info.
-Elpi Export TC.Set_deterministic.
 Elpi Export TC.Unfold.
 
 Set Warnings "elpi".

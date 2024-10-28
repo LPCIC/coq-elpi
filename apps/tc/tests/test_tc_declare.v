@@ -17,7 +17,7 @@ End S1.
 (* Deterministic class test *)
 Section S2.
 
-  #[deterministic] TC.Declare Class class2 (n : nat).
+  #[no_backtrack] TC.Declare Class class2 (n : nat).
 
   Instance inst2  : class2 1 | 0. Proof. apply Build_class2. Qed.
   Instance inst2' : class2 2 | 1. Proof. apply Build_class2. Qed.
