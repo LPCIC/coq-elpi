@@ -52,7 +52,7 @@ let master = [
       ocamlPackages = {
         # when updating this, don't forget to update dune-project
         # then use it to regenerate coq-elpi.opam
-        elpi.override.version = "v1.18.2";
+        elpi.override.version = "v1.19.5";
       };
     };
 

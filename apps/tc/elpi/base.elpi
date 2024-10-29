@@ -90,10 +90,13 @@ split-at-not-fatal N [X|XS] [X|LN] LM :- !, N1 is N - 1,
 
 pred undup-same i:list A, o:list A.
 undup-same [] [].
-undup-same [X|Xs] [X|Ys] :-
-  std.forall Xs (x\ not (x == X)), !,
-  undup-same Xs Ys.
-undup-same [_|Xs] Ys :- undup-same Xs Ys.
+undup-same [X|Xs] Ys :- std.exists Xs (x\ x == X), !, undup-same Xs Ys.
+undup-same [X|Xs] [X|Ys] :- undup-same Xs Ys.
+
+pred undup i:list A, o:list A.
+undup [] [].
+undup [X|Xs] Ys :- std.mem! Xs X, !, undup Xs Ys.
+undup [X|Xs] [X|Ys] :- undup Xs Ys.
 
 :index (1)
 pred is-coq-term i:A.
@@ -142,24 +145,13 @@ pred count-prod i:term , o:nat.
 count-prod (prod _ _ B) (s N) :- !, pi x\ count-prod (B x) N.
 count-prod _ z.
 
-pred close-prop i:(A -> list prop), o:list prop.
-close-prop (x\ []) [] :- !.
-close-prop (x\ [X | Xs x]) [X| Xs'] :- !, close-prop Xs Xs'.
-close-prop (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, close-prop Xs Xs'. 
+pred close-prop-no-prune-pi-decl i:(term -> list prop), i:term, o:list prop.
+close-prop-no-prune-pi-decl (x\ []) _ [] :- !.
+close-prop-no-prune-pi-decl (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
+  close-prop-no-prune-pi-decl Xs Ty Xs'. 
 
-pred close-prop-no-prune i:(A -> list prop), o:list prop.
-close-prop-no-prune (x\ []) [] :- !.
-close-prop-no-prune (x\ [X x | Xs x]) [pi x\ X x | Xs'] :- !, 
-  close-prop-no-prune Xs Xs'. 
-
-% [close-term-ty (x\ L) Ty R] Ty is the type of x
-pred close-term-ty i:(term -> list prop), i:term, o:list prop.
-close-term-ty (x\ []) _ [] :- !.
-close-term-ty (x\ [X | Xs x]) Ty [X| Xs'] :- !, close-term-ty Xs Ty Xs'.
-close-term-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
-  close-term-ty Xs Ty Xs'. 
-
-pred close-term-no-prune-ty i:(term -> list prop), i:term, o:list prop.
-close-term-no-prune-ty (x\ []) _ [] :- !.
-close-term-no-prune-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
-  close-term-no-prune-ty Xs Ty Xs'. 
+pred free-names i:term, o:list term.
+free-names T L :-
+  names N,
+  (pi T L\ fold-map T L T [T|L] :- name T, std.mem! N T, !) => fold-map T [] _ L',
+  undup {std.rev L'} L.
