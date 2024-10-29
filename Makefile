@@ -18,6 +18,7 @@ build:
 
 test-core:
 	$(call dune,runtest) tests
+	$(call dune,build) tests
 .PHONY: test-core
 
 test-apps:
@@ -26,6 +27,7 @@ test-apps:
 
 test:
 	$(call dune,runtest)
+	$(call dune,build) tests
 	$(call dune,build) $$(find apps -type d -name tests)
 .PHONY: test
 
