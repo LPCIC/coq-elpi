@@ -461,11 +461,21 @@ let get ?(fail_if_not_exists=false) p =
         { sources_rev = Chunk.Base { hash = hash_cunit base; base }; units = Names.KNset.singleton kname }
     | _ -> assert false
         
+  let is_inside_current_library kn =
+    Names.DirPath.equal
+      (Lib.library_dp ())
+       (Names.KerName.modpath kn |> Names.ModPath.dp)
+
   let in_db : Names.Id.t -> snippet -> Libobject.obj =
     let open Libobject in
     let cache ((_,kn),{ program = name; code = p; _ }) =
       db_name_src := SLMap.add name (append_to_db name kn p) !db_name_src in
-    let import i (_,s as o) = if Int.equal i 1 || s.scope =  Coq_elpi_utils.SuperGlobal then cache o in
+    let load i ((_,kn),s as o) =
+      if Int.equal i 1 ||
+        (s.scope = Coq_elpi_utils.Global && is_inside_current_library kn) ||
+        s.scope = Coq_elpi_utils.SuperGlobal then cache o in
+    let import i (_,s as o) =
+      if Int.equal i 1 then cache o in
     declare_named_object @@ { (default_object "ELPI-DB") with
       classify_function = (fun { scope; program; _ } ->
         match scope with
@@ -473,7 +483,7 @@ let get ?(fail_if_not_exists=false) p =
         | Coq_elpi_utils.Regular -> Substitute
         | Coq_elpi_utils.Global -> Keep
         | Coq_elpi_utils.SuperGlobal -> Keep);
-      load_function  = import;
+      load_function  = load;
       cache_function  = cache;
       subst_function = (fun (_,o) -> o);
       open_function = simple_open import;
