@@ -32,27 +32,29 @@ let master = [
         coq.override.version = "8.20";
       };
       ocamlPackages = {
-        elpi.override.version = "v1.19.5";
+        elpi.override.version = "1.20.0";
       };
     };
 
     "coq-master" = {
       coqPackages = common-bundles // {
         coq.override.version = "master";
+        coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
       };
       ocamlPackages = {
-        elpi.override.version = "v1.19.5";
+        elpi.override.version = "1.20.0";
       };
     };
       
     "coq-master-min-elpi" = {
       coqPackages = common-bundles // {
         coq.override.version = "master";
+        coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
       };
       ocamlPackages = {
         # when updating this, don't forget to update dune-project
         # then use it to regenerate coq-elpi.opam
-        elpi.override.version = "v1.18.2";
+        elpi.override.version = "1.18.2";
       };
     };
 
