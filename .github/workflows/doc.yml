@@ -43,7 +43,7 @@ jobs:
       run: opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
 
     - name: Save artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: doc
 
