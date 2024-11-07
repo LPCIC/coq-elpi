@@ -856,6 +856,7 @@ let rec do_context_constr coq_ctx csts fields ~depth state =
 
 let strc = E.Constants.declare_global_symbol "str"
 let trmc = E.Constants.declare_global_symbol "trm"
+let open_trmc = E.Constants.declare_global_symbol "open-trm"
 let tacc = E.Constants.declare_global_symbol "tac"
 let intc = E.Constants.declare_global_symbol "int"
 let ctxc = E.Constants.declare_global_symbol "ctx-decl"
@@ -898,12 +899,27 @@ let in_elpi_string_arg ~depth state x =
 let in_elpi_int_arg ~depth state x =
   state, E.mkApp intc (CD.of_int x) [], []
 
+let free_glob_vars known_vars =
+  let open Glob_term in
+    let rec vars bound vs c = match DAst.get c with
+      | GVar id' -> if Id.Set.mem id' bound then vs else Id.Set.add id' vs
+      | _ -> Glob_ops.fold_glob_constr_with_binders Id.Set.add vars bound vs c in
+    fun rt ->
+      let vs = vars known_vars Id.Set.empty rt in
+      vs
+let close_glob coq_ctx term =
+  let open Glob_term in
+  let fv_set = free_glob_vars coq_ctx.names term in
+  (Id.Set.cardinal fv_set ,Id.Set.fold (fun id t ->
+    DAst.(make (GLambda(Name.Name(id),None,Explicit,mkGHole,t)))) fv_set term)
+
 let in_elpi_term_arg ~depth state coq_ctx hyps sigma ist glob_or_expr =
   let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
   let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
+  let (n, g) = close_glob coq_ctx g in
   let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
   let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
-  state, E.mkApp trmc t [], []
+  state, (if n = 0 then E.mkApp trmc t [] else E.mkApp open_trmc (CD.of_int n) [t]), []
  
 let in_elpi_tac_econstr ~depth ?calldepth coq_ctx hyps sigma state x =
   let state, gls0 = set_current_sigma ~depth state sigma in
