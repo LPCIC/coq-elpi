@@ -32,6 +32,7 @@ kind argument type.
 type int       int    -> argument. % Eg. 1 -2.
 type str       string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
 type trm       term   -> argument. % Eg. (t).
+type open-trm  int -> term -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
