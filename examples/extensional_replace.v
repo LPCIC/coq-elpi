@@ -43,6 +43,46 @@ Elpi Tactic replace.
 
 Elpi Accumulate lp:{{
 
+pred mk-equality i:list prop, i:term i:A, o:term, o:A.
+:name "mk-equality:start"
+mk-equality _Ctx X A Y A :- name X, !, {{erefl lp:X}} = Y, !.
+mk-equality _Ctx (global _ as C) A C {{erefl lp:C}} :- !.
+mk-equality _Ctx (pglobal _ _ as C) A C {{erefl lp:C}} :- !.
+mk-equality _Ctx (sort _ as C) A C {{erefl lp:C}} :- !.
+mk-equality Ctx (fun N T F as C) A {{erefl lp:C}} A :-
+  @pi-decl x\ mk-equality [decl x N T | Ctx] (F x) A1 {{erefl _}} _A2,!.
+mk-equality Ctx (fun N T F) A (fun N T1 F1) A1 :- !,
+  @pi-decl x\ mk-equality [decl x N T | Ctx] (F x) A (F1 x) A1.
+mk-equality Ctx (let N T B F as C) A {{erefl C}}:-
+  mk-equality Ctx B A {{erefl _}} A2,
+  (@pi-decl N T x\ mk-equality [def x N T B | Ctx] (F x) A2 {{erefl _}} _A3),!.
+mk-equality Ctx (let N T B F) A (let N T1 B1 F1) A3 :- !,
+  mk-equality Ctx B A B1 A2,
+  @pi-decl N T x\ mk-equality [def x N T B | Ctx] (F x) A2 (F1 x) A3.
+mk-equality Ctx (prod N T F) A (fun N T F1) A2 :- !,
+  (@pi-decl N T x\ mk-equality [decl x N T | Ctx] (F x) A1 (F1 x) A2).
+mk-equality Ctx (app L as C) A {{erefl C}} A :-
+  std.fold-map L A (mk-equality Ctx Id) L1 _A1,
+  forall (c \ c = {{erefl _}}) L1,!.
+mk-equality Ctx (app L) A (app L1) A1 :- !,
+  std.fold-map L A (mk-equality Ctx Id) L1 A1.
+mk-equality Ctx (fix N Rno Ty F as C) A {{erefl lp:C}} A :- !.
+mk-equality Ctx (match T Rty B as C) A {{erefl lp:C}} A3 :- !.
+mk-equality _Ctx (primitive _ as C) A {{erefl lp:C}} A :- !.
+mk-equality Ctx (uvar M L as C) A {{ereflc lp:C}} A :- !.
+% when used in CHR rules
+mk-equality Ctx (uvar X L as C) A {{erefl lp:C}} A :- !.
+
+pred fold-map-ctx-item i:prop,  i:A, o:prop,o:A.
+fold-map-ctx-item (decl X N T) A (decl X1 N T1) A2 :- fold-map X A X1 A1, fold-map T A1 T1 A2.
+fold-map-ctx-item (def X N T B) A (def X1 N T1 B1) A3 :-
+  fold-map X A X1 A1, fold-map T A1 T1 A2, fold-map B A2 B1 A3.
+
+pred fold-map-arity i:arity,  i:A, o:arity, o:A.
+fold-map-arity (parameter ID IMP T R) A (parameter ID IMP T1 R1) A2 :-
+  fold-map T A T1 A1, pi x\ fold-map-arity (R x) A1 (R1 x) A2.
+fold-map-arity (arity T) A (arity T1) A1 :- fold-map T A T1 A1.
+
 pred process i:argument, i:argument, i:term, o:term, o:term.
 
 % The header says we want to replace a formula with one unknown
