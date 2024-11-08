@@ -9,7 +9,7 @@ Goal forall l, map (fun x => x + 1) l = map (fun x => 1 + x) l.
 Proof.
 Fail replace (x + 1) with (1 + x) by ring.
 replace (fun x => x + 1) with (fun x => 1 + x).
-  easy.
+easy.
 extensionality x.
 ring.
 Qed.
@@ -17,27 +17,27 @@ Qed.
 Elpi Tactic show.
 Elpi Accumulate lp:{{
 
-  pred process i:list argument, o:string.
+pred process i:list argument, o:string.
 
-  process [open-trm K_ T] S :-
-      coq.term->string T S.
+process [open-trm K_ T] S :-
+coq.term->string T S.
 
-  process [trm T] S :-
-      coq.term->string T S.
-  
-  solve (goal Ctx _Trigger Type Proof Args) _ :-
-    % process Args Txt,
-    coq.say "Goal:" Ctx "|-" Proof ":" Type ">->" Args.
+process [trm T] S :-
+coq.term->string T S.
+
+solve (goal Ctx _Trigger Type Proof Args) _ :-
+% process Args Txt,
+coq.say "Goal:" Ctx "|-" Proof ":" Type ">->" Args.
 
 }}.
 
 Elpi Typecheck.
 
 Ltac prove_by_extensionality_and_ring term1 term2 :=
-  replace term1 with term2;[ |
-    let Var_name := fresh "mame_for_bound_variable" in
-      extensionality Var_name; try ring
-  ].
+replace term1 with term2;[ |
+let Var_name := fresh "mame_for_bound_variable" in
+extensionality Var_name; try ring
+].
 
 Elpi Tactic replace.
 
@@ -45,33 +45,33 @@ Elpi Accumulate lp:{{
 
 pred mk-equality i:list prop, i:term i:A, o:term, o:A.
 :name "mk-equality:start"
-mk-equality _Ctx X A Y A :- name X, !, {{erefl lp:X}} = Y, !.
-mk-equality _Ctx (global _ as C) A C {{erefl lp:C}} :- !.
-mk-equality _Ctx (pglobal _ _ as C) A C {{erefl lp:C}} :- !.
-mk-equality _Ctx (sort _ as C) A C {{erefl lp:C}} :- !.
-mk-equality Ctx (fun N T F as C) A {{erefl lp:C}} A :-
-  @pi-decl x\ mk-equality [decl x N T | Ctx] (F x) A1 {{erefl _}} _A2,!.
+mk-equality _Ctx X A Y A :- name X, !, {{@refl_equal _ lp:X}} = Y, !.
+mk-equality _Ctx (global _ as C) A C {{@refl_equal _ lp:C}} :- !.
+mk-equality _Ctx (pglobal _ _ as C) A C {{@refl_equal _ lp:C}} :- !.
+mk-equality _Ctx (sort _ as C) A C {{@refl_equal _ lp:C}} :- !.
+mk-equality Ctx (fun N T F as C) A {{@refl_equal _ lp:C}} A :-
+@pi-decl N T x\ mk-equality [decl x N T | Ctx] (F x) A1 {{@refl_equal _ _}} _A2,!.
 mk-equality Ctx (fun N T F) A (fun N T1 F1) A1 :- !,
-  @pi-decl x\ mk-equality [decl x N T | Ctx] (F x) A (F1 x) A1.
-mk-equality Ctx (let N T B F as C) A {{erefl C}}:-
-  mk-equality Ctx B A {{erefl _}} A2,
-  (@pi-decl N T x\ mk-equality [def x N T B | Ctx] (F x) A2 {{erefl _}} _A3),!.
+@pi-decl N T x\ mk-equality [decl x N T | Ctx] (F x) A (F1 x) A1.
+mk-equality Ctx (let N T B F as C) A {{@refl_equal _ lp:C}} A :-
+mk-equality Ctx B A {{@refl_equal _ _}} A2,
+(@pi-decl N T x\ mk-equality [def x N T B | Ctx] (F x) A2 {{@refl_equal _ _}} _A3),!.
 mk-equality Ctx (let N T B F) A (let N T1 B1 F1) A3 :- !,
-  mk-equality Ctx B A B1 A2,
-  @pi-decl N T x\ mk-equality [def x N T B | Ctx] (F x) A2 (F1 x) A3.
+mk-equality Ctx B A B1 A2,
+@pi-decl N T x\ mk-equality [def x N T B | Ctx] (F x) A2 (F1 x) A3.
 mk-equality Ctx (prod N T F) A (fun N T F1) A2 :- !,
-  (@pi-decl N T x\ mk-equality [decl x N T | Ctx] (F x) A1 (F1 x) A2).
-mk-equality Ctx (app L as C) A {{erefl C}} A :-
-  std.fold-map L A (mk-equality Ctx Id) L1 _A1,
-  forall (c \ c = {{erefl _}}) L1,!.
+(@pi-decl N T x\ mk-equality [decl x N T | Ctx] (F x) A1 (F1 x) A2).
+mk-equality Ctx (app L as C) A {{@refl_equal _ lp:C}} A :-
+std.fold-map L A (mk-equality Ctx) L1 _A1,
+std.forall L1 (c \ c = {{@refl_equal _ _}}),!.
 mk-equality Ctx (app L) A (app L1) A1 :- !,
-  std.fold-map L A (mk-equality Ctx Id) L1 A1.
-mk-equality Ctx (fix N Rno Ty F as C) A {{erefl lp:C}} A :- !.
-mk-equality Ctx (match T Rty B as C) A {{erefl lp:C}} A3 :- !.
-mk-equality _Ctx (primitive _ as C) A {{erefl lp:C}} A :- !.
-mk-equality Ctx (uvar M L as C) A {{ereflc lp:C}} A :- !.
+std.fold-map L A (mk-equality Ctx) L1 A1.
+mk-equality Ctx (fix N Rno Ty F as C) A {{@refl_equal _ lp:C}} A :- !.
+mk-equality Ctx (match T Rty B as C) A {{@refl_equal _ lp:C}} A3 :- !.
+mk-equality _Ctx (primitive _ as C) A {{@refl_equal _ lp:C}} A :- !.
+mk-equality Ctx (uvar M L as C) A {{@refl_equal _ lp:C}} A :- !.
 % when used in CHR rules
-mk-equality Ctx (uvar X L as C) A {{erefl lp:C}} A :- !.
+mk-equality Ctx (uvar X L as C) A {{@refl_equal _ lp:C}} A :- !.
 
 pred fold-map-ctx-item i:prop,  i:A, o:prop,o:A.
 fold-map-ctx-item (decl X N T) A (decl X1 N T1) A2 :- fold-map X A X1 A1, fold-map T A1 T1 A2.
