@@ -56,6 +56,15 @@ About f_equal3.
 About eq_trans.
 About id.
 
+About map_ext_in.
+
+Lemma map_ext_in_equal2 [A B : Type] (f g : A -> B) (l1 l2 : list A):
+  (forall a : A, In a l1 -> f a = g a) -> l1 = l2 ->
+  map f l1 = map g l2.
+Proof.
+now intros exth l1l2; rewrite <- l1l2; apply map_ext_in.
+Qed.
+
 Elpi Tactic replace.
 
 Elpi Accumulate lp:{{
@@ -110,18 +119,23 @@ instantiate_pair N T C (pr A1 A2) (pr B1 B2) :-
 
 pred mk-equality i:(pair argument argument), i:term i:A, o:term, o:term, o:A.
 
-mk-equality (pr (trm S) (trm T)) S A T {{@id (lp:S = lp:T) _}} A :- !,
+mk-equality (pr (trm S) (trm T)) S A T P A :- !,
+  coq.typecheck P {{lp:S = lp:T}} ok,
   coq.say "rewrite happens".
 
 :name "mk-equality:start"
 mk-equality _Ctx X A Z Y A :- name X,!, 
-coq.say "first clause", X = Z, {{@refl_equal _ lp:X}} = Y, !.
-mk-equality _Ctx (global _ as C) A C {{@refl_equal _ lp:C}} A :- !,
-coq.say "second clause" C.
-mk-equality _Ctx (pglobal _ _ as C) A C {{@refl_equal _ lp:C}} A :- !,
-coq.say "third clause".
-mk-equality _Ctx (sort _ as C) A C {{@refl_equal _ lp:C}} A :- !,
-coq.say "fourth clause".
+% coq.say "first clause", 
+X = Z, {{@refl_equal _ lp:X}} = Y, !.
+mk-equality _Ctx (global _ as C) A C {{@refl_equal _ lp:C}} A :- !
+% , coq.say "second clause" C
+.
+mk-equality _Ctx (pglobal _ _ as C) A C {{@refl_equal _ lp:C}} A :- !
+% , coq.say "third clause"
+.
+mk-equality _Ctx (sort _ as C) A C {{@refl_equal _ lp:C}} A :- !
+% , coq.say "fourth clause"
+.
 
 mk-equality Ctx (fun N T F as C) A C Res A :-
 @pi-decl N T x\
@@ -138,11 +152,12 @@ mk-equality Ctx (fun N T F) A (fun N T F1)
   (std.assert! (instantiate_pair N T x Ctx (Ctx1 x)) "instantiate_pair failed",!,
    mk-equality (Ctx1 x) (F x) A (F1 x) (Prf x) A1).
 
+% TODO: write unit tests for the following clauses
 mk-equality Ctx (let N T B F as C) A C {{@refl_equal _ lp:C}} A :-
 mk-equality Ctx B A _ {{@refl_equal _ _}} A2,
 (@pi-decl N T x\
-  (std.assert! (instantiate_pair N T x Ctx Ctx1) "instantiate_pair failed",!,
-  mk-equality Ctx1 (F x) A2 _ {{@refl_equal _ _}} _A3)),!,
+  (std.assert! (instantiate_pair N T x Ctx (Ctx1 x)) "instantiate_pair failed",!,
+  mk-equality (Ctx1 x) (F x) A2 _ {{@refl_equal _ _}} _A3)),!,
   coq.say "seventh clause".
 
 mk-equality Ctx (let N T B F) A (let N T B1 F1) 
@@ -150,33 +165,39 @@ mk-equality Ctx (let N T B F) A (let N T B1 F1)
       lp:PB lp:PF}} A3:- !,
 mk-equality Ctx B A B1 PB A2,
 @pi-decl N T x\ 
-  (instantiate_pair N T x Ctx Ctx1,!,
+  (instantiate_pair N T x Ctx (Ctx1 x),!,
   coq.say "eigth clause",
-   mk-equality Ctx1 (F x) A2 (F1 x) PF A3).
+   mk-equality (Ctx1 x) (F x) A2 (F1 x) PF A3).
 
 mk-equality Ctx (prod N T F) A (prod N T F1) (fun N T P1) A2 :- !,
 (@pi-decl N T x\ 
-  (instantiate_pair N T x Ctx Ctx1,!,
-   mk-equality  Ctx1 (F x) A (F1 x) (P1 x) A2)),!,
-   coq.say "ninth clause".
-
+  (instantiate_pair N T x Ctx (Ctx1 x),!,
+   mk-equality  (Ctx1 x) (F x) A (F1 x) (P1 x) A2)),!
+   , coq.say "ninth clause"
+.
 mk-equality Ctx (app L as C) A C {{@refl_equal _ lp:C}} A :-
 fold-map2 L A (mk-equality Ctx) _ L1 _A1,
-std.forall L1 (c \ c = {{@refl_equal _ _}}),!,
-coq.say "tenth clause".
+std.forall L1 (c \ c = {{@refl_equal _ _}}),!
+, coq.say "tenth clause"
+.
 
-mk-equality Ctx {{@map Z Z lp:F lp:L}} A {{@map Z Z lp:F1 lp:L1}}
+mk-equality Ctx {{@map lp:T1 lp:T2 lp:{{fun N _ F}} lp:L}}
+  A 
+  {{@map lp:T1 lp:T2 lp:{{fun N T1 F1}} lp:L1}}
   R A2 :- !,
-  coq.say "eleventh clause",
-   mk-equality Ctx F A F1 Pf A1,
-   mk-equality Ctx L A1 L1 Pl A2,!,
-   R = {{f_equal2 (@map Z Z) lp:Pf lp:Pl}}.
+  % coq.say "eleventh clause",
+  @pi-decl N T1 x\
+  (instantiate_pair N T1 x Ctx (Ctx1 x),!,
+    @pi-decl `H` (Ext_Hyp x) h\
+      mk-equality (Ctx1 x) (F x) A (F1 x) (Pf x h) A1),
+  mk-equality Ctx L A1 L1 Pl A2,
+  R = {{map_ext_in_equal2 lp:{{fun N _ F}} lp:{{fun N _ F1}} lp:L lp:L1
+         lp:{{fun N T1 x\
+              (fun `H` (Ext_Hyp x) h\ Pf x h)}} lp:Pl }}.
    
 mk-equality Ctx (app L) A (app L1) Prf A1 :-
-% this can only succeed if the two lengths have the same length
 coq.say "entering twelfth",
 fold-map2 L A (mk-equality Ctx) L1 P1 A1,
-coq.say "fold-map2 succeeded", !,
 mk-app-prf L L1 P1 Prf.
 
 mk-equality _Ctx (fix _N _Rno _Ty _F as C) A C {{@refl_equal _ lp:C}} A :- !.
@@ -233,9 +254,11 @@ solve (goal _ _ {{ _ = lp:Y }} _ [_, Arg1, Arg2] as G) GL :-
   coq.say "calling equality with " (pr Arg1 Arg2) Y,
   mk-equality (pr Arg1 Arg2) Y [] Y2 P _,
   coq.say "mk-equality succeeded" P,
-  coq.typecheck P {{lp:Y = lp:Y2}} _Diag,!,
   coq.term->string Y2 S,
-  coq.say "typecheck succeeded" S,
+  coq.term->string P SP,
+  coq.say "prouf term" SP,
+  std.assert-ok! (coq.typecheck P {{lp:Y = lp:Y2}}) "proof incorrect",
+  coq.say "typecheck succeeded" S,!,
   refine {{eq_sym (@eq_trans _ _ lp:Y2 _ lp:P (eq_sym _))}} G GL.
   % refine {{eq_sym (@eq_trans lp:Y lp:Y2 lp:X lp:P (eq_sym _))}} G GL.
 
@@ -250,6 +273,13 @@ solve (goal _ _ _ _ [] as _G) _GL :-
 
 Elpi Typecheck.
 
+Tactic Notation (at level 0)  "replace_in_rhs" uconstr(A) uconstr(B) :=
+ (elpi replace True A B;[lazy beta | ]).
+(* this does not work because Ltac insists on have known unbound variables
+  in arguments before passing them to other tactics.
+ Ltac my_replace A B :=
+ elpi replace True A B;[ lazy beta | ]. *)
+
 Open Scope Z_scope.
 Elpi Query lp:{{
   sigma T1 T2 A \
@@ -258,7 +288,12 @@ Elpi Query lp:{{
   instantiate_pair `x` {{Z}} A (pr (open-trm 1 T1) (open-trm 1 T2)) R
 }}.
 
-
+(* With only two arguments, we use the variant corresponding to the
+  first minimal working example, based on finding the left-most lambda,
+  and then instantiating the unknown expression in the input terms with
+  that lambda.  It only works if the expression-to-replace has exactly
+  one-unknown and the other expression has at  most one unknown (assumed
+  to be the same, without checking). )*)
 Goal forall l, map (fun x => (x + 1) + 2) l = map (fun x => (1 + x) + 2) l.
 Proof.
 now intros l; elpi replace (x + 1) (1 + x).
@@ -281,21 +316,32 @@ elpi replace (x - x) (0).
 apply (fold_neutral Z.add 0 Z.add_0_r).
 Qed.
 
+(* With a third argument equal to True, the same tactic now uses an
+  that proves only equalities. replacements only happen in the right-hand
+  side, and both the expression-to-be-replaced and the replacing expression
+  can have arbitrary many unknowns, which are filled with bound variables
+  appearing in nested lambdas appearing in the term.  Replacement only
+  happens when all unknowns have been filled. The goals are given in
+  this order: first the equality between the expression-to-be-replace
+  and the replacing expression in the context where the replacement occurs,
+  second the goal after the replacement.  (TODO revese that order). *)
+
+(* The first test illustrates the case where is no unknown. *)
 Goal forall x, x = 1 -> 2 = x + 1.
 intros x x1.
 elpi replace True (x) (1);[assumption | ].
 ring.
 Qed.
 
+(* The second test illustrates the case where there is one unknown in
+  both the expression-to-be-replace and the replacing expression. *)
 Goal forall l, map (fun x => x + 1) l = map (fun x => (x + (1 + 0))) l.
 Proof.
 intros l.
 elpi replace True (x + (1 + 0)) (x + 1).
-
+  (* TODO: find how to have this goal beta-reduced. *)
+  lazy beta.
+  ring.
+easy.
 Qed.
-
-Goal forall x, x = 1.
-Proof.
-intros x.
-elpi replace.
 
