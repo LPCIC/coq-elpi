@@ -196,7 +196,8 @@ mk-equality Ctx {{@map lp:T1 lp:T2 lp:{{fun N _ F}} lp:L}}
               (fun `H` (Ext_Hyp x) h\ Pf x h)}} lp:Pl }}.
    
 mk-equality Ctx (app L) A (app L1) Prf A1 :-
-coq.say "entering twelfth",
+L = [Hd | _], coq.term->string Hd S,
+coq.say "entering twelfth" Hd S,
 fold-map2 L A (mk-equality Ctx) L1 P1 A1,
 mk-app-prf L L1 P1 Prf.
 
@@ -253,7 +254,7 @@ solve (goal _ _ Type _ [Arg1, Arg2] as G) GL :-
 solve (goal _ _ {{ _ = lp:Y }} _ [_, Arg1, Arg2] as G) GL :-
   coq.say "calling equality with " (pr Arg1 Arg2) Y,
   mk-equality (pr Arg1 Arg2) Y [] Y2 P _,
-  coq.say "mk-equality succeeded" P,
+  coq.say "mk-equality succeeded" P,!,
   coq.term->string Y2 S,
   coq.term->string P SP,
   coq.say "prouf term" SP,
@@ -335,7 +336,7 @@ Qed.
 
 (* The second test illustrates the case where there is one unknown in
   both the expression-to-be-replace and the replacing expression. *)
-Goal forall l, map (fun x => x + 1) l = map (fun x => (x + (1 + 0))) l.
+Goal forall l, map (fun x => x + 1) l = map (fun x => x + (1 + 0)) l.
 Proof.
 intros l.
 elpi replace True (x + (1 + 0)) (x + 1).
@@ -345,3 +346,12 @@ elpi replace True (x + (1 + 0)) (x + 1).
 easy.
 Qed.
 
+(* We can now try a replacement in nested sums. *)
+Goal forall l, map (fun i => map (fun j => i + j) l) l =
+  map (fun i => map (fun j => j + i) l) l.
+intros n.
+elpi replace True (j + i) (i + j).
+  lazy beta.
+ring.
+easy.
+Qed.
