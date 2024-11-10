@@ -125,8 +125,8 @@ coq.say "fourth clause".
 
 mk-equality Ctx (fun N T F as C) A C Res A :-
 @pi-decl N T x\
-  (instantiate_pair N T x Ctx Ctx1,
-   mk-equality Ctx1 (F x) A _ {{@refl_equal _ _}} _A2,!,
+  (instantiate_pair N T x Ctx (Ctx1 x),
+   mk-equality (Ctx1 x) (F x) A _ {{@refl_equal _ _}} _A2,!,
    Res = {{@refl_equal _ _}},
    coq.say "fifth clause").
 
@@ -135,8 +135,8 @@ mk-equality Ctx (fun N T F) A (fun N T F1)
       lp:{{(fun N T Prf)}}}} A1 :- !,
       coq.say "sixth clause",
 @pi-decl N T x\
-  (std.assert! (instantiate_pair N T x Ctx Ctx1) "instantiate_pair failed",!,
-   mk-equality Ctx1 (F x) A (F1 x) (Prf x) A1).
+  (std.assert! (instantiate_pair N T x Ctx (Ctx1 x)) "instantiate_pair failed",!,
+   mk-equality (Ctx1 x) (F x) A (F1 x) (Prf x) A1).
 
 mk-equality Ctx (let N T B F as C) A C {{@refl_equal _ lp:C}} A :-
 mk-equality Ctx B A _ {{@refl_equal _ _}} A2,
