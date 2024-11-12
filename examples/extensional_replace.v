@@ -66,6 +66,10 @@ Proof.
 now intros exth l1l2; rewrite <- l1l2; apply map_ext_in.
 Qed.
 
+Lemma app_prf [A B : Type] (f g : A -> B) (v1 v2 : A) :
+  f = g -> v1 = v2 -> f v1 = g v2.
+Proof. now intros fg v1v2; rewrite fg, v1v2. Qed.
+
 Elpi Tactic replace.
 
 Elpi Accumulate lp:{{
@@ -183,6 +187,7 @@ mk-equality RW (prod N T F) A (prod N T F1) (fun N T P1) A2 :- !,
    mk-equality  (RW1 x) (F x) A (F1 x) (P1 x) A2)),!
    , coq.say "ninth clause"
 .
+
 mk-equality RW (app L as C) A C {{@refl_equal _ lp:C}} A :-
 fold-map2 L A (mk-equality RW) _ L1 _A1,
 std.forall L1 (c \ (sigma A B \ c = {{@refl_equal lp:A lp:B}})),!
@@ -207,7 +212,40 @@ mk-equality RW (app L) A (app L1) Prf A1 :-
 L = [Hd | _], coq.term->string Hd S,
 coq.say "entering twelfth" Hd S,
 fold-map2 L A (mk-equality RW) L1 P1 A1,
-mk-app-prf L L1 P1 Prf.
+if (non-dependent-type Hd, {std.length L} < 7)
+  (mk-app-prf L L1 P1 Prf)
+  (equal-app L L1 P1 Prf).
+
+pred non-dependent-type  i:term.
+
+non-dependent-type F :- coq.say "entered non-dependent-type" F, fail.
+
+non-dependent-type F :-
+  coq.typecheck F Ty ok,
+  ndpt Ty.
+
+pred ndpt i:term.
+
+ndpt A :- coq.say "entered ndpt" A, fail.
+
+ndpt (prod _N _T F) :-
+  pi c1 c2\ F c1  = F c2,!,
+  pi c\ ndpt (F c).
+
+ndpt (prod _ _ _) :- !, fail.
+
+ndpt _ :- !.
+
+
+pred equal-app i:list term, i:list term, i:list term, o:term.
+
+equal-app  [F, A] [F1, A1] [Pf, Pa]
+  {{app_prf lp:F lp:F1 lp:A lp:A1 lp:Pf lp:Pa}} :- !.
+
+equal-app [F, A | Args] [F1, A1 | Args1] [Pf, Pa | Ps]
+    R :-
+  equal-app [app [F, A] | Args] [app [F1, A1] | Args1]
+    [{{app_prf lp:F lp:F1 lp:A lp:A1 lp:Pf lp:Pa}} | Ps] R.
 
 mk-equality _RW (fix _N _Rno _Ty _F as C) A C {{@refl_equal _ lp:C}} A :- !.
 mk-equality _RW (match _T _Rty _B as C) A C {{@refl_equal _ lp:C}} A :- !.
@@ -365,3 +403,10 @@ elpi replace True (j + i) (i + j).
 lazy beta.
 ring.
 Qed.
+
+Goal forall l, fold_right Z.add 0 (map (fun x => x + 1) l) =
+  fold_right Z.add 0 (map (fun x => 1 + x) l).
+Proof.
+intros l.
+(* TODO : this should make some progress. *)
+Fail progress elpi replace True (1 + x) (x + 1).
