@@ -33,11 +33,6 @@ namespace tc {
     coq.safe-dest-app T HD _,
     not (var HD), class-gref HD ClassGR.
 
-  pred drop-last i:list A, i:list A, o:list A.
-  drop-last [X | XS] [Y | YS] L :-
-    same_term X Y, !, drop-last XS YS L.
-  drop-last L [] L' :- std.rev L L'.
-
   pred instances-of-current-section o:list gref.
   :name "MySectionEndHook"
   instances-of-current-section InstsFiltered :-
@@ -79,14 +74,6 @@ namespace tc {
     get-TC-of-inst-type T Hd, 
     coq.TC.class? Hd. 
 
-  % input (∀ a, b, c ... => app [A, B, ..., Last])
-  % returns Last 
-  pred get-last i:term, o:term.
-  get-last (prod _ _ Bo) R :-
-    pi x\ get-last (Bo x) R.
-  get-last (app L) R :-
-    std.last L R.
-
   % TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
   pred gref->pred-name i:gref, o:string.
   gref->pred-name Gr S :-
@@ -100,16 +87,6 @@ namespace tc {
     %          name, we replace ö with o
     rex.replace "ö" "o" {coq.gref->id Gr} GrStr,
     S is "tc-" ^ Path ^ GrStr.
-
-  pred no-backtrack i:list prop, o:list prop. 
-  no-backtrack [] [].
-  no-backtrack [do X | XS] [std.do! [(std.do! X') | XS']] :- !, 
-    no-backtrack X X', no-backtrack XS XS'.
-  no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
-
-  pred get-mode i:gref, o:list string.
-  get-mode ClassGR M :- tc.class ClassGR _ _ M, !.
-  get-mode ClassGR _ :- coq.error "[TC]" ClassGR "is an unknown class".
 
   /* 
   [make-tc.aux B Sol Head Body Rule] builds the rule with the given Head and body
@@ -127,9 +104,20 @@ namespace tc {
   make-tc.aux tt _ Head Body (Head :- Body) :- !.
   make-tc.aux ff Sol Head Body P :- !, P = if (var Sol) (Body => Head) true.
 
+  /*
+    [make-tc InstTy Sol RuleBody IsPositive Rule]
+    - InstTy is the type of a class where all prod have been eaten by the
+      compiling phase. If some of these prod are type-classes then they are
+      collected in `RuleBody`
+    - Sol is the name of the instance being compiled
+    - IsPositive tell if the we are in positive or negative position.
+    - Rule is the rule to add in the database of instance, i.e. the compiled
+      instance. Note that `Rule` is not a closed term, it contains quantified
+      variables but no `pi` in front of it. It is the compiler which accumulates
+  */
   pred make-tc i:term, i:term, i:list prop, i:bool, o:prop.
-  make-tc Goal Sol RuleBody IsPositive Rule :-
-    coq.safe-dest-app Goal Class Args,
+  make-tc InstTy Sol RuleBody IsPositive Rule :-
+    coq.safe-dest-app InstTy Class Args,
     get-TC-of-inst-type Class ClassGR,
     gref->pred-name ClassGR ClassStr,
     std.append Args [Sol] ArgsSol, 
@@ -164,8 +152,6 @@ namespace tc {
     std.map UnfoldFindall constant->redflag UnfoldRF,
     coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.delta | UnfoldRF] RF,
     @redflags! RF => coq.reduction.lazy.norm G1 G2.
-
-  pred dummy.
 
   pred remove-clause i:string, i:prop, i:list prop.
   remove-clause ClauseName P Locality :-

@@ -17,11 +17,13 @@ Elpi Accumulate lp:{{
     WantedLength is {origial_tc} + Len,
     std.assert! ({std.length R} = WantedLength) 
       "Unexpected number of instances",
-    std.forall R (x\ sigma L\
-      std.assert! (count R x L, L = 1) "Duplicates in instances"). 
+    std.forall R (x\ sigma L\ count R x L,
+      if (L = 1) true
+        (coq.error "Duplicate instances for class" x ": expected 1, found" L)). 
 }}.
 
 Elpi Query TC.Solver lp:{{
+  sigma Rules Len\
   std.findall (tc.instance _ _ _ _) Rules,
   std.length Rules Len,
   coq.elpi.accumulate _ "tc.db" (clause _ _ (origial_tc Len)).

@@ -468,7 +468,7 @@ let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
          coq. Currently we have to get all the instances of the tc and the find
          its implementation.
 *)
-let get_isntances_of_tc env sigma (tc : GlobRef.t) = 
+let get_instance_of_tc env sigma (tc : GlobRef.t) = 
   let inst_of_tc = (* contains all the instances of a type class *)
     Typeclasses.instances_exn env sigma tc |>
     List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
@@ -515,7 +515,7 @@ let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_insta
     | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
     | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
     | _ -> None) constrs in
-  let isnt_of_tc = get_isntances_of_tc env sigma tc in
+  let isnt_of_tc = get_instance_of_tc env sigma tc in
   List.map (get_instance env sigma isnt_of_tc) instances_grefs
 
 let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
@@ -2821,7 +2821,7 @@ Supported attributes:
     Read (global, "reads the priority of an instance")))),
     (fun class_gr inst_gr _ ~depth { env } _ state ->
       let sigma = get_sigma state in
-      let inst_of_tc = get_isntances_of_tc env sigma class_gr in
+      let inst_of_tc = get_instance_of_tc env sigma class_gr in
       let {priority} = get_instance env sigma inst_of_tc inst_gr in 
       !: priority)),
   DocAbove);

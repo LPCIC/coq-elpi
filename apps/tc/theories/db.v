@@ -70,8 +70,7 @@ Elpi Db tc.db lp:{{
     % deterministic :- no backtrack after having found a solution/fail
     % classic       :- the classic search, if a path is failing, we backtrack
     kind search-mode type.
-    type deterministic  search-mode.
-    type classic        search-mode.
+    type no-backtrack   bool -> search-mode.
 
     % [instance Path InstGR ClassGR Locality], ClassGR is the class implemented by InstGR
     % Locality is either the empty list, or [@local!], or [@global!]
@@ -96,8 +95,16 @@ Elpi Db tc.db lp:{{
 
     pred pending-mode o:list string.
 
-    pred dummy.
-
     pred ho-link o:term, i:term, o:A.
+
+    namespace pending {
+      kind modes type.
+      type modes list string -> modes.
+
+      kind functionality type.
+      type functionality bool -> functionality.
+
+      pred atts o:modes, o:functionality, o:search-mode.
+    }
   }
 }}.

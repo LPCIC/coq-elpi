@@ -1,3 +1,6 @@
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
 namespace tc {
   shorten tc.{r-ar, range-arity}.
 
@@ -217,8 +220,8 @@ namespace tc {
         (pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
           tc.get-TC-of-inst-type PTy TC, !,
         compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
-        if (tc.class TC _ tc.deterministic _)
-          (NewPrem' = do-once NewPrem)
+        if (tc.class TC _ (tc.no-backtrack tt) _)
+          (NewPrem' = std.once NewPrem)
           (NewPrem' = NewPrem),
         compile-ty L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
       compile-premise L L1 _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :-

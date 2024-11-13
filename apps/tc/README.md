@@ -109,14 +109,14 @@ In this implementation, the elpi rule for the instance `a3` is:
 
 ```elpi 
   tc-A {{3}} {{a3 lp:A lp:B lp:C}} :-
-    do-once (tc-NoBacktrack A B), 
+    once (tc-NoBacktrack A B), 
     tc-A A C.
 ```
 
-The predicate `do-once i:prop` has 
+The predicate `once i:prop` has 
 
 ```prolog
-do-once P :- P, !.
+once P :- P, !.
 ```
 
 as implementation. The cut (`!`) operator is in charge to avoid backtracking on 

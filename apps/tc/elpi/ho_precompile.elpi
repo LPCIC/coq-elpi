@@ -107,7 +107,6 @@ namespace tc {
       precompile-aux _ (sort _ as C) A C A :- !.
 
       % Detect maybe-eta term
-      % TODO: should I precompile also the type of the fun and put it in the output term
       precompile-aux _ (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
         maybe-eta T, !,
         free-var Scope,
@@ -185,7 +184,6 @@ namespace tc {
       :index (_ _ 1)
       pred may-contract-to i:list term, i:term, i:term.
       may-contract-to _ N N :- !.
-      % TODO: here we should do var V _ Scope and use scope: N can be in Scope but not in S
       may-contract-to L N (app [V|S]) :- var V, !,
         std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
       may-contract-to L N (app [N|A]) :-
@@ -202,7 +200,6 @@ namespace tc {
       occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
       pred maybe-eta-aux i:term, i:list term.
-      % TODO: here we should do var V _ Scope and use Scope: an elt in L can appear in Scope
       maybe-eta-aux (app[V|S]) L :- var V, !,
         std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
       maybe-eta-aux (app [_|A]) L :-

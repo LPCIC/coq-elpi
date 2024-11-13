@@ -77,9 +77,9 @@ TC.Print_instances Eqb.
 TC.Get_class_info Eqb.
 
 Module Backtrack.
-  Elpi TC Solver Override TC.Solver All.
+
+  #[no_backtrack] TC.Pending_attributes.
   Class NoBacktrack (n: nat).
-  TC.Set_deterministic NoBacktrack.
   Class A (n: nat).
 
   Instance a0 : A 0. Qed.
