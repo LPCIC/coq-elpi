@@ -70,24 +70,51 @@ Lemma app_prf [A B : Type] (f g : A -> B) (v1 v2 : A) :
   f = g -> v1 = v2 -> f v1 = g v2.
 Proof. now intros fg v1v2; rewrite fg, v1v2. Qed.
 
+Lemma app_prf1 [A : Type] [B : A -> Type] (f g : forall x, B x) (v : A) :
+  f = g -> f v = g v.
+Proof. now intros fg; rewrite fg. Qed.
+
+Ltac lazy_beta := lazy beta.
+
 Elpi Tactic replace.
 
 Elpi Accumulate lp:{{
 
 pred mk-app-prf i:list term, i:list term, i: list term, o:term.
 
-mk-app-prf [F, _] [F, _] [{{@refl_equal _ _}}, P] {{f_equal lp:F lp:P}}.
+mk-app-prf [F, _] [F, _] [{{@refl_equal _ _}}, P] {{f_equal lp:F lp:P}} :-
+  non-dependent-type F,!.
 mk-app-prf [F, _, _] [F, _, _] [{{@refl_equal _ _}}, P1, P2]
-  {{f_equal2 lp:F lp:P1 lp:P2}}.
+  {{f_equal2 lp:F lp:P1 lp:P2}} :-
+  non-dependent-type F,!.
 mk-app-prf [F, _, _, _] [F, _, _, _] [{{@refl_equal _ _}}, P1, P2, P3]
-  {{f_equal3 lp:F lp:P1 lp:P2 lp:P3}}.
+  {{f_equal3 lp:F lp:P1 lp:P2 lp:P3}} :-
+  non-dependent-type F,!.
 mk-app-prf [F, _, _, _, _] [F, _, _, _, _]
   [{{@refl_equal _ _}}, P1, P2, P3, P4]
-  {{f_equal4 lp:F lp:P1 lp:P2 lp:P3 lp:P4}}.
-% use nary_congruence from ssreflect
+  {{f_equal4 lp:F lp:P1 lp:P2 lp:P3 lp:P4}} :-
+  non-dependent-type F,!.
+% TODO use nary_congruence from ssreflect
 mk-app-prf [F, _, _, _, _, _] [F, _, _, _, _, _]
   [{{@refl_equal _ _}}, P1, P2, P3, P4, P5]
-  {{f_equal5 lp:F lp:P1 lp:P2 lp:P3 lp:P4 lp:P5}}.
+  {{f_equal5 lp:F lp:P1 lp:P2 lp:P3 lp:P4 lp:P5}} :-
+  non-dependent-type F,!.
+mk-app-prf [F1, A] [F2, A] [Pf, {{@refl_equal _ _}}]
+   {{app_prf1 lp:F1 lp:F2 lp:A lp:Pf}} :- !.
+mk-app-prf [F1, A] [F2, B] [Pf, Pa]
+  {{app_prf lp:F1 lp:F2 lp:A lp:B lp:Pf lp:Pa}} :-
+  coq.typecheck F1 (prod _ _ Ft) ok,
+  (pi c1 c2 \ Ft c1 = Ft c2),!.
+ mk-app-prf [F1, A | Args1] [F2, A |Args2] [Pf, {{@refl_equal _ _}} | Ps]
+   P :- !,
+    mk-app-prf [app [F1, A] | Args1] [app [F2, A] | Args2]
+      [{{app_prf1 lp:F1 lp:F2 lp:A lp:Pf}} | Ps] P.
+
+mk-app-prf [F1, A | Args1] [F2, B | Args2] [Pf, Pa | Ps] P :-
+  coq.typecheck F1 (prod _ _ Ft) ok,
+  (pi c1 c2 \ Ft c1 = Ft c2),!,
+  mk-app-prf [app [F1, A] | Args1] [app [F2, B] | Args2]
+    [{{app_prf lp:F1 lp:F2 lp:A lp:B lp:Pf lp:Pa}} | Ps] P.
 
 pred fold-map2 i:list term i:A i:(term -> A -> term -> term -> A -> prop)
   o:list term o:list term o:A.
@@ -103,11 +130,22 @@ pred instantiate i:name, i:term, i:term, i:argument, o:argument.
 
 pred remove_one_unknown i:name, i:term, i:term, i:term, o:term.
 
+% TODO : needs a fix in a coq-elpi to detect if renaming has happened in
+% in the current context.
 remove_one_unknown N _T C (fun N1 _T1 F) Res :-
   {coq.name->id N} = {coq.name->id N1},!,
-
   Res = (F C),!,
    coq.say "remove the unknown" Res.
+
+remove_one_unknown N T C (fun N1 _T1 F) Res :-
+  {coq.ltac.fresh-id {coq.name->id N} T} = {coq.name->id N1},!,
+  Res = (F C),!,
+   coq.say "remove the unknown 2" Res.
+
+% external pred coq.ltac.id-free? i:id, i:goal.
+
+% % [coq.ltac.fresh-id Default Ty FreshID] TODO
+% external pred coq.ltac.fresh-id i:id, i:term, o:id.
 
 remove_one_unknown N T C (fun N1 T1 F) (fun N1 T1 Res) :-
   coq.say "not the unknown" N N1,
@@ -122,6 +160,8 @@ instantiate N T C (open-trm I F) (open-trm J Res) :-
   J is I - 1.
 
 instantiate _N _T _C (trm A) (trm A):- !.
+
+instantiate _N _T _C (open-trm _ _ as It) It :- !.
 
 instantiate_pair N T C (pr A1 A2) (pr B1 B2) :-
   std.do! [ coq.say "before" N T C A1 B1,
@@ -209,12 +249,10 @@ mk-equality RW {{@map lp:T1 lp:T2 lp:{{fun N _ F}} lp:L}}
               (fun `H` (Ext_Hyp x) h\ Pf x h)}} lp:Pl }}.
 
 mk-equality RW (app L) A (app L1) Prf A1 :-
-L = [Hd | _], coq.term->string Hd S,
-coq.say "entering twelfth" Hd S,
-fold-map2 L A (mk-equality RW) L1 P1 A1,
-if (non-dependent-type Hd, {std.length L} < 7)
-  (mk-app-prf L L1 P1 Prf)
-  (equal-app L L1 P1 Prf).
+  L = [Hd | _], coq.term->string Hd S,
+  coq.say "entering twelfth" Hd S,
+  fold-map2 L A (mk-equality RW) L1 P1 A1,
+  mk-app-prf L L1 P1 Prf.
 
 pred non-dependent-type  i:term.
 
@@ -254,50 +292,7 @@ mk-equality _RW (uvar _M _L as C) A C {{@refl_equal _ lp:C}} A :- !.
 % when used in CHR rules
 mk-equality _RW (uvar _X _L as C) A C {{@refl_equal _ lp:C}} A :- !.
 
-pred process i:argument, i:argument, i:term, o:term, o:term.
-
-% The header says we want to replace a formula with one unknown
-% by a formula with also one unknown in the Goal.
-process (open-trm 1 (fun Name _Ty F1))    % to be replaced
-        (open-trm 1 (fun _Name1 _Ty1 F2)) % to be inserted in place
-        GoalConcl                         % term in which to replace
-        FirstLambda                       % Lambda to replace
-        (fun Name2 Ty2 H'):-              % lambda to insert in place
-
-% The 1 in first and second arguments expresses there is exactly one
-% unknown in these terms (expected to be the same unknown, not checked here
-% We expect the unknown to be instantiated by a bound variable in
-% the first lambda in the goal.  We perform the replacement in that lambda
-% without checking that there is progress (in this preliminary version).
-
-% We look for lambdas in the goal.  Behware that
-% TopLambdas contains the expressions in reverse order of their
-% discovery in a left-to-right traversal.
-%  std.do! [
-    ((pi T A T\ fold-map T A T [T | A] :- T = (fun _ _ _)) =>
-      fold-map GoalConcl [] _ TopLambdas),
-    MSG is "variable " ^ {coq.name->id Name} ^ " is unknown",
-% We take the first lambda
-    std.assert! ({std.rev TopLambdas} = [FirstLambda | _]) MSG,
-    FirstLambda = (fun Name2 Ty2 H),
-% We perform the required replacement in the body of the lambda
-    (pi C \ copy (F1 C) (F2 C) => copy (H C) (H' C))
-  %]
-  .
-
-% Accepting the case where the replacement term does not contain the
-% unknown variable present in the replaced term.
-process (open-trm 1 (fun Name Ty F1)) (trm T) GConcl L1 L2:-
-  process (open-trm 1 (fun Name Ty F1)) (open-trm 1 (fun Name Ty (C \ T)))
-  GConcl L1 L2.
-
-
-solve (goal _ _ Type _ [Arg1, Arg2] as G) GL :-
-    process Arg1 Arg2 Type Term1 Term2,
-    std.assert! (coq.ltac.call "prove_by_extensionality_and_ring"
-        [trm Term1, trm Term2] G GL) "ltac call failed".
-
-solve (goal _ _ {{lp:_X = lp:Y }} _ [_, Arg1, Arg2] as G) GL :-
+solve (goal _ _ {{lp:_X = lp:Y }} _ [Arg1, Arg2] as G) GL1 :-
   coq.say "calling equality with " (pr Arg1 Arg2) Y,
   mk-equality (pr Arg1 Arg2) Y [] Y2 P _,
   coq.say "mk-equality succeeded" P,!,
@@ -306,7 +301,12 @@ solve (goal _ _ {{lp:_X = lp:Y }} _ [_, Arg1, Arg2] as G) GL :-
   coq.say "prouf term" SP,
   std.assert-ok! (coq.typecheck P {{lp:Y = lp:Y2}}) "proof incorrect",
   coq.say "typecheck succeeded" S,!,
-  refine {{@eq_trans _ _ lp:Y2 _ _ (eq_sym lp:P)}} G GL.
+  refine {{@eq_trans _ _ lp:Y2 _ _ (eq_sym lp:P)}} G GL,
+  if (GL = [Ng, Ng2])
+    (coq.say "two subgoals",
+     coq.ltac.open (coq.ltac.call "lazy_beta" []) Ng2 GL_aux,
+     GL1 = [Ng | GL_aux])
+    (GL1 = GL).
   % refine {{eq_sym (@eq_trans lp:Y lp:Y2 lp:X lp:P (eq_sym _))}} G GL.
 
 solve (goal _ _ _ _ [Arg1, Arg2]) _ :-
@@ -320,93 +320,127 @@ solve (goal _ _ _ _ [] as _G) _GL :-
 
 Elpi Typecheck.
 
-Tactic Notation (at level 0)  "replace_in_rhs" uconstr(A) uconstr(B) :=
- (elpi replace True A B;[lazy beta | ]).
-(* this does not work because Ltac insists on have known unbound variables
-  in arguments before passing them to other tactics.
- Ltac my_replace A B :=
- elpi replace True A B;[ lazy beta | ]. *)
+Open Scope Z_scope. (* Otherwise ring fails. *)
 
-Open Scope Z_scope.
-Elpi Query lp:{{
-  sigma T1 T2 A \
-  {{fun x => x + (1 + 0)}} = T1,
-  {{fun x => x + 1}} = T2,
-  instantiate_pair `x` {{Z}} A (pr (open-trm 1 T1) (open-trm 1 T2)) R
-}}.
+(* The tactic elpi replace only handles goals that have the shape of an
+  equality, and only attempts to perform rewrites in the right-hand-side of
+  that equality. In this example, we replace a formula containing a variable
+  that is not well defined outside the map expression with a formula that also
+  contains the such a variable.  But a variable with the same name is
+  actually bound in the goal, and the expression to be replaced occurs inside
+  the lambda-expression.
+  The number of variables occuring in the replacement formulas that
+  are unknown at the root of the goals conclusion can be arbitrary big,
+  but they all have to be fillable with bound variables where the binding
+  happens in the goal, in a nested fashion. *)
 
-(* With only two arguments, we use the variant corresponding to the
-  first minimal working example, based on finding the left-most lambda,
-  and then instantiating the unknown expression in the input terms with
-  that lambda.  It only works if the expression-to-replace has exactly
-  one-unknown and the other expression has at  most one unknown (assumed
-  to be the same, without checking). )*)
-Goal forall l, map (fun x => (x + 1) + 2) l = map (fun x => (1 + x) + 2) l.
-Proof.
-now intros l; elpi replace (x + 1) (1 + x).
-Show Proof.
+(* This test illustrates the case where there is no unknown. *)
+Goal forall x, x = 1 -> 2 = x + 1.
+intros x x1.
+elpi replace (x) (1);[ | assumption].
+ring.
 Qed.
 
-(* This is a typical bigop theorem. *)
+(* This test illustrates the case where there is one unknown in
+  both the expression-to-be-replaced and the replacing expression. *)
+Goal forall l, map (fun x => x + 1) l = map (fun x => x + (1 + 0)) l.
+Proof.
+intros l.
+elpi replace (x + (1 + 0)) (x + 1); cycle 1.
+  ring.
+easy.
+Qed.
+
+(* This test illustrates the case where there are two unknowns in
+  both the expression-to-be-replaced and the replacing expression. *)
+Goal forall n,
+  map (fun i => map (fun j => (i + j)) (map Z.of_nat (seq 1 n)))
+  (map Z.of_nat (seq 1 n)) =
+  map (fun i => map (fun j => (j + i)) (map Z.of_nat (seq 1 n)))
+    (map Z.of_nat (seq 1 n)).
+intros n.
+elpi replace (j + i) (i + j).
+  easy.
+ring.
+Qed.
+
+(* This is a typical bigop theorem. The proof does not use our new
+  tactic. *)
 Lemma fold_neutral {A B : Type}(f : A -> A -> A) (a0 : A) :
   (forall x, f x a0 = x) ->
-  forall (l : list B), fold_right f a0 (map (fun _ => a0) l) = a0.
+  forall (l : list B), fold_right f a0 (map (fun x => a0) l) = a0.
 Proof.
 intros neutral; induction l as [ | b l Ih]; simpl; try rewrite Ih; auto.
 Qed.
 
-
-Open Scope Z_scope. (* Otherwise ring fails. *)
+(* The next two tests illustrate the fact that the whole formula may contain
+  polymorphic functions. *)
+(* This test illustrates the case where the formula to be replaced contains
+  an instance of the variable bound in a lambda expression occuring in the
+  right-hand-side of the equality, but the replacing formula does not. *)
 Goal forall l, fold_right Z.add 0 (map (fun x => x - x) l) = 0.
 Proof.
-elpi replace (x - x) (0).
+intros l.
+symmetry.
+(* TODO: this should not fail. *)
+elpi replace (x - x) (0); cycle 1.
+  ring.
+symmetry.
 apply (fold_neutral Z.add 0 Z.add_0_r).
 Qed.
 
-(* With a third argument equal to True, the same tactic now uses an
-  that proves only equalities. replacements only happen in the right-hand
-  side, and both the expression-to-be-replaced and the replacing expression
-  can have arbitrary many unknowns, which are filled with bound variables
-  appearing in nested lambdas appearing in the term.  Replacement only
-  happens when all unknowns have been filled. The goals are given in
-  this order: first the equality between the expression-to-be-replace
-  and the replacing expression in the context where the replacement occurs,
-  second the goal after the replacement.  (TODO revese that order). *)
-
-(* The first test illustrates the case where is no unknown. *)
-Goal forall x, x = 1 -> 2 = x + 1.
-intros x x1.
-elpi replace True (x) (1);[ | assumption].
-ring.
-Qed.
-
-(* The second test illustrates the case where there is one unknown in
-  both the expression-to-be-replace and the replacing expression. *)
-Goal forall l, map (fun x => x + 1) l = map (fun x => x + (1 + 0)) l.
-Proof.
+(* This test illustrates the case where the formula to be replaced contains
+  no instance of a bound variable, but the replacing formula does. *)
+Goal forall (l : list Z), 0 = fold_right Z.add 0 (map (fun x => x - x + 0) l).
 intros l.
-elpi replace True (x + (1 + 0)) (x + 1).
-  easy.
-(* TODO: find how to have this goal beta-reduced. *)
-lazy beta.
-ring.
+elpi replace (0) (x - x); cycle 1.
+  ring.
+elpi replace (x - x + (x - x)) (0); cycle 1.
+  ring.
+symmetry.
+apply fold_neutral.
+intros x; ring.
 Qed.
 
-Goal forall n, map (fun i => map (fun j => i + j) (map Z.of_nat (seq 1 n)))
+Goal forall m n, m = n ->
+  map (fun i => map (fun j => (i + j)) (map Z.of_nat (seq 1 n)))
   (map Z.of_nat (seq 1 n)) =
-  map (fun i => map (fun j => j + i) (map Z.of_nat (seq 1 n)))
-    (map Z.of_nat (seq 1 n)).
-intros n.
+  map (fun i => map (fun j => (j + i)) (map Z.of_nat (seq 1 n)))
+    (map Z.of_nat (seq 1 m)).
+intros m n mn.
 elpi replace True (j + i) (i + j).
+  rewrite mn.
   easy.
-(* TODO: find how to have this goal beta-reduced. *)
-lazy beta.
+  Show Proof.
 ring.
 Qed.
 
-Goal forall l, fold_right Z.add 0 (map (fun x => x + 1) l) =
-  fold_right Z.add 0 (map (fun x => 1 + x) l).
+(* TODO : This fails if x is a section variable requires a fix in coq-elpi *)
+Goal forall (x : Z) l y, map (fun x => x + y) l = map (fun x => x + (y + 0)) l.
+Proof.
+intros x l y.
+elpi replace True (x0 + (y + 0)) (x0 + y).
+(* TODO: find how to preseve the name of the bound variable.  This one
+ fails because x0 has been replaced with elpi_ctx_entry_??_ *)
+Fail progress elpi replace True (x0 + y) (y + x0).
+easy.
+ring.
+>>>>>>> 5a04f1dd (cleanup : remove the third argument variant, and make it use the complex)
+Qed.
+
+(* If there are several lambda expressions, one of which is not concerned
+  with the rewrite rule, it should not fail. *)
+
+Goal forall l, l = map (fun x => x + 1) (map (fun y => y - 1) l).
 Proof.
 intros l.
-(* TODO : this should make some progress. *)
-Fail progress elpi replace True (1 + x) (x + 1).
+elpi replace True (x + 1) (1 + x); cycle 1.
+  ring.
+elpi replace True (y - 1) ((-1) + y); cycle 1.
+  ring.
+rewrite map_map.
+elpi replace True (1 + ((-1) + x)) (x); cycle 1.
+  ring.
+rewrite map_id.
+easy.
+Qed.
