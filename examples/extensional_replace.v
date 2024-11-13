@@ -430,3 +430,19 @@ elpi replace (1 + ((-1) + x)) (x); cycle 1.
 rewrite map_id.
 easy.
 Qed.
+
+Section sandbox.
+
+Variable x : Z.
+
+(* This goal illustrates the case where a bound variable clashes with
+  a section variable. *)
+Goal forall l y, map (fun x => x + y) l = map (fun x => x + (y + 0)) l.
+Proof.
+intros l y.
+(* TODO: elpi bug correction. *)
+Fail elpi replace (x0 + (y + 0)) (x0 + y).
+now apply map_ext_in; intros a _; ring.
+Qed.
+
+End sandbox.
