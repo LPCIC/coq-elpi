@@ -402,30 +402,16 @@ apply fold_neutral.
 intros x; ring.
 Qed.
 
-Goal forall m n, m = n ->
-  map (fun i => map (fun j => (i + j)) (map Z.of_nat (seq 1 n)))
-  (map Z.of_nat (seq 1 n)) =
-  map (fun i => map (fun j => (j + i)) (map Z.of_nat (seq 1 n)))
-    (map Z.of_nat (seq 1 m)).
-intros m n mn.
-elpi replace True (j + i) (i + j).
-  rewrite mn.
-  easy.
-  Show Proof.
-ring.
-Qed.
-
 (* TODO : This fails if x is a section variable requires a fix in coq-elpi *)
 Goal forall (x : Z) l y, map (fun x => x + y) l = map (fun x => x + (y + 0)) l.
 Proof.
 intros x l y.
-elpi replace True (x0 + (y + 0)) (x0 + y).
+elpi replace (x0 + (y + 0)) (x0 + y).
 (* TODO: find how to preseve the name of the bound variable.  This one
  fails because x0 has been replaced with elpi_ctx_entry_??_ *)
 Fail progress elpi replace True (x0 + y) (y + x0).
 easy.
 ring.
->>>>>>> 5a04f1dd (cleanup : remove the third argument variant, and make it use the complex)
 Qed.
 
 (* If there are several lambda expressions, one of which is not concerned
@@ -434,12 +420,12 @@ Qed.
 Goal forall l, l = map (fun x => x + 1) (map (fun y => y - 1) l).
 Proof.
 intros l.
-elpi replace True (x + 1) (1 + x); cycle 1.
+elpi replace(x + 1) (1 + x); cycle 1.
   ring.
-elpi replace True (y - 1) ((-1) + y); cycle 1.
+elpi replace (y - 1) ((-1) + y); cycle 1.
   ring.
 rewrite map_map.
-elpi replace True (1 + ((-1) + x)) (x); cycle 1.
+elpi replace (1 + ((-1) + x)) (x); cycle 1.
   ring.
 rewrite map_id.
 easy.
