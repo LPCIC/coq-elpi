@@ -83,12 +83,24 @@ Elpi Accumulate lp:{{
 pred preserve_bound_variables i:term o:term.
 
 preserve_bound_variables I O :-
-  ((pi N T F N1 T1 F1 \
+  (((pi N T F N1 T1 F1 \
     copy (fun N T F) (fun N1 T1 F1) :-
     copy T T1,
     fresh-name N T N1,
     (@pi-decl N1 T1 x\ 
-      copy (F x) (F1 x))) => copy I O).
+      copy (F x) (F1 x))),
+    (pi B B1 N T F N1 T1 F1 \
+      copy (let N T B F)(let N1 T1 B1 F1) :-
+        copy T T1,
+        copy B B1,
+        fresh-name N T N1,
+        (@pi-decl N1 T1 x\ copy (F x) (F1 x))),
+    (pi N T F N1 T1 F1 \
+      copy (prod N T F) (prod N1 T1 F1) :-
+        copy T T1,
+        fresh-name N T N1,
+        (@pi-decl N1 T1 x\
+          copy (F x) (F1 x)))) => copy I O).
 
 pred fresh-name i:name, i:term, o:name.
 
