@@ -23,7 +23,7 @@ module type Common = sig
     Elpi.API.Execute.outcome
 
   val accumulate_files       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
-  val accumulate_extra_deps  : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> Names.Id.t list -> unit
+  val accumulate_extra_deps  : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name list -> unit
   val accumulate_string      : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
   val accumulate_db          : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
   val accumulate_db_header   : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
@@ -43,6 +43,7 @@ module type Common = sig
   val create_command : atts:bool option -> loc:Loc.t -> program_name -> unit
   val create_tactic : loc:Loc.t -> program_name -> unit
   val create_db : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+  val create_file : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
 
 end
 

@@ -1,6 +1,6 @@
 From elpi Require Import elpi.
 
-From elpi Require test_API.
+From elpi.tests Require test_API.
 
 Elpi Command declare.testX.
 Elpi Accumulate Db global.db.
@@ -416,3 +416,19 @@ main _ :-
 Elpi Accumulate Db foo.db.
 
 Fail Elpi acc_foo. (* since r has no type in foo.db *)
+
+
+Elpi File r.elpi lp:{{ pred r i:list int. }}.
+
+Elpi Accumulate foo.db File r.elpi.
+
+Elpi Command acc_foo2.
+Elpi Accumulate Db Header foo.db.
+Elpi Accumulate File r.elpi.
+Elpi Accumulate lp:{{
+main _ :-
+  coq.elpi.accumulate _ "foo.db" (clause _ _ (r [])).
+}}.
+Elpi Accumulate Db foo.db.
+
+Elpi acc_foo2. (* since r has no type in foo.db *)

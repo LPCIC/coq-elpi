@@ -139,7 +139,7 @@ type db = {
   units : Names.KNset.t;
 }
 
-type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
+type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool }
 
 type program = {
   sources_rev : qualified_name Code.t;
@@ -178,21 +178,24 @@ module type Programs = sig
   val cc_flags : unit -> API.Compile.flags
   val unit_from_file   : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string -> cunit
   val unit_from_string : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> API.Ast.Loc.t -> string -> cunit
+  val ast_from_string : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> Digest.t * API.Ast.program
   val unit_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Ast.program -> cunit
-  (* val assemble_units : elpi:API.Setup.elpi -> API.Compile.compilation_unit list -> API.Compile.program *)
   val extend_w_units : base:API.Compile.program -> loc:Loc.t -> API.Compile.compilation_unit list -> API.Compile.program
   val parse_goal : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> API.Ast.query
-  (* val intern_unit : (string option * API.Compile.compilation_unit * API.Compile.flags) -> cunit *)
 
   val db_exists : qualified_name -> bool
   val program_exists : qualified_name -> bool
   val declare_db : program_name -> unit
   val declare_program : program_name -> nature -> unit
+  val declare_file : program_name -> unit
   val get_nature : qualified_name -> nature
 
   val init_program : program_name -> src -> unit
   val init_db : program_name -> cunit -> unit
+  val init_file : program_name -> Digest.t * API.Ast.program -> unit
   val header_of_db : qualified_name -> cunit
+  val ast_of_file : qualified_name -> Digest.t * API.Ast.program
+
 
   val accumulate : qualified_name -> src list -> unit
   val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
@@ -265,7 +268,9 @@ module SourcesStorage(S : Stage) = struct
     Lib.add_leaf obj
         
   let db_name : SLSet.t ref = Summary.ref  ~name:("elpi-dbs") SLSet.empty
+  let file_name : SLSet.t ref = Summary.ref  ~name:("elpi-files") SLSet.empty
   let db_exists name = SLSet.mem name !db_name
+  let file_exists name = SLSet.mem name !file_name
   
   let in_db_name : qualified_name -> Libobject.obj =
     let open Libobject in
@@ -273,21 +278,38 @@ module SourcesStorage(S : Stage) = struct
       (superglobal_object_nodischarge "elpi-db-names"
           ~cache:(fun name -> db_name := SLSet.add name !db_name)
           ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+
+  let in_file_name : qualified_name -> Libobject.obj =
+    let open Libobject in
+    declare_object @@
+      (superglobal_object_nodischarge "elpi-file-names"
+          ~cache:(fun name -> file_name := SLSet.add name !file_name)
+          ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+        
   let declare_db program =
     ignore @@ Lib.add_leaf (in_db_name program)
   
-        
+  let declare_file program =
+    ignore @@ Lib.add_leaf (in_file_name program)
+          
   let declare_program (loc,qualid) nature =
-    if program_exists qualid || db_exists qualid then
-      CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
+    if program_exists qualid || db_exists qualid || file_exists qualid then
+      CErrors.user_err Pp.(str "Program/Tactic/Db/File " ++ pr_qualified_name qualid ++ str " already exists")
     else
       declare_program qualid nature
       
   let declare_db (loc,qualid) =
-    if program_exists qualid || db_exists qualid then
-      CErrors.user_err Pp.(str "Program/Tactic/Db " ++ pr_qualified_name qualid ++ str " already exists")
+    if program_exists qualid || db_exists qualid || file_exists qualid then
+      CErrors.user_err Pp.(str "Program/Tactic/Db/File " ++ pr_qualified_name qualid ++ str " already exists")
     else
       declare_db qualid
+
+
+  let declare_file (loc,qualid) =
+    if program_exists qualid || db_exists qualid || file_exists qualid then
+      CErrors.user_err Pp.(str "Program/Tactic/Db/File " ++ pr_qualified_name qualid ++ str " already exists")
+    else
+      declare_file qualid
 
 let debug_vars = Summary.ref ~name:"elpi-debug" EC.StrSet.empty
 
@@ -357,6 +379,11 @@ let unit_from_string ~elpi ~base ~loc xloc x : cunit =
     let ast = EP.program_from ~elpi ~loc:xloc (Lexing.from_string x) in
     unit_from_ast ~elpi ~flags (Some hash) ~base ~loc ast)
 
+let ast_from_string ~elpi ~loc xloc x : string * API.Ast.program =
+  let hash = Digest.(to_hex @@ string x) in
+  handle_elpi_compiler_errors ~loc (fun () ->
+    hash, EP.program_from ~elpi ~loc:xloc (Lexing.from_string x))
+
 let parse_goal ~elpi ~loc tloc text =
   handle_elpi_compiler_errors ~loc (fun () ->
     EP.goal ~elpi ~loc:tloc ~text)
@@ -372,6 +399,9 @@ let program_src : program SLMap.t ref =
 
 let db_name_src : db SLMap.t ref =
   Summary.ref ~name:("elpi-db-src") SLMap.empty
+
+let file_name_src : (Digest.t * API.Ast.program) SLMap.t ref =
+  Summary.ref ~name:("elpi-file-src") SLMap.empty
 
   (* Setup called *)
 let elpi = Stdlib.ref None
@@ -486,17 +516,44 @@ let get ?(fail_if_not_exists=false) p =
         if scope = Coq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
         else Some o);
     }
-    
+  
+    let in_file : Names.Id.t -> (program_name * (Digest.t * API.Ast.program)) -> Libobject.obj =
+      let open Libobject in
+      let cache ((_,kn),((_,name),p)) =
+        file_name_src := SLMap.add name p !file_name_src in
+      let load i ((_,kn),_ as o) = cache o in
+      let import i (_,s as o) =
+        if Int.equal i 1 then cache o in
+      declare_named_object @@ { (default_object "ELPI-FILE") with
+        classify_function = (fun _ -> Keep);
+        load_function  = load;
+        cache_function  = cache;
+        subst_function = (fun (_,o) -> o);
+        open_function = simple_open import;
+        discharge_function = (fun o -> Some o);
+      }
+
   let accum = ref 0
   let add_to_db program code vars scope =
     ignore @@ Lib.add_leaf
       (in_db (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum)) { program; code; scope; vars })
 
+  let add_to_file program code =
+    ignore @@ Lib.add_leaf
+      (in_file (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum)) (program, code))
+    
+
   let init_db qualid init =
     add_to_db qualid [init] [] Coq_elpi_utils.SuperGlobal
-    
+
+  let init_file qualid init =
+    add_to_file qualid init
+      
   let header_of_db qulid =
     Chunk.base @@ (SLMap.find qulid !db_name_src).sources_rev
+
+  let ast_of_file qulid = SLMap.find qulid !file_name_src
+
 
   (* templates *)
   let lp_command_ast = Summary.ref ~name:("elpi-lp-command") None

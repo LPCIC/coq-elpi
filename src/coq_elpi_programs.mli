@@ -24,7 +24,7 @@ and src_db_header = {
   dast : cunit;
 }
 
-type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool } 
+type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool }
 
 
 module Chunk : sig
@@ -80,19 +80,24 @@ module type Programs = sig
   val cc_flags : unit -> Compile.flags
   val unit_from_file   : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string -> cunit
   val unit_from_string : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> Ast.Loc.t -> string -> cunit
+  val ast_from_string  : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Digest.t * Ast.program
   val unit_from_ast    : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Ast.program -> cunit
-  val extend_w_units : base:Compile.program -> loc:Loc.t -> Compile.compilation_unit list -> Compile.program
-  val parse_goal : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Ast.query
+  val extend_w_units   : base:Compile.program -> loc:Loc.t -> Compile.compilation_unit list -> Compile.program
+  val parse_goal       : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Ast.query
 
   val db_exists : qualified_name -> bool
   val program_exists : qualified_name -> bool
   val declare_db : program_name -> unit
   val declare_program : program_name -> nature -> unit
+  val declare_file : program_name -> unit
   val get_nature : qualified_name -> nature
 
   val init_program : program_name -> src -> unit
   val init_db : program_name -> cunit -> unit
+  val init_file : program_name -> Digest.t * Ast.program -> unit
+
   val header_of_db : qualified_name -> cunit
+  val ast_of_file : qualified_name -> Digest.t * Ast.program
 
   val accumulate : qualified_name -> src list -> unit
   val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
