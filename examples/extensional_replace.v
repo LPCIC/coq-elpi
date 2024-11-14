@@ -80,6 +80,12 @@ Elpi Tactic replace.
 
 Elpi Accumulate lp:{{
 
+pred fresh-name i:name, i:term, o:name.
+
+fresh-name N T M :-
+  coq.ltac.fresh-id {coq.name->id N} T Mi,
+  coq.id->name Mi M.
+
 pred mk-app-prf i:list term, i:list term, i: list term, o:term.
 
 mk-app-prf [F, _] [F, _] [{{@refl_equal _ _}}, P] {{f_equal lp:F lp:P}} :-
@@ -137,10 +143,10 @@ remove_one_unknown N _T C (fun N1 _T1 F) Res :-
   Res = (F C),!,
    coq.say "remove the unknown" Res.
 
-remove_one_unknown N T C (fun N1 _T1 F) Res :-
-  {coq.ltac.fresh-id {coq.name->id N} T} = {coq.name->id N1},!,
-  Res = (F C),!,
-   coq.say "remove the unknown 2" Res.
+% remove_one_unknown N T C (fun N1 _T1 F) Res :-
+%   {coq.ltac.fresh-id {coq.name->id N} T} = {coq.name->id N1},!,
+%   Res = (F C),!,
+%    coq.say "remove the unknown 2" Res.
 
 % external pred coq.ltac.id-free? i:id, i:goal.
 
@@ -189,41 +195,47 @@ mk-equality _RW (sort _ as C) A C {{@refl_equal _ lp:C}} A :- !
 % , coq.say "fourth clause"
 .
 
-mk-equality RW (fun N T F as C) A C Res A :-
+mk-equality RW (fun N T F) A (fun N1 T F) Res A :-
+fresh-name N T N1,
 @pi-decl N T x\
   (instantiate_pair N T x RW (RW1 x),
    mk-equality (RW1 x) (F x) A _ {{@refl_equal _ _}} _A2,!,
    Res = {{@refl_equal _ _}},
    coq.say "fifth clause").
 
-mk-equality RW (fun N T F) A (fun N T F1)
+mk-equality RW (fun N T F) A (fun N1 T F1)
   {{functional_extensionality lp:{{(fun N T F)}} lp:{{(fun N T F1)}}
-      lp:{{(fun N T Prf)}}}} A1 :- !,
-      coq.say "sixth clause",
-@pi-decl N T x\
-  (std.assert! (instantiate_pair N T x RW (RW1 x)) "instantiate_pair failed",!,
+      lp:{{(fun N1 T Prf)}}}} A1 :- !,
+coq.say "sixth clause",
+fresh-name N T N1,
+@pi-decl N1 T x\
+  (std.assert! (instantiate_pair N1 T x RW (RW1 x)) "instantiate_pair failed",!,
    mk-equality (RW1 x) (F x) A (F1 x) (Prf x) A1).
 
 % TODO: write unit tests for the following clauses
-mk-equality RW (let N T B F as C) A C {{@refl_equal _ lp:C}} A :-
+mk-equality RW (let N T B F as C) A (let N1 T B F) {{@refl_equal _ lp:C}} A :-
 mk-equality RW B A _ {{@refl_equal _ _}} A2,
-(@pi-decl N T x\
-  (std.assert! (instantiate_pair N T x RW (RW1 x)) "instantiate_pair failed",!,
+fresh-name N T N1,
+coq.say "old name - new name" N N1,
+(@pi-decl N1 T x\
+  (std.assert! (instantiate_pair N1 T x RW (RW1 x)) "instantiate_pair failed",!,
   mk-equality (RW1 x) (F x) A2 _ {{@refl_equal _ _}} _A3)),!,
   coq.say "seventh clause".
 
-mk-equality RW (let N T B F) A (let N T B1 F1)
-  {{let_congr lp:B lp:B1 lp:{{fun N T F}} lp:{{fun N T F1}}
+mk-equality RW (let N T B F) A (let N1 T B1 F1)
+  {{let_congr lp:B lp:B1 lp:{{fun N1 T F}} lp:{{fun N1 T F1}}
       lp:PB lp:PF}} A3:- !,
+fresh-name N T N1,
 mk-equality RW B A B1 PB A2,
-@pi-decl N T x\
-  (instantiate_pair N T x RW (RW1 x),!,
+@pi-decl N1 T x\
+  (instantiate_pair N1 T x RW (RW1 x),!,
   coq.say "eigth clause",
    mk-equality (RW1 x) (F x) A2 (F1 x) PF A3).
 
-mk-equality RW (prod N T F) A (prod N T F1) (fun N T P1) A2 :- !,
-(@pi-decl N T x\
-  (instantiate_pair N T x RW (RW1 x),!,
+mk-equality RW (prod N T F) A (prod N1 T F1) (fun N1 T P1) A2 :- !,
+fresh-name N T N1,
+(@pi-decl N1 T x\
+  (instantiate_pair N1 T x RW (RW1 x),!,
    mk-equality  (RW1 x) (F x) A (F1 x) (P1 x) A2)),!
    , coq.say "ninth clause"
 .
@@ -236,16 +248,17 @@ std.forall L1 (c \ (sigma A B \ c = {{@refl_equal lp:A lp:B}})),!
 
 mk-equality RW {{@map lp:T1 lp:T2 lp:{{fun N _ F}} lp:L}}
   A
-  {{@map lp:T1 lp:T2 lp:{{fun N T1 F1}} lp:L1}}
+  {{@map lp:T1 lp:T2 lp:{{fun N1 T1 F1}} lp:L1}}
   R A2 :- !,
+  fresh-name N T1 N1,
   % coq.say "eleventh clause",
-  @pi-decl N T1 x\
-  (instantiate_pair N T1 x RW (RW1 x),!,
+  @pi-decl N1 T1 x\
+  (instantiate_pair N1 T1 x RW (RW1 x),!,
     @pi-decl `H` (Ext_Hyp x) h\
       mk-equality (RW1 x) (F x) A (F1 x) (Pf x h) A1),
   mk-equality RW L A1 L1 Pl A2,
-  R = {{map_ext_in_equal2 lp:{{fun N _ F}} lp:{{fun N _ F1}} lp:L lp:L1
-         lp:{{fun N T1 x\
+  R = {{map_ext_in_equal2 lp:{{fun N1 _ F}} lp:{{fun N1 _ F1}} lp:L lp:L1
+         lp:{{fun N1 T1 x\
               (fun `H` (Ext_Hyp x) h\ Pf x h)}} lp:Pl }}.
 
 mk-equality RW (app L) A (app L1) Prf A1 :-
@@ -402,16 +415,18 @@ apply fold_neutral.
 intros x; ring.
 Qed.
 
-(* TODO : This fails if x is a section variable requires a fix in coq-elpi *)
+(* this illustrates the case where a bound variable is clashing with another
+  existing variable in the context, with the same name. *)
 Goal forall (x : Z) l y, map (fun x => x + y) l = map (fun x => x + (y + 0)) l.
 Proof.
 intros x l y.
+(* This illustrates that the names seen by the user are recognized properly
+  by the tactic.*)
 elpi replace (x0 + (y + 0)) (x0 + y).
-(* TODO: find how to preseve the name of the bound variable.  This one
- fails because x0 has been replaced with elpi_ctx_entry_??_ *)
-Fail progress elpi replace True (x0 + y) (y + x0).
+progress elpi replace (x0 + y) (y + x0).
+elpi replace (y + x0) (x0 + y).
 easy.
-ring.
+all:ring.
 Qed.
 
 (* If there are several lambda expressions, one of which is not concerned
@@ -440,8 +455,10 @@ Variable x : Z.
 Goal forall l y, map (fun x => x + y) l = map (fun x => x + (y + 0)) l.
 Proof.
 intros l y.
-(* TODO: elpi bug correction. *)
-Fail elpi replace (x0 + (y + 0)) (x0 + y).
+elpi replace (x0 + (y + 0)) (x0 + y); cycle 1.
+  ring.
+(* TODO: elpi generates an ugly name in a subterm of the goal that we did not
+  modify, when it could avoid it. *)
 now apply map_ext_in; intros a _; ring.
 Qed.
 
