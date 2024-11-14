@@ -158,11 +158,6 @@ remove_one_unknown N _T C (fun N1 _T1 F) Res :-
 %   Res = (F C),!,
 %    coq.say "remove the unknown 2" Res.
 
-% external pred coq.ltac.id-free? i:id, i:goal.
-
-% % [coq.ltac.fresh-id Default Ty FreshID] TODO
-% external pred coq.ltac.fresh-id i:id, i:term, o:id.
-
 remove_one_unknown N T C (fun N1 T1 F) (fun N1 T1 Res) :-
   coq.say "not the unknown" N N1,
   (@pi-decl N1 T1 x \
