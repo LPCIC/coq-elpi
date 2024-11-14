@@ -80,6 +80,16 @@ Elpi Tactic replace.
 
 Elpi Accumulate lp:{{
 
+pred preserve_bound_variables i:term o:term.
+
+preserve_bound_variables I O :-
+  ((pi N T F N1 T1 F1 \
+    copy (fun N T F) (fun N1 T1 F1) :-
+    copy T T1,
+    fresh-name N T N1,
+    (@pi-decl N1 T1 x\ 
+      copy (F x) (F1 x))) => copy I O).
+
 pred fresh-name i:name, i:term, o:name.
 
 fresh-name N T M :-
@@ -305,7 +315,7 @@ mk-equality _RW (uvar _M _L as C) A C {{@refl_equal _ lp:C}} A :- !.
 % when used in CHR rules
 mk-equality _RW (uvar _X _L as C) A C {{@refl_equal _ lp:C}} A :- !.
 
-solve (goal _ _ {{lp:_X = lp:Y }} _ [Arg1, Arg2] as G) GL1 :-
+solve (goal _ _ {{lp:X = lp:Y }} _ [Arg1, Arg2] as G) GL1 :-
   coq.say "calling equality with " (pr Arg1 Arg2) Y,
   mk-equality (pr Arg1 Arg2) Y [] Y2 P _,
   coq.say "mk-equality succeeded" P,!,
@@ -314,7 +324,8 @@ solve (goal _ _ {{lp:_X = lp:Y }} _ [Arg1, Arg2] as G) GL1 :-
   coq.say "prouf term" SP,
   std.assert-ok! (coq.typecheck P {{lp:Y = lp:Y2}}) "proof incorrect",
   coq.say "typecheck succeeded" S,!,
-  refine {{@eq_trans _ _ lp:Y2 _ _ (eq_sym lp:P)}} G GL,
+  preserve_bound_variables X X1,
+  refine {{@eq_trans _ lp:X1 lp:Y2 _ _ (eq_sym lp:P)}} G GL,
   if (GL = [Ng, Ng2])
     (coq.say "two subgoals",
      coq.ltac.open (coq.ltac.call "lazy_beta" []) Ng2 GL_aux,
