@@ -14,33 +14,6 @@ extensionality x.
 ring.
 Qed.
 
-Elpi Tactic show.
-Elpi Accumulate lp:{{
-
-pred process i:list argument, o:string.
-
-process [open-trm K_ T] S :-
-coq.term->string T S.
-
-process [trm T] S :-
-coq.term->string T S.
-
-solve (goal Ctx _Trigger Type Proof Args) _ :-
-% process Args Txt,
-coq.say "Goal:" Ctx "|-" Proof ":" Type ">->" Args.
-
-}}.
-
-Elpi Typecheck.
-
-Ltac prove_by_extensionality_and_ring term1 term2 :=
-replace term1 with term2;[ |
-let Var_name := fresh "mame_for_bound_variable" in
-extensionality Var_name; try ring
-].
-
-Check functional_extensionality.
-
 Lemma let_congr {T1 T2 : Type} (b1 b2 : T1) (F1 F2 : T1 -> T2) :
   b1 = b2 -> (forall x : T1, F1 x = F2 x) ->
   (let x := b1 in F1 x) = (let x := b2 in F2 x).
@@ -48,16 +21,6 @@ Proof.
 intros bq fq; rewrite bq.
 lazy zeta; apply fq.
 Qed.
-
-About f_equal.
-About f_equal2.
-About f_equal3.
-Fail Check f_equal6.
-
-About eq_trans.
-About id.
-
-About map_ext_in.
 
 Lemma map_ext_in_equal2 [A B : Type] (f g : A -> B) (l1 l2 : list A):
   (forall a : A, In a l1 -> f a = g a) -> l1 = l2 ->
@@ -162,16 +125,9 @@ pred remove_one_unknown i:name, i:term, i:term, i:term, o:term.
 % in the current context.
 remove_one_unknown N _T C (fun N1 _T1 F) Res :-
   {coq.name->id N} = {coq.name->id N1},!,
-  Res = (F C),!,
-   coq.say "remove the unknown" Res.
-
-% remove_one_unknown N T C (fun N1 _T1 F) Res :-
-%   {coq.ltac.fresh-id {coq.name->id N} T} = {coq.name->id N1},!,
-%   Res = (F C),!,
-%    coq.say "remove the unknown 2" Res.
-
-remove_one_unknown N T C (fun N1 T1 F) (fun N1 T1 Res) :-
-  coq.say "not the unknown" N N1,
+  Res = (F C),!.
+ 
+ remove_one_unknown N T C (fun N1 T1 F) (fun N1 T1 Res) :-
   (@pi-decl N1 T1 x \
      remove_one_unknown N T C (F x) (Res x)),!.
 
@@ -187,43 +143,35 @@ instantiate _N _T _C (trm A) (trm A):- !.
 instantiate _N _T _C (open-trm _ _ as It) It :- !.
 
 instantiate_pair N T C (pr A1 A2) (pr B1 B2) :-
-  std.do! [ coq.say "before" N T C A1 B1,
+  std.do! [
   std.assert! (instantiate N T C A1 B1) "first instantiate failed",
-   coq.say "between" B1, instantiate N T C A2 B2,
-   coq.say "after" N T C (pr B1 B2)].
+  instantiate N T C A2 B2].
 
 pred mk-equality i:(pair argument argument), i:term i:A, o:term, o:term, o:A.
 
 mk-equality (pr (trm S) (trm T)) S A T P A :- !,
-  coq.typecheck P {{lp:S = lp:T}} ok,
-  coq.say "rewrite happens".
+  coq.typecheck P {{lp:S = lp:T}} ok.
 
 :name "mk-equality:start"
 mk-equality _RW X A Z Y A :- name X,!,
-% coq.say "first clause",
 X = Z, {{@refl_equal _ lp:X}} = Y, !.
-mk-equality _RW (global _ as C) A C {{@refl_equal _ lp:C}} A :- !
-% , coq.say "second clause" C
-.
-mk-equality _RW (pglobal _ _ as C) A C {{@refl_equal _ lp:C}} A :- !
-% , coq.say "third clause"
-.
-mk-equality _RW (sort _ as C) A C {{@refl_equal _ lp:C}} A :- !
-% , coq.say "fourth clause"
-.
+
+mk-equality _RW (global _ as C) A C {{@refl_equal _ lp:C}} A :- !.
+
+mk-equality _RW (pglobal _ _ as C) A C {{@refl_equal _ lp:C}} A :- !.
+
+mk-equality _RW (sort _ as C) A C {{@refl_equal _ lp:C}} A :- !.
 
 mk-equality RW (fun N T F) A (fun N1 T F) Res A :-
 fresh-name N T N1,
 @pi-decl N T x\
   (instantiate_pair N T x RW (RW1 x),
    mk-equality (RW1 x) (F x) A _ {{@refl_equal _ _}} _A2,!,
-   Res = {{@refl_equal _ _}},
-   coq.say "fifth clause").
+   Res = {{@refl_equal _ _}}).
 
 mk-equality RW (fun N T F) A (fun N1 T F1)
   {{functional_extensionality lp:{{(fun N T F)}} lp:{{(fun N T F1)}}
       lp:{{(fun N1 T Prf)}}}} A1 :- !,
-coq.say "sixth clause",
 fresh-name N T N1,
 @pi-decl N1 T x\
   (std.assert! (instantiate_pair N1 T x RW (RW1 x)) "instantiate_pair failed",!,
@@ -233,11 +181,9 @@ fresh-name N T N1,
 mk-equality RW (let N T B F as C) A (let N1 T B F) {{@refl_equal _ lp:C}} A :-
 mk-equality RW B A _ {{@refl_equal _ _}} A2,
 fresh-name N T N1,
-coq.say "old name - new name" N N1,
 (@pi-decl N1 T x\
   (std.assert! (instantiate_pair N1 T x RW (RW1 x)) "instantiate_pair failed",!,
-  mk-equality (RW1 x) (F x) A2 _ {{@refl_equal _ _}} _A3)),!,
-  coq.say "seventh clause".
+  mk-equality (RW1 x) (F x) A2 _ {{@refl_equal _ _}} _A3)),!.
 
 mk-equality RW (let N T B F) A (let N1 T B1 F1)
   {{let_congr lp:B lp:B1 lp:{{fun N1 T F}} lp:{{fun N1 T F1}}
@@ -246,29 +192,23 @@ fresh-name N T N1,
 mk-equality RW B A B1 PB A2,
 @pi-decl N1 T x\
   (instantiate_pair N1 T x RW (RW1 x),!,
-  coq.say "eigth clause",
    mk-equality (RW1 x) (F x) A2 (F1 x) PF A3).
 
 mk-equality RW (prod N T F) A (prod N1 T F1) (fun N1 T P1) A2 :- !,
 fresh-name N T N1,
 (@pi-decl N1 T x\
   (instantiate_pair N1 T x RW (RW1 x),!,
-   mk-equality  (RW1 x) (F x) A (F1 x) (P1 x) A2)),!
-   , coq.say "ninth clause"
-.
+   mk-equality  (RW1 x) (F x) A (F1 x) (P1 x) A2)),!.
 
 mk-equality RW (app L as C) A C {{@refl_equal _ lp:C}} A :-
 fold-map2 L A (mk-equality RW) _ L1 _A1,
-std.forall L1 (c \ (sigma A B \ c = {{@refl_equal lp:A lp:B}})),!
-, coq.say "tenth clause"
-.
+std.forall L1 (c \ (sigma A B \ c = {{@refl_equal lp:A lp:B}})),!.
 
 mk-equality RW {{@map lp:T1 lp:T2 lp:{{fun N _ F}} lp:L}}
   A
   {{@map lp:T1 lp:T2 lp:{{fun N1 T1 F1}} lp:L1}}
   R A2 :- !,
   fresh-name N T1 N1,
-  % coq.say "eleventh clause",
   @pi-decl N1 T1 x\
   (instantiate_pair N1 T1 x RW (RW1 x),!,
     @pi-decl `H` (Ext_Hyp x) h\
@@ -279,22 +219,16 @@ mk-equality RW {{@map lp:T1 lp:T2 lp:{{fun N _ F}} lp:L}}
               (fun `H` (Ext_Hyp x) h\ Pf x h)}} lp:Pl }}.
 
 mk-equality RW (app L) A (app L1) Prf A1 :-
-  L = [Hd | _], coq.term->string Hd S,
-  coq.say "entering twelfth" Hd S,
   fold-map2 L A (mk-equality RW) L1 P1 A1,
   mk-app-prf L L1 P1 Prf.
 
 pred non-dependent-type  i:term.
-
-non-dependent-type F :- coq.say "entered non-dependent-type" F, fail.
 
 non-dependent-type F :-
   coq.typecheck F Ty ok,
   ndpt Ty.
 
 pred ndpt i:term.
-
-ndpt A :- coq.say "entered ndpt" A, fail.
 
 ndpt (prod _N _T F) :-
   pi c1 c2\ F c1  = F c2,!,
@@ -323,19 +257,12 @@ mk-equality _RW (uvar _M _L as C) A C {{@refl_equal _ lp:C}} A :- !.
 mk-equality _RW (uvar _X _L as C) A C {{@refl_equal _ lp:C}} A :- !.
 
 solve (goal _ _ {{lp:X = lp:Y }} _ [Arg1, Arg2] as G) GL1 :-
-  coq.say "calling equality with " (pr Arg1 Arg2) Y,
   mk-equality (pr Arg1 Arg2) Y [] Y2 P _,
-  coq.say "mk-equality succeeded" P,!,
-  coq.term->string Y2 S,
-  coq.term->string P SP,
-  coq.say "prouf term" SP,
-  std.assert-ok! (coq.typecheck P {{lp:Y = lp:Y2}}) "proof incorrect",
-  coq.say "typecheck succeeded" S,!,
+  std.assert-ok! (coq.typecheck P {{lp:Y = lp:Y2}}) "proof incorrect",!,
   preserve_bound_variables X X1,
   refine {{@eq_trans _ lp:X1 lp:Y2 _ _ (eq_sym lp:P)}} G GL,
   if (GL = [Ng, Ng2])
-    (coq.say "two subgoals",
-     coq.ltac.open (coq.ltac.call "lazy_beta" []) Ng2 GL_aux,
+    (coq.ltac.open (coq.ltac.call "lazy_beta" []) Ng2 GL_aux,
      GL1 = [Ng | GL_aux])
     (GL1 = GL).
   % refine {{eq_sym (@eq_trans lp:Y lp:Y2 lp:X lp:P (eq_sym _))}} G GL.
@@ -350,6 +277,12 @@ solve (goal _ _ _ _ [] as _G) _GL :-
 }}.
 
 Elpi Typecheck.
+
+(* Tactic Notation (at level 0) "repl" uconstr(x) uconstr(y) :=
+  (* Ideally, ltac_term should be ltac_open_term (not implemented yet),
+  so that the tactic knows the argument is not completely defined in the
+  current context. *)
+  (elpi replace ltac_term:(x) ltac_term:(y)). *)
 
 Open Scope Z_scope. (* Otherwise ring fails. *)
 
