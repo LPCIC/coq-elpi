@@ -49,14 +49,36 @@ let pp_oloc = function
 
 (* If the error comes from another file (see Loc.mergeable) Coq drops the precise loc
    and reports it on the whole execution site. If so, we print the
-   more precise loc as part of the error message. *)
-let patch_loc_source execution_loc error_loc =
+   more precise loc as part of the error message. 
+   
+   We also copy here Loc.merge since it may anyway discard the better loc,
+   in that case we feedback it
+   *)
+let coq_would_drop_loc2 loc1 loc2 =
+let open Loc in
+if loc1.bp < loc2.bp then
+  if loc1.ep < loc2.ep then false
+  else true
+else if loc2.ep < loc1.ep then false
+else false
+
+[%%if coq = "8.20"]
+let feedback_error loc m = Feedback.(feedback (Message(Error,loc,m)))
+[%%else]
+let feedback_error loc m = Feedback.(feedback (Message(Error,loc,[],m)))
+[%%endif]
+
+let patch_loc_source execution_loc error_loc msg =
   match execution_loc, error_loc with
-  | _, None -> Pp.mt (), execution_loc
-  | { Loc.fname },Some ({ Loc.fname = elpiname } as elpiloc) when fname <> elpiname ->
+  | _, None -> msg, execution_loc
+  | _, Some elpiloc when Loc.finer (Some execution_loc) (Some elpiloc) -> msg, elpiloc
+  | { Loc.fname },Some ({ Loc.fname = elpiname } as elpiloc) when fname = elpiname ->
+      (* same file, far location, we complementwith a feedback *)
+      feedback_error (Some elpiloc) msg;
+      Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc    
+  | _, Some elpiloc ->
       (* external file *)
-      Pp.(Loc.pr elpiloc ++ spc ()), execution_loc
-  | _, Some elpiloc -> Pp.mt (), elpiloc
+      Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc
 
 let handle_elpi_compiler_errors ~loc f =
   try f ()
@@ -65,18 +87,18 @@ let handle_elpi_compiler_errors ~loc f =
     CErrors.user_err ~loc (Pp.str msg)
   | Elpi.API.Compile.CompileError(oloc, msg) as e ->
     let _,info = Exninfo.capture e in
-    let extra_msg, loc = patch_loc_source loc (Option.map to_coq_loc oloc) in
-    CErrors.user_err ~info ~loc Pp.(hv 0 (extra_msg ++ str msg))
+    let msg, loc = patch_loc_source loc (Option.map to_coq_loc oloc) (Pp.str msg) in
+    CErrors.user_err ~info ~loc msg
   | Elpi.API.Parse.ParseError(oloc, msg) as e ->
     let _,info = Exninfo.capture e in
-    let extra_msg, loc = patch_loc_source loc (Some (to_coq_loc oloc)) in
-    CErrors.user_err ~info ~loc Pp.(hv 0 (extra_msg ++ str msg))
+    let msg, loc = patch_loc_source loc (Some (to_coq_loc oloc)) (Pp.str msg) in
+    CErrors.user_err ~info ~loc msg
   | Gramlib.Grammar.Error _ as e ->
     let _,info = Exninfo.capture e in
     let cloc = Loc.get_loc info in
     let msg = CErrors.print_no_report e in
-    let extra_msg, loc = patch_loc_source loc cloc in
-    CErrors.user_err ~info ~loc Pp.(hv 0 (extra_msg ++ msg))
+    let msg, loc = patch_loc_source loc cloc msg in
+    CErrors.user_err ~info ~loc msg
 
 
 exception LtacFail of int * Pp.t

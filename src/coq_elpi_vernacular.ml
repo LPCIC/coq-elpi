@@ -233,24 +233,31 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
 
   let accumulate_extra_deps ~loc ?(program=current_program()) ids =
     let elpi = P.ensure_initialized () in
-    let s = ids |> List.map (fun id ->
-      try ComExtraDeps.query_extra_dep id
+    let () = ids |> List.iter (fun id ->
+      let base = get_base ~loc ~elpi program in
+      let base, add =
+        match base with
+        | `Db base -> base, (fun _ fast -> P.accumulate_to_db program [fast] [] ~scope:Coq_elpi_utils.Regular)
+        | `Program base -> base, (fun fname fast -> P.accumulate program [File { fname; fast}]) in
+      try
+        let s = ComExtraDeps.query_extra_dep (Names.Id.of_string_soft (String.concat "." id)) in
+        add s (P.unit_from_file ~elpi ~loc ~base s)
       with
-      | Not_found when P.stage = Summary.Stage.Interp -> CErrors.anomaly Pp.(str"wtf")
+      | Failure s ->  CErrors.user_err Pp.(str s)
       | Not_found ->
-        err Pp.(str"File " ++ Names.Id.print id ++
-          str" is unknown; please add a directive like 'From .. Extra Dependency .. as " ++
-          Names.Id.print id ++ str"'.")) in
-    try
-      match get_base ~loc ~elpi program with
-      | `Db base ->
-        let new_src_ast = List.map (fun fname -> P.unit_from_file ~elpi ~loc ~base fname) s in
-        P.accumulate_to_db program new_src_ast [] ~scope:Coq_elpi_utils.Regular
-      | `Program base ->
-        let new_src_ast = List.map (fun fname -> P.unit_from_file ~loc ~elpi ~base fname) s in
-        let new_src_ast = List.map2 (fun fname funit -> File { fname; fast = funit; }) s new_src_ast in
-        P.accumulate program new_src_ast
-    with Failure s ->  CErrors.user_err Pp.(str s)
+        try
+          let hash, ast = P.ast_of_file id in
+          add (String.concat "." id) (P.unit_from_ast ~elpi ~base ~loc (Some hash) ast)
+        with
+        | Failure s ->  CErrors.user_err Pp.(str s)
+        | Not_found when P.stage = Summary.Stage.Interp -> CErrors.anomaly Pp.(str"wtf")
+        | Not_found ->
+            err Pp.(str"File " ++ pr_qualified_name id ++
+              str" is unknown; please add a directive like 'From .. Extra Dependency .. as " ++
+              pr_qualified_name id ++ str"' or 'Elpi File .. lp:{{ ... }}'."))
+    in
+    ()
+    
   let accumulate_extra_deps ~atts:(only,ph) ~loc ?program ids = skip ~only ~ph (accumulate_extra_deps ~loc ?program) ids
     
   let accumulate_files ~loc ?(program=current_program()) s =
@@ -376,6 +383,17 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
       P.init_db n unit  
     end
 
+  let create_file ~atts ~loc n ~init:(sloc,s) =
+    let do_init =
+      match atts with
+      | None -> same_phase Interp P.stage
+      | Some phase -> same_phase phase P.stage in
+    let elpi = P.ensure_initialized () in
+    if do_init then begin
+      P.declare_file n;
+      P.init_file n P.(ast_from_string ~elpi ~loc sloc s)
+    end
+
   let load_command = P.load_command
   let load_tactic = P.load_tactic
   
@@ -392,7 +410,7 @@ module type Common = sig
     Elpi.API.Execute.outcome  
 
   val accumulate_files       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
-  val accumulate_extra_deps  : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> Names.Id.t list -> unit
+  val accumulate_extra_deps  : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name list -> unit
   val accumulate_string      : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
   val accumulate_db          : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
   val accumulate_db_header   : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
@@ -410,6 +428,7 @@ module type Common = sig
   val create_command : atts:bool option -> loc:Loc.t -> program_name -> unit
   val create_tactic : loc:Loc.t -> program_name -> unit
   val create_db : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+  val create_file : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
 
 end
 
