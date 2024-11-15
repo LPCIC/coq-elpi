@@ -158,117 +158,119 @@ VERNAC COMMAND EXTEND ElpiNamed
      EV.Interp.create_file ~atts ~loc:gloc d ~init:s }
 END
 
-VERNAC COMMAND EXTEND ElpiUnnamed CLASSIFIED AS SIDEFF
+VERNAC COMMAND EXTEND ElpiAccumulate CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "File" ne_qualified_name_list(ids) ] SYNTERP AS atts {
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc (List.map snd ids);
      atts
    } -> {
      EV.Interp.accumulate_extra_deps ~atts ~loc:gloc (List.map snd ids) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Files" ne_qualified_name_list(ids) ] SYNTERP AS atts {
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc (List.map snd ids);
      atts
    } -> {
      EV.Interp.accumulate_extra_deps ~atts ~loc:gloc (List.map snd ids) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "File" ne_qualified_name_list(ids) ] SYNTERP AS atts {
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) (List.map snd ids);
      atts
    } -> {
      EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) (List.map snd ids) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "Files" ne_qualified_name_list(ids) ] SYNTERP AS atts {
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) (List.map snd ids);
      atts
    } -> {
      EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) (List.map snd ids) }
 
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "File" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_files ~atts ~loc:gloc s;
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc s }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "File" string_list(s) "From" global(g) ] SYNTERP AS atts { warning_legacy_accumulate2 ();
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_files ~atts ~loc:gloc (inlogpath g s);
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc (inlogpath g s) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Files" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_files ~atts ~loc:gloc s;
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc s }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Files" string_list(s) "From" global(g) ] SYNTERP AS atts { warning_legacy_accumulate2 ();
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_files ~atts ~loc:gloc (inlogpath g s);
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc (inlogpath g s) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) elpi_string(s) ] SYNTERP AS atts {
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_string ~atts ~loc:gloc s;
      atts
    } -> {
      EV.Interp.accumulate_string ~atts ~loc:gloc s }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "File" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_files ~atts ~loc:gloc ~program:(snd p) s;
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc ~program:(snd p) s }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "File" string_list(s) "From" global(g) ] SYNTERP AS atts { warning_legacy_accumulate2 ();
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_files ~atts ~loc:gloc ~program:(snd p) (inlogpath g s);
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc ~program:(snd p) (inlogpath g s) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "Files" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_files ~atts ~loc:gloc ~program:(snd p) s;
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc ~program:(snd p) s }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "Files" string_list(s) "From" global(g) ] SYNTERP AS atts { warning_legacy_accumulate2 ();
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_files ~atts ~loc:gloc ~program:(snd p) (inlogpath g s);
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc ~program:(snd p) (inlogpath g s) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) elpi_string(s) ] SYNTERP AS atts {
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_string ~atts ~loc:gloc ~program:(snd p) s;
      atts
    } -> {
      EV.Interp.accumulate_string ~atts ~loc:gloc ~program:(snd p) s }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Db" qualified_name(d) ] SYNTERP AS atts {
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_db ~atts ~loc:gloc (snd d);
      atts
    } -> {
      EV.Interp.accumulate_db ~atts ~loc:gloc (snd d) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "Db" qualified_name(d) ] SYNTERP AS atts { 
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_db ~atts ~loc:gloc ~program:(snd p) (snd d);
      atts
    } -> {
      EV.Interp.accumulate_db ~atts ~loc:gloc ~program:(snd p) (snd d) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Db" "Header" qualified_name(d) ] SYNTERP AS atts {
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_db_header ~atts ~loc:gloc (snd d);
      atts
    } -> {
      EV.Interp.accumulate_db_header ~atts ~loc:gloc (snd d) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "Db" "Header" qualified_name(d) ] SYNTERP AS atts { 
-     let atts = validate_attributes skip_and_synterp_attributes atts in
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_db_header ~atts ~loc:gloc ~program:(snd p) (snd d);
      atts
    } -> {
      EV.Interp.accumulate_db_header ~atts ~loc:gloc ~program:(snd p) (snd d) }
+END
 
+VERNAC COMMAND EXTEND ElpiUnnamed CLASSIFIED AS SIDEFF
 | #[ atts = any_attribute ] [ "Elpi" "Debug" string_list(s) ] SYNTERP AS atts {
      let atts = validate_attributes synterp_attribute atts in
      EV.Synterp.debug  ~atts s;

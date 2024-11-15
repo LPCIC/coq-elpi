@@ -101,3 +101,5 @@ Elpi Db tc.db lp:{{
     pred ho-link o:term, i:term, o:A.
   }
 }}.
+From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
+#[superglobal] Elpi Accumulate tc.db File base.

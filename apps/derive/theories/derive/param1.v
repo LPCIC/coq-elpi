@@ -52,12 +52,13 @@ Register is_float64 as elpi.derive.is_float64.
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
 Elpi Db derive.param1.db lp:{{
-type stop string -> prop.
-
-pred reali-done i:gref.
-
 :index(3)
 pred reali i:term, o:term.
+type realiR term -> term -> prop.
+pred reali-done i:gref.
+}}.
+#[superglobal] Elpi Accumulate derive.param1.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.param1.db lp:{{
 
 reali {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
 reali {{ lib:num.float.type }} {{ lib:elpi.derive.is_float64 }} :- !.
@@ -67,8 +68,6 @@ reali X _ :-
   M is "derive.param1: No unary parametricity translation for " ^
           {coq.term->string X},
   stop M.
-
-type realiR term -> term -> prop.
 
 realiR {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
 realiR {{ lib:num.float.type }} {{ lib:elpi.derive.is_float64 }} :- !.

@@ -84,6 +84,11 @@ type query =
   | Ast of (API.Data.state -> API.Data.state) * API.Ast.query
   | Fun of (API.Data.state -> API.Data.state * API.RawData.term * Elpi.API.Conversion.extra_goals)
 
+type atts = ((clause_scope * (Str.regexp list option * Str.regexp list option)) * phase option)
+let warn_scope_not_regular = CWarnings.create ~name:"elpi.accumulate-scope" ~category:elpi_cat (fun x -> x)
+let warn_scope_not_regular ~loc = function
+  | Regular -> ()
+  | _ -> warn_scope_not_regular ~loc Pp.(str "Scope attribute not supported, this accumulation has a superglobal scope")
 
 module Compiler(P : Programs) = struct
 
@@ -231,14 +236,16 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     let query_ast = Ast (st_setup base, P.parse_goal ~loc ~elpi qloc query) in
     run_and_print ~print:true ~loc program base query_ast)
 
-  let accumulate_extra_deps ~loc ?(program=current_program()) ids =
+  let accumulate_extra_deps ~loc ?(program=current_program()) ~scope ids =
     let elpi = P.ensure_initialized () in
     let () = ids |> List.iter (fun id ->
       let base = get_base ~loc ~elpi program in
       let base, add =
         match base with
-        | `Db base -> base, (fun _ fast -> P.accumulate_to_db program [fast] [] ~scope:Coq_elpi_utils.Regular)
-        | `Program base -> base, (fun fname fast -> P.accumulate program [File { fname; fast}]) in
+        | `Db base -> base, (fun _ fast -> P.accumulate_to_db program [fast] [] ~scope)
+        | `Program base -> base, (fun fname fast ->
+           warn_scope_not_regular ~loc scope;
+           P.accumulate program [File { fname; fast}]) in
       try
         let s = ComExtraDeps.query_extra_dep (Names.Id.of_string_soft (String.concat "." id)) in
         add s (P.unit_from_file ~elpi ~loc ~base s)
@@ -258,16 +265,17 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     in
     ()
     
-  let accumulate_extra_deps ~atts:(only,ph) ~loc ?program ids = skip ~only ~ph (accumulate_extra_deps ~loc ?program) ids
-    
-  let accumulate_files ~loc ?(program=current_program()) s =
+  let accumulate_extra_deps ~atts:((scope,only),ph) ~loc ?program ids = skip ~only ~ph (accumulate_extra_deps ~loc ?program ~scope) ids
+
+  let accumulate_files ~loc ?(program=current_program()) ~scope s =
     let elpi = P.ensure_initialized () in
     try
       match get_base ~loc ~elpi program with
       | `Db base ->
         let new_src_ast = List.map (fun fname -> P.unit_from_file ~loc ~elpi ~base fname) s in
-        P.accumulate_to_db program new_src_ast [] ~scope:Coq_elpi_utils.Regular
+        P.accumulate_to_db program new_src_ast [] ~scope
       | `Program base ->
+        warn_scope_not_regular ~loc scope;
         let new_src_ast = List.map (fun fname -> P.unit_from_file ~loc ~elpi ~base fname) s in
         let new_src_ast = List.map2 (fun fname funit ->
           File {
@@ -276,40 +284,50 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
           }) s new_src_ast in
         P.accumulate program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
-  let accumulate_files ~atts:(only,ph) ~loc ?program s = skip ~only ~ph (accumulate_files ~loc ?program) s
+  let accumulate_files ~atts:((scope,only),ph) ~loc ?program s = skip ~only ~ph (accumulate_files ~loc ?program ~scope) s
   
-  let accumulate_string ~loc ?(program=current_program()) (sloc,s) =
+  let accumulate_string ~loc ?(program=current_program()) ~scope (sloc,s) =
     let elpi = P.ensure_initialized () in
     match get_base ~elpi ~loc program with
     | `Db base ->
       let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
-      P.accumulate_to_db program [new_ast] [] ~scope:Coq_elpi_utils.Regular
+      P.accumulate_to_db program [new_ast] [] ~scope
     | `Program base ->
+      warn_scope_not_regular ~loc scope;
       let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
       P.accumulate program [EmbeddedString { sast = new_ast}]
-  let accumulate_string ~atts:(only,ph) ~loc ?program sloc = skip ~only ~ph (accumulate_string ~loc ?program) sloc
+  let accumulate_string ~atts:((scope,only),ph) ~loc ?program sloc = skip ~only ~ph (accumulate_string ~loc ?program ~scope) sloc
   
   
   let accumulate_db ~loc ?(program=current_program()) name =
     let _ = P.ensure_initialized () in
     if P.db_exists name then P.accumulate program [DatabaseHeader { dast = P.(header_of_db name) };DatabaseBody name]
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
-  let accumulate_db ~atts:(only,ph) ~loc ?program name = skip ~only ~ph (accumulate_db ~loc ?program) name
+  let accumulate_db ~atts:((scope,only),ph) ~loc ?program name =
+    warn_scope_not_regular ~loc scope;
+    skip ~only ~ph (accumulate_db ~loc ?program) name
   
-  let accumulate_db_header ~loc ?(program=current_program()) name =
+  let accumulate_db_header ~loc ?(program=current_program()) ~scope name =
     let _ = P.ensure_initialized () in
-    if P.db_exists name then P.accumulate program [DatabaseHeader { dast = P.(header_of_db name) }]
+    if P.db_exists name then
+      let unit = P.header_of_db name in
+      if P.db_exists program then
+        P.accumulate_to_db program [unit] [] ~scope
+      else
+        let () = warn_scope_not_regular ~loc scope in
+        P.accumulate program [DatabaseHeader { dast = unit }]
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
-  let accumulate_db_header ~atts:(only,ph) ~loc ?program name = skip ~only ~ph (accumulate_db_header ~loc ?program) name
+  let accumulate_db_header ~atts:((scope,only),ph) ~loc ?program name =
+    skip ~only ~ph (accumulate_db_header ~loc ?program ~scope) name
   
-  let accumulate_to_db ~loc db (sloc,s) idl ~scope =
+  let accumulate_to_db ~loc db (sloc,s) ~scope idl =
     let elpi = P.ensure_initialized () in
     match get_base ~elpi ~loc db with
     | `Db base ->
        let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
        P.accumulate_to_db db [new_ast] idl ~scope
     | _ -> CErrors.user_err Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 
-  let accumulate_to_db ~atts:(only,ph) ~loc db sloc idl ~scope = skip ~only ~ph (accumulate_to_db ~loc db sloc ~scope) idl
+  let accumulate_to_db ~atts:((scope,only),ph) ~loc db sloc idl = skip ~only ~ph (accumulate_to_db ~loc db sloc ~scope) idl
   
 
   let mk_trace_opts start stop preds =
@@ -335,7 +353,12 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let trace_browser ~atts opts = skip ~ph:atts trace_browser opts
       
   let print ~loc ~name ~args output =
-    P.get_and_compile ~loc name |> Option.iter @@ fun (program, _) ->
+    let program =
+      if P.db_exists name then
+        Some (P.get_and_compile_existing_db ~loc name)
+      else
+        Option.map fst @@ P.get_and_compile ~loc name in
+    program |> Option.iter @@ fun program ->
     let fname =
       Coq_elpi_programs.resolve_file_path
         ~must_exist:false ~allow_absolute:false ~only_elpi:false output
@@ -409,12 +432,12 @@ module type Common = sig
      query ->
     Elpi.API.Execute.outcome  
 
-  val accumulate_files       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
-  val accumulate_extra_deps  : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name list -> unit
-  val accumulate_string      : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
-  val accumulate_db          : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
-  val accumulate_db_header   : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
-  val accumulate_to_db       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
+  val accumulate_files       : atts:atts -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
+  val accumulate_extra_deps  : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name list -> unit
+  val accumulate_string      : atts:atts -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
+  val accumulate_db          : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
+  val accumulate_db_header   : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
+  val accumulate_to_db       : atts:atts -> loc:Loc.t -> qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> unit
   val load_tactic : loc:Loc.t -> string -> unit
   val load_command : loc:Loc.t -> string -> unit
 

@@ -195,9 +195,6 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   The code can be verbatim, from a file or a Db.
   File names `<fname>` must have been previously declared with
   `Extra Dependency` or `Elpi File`.
-  It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
-  a no op if the Coq version is matched (or not) by the given regular expression.
-  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
   Accumulating `Db Header <dbname>`, instead of `Db <dbname>`, accumulates
   only the first chunk of code associated with Db, typically the type
   declaration of the predicates that live in the Db. When defining a command
@@ -208,6 +205,13 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   recompiled, e.g. if the Db was updated. In this case all the code accumulated
   after the Db (but not after its header) may need to be recompiled. Hence
   we recommend to accumulate Dbs last.
+  It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
+  a no op if the Coq version is matched (or not) by the given regular expression.
+  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
+  It understands the `#[local]`, `#[global]`, and `#[superglobal]` scope attributes,
+  although only when accumulating to a `<dbname>` (all accumulations to a program
+  are `#[superglobal]`). Default accumulation to db is the equivalent of `#[export]`.
+  See the Coq reference manual for the meaning of these scopes.
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)

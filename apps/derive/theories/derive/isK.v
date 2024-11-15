@@ -12,8 +12,10 @@ From elpi.apps Require Import derive.
 
 (* Links the @gref of the constructor K to the isK constant *)
 Elpi Db derive.isK.db lp:{{
-type stop string -> prop.
   type isK-db constructor -> term -> prop.
+}}.
+#[superglobal] Elpi Accumulate derive.isK.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.isK.db lp:{{
 
   :name "isK-db:fail"
   isK-db K _ :-

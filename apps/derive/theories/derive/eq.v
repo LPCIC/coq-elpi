@@ -16,13 +16,20 @@ Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
 
 Elpi Db derive.eq.db lp:{{
-  type stop string -> prop.
-  type whd1 term -> term -> prop.
 
 % full resolution (composes with eq functions for parameters)
 type eq-db term -> term -> term -> prop.
 eq-db {{ lib:num.int63.type }} {{ lib:num.int63.type }} {{ lib:elpi.derive.eq_unit63 }} :- !.
 eq-db {{ lib:num.float.type }} {{ lib:num.float.type }} {{ lib:elpi.derive.eq_float64 }} :- !.
+
+% quick access
+type eq-for inductive -> constant -> prop.
+
+}}.
+#[superglobal] Elpi Accumulate derive.eq.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.eq.db lp:{{
+
+type whd1 term -> term -> prop.
 
 :name "eq-db:fail"
 eq-db A B F :-
@@ -33,9 +40,6 @@ eq-db A B _ :-
   M is "derive.eq: can't find the comparison function for terms of type " ^
           {coq.term->string A} ^ " and " ^ {coq.term->string B} ^ " respectively",
   stop M.
-
-% quick access
-type eq-for inductive -> constant -> prop.
 
 }}.
 

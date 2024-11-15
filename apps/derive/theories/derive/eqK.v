@@ -35,8 +35,11 @@ Register bool_discr as elpi.bool_discr.
 
 Elpi Db derive.eqK.db lp:{{
 
-type stop string -> prop.
 type eqK-db constructor -> term -> prop.
+
+}}.
+#[superglobal] Elpi Accumulate derive.eqK.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.eqK.db lp:{{
 
 :name "eqK-db:fail"
 eqK-db K _ :-

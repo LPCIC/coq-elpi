@@ -3,7 +3,6 @@
 
 Declare ML Module "coq-elpi.tc".
 
-From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
 (* From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler. *)
 From elpi.apps.tc.elpi Extra Dependency "ho_precompile.elpi" as ho_precompile.
@@ -48,7 +47,6 @@ Elpi Accumulate lp:{{
 Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
@@ -80,7 +78,6 @@ Elpi Query lp:{{
 Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File ho_precompile.
@@ -137,7 +134,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Set_deterministic.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
@@ -152,7 +148,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Get_class_info.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
@@ -173,7 +168,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Unfold.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate Db tc.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   pred tc.add-unfold i:gref.
