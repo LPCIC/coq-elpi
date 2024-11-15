@@ -14,9 +14,10 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 Elpi Db derive.eqbOK.db lp:{{
 
   pred eqbok-for o:gref, o:constant.
-  type stop string -> prop.
 
 }}.
+#[superglobal] Elpi Accumulate derive.eqbOK.db File derive.lib.
+
 
 (* standalone *)
 Elpi Command derive.eqbOK.

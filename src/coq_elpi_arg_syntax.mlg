@@ -112,6 +112,25 @@ let any_attribute : Attributes.vernac_flags Attributes.attribute =
 let ignore_unknown_attributes extra =
   CWarnings.with_warn "unsupported-attributes" Attributes.unsupported_attributes extra
 
+let scope_attribute : Coq_elpi_utils.clause_scope Attributes.attribute =
+  let open Attributes.Notations in
+  let open Coq_elpi_utils in
+  Attributes.attribute_of_list
+    ["local",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Local
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[local]"));
+     "global",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Global
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[global]"));
+     "superglobal",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> SuperGlobal
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[superglobal]"));
+    ] |> map (Option.default Regular)
+
+
 let skip_attribute : (Str.regexp list option * Str.regexp list option) Attributes.attribute =
   let open Attributes.Notations in
   let o2l = function None -> [] | Some l -> l in
@@ -156,6 +175,7 @@ let synterp_attribute : EA.phase option Attributes.attribute =
     ]
 
 let skip_and_synterp_attributes = Attributes.Notations.(skip_attribute ++ synterp_attribute)
+let scope_and_skip_and_synterp_attributes = Attributes.Notations.(scope_attribute ++ skip_attribute ++ synterp_attribute)
 
 let raw_args_attributes =
   Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw"))

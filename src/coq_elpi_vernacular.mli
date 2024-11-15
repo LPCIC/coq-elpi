@@ -14,6 +14,8 @@ type query =
   | Ast of (Elpi.API.Data.state -> Elpi.API.Data.state) * Elpi.API.Ast.query
   | Fun of (Elpi.API.Data.state -> Elpi.API.Data.state * Elpi.API.RawData.term * Elpi.API.Conversion.extra_goals)
 
+type atts = ((clause_scope * (Str.regexp list option * Str.regexp list option)) * phase option)
+
 module type Common = sig
 
   val get_and_compile :
@@ -22,12 +24,12 @@ module type Common = sig
     Elpi.API.Compile.program -> query ->
     Elpi.API.Execute.outcome
 
-  val accumulate_files       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
-  val accumulate_extra_deps  : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name list -> unit
-  val accumulate_string      : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
-  val accumulate_db          : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
-  val accumulate_db_header   : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
-  val accumulate_to_db       : atts:((Str.regexp list option * Str.regexp list option) * phase option) -> loc:Loc.t -> qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
+  val accumulate_files       : atts:atts -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
+  val accumulate_extra_deps  : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name list -> unit
+  val accumulate_string      : atts:atts -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
+  val accumulate_db          : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
+  val accumulate_db_header   : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
+  val accumulate_to_db       : atts:atts -> loc:Loc.t -> qualified_name -> Elpi.API.Ast.Loc.t * string -> Names.Id.t list -> unit
 
   (* Setup *)
   val load_tactic  : loc:Loc.t -> string -> unit

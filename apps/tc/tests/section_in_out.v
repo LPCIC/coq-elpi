@@ -1,5 +1,4 @@
 From elpi.apps Require Import tc.
-From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 
 Elpi Accumulate tc.db lp:{{
   pred origial_tc o:int. 
@@ -7,7 +6,6 @@ Elpi Accumulate tc.db lp:{{
 
 Elpi Command len_test.
 Elpi Accumulate Db tc.db.
-Elpi Accumulate File base.
 Elpi Accumulate lp:{{
   % contains the number of instances that are not 
   % imported from other files

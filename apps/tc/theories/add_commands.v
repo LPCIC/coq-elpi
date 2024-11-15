@@ -3,7 +3,6 @@
 
 From elpi.apps.tc Require Import db.
 
-From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc.elpi Extra Dependency "ho_precompile.elpi" as ho_precompile.
 From elpi.apps.tc.elpi Extra Dependency "ho_compile.elpi" as ho_compile.
@@ -21,8 +20,6 @@ Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
 
 Elpi Accumulate Db tc_options.db.
-
-Elpi Accumulate File base.
 
 Elpi Accumulate File tc_aux.
 
@@ -48,7 +45,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File ho_precompile.
 Elpi Accumulate File ho_compile.
@@ -66,7 +62,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddAllClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
@@ -81,7 +76,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
@@ -101,7 +95,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddHook.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   pred tc.addHook i:grafting, i:string. 
@@ -132,7 +125,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Declare.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
@@ -148,7 +140,6 @@ with implicit arguments (those implicits will be neglected)", fail.
 Elpi Command TC.Pending_mode.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
