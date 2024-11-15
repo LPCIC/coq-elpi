@@ -182,14 +182,22 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
 - `Elpi Program <qname> <code>` lower level primitive letting one crate a
   command/tactic with a custom preamble `<code>`.
-- `From some.load.path Extra Dependency <filename> as <fname>`.
+- `From some.load.path Extra Dependency <filename> as <fname>` declares `<fname>`
+   as a piece of code that can be accumulated via `Elpi Accumulate File`.
+   The content is given in the external file `<filename>` to be found in
+   the Coq load path `some.load.path`.
+- `Elpi File <fname> <code>.` declares `<fname>`
+   as a piece of code that can be accumulated via `Elpi Accumulate File`.
+   This time the code is given in the .v file.
+   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
 - `Elpi Accumulate [<dbname>|<qname>] [<code>|File <fname>|Db [Header] <dbname>]`
   adds code to the current program (or `<dbname>` or `<qname>` if specified).
   The code can be verbatim, from a file or a Db.
-  File names `<fname>` must have been previously declared with the above command.
+  File names `<fname>` must have been previously declared with
+  `Extra Dependency` or `Elpi File`.
   It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
   a no op if the Coq version is matched (or not) by the given regular expression.
-  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
+  It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
   Accumulating `Db Header <dbname>`, instead of `Db <dbname>`, accumulates
   only the first chunk of code associated with Db, typically the type
   declaration of the predicates that live in the Db. When defining a command
@@ -214,10 +222,9 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   tracing for Elpi's [trace browser]().
 - `Elpi Bound Steps <number>` limits the number of steps an Elpi program can
   make.
-- `Elpi Print <qname> [<string> <filter>*]` prints the program `<qname>` to an
-  HTML file named `<qname>.html` and a text file called `<qname>.txt`
-  (or `<string>` if provided) filtering out clauses whose file or clause-name
-  matches `<filter>`.
+- `Elpi Print <qname> [<string> <filter>*]` prints the program `<qname>` to 
+  a text file called `<qname>.txt` (or `<string>` if provided) filtering out
+  clauses whose file or clause-name matches `<filter>`.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
 
 where:
@@ -230,6 +237,8 @@ where:
   `lp:{{ coq.say "hello!" }}` becomes `" coq.say ""hello!"" "`).
 - `<filename>` is a string containing the path of an external file, e.g.
   `"this_file.elpi"`.
+- `<fname>` is a qualified Coq name, eg `foo.elpi` (note that `Extra Dependency`
+  only allows simple identifiers).
 - `<start>` and `<stop>` are numbers, e.g. `17 24`.
 - `<predicate-filter>` is a regexp against which the predicate name is matched,
   e.g. `"derive.*"`.
