@@ -26,11 +26,11 @@ namespace tc {
     coq.env.current-section-path SectionPath,
     tc.compile.instance-gr Inst Clause, 
     tc.get-full-path Inst ClauseName,
-    Locality => (
+    (Locality => (
       tc.add-tc-db ClauseName Grafting Clause, 
-      tc.add-tc-db _ Grafting (tc.instance SectionPath Inst TC Locality)).
+      tc.add-tc-db _ Grafting (tc.instance SectionPath Inst TC Locality))).
   add-inst.aux Inst _ _ _ :- 
-    @global! => tc.add-tc-db _ _ (tc.banned Inst),
+    (@global! => tc.add-tc-db _ _ (tc.banned Inst)),
     coq.error "Not-added" "TC_solver" "[TC] Not yet able to compile" Inst "...".
 
   pred add-inst i:gref, i:gref, i:string, i:int.

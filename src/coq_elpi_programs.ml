@@ -143,6 +143,7 @@ type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : 
 
 type program = {
   sources_rev : qualified_name Code.t;
+  files : CString.Set.t;
   units : Names.KNset.t;
   dbs : SLSet.t;
   empty : bool; (* it is empty, if it only contains default code *)
@@ -414,32 +415,32 @@ let get ?(fail_if_not_exists=false) p =
   let _elpi = ensure_initialized () in
   let nature = get_nature p in
   try
-  let { sources_rev; units; dbs; empty } = SLMap.find p !program_src in
-  units, dbs, Some nature, Some sources_rev, empty
+  let { sources_rev; files; units; dbs; empty } = SLMap.find p !program_src in
+  files, units, dbs, Some nature, Some sources_rev, empty
   with Not_found ->
   if fail_if_not_exists then
     CErrors.user_err
       Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
   else
-    Names.KNset.empty, SLSet.empty, None, None, true
+    CString.Set.empty, Names.KNset.empty, SLSet.empty, None, None, true
 
   let append_to_prog from name src =
-    let units, dbs, _, prog, empty = get name in
-    let units, dbs, prog =
+    let files, units, dbs, _, prog, empty = get name in
+    let files, units, dbs, prog =
       match src with
       (* undup *)
-      | File { fast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
-      | EmbeddedString { sast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
-      | DatabaseHeader { dast = (kn,_) } when Names.KNset.mem kn units -> units, dbs, prog
-      | DatabaseBody n  when SLSet.mem n dbs -> units, dbs, prog
+      | File { fname; fast = (kn,_) } when CString.Set.mem fname files || Names.KNset.mem kn units -> files, units, dbs, prog
+      | EmbeddedString { sast = (kn,_) } when Names.KNset.mem kn units -> files, units, dbs, prog
+      | DatabaseHeader { dast = (kn,_) } when Names.KNset.mem kn units -> files, units, dbs, prog
+      | DatabaseBody n  when SLSet.mem n dbs -> files, units, dbs, prog
       (* add *)
-      | File { fast = (kn,_ as u) } -> (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
-      | EmbeddedString { sast = (kn,_ as u) } -> (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
-      | DatabaseHeader { dast = (kn,_ as u) } ->  (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
-      | DatabaseBody n ->  units, SLSet.add n dbs, Some (Code.snoc_db_opt Hashtbl.hash n prog)
+      | File { fname; fast = (kn,_ as u) } -> CString.Set.add fname files, (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
+      | EmbeddedString { sast = (kn,_ as u) } -> files, (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
+      | DatabaseHeader { dast = (kn,_ as u) } ->  files, (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
+      | DatabaseBody n ->  files, units, SLSet.add n dbs, Some (Code.snoc_db_opt Hashtbl.hash n prog)
       in
     let prog = Option.get prog in
-    { units; dbs; sources_rev = prog; empty = empty && from = Initialization }
+    { files; units; dbs; sources_rev = prog; empty = empty && from = Initialization }
   
 
   let in_program : qualified_name * src * from -> Libobject.obj =
@@ -461,7 +462,7 @@ let get ?(fail_if_not_exists=false) p =
     Lib.add_leaf obj
 
   let code ?(even_if_empty=false) n : Chunk.t Code.t option =
-    let _,_,_,sources, empty = get n in
+    let _,_,_,_,sources, empty = get n in
     if empty && not even_if_empty then None else
     sources |> Option.map (fun sources -> sources |> Code.map (fun name ->
     try
