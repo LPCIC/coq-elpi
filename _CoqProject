@@ -57,7 +57,6 @@
 -Q _build/default/apps/tc/elpi elpi.apps.tc.elpi
 -Q apps/tc/examples elpi.apps.tc.examples
 -Q _build/default/apps/tc/examples elpi.apps.tc.examples
--Q apps/tc/tests elpi.apps.tc.tests
 -Q _build/default/apps/tc/tests elpi.apps.tc.tests
 -Q apps/tc/theories elpi.apps.tc
 -Q _build/default/apps/tc/theories elpi.apps.tc

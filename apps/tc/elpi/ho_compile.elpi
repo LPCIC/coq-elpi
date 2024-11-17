@@ -54,9 +54,9 @@ namespace tc {
           prune Z S',
           tc.compile.goal.make-pairs [T] Pairs,
           % We build on the fly the eta-links for T
-          Pairs =>
+          (Pairs =>
             (tc.compile.goal.build-eta-links-of-vars [T] P,
-              tc.compile.goal.get-uva-pair-arity T PF Y),
+              tc.compile.goal.get-uva-pair-arity T PF Y)),
           std.fold-map NPF A decompile-term-aux Tl (pr XS' L2), 
           std.append P L2 L3,
           NL = tc.link.llam Z (app [Y|Tl]).
@@ -94,9 +94,9 @@ namespace tc {
           prune Z Scope',
           tc.compile.goal.make-pairs [T] Pairs,
           % We build on the fly the eta-links for `T`
-          Pairs =>
+          (Pairs =>
             (tc.compile.goal.build-eta-links-of-vars [T] P,
-              tc.compile.goal.get-uva-pair-arity T L Y),
+              tc.compile.goal.get-uva-pair-arity T L Y)),
           var Z Y Scope',
           std.append P B B'.
 
@@ -173,7 +173,7 @@ namespace tc {
       % In this case we unfold this definition to get the prod constructor
       make-eta-link-aux A T BN L Link Ty' Bo :-
         coq.safe-dest-app T Hd Ag,
-        @redflags! coq.redflags.delta => coq.reduction.lazy.whd Hd Hd',
+        (@redflags! coq.redflags.delta => coq.reduction.lazy.whd Hd Hd'),
         not (Hd = Hd'), !,
         coq.mk-app Hd' Ag TT',
         make-eta-link-aux A TT' BN L Link Ty' Bo.
@@ -214,8 +214,8 @@ namespace tc {
         i:list prop,
         o:prop.
       compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
-        (pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
-          tc.get-TC-of-inst-type PTy TC, !,
+        ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
+          tc.get-TC-of-inst-type PTy TC), !,
         compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
         if (tc.class TC _ tc.deterministic _)
           (NewPrem' = do-once NewPrem)
