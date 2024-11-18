@@ -1,0 +1,7 @@
+namespace coq {
+	kind tm type -> type.
+}
+namespace cpp {
+	typeabbrev bs (coq.tm int).
+}
+p.
