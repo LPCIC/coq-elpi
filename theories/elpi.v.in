@@ -5,8 +5,9 @@ Declare ML Module "coq-elpi.elpi".
 (* Generate coq-bultins.elpi *)
 Elpi Document Builtins.
 
-(* Load once and forall these files in this .vo, to ease redistribution *)
+(* Load once and for all these files in this .vo, to ease redistribution *)
 Elpi Template Command "elpi_elpi/elpi-command-template-synterp.elpi" "elpi_elpi/elpi-command-template.elpi".
+(* Note: this is on top of the template for commands for the interp phase *)
 Elpi Template Tactic "elpi_elpi/elpi-tactic-template.elpi".
 
 (* Special constant used for HOAS of holes, see coq-bultins.elpi *)

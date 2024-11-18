@@ -12,32 +12,30 @@ let interp_hoas = API.RawData.new_hoas_descriptor ()
 let interp_state = API.State.new_state_descriptor ()
 
 let source_name_of_fname = function
-  | Loc.InFile { dirpath = None; file } -> Format.asprintf "%s" file 
-  | Loc.InFile { dirpath = Some dp; file } -> Format.asprintf "%s|%s" dp file 
+  | Loc.InFile { file } -> Format.asprintf "%s" file 
   | Loc.ToplevelInput -> "(stdin)" 
 
-let fname_of_source_name s =
+let fname_of_source_name ~dirpath s =
   if s = "(stdin)" then Loc.ToplevelInput
-  else
-    try
-      let i = String.index s '|' in
-      let len = String.length s in
-      let dp = String.sub s 0 i in
-      let file = String.sub s (i+1) (len-i-1) in
-      Loc.InFile { dirpath = Some dp; file }
-    with Not_found -> Loc.InFile { dirpath = None; file = s }
+  else Loc.InFile { dirpath; file = s }
 
 let of_coq_loc l =
+  let client_payload =
+    match l.Loc.fname with
+    | ToplevelInput -> None
+    | InFile { dirpath } -> Option.map Obj.repr dirpath in
   {
-    API.Ast.Loc.source_name = source_name_of_fname l.Loc.fname;
+    API.Ast.Loc.client_payload;
+    source_name = source_name_of_fname l.Loc.fname;
     source_start = l.Loc.bp;
     source_stop = l.Loc.ep;
     line = l.Loc.line_nb;
     line_starts_at = l.Loc.bol_pos;
   }
 
-let to_coq_loc { API.Ast.Loc.source_name; line; line_starts_at; source_start; source_stop } =
-  Loc.create (fname_of_source_name source_name) line line_starts_at source_start source_stop
+let to_coq_loc { API.Ast.Loc.source_name; client_payload; line; line_starts_at; source_start; source_stop } =
+  let dirpath = Option.map Obj.obj client_payload in
+  Loc.create (fname_of_source_name ~dirpath source_name) line line_starts_at source_start source_stop
 
 let err ?loc msg =
   let loc = Option.map to_coq_loc loc in
