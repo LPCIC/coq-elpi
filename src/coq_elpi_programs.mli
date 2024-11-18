@@ -5,7 +5,7 @@
 open Elpi.API
 open Coq_elpi_utils
 
-type cunit = Names.KerName.t * Compile.compilation_unit
+type cunit = Full of  Names.KerName.t * Compile.compilation_unit | Signature of Compile.compilation_unit_signature
 type program_name = Loc.t * qualified_name
 
 type src =
@@ -72,6 +72,7 @@ module SLMap : Map.S with type key = qualified_name
 
 val combine_hash : int -> int -> int
 
+
 (* runtime *)
 
 module type Programs = sig
@@ -82,7 +83,7 @@ module type Programs = sig
   val unit_from_string : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> Ast.Loc.t -> string -> cunit
   val ast_from_string  : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Digest.t * Ast.program
   val unit_from_ast    : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Ast.program -> cunit
-  val extend_w_units   : base:Compile.program -> loc:Loc.t -> Compile.compilation_unit list -> Compile.program
+  val extend_w_units   : base:Compile.program -> loc:Loc.t -> cunit list -> Compile.program
   val parse_goal       : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Ast.query
 
   val db_exists : qualified_name -> bool
@@ -92,7 +93,7 @@ module type Programs = sig
   val declare_file : program_name -> unit
   val get_nature : qualified_name -> nature
 
-  val init_program : program_name -> src -> unit
+  val init_program : program_name -> src list -> unit
   val init_db : program_name -> cunit -> unit
   val init_file : program_name -> Digest.t * Ast.program -> unit
 
