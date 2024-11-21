@@ -18,7 +18,7 @@ depends: [
   "dune" {>= "3.13"}
   "ocaml" {>= "4.10.0"}
   "stdlib-shims"
-  "elpi" {>= "1.20.0" & < "1.21.0~"}
+  "elpi" {>= "2.0.0" & < "2.1.0~"}
   "coq" {>= "8.20+rc1" & < "8.21~"}
   "ppx_optcomp"
   "ocaml-lsp-server" {with-dev-setup}
