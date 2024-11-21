@@ -204,7 +204,7 @@ let run_and_print ~print ~loc program_name program_ast query_ast : _ * Coq_elpi_
       List.map (fun (dbname,asts,vs,scope) ->
         let base = P.get_and_compile_existing_db ~loc dbname in
         (* maybe this should be a fold otherwise all clauses have to be independent (the second cannot mention the first one) *)
-        let units = asts |> List.map (fun ast -> P.unit_from_ast ~elpi None ~base ~loc ast) in
+        let units = asts |> List.map (fun ast -> P.unit_from_ast ~elpi None ~base ~loc (EC.scope ~elpi ast)) in
       dbname,units,vs,scope) in
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
       P.accumulate_to_db dbname units vs ~scope);
@@ -301,7 +301,8 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   
   let accumulate_db ~loc ?(program=current_program()) name =
     let _ = P.ensure_initialized () in
-    if P.db_exists name then P.accumulate program [DatabaseHeader { dast = P.(header_of_db name) };DatabaseBody name]
+    let header = P.header_of_db name |> List.map (fun dast -> DatabaseHeader { dast }) in
+    if P.db_exists name then P.accumulate program (header @ [DatabaseBody name])
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
   let accumulate_db ~atts:((scope,only),ph) ~loc ?program name =
     warn_scope_not_regular ~loc scope;
@@ -310,12 +311,13 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let accumulate_db_header ~loc ?(program=current_program()) ~scope name =
     let _ = P.ensure_initialized () in
     if P.db_exists name then
-      let unit = P.header_of_db name in
+      let units = P.header_of_db name in
       if P.db_exists program then
-        P.accumulate_to_db program [unit] [] ~scope
+        P.accumulate_to_db program units [] ~scope
       else
         let () = warn_scope_not_regular ~loc scope in
-        P.accumulate program [DatabaseHeader { dast = unit }]
+        let units = List.map (fun dast -> DatabaseHeader { dast }) units in
+        P.accumulate program units
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
   let accumulate_db_header ~atts:((scope,only),ph) ~loc ?program name =
     skip ~only ~ph (accumulate_db_header ~loc ?program ~scope) name
@@ -399,11 +401,9 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
       match atts with
       | None -> same_phase Interp P.stage
       | Some phase -> same_phase phase P.stage in
-    let elpi = P.ensure_initialized () in
     if do_init then begin
       P.declare_db n;
-      let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
-      P.init_db n unit  
+      P.init_db n ~loc (sloc,s)  
     end
 
   let create_file ~atts ~loc n ~init:(sloc,s) =
