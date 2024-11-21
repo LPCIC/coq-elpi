@@ -54,7 +54,7 @@ module Chunk = struct
   type t =
     | Base of {
       hash : int;
-      base : cunit;
+      base : cunit list;
     }
     | Snoc of {
       source_rev : cunit list;
@@ -193,8 +193,8 @@ module type Programs = sig
   val cc_flags : unit -> API.Compile.flags
   val unit_from_file   : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string -> cunit
   val unit_from_string : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> API.Ast.Loc.t -> string -> cunit
-  val ast_from_string : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> Digest.t * API.Ast.program
-  val unit_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Ast.program -> cunit
+  val ast_from_string : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> Digest.t * API.Compile.scoped_program
+  val unit_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Compile.scoped_program -> cunit
   val extend_w_units : base:API.Compile.program -> loc:Loc.t -> cunit list -> API.Compile.program
   val parse_goal : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> API.Ast.query
 
@@ -206,10 +206,10 @@ module type Programs = sig
   val get_nature : qualified_name -> nature
 
   val init_program : program_name -> src list -> unit
-  val init_db : program_name -> cunit -> unit
-  val init_file : program_name -> Digest.t * API.Ast.program -> unit
-  val header_of_db : qualified_name -> cunit
-  val ast_of_file : qualified_name -> Digest.t * API.Ast.program
+  val init_db : program_name -> loc:Loc.t -> (API.Ast.Loc.t * string) -> unit
+  val init_file : program_name -> Digest.t * API.Compile.scoped_program -> unit
+  val header_of_db : qualified_name -> cunit list
+  val ast_of_file : qualified_name -> Digest.t * API.Compile.scoped_program
 
 
   val accumulate : qualified_name -> src list -> unit
@@ -382,9 +382,10 @@ let unit_from_file ~elpi ~base ~loc x : cunit =
     Full (kn,u)
   with Not_found ->
     handle_elpi_compiler_errors ~loc (fun () ->
-      let program = EP.program ~elpi ~files:[x] in
+      let ast = EP.program ~elpi ~files:[x] in
+      let ast = EC.scope ~elpi ast in
       let loc = Loc.initial Loc.ToplevelInput in
-      unit_from_ast ~elpi ~flags (Some hash) ~base ~loc program)
+      unit_from_ast ~elpi ~flags (Some hash) ~base ~loc ast)
 
 let unit_from_string ~elpi ~base ~loc xloc x : cunit =
   let flags = cc_flags () in
@@ -392,12 +393,13 @@ let unit_from_string ~elpi ~base ~loc xloc x : cunit =
   (* TODO: ERROR SAME HASH *)
   handle_elpi_compiler_errors ~loc (fun () ->
     let ast = EP.program_from ~elpi ~loc:xloc (Lexing.from_string x) in
+    let ast = EC.scope ~elpi ast in
     unit_from_ast ~elpi ~flags (Some hash) ~base ~loc ast)
 
-let ast_from_string ~elpi ~loc xloc x : string * API.Ast.program =
+let ast_from_string ~elpi ~loc xloc x : string * API.Compile.scoped_program =
   let hash = Digest.(to_hex @@ string x) in
   handle_elpi_compiler_errors ~loc (fun () ->
-    hash, EP.program_from ~elpi ~loc:xloc (Lexing.from_string x))
+    hash, EP.program_from ~elpi ~loc:xloc (Lexing.from_string x) |> EC.scope ~elpi)
 
 let parse_goal ~elpi ~loc tloc text =
   handle_elpi_compiler_errors ~loc (fun () ->
@@ -417,7 +419,7 @@ let program_src : program SLMap.t ref =
 let db_name_src : db SLMap.t ref =
   Summary.ref ~name:("elpi-db-src") SLMap.empty
 
-let file_name_src : (Digest.t * API.Ast.program) SLMap.t ref =
+let file_name_src : (Digest.t * API.Compile.scoped_program) SLMap.t ref =
   Summary.ref ~name:("elpi-file-src") SLMap.empty
 
   (* Setup called *)
@@ -502,11 +504,7 @@ let get ?(fail_if_not_exists=false) p =
       if Names.KNset.mem kname db.units then db
       else { sources_rev = Chunk.snoc c db.sources_rev; units = Names.KNset.add kname db.units }
     with Not_found ->
-    match c with
-    | [] -> assert false
-    | [base] ->
-        { sources_rev = Chunk.Base { hash = hash_cunit base; base }; units = Names.KNset.singleton kname }
-    | _ -> assert false
+      { sources_rev = Chunk.Base { hash = hash_list hash_cunit 0 c; base = List.rev c }; units = Names.KNset.singleton kname }
         
   let is_inside_current_library kn =
     Names.DirPath.equal
@@ -539,7 +537,7 @@ let get ?(fail_if_not_exists=false) p =
         else Some o);
     }
   
-    let in_file : Names.Id.t -> (program_name * (Digest.t * API.Ast.program)) -> Libobject.obj =
+    let in_file : Names.Id.t -> (program_name * (Digest.t * API.Compile.scoped_program)) -> Libobject.obj =
       let open Libobject in
       let cache ((_,kn),((_,name),p)) =
         file_name_src := SLMap.add name p !file_name_src in
@@ -564,13 +562,6 @@ let get ?(fail_if_not_exists=false) p =
     ignore @@ Lib.add_leaf
       (in_file (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum)) (program, code))
     
-
-  let init_db qualid cmd_base init =
-    match cmd_base with
-    | File { fast = Full(_,base) } ->
-      add_to_db qualid [init] [] Coq_elpi_utils.SuperGlobal;
-      add_to_db qualid [Signature (EC.signature base)] [] Coq_elpi_utils.SuperGlobal;
-    | _ -> assert false
 
   let init_file qualid init =
     add_to_file qualid init
@@ -601,6 +592,21 @@ let get ?(fail_if_not_exists=false) p =
     match !lp_command_ast with
     | None -> CErrors.user_err Pp.(str "Elpi CommandTemplate was not called")
     | Some ast -> ast
+
+  let db_init_base ~loc =
+    let elpi = ensure_initialized () in
+    match command_init () with
+    | File { fast = Full(_,base) } ->
+        let base = Signature (EC.signature base) in
+        base, extend_w_units ~loc ~base:EC.(empty_base ~elpi) [base]
+    | _ -> assert false
+
+  let init_db qualid ~loc (sloc,s) =
+    let base_sig, base = db_init_base ~loc in
+    let elpi = ensure_initialized () in
+    let unit = unit_from_string ~elpi ~base ~loc sloc s in
+    add_to_db qualid [base_sig;unit] [] Coq_elpi_utils.SuperGlobal
+    (* add_to_db qualid [base_sig] [] Coq_elpi_utils.SuperGlobal *)
   
   let lp_tactic_ast = Summary.ref ~name:("elpi-lp-tactic") None
   let in_lp_tactic_ast : src -> Libobject.obj =
@@ -628,13 +634,13 @@ let get ?(fail_if_not_exists=false) p =
     else
       init_program qualid init
   
-  let init_db (loc,qualid) (init : cunit) =
+  let init_db (_,qualid) ~loc header =
     if stage = Summary.Stage.Interp && Global.sections_are_opened () then
       CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
     else if stage = Summary.Stage.Interp && match Global.current_modpath () with Names.ModPath.MPdot (Names.ModPath.MPfile _,_) -> true | _ -> false then
       CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside modules")
     else
-    init_db qualid (command_init()) init
+    init_db qualid ~loc header
   ;;
     
   let accumulate p (v : src list) =
@@ -783,9 +789,9 @@ let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
       lookup_chunk 0 h src
     with Not_found ->
       match src with
-      | Chunk.Base { base = u } ->
+      | Chunk.Base { base } ->
           let elpi = ensure_initialized () in
-          let prog = extend_w_units ~loc ~base:(EC.empty_base ~elpi) [u] in
+          let prog = extend_w_units ~loc ~base:(EC.empty_base ~elpi) base in
           cache_chunk 0 h prog src
       | Chunk.Snoc { prev; source_rev } ->
           let base = compile_db ~loc prev in
@@ -935,7 +941,7 @@ module Synterp : Programs = struct
     let clauses_to_add = clauses_to_add |> group_clauses |>
       List.map (fun (dbname,asts,vs,scope) ->
         let base = get_and_compile_existing_db ~loc dbname in
-        let units = List.map (unit_from_ast ~elpi ~base None ~loc) asts in
+        let units = List.map (fun x -> unit_from_ast ~elpi ~base None ~loc (EC.scope ~elpi x)) asts in
         dbname,units,vs,scope) in
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
       accumulate_to_db dbname units vs ~scope))
@@ -956,7 +962,7 @@ let () = Coq_elpi_builtins.set_accumulate_to_db_interp (fun ~loc clauses_to_add 
   let clauses_to_add = clauses_to_add |> group_clauses |>
     List.map (fun (dbname,asts,vs,scope) ->
       let base = get_and_compile_existing_db ~loc dbname in
-      let units = List.map (unit_from_ast ~elpi ~base None ~loc) asts in
+      let units = List.map (fun x -> unit_from_ast ~elpi ~base None ~loc (EC.scope ~elpi x)) asts in
       dbname,units,vs,scope) in
   clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
     accumulate_to_db dbname units vs ~scope))

@@ -31,7 +31,7 @@ module Chunk : sig
   type t =
   | Base of {
       hash : int;
-      base : cunit;
+      base : cunit list;
     }
   | Snoc of {
       source_rev : cunit list;
@@ -81,8 +81,8 @@ module type Programs = sig
   val cc_flags : unit -> Compile.flags
   val unit_from_file   : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string -> cunit
   val unit_from_string : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> Ast.Loc.t -> string -> cunit
-  val ast_from_string  : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Digest.t * Ast.program
-  val unit_from_ast    : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Ast.program -> cunit
+  val ast_from_string  : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Digest.t * Compile.scoped_program
+  val unit_from_ast    : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Compile.scoped_program -> cunit
   val extend_w_units   : base:Compile.program -> loc:Loc.t -> cunit list -> Compile.program
   val parse_goal       : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Ast.query
 
@@ -94,11 +94,11 @@ module type Programs = sig
   val get_nature : qualified_name -> nature
 
   val init_program : program_name -> src list -> unit
-  val init_db : program_name -> cunit -> unit
-  val init_file : program_name -> Digest.t * Ast.program -> unit
+  val init_db : program_name -> loc:Loc.t -> (Ast.Loc.t * string) -> unit
+  val init_file : program_name -> Digest.t * Compile.scoped_program -> unit
 
-  val header_of_db : qualified_name -> cunit
-  val ast_of_file : qualified_name -> Digest.t * Ast.program
+  val header_of_db : qualified_name -> cunit list
+  val ast_of_file : qualified_name -> Digest.t * Compile.scoped_program
 
   val accumulate : qualified_name -> src list -> unit
   val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Coq_elpi_utils.clause_scope -> unit
