@@ -2781,7 +2781,7 @@ Supported attributes:
 Supported attributes:
 - @global! (default: true)|}))),
   (fun gr priority ~depth { options } _ -> grab_global_env "coq.TC.declare-instance" (fun state ->
-     let global = if options.local = Some false then Hints.SuperGlobal else Hints.Local in
+     let global = hint_locality options in
      let hint_priority = Some priority in
      Classes.existing_instance global gr
           (Some { Hints.empty_hint_info with Typeclasses.hint_priority });

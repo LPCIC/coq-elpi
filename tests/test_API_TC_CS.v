@@ -15,11 +15,29 @@ Proof.
 exact Rr.
 Defined.
 
-Check (_ : Reflexive R).
+Fail Example ex : Reflexive R := _.
 
-Elpi Query lp:{{coq.locate "myi" GR, coq.TC.declare-instance GR 10. }}.
+Module TCLocal.
+  Elpi Query lp:{{ coq.locate "myi" GR, @local! => coq.TC.declare-instance GR 10. }}.
+  Succeed Example ex : Reflexive R := _.
+End TCLocal.
 
-Check (_ : Reflexive R).
+Module TCExport.
+  Fail Example ex : Reflexive R := _.
+  Module Mod.
+    Elpi Query lp:{{ coq.locate "myi" GR, coq.TC.declare-instance GR 10. }}.
+  End Mod.
+  Fail Example ex : Reflexive R := _.
+  Import Mod.
+  Check (_ : Reflexive R).
+  Succeed Example ex : Reflexive R := _.
+End TCExport.
+
+Module TCGlobal.
+  Elpi Query lp:{{ coq.locate "myi" GR, @global! => coq.TC.declare-instance GR 10. }}.
+End TCGlobal.
+Succeed Example ex : Reflexive R := _.
+
 
 Elpi Query lp:{{coq.TC.db L}}.
 Elpi Query lp:{{coq.locate "RewriteRelation" GR, coq.TC.db-for GR L}}.
