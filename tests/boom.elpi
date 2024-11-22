@@ -1,1 +1,12 @@
-p :- X = {{ hd }}.
+pred locate?! i:id, i:A -> located, o:A.  % Locate or fail (rather than panic)
+  pred locate? i:id, i:A -> located, o:A.   % Can succeed more than once
+
+  locate?! Name Pat Val :-
+    std.mem! {coq.locate-all Name} (Pat Tmp),
+    ( ground_term Tmp, !, Val = Tmp
+    ; fail ).
+
+  locate? Name Pat Val :-
+    std.mem {coq.locate-all Name} (Pat Tmp),
+    ( ground_term Tmp, Val = Tmp
+    ; fail ).

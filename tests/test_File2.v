@@ -9,3 +9,7 @@ Elpi Accumulate File file2.
 Elpi Accumulate lp:{{ main _ :- coq.say "hello4". }}.
 
 Elpi c.
+
+
+
+

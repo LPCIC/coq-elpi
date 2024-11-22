@@ -391,9 +391,11 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     let raw_args = Option.default false raw_args in
     let elpi = P.ensure_initialized () in
     P.declare_program n (Program { raw_args });
-    let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
-    let init = EmbeddedString { (*sloc = loc; sdata = s;*) sast = unit} in
-    P.init_program n [init];
+    if P.stage = Summary.Stage.Interp then begin
+      let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
+      let init = EmbeddedString { sast = unit} in
+      P.init_program n [init];
+    end;
     set_current_program (snd n)
 
   let create_db ~atts ~loc n ~init:(sloc,s) =
