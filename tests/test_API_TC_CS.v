@@ -44,6 +44,37 @@ Elpi Query lp:{{coq.locate "RewriteRelation" GR, coq.TC.db-for GR L}}.
 Elpi Query lp:{{coq.locate "RewriteRelation" GR, coq.TC.class? GR}}.
 Elpi Query lp:{{coq.locate "True" GR, not(coq.TC.class? GR)}}.
 
+Module hint_instance.
+  Class Test : Prop := {}.
+
+  Instance instance_c : Test := Build_Test.
+  Instance instance_g : Test | 4 := Build_Test.
+
+  Definition hint_c : Test := Build_Test.
+  Definition hint_g : Test := Build_Test.
+
+  Hint Resolve hint_c : typeclass_instances.
+  Hint Resolve hint_g | 5 : typeclass_instances.
+
+  Elpi Command test.
+  Elpi Accumulate lp:{{
+    pred expected o:tc-instance.
+    expected (tc-instance {{:gref hint_c}} 0).
+    expected (tc-instance {{:gref instance_c}} 0).
+    expected (tc-instance {{:gref instance_g}} 4).
+    % Note: the priority of hint_g is 5, the one given in the hint resolve
+    expected (tc-instance {{:gref hint_g}} 5).
+  }}.
+  Elpi Query lp:{{ 
+    coq.TC.db-for {{:gref Test}} L,
+    std.length L 4,               % there are 4 instances for Test
+    std.findall (expected _) Exp, % get the expected prio
+    Check = (x\ sigma Exp\ x = expected Exp, std.mem L Exp),
+    std.forall Exp Check.         % check each instance has the expected priority
+  }}.
+
+End hint_instance.
+
 Axiom C : Type -> Type.
 
 Elpi Query lp:{{ coq.TC.declare-class {{:gref C }} }}.

@@ -136,16 +136,12 @@ namespace tc {
     coq.elpi.predicate ClassStr ArgsSol RuleHead,
     make-tc.aux IsPositive Sol RuleHead RuleBody Rule.
 
-    pred unwrap-prio i:tc-priority, o:int.
-    unwrap-prio (tc-priority-given Prio) Prio.
-    unwrap-prio (tc-priority-computed Prio) Prio.
-
   % returns the priority of an instance from the gref of an instance
   pred get-inst-prio i:gref, o:int.
   get-inst-prio InstGR Prio :-
     coq.env.typeof InstGR InstTy,
     get-TC-of-inst-type InstTy ClassGR,
-    unwrap-prio {coq.TC.get-inst-prio ClassGR InstGR} Prio.
+    coq.TC.get-inst-prio ClassGR InstGR Prio.
 
   pred get-full-path i:gref, o:string.
   get-full-path Gr Res' :-

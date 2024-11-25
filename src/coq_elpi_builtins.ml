@@ -397,24 +397,9 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Struct
 } |> CConv.(!<)
 
 
-type tc_priority = Computed of int | UserGiven of int
-
-let tc_priority = let open Conv in let open API.AlgebraicData in declare {
-  ty = TyName "tc-priority";
-  doc = "Type class instance priority";
-  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
-  constructors = [
-    K("tc-priority-given","User given priority",A(int,N),
-      B (fun i -> UserGiven i),
-      M (fun ~ok ~ko -> function UserGiven i -> ok i | _ -> ko ()));
-    K("tc-priority-computed","Coq computed priority", A(int,N),
-      B (fun i -> Computed i),
-      M (fun ~ok ~ko -> function Computed i -> ok i | _ -> ko ()));
-]} |> CConv.(!<)
-
 type type_class_instance = {
   implementation : GlobRef.t;
-  priority : tc_priority;
+  priority : int;
 }
 
 let tc_instance = let open Conv in let open API.AlgebraicData in declare {
@@ -422,71 +407,46 @@ let tc_instance = let open Conv in let open API.AlgebraicData in declare {
   doc = "Type class instance with priority";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
-    K("tc-instance","",A(gref,A(tc_priority,N)),
+    K("tc-instance","",A(gref,A(int,N)),
       B (fun implementation priority -> { implementation; priority }),
       M (fun ~ok ~ko { implementation; priority } -> ok implementation priority));
 ]} |> CConv.(!<)
 
-[%%if coq = "8.20"]
-let clenv_missing sigma ce cty =
-  let rec nb_hyp sigma c = match EConstr.kind sigma c with
-  | Prod(_,_,c2) -> if EConstr.Vars.noccurn sigma 1 c2 then 1+(nb_hyp sigma c2) else nb_hyp sigma c2
-  | _ -> 0 in
-  let miss = Clenv.clenv_missing ce in
-  let nmiss = List.length miss in
-  let hyps = nb_hyp sigma cty in
-  nmiss, hyps
-[%%else]
-let clenv_missing _ ce _ =
-  let miss, hyps = Clenv.clenv_missing ce in
-  List.length miss, hyps
-[%%endif]
+let get_instance_prio env class_gr inst_gr =
+  let exception STOP in
+  (* db contains the hints stored in the typeclassses_db *)
+  let db = Hints.searchtable_map Class_tactics.typeclasses_db in
+  (* full_hint is the **list** of hints for a typeclass *)
+  let full_hint = ref None in
+  (try
+    (* since we have not a "find" API in Hints.Hint_db to get the value associated to a class gref
+       we iterate over the list until finding the wanted result *)
+       (* complexity: O(N) where N is the number of typeclasses *)
+    Hints.Hint_db.iter (fun gro _ fh -> 
+      Option.iter (fun gr -> 
+      if Environ.QGlobRef.equal env gr class_gr then 
+      (full_hint := Some fh; raise STOP)) gro) db;
+  with STOP -> ());
+  match !full_hint with
+  (* None means that we cannot find the class gref in the db *)
+  | None -> err Pp.(str"Cannot find the gref" ++ GlobRef.print class_gr ++ str" in typeclass_instances: is it a valid typeclass?")
+  | Some full_hint ->
+    let same_inst e = 
+      match Hints.FullHint.name e with
+      | Some hint_name when Environ.QGlobRef.equal env hint_name inst_gr -> Some (Hints.FullHint.priority e)
+      | _ -> None
+    in
+    (* We look in the list of hint for the one associated to inst_gr, if it does not exists: error *)
+    (* complexity: O(N) where N is the number of instances of class_gr *)
+    match List.find_map same_inst full_hint with
+    | None -> err Pp.(str"Cannot find the priority of " ++ GlobRef.print inst_gr ++ 
+                    str": either it is not an instance of " ++ GlobRef.print class_gr ++ 
+                    str" or it is not stored as a hint in typeclasses_instances")
+    | Some e -> e
 
-let get_instance_prio gr env sigma (hint_priority : int option) : tc_priority =
-  match hint_priority with
-  | Some p -> UserGiven p
-  | None -> 
-    let merge_context_set_opt sigma ctx = 
-      match ctx with
-      | None -> sigma
-      | Some ctx -> Evd.merge_sort_context_set Evd.univ_flexible sigma ctx
-    in 
-    let fresh_global_or_constr env sigma = 
-        let (c, ctx) = UnivGen.fresh_global_instance env gr in
-        let ctx = if Environ.is_polymorphic env gr then Some ctx else None in
-        (EConstr.of_constr c, ctx) in
-    let c, ctx = fresh_global_or_constr env sigma in
-    let cty = Retyping.get_type_of env sigma c in
-    let cty = Reductionops.nf_betaiota env sigma cty in
-    let sigma' = merge_context_set_opt sigma ctx in
-    let ce = Clenv.mk_clenv_from env sigma' (c,cty) in
-    let nmiss, nhyps = clenv_missing sigma' ce cty in
-    Computed (nhyps + nmiss)
-
-(* TODO: this algorithm is quite inefficient since we have not yet the
-         possibility to get the implementation of an instance from its gref in
-         coq. Currently we have to get all the instances of the tc and the find
-         its implementation.
-*)
-let get_isntances_of_tc env sigma (tc : GlobRef.t) = 
-  let inst_of_tc = (* contains all the instances of a type class *)
-    Typeclasses.instances_exn env sigma tc |>
-    List.fold_left (fun m i -> GlobRef.Map.add i.Typeclasses.is_impl i m) GlobRef.Map.empty in
-  inst_of_tc
-
-let get_instance env sigma inst_of_tc instance : type_class_instance =
-  let instances_grefs2istance inst_gr : type_class_instance = 
-    let open Typeclasses in 
-    let user_hint_prio = 
-      (* Note: in general we deal with an instance I of a type class. Here we
-               look if the user has given a priority to I. However, external
-               hints are not in the inst_of_tc (the Not_found exception) *)
-      try (GlobRef.Map.find inst_gr inst_of_tc).is_info.hint_priority 
-      with Not_found -> None in
-    let priority = get_instance_prio inst_gr env sigma user_hint_prio in 
-    { implementation = inst_gr; priority } 
-  in
-  instances_grefs2istance instance
+let get_instance env class_gr inst_gr : type_class_instance =
+  let priority = get_instance_prio env class_gr inst_gr in 
+  { implementation = inst_gr; priority }
 
 let warning_tc_hints = CWarnings.create ~name:"elpi.TC.hints" ~category:elpi_cat Pp.str
 
@@ -515,8 +475,7 @@ let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_insta
     | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
     | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
     | _ -> None) constrs in
-  let isnt_of_tc = get_isntances_of_tc env sigma tc in
-  List.map (get_instance env sigma isnt_of_tc) instances_grefs
+  List.map (get_instance env tc) instances_grefs
 
 let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
   let f = ref (fun _ -> assert false) in
@@ -2771,7 +2730,6 @@ Supported attributes:
     !: topo_sort)),
   DocAbove);
 
-  MLData tc_priority;
   MLData tc_instance;
  
   MLCode(Pred("coq.TC.declare-instance",
@@ -2817,13 +2775,10 @@ Supported attributes:
   MLCode(Pred("coq.TC.get-inst-prio", 
     In(gref, "ClassGR",
     In(gref, "InstGR",
-    Out(tc_priority, "InstPrio",
+    Out(int, "InstPrio",
     Read (global, "reads the priority of an instance")))),
     (fun class_gr inst_gr _ ~depth { env } _ state ->
-      let sigma = get_sigma state in
-      let inst_of_tc = get_isntances_of_tc env sigma class_gr in
-      let {priority} = get_instance env sigma inst_of_tc inst_gr in 
-      !: priority)),
+      !: (get_instance_prio env class_gr inst_gr))),
   DocAbove);
 
   MLCode(Pred("coq.TC.class?",
