@@ -307,7 +307,7 @@ let of_coq_record_definition id =
     name;
     parameters = binders;
     sort;
-    constructor = Some idbuild;
+    constructor = Some idbuild.v;
     fields = cfs;
     univpoly = univpoly_of ~poly ~cumulative
   } 
