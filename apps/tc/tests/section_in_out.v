@@ -57,6 +57,7 @@ Section ClassPersistence.
     Context (X : Type) (A : X).
     Class class (A : X).
     Definition x : class A. apply Build_class. Qed.
+    Hint Resolve x : typeclass_instances.
     Elpi TC.AddInstances x.
     Goal exists x, class x. eexists. apply _. Qed.
   End S1.
