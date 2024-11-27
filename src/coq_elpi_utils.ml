@@ -78,25 +78,29 @@ let patch_loc_source execution_loc error_loc msg =
       (* external file *)
       Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc
 
-let handle_elpi_compiler_errors ~loc f =
+let handle_elpi_compiler_errors ~loc ?error_header f =
+  let w_header m =
+    match error_header with
+    | None -> m
+    | Some x -> Pp.(v 0 (str x ++ str":" ++ spc() ++ m)) in
   try f ()
   with
   | Sys_error msg ->
-    CErrors.user_err ~loc (Pp.str msg)
+    CErrors.user_err ~loc (w_header (Pp.str msg))
   | Elpi.API.Compile.CompileError(oloc, msg) as e ->
     let _,info = Exninfo.capture e in
     let msg, loc = patch_loc_source loc (Option.map to_coq_loc oloc) (Pp.str msg) in
-    CErrors.user_err ~info ~loc msg
+    CErrors.user_err ~info ~loc (w_header msg)
   | Elpi.API.Parse.ParseError(oloc, msg) as e ->
     let _,info = Exninfo.capture e in
     let msg, loc = patch_loc_source loc (Some (to_coq_loc oloc)) (Pp.str msg) in
-    CErrors.user_err ~info ~loc msg
+    CErrors.user_err ~info ~loc (w_header msg)
   | Gramlib.Grammar.Error _ as e ->
     let _,info = Exninfo.capture e in
     let cloc = Loc.get_loc info in
     let msg = CErrors.print_no_report e in
     let msg, loc = patch_loc_source loc cloc msg in
-    CErrors.user_err ~info ~loc msg
+    CErrors.user_err ~info ~loc (w_header msg)
 
 
 exception LtacFail of int * Pp.t

@@ -20,7 +20,7 @@ val err : ?loc:Elpi.API.Ast.Loc.t -> Pp.t -> 'a
 
 (* CompileError, ParserError, Gramlib.Error (coq parser inside quotations) and Sys_error *)
 val handle_elpi_compiler_errors :
-  loc:Loc.t -> (unit -> 'b) -> 'b
+  loc:Loc.t -> ?error_header:string -> (unit -> 'b) -> 'b
 
 exception LtacFail of int * Pp.t
 val ltac_fail_err : ?loc:Elpi.API.Ast.Loc.t -> int -> Pp.t -> 'a

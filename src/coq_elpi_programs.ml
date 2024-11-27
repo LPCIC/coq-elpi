@@ -195,7 +195,7 @@ module type Programs = sig
   val unit_signature_from_file   : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string -> cunit
   val unit_from_string : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> API.Ast.Loc.t -> string -> cunit
   val ast_from_string : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> Digest.t * API.Compile.scoped_program
-  val unit_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Compile.scoped_program -> cunit
+  val unit_from_ast    : ?error_header:string -> elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Compile.scoped_program -> cunit
   val unit_signature_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Compile.scoped_program -> cunit
   val extend_w_units : base:API.Compile.program -> loc:Loc.t -> cunit list -> API.Compile.program
   val parse_goal : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> API.Ast.query
@@ -381,8 +381,8 @@ let intern_unit_signature u =
   
 (* Source files can be large, and loaded multiple times since many entry point
    can be implemented in the same file. We share (in memory) the parsed file. *)
-let unit_from_ast ~elpi ~flags h ~base ~loc ast =
-  handle_elpi_compiler_errors ~loc (fun () ->
+let unit_from_ast ?error_header ~elpi ~flags h ~base ~loc ast =
+  handle_elpi_compiler_errors ~loc ?error_header (fun () ->
     let u = EC.unit ~elpi ~flags ~base ast in
     intern_unit (h,u,flags))
 
@@ -691,8 +691,8 @@ let get ?(fail_if_not_exists=false) p =
     try Names.KNset.cardinal (SLMap.find name !db_name_src).units
   with Not_found -> -1
     
-  let unit_from_ast ~elpi ~base ~loc h ast =
-    unit_from_ast ~elpi ~base h ~loc ast ~flags:(cc_flags ())
+  let unit_from_ast ?error_header ~elpi ~base ~loc h ast =
+    unit_from_ast ?error_header ~elpi ~base h ~loc ast ~flags:(cc_flags ())
 
 let unit_signature_from_ast ~elpi ~base ~loc h ast =
   unit_signature_from_ast ~elpi ~base h ~loc ast ~flags:(cc_flags ())
@@ -974,7 +974,7 @@ module Synterp : Programs = struct
     let clauses_to_add = clauses_to_add |> group_clauses |>
       List.map (fun (dbname,asts,vs,scope) ->
         let base = get_and_compile_existing_db ~loc dbname in
-        let units = List.map (fun x -> unit_from_ast ~elpi ~base None ~loc (EC.scope ~elpi x)) asts in
+        let units = List.map (fun x -> unit_from_ast ~error_header:(Format.asprintf "accumulating clause to %s" (String.concat "." dbname)) ~elpi ~base None ~loc (EC.scope ~elpi x)) asts in
         dbname,units,vs,scope) in
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
       accumulate_to_db dbname units vs ~scope))
@@ -995,7 +995,7 @@ let () = Coq_elpi_builtins.set_accumulate_to_db_interp (fun ~loc clauses_to_add 
   let clauses_to_add = clauses_to_add |> group_clauses |>
     List.map (fun (dbname,asts,vs,scope) ->
       let base = get_and_compile_existing_db ~loc dbname in
-      let units = List.map (fun x -> unit_from_ast ~elpi ~base None ~loc (EC.scope ~elpi x)) asts in
+      let units = List.map (fun x -> unit_from_ast ~error_header:(Format.asprintf "accumulating clause to %s" (String.concat "." dbname)) ~elpi ~base None ~loc (EC.scope ~elpi x)) asts in
       dbname,units,vs,scope) in
   clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
     accumulate_to_db dbname units vs ~scope))

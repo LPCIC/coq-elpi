@@ -1172,14 +1172,9 @@ external pred coq.TC.declare-class i:gref.
 % returns the nodes in topological order
 external pred coq.elpi.toposort i:list (pair A (list A)), o:list A.
 
-% Type class instance priority
-kind tc-priority type.
-type tc-priority-given int -> tc-priority. % User given priority
-type tc-priority-computed int -> tc-priority. % Coq computed priority
-
 % Type class instance with priority
 kind tc-instance type.
-type tc-instance gref -> tc-priority -> tc-instance.
+type tc-instance gref -> int -> tc-instance.
 
 % [coq.TC.declare-instance GR Priority] Declare GR as a Global type class
 % instance with Priority.
@@ -1199,7 +1194,7 @@ external pred coq.TC.db-for i:gref, o:list tc-instance.
 
 % [coq.TC.get-inst-prio ClassGR InstGR InstPrio] reads the priority of an
 % instance
-external pred coq.TC.get-inst-prio i:gref, i:gref, o:tc-priority.
+external pred coq.TC.get-inst-prio i:gref, i:gref, o:int.
 
 % [coq.TC.class? GR] checks if GR is a class
 external pred coq.TC.class? i:gref.

@@ -83,7 +83,7 @@ module type Programs = sig
   val unit_signature_from_file   : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string -> cunit
   val unit_from_string : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> Ast.Loc.t -> string -> cunit
   val ast_from_string  : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Digest.t * Compile.scoped_program
-  val unit_from_ast    : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Compile.scoped_program -> cunit
+  val unit_from_ast    : ?error_header:string -> elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Compile.scoped_program -> cunit
   val unit_signature_from_ast    : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Compile.scoped_program -> cunit
   val extend_w_units   : base:Compile.program -> loc:Loc.t -> cunit list -> Compile.program
   val parse_goal       : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Ast.query
