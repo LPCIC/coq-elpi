@@ -190,11 +190,14 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
    as a piece of code that can be accumulated via `Elpi Accumulate File`.
    This time the code is given in the .v file.
    It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
-- `Elpi Accumulate [<dbname>|<qname>] [<code>|File <fname>|Db [Header] <dbname>]`
+- `Elpi Accumulate [<dbname>|<qname>] [<code>|File [Signature] <fname>|Db [Header] <dbname>]`
   adds code to the current program (or `<dbname>` or `<qname>` if specified).
   The code can be verbatim, from a file or a Db.
   File names `<fname>` must have been previously declared with
   `Extra Dependency` or `Elpi File`.
+  Accumulating `File Signature <fname>` only adds the signautre declarations
+  (kinds, types, modes, type abbreviations) from `<fname>` skipping the code
+  (clauses/rules).
   Accumulating `Db Header <dbname>`, instead of `Db <dbname>`, accumulates
   only the first chunk of code associated with Db, typically the type
   declaration of the predicates that live in the Db. When defining a command
