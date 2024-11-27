@@ -131,14 +131,14 @@ remove_one_unknown N _T C (fun N1 _T1 F) Res :-
   (@pi-decl N1 T1 x \
      remove_one_unknown N T C (F x) (Res x)),!.
 
-instantiate N T C (open-trm 1 F) (trm Res) :-
+instantiate N T C (open-trm 1 F) (open-trm 0 Res) :-
   remove_one_unknown N T C F Res,!.
 
 instantiate N T C (open-trm I F) (open-trm J Res) :-
   remove_one_unknown N T C F Res,!,
   J is I - 1.
 
-instantiate _N _T _C (trm A) (trm A):- !.
+instantiate _N _T _C (open-trm 0 A) (open-trm 0 A):- !.
 
 instantiate _N _T _C (open-trm _ _ as It) It :- !.
 
@@ -149,7 +149,7 @@ instantiate_pair N T C (pr A1 A2) (pr B1 B2) :-
 
 pred mk-equality i:(pair argument argument), i:term i:A, o:term, o:term, o:A.
 
-mk-equality (pr (trm S) (trm T)) S A T P A :- !,
+mk-equality (pr (open-trm 0 S) (open-trm 0 T)) S A T P A :- !,
   coq.typecheck P {{lp:S = lp:T}} ok.
 
 :name "mk-equality:start"
@@ -257,6 +257,7 @@ mk-equality _RW (uvar _M _L as C) A C {{@refl_equal _ lp:C}} A :- !.
 mk-equality _RW (uvar _X _L as C) A C {{@refl_equal _ lp:C}} A :- !.
 
 solve (goal _ _ {{lp:X = lp:Y }} _ [Arg1, Arg2] as G) GL1 :-
+  %coq.say Arg1 Arg2,
   mk-equality (pr Arg1 Arg2) Y [] Y2 P _,
   std.assert-ok! (coq.typecheck P {{lp:Y = lp:Y2}}) "proof incorrect",!,
   preserve_bound_variables X X1,
@@ -276,15 +277,12 @@ solve (goal _ _ _ _ [] as _G) _GL :-
   coq.say "failed".
 }}.
 
-(* Tactic Notation (at level 0) "repl" uconstr(x) uconstr(y) :=
-  (* Ideally, ltac_term should be ltac_open_term (not implemented yet),
-  so that the tactic knows the argument is not completely defined in the
-  current context. *)
-  (elpi replace ltac_term:(x) ltac_term:(y)). *)
+Tactic Notation (at level 0) "repl" uconstr(x) uconstr(y) :=
+  (elpi replace ltac_open_term:(x) ltac_open_term:(y)).
 
 Open Scope Z_scope. (* Otherwise ring fails. *)
 
-(* The tactic elpi replace only handles goals that have the shape of an
+(* The tactic repl only handles goals that have the shape of an
   equality, and only attempts to perform rewrites in the right-hand-side of
   that equality. In this example, we replace a formula containing a variable
   that is not well defined outside the map expression with a formula that also
@@ -299,7 +297,7 @@ Open Scope Z_scope. (* Otherwise ring fails. *)
 (* This test illustrates the case where there is no unknown. *)
 Goal forall x, x = 1 -> 2 = x + 1.
 intros x x1.
-elpi replace (x) (1);[ | assumption].
+repl x 1;[ | assumption].
 ring.
 Qed.
 
@@ -308,7 +306,7 @@ Qed.
 Goal forall l, map (fun x => x + 1) l = map (fun x => x + (1 + 0)) l.
 Proof.
 intros l.
-elpi replace (x + (1 + 0)) (x + 1); cycle 1.
+repl (x + (1 + 0)) (x + 1); cycle 1.
   ring.
 easy.
 Qed.
@@ -321,7 +319,7 @@ Goal forall n,
   map (fun i => map (fun j => (j + i)) (map Z.of_nat (seq 1 n)))
     (map Z.of_nat (seq 1 n)).
 intros n.
-elpi replace (j + i) (i + j).
+repl (j + i) (i + j).
   easy.
 ring.
 Qed.
@@ -345,7 +343,7 @@ Proof.
 intros l.
 symmetry.
 (* TODO: this should not fail. *)
-elpi replace (x - x) (0); cycle 1.
+repl (x - x) 0; cycle 1.
   ring.
 symmetry.
 apply (fold_neutral Z.add 0 Z.add_0_r).
@@ -355,9 +353,9 @@ Qed.
   no instance of a bound variable, but the replacing formula does. *)
 Goal forall (l : list Z), 0 = fold_right Z.add 0 (map (fun x => x - x + 0) l).
 intros l.
-elpi replace (0) (x - x); cycle 1.
+repl 0 (x - x); cycle 1.
   ring.
-elpi replace (x - x + (x - x)) (0); cycle 1.
+repl (x - x + (x - x)) 0; cycle 1.
   ring.
 symmetry.
 apply fold_neutral.
@@ -371,9 +369,9 @@ Proof.
 intros x l y.
 (* This illustrates that the names seen by the user are recognized properly
   by the tactic.*)
-elpi replace (x0 + (y + 0)) (x0 + y).
-progress elpi replace (x0 + y) (y + x0).
-elpi replace (y + x0) (x0 + y).
+repl (x0 + (y + 0)) (x0 + y).
+progress repl (x0 + y) (y + x0).
+repl (y + x0) (x0 + y).
 easy.
 all:ring.
 Qed.
@@ -384,12 +382,12 @@ Qed.
 Goal forall l, l = map (fun x => x + 1) (map (fun y => y - 1) l).
 Proof.
 intros l.
-elpi replace(x + 1) (1 + x); cycle 1.
+repl(x + 1) (1 + x); cycle 1.
   ring.
-elpi replace (y - 1) ((-1) + y); cycle 1.
+repl (y - 1) ((-1) + y); cycle 1.
   ring.
 rewrite map_map.
-elpi replace (1 + ((-1) + x)) (x); cycle 1.
+repl (1 + ((-1) + x)) x; cycle 1.
   ring.
 rewrite map_id.
 easy.
@@ -404,7 +402,7 @@ Variable x : Z.
 Goal forall l y, map (fun x => x + y) l = map (fun x => x + (y + 0)) l.
 Proof.
 intros l y.
-elpi replace (x0 + (y + 0)) (x0 + y); cycle 1.
+repl (x0 + (y + 0)) (x0 + y); cycle 1.
   ring.
 (* TODO: elpi generates an ugly name in a subterm of the goal that we did not
   modify, when it could avoid it. *)
