@@ -419,6 +419,7 @@ tactic receives `open-trm N F` where `N` is the number of free variables in `U`
 and `F` is `fun x1 => ... fun xN => U`.
 Finally, `ltac_term:(T)` and `(T)` are *not* synonyms: but the former must be used
 when defining tactic notations, the latter when invoking elpi tactics directly.
+``` `(T)``` can be used to pass an open term to `elpi tactic ...`.
 
 ##### Attributes
 
