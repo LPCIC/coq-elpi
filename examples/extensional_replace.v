@@ -276,8 +276,6 @@ solve (goal _ _ _ _ [] as _G) _GL :-
   coq.say "failed".
 }}.
 
-Elpi Typecheck.
-
 (* Tactic Notation (at level 0) "repl" uconstr(x) uconstr(y) :=
   (* Ideally, ltac_term should be ltac_open_term (not implemented yet),
   so that the tactic knows the argument is not completely defined in the
