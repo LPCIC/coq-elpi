@@ -1,3 +1,4 @@
+From Coq Require Import Prelude.
 From elpi Require Import elpi.
 
 (** Abstract a term over something, like the generalize tactic *)
