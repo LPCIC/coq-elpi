@@ -904,18 +904,33 @@ let in_elpi_string_arg ~depth state x =
 let in_elpi_int_arg ~depth state x =
   state, E.mkApp intc (CD.of_int x) [], []
 
+module NIdSet = struct
+  include Id.Map
+  let counter = ref 0
+  let add x s =
+    if not (mem x s) then begin
+      incr counter;
+      add x !counter s
+    end else
+      s
+
+  let fold f s acc =
+    Id.Map.bindings s |> List.sort (fun (_,n) (_,m) -> m - n) |>
+      List.fold_left (fun acc (x,_) -> f x acc) acc
+
+end
 let free_glob_vars known_vars =
   let open Glob_term in
     let rec vars bound vs c = match DAst.get c with
-      | GVar id' -> if Id.Set.mem id' bound then vs else Id.Set.add id' vs
+      | GVar id' -> if Id.Set.mem id' bound then vs else NIdSet.add id' vs
       | _ -> Glob_ops.fold_glob_constr_with_binders Id.Set.add vars bound vs c in
     fun rt ->
-      let vs = vars known_vars Id.Set.empty rt in
+      let vs = vars known_vars NIdSet.empty rt in
       vs
 let close_glob coq_ctx term =
   let open Glob_term in
   let fv_set = free_glob_vars coq_ctx.names term in
-  (Id.Set.cardinal fv_set ,Id.Set.fold (fun id t ->
+  (NIdSet.cardinal fv_set ,NIdSet.fold (fun id t ->
     DAst.(make (GLambda(Name.Name(id),None,Explicit,mkGHole,t)))) fv_set term)
 
 let in_elpi_term_arg ~loc ~base ~depth state coq_ctx hyps sigma ist glob_or_expr =
