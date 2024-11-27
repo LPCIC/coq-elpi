@@ -193,6 +193,10 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
+- `Elpi Compile <qname list>` forces the compilation (and cache) of a set of programs/tactics.
+  Running a program or a tactic compiles it on the fly and caches the result.
+  The cache entries generated in the middle of proofs are lost then the proof ends,
+  so one may want to cache the compilation of (very large) tactics outside of proofs.
 - `Elpi Debug <string>` sets the variable `<string>`, relevant for conditional
   clause compilation (the `:if VARIABLE` clause attribute).
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)

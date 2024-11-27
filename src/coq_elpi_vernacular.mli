@@ -38,6 +38,8 @@ module type Common = sig
   val load_tactic : string -> unit
   val load_command : string -> unit
   
+  val compile : atts:phase option -> qualified_name list -> unit
+
   val debug         : atts:phase option -> string list -> unit
   val trace         : atts:phase option -> int -> int -> string list -> string list -> unit
   val trace_browser : atts:phase option -> string list -> unit
