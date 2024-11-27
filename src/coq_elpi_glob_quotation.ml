@@ -297,7 +297,7 @@ let is_elpi_code_appArg = ref (fun _ -> assert false)
 let get_elpi_code_appArg = ref (fun _ -> assert false)
 
 
-let gterm2lpast ~language state glob =
+let gterm2lpast ~pattern ~language state glob =
 
   let rec lookup_bound ~loc ~coqloc name state =
     let { env; bound; section } = get_glob_env state in
@@ -401,7 +401,17 @@ let gterm2lpast ~language state glob =
 
   | GGenarg _ -> nYI "(glob)HOAS for GGenarg"
 
-  | GHole _ ->
+  | GHole GImpossibleCase ->  nYI "(glob)HOAS for GHole GImpossibleCase"
+  | GHole (GNamedHole _) -> CErrors.user_err ~loc:coqloc Pp.(str"elpi: ?[name] syntax not supported")
+
+  | GHole (GImplicitArg _|GInternalHole|GQuestionMark _|GBinderType _|GCasesType) when pattern -> A.Term.mkDiscard ~loc
+
+  | GHole (GImplicitArg _) 
+     (*A.Term.mkDiscard ~loc (* since the user did not write it, can override with @ *)*)
+  | GHole (GBinderType _)
+  | GHole GInternalHole
+  | GHole GCasesType 
+  | GHole (GQuestionMark _) ->
       let { bound_list = args } = get_glob_env state in
       let args = List.filter (fun n -> not(is_restricted_name n)) args in
       A.Term.mkVar ~loc (fresh_uv ())
@@ -568,13 +578,15 @@ let coq_quotation ~language state loc src =
   let glob = Constrintern.intern_constr (get_glob_env state).env (get_sigma state) ce in
   gterm2lpast ~language state glob
 
-let coq = Q.register_named_quotation ~name:"coq" coq_quotation ~descriptor:interp_quotations
+let coq = Q.register_named_quotation ~name:"coq" (coq_quotation ~pattern:false) ~descriptor:interp_quotations
 let () = Coq_elpi_HOAS.set_coq coq
+
+let _coqpat = Q.register_named_quotation ~name:"pat" (coq_quotation ~pattern:true) ~descriptor:interp_quotations
 
 let coq_quotation ~language:_ state loc src = coq_quotation ~language:coq state loc src 
 
 (* Install the quotation *)
-let () = Q.set_default_quotation coq_quotation ~descriptor:interp_quotations
+let () = Q.set_default_quotation (coq_quotation ~pattern:false) ~descriptor:interp_quotations
 
 let _ = API.Quotation.register_named_quotation ~name:"gref" ~descriptor:interp_quotations
   (fun ~language state loc src ->
@@ -583,7 +595,7 @@ let _ = API.Quotation.register_named_quotation ~name:"gref" ~descriptor:interp_q
 ;;
    
 let gterm2lp ~loc ~base glob ~depth state =
-  let t = gterm2lpast ~language:coq state glob in
+  let t = gterm2lpast ~pattern:false ~language:coq state glob in
   let coq_ctx, _ = Option.default (upcast @@ mk_coq_context ~options:(default_options ()) state,[]) (get_ctx state) in
   let ctx = Names.Id.Map.fold (fun id i m ->
     API.Ast.Scope.Map.add (API.Ast.Name.from_string @@ Names.Id.to_string id,coq) i m
@@ -592,7 +604,7 @@ let gterm2lp ~loc ~base glob ~depth state =
     API.RawQuery.term_to_raw_term ~ctx state base ~depth t)
 
 let runtime_gterm2lp ~loc ~base glob ~depth state =
-  let t = gterm2lpast ~language:coq state glob in
+  let t = gterm2lpast ~pattern:false ~language:coq state glob in
   let coq_ctx, _ = Option.default (upcast @@ mk_coq_context ~options:(default_options ()) state,[]) (get_ctx state) in
   let ctx = Names.Id.Map.fold (fun id i m ->
     API.Ast.Scope.Map.add (API.Ast.Name.from_string @@ Names.Id.to_string id,coq) i m
