@@ -15,6 +15,7 @@ type query =
   | Fun of (Elpi.API.Data.state -> Elpi.API.Data.state * Elpi.API.RawData.term * Elpi.API.Conversion.extra_goals)
 
 type atts = ((clause_scope * (Str.regexp list option * Str.regexp list option)) * phase option)
+type what = Code | Signature
 
 module type Common = sig
 
@@ -25,7 +26,7 @@ module type Common = sig
     Elpi.API.Execute.outcome
 
   val accumulate_files       : atts:atts -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
-  val accumulate_extra_deps  : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name list -> unit
+  val accumulate_extra_deps  : atts:atts -> loc:Loc.t -> ?program:qualified_name -> what:what -> qualified_name list -> unit
   val accumulate_string      : atts:atts -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
   val accumulate_db          : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
   val accumulate_db_header   : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit

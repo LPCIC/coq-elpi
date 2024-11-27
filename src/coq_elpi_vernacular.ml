@@ -85,6 +85,8 @@ type query =
   | Fun of (API.Data.state -> API.Data.state * API.RawData.term * Elpi.API.Conversion.extra_goals)
 
 type atts = ((clause_scope * (Str.regexp list option * Str.regexp list option)) * phase option)
+type what = Code | Signature
+
 let warn_scope_not_regular = CWarnings.create ~name:"elpi.accumulate-scope" ~category:elpi_cat (fun x -> x)
 let warn_scope_not_regular ~loc = function
   | Regular -> ()
@@ -236,7 +238,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     let query_ast = Ast (st_setup base, P.parse_goal ~loc ~elpi qloc query) in
     run_and_print ~print:true ~loc program base query_ast)
 
-  let accumulate_extra_deps ~loc ?(program=current_program()) ~scope ids =
+  let accumulate_extra_deps ~loc ?(program=current_program()) ~scope ~what ids =
     let elpi = P.ensure_initialized () in
     let () = ids |> List.iter (fun id ->
       let base = get_base ~loc ~elpi program in
@@ -246,26 +248,36 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
         | `Program base -> base, (fun fname fast ->
            warn_scope_not_regular ~loc scope;
            P.accumulate program [File { fname; fast}]) in
-      try
-        let s = ComExtraDeps.query_extra_dep (Names.Id.of_string_soft (String.concat "." id)) in
-        add s (P.unit_from_file ~elpi ~loc ~base s)
-      with
-      | Failure s ->  CErrors.user_err Pp.(str s)
-      | Not_found ->
+      let cid = Names.Id.of_string_soft (String.concat "." id) in
+      let s, u =
         try
-          let hash, ast = P.ast_of_file id in
-          add (String.concat "." id) (P.unit_from_ast ~elpi ~base ~loc (Some hash) ast)
+          let s = ComExtraDeps.query_extra_dep cid in
+          s, match what with
+             | Code -> P.unit_from_file ~elpi ~loc ~base s
+             | Signature -> P.unit_signature_from_file ~elpi ~loc ~base s
         with
-        | Failure s ->  CErrors.user_err Pp.(str s)
-        | Not_found when P.stage = Summary.Stage.Interp -> CErrors.anomaly Pp.(str"wtf")
+        | Failure s ->  CErrors.user_err ~loc Pp.(str s)
         | Not_found ->
-            err Pp.(str"File " ++ pr_qualified_name id ++
-              str" is unknown; please add a directive like 'From .. Extra Dependency .. as " ++
-              pr_qualified_name id ++ str"' or 'Elpi File .. lp:{{ ... }}'."))
+          try
+            let hash, ast = P.ast_of_file id in
+            String.concat "." id,
+              match what with
+              | Code -> P.unit_from_ast ~elpi ~base ~loc (Some hash) ast
+              | Signature -> P.unit_signature_from_ast ~elpi ~base ~loc (Some hash) ast
+          with
+          | Failure s ->  CErrors.user_err Pp.(str s)
+          | Not_found when P.stage = Summary.Stage.Interp ->
+              CErrors.user_err ~loc Pp.(str"File " ++ Names.Id.print cid ++ str " not found")
+          | Not_found ->
+              err Pp.(str"File " ++ pr_qualified_name id ++
+                str" is unknown; please add a directive like 'From .. Extra Dependency .. as " ++
+                pr_qualified_name id ++ str"' or 'Elpi File .. lp:{{ ... }}'.")
+      in
+         add s u)
     in
     ()
     
-  let accumulate_extra_deps ~atts:((scope,only),ph) ~loc ?program ids = skip ~only ~ph (accumulate_extra_deps ~loc ?program ~scope) ids
+  let accumulate_extra_deps ~atts:((scope,only),ph) ~loc ?program ~what ids = skip ~only ~ph (accumulate_extra_deps ~loc ?program ~scope ~what) ids
 
   let accumulate_files ~loc ?(program=current_program()) ~scope s =
     let elpi = P.ensure_initialized () in
@@ -435,7 +447,7 @@ module type Common = sig
     Elpi.API.Execute.outcome  
 
   val accumulate_files       : atts:atts -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
-  val accumulate_extra_deps  : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name list -> unit
+  val accumulate_extra_deps  : atts:atts -> loc:Loc.t -> ?program:qualified_name -> what:what -> qualified_name list -> unit
   val accumulate_string      : atts:atts -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
   val accumulate_db          : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
   val accumulate_db_header   : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit

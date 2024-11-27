@@ -192,9 +192,11 @@ module type Programs = sig
   val debug_vars : API.Compile.StrSet.t ref
   val cc_flags : unit -> API.Compile.flags
   val unit_from_file   : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string -> cunit
+  val unit_signature_from_file   : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string -> cunit
   val unit_from_string : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> API.Ast.Loc.t -> string -> cunit
   val ast_from_string : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> Digest.t * API.Compile.scoped_program
   val unit_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Compile.scoped_program -> cunit
+  val unit_signature_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Compile.scoped_program -> cunit
   val extend_w_units : base:API.Compile.program -> loc:Loc.t -> cunit list -> API.Compile.program
   val parse_goal : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> API.Ast.query
 
@@ -334,6 +336,12 @@ let cc_flags () =
 let source_cache1 = Summary.ref ~local:true ~name:"elpi-units1" Names.KNmap.empty
 let source_cache2 = Summary.ref ~local:true ~name:"elpi-units2" CString.Map.empty
 
+let source_cache_lookup flags hash =
+  let kn = CString.Map.find hash !source_cache2 in
+  let u,cf = Names.KNmap.find kn !source_cache1 in
+  if flags <> cf then raise Not_found (* TODO ERROR *)
+  else kn, u
+
 let last_kn = ref None
 
 let in_source : Names.Id.t -> string option * EC.compilation_unit * EC.flags -> Libobject.obj =
@@ -356,29 +364,38 @@ let in_source : Names.Id.t -> string option * EC.compilation_unit * EC.flags -> 
 
 let dig = ref 0
 
-let intern_unit (hash,u,flags) =
+let intern (hash,_,_ as x) = 
   let id = Names.Id.of_string_soft
     (match hash with Some x -> x | None -> incr dig; string_of_int !dig) in
-  last_kn := None;
-  Lib.add_leaf (in_source id (hash,u,flags));
+  Lib.add_leaf (in_source id x);
   let kn = Option.get !last_kn in
   let u,_ = Names.KNmap.find kn !source_cache1 in
-  Full(kn,u)
+  kn, u
 
+let intern_unit u =
+  let kn, u = intern u in
+  Full(kn,u)
+let intern_unit_signature u =
+  let _kn, u = intern u in
+  Signature (EC.signature u)
+  
 (* Source files can be large, and loaded multiple times since many entry point
    can be implemented in the same file. We share (in memory) the parsed file. *)
 let unit_from_ast ~elpi ~flags h ~base ~loc ast =
   handle_elpi_compiler_errors ~loc (fun () ->
     let u = EC.unit ~elpi ~flags ~base ast in
     intern_unit (h,u,flags))
-  
+
+let unit_signature_from_ast ~elpi ~flags h ~base ~loc ast =
+  handle_elpi_compiler_errors ~loc (fun () ->
+    let u = EC.unit ~elpi ~flags ~base ast in
+    intern_unit_signature (h,u,flags))
+        
 let unit_from_file ~elpi ~base ~loc x : cunit =
   let flags = cc_flags () in
   let hash = Digest.(to_hex @@ file (EP.resolve_file ~elpi ~unit:x ())) in
   try
-    let kn = CString.Map.find hash !source_cache2 in
-    let u,cf = Names.KNmap.find kn !source_cache1 in
-    if flags <> cf then raise Not_found; (* TODO ERROR *)
+    let kn, u = source_cache_lookup flags hash in
     Full (kn,u)
   with Not_found ->
     handle_elpi_compiler_errors ~loc (fun () ->
@@ -386,6 +403,20 @@ let unit_from_file ~elpi ~base ~loc x : cunit =
       let ast = EC.scope ~elpi ast in
       let loc = Loc.initial Loc.ToplevelInput in
       unit_from_ast ~elpi ~flags (Some hash) ~base ~loc ast)
+
+let unit_signature_from_file ~elpi ~base ~loc x : cunit =
+  let flags = cc_flags () in
+  let hash = Digest.(to_hex @@ file (EP.resolve_file ~elpi ~unit:x ())) in
+  try
+    let kn, u = source_cache_lookup flags hash in
+    Signature (EC.signature u)
+  with Not_found ->
+    handle_elpi_compiler_errors ~loc (fun () ->
+      let ast = EP.program ~elpi ~files:[x] in
+      let ast = EC.scope ~elpi ast in
+      let loc = Loc.initial Loc.ToplevelInput in
+      unit_signature_from_ast ~elpi ~flags (Some hash) ~base ~loc ast)
+      
 
 let unit_from_string ~elpi ~base ~loc xloc x : cunit =
   let flags = cc_flags () in
@@ -663,7 +694,9 @@ let get ?(fail_if_not_exists=false) p =
   let unit_from_ast ~elpi ~base ~loc h ast =
     unit_from_ast ~elpi ~base h ~loc ast ~flags:(cc_flags ())
 
-
+let unit_signature_from_ast ~elpi ~base ~loc h ast =
+  unit_signature_from_ast ~elpi ~base h ~loc ast ~flags:(cc_flags ())
+  
 
 (* Units are marshalable, but programs are not *)
 
