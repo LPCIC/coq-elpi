@@ -125,20 +125,26 @@ let elpi_cat = CWarnings.create_category ~name:"elpi" ()
 
 let elpi_depr_cat =
   CWarnings.create_category ~from:[ elpi_cat; CWarnings.CoreCategories.deprecated ] ~name:"elpi.deprecated" ()
-
+let elpi_tc_cat =
+  CWarnings.create_category ~from:[ elpi_cat ] ~name:"elpi.typecheck" ()
+  
 let () = API.Setup.set_error (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_anomaly (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_type_error (fun ?loc s -> err ?loc Pp.(str s))
 let warn = CWarnings.create ~name:"elpi.runtime" ~category:elpi_cat (fun x -> x)
 let warn_impl = CWarnings.create ~name:"elpi.implication-precedence" ~category:elpi_cat (fun x -> x)
 let warn_impl_rex = Re.Str.regexp_string "The standard λProlog infix operator for implication"
-let warn_linear = CWarnings.create ~name:"elpi.linear-variable" ~category:elpi_cat (fun x -> x)
+let warn_linear = CWarnings.create ~name:"elpi.linear-variable" ~category:elpi_tc_cat (fun x -> x)
 let warn_linear_rex = Re.Str.regexp ".*is linear:.*discard.*fresh variable"
+let warn_missing_types = CWarnings.create ~name:"elpi.missing-types" ~category:elpi_tc_cat (fun x -> x)
+let warn_missing_types_rex = Re.Str.regexp_string "Undeclared globals"
+
 let () = API.Setup.set_warn (fun ?loc x ->
   let loc = Option.map to_coq_loc loc in
   let msg = Pp.(hv 0 (Option.cata (fun loc -> Loc.pr loc ++ spc ()) (mt()) loc ++ str x)) in
   if Re.Str.string_match warn_impl_rex x 0 then warn_impl ?loc msg
   else if Re.Str.string_match warn_linear_rex x 0 then warn_linear ?loc msg
+  else if Re.Str.string_match warn_missing_types_rex x 0 then warn_missing_types ?loc msg
   else warn ?loc msg)
 let () = API.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let () = API.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
