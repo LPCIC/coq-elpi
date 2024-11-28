@@ -121,7 +121,7 @@ allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
   J1 is J + 1,
   Name is Prefix ^ {coq.gref->id (indc K)} ^ {any->string J1},
   if (coq.elaborate-skeleton RSkel TyR R ok)
-     (@dropunivs! => coq.env.add-const Name R TyR _ P,
+     ((@dropunivs! => coq.env.add-const Name R TyR _ P),
       Clause = (projK-db K J1 (global (const P)) :- !),
       coq.elpi.accumulate _ "derive.projK.db" (clause _ (before "projK-db:fail") Clause),
       Clauses = [Clause|ClausesRest])

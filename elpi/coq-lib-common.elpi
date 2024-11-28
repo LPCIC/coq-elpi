@@ -136,18 +136,18 @@ parse-attributes.aux [] _ [].
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attlist), !,
   parse-attributes.aux AS Prefix R1,
-  (pi x\ supported-attribute (att x bool) :- !) => parse-attributes.aux L "" Map,
+  ((pi x\ supported-attribute (att x bool) :- !) ==> parse-attributes.aux L "" Map),
   std.append R1 [get-option PS Map] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attmap), !,
   parse-attributes.aux AS Prefix R1,
-  (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
+  ((pi x\ supported-attribute (att x string) :- !) ==> parse-attributes.aux L "" Map),
   std.append R1 [get-option PS Map] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attlabel), !,
   parse-attributes.aux AS Prefix R1,
   std.map L keep-only-label Ll,
-  (pi x\ supported-attribute (att x bool) :- !) => parse-attributes.aux Ll "" Map,
+  ((pi x\ supported-attribute (att x bool) :- !) ==> parse-attributes.aux Ll "" Map),
   parse-attributes.aux L Prefix R2,
   std.append R1 [get-option PS Map|R2] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,

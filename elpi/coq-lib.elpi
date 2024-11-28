@@ -229,7 +229,7 @@ coq.build-indt-decl-aux (pr GR I) IsInd NUPno 0 Ty Kns KtysNu Params (inductive 
   pi i\
     map2 Kns Ktys (gr_name\ ty\ res\
       sigma tmp name\
-      Sub i => copy-arity ty tmp,
+      (Sub i ==> copy-arity ty tmp),
       gr_name = pr _ name,
       res = constructor name tmp)
     (Ks i).
@@ -562,9 +562,9 @@ coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   if2 (HD = global (indt GR)) true
       (HD = pglobal (indt GR) I) true
       fail,
-  @uinstance! I => coq.env.indt GR _ Lno _ Arity Kn Kt,
+  (@uinstance! I ==> coq.env.indt GR _ Lno _ Arity Kn Kt),
   take Lno Args LArgs,
-  @uinstance! I => coq.mk-app {coq.env.global (indt GR)} LArgs IndtLArgs,
+  (@uinstance! I ==> coq.mk-app {coq.env.global (indt GR)} LArgs IndtLArgs),
   % Rty
   coq.subst-prod LArgs Arity ArityArgs,
   coq.bind-ind-arity-no-let IndtLArgs ArityArgs RtyF Rty,

@@ -3,7 +3,7 @@ From elpi Require Import elpi.
 Elpi Tactic double_open.
 Elpi Accumulate lp:{{
   solve (goal _Ctx _Trigger Type _Proof [] as G) GL :-
-    @no-tc! => refine {{ id _ }} G [G2],
+    (@no-tc! ==> refine {{ id _ }} G [G2]),
     coq.ltac.open (refine {{ id _ }}) G2 GL,
     coq.say G2.
 }}.
@@ -123,7 +123,7 @@ Elpi Tactic test_typecheck_in_ctx.
 Elpi Accumulate lp:{{
 
 solve (goal Ctx _Ev (prod _ T x\ app[G x,B x,_]) _ _) _ :-
-  pi x\ decl x `f` T => sigma H HT\
+  pi x\ decl x `f` T ==> sigma H HT\
     coq.typecheck (B x) (Ty x) ok,
     coq.typecheck (G x) (GTy x) ok,
     coq.say [B,Ty,G,GTy],
@@ -282,7 +282,7 @@ Elpi Accumulate lp:{{
   coq.say "YYYYYYYYYYYYYYYYYYYYYYYYYYYY" {attributes},
     coq.parse-attributes {attributes} [ att "foo" bool, att "bar" bool ] Opts,
     coq.say "XXXXXXXXXXXXXXXXXXXXXXXXXXX" Opts,
-    Opts => get-option "foo" tt.
+    (Opts ==> get-option "foo" tt).
 }}.
 
 

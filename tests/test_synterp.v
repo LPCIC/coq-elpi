@@ -99,7 +99,7 @@ Elpi Command acc.
 #[both] Elpi Accumulate Db acc.db.
 #[synterp] Elpi Accumulate lp:{{
   main [int N] :-
-    @local! => coq.elpi.accumulate _ "acc.db" (clause _ _ (p N)),
+    (@local! ==> coq.elpi.accumulate _ "acc.db" (clause _ _ (p N))),
     coq.env.begin-module "TMP" none,
     true
     .

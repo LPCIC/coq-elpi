@@ -97,7 +97,7 @@ reali-match (fun N T B) PRM :- pi x\ not (B x = fun _ _ _), !, do! [
 
 reali-match (fun N T B) PRM :- do! [
   reali T TR,
-  (pi x xR\ reali x xR => reali-match (B x) (BR x xR)),
+  (pi x xR\ (reali x xR ==> reali-match (B x) (BR x xR))),
   coq.name-suffix N 1 N1,
   (pi z \ PRM z = fun N T x\ fun N1 {coq.subst-fun [x] TR} xR\ BR x xR z)
 ].
@@ -164,11 +164,11 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
   LnoR is 2 * Lno,
 
   pi new_name\ sigma KnamesR KtypesR TyR\ (
-    reali Ind (global (indt new_name)) => reali Ty TyR,
-    reali Ind (global (indt new_name)) =>
+    (reali Ind (global (indt new_name)) ==>
+      reali Ty TyR,
       map2 Knames Ktypes (k\ ty\ r\ sigma tyr\
         reali ty tyr, coq.subst-fun [global (indc k)] tyr r)
-      KtypesR,
+      KtypesR),
     map Knames (prefix-indc Prefix) KnamesR,
 
     NewName is Prefix ^ {coq.gref->id (indt GR)},

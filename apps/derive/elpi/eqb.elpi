@@ -204,9 +204,9 @@ fields.aux (dependent TYX FX) (dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb 
   feqb.trm->term TYX TX,
   feqb.trm->term TYY TY,
   mk-eqb-for TX TY EQB,
-  @pi-decl `p` TX n\ pi a\ (feqb.trm->term a n :- !) =>
-  @pi-decl `p` TY m\ pi b\ (feqb.trm->term b m :- !) =>
-    fields.aux (FX a) (FY b) XS YS (R n m),
+  (@pi-decl `p` TX n\ pi a\ (feqb.trm->term a n :- !) ==>
+   @pi-decl `p` TY m\ pi b\ (feqb.trm->term b m :- !) ==>
+    fields.aux (FX a) (FY b) XS YS (R n m)),
   R1 = R X Y.
 
 fields.aux (regular TYX FX) (regular TYY FY)  [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R }} :- 

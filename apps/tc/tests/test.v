@@ -245,7 +245,7 @@ Module HO_9.
   Instance i1 A: c1 (fun x => f (A x) (A x)). Qed.
 
   Elpi Query TC.Solver lp:{{
-    pi F\ sigma T\ decl F `x` {{Type -> Type}} => tc.precomp.instance.is-uvar F => 
+    pi F\ sigma T\ decl F `x` {{Type -> Type}} ==> tc.precomp.instance.is-uvar F ==> 
       tc.precomp.instance {{c1 (fun x => f (lp:F x) (lp:F x))}} T N _ _,
       std.assert! (T = app [{{c1}}, tc.maybe-eta-tm _ _]) "Invalid precompilation".
   }}.

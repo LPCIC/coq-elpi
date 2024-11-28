@@ -29,8 +29,8 @@ main (indt I) Prefix CLs :- std.do! [
  
   /* Correctness */
 
-  config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
-    common FI [] Indu R,
+  (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+    common FI [] Indu R),
 
   %std.assert! (ground_term R) "ww",
   std.assert-ok! (coq.typecheck R Ty) "derive.eqbcorrect: common/correct generates ill typed term", 
@@ -40,8 +40,8 @@ main (indt I) Prefix CLs :- std.do! [
 
   if (has-params? FI) (
 
-    config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
-      common-aux FI [] Indu Rx,
+    (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+      common-aux FI [] Indu Rx),
 
     std.assert-ok! (coq.typecheck Rx Tyx) "derive.eqbcorrect: common-aux/corect generates ill typed term", 
     Namex is Prefix ^ "eqb_correct_aux",
@@ -53,8 +53,8 @@ main (indt I) Prefix CLs :- std.do! [
 
   /* Reflexivity */
 
-  config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
-    common FI [] Indu Rr,
+  (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+    common FI [] Indu Rr),
 
   std.assert-ok! (coq.typecheck Rr Tyr) "derive.eqbcorrect: common/refl generates ill typed term", 
   Namer is Prefix ^ "eqb_refl",
@@ -63,8 +63,8 @@ main (indt I) Prefix CLs :- std.do! [
 
   if (has-params? FI) (
 
-    config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
-      common-aux FI [] Indu Rrx,
+    (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+      common-aux FI [] Indu Rrx),
 
     std.assert-ok! (coq.typecheck Rrx Tyrx) "derive.eqbcorrect: common-aux/refl generates ill typed term", 
     Namerx is Prefix ^ "eqb_refl_aux",
@@ -125,7 +125,7 @@ search-eqcorrect-apply (inductive _ _) [] C R C R.
 pred run-solver i:sealed-goal, i:string.
 run-solver G Name :-
   if (coq.ltac.open (coq.ltac.call Name []) G []) true
-     (@holes! => coq.sealed-goal->string G SG,
+     ((@holes! => coq.sealed-goal->string G SG),
       std.fatal-error {calc ( "solver " ^ Name ^ " fails on goal:\n" ^ SG )}).
 
 pred coq.sealed-goal->string i:sealed-goal, o:string.

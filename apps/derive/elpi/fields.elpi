@@ -3,7 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 macro @pi-trm N T F :-
-  pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
+  pi x xx\ decl x N T ==> (feqb.trm->term xx x :- !) ==> F xx x.
 
 namespace derive.fields {
 
@@ -13,7 +13,7 @@ pred self o:term.
 
 pred std.stop-do! i:list prop.
 std.stop-do! [].
-std.stop-do! [P|PS] :- coq.say P, (pi x\ stop x :- !, fail) => P, !, std.stop-do! PS.
+std.stop-do! [P|PS] :- coq.say P, ((pi x\ stop x :- !, fail) ==> P), !, std.stop-do! PS.
 std.stop-do! [P|_] :- coq.say "STOP" P.
 
 pred main i:inductive, i:string, o:list prop.
@@ -26,20 +26,20 @@ main I Prefix AllCL :- std.do! [
 
   box (global (indt I)) KS FI CLB,
 
-  CLB => fields_t.main FI (global (indt I)) Body_t,
+  (CLB ==> fields_t.main FI (global (indt I)) Body_t),
   std.assert-ok! (coq.typecheck Body_t Ty_t) "derive.fields generates illtyped fields_t",
   Name_t is Prefix ^ "fields_t",
   coq.ensure-fresh-global-id Name_t FName_t,
   coq.env.add-const FName_t Body_t Ty_t ff Fields_t, 
 
-  CLB => fields.main FI (global (indt I)) (global (const Fields_t)) (global (const Tag)) BodySkel,
+  (CLB ==> fields.main FI (global (indt I)) (global (const Fields_t)) (global (const Tag)) BodySkel),
   % we elaborate only for primitive records...
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "derive.fields generates illtyped fields",
   Name is Prefix ^ "fields",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName Body Ty ff Fields, 
 
-  CLB => construct.main FI (global (indt I)) Fields_t Body_c,
+  (CLB ==> construct.main FI (global (indt I)) Fields_t Body_c),
   std.assert-ok! (coq.typecheck Body_c Ty_c) "derive.fields generates illtyped construct",
   Name_c is Prefix ^ "construct",
   coq.ensure-fresh-global-id Name_c FName_c,
@@ -124,7 +124,7 @@ box.declare [K|Ks] [real-box I|Bs] [C|Cs] :-
   coq.env.add-indt D IB,
   coq.env.indt IB _ _ _ _ [KB] _,
   C = box-for K IB KB,
-  C => box.declare Ks Bs Cs.
+  (C ==> box.declare Ks Bs Cs).
 box.declare [K|Ks] [same-box K1|Bs] [box-for K IB KB|Cs] :-
   box-for K1 IB KB,
   box.declare Ks Bs Cs.
@@ -156,8 +156,8 @@ box.aux2 I Ind X [constructor K Args|MoreKs] [real-box (record ID1 S ID2 Fields)
   if (coq.env.informative? Ind) (S = {{ Type }}) (S = {{ Prop }}),
   ID1 is "box_" ^ {coq.gref->id (indt Ind)} ^ "_" ^ {coq.gref->id (indc K)},
   ID2 is "Box_" ^ {coq.gref->id (indt Ind)} ^ "_" ^ {coq.gref->id (indc K)},
-  (feqb.trm->term X I :- !) => box.box-argument ID2 0 Args Fields,
-  args-of K Args => box.aux2 I Ind X MoreKs MoreBoxes.
+  ((feqb.trm->term X I :- !) ==> box.box-argument ID2 0 Args Fields),
+  args-of K Args ==> box.aux2 I Ind X MoreKs MoreBoxes.
 
 pred box.box-argument i:string, i:int, i:arguments, o:record-decl.
 box.box-argument _ _ (stop _) end-record.
@@ -167,7 +167,7 @@ box.box-argument S M (irrelevant T Args) (field [] N TY _\A) :- N is S ^ "_" ^ {
   feqb.trm->term T TY, box.box-argument S {calc (M + 1)} Args A.
 box.box-argument S M (dependent T Args) (field [] N TY A) :- N is S ^ "_" ^ {std.any->string M},
   feqb.trm->term T TY,
-  pi x y\ (feqb.trm->term x y :- !) => box.box-argument S {calc (M + 1)} (Args x) (A y).
+  pi x y\ (feqb.trm->term x y :- !) ==> box.box-argument S {calc (M + 1)} (Args x) (A y).
 
 pred distribute i:(A -> list box-spec), i:((A -> indt-decl) ->  indt-decl -> prop), o:list box-spec.
 distribute (_\ []) _ [].

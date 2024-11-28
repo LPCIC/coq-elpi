@@ -7,7 +7,7 @@ Elpi Accumulate lp:{{
   mk-abstracted-goal ToAbstract Goal  _IndSort Vars _VarsTys Out :-
     std.map2 ToAbstract Vars (t\v\r\ r = copy t v) Subst,
     % Non deterministically we abstract until we obtain a well typed term
-    Subst => copy Goal Out,
+    (Subst ==> copy Goal Out),
     coq.say "trying" {coq.term->string Out},
     coq.typecheck Out _ ok.
 

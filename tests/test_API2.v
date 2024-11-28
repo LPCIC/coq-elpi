@@ -178,7 +178,7 @@ Elpi Query lp:{{
     {{ x }} = global (const C1),
     coq.hints.opaque C1 "core" @opaque!,
     coq.env.begin-module "xx" _,
-    @local! => coq.hints.set-opaque C1 "core" @transparent!,
+    (@local! ==> coq.hints.set-opaque C1 "core" @transparent!),
     coq.env.end-module M,
     coq.hints.opaque C1 "core" @opaque!,
     coq.env.import-module M,
@@ -212,7 +212,7 @@ Elpi Query lp:{{
     {{ x }} = global (const C1),
     coq.hints.opaque C1 "core" @opaque!,
     coq.env.begin-module "xx3" _,
-    @global! => coq.hints.set-opaque C1 "core" @transparent!,
+    (@global! => coq.hints.set-opaque C1 "core" @transparent!),
     coq.env.end-module M,
     coq.hints.opaque C1 "core" @transparent!,
   ]
@@ -255,7 +255,7 @@ Elpi Query lp:{{
   std.do! [ coq.env.begin-module-type "T", coq.env.end-module-type _, ]
 }} lp:{{
   coq.env.begin-module-type "T",
-  @inline-at! 1 => coq.env.add-axiom "T" {{ Type }} _,
+  @inline-at! 1 ==> coq.env.add-axiom "T" {{ Type }} _,
   coq.env.end-module-type _
 
 }}.

@@ -78,7 +78,7 @@ Elpi Tactic barendregt.
 Elpi Accumulate lp:{{
   solve (goal _ _ Ty _ Args as G) GL :-
     coq.say Ty,
-    (pi N N' T F ID ID1\
+    ((pi N N' T F ID ID1\
       copy (fun N T F) (fun N' T1 F1) :- !,
         coq.name->id N ID,
         coq.ltac.fresh-id ID T ID1,
@@ -86,7 +86,7 @@ Elpi Accumulate lp:{{
         coq.id->name ID1 N',
         copy T T1,
         @pi-decl N T x\ copy (F x) (F1 x)) =>
-    copy Ty Ty',
+    copy Ty Ty'),
     refine {{ _ : lp:Ty' }} G GL.
 }}.
 
