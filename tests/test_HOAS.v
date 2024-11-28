@@ -8,7 +8,7 @@ solve G GS :- pi x\
   print_constraints,
   refine {{ fun w : _ => _ }} G GS.
 }}.
-Elpi Typecheck.
+
 
 Lemma test (x : nat) : bool -> True.
 Proof.
@@ -29,7 +29,7 @@ solve (goal [decl T _ _ | _ ] _ _ _ _ as G) GS :-
   coq.say GS.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test  : (forall b: ( forall b : bool, b = b), True) -> True.
 Proof.
@@ -48,7 +48,7 @@ Elpi Command kwd.
 Elpi Accumulate lp:{{
   main L :- coq.say L.
 }}.
-Elpi Typecheck.
+
 
 Elpi kwd fun in as 4 end match return => : := { } ; , | "x" 1 H (fun x => match x as y in False return nat with end).
 
@@ -103,7 +103,7 @@ Fail Elpi Query lp:{{
 Elpi Query lp:{{
   @pi-decl `a` {{ bool }} a\
   coq.say "----------------------------------",
-  @holes! => coq.typecheck (X a a) TY ok,
+  (@holes! => coq.typecheck (X a a) TY ok),
   coq.sigma.print,
   coq.say (X a a) ":" TY.
 }}.
@@ -122,7 +122,7 @@ main [trm T] :-
   std.assert! (coq.reduction.lazy.whd_all T T1) "normal form is not an opinion",
   coq.say "Raw term:" T "\nNice term:" {coq.term->string T} "\nRed:" {coq.term->string T1}.
 }}.
-Elpi Typecheck.
+
 
 From Coq Require Import PrimInt63.
 Open Scope int63_scope.
@@ -142,7 +142,7 @@ Elpi Query lp:{{
   coq.redflags.add coq.redflags.nored [
     coq.redflags.const C,
   ] F,
-  @redflags! F => coq.reduction.cbv.norm T1 T,
+  (@redflags! F => coq.reduction.cbv.norm T1 T),
   std.assert! (T = T2) "normal form is not an opinion".
 }}.
 
@@ -154,7 +154,7 @@ Elpi Query lp:{{
     coq.redflags.const C,
     coq.redflags.fix,
   ] F,
-  @redflags! F => coq.reduction.cbv.norm T1 T,
+  (@redflags! F => coq.reduction.cbv.norm T1 T),
   std.assert! (T = T2) "normal form is not an opinion".
 }}.
 
@@ -167,7 +167,7 @@ Elpi Query lp:{{
     coq.redflags.fix,
     coq.redflags.beta,
   ] F,
-  @redflags! F => coq.reduction.cbv.norm T1 T,
+  (@redflags! F => coq.reduction.cbv.norm T1 T),
   std.assert! (T = T2) "normal form is not an opinion".
 }}.
 
@@ -181,7 +181,7 @@ Elpi Query lp:{{
     coq.redflags.beta,
     coq.redflags.match,
   ] F,
-  @redflags! F => coq.reduction.cbv.norm T1 T,
+  (@redflags! F => coq.reduction.cbv.norm T1 T),
   std.assert! (T = T2) "normal form is not an opinion".
 }}.
 
@@ -246,7 +246,7 @@ Elpi Accumulate lp:{{
     std.assert! (unwind {whd T []} V) "wrong value",
   ].
 }}.
-Elpi Typecheck.
+
 
 Elpi primitive_proj "primitive" (@P.foo) (P.x.(P.p1)) 1 (3%nat).
 Elpi primitive_proj "primitive" (@P.foo) (P.x.(P.p2)) 2 (false).
@@ -266,7 +266,7 @@ main [trm X] :-
   coq.elaborate-skeleton X _ _ ok.
 
 }}.
-Elpi Typecheck.
+
 Elpi ifte (if true then 1 else 2).
 
 (* gref quotations *)
@@ -318,43 +318,43 @@ Elpi Query lp:{{
   GRF = indt Ind,
 
   % coq.env.indt
-  @uinstance! I => coq.env.indt Ind _ _ _ Arity K KTys,
-  @uinstance! I => coq.env.indt Ind _ _ _ Arity K _,
-  @uinstance! I => coq.env.indt Ind _ _ _ _ K KTys,
-  @uinstance! I => coq.env.indt Ind _ _ _ _ K _,
-  @uinstance! I => coq.env.indt Ind _ _ _ _ _ _,
+  (@uinstance! I => coq.env.indt Ind _ _ _ Arity K KTys).
+  (@uinstance! I => coq.env.indt Ind _ _ _ Arity K _).
+  (@uinstance! I => coq.env.indt Ind _ _ _ _ K KTys).
+  (@uinstance! I => coq.env.indt Ind _ _ _ _ K _).
+  (@uinstance! I => coq.env.indt Ind _ _ _ _ _ _).
 
-  @uinstance! _ => coq.env.indt Ind _ _ _ Arity1 K KTys1,
-  @uinstance! _ => coq.env.indt Ind _ _ _ Arity2 K _,
-  @uinstance! _ => coq.env.indt Ind _ _ _ _ K KTys3,
-  @uinstance! _ => coq.env.indt Ind _ _ _ _ K _,
-  @uinstance! _ => coq.env.indt Ind _ _ _ _ _ _,
+  (@uinstance! _ => coq.env.indt Ind _ _ _ Arity1 K KTys1).
+  (@uinstance! _ => coq.env.indt Ind _ _ _ Arity2 K _).
+  (@uinstance! _ => coq.env.indt Ind _ _ _ _ K KTys3).
+  (@uinstance! _ => coq.env.indt Ind _ _ _ _ K _).
+  (@uinstance! _ => coq.env.indt Ind _ _ _ _ _ _).
 
-  @uinstance! A4 => coq.env.indt Ind _ _ _ Arity4 K KTys4,
-  @uinstance! A5 => coq.env.indt Ind _ _ _ Arity5 K _,
-  @uinstance! A6 => coq.env.indt Ind _ _ _ _ K KTys6,
-  @uinstance! A7 => coq.env.indt Ind _ _ _ _ K _,
-  @uinstance! A8 => coq.env.indt Ind _ _ _ _ _ _,
+  (@uinstance! A4 => coq.env.indt Ind _ _ _ Arity4 K KTys4).
+  (@uinstance! A5 => coq.env.indt Ind _ _ _ Arity5 K _).
+  (@uinstance! A6 => coq.env.indt Ind _ _ _ _ K KTys6).
+  (@uinstance! A7 => coq.env.indt Ind _ _ _ _ K _).
+  (@uinstance! A8 => coq.env.indt Ind _ _ _ _ _ _).
 
-  @uinstance! A4 => coq.env.indt Ind _ _ _ Arity4 K KTys4,
-  @uinstance! A5 => coq.env.indt Ind _ _ _ Arity5 K _,
-  @uinstance! A6 => coq.env.indt Ind _ _ _ _ K KTys6,
+  (@uinstance! A4 => coq.env.indt Ind _ _ _ Arity4 K KTys4).
+  (@uinstance! A5 => coq.env.indt Ind _ _ _ Arity5 K _).
+  (@uinstance! A6 => coq.env.indt Ind _ _ _ _ K KTys6).
 
   coq.locate "Build_F" GRB,
   coq.typecheck (pglobal GRB I2) TyB ok,
   GRB = indc B,
 
   % coq.env.indc
-  @uinstance! I2 => coq.env.indc B _ _ _ TyB,
-  @uinstance! I2 => coq.env.indc B _ _ _ _,
+  (@uinstance! I2 => coq.env.indc B _ _ _ TyB).
+  (@uinstance! I2 => coq.env.indc B _ _ _ _).
 
-  @uinstance! _ => coq.env.indc B _ _ _ BTy2,
-  @uinstance! _ => coq.env.indc B _ _ _ _,
+  (@uinstance! _ => coq.env.indc B _ _ _ BTy2).
+  (@uinstance! _ => coq.env.indc B _ _ _ _).
 
-  @uinstance! B1 => coq.env.indc B _ _ _ BTy3,
-  @uinstance! B2 => coq.env.indc B _ _ _ _,
+  (@uinstance! B1 => coq.env.indc B _ _ _ BTy3).
+  (@uinstance! B2 => coq.env.indc B _ _ _ _).
 
-  @uinstance! B1 => coq.env.indc B _ _ _ BTy3,
+  (@uinstance! B1 => coq.env.indc B _ _ _ BTy3).
 
   coq.locate "t" GRt,
   coq.typecheck (pglobal GRt I3) Tyt ok,
@@ -362,101 +362,101 @@ Elpi Query lp:{{
 
   % coq.env.const
   % constant
-  @uinstance! I3 => coq.env.const T BoT TyT,
-  @uinstance! I3 => coq.env.const T BoT _,
-  @uinstance! I3 => coq.env.const T _ TyT,
-  @uinstance! I3 => coq.env.const T _ _,
+  (@uinstance! I3 => coq.env.const T BoT TyT).
+  (@uinstance! I3 => coq.env.const T BoT _).
+  (@uinstance! I3 => coq.env.const T _ TyT).
+  (@uinstance! I3 => coq.env.const T _ _).
 
-  @uinstance! _ => coq.env.const T BoT1 TyT1,
-  @uinstance! _ => coq.env.const T BoT2 _,
-  @uinstance! _ => coq.env.const T _ TyT3,
-  @uinstance! _ => coq.env.const T _ _,
+  (@uinstance! _ => coq.env.const T BoT1 TyT1).
+  (@uinstance! _ => coq.env.const T BoT2 _).
+  (@uinstance! _ => coq.env.const T _ TyT3).
+  (@uinstance! _ => coq.env.const T _ _).
 
-  @uinstance! D1 => coq.env.const T BoT4 TyT4,
-  @uinstance! D2 => coq.env.const T BoT5 _,
-  @uinstance! D3 => coq.env.const T _ TyT5,
-  @uinstance! D4 => coq.env.const T _ _,
+  (@uinstance! D1 => coq.env.const T BoT4 TyT4).
+  (@uinstance! D2 => coq.env.const T BoT5 _).
+  (@uinstance! D3 => coq.env.const T _ TyT5).
+  (@uinstance! D4 => coq.env.const T _ _).
 
-  @uinstance! D1 => coq.env.const T BoT4 TyT4,
-  @uinstance! D2 => coq.env.const T BoT5 _,
-  @uinstance! D3 => coq.env.const T _ TyT5,
+  (@uinstance! D1 => coq.env.const T BoT4 TyT4).
+  (@uinstance! D2 => coq.env.const T BoT5 _).
+  (@uinstance! D3 => coq.env.const T _ TyT5).
 
   coq.locate "n" GRn,
   GRn = const N,
 
   % variable (non polymorphic)
-  @uinstance! _ => coq.env.const N BoN TyN,
-  @uinstance! _ => coq.env.const N BoN _,
-  @uinstance! _ => coq.env.const N _ TyN,
-  @uinstance! _ => coq.env.const N _ _,
+  (@uinstance! _ => coq.env.const N BoN TyN).
+  (@uinstance! _ => coq.env.const N BoN _).
+  (@uinstance! _ => coq.env.const N _ TyN).
+  (@uinstance! _ => coq.env.const N _ _).
 
-  @uinstance! I4 => coq.env.const N BoN TyN,
-  @uinstance! I4 => coq.env.const N BoN _,
-  @uinstance! I4 => coq.env.const N _ TyN,
-  @uinstance! I4 => coq.env.const N _ _,
+  (@uinstance! I4 => coq.env.const N BoN TyN).
+  (@uinstance! I4 => coq.env.const N BoN _).
+  (@uinstance! I4 => coq.env.const N _ TyN).
+  (@uinstance! I4 => coq.env.const N _ _).
 
   % coq.env.typeof
   % indt
-  @uinstance! I => coq.env.typeof GRF TyF,
-  @uinstance! I => coq.env.typeof GRF _,
+  (@uinstance! I => coq.env.typeof GRF TyF).
+  (@uinstance! I => coq.env.typeof GRF _).
 
-  @uinstance! _ => coq.env.typeof GRF TyF2,
-  @uinstance! _ => coq.env.typeof GRF _,
+  (@uinstance! _ => coq.env.typeof GRF TyF2).
+  (@uinstance! _ => coq.env.typeof GRF _).
 
-  @uinstance! C1 => coq.env.typeof GRF TyF3,
-  @uinstance! C2 => coq.env.typeof GRF _,
+  (@uinstance! C1 => coq.env.typeof GRF TyF3).
+  (@uinstance! C2 => coq.env.typeof GRF _).
 
-  @uinstance! C1 => coq.env.typeof GRF TyF3,
+  (@uinstance! C1 => coq.env.typeof GRF TyF3).
 
   % indc
-  @uinstance! I2 => coq.env.typeof GRB TyB,
-  @uinstance! I2 => coq.env.typeof GRB _,
+  (@uinstance! I2 => coq.env.typeof GRB TyB).
+  (@uinstance! I2 => coq.env.typeof GRB _).
 
-  @uinstance! _ => coq.env.typeof GRB TyB2,
-  @uinstance! _ => coq.env.typeof GRB _,
+  (@uinstance! _ => coq.env.typeof GRB TyB2).
+  (@uinstance! _ => coq.env.typeof GRB _).
 
-  @uinstance! C3 => coq.env.typeof GRB TyB3,
-  @uinstance! C4 => coq.env.typeof GRB _,
+  (@uinstance! C3 => coq.env.typeof GRB TyB3).
+  (@uinstance! C4 => coq.env.typeof GRB _).
 
-  @uinstance! C3 => coq.env.typeof GRB TyB3,
+  (@uinstance! C3 => coq.env.typeof GRB TyB3).
 
   % const
-  @uinstance! I3 => coq.env.typeof GRt TyT,
-  @uinstance! I3 => coq.env.typeof GRt _,
+  (@uinstance! I3 => coq.env.typeof GRt TyT).
+  (@uinstance! I3 => coq.env.typeof GRt _).
 
-  @uinstance! _ => coq.env.typeof GRt TyT6,
-  @uinstance! _ => coq.env.typeof GRt _,
+  (@uinstance! _ => coq.env.typeof GRt TyT6).
+  (@uinstance! _ => coq.env.typeof GRt _).
 
-  @uinstance! C5 => coq.env.typeof GRt TyT7,
-  @uinstance! C6 => coq.env.typeof GRt _,
+  (@uinstance! C5 => coq.env.typeof GRt TyT7).
+  (@uinstance! C6 => coq.env.typeof GRt _).
 
-  @uinstance! C5 => coq.env.typeof GRt TyT7,
+  (@uinstance! C5 => coq.env.typeof GRt TyT7).
 
   % var
-  @uinstance! I4 => coq.env.typeof GRn TyN,
-  @uinstance! I4 => coq.env.typeof GRn _,
+  (@uinstance! I4 => coq.env.typeof GRn TyN).
+  (@uinstance! I4 => coq.env.typeof GRn _).
 
-  @uinstance! _ => coq.env.typeof GRn TyN,
-  @uinstance! _ => coq.env.typeof GRn _,
+  (@uinstance! _ => coq.env.typeof GRn TyN).
+  (@uinstance! _ => coq.env.typeof GRn _).
 
   % coq.env.const-body
   % const
-  @uinstance! I3 => coq.env.const-body T BoT,
-  @uinstance! I3 => coq.env.const-body T _,
+  (@uinstance! I3 => coq.env.const-body T BoT).
+  (@uinstance! I3 => coq.env.const-body T _).
 
-  @uinstance! _ => coq.env.const-body T BoT6,
-  @uinstance! _ => coq.env.const-body T _,
+  (@uinstance! _ => coq.env.const-body T BoT6).
+  (@uinstance! _ => coq.env.const-body T _).
 
-  @uinstance! E5 => coq.env.const-body T BoT7,
-  @uinstance! E6 => coq.env.const-body T _,
+  (@uinstance! E5 => coq.env.const-body T BoT7).
+  (@uinstance! E6 => coq.env.const-body T _).
 
-  @uinstance! E5 => coq.env.const-body T BoT7,
+  (@uinstance! E5 => coq.env.const-body T BoT7).
 
   % var
-  @uinstance! I4 => coq.env.const-body N BoN,
-  @uinstance! I4 => coq.env.const-body N _,
+  (@uinstance! I4 => coq.env.const-body N BoN).
+  (@uinstance! I4 => coq.env.const-body N _).
   
-  @uinstance! _ => coq.env.const-body N BoN,
+  (@uinstance! _ => coq.env.const-body N BoN).
   @uinstance! _ => coq.env.const-body N _.
 }}.
 
@@ -465,12 +465,12 @@ Elpi Query lp:{{
   GRF = indt Ind,
 
   % coq.env.indt
-  @uinstance! I => coq.env.indt-decl Ind Decl,
+  (@uinstance! I => coq.env.indt-decl Ind Decl).
   coq.say I Decl,
-  @uinstance! I => coq.env.indt-decl Ind Decl1,
+  (@uinstance! I => coq.env.indt-decl Ind Decl1).
   coq.say I Decl1,
 
-  @uinstance! _ => coq.env.indt-decl Ind Decl2,
+  (@uinstance! _ => coq.env.indt-decl Ind Decl2).
   coq.say Decl2.
 
 }}.
@@ -567,7 +567,7 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
   coq.locate "F" GR,
-  @uinstance! I => coq.say {coq.env.global GR},
+  (@uinstance! I => coq.say {coq.env.global GR}).
   coq.locate "Build_F" GR1,
   coq.say I,
   @uinstance! I => coq.say {coq.env.global GR1}.

@@ -17,7 +17,7 @@ solve (goal _ _ _ _ [str "nocache", int N]) _ :- !,
 
 
 }}.
-Elpi Typecheck.
+
 
 Notation t := 
     (

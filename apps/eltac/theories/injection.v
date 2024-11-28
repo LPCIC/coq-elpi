@@ -17,6 +17,6 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: eltac.injection <equation>".
 }}.
-Elpi Typecheck.
+
 
 Tactic Notation "eltac.injection" constr(T) := elpi injection ltac_term:(T).

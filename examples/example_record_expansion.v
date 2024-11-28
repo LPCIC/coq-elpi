@@ -27,8 +27,33 @@ Elpi Db record.expand.db lp:{{
   % This data base will contain all the expansions performed previously.
   % For example, if f was expandded to f1 we would have this clause:
 
-  % copy (app[f, R | L]) (app[f1, V1, V2 | L1]) :-
-  %   copy R (app[k, V1, V2]), std.map L copy L1.
+  % expand (app[f, R | L]) (app[f1, V1, V2 | L1]) :-
+  %   expand R (app[k, V1, V2]), std.map L expand L1.
+
+% [expand A B] can be used to perform a replacement, eg
+%   (expand (const "foo") (const "bar") :- !) ==> expand A B
+pred expand i:term, o:term.
+
+}}.
+Elpi Accumulate record.expand.db lp:{{
+shorten std.{ map }.
+
+:name "expand:start"
+expand (global _ as C) C :- !.
+expand (pglobal _ _ as C) C :- !.
+expand (sort _ as C) C :- !.
+expand (fun N T F) (fun N T1 F1) :- !,
+  expand T T1, pi x\ expand x x ==> expand (F x) (F1 x).
+expand (let N T B F) (let N T1 B1 F1) :- !,
+  expand T T1, expand B B1, pi x\ expand x x ==> expand (F x) (F1 x).
+expand (prod N T F) (prod N T1 F1) :- !,
+  expand T T1, (pi x\ expand x x ==> expand (F x) (F1 x)).
+expand (app L) (app L1) :- !, map L expand L1.
+expand (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
+  expand Ty Ty1, pi x\ expand x x ==> expand (F x) (F1 x).
+expand (match T Rty B) (match T1 Rty1 B1) :- !,
+  expand T T1, expand Rty Rty1, map B expand B1.
+expand (primitive _ as C) C :- !.
 
 }}.
 
@@ -39,7 +64,7 @@ Elpi Accumulate lp:{{
 % This builds a clause to replace "proji (k y1..yn)" by "yi"
 pred build-iotared-clause i:term, i:(pair constant term), o:prop.
 build-iotared-clause T   (pr Proj Var)
-  (pi L AppVar\ copy(app [global (const Proj),T|L]) AppVar :- coq.mk-app Var L AppVar).
+  (pi L AppVar\ expand(app [global (const Proj),T|L]) AppVar :- coq.mk-app Var L AppVar).
 
 % The core algorithm ----------------------------------------------------------
 
@@ -87,24 +112,25 @@ pred expand-abstraction
   i:list term, i:list term, % variables for the head of the clause (LHS and RHS)
   i:list prop, o:prop. % accumulator for the premises of the clause, and the clause
 
-expand-abstraction Info Rec (prod N S F) [P|PS] OldBo (fun N S Bo) KArgs Iota AccL AccR Premises (pi x\ Clause x) :-
-  pi x\
+expand-abstraction Info Rec (prod N S F) [P|PS] OldBo (fun N S Bo) KArgs Iota AccL AccR Premises (pi x\ Clause x) :- !,
+  pi x\ expand x x ==> 
     expand-abstraction Info Rec
       (F x) PS OldBo (Bo x) {coq.mk-app KArgs [x]} {cons_assoc_opt P x Iota} AccL [x|AccR] Premises (Clause x).
 
-expand-abstraction Info Rec (let N S B F) [P|PS] OldBo (let N S B Bo) KArgs Iota AccL AccR Premises Clause :-
-  pi x\ % a let in is not a real argument to KArgs, but may need a "iota" redex, since the projection could exist
+expand-abstraction Info Rec (let N S B F) [P|PS] OldBo (let N S B Bo) KArgs Iota AccL AccR Premises Clause :- !,
+  pi x\ expand x x ==> 
+    % a let in is not a real argument to KArgs, but may need a "iota" redex, since the projection could exist
     expand-abstraction Info Rec
       (F x) PS OldBo (Bo x) KArgs {cons_assoc_opt P x Iota} AccL AccR Premises Clause.
 
 expand-abstraction Info Rec _ [] OldBo Result  ExpandedRecord Iota AccL AccR Premises Clause :-
   % generate all substitutions
   std.map Iota (build-iotared-clause ExpandedRecord) IotaClauses,
-  ExpansionClause = copy Rec ExpandedRecord,
+  ExpansionClause = expand Rec ExpandedRecord,
   % eta expand the record to obtain a new body (that typechecks)
-  ExpansionClause => copy OldBo NewBo,
+  (ExpansionClause ==> expand OldBo NewBo), !,
   % continue, but schedule iota reductions (pre-existing projections became iota redexes)
-  IotaClauses =>
+  IotaClauses ==>
     expand-spine Info NewBo Result AccL AccR [ExpansionClause|Premises] Clause.
 
 % This predicate travrses the spine of lambdas. When it finds an abstraction
@@ -122,28 +148,28 @@ expand-spine (info R _ _ Projs K KTY as Info) (fun _ (global (indt R)) Bo) Resul
 
 % otherwise we traverse the spine
 expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
-  copy Ty Ty1,
-  pi x y\ copy x y => expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [copy x y|Premises] (Clause x y).
+  expand Ty Ty1, !,
+  pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
 expand-spine Info (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
-  copy Ty Ty1,
-  copy V V1,
-  pi x y\ copy x y => expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [copy x y|Premises] (Clause x y).
+  expand Ty Ty1, !,
+  expand V V1, !,
+  pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
 
 % at the end of the spine we fire the iota redexes and complete the clause
 expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
-  copy X Y,
+  expand X Y, !,
   % we build "app[f,x1..xn|rest]"
   (pi rest1\ coq.mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
   (pi rest2\ coq.mk-app (global NGR) {std.append {std.rev AccR} rest2} (R rest2)),
-  % we can now build the clause "copy (app[f,L1..Ln|Rest1]) (app[f1,R1..Rn|Rest2])"
+  % we can now build the clause "expand (app[f,L1..Ln|Rest1]) (app[f1,R1..Rn|Rest2])"
   % here we quantify only the tails, the other variables were quantified during
   % expand-*
-  Clause = (pi rest1 rest2\ copy (L rest1) (R rest2) :- [!, std.map rest1 copy rest2 | Premises]).
+  Clause = (pi rest1 rest2\ expand (L rest1) (R rest2) :- [!, std.map rest1 expand rest2 | Premises]).
 
 % The entry point of the main algorithm, just fetchs some data and passes initial
 % values for the accumulators.
-pred expand i:inductive, i:gref, i:gref, i:term, o:term, o:prop.
-expand R GR NGR X Y Clause :-
+pred expand-record i:inductive, i:gref, i:gref, i:term, o:term, o:prop.
+expand-record R GR NGR X Y Clause :-
   std.assert! (coq.env.indt R tt 0 0 _ [K] [KTY]) "record is too complex for this example",
   coq.env.projections R Projs,
   expand-spine (info R GR NGR Projs K KTY) X Y [] [] [] Clause.
@@ -155,12 +181,13 @@ expand R GR NGR X Y Clause :-
 % generated. Since we don't know it yet (Coq tells us in response to coq.env.add-const)
 % we postulate a name for that constant "nc" and later replace it with the real one "NC"
 pred expand-gref i:inductive, i:gref, i:string, o:prop.
-expand-gref Record (const C) Name Clause :- !,
+expand-gref Record (const C) Name Clause :- !, std.do! [
   std.assert! (coq.env.const C (some Bo) _) "only transparent constants can be expanded",
-  (pi nc\ expand Record (const C) nc Bo NewBo (NClause nc)),
+  (pi nc\ expand-record Record (const C) nc Bo NewBo (NClause nc)),
   std.assert-ok! (coq.typecheck NewBo _) "illtyped",
   coq.env.add-const Name NewBo _ _ NC,
-  Clause = NClause (const NC).
+  Clause = NClause (const NC),
+].
 
 expand-gref _ (indt _) _ _ :- coq.error "Not implemented yet".
 
@@ -174,12 +201,12 @@ main [str R, str In, str Prefix] :- !,
 
   expand-gref Record GR NewName Clause,
 
-  % We want our clauses to take precensence over the structural ones of "copy"
-  coq.elpi.accumulate _ "record.expand.db" (clause _ (before "copy:start") Clause).
+  % We want our clauses to take precensence over the structural ones of "expand"
+  coq.elpi.accumulate _ "record.expand.db" (clause _ (before "expand:start") Clause).
 
 main _ :- coq.error "usage: Elpi record.expand record_name global_term prefix".
 }}.
-Elpi Typecheck.
+
 
 Record r := { T :> Type; X := T; op : T -> X -> bool }.
 
@@ -190,11 +217,12 @@ Definition f b (t : r) (q := negb b) := fix rec (l1 l2 : list t) :=
   | _, _ => q
   end.
 
-Elpi record.expand r f "expanded_".
+Elpi Trace.
+Elpi record.expand r f "expanded_". 
 Print f.
 Print expanded_f.
 
-(* so that we can see the new "copy" clause *)
+(* so that we can see the new "expand" clause *)
 Elpi Print record.expand "elpi_examples/record.expand".
 
 Definition g t l s h := (forall x y, op t x y = false) /\ f true t l s = h.

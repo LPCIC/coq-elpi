@@ -656,30 +656,30 @@ let mk_indt_decl state univpoly r =
       assert(gls=[]);
       state, E.mkApp uideclc r [up]
 
-let rec do_params_synterp ~depth params k state =
+let rec gparams2lp_synterp ~depth params k state =
   match params with
   | [] -> k state
   | (name,imp,ob,src) :: params ->
       if ob <> None then Coq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let src = E.mkDiscard in
-      let state, tgt = do_params_synterp ~depth params k state in
+      let state, tgt = gparams2lp_synterp ~depth params k state in
       let state, imp = in_elpi_imp ~depth state imp in
       state, in_elpi_parameter name ~imp src tgt
       
       
-let rec do_fields_synterp ~depth fields state =
+let rec gfields2lp_synterp ~depth fields state =
   match fields with
   | [] -> state, in_elpi_indtdecl_endrecord ()
   | (f,({ name; is_coercion; is_canonical } as att)) :: fields ->
       let f = E.mkDiscard in
-      let state, fields = do_fields_synterp ~depth fields state in
+      let state, fields = gfields2lp_synterp ~depth fields state in
       in_elpi_indtdecl_field ~depth state att f fields
       
-let do_record_synterp ~depth ~name ~constructorname arity fields state =
+let grecord2lp_synterp ~depth ~name ~constructorname arity fields state =
   let space, record_name = name in
   let qrecord_name = Id.of_string_soft @@ String.concat "." (space @ [Id.to_string record_name]) in
   let arity = E.mkDiscard in
-  let state, fields = do_fields_synterp ~depth fields state in
+  let state, fields = gfields2lp_synterp ~depth fields state in
   let constructor = match constructorname with
     | None -> Name.Name (Id.of_string ("Build_" ^ Id.to_string record_name))
     | Some x -> Name.Name x in
@@ -687,12 +687,12 @@ let do_record_synterp ~depth ~name ~constructorname arity fields state =
 
 let grecord2lp_synterp ~depth state { Cmd.name; arity; params; constructorname; fields; univpoly } =
   let params = List.map drop_relevance params in
-  let state, r = do_params_synterp ~depth params (do_record_synterp ~depth ~name ~constructorname arity fields) state in
+  let state, r = gparams2lp_synterp ~depth params (grecord2lp_synterp ~depth ~name ~constructorname arity fields) state in
   mk_indt_decl state univpoly r
       
-let grecord2lp ~depth state { Cmd.name; arity; params; constructorname; fields; univpoly } =
+let grecord2lp ~loc ~base ~depth state { Cmd.name; arity; params; constructorname; fields; univpoly } =
   let open Coq_elpi_glob_quotation in
-  let state, r = do_params params (do_record ~name ~constructorname arity fields) ~depth state in
+  let state, r = gparams2lp ~loc ~base params ~k:(grecord2lp ~loc ~base ~name ~constructorname arity fields) ~depth state in
   mk_indt_decl state univpoly r
   
 let contract_params env sigma name params nuparams_given t =
@@ -740,39 +740,39 @@ let ginductive2lp_synterp ~depth state { Cmd.finiteness; name; arity; params; nu
   let nuparams = List.map drop_relevance nuparams in
   let params = List.map drop_relevance params in
   let do_constructor ~depth state (name, ty) =
-    let state, ty = do_params_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
+    let state, ty = gparams2lp_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
     state, in_elpi_indtdecl_constructor (Name.Name name) ty
   in
   let do_inductive_synterp ~depth state =
     let qindt_name = Id.of_string_soft @@ String.concat "." (space @ [Id.to_string indt_name]) in
-    let state, arity = do_params_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
+    let state, arity = gparams2lp_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
     let state, constructors = Coq_elpi_utils.list_map_acc (do_constructor ~depth ) state constructors in
     state, in_elpi_indtdecl_inductive state finiteness (Name.Name qindt_name) arity constructors
   in
-  let state, r = do_params_synterp params (do_inductive_synterp ~depth) ~depth state in
+  let state, r = gparams2lp_synterp params (do_inductive_synterp ~depth) ~depth state in
   mk_indt_decl state univpoly r
   
-let ginductive2lp ~depth state { Cmd.finiteness; name; arity; params; nuparams; nuparams_given; constructors; univpoly } =
+let ginductive2lp ~loc ~depth ~base state { Cmd.finiteness; name; arity; params; nuparams; nuparams_given; constructors; univpoly } =
   let open Coq_elpi_glob_quotation in
   let space, indt_name = name in
   let contract state x =
     let params = List.map drop_relevance params in
     contract_params (get_global_env state) (get_sigma state) indt_name params nuparams_given x in
   let do_constructor ~depth state (name, ty) =
-    let state, ty = do_params nuparams (do_arity (contract state ty)) ~depth state in
+    let state, ty = gparams2lp ~loc ~base nuparams ~k:(garity2lp ~loc ~base (contract state ty)) ~depth state in
     state, in_elpi_indtdecl_constructor (Name.Name name) ty
   in
   let do_inductive ~depth state =
     let short_name = Name.Name indt_name in
     let qindt_name = Id.of_string_soft @@ String.concat "." (space @ [Id.to_string indt_name]) in
-    let state, term_arity = gterm2lp ~depth state (Coq_elpi_utils.mk_gforall arity nuparams) in
-    let state, arity = do_params nuparams (do_arity arity) ~depth state in
-    under_ctx short_name term_arity None (fun ~depth state ->
+    let state, term_arity = gterm2lp ~loc ~depth ~base (Coq_elpi_utils.mk_gforall arity nuparams) state in
+    let state, arity = gparams2lp ~loc ~base nuparams ~k:(garity2lp ~loc ~base arity) ~depth state in
+    under_ctx short_name term_arity None ~k:(fun ~depth state ->
       let state, constructors = Coq_elpi_utils.list_map_acc (do_constructor ~depth ) state constructors in
       state, in_elpi_indtdecl_inductive state finiteness (Name.Name qindt_name) arity constructors, ())
     ~depth state
   in
-  let state, r = do_params params (drop_unit do_inductive) ~depth state in
+  let state, r = gparams2lp ~loc ~base params ~k:(drop_unit do_inductive) ~depth state in
   mk_indt_decl state univpoly r
 
 let in_option = Elpi.(Builtin.option API.BuiltInData.any).API.Conversion.embed
@@ -788,7 +788,7 @@ let ucdeclc = E.Constants.declare_global_symbol "upoly-const-decl"
 
 let gdecl2lp_synterp ~depth state { Cmd.name; params; typ : _; body; udecl } =
   let params = List.map drop_relevance params in
-  let state, typ = do_params_synterp ~depth params (fun state -> state, in_elpi_arity E.mkDiscard) state in
+  let state, typ = gparams2lp_synterp ~depth params (fun state -> state, in_elpi_arity E.mkDiscard) state in
   let body = Option.map (fun _ -> E.mkDiscard) body in
   let name = decl_name2lp name in
   let state, body, gls = in_option ~depth state body in
@@ -799,10 +799,10 @@ let gdecl2lp_synterp ~depth state { Cmd.name; params; typ : _; body; udecl } =
       let state, ud, gls1 = universe_decl.API.Conversion.embed ~depth state ud in
       state, E.mkApp ucdeclc name [body;typ;ud], gls @ gls1
 
-let cdecl2lp ~depth state { Cmd.name; params; typ; body; udecl } =
+let cdecl2lp ~loc ~depth ~base state { Cmd.name; params; typ; body; udecl } =
   let open Coq_elpi_glob_quotation in
-  let state, typ = do_params params (do_arity typ) ~depth state in
-  let state, body = option_map_acc (fun state bo -> gterm2lp ~depth state @@ Coq_elpi_utils.mk_gfun bo params) state body in
+  let state, typ = gparams2lp ~loc ~base params ~k:(garity2lp ~loc ~base typ) ~depth state in
+  let state, body = option_map_acc (fun state bo -> gterm2lp ~loc ~depth ~base (Coq_elpi_utils.mk_gfun bo params) state) state body in
   let name = decl_name2lp name in
   let state, body, gls = in_option ~depth state body in
   match udecl with
@@ -826,14 +826,14 @@ let rec do_context_glob_synterp fields ~depth state =
       let state, imp = in_elpi_imp ~depth state bk in
       state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields]
 
-let rec do_context_glob fields ~depth state =
+let rec do_context_glob ~loc fields ~depth ~base state =
   match fields with
   | [] -> state, E.mkGlobal ctxendc
   | (name,_,bk,bo,ty) :: fields ->
       let open Coq_elpi_glob_quotation in
-      let state, ty = gterm2lp ~depth state ty in
-      let state, bo = option_map_acc (gterm2lp ~depth) state bo in
-      let state, fields, () = under_ctx name ty bo (nogls (do_context_glob fields)) ~depth state in
+      let state, ty = gterm2lp ~loc ~depth ~base ty state in
+      let state, bo = option_map_acc (fun state bo -> gterm2lp ~loc ~depth ~base bo state) state bo in
+      let state, fields, () = Coq_elpi_glob_quotation.under_ctx name ty bo ~k:(nogls (do_context_glob ~loc ~base fields)) ~depth state in
       let state, bo, _ = in_option ~depth state bo in
       let state, imp = in_elpi_imp ~depth state bk in
       state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields]
@@ -848,7 +848,7 @@ let rec do_context_constr coq_ctx csts fields ~depth state =
         | None -> state, None, []
         | Some bo -> let state, bo, gl = map state bo in state, Some bo, gl in
         (* TODO GLS *)
-      let state, fields, gl2 = Coq_elpi_glob_quotation.under_ctx name ty bo (do_context_constr coq_ctx csts fields) ~depth state in
+      let state, fields, gl2 = Coq_elpi_glob_quotation.under_ctx name ty bo ~k:(do_context_constr coq_ctx csts fields) ~depth state in
       let state, bo, gl3 = in_option ~depth state bo in
       let state, imp = in_elpi_imp ~depth state bk in
       state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields], gl0 @ gl1 @ gl2 @ gl3
@@ -898,14 +898,14 @@ let in_elpi_string_arg ~depth state x =
 let in_elpi_int_arg ~depth state x =
   state, E.mkApp intc (CD.of_int x) [], []
 
-let in_elpi_term_arg ~depth state coq_ctx hyps sigma ist glob_or_expr =
+let in_elpi_term_arg ~loc ~base ~depth state coq_ctx hyps sigma ist glob_or_expr =
   let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
   let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
   let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-  let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
+  let state, t = Coq_elpi_glob_quotation.gterm2lp ~loc ~depth ~base g state in
   state, E.mkApp trmc t [], []
  
-let in_elpi_tac_econstr ~depth ?calldepth coq_ctx hyps sigma state x =
+let in_elpi_tac_econstr ~base:() ~depth ?calldepth coq_ctx hyps sigma state x =
   let state, gls0 = set_current_sigma ~depth state sigma in
   let state, t, gls1 = Coq_elpi_HOAS.constr2lp ~depth ?calldepth coq_ctx E.no_constraints state x in
   state, [E.mkApp trmc t []], gls0 @ gls1
@@ -917,10 +917,10 @@ let in_elpi_elab_term_arg ~depth ?calldepth state coq_ctx hyps sigma ist glob_or
   state, E.mkApp trmc t [], gls0 @ gls1
   
 let singleton (state,x,gls) = state,[x],gls
-let rec in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ty ist v =
+let rec in_elpi_ltac_arg ~loc ~depth ~base ?calldepth coq_ctx hyps sigma state ty ist v =
   let open Ltac_plugin in
   let open Tac in
-  let self ty state = in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ty ist in
+  let self ty state = in_elpi_ltac_arg ~loc ~depth ~base ?calldepth coq_ctx hyps sigma state ty ist in
   let self_list ty state l =
     try
       let state, l, gl = API.Utils.map_acc (self ty) state l in
@@ -947,7 +947,7 @@ let rec in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ty ist v =
         let closure = Taccoerce.coerce_to_uconstr v in
         let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
         let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-        let state, t = Coq_elpi_glob_quotation.gterm2lp ~depth state g in
+        let state, t = Coq_elpi_glob_quotation.gterm2lp ~loc ~depth ~base g state in
         state, [E.mkApp trmc t []], []
       with Taccoerce.CannotCoerceTo _ -> try
         let id = Taccoerce.coerce_to_hyp coq_ctx.env sigma v in
@@ -969,20 +969,20 @@ let { CD.cin = of_ltac_tactic; isc = is_ltac_tactic; cout = to_ltac_tactic }, ta
 let in_elpi_ltac_tactic ~depth ?calldepth coq_ctx hyps sigma state t =
   state, [E.mkApp tacc (of_ltac_tactic t) []], []
 
-let in_elpi_tac ~depth ?calldepth coq_ctx hyps sigma state x =
+let in_elpi_tac ~loc ~base ~depth ?calldepth coq_ctx hyps sigma state x =
   let open Tac in
   match x with
   | LTacTactic t -> in_elpi_ltac_tactic ~depth ?calldepth coq_ctx hyps sigma state t
   | LTac(ty,(ist,id)) ->
       let v = try Id.Map.find id ist.Geninterp.lfun with Not_found -> assert false in
       begin try
-        in_elpi_ltac_arg ~depth ?calldepth coq_ctx hyps sigma state ty ist v
+        in_elpi_ltac_arg ~loc ~depth ~base ?calldepth coq_ctx hyps sigma state ty ist v
       with Ltac_plugin.Taccoerce.CannotCoerceTo s ->
         let env = Some (coq_ctx.env,sigma) in
         Ltac_plugin.Taccoerce.error_ltac_variable id env v s end
   | Int x -> singleton @@ in_elpi_int_arg ~depth state x
   | String x -> singleton @@ in_elpi_string_arg ~depth state x
-  | Term (ist,glob_or_expr) -> singleton @@ in_elpi_term_arg ~depth state coq_ctx hyps sigma ist glob_or_expr
+  | Term (ist,glob_or_expr) -> singleton @@ in_elpi_term_arg ~loc ~depth ~base state coq_ctx hyps sigma ist glob_or_expr
 
 let handle_template_polymorphism = function
   | None -> Some false
@@ -1060,7 +1060,7 @@ let interp_mutual_inductive ~flags ~env ~uniform ~private_ind ?typing_flags ~ude
 [%%endif]
 
 
-let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
+let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   let open Cmd in
   let hyps = [] in
   match x with
@@ -1068,7 +1068,7 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let raw_rdecl = of_coq_record_definition raw_rdecl in
       let glob_rdecl = raw_record_decl_to_glob glob_sign raw_rdecl in
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-      let state, t = grecord2lp ~depth state glob_rdecl in
+      let state, t = grecord2lp ~loc ~base ~depth state glob_rdecl in
       state, t, []
   | RecordDecl (_ist,(glob_sign,raw_rdecl)) ->
       let flags, udecl, primitive_proj, kind, records = dest_rdecl raw_rdecl in
@@ -1081,7 +1081,7 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let raw_indt = of_coq_inductive_definition raw_indt in
       let glob_indt = raw_indt_decl_to_glob glob_sign raw_indt in
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-      let state, t = ginductive2lp ~depth state glob_indt in
+      let state, t = ginductive2lp ~loc ~depth ~base state glob_indt in
       state, t, []
   | IndtDecl (_ist,(glob_sign,raw_indt)) -> 
       let flags, udecl, typing_flags, uniform, private_ind, inductives = dest_idecl raw_indt in
@@ -1096,7 +1096,7 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   | ConstantDecl (_ist,(glob_sign,raw_cdecl)) when raw ->
       let state, glob_cdecl = raw_constant_decl_to_glob glob_sign raw_cdecl state in
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-      cdecl2lp ~depth state glob_cdecl
+      cdecl2lp ~loc ~depth ~base state glob_cdecl
   | ConstantDecl (_ist,(glob_sign,({ name; typ = (bl,_) } as raw_cdecl))) ->
       let state, udecl, typ, body, gls0 =
         raw_constant_decl_to_constr ~depth coq_ctx state raw_cdecl in
@@ -1116,7 +1116,7 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   | Context (_ist,(glob_sign,raw_ctx)) when raw ->
       let glob_ctx = raw_context_decl_to_glob glob_sign raw_ctx in
       let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
-      let state, t = do_context_glob glob_ctx ~depth state in
+      let state, t = do_context_glob ~loc glob_ctx ~depth ~base state in
       state, E.mkApp ctxc t [], []
   | Context (_ist,(glob_sign,raw_ctx)) ->
       let sigma, ctx = ComAssumption.interp_context coq_ctx.env (get_sigma state) raw_ctx in
@@ -1127,7 +1127,7 @@ let in_elpi_cmd ~depth ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   | String x -> in_elpi_string_arg ~depth state x
   | Term (ist,glob_or_expr) when raw ->
       let sigma = get_sigma state in
-      in_elpi_term_arg ~depth state coq_ctx hyps sigma ist glob_or_expr
+      in_elpi_term_arg ~loc ~depth ~base state coq_ctx hyps sigma ist glob_or_expr
   | Term (ist,glob_or_expr) ->
       let sigma = get_sigma state in
       in_elpi_elab_term_arg ~depth ?calldepth state coq_ctx hyps sigma ist glob_or_expr

@@ -102,7 +102,7 @@ Elpi Accumulate lp:{{
       (clause _ _ (pi x\ foo x :- x = "there")),
     coq.env.end-module _.
 }}.
-Elpi Typecheck.
+
 
 Fail Elpi Query lp:{{foo _}}.
 Elpi test.use.db.
@@ -175,7 +175,7 @@ main [str "execution-site", str I] :-
   coq.env.end-module _.
 
 }}.
-Elpi Typecheck.
+
 
 Elpi Command declare.test.
 Elpi Accumulate Db global.db.
@@ -188,7 +188,7 @@ main [str "length", int I] :-
   std.assert! (std.length L I) "wrong number of clauses".
 
 }}.
-Elpi Typecheck.
+
 
 
 Module Box.
@@ -228,7 +228,7 @@ Elpi Query lp:{{ % see test_API.v
 
 Elpi Command export.me.
 Elpi Accumulate lp:{{ main A :- coq.say "hello" A. }}.
-Elpi Typecheck.
+
 
 Elpi Export export.me.
 
@@ -254,6 +254,6 @@ main _ :- std.do! [
   @ppmost! => coq.say {coq.term->string {{ fix foo x y {struct x} := match x in bool with false => y | true => 3 end }} },
 ].
 }}.
-Elpi Typecheck.
+
 Elpi test.pp.
 

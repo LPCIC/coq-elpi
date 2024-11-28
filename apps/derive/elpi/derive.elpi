@@ -36,20 +36,20 @@ chain _ [] [].
 chain T [derive Name _ _|FS] CL :- not(selected Name), !,
   if-verbose (coq.say "Skipping derivation" Name "on" T "since the user did not select it"),
   chain T FS CL.
-chain T [derive Name _ AlreadyDone|FS] CL :- (pi x\ stop x :- !, fail) => AlreadyDone, !,
+chain T [derive Name _ AlreadyDone|FS] CL :- ((pi x\ stop x :- !, fail) ==> AlreadyDone), !,
   if-verbose (coq.say "Skipping derivation" Name "on" T "since it has been already run"),
   chain T FS CL.
 chain T [derive Name F _|FS] CL :- get-option "only" _, !, % request this one
   if-verbose (coq.say "Derivation" Name "on" T),
-  @dropunivs! => std.time (F C) Time,
+  (@dropunivs! ==> std.time (F C) Time),
   if-verbose (coq.say "Derivation" Name "on" T "took" Time),
-  C => chain T FS CS,
+  (C ==> chain T FS CS),
   std.append C CS CL.
 chain T [derive Name F _|FS] CL :- % all are selected, we can fail
   if-verbose (coq.say "Derivation" Name "on" T),
-  (pi x\ stop x :- !, fail) => @dropunivs! => std.time (F C) Time, !,
+  ((pi x\ stop x :- !, fail) ==> @dropunivs! ==> std.time (F C) Time), !,
   if-verbose (coq.say "Derivation" Name "on" T "took" Time),
-  C => chain T FS CS,
+  (C ==> chain T FS CS),
   std.append C CS CL.
 chain T [derive F _ _|FS] CL :-
   if-verbose (coq.say "Derivation" F "on" T "failed, continuing"),
@@ -105,14 +105,14 @@ main-derive GR InModule CL :- get-option "recursive" tt, !,
   coq.gref.set.elements AllDeps AllDepsL,
   std.filter AllDepsL indt-or-const Deps,
   main.aux InModule Deps [] CL1,
-  CL1 => main1 GR InModule CL2,
+  (CL1 ==> main1 GR InModule CL2),
   std.append CL1 CL2 CL.
 main-derive GR InModule CL :- main1 GR InModule CL.
 
 pred main.aux i:bool, i:list gref, i:list prop, o:list prop.
 main.aux _ [] X X.
 main.aux InModule [GR|GRS] Acc CL :-
-  (pi X\get-option "only" X :- !, fail) => Acc => main-derive GR InModule CL1,
+  ((pi X\get-option "only" X :- !, fail) ==> Acc ==> main-derive GR InModule CL1),
   main.aux InModule GRS {std.append CL1 Acc} CL.
 
 pred validate-recursive i:prop, o:derive.
@@ -170,11 +170,11 @@ decl+main.post TypeName I DS CL :- std.do! [
 
   coq.indt-decl->implicits DS IndImpls KsImpls,
   if (coq.any-implicit? IndImpls)
-     (@global! => coq.arguments.set-implicit (indt I) [IndImpls])
+     (@global! ==> coq.arguments.set-implicit (indt I) [IndImpls])
      true,
   std.forall2 KsImpls KS (i\k\
     if (coq.any-implicit? i)
-       (@global! => coq.arguments.set-implicit (indc k) [i])
+       (@global! ==> coq.arguments.set-implicit (indc k) [i])
        true
     ),
   std.map-filter CL export? P,
@@ -183,6 +183,6 @@ decl+main.post TypeName I DS CL :- std.do! [
 
 pred short-alias i:id, i:term.
 short-alias _ _ :- get-option "no_alias" tt, !, true.
-short-alias ID T :- @global! => coq.notation.add-abbreviation ID 0 T ff _.
+short-alias ID T :- @global! ==> coq.notation.add-abbreviation ID 0 T ff _.
 
 }

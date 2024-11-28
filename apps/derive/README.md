@@ -525,7 +525,7 @@ Elpi Accumulate lp:{{
   pred usage.
   usage :- coq.error "Usage: derive.myder <object name>".
 }}. 
-Elpi Typecheck.
+
 ```
 
 This is enough to run the derivation via something like
@@ -575,7 +575,6 @@ From elpi.apps Require Export
   ...
   myder (* new derivation *)
 . 
-Elpi Typecheck derive.
 ```
 
 So when the user `Import`s `better_std` he gets a fully loaded `derive`.

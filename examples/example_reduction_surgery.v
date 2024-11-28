@@ -22,11 +22,11 @@ solve (goal _ _ Ty _ [str M] as G) GS :-
   coq.redflags.add coq.redflags.nored
     [ coq.redflags.beta, coq.redflags.fix, coq.redflags.match | DELTAFLAGS ]
     F,
-  @redflags! F => coq.reduction.cbv.norm Ty Ty1,
+  (@redflags! F ==> coq.reduction.cbv.norm Ty Ty1),
   refine {{ _ : lp:Ty1 }} G GS. % to leave a vmcast one needs to call ltac1
 
 }}.
-Elpi Typecheck.
+
 
 
 Module ToRed.

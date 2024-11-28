@@ -8,7 +8,7 @@ Module FO_prod. Section XX.
   Class Ccc (i : Prop).
   Global Instance i P : Ccc (forall (x: A), P x y). Qed.
 
-  Elpi Typecheck TC.Solver.
+  
   Goal forall (P : nat -> A -> B -> Prop), Ccc (forall x, P 0 x y).
     apply _.
   Qed.

@@ -20,7 +20,7 @@ Elpi Accumulate lp:{{
     thenl [open dup, open clear] (seal G) GL.
 
 }}.
-Elpi Typecheck.
+
 
 Goal forall z x : nat, True.
 intros z x.
@@ -45,7 +45,7 @@ Elpi Accumulate lp:{{
     coq.env.add-const "it" Bo _ @transparent! C_.
 
 }}.
-Elpi Typecheck.
+
 Elpi define_it.
 
 Print it.
@@ -55,3 +55,45 @@ Print elpi_subproof.
 About elpi_subproof.
 
 Print Assumptions it.
+
+
+Elpi Tactic test_dep.
+Elpi Accumulate lp:{{
+  solve (goal _ _ {{ _ -> _ }} _ _) _.
+}}.
+
+Goal nat -> nat.
+elpi test_dep.
+Abort.
+
+Goal forall T : Type, T -> T.
+Fail elpi test_dep.
+intro T.
+elpi test_dep.
+Abort.
+
+
+
+Elpi Tactic barendregt.
+Elpi Accumulate lp:{{
+  solve (goal _ _ Ty _ Args as G) GL :-
+    coq.say Ty,
+    ((pi N N' T F ID ID1\
+      copy (fun N T F) (fun N' T1 F1) :- !,
+        coq.name->id N ID,
+        coq.ltac.fresh-id ID T ID1,
+        if (Args = []) true (std.assert! (ID = ID1) "collision"),
+        coq.id->name ID1 N',
+        copy T T1,
+        @pi-decl N T x\ copy (F x) (F1 x)) =>
+    copy Ty Ty'),
+    refine {{ _ : lp:Ty' }} G GL.
+}}.
+
+Axiom map : (nat -> nat) -> nat.
+Lemma test x : map (fun x => x + 1) = x.
+Proof.
+Fail elpi barendregt True.
+elpi barendregt.
+elpi barendregt True.
+Abort.

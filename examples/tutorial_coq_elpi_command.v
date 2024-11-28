@@ -53,7 +53,7 @@ Elpi Accumulate lp:{{
   main Arguments :- coq.say "Hello" Arguments.
 
 }}.
-Elpi Typecheck.
+
 
 (*|
 
@@ -80,10 +80,11 @@ Accumulating code via inline text or file is equivalent, the AST of `code`
 is stored in the .vo file (the external file does not need to be installed).
 We postpone the description of data bases to a dedicated section.
 
-Once all the code is accumulated `Elpi Typecheck` verifies that the
-code does not contain the most frequent kind of mistakes. This command
-considers some mistakes minor and only warns about them. You can
-pass `-w +elpi.typecheck` to `coqc` to turn these warnings into errors.
+When some code is accumulated Elpi verifies that the
+code does not contain the most frequent kind of mistakes, via some
+type checking and linting. Some mistakes are minor and Elpi only warns about
+them. You can pass `-w +elpi.typecheck` to `coqc` to turn these warnings into
+errors.
 
 We can now run our program!
 
@@ -192,7 +193,7 @@ Elpi Accumulate lp:{{
     coq.say "The type of" T "is" Ty.
 
 }}.
-Elpi Typecheck.
+
 
 Elpi check_arg (1 = 0).
 Fail Elpi check_arg (1 = true). (* .fails *)
@@ -240,7 +241,7 @@ Elpi Accumulate lp:{{
     coq.say "Ty=" Ty.
     
 }}.
-Elpi Typecheck.
+
 
 Elpi elaborate_arg (1 = true).
 
@@ -292,7 +293,7 @@ main [str IndName, str Name] :-
   coq.env.add-const Name Nnat _ _ _. % save it
 
 }}.
-Elpi Typecheck.
+
 
 Elpi constructors_num bool nK_bool.
 Print nK_bool.
@@ -351,11 +352,11 @@ Elpi Accumulate lp:{{
 
     % let's start to craft the new declaration by putting a
     % parameter A which has the type of P
-    NewDecl = parameter "A" explicit PTy Decl',
+    (NewDecl : indt-decl) = parameter "A" explicit PTy Decl',
 
     % let's make a copy, capturing all occurrences of P with a
     % (which stands for the parameter)
-    (pi a\ copy P a => copy-indt-decl Decl (Decl' a)),
+    (pi a\ copy P a ==> copy-indt-decl Decl (Decl' a)),
 
     % to avoid name clashes, we rename the type and its constructors
     % (we don't need to rename the parameters)
@@ -371,7 +372,7 @@ Elpi Accumulate lp:{{
     coq.env.add-indt DeclRenamed _.
 
 }}.
-Elpi Typecheck.
+
 
 Inductive tree := leaf | node : tree -> option nat -> tree -> tree.
 
@@ -438,7 +439,7 @@ A Db can be created with the command:
 
 |*)
 
-Elpi Db name.db lp:{{ some code. }}.
+Elpi Db name.db lp:{{ pred some-pred. }}.
 
 (*|
 
@@ -453,7 +454,7 @@ Moreover the Db can be extended by Elpi programs themselves
 thanks to the API :builtin:`coq.elpi.accumulate`, enabling code to save a state
 which is then visible at subsequent runs.
 
-The initial contents of a Db, `some code` in the example
+The initial contents of a Db, `pred some-pred.` in the example
 above, is usually just the type declaration for the predicates part of the Db,
 and maybe a few default rules.
 Let's define a Db.
@@ -490,7 +491,7 @@ Elpi Accumulate lp:{{
     coq.say Name "is" A "years old".
 
 }}.
-Elpi Typecheck. 
+ 
 
 Fail Elpi age bob.  (* .fails *)
 
@@ -528,7 +529,7 @@ Elpi Accumulate lp:{{
       (clause _ (before "age.fail") TheNewRule).
   
 }}.
-Elpi Typecheck.
+
 
 Elpi set_age "alice" 21.
 Elpi age "alice".
@@ -570,7 +571,7 @@ Elpi Accumulate lp:{{
   print-rule (age P N) :- coq.say P "is" N "years old".
   
 }}.
-Elpi Typecheck.
+
 Elpi print_all_ages.
 
 (*|
@@ -635,7 +636,7 @@ Elpi Accumulate lp:{{
       att "more.stuff" int,
     ] Opts,
     coq.say "options=" Opts,
-    Opts => some-code.
+    Opts ==> some-code.
 
 }}.
 
@@ -664,7 +665,7 @@ final user does not need to type `Elpi` to invoke them.
 
 Elpi Command Say.
 Elpi Accumulate lp:{{ main [str S] :- coq.say S. }}.
-Elpi Typecheck.
+
 
 Elpi Export Say. (* extend the Coq command grammar *)
 
@@ -687,7 +688,7 @@ Elpi Accumulate lp:{{
   main _ :-
     coq.error "Parse error! Use: go <from> => <to> / <via>".
 }}.
-Elpi Typecheck.
+
 Elpi Export Go.
 
 Go source => target / plane.
@@ -706,7 +707,7 @@ as the previous one.
 
 Elpi Command bad.
 Elpi Accumulate lp:{{ main []. }}.
-Elpi Typecheck.
+
 Elpi Export bad.
 
 Fail bad 1.  (* .fails *)
@@ -771,7 +772,7 @@ Elpi Command hello_synterp.
 Elpi Accumulate lp:{{
   main [const-decl Name Body _] :- coq.say "interp" Name ":=" Body.
 }}.
-Elpi Typecheck.
+
 
 Elpi hello_synterp Definition x := 2.
 
@@ -797,7 +798,7 @@ Elpi Accumulate lp:{{
     coq.locate "w" (const GR),
     coq.env.const GR (some {{ 3 }}) _.
 }}.
-Elpi Typecheck.
+
 
 Fail Elpi import_module Notations. (* .fails .in .messages *)
 
@@ -807,7 +808,7 @@ Fail Elpi import_module Notations. (* .fails .in .messages *)
     coq.locate-module M MP,
     coq.env.import-module MP.
 }}.
-Elpi Typecheck.
+
 
 Elpi import_module Notations.
 
@@ -853,7 +854,7 @@ Elpi Accumulate lp:{{
     coq.env.end-module MP,
     coq.say "The module is" MP.
 }}.
-Elpi Typecheck.
+
 
 Elpi mk_random_module.
 
@@ -904,7 +905,7 @@ Elpi Accumulate lp:{{
   replay-missing.
 }}.
 
-Elpi Typecheck.
+
 
 Elpi put_inside 4 Definition foo (n : nat) := n + 2.
 
@@ -946,7 +947,7 @@ Elpi Accumulate lp:{{
     replay-missing.
   replay-missing.
 }}.
-Elpi Typecheck.
+
 
 Elpi mk_next_module.
 Elpi mk_next_module.

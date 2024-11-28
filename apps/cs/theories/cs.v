@@ -24,5 +24,4 @@ solve (goal Ctx _ _Ty Sol [trm Proj, trm Rhs]) _ :-
   true.
 
 }}.
-Elpi Typecheck canonical_solution.
 Elpi CS canonical_solution.

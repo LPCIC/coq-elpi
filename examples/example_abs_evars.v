@@ -30,7 +30,7 @@ bind I M T T1 :- M > I, !,
   T1 = {{ forall x, lp:(B x) }},   
   N is I + 1,
   pi x\                           % we allocate the fresh symbol for (abs M)
-    (copy (abs N) x :- !) =>      % we schedule the replacement (abs M) -> x
+    (copy (abs N) x :- !) ==>     % we schedule the replacement (abs M) -> x
     bind N M T (B x).
 bind M M T T1 :- copy T T1.         % we perform all the replacements
 
@@ -41,9 +41,9 @@ bind M M T T1 :- copy T T1.         % we perform all the replacements
 pred abs-evars i:term, o:term, o:int.
 abs-evars T1 T3 M :- std.do! [
   % we put (abs N) in place of each occurrence of the same hole
-  (pi T Ty N N' M \ fold-map T N (abs M) M :- var T, not (seen? T _), !, coq.typecheck T Ty ok, fold-map Ty N _ N', M is N' + 1, seen! T M) =>
-  (pi T N M \ fold-map T N (abs M) N :- var T, seen? T M, !) =>
-    fold-map T1 0 T2 M,
+  ((pi T Ty N N' M \ fold-map T N (abs M) M :- var T, not (seen? T _), !, coq.typecheck T Ty ok, fold-map Ty N _ N', M is N' + 1, seen! T M) ==>
+   (pi T N M \ fold-map T N (abs M) N :- var T, seen? T M, !) ==>
+     fold-map T1 0 T2 M),
   % we abstract M holes (M abs nodes)
   bind 0 M T2 T3,
   % cleanup constraint store
@@ -91,7 +91,7 @@ solve (goal _ _ T _ [] as G) GL :-
 refine R G GL.
 
 }}.
-Elpi Typecheck.
+
 Elpi Export abs_evars.
 
 Fail Lemma test : forall x, x = x.

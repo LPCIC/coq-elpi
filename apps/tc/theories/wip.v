@@ -4,7 +4,6 @@
 Declare ML Module "coq-elpi.tc".
 From elpi Require Import elpi.
 
-From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc.elpi Extra Dependency "ho_precompile.elpi" as ho_precompile.
 From elpi.apps.tc.elpi Extra Dependency "ho_compile.elpi" as ho_compile.
@@ -42,7 +41,7 @@ Elpi Accumulate lp:{{
   main L :- 
     std.forall {args->str-list L} add-lemma->forward.
 }}.
-Elpi Typecheck.
+
 
 Elpi Command AddAlias.
 Elpi Accumulate Db tc.db.
@@ -55,4 +54,4 @@ Elpi Accumulate lp:{{
   main [trm New, trm Old] :-
     add-tc-db _ _ (alias New Old).
 }}.
-Elpi Typecheck. *)
+ *)

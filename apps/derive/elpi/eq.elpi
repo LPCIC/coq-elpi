@@ -139,8 +139,8 @@ quantify-eq-db-idx (eq-db A B C :- L)
 pred quantify-eq-db-param i:prop, o:prop.
 quantify-eq-db-param (pi x f\ C x f) (pi x f\ C1 x f) :-
   pi x f\ quantify-eq-db-param (C x f) (C1 x f).
-quantify-eq-db-param (eq-db A B C :- L)
-                         (pi x f\ eq-db (A1 x) (B1 x) (C1 x f) :- L1 x f) :-
+quantify-eq-db-param (eq-db A B C :- (L : list prop))
+                         (pi x f\ eq-db (A1 x) (B1 x) (C1 x f) :- (L1 x f : list prop)) :-
   pi x f\
     append [eq-db x x f] L (L1 x f),
     coq.mk-app A [x] (A1 x),

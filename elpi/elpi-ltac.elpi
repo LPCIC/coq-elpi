@@ -11,7 +11,7 @@ refine T G GS :- refine.elaborate T G GS.
 pred refine.elaborate i:term, i:goal, o:list sealed-goal.
 refine.elaborate T (goal _ RawEv Ty Ev _) GS :-
   rm-evar RawEv Ev,
-  @keepunivs! => coq.elaborate-skeleton T Ty TR ok,
+  (@keepunivs! => coq.elaborate-skeleton T Ty TR ok),
   coq.ltac.collect-goals TR GS _,
   RawEv = T,
   Ev = TR.
@@ -82,7 +82,7 @@ open T (nabla G) O :- (pi x\ open T (G x) (NG x)), private.distribute-nabla NG O
 open _ (seal (goal _ _ _ Solution _)) [] :- not (var Solution), !. % solved by side effect
 open T (seal (goal Ctx _ _ _ _ as G)) O :-
   std.filter Ctx private.not-already-assumed Ctx1,
-  Ctx1 => T G O,
+  (Ctx1 => T G O),
   if (var O)
      (G = goal _ _ _ P _, coq.ltac.collect-goals P O1 O2, std.append O1 O2 O)
      true.

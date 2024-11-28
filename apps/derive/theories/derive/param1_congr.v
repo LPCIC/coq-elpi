@@ -30,7 +30,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.param1.congr <inductive type name> [<output prefix>]".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File param1_congr.

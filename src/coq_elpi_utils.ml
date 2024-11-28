@@ -11,21 +11,97 @@ let interp_quotations = API.Quotation.new_quotations_descriptor ()
 let interp_hoas = API.RawData.new_hoas_descriptor ()
 let interp_state = API.State.new_state_descriptor ()
 
+let source_name_of_fname = function
+  | Loc.InFile { file } -> Format.asprintf "%s" file 
+  | Loc.ToplevelInput -> "(stdin)" 
+
+let fname_of_source_name ~dirpath s =
+  if s = "(stdin)" then Loc.ToplevelInput
+  else Loc.InFile { dirpath; file = s }
+
 let of_coq_loc l =
+  let client_payload =
+    match l.Loc.fname with
+    | ToplevelInput -> None
+    | InFile { dirpath } -> Option.map Obj.repr dirpath in
   {
-    API.Ast.Loc.source_name = (match l.Loc.fname with Loc.InFile { file } -> file | Loc.ToplevelInput -> "(stdin)");
+    API.Ast.Loc.client_payload;
+    source_name = source_name_of_fname l.Loc.fname;
     source_start = l.Loc.bp;
     source_stop = l.Loc.ep;
     line = l.Loc.line_nb;
     line_starts_at = l.Loc.bol_pos;
   }
 
-let to_coq_loc { API.Ast.Loc.source_name; line; line_starts_at; source_start; source_stop } =
-  Loc.create (Loc.InFile { dirpath = None; file = source_name }) line line_starts_at source_start source_stop
+let to_coq_loc { API.Ast.Loc.source_name; client_payload; line; line_starts_at; source_start; source_stop } =
+  let dirpath = Option.map Obj.obj client_payload in
+  Loc.create (fname_of_source_name ~dirpath source_name) line line_starts_at source_start source_stop
 
 let err ?loc msg =
   let loc = Option.map to_coq_loc loc in
   CErrors.user_err ?loc msg
+
+let pp_oloc = function
+  | None -> Pp.mt ()
+  | Some loc -> Pp.str @@ Format.asprintf "%a " API.Ast.Loc.pp loc
+
+(* If the error comes from another file (see Loc.mergeable) Coq drops the precise loc
+   and reports it on the whole execution site. If so, we print the
+   more precise loc as part of the error message. 
+   
+   We also copy here Loc.merge since it may anyway discard the better loc,
+   in that case we feedback it
+   *)
+let coq_would_drop_loc2 loc1 loc2 =
+let open Loc in
+if loc1.bp < loc2.bp then
+  if loc1.ep < loc2.ep then false
+  else true
+else if loc2.ep < loc1.ep then false
+else false
+
+[%%if coq = "8.20"]
+let feedback_error loc m = Feedback.(feedback (Message(Error,loc,m)))
+[%%else]
+let feedback_error loc m = Feedback.(feedback (Message(Error,loc,[],m)))
+[%%endif]
+
+let patch_loc_source execution_loc error_loc msg =
+  match execution_loc, error_loc with
+  | _, None -> msg, execution_loc
+  | _, Some elpiloc when Loc.finer (Some execution_loc) (Some elpiloc) -> msg, elpiloc
+  | { Loc.fname },Some ({ Loc.fname = elpiname } as elpiloc) when fname = elpiname ->
+      (* same file, far location, we complementwith a feedback *)
+      feedback_error (Some elpiloc) msg;
+      Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc    
+  | _, Some elpiloc ->
+      (* external file *)
+      Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc
+
+let handle_elpi_compiler_errors ~loc ?error_header f =
+  let w_header m =
+    match error_header with
+    | None -> m
+    | Some x -> Pp.(v 0 (str x ++ str":" ++ spc() ++ m)) in
+  try f ()
+  with
+  | Sys_error msg ->
+    CErrors.user_err ~loc (w_header (Pp.str msg))
+  | Elpi.API.Compile.CompileError(oloc, msg) as e ->
+    let _,info = Exninfo.capture e in
+    let msg, loc = patch_loc_source loc (Option.map to_coq_loc oloc) (Pp.str msg) in
+    CErrors.user_err ~info ~loc (w_header msg)
+  | Elpi.API.Parse.ParseError(oloc, msg) as e ->
+    let _,info = Exninfo.capture e in
+    let msg, loc = patch_loc_source loc (Some (to_coq_loc oloc)) (Pp.str msg) in
+    CErrors.user_err ~info ~loc (w_header msg)
+  | Gramlib.Grammar.Error _ as e ->
+    let _,info = Exninfo.capture e in
+    let cloc = Loc.get_loc info in
+    let msg = CErrors.print_no_report e in
+    let msg, loc = patch_loc_source loc cloc msg in
+    CErrors.user_err ~info ~loc (w_header msg)
+
 
 exception LtacFail of int * Pp.t
 
@@ -49,12 +125,27 @@ let elpi_cat = CWarnings.create_category ~name:"elpi" ()
 
 let elpi_depr_cat =
   CWarnings.create_category ~from:[ elpi_cat; CWarnings.CoreCategories.deprecated ] ~name:"elpi.deprecated" ()
-
+let elpi_tc_cat =
+  CWarnings.create_category ~from:[ elpi_cat ] ~name:"elpi.typecheck" ()
+  
 let () = API.Setup.set_error (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_anomaly (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_type_error (fun ?loc s -> err ?loc Pp.(str s))
-let warn = CWarnings.create ~name:"runtime" ~category:elpi_cat Pp.str
-let () = API.Setup.set_warn (fun ?loc x -> warn ?loc:(Option.map to_coq_loc loc) x)
+let warn = CWarnings.create ~name:"elpi.runtime" ~category:elpi_cat (fun x -> x)
+let warn_impl = CWarnings.create ~name:"elpi.implication-precedence" ~category:elpi_cat (fun x -> x)
+let warn_impl_rex = Re.Str.regexp_string "The standard λProlog infix operator for implication"
+let warn_linear = CWarnings.create ~name:"elpi.linear-variable" ~category:elpi_tc_cat (fun x -> x)
+let warn_linear_rex = Re.Str.regexp ".*is linear:.*discard.*fresh variable"
+let warn_missing_types = CWarnings.create ~name:"elpi.missing-types" ~category:elpi_tc_cat (fun x -> x)
+let warn_missing_types_rex = Re.Str.regexp_string "Undeclared globals"
+
+let () = API.Setup.set_warn (fun ?loc x ->
+  let loc = Option.map to_coq_loc loc in
+  let msg = Pp.(hv 0 (Option.cata (fun loc -> Loc.pr loc ++ spc ()) (mt()) loc ++ str x)) in
+  if Re.Str.string_match warn_impl_rex x 0 then warn_impl ?loc msg
+  else if Re.Str.string_match warn_linear_rex x 0 then warn_linear ?loc msg
+  else if Re.Str.string_match warn_missing_types_rex x 0 then warn_missing_types ?loc msg
+  else warn ?loc msg)
 let () = API.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let () = API.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let nYI s = err Pp.(str "Not Yet Implemented: " ++ str s)
@@ -145,8 +236,8 @@ let locate_gref s =
     let qualid = Libnames.qualid_of_string s in
     locate_simple_qualid qualid
 
-let uint63 : Uint63.t Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
+let (uint63c, uint63) : Uint63.t Elpi.API.RawOpaqueData.cdata * Uint63.t Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
   declare
     {
       name = "uint63";
@@ -158,8 +249,8 @@ let uint63 : Uint63.t Elpi.API.Conversion.t =
       constants = [];
     }
 
-let float64 : Float64.t Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
+let (float64c, float64) : Float64.t Elpi.API.RawOpaqueData.cdata * Float64.t Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
   declare
     {
       name = "float64";
@@ -171,8 +262,8 @@ let float64 : Float64.t Elpi.API.Conversion.t =
       constants = [];
     }
 
-let pstring : Pstring.t Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
+let (pstringc, pstring) : Pstring.t Elpi.API.RawOpaqueData.cdata * Pstring.t Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
   declare {
     name = "pstring";
     doc = "";
@@ -189,8 +280,8 @@ let debug = CDebug.create ~name:"elpi" ()
 
 let elpitime_flag, elpitime = CDebug.create_full ~name:"elpitime" ()
 
-let projection : Names.Projection.t Elpi.API.Conversion.t =
-  let open Elpi.API.OpaqueData in
+let (projectionc, projection) : Names.Projection.t Elpi.API.RawOpaqueData.cdata * Names.Projection.t Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
   declare
     {
       name = "projection";

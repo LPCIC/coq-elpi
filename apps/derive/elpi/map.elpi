@@ -112,7 +112,7 @@ bo-params N Lno Ity1 Ity2 T OT Ps R :-
 bo-params _ _ _ _ _ _ _ _ :-
   stop "derive.map: Indexed data types not supported".
 
-pred map-pi i:A, o:list prop.
+pred map-pi i:any, o:list prop.
 map-pi (x\ []) [].
 map-pi (x\ [X x| XS x]) [pi x\ X x | YS] :- map-pi XS YS.
 

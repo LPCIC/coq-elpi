@@ -13,8 +13,10 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 
 Elpi Db derive.projK.db lp:{{
-
 type projK-db constructor -> int -> term -> prop.
+}}.
+#[superglobal] Elpi Accumulate derive.projK.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.projK.db lp:{{
 
 :name "projK-db:fail"
 projK-db GR N _ :-
@@ -35,7 +37,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.projK <inductive type name> [<output prefix>]".
 }}.
-Elpi Typecheck.
+
 
 
 (* hook into derive *)

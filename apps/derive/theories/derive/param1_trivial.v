@@ -70,10 +70,21 @@ Register is_eq_trivial as elpi.derive.is_eq_trivial.
 Elpi Db derive.param1.trivial.db lp:{{
 
   pred param1-trivial-done i:inductive.
-  pred param1-inhab-done i:inductive.
+  type param1-trivial-db term -> term -> prop.
+  type param1-trivial-db-args list term -> list term -> prop.
 
+  pred param1-inhab-done i:inductive.
   type param1-inhab-db term -> term -> prop.
-  
+  type param1-inhab-db-args list term -> list term -> prop.
+
+}}.
+#[superglobal] Elpi Accumulate derive.param1.trivial.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.param1.trivial.db Db Header derive.param1.db.
+#[superglobal] Elpi Accumulate derive.param1.trivial.db lp:{{
+
+  pred coq.mk-app i:term, i:list term, o:term.
+  pred coq.sort? i:term.
+
   param1-inhab-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_inhab }}.
   param1-inhab-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_inhab }}.
   param1-inhab-db {{ lib:elpi.derive.is_eq }} {{ lib:elpi.derive.is_eq_inhab }}.
@@ -97,7 +108,6 @@ Elpi Db derive.param1.trivial.db lp:{{
     param1-inhab-db Hd P, !,
     param1-inhab-db-args Args PArgs.
   
-  type param1-inhab-db-args list term -> list term -> prop.
   param1-inhab-db-args [] [].
   param1-inhab-db-args [T,P|Args] R :-
     std.assert-ok! (coq.typecheck T Ty) "param1-inhab-db: cannot work illtyped term",
@@ -105,37 +115,34 @@ Elpi Db derive.param1.trivial.db lp:{{
        (param1-inhab-db P Q, R = [T,P,Q|PArgs], param1-inhab-db-args Args PArgs)
        (R = [T,P|PArgs], param1-inhab-db-args Args PArgs).
    
-type param1-trivial-db term -> term -> prop.
+  param1-trivial-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_trivial }}.
+  param1-trivial-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_trivial }}.
 
-param1-trivial-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_trivial }}.
-param1-trivial-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_trivial }}.
+  param1-trivial-db (fun `f` (prod `_` S _\ T) f\
+              prod `x` S x\ prod `px` (RS x) _)
+            (fun `f` (prod `_` S _\ T) f\
+              fun `x` S x\
+                fun `px` (RS x) _\ P f x) :-
+            pi f x\
+              reali T R,
+              param1-trivial-db R PT,
+              coq.mk-app PT [{coq.mk-app f [x]}] (P f x).
 
-param1-trivial-db (fun `f` (prod `_` S _\ T) f\
-            prod `x` S x\ prod `px` (RS x) _)
-           (fun `f` (prod `_` S _\ T) f\
-             fun `x` S x\
-              fun `px` (RS x) _\ P f x) :-
-           pi f x\
-             reali T R,
-             param1-trivial-db R PT,
-             coq.mk-app PT [{coq.mk-app f [x]}] (P f x).
+  param1-trivial-db
+    {{ lib:elpi.derive.is_eq lp:A lp:PA lp:X lp:PX lp:Y lp:PY }}
+    {{ lib:elpi.derive.is_eq_trivial lp:A lp:PA lp:QA lp:X lp:PX lp:Y lp:PY }} :-
+    param1-trivial-db PA QA.
 
-param1-trivial-db
-   {{ lib:elpi.derive.is_eq lp:A lp:PA lp:X lp:PX lp:Y lp:PY }}
-   {{ lib:elpi.derive.is_eq_trivial lp:A lp:PA lp:QA lp:X lp:PX lp:Y lp:PY }} :-
-   param1-trivial-db PA QA.
+  param1-trivial-db (app [Hd|Args]) (app[P|PArgs]) :-
+    param1-trivial-db Hd P, !,
+    param1-trivial-db-args Args PArgs.
 
-param1-trivial-db (app [Hd|Args]) (app[P|PArgs]) :-
-  param1-trivial-db Hd P, !,
-  param1-trivial-db-args Args PArgs.
-
-type param1-trivial-db-args list term -> list term -> prop.
-param1-trivial-db-args [] [].
-param1-trivial-db-args [T,P|Args] R :-
-  std.assert-ok! (coq.typecheck T Ty) "param1-trivial-db: cannot work on illtyped term",
-  if (coq.sort? Ty)
-     (param1-trivial-db P Q, R = [T,P,Q|PArgs], param1-trivial-db-args Args PArgs)
-     (R = [T,P|PArgs], param1-trivial-db-args Args PArgs).
+  param1-trivial-db-args [] [].
+  param1-trivial-db-args [T,P|Args] R :-
+    std.assert-ok! (coq.typecheck T Ty) "param1-trivial-db: cannot work on illtyped term",
+    if (coq.sort? Ty)
+      (param1-trivial-db P Q, R = [T,P,Q|PArgs], param1-trivial-db-args Args PArgs)
+      (R = [T,P|PArgs], param1-trivial-db-args Args PArgs).
 
 }}.
   
@@ -158,7 +165,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.param1.trivial <inductive type name>".
 }}.
-Elpi Typecheck.
+
  
 Elpi Command derive.param1.inhab.
 Elpi Accumulate File derive_hook.
@@ -176,7 +183,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.param1.inhab <inductive type name>".
 }}.
-Elpi Typecheck.
+
 
 
 (* hook into derive *)

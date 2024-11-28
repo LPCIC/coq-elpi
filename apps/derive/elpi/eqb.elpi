@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+type feqb.trm->term trm -> term -> prop.
+
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
 
@@ -14,14 +16,14 @@ derive.eqb.main (indt I) Prefix CL :- std.do! [
   Name is Prefix ^ "eqb_fields",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName R Rty ff C,
-  EQBF = global (const C),
+  EQBF = (global (const C) : term),
 
   derive.eqb.eqb.main FI FI [] [] EQBF R1Skel,
   std.assert-ok! (coq.elaborate-skeleton R1Skel R1ty R1) "derive.eqb generates illtyped term", % need elaborate for prim record
   Name1 is Prefix ^ "eqb",
   coq.ensure-fresh-global-id Name1 FName1,
   coq.env.add-const FName1 R1 R1ty ff C1,
-  EQB = global (const C1),
+  EQB = (global (const C1) : term),
 
   % populate dbs
   derive.eqb.eqbf.do-clause FI FI [] [] EQBF [] CL1,
@@ -34,12 +36,12 @@ derive.eqb.main (const C) Prefix CL :- std.do! [
   std.assert! (eqb-for T T EQB) "cannot derive eqb",
   Name is Prefix ^ "eqb",
   coq.ensure-fresh-global-id Name FName,
-  X = global (const C),
+  X = (global (const C) : term),
   coq.env.add-const FName EQB {{ lp:X -> lp:X -> bool }} @transparent! EQBC,
   CL = [eqb-done (const C), eqb-for (global (const C)) (global (const C)) (global (const EQBC))],
   std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") x)),
 ].
-derive.eqb.main (indc _) _ _ :- stop "eqrive.eqb cannot be called on constructors".
+% derive.eqb.main (indc _) _ _ :- stop "eqrive.eqb cannot be called on constructors".
 
 namespace derive.eqb.eqb {
 
@@ -202,9 +204,9 @@ fields.aux (dependent TYX FX) (dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb 
   feqb.trm->term TYX TX,
   feqb.trm->term TYY TY,
   mk-eqb-for TX TY EQB,
-  @pi-decl `p` TX n\ pi a\ (feqb.trm->term a n :- !) =>
-  @pi-decl `p` TY m\ pi b\ (feqb.trm->term b m :- !) =>
-    fields.aux (FX a) (FY b) XS YS (R n m),
+  (@pi-decl `p` TX n\ pi a\ (feqb.trm->term a n :- !) ==>
+   @pi-decl `p` TY m\ pi b\ (feqb.trm->term b m :- !) ==>
+    fields.aux (FX a) (FY b) XS YS (R n m)),
   R1 = R X Y.
 
 fields.aux (regular TYX FX) (regular TYY FY)  [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R }} :- 

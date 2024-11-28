@@ -15,7 +15,7 @@ solve (goal _ _ _ _ [_] as G) GS :-
   coq.ltac.call "ltac_foo" [] G GS.
 
 }}.
-Elpi Typecheck.
+
 
 Goal nat.
 Proof.

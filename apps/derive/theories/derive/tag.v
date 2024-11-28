@@ -19,6 +19,7 @@ pred tag-for o:inductive, o:constant.
 
 (* standalone *)
 Elpi Command derive.tag.
+Elpi Accumulate Db Header derive.tag.db.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File tag.
 Elpi Accumulate Db derive.tag.db.
@@ -35,7 +36,7 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.tag <inductive name>".
 
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.tag.db.

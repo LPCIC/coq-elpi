@@ -30,9 +30,9 @@ declare-abbrev Args (some Proj) :-
   coq.gref->id (const Proj) ID, % get the short name of the projection
   OnlyParsing = tt,
   coq.mk-app (global (const Proj)) Args T, % handles the case Args = []
-  @local! => coq.notation.add-abbreviation ID 0 T OnlyParsing _.
+  @local! ==> coq.notation.add-abbreviation ID 0 T OnlyParsing _.
 }}.
-Elpi Typecheck.
+
 Elpi Export import.projections. (* make the command available *)
  
 (**************************** usage examples *********************************)

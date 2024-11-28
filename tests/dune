@@ -4,3 +4,9 @@
  (theories elpi))
 
 (include_subdirs qualified)
+
+(rule
+ (target dummy.v)
+ (deps (glob_files_rec *.elpi))
+ (action
+  (with-stdout-to %{target} (echo "(* copy elpi files to _build *)"))))

@@ -13,8 +13,7 @@ Elpi Query lp:{{
     coq.locate "imp" I,
     coq.arguments.implicit I
       [[maximal,implicit,explicit], [implicit,explicit,explicit]],
-    @global! => coq.arguments.set-implicit I
-      [[]],
+    (@global! => coq.arguments.set-implicit I [[]]),
     coq.arguments.implicit I
       [[explicit,explicit,explicit]]
 }}.

@@ -97,7 +97,7 @@ Elpi Query lp:{{
             field [canonical ff, coercion reversible]     "prim_eq_f"     {{bool}} f\
             field _ "prim_eq_proof" {{lp:f = lp:f :> bool}} _\
        end-record)),
- @primitive! => coq.env.add-indt DECL GR,
+ (@primitive! => coq.env.add-indt DECL GR),
  coq.env.projections GR [some _, some _].
 }}.
 
@@ -179,7 +179,7 @@ Fail Check fun x : nuind nat 3 false =>
        end.
 
 Elpi Query lp:{{
-  pi x\ decl x `x` {{ nat }} => coq.typecheck x T ok, coq.say x T.
+  pi x\ (decl x `x` {{ nat }} => coq.typecheck x T ok), coq.say x T.
 }}.
 
 
@@ -365,8 +365,7 @@ Elpi Query lp:{{
 }} lp:{{
   coq.env.begin-module "Test" _,
   Decl = record "Rec" {{ Type }} "BuildRec" (field [] "f" {{ Type }} (_\ end-record)),
-  @univpoly! =>
-    coq.env.add-indt Decl _,
+  (@univpoly! => coq.env.add-indt Decl _),
   coq.env.end-module _.
 }}.
 

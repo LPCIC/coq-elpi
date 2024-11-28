@@ -4,7 +4,7 @@ From elpi Require Import elpi.
 Elpi Command foo.
 #[synterp] Elpi Accumulate lp:{{ main-synterp X X :- coq.say "synterp" X.  }}.
 Elpi Accumulate lp:{{ main-interp X Y :- coq.say "interp" X, std.assert! (X = Y) "bug". }}.
-Elpi Typecheck.
+
 
 Elpi foo X.
 Elpi foo 1.
@@ -88,7 +88,7 @@ Elpi Accumulate lp:{{
     coq.env.end-module _.
 
 }}.
-Elpi Typecheck.
+
 Elpi module2 "B" "C".
 Check a.
 
@@ -99,7 +99,7 @@ Elpi Command acc.
 #[both] Elpi Accumulate Db acc.db.
 #[synterp] Elpi Accumulate lp:{{
   main [int N] :-
-    @local! => coq.elpi.accumulate _ "acc.db" (clause _ _ (p N)),
+    (@local! ==> coq.elpi.accumulate _ "acc.db" (clause _ _ (p N))),
     coq.env.begin-module "TMP" none,
     true
     .
@@ -140,7 +140,7 @@ Elpi Command test_data.
   type foo int.
   main-interp _ R :- std.assert! (std.any->string R "foo") "bug".
 }}.
-Elpi Typecheck.
+
 Elpi Export test_data.
 
 test_data.
@@ -156,4 +156,3 @@ Elpi Accumulate Db db1.
 Elpi Accumulate lp:{{ main _. }}.
 #[synterp] Elpi Accumulate lp:{{ main _. }}.
 
-Elpi Typecheck.

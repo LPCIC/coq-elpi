@@ -84,7 +84,7 @@ coq.valid-str-attribute Name Value V Diag :-
 pred coq.valid-loc-attribute i:string, i:loc, o:diagnostic.
 coq.valid-loc-attribute Name Loc Diag :-
   if (supported-attribute (att Name loc))
-     (if (primitive? Loc "Loc.t") (Diag = ok) (Diag = error {calc ( "Attribute " ^ Name ^ " takes a loc, got " ^ {std.any->string Loc} ) } ))
+     (if (primitive? Loc "loc") (Diag = ok) (Diag = error {calc ( "Attribute " ^ Name ^ " takes a loc, got " ^ {std.any->string Loc} ) } ))
      (if (supported-attribute att-ignore-unknown) (Diag = ok)
          (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
 
@@ -130,22 +130,24 @@ keep-only-label (attribute L _) (attribute L (leaf-str "")).
 coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,
   CS => parse-attributes.aux L "" O, !.
+
+pred parse-attributes.aux i:list attribute, i:string, o:list prop.
 parse-attributes.aux [] _ [].
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attlist), !,
   parse-attributes.aux AS Prefix R1,
-  (pi x\ supported-attribute (att x bool) :- !) => parse-attributes.aux L "" Map,
+  ((pi x\ supported-attribute (att x bool) :- !) ==> parse-attributes.aux L "" Map),
   std.append R1 [get-option PS Map] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attmap), !,
   parse-attributes.aux AS Prefix R1,
-  (pi x\ supported-attribute (att x string) :- !) => parse-attributes.aux L "" Map,
+  ((pi x\ supported-attribute (att x string) :- !) ==> parse-attributes.aux L "" Map),
   std.append R1 [get-option PS Map] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attlabel), !,
   parse-attributes.aux AS Prefix R1,
   std.map L keep-only-label Ll,
-  (pi x\ supported-attribute (att x bool) :- !) => parse-attributes.aux Ll "" Map,
+  ((pi x\ supported-attribute (att x bool) :- !) ==> parse-attributes.aux Ll "" Map),
   parse-attributes.aux L Prefix R2,
   std.append R1 [get-option PS Map|R2] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,

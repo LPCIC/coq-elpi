@@ -36,7 +36,6 @@ coercion _ {{ True }} {{ Prop }} {{ bool }} {{ true }}.
 coercion _ {{ False }} {{ Prop }} {{ bool }} {{ false }}.
 
 }}.
-Elpi Typecheck coercion. (* checks the elpi program is OK *)
 
 Check True && False.
 ```

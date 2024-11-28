@@ -11,7 +11,7 @@ Elpi Accumulate lp:{{
   solve (goal Ctx Ev Ty _ _) _ :-
     coq.say "goal" Ev "is\n" Ctx "\n-------\n" Ty.
 }}. 
-Elpi Typecheck.
+
 
 
 Lemma l0 x y z (H : x < y) : y < z -> x < z.
@@ -27,7 +27,7 @@ Elpi Accumulate lp:{{
   solve (goal _ Ev _ _ _) _ :- Ev = {{true}}.
   solve (goal _ Ev _ _ _) _ :- Ev = {{3}}.
 }}. 
-Elpi Typecheck.
+
 
 Lemma l1 : nat.
 Proof.
@@ -43,7 +43,7 @@ Elpi Accumulate lp:{{
     coq.string->name S N,
     refine (fun N Src_ Tgt_) G GS.
 }}.
-Elpi Typecheck.
+
 
 Lemma l2 x y z (H : x < y) : y < z -> x < z.
 Proof.
@@ -79,7 +79,7 @@ Elpi Accumulate lp:{{
     repeat (or [open exf, open kon, open (intro `H`)]) (seal G) [].
 
 }}.
-Elpi Typecheck.
+
 
 Lemma l3 : forall P : Prop, (False -> P) /\ (False \/ True).
 Proof.

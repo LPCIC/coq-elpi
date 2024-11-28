@@ -88,3 +88,11 @@ Fail Elpi Query lp:{{ std.do! [
   std.assert-ok! (coq.typecheck T _) "does not typecheck",
 ]
 }}.
+
+
+Fail Check hd.
+Fail Elpi File boom lp:{{ p :- X = {{ hd }}.  }}.
+From elpi.tests Extra Dependency "boom.elpi" as boom2.
+Import List.
+Check hd.
+Elpi File boom lp:{{ p :- X = {{ hd }}.  }}.

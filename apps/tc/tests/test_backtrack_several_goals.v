@@ -71,7 +71,7 @@ Module ElpiBt.
     solvee {{C 1}} {{i1}}.
     solvee {{E 1}} {{e1}}. 
   }}.
-  Elpi Typecheck.
+  
 
   Goal exists i, C i /\ E i.
     eexists.

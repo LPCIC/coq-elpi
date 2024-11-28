@@ -23,7 +23,7 @@ Elpi Command Make.
     nes.end-path,
   ].
 }}.
-Elpi Typecheck.
+
 Elpi Export Make.
 
 Make Cats.And.Dogs.

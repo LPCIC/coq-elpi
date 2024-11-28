@@ -25,7 +25,7 @@ Elpi Accumulate lp:{{
       coq.env.end-module _,
       true.
 }}.
-Elpi Typecheck.
+
 Elpi Export test.
 test.
 Check d1. Check d2.
@@ -34,3 +34,13 @@ Check k1. Check k2.
 Check r1. Check r2.
 Check f1. Check f2. 
 Module M2 := N2.
+
+
+Elpi Query lp:{{
+  pi x\
+    decl x `x` {{:pat list _}} ==> decl x _ {{ list bool }}, decl x _ {{ list nat }}.
+}}.
+Fail Elpi Query lp:{{
+  pi x\
+    decl x `x` {{list _}} ==> decl x _ {{ list bool }}, decl x _ {{ list nat }}.
+}}.

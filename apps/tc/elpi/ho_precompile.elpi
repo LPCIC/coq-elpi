@@ -91,7 +91,7 @@ namespace tc {
         (pi x\ get-range-arity-aux T (B x) R1),
         min-max-nat R R1 R2.
       get-range-arity-aux _ (global _) @max-min :- !.
-      get-range-arity-aux _ (uvar _) @max-min :- !.
+      get-range-arity-aux _ uvar @max-min :- !.
       get-range-arity-aux _ (sort _) @max-min :- !.
       get-range-arity-aux _ (pglobal _ _) @max-min :- !.
       get-range-arity-aux A B _ :- coq.error "Count maximal arity failure" A B.

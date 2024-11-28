@@ -16,6 +16,8 @@ Elpi Db derive.eqbOK.db lp:{{
   pred eqbok-for o:gref, o:constant.
 
 }}.
+#[superglobal] Elpi Accumulate derive.eqbOK.db File derive.lib.
+
 
 (* standalone *)
 Elpi Command derive.eqbOK.
@@ -38,7 +40,7 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.eqbOK <inductive name/alias>".
 
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive  *)
 Elpi Accumulate derive File eqbOK.

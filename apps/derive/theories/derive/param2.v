@@ -19,26 +19,27 @@ Register store_param as param2.store_param.
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
 Elpi Db derive.param2.db lp:{{
-
-    pred param-done i:gref.
-
     :index(3)
     pred param i:term, o:term, o:term.
-    
+    type paramR term -> term -> term -> prop.
+    pred param-done i:gref.
+}}.
+#[superglobal] Elpi Accumulate derive.param2.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.param2.db lp:{{
+
     :name "param:fail"
     param X _ _ :-
       M is "derive.param2: No binary parametricity translation for " ^
               {coq.term->string X},
       stop M.
     
-    type paramR term -> term -> term -> prop.
     
     :name "paramR:fail"
     paramR T T1 TR :-
       M is "derive.param2: No binary parametricity translation linking " ^
               {coq.term->string T} ^ " and " ^ {coq.term->string T1} ^ " and " ^ {coq.term->string TR},
       stop M.
-    }}.
+}}.
     
 
 Elpi Command derive.param2.
@@ -52,7 +53,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.param2 <object name>".
 }}. 
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File param2.

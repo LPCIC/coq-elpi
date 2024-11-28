@@ -2,10 +2,12 @@ dune = dune $(1) $(DUNE_$(1)_FLAGS)
 
 all:
 	$(call dune,build)
+	$(call dune,build) builtin-doc
 .PHONY: all
 
 build-core:
 	$(call dune,build) theories
+	$(call dune,build) builtin-doc
 .PHONY: build-core
 
 build-apps:
@@ -14,6 +16,7 @@ build-apps:
 
 build:
 	$(call dune,build) -p coq-elpi @install
+	$(call dune,build) builtin-doc
 .PHONY: build
 
 test-core:
@@ -46,7 +49,7 @@ doc: build
 			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi_elpi elpi_elpi \
 			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi elpi \
 			$(tut) &&) true
-	@cp _build/default/examples/stlc.html doc/
+	@cp ./_build/default/examples/stlc.txt doc/
 	@cp etc/tracer.png doc/
 
 clean:

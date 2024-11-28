@@ -40,6 +40,8 @@ Elpi Db derive.lens_laws.db lp:{{
 
 (* standalone *)
 Elpi Command derive.lens_laws.
+Elpi Accumulate Db Header derive.lens.db.
+Elpi Accumulate Db Header derive.lens_laws.db.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File lens_laws.
 Elpi Accumulate Db derive.lens.db.
@@ -51,7 +53,7 @@ Elpi Accumulate lp:{{
    
   usage :- coq.error "Usage: derive.lens_laws <record name> [<prefix>]".
 }}.
-Elpi Typecheck.
+
       
 (* hook into derive *)
 Elpi Accumulate derive File lens_laws.

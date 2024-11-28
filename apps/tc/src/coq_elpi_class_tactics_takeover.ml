@@ -103,21 +103,23 @@ end
 
 module Solver = struct
   let solve_TC program = let open Class_tactics in { solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
-    let loc = API.Ast.Loc.initial "(unknown)" in
     let atts = [] in
     let gls = goals in
-    let query ~depth state =
-      let state, (loc, q), gls =
-        Coq_elpi_HOAS.goals2query sigma gls loc ~main:(Coq_elpi_HOAS.Solve [])
-          ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.in_elpi_tac ~depth state in
+    let query ~base state =
+      let loc = Elpi.API.State.get Coq_elpi_builtins_synterp.invocation_site_loc state in
+      let depth = 0 in
+      let state, q, gls =
+        Coq_elpi_HOAS.solvegoals2query sigma gls loc ~main:[]
+          ~in_elpi_tac_arg:Coq_elpi_arg_HOAS.(in_elpi_tac ~loc:(to_coq_loc loc)) ~depth ~base state in
       let state, qatts = Coq_elpi_vernacular.atts2impl loc Summary.Stage.Interp ~depth state atts q in
       let state = API.State.set Coq_elpi_builtins.tactic_mode state true in
-      state, (loc, qatts), gls
+      state, qatts, gls
       in
-    match Coq_elpi_vernacular.Interp.get_and_compile program with
+    let loc = Loc.initial Loc.ToplevelInput in
+    match Coq_elpi_vernacular.Interp.get_and_compile ~loc program with
     | None -> assert false
-    | Some (cprogram,_) ->
-      match Coq_elpi_vernacular.Interp.run ~static_check:false cprogram (`Fun query) with
+    | Some (base,_) ->
+      match Coq_elpi_vernacular.Interp.run ~loc base (Fun (query ~base)) with
         | API.Execute.Success solution ->
             let sigma, sub_goals, to_shelve = Coq_elpi_HOAS.solution2evd ~eta_contract_solution:true sigma solution (Evar.Set.of_list goals) in
             let sigma = Evd.shelve sigma sub_goals in

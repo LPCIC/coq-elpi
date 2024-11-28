@@ -96,7 +96,7 @@ undup-same [X|Xs] [X|Ys] :-
 undup-same [_|Xs] Ys :- undup-same Xs Ys.
 
 :index (1)
-pred is-coq-term i:A.
+pred is-coq-term i:any.
 is-coq-term (sort _).
 is-coq-term (global _).
 is-coq-term (pglobal _ _).

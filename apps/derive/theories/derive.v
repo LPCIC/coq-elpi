@@ -59,6 +59,12 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp.elpi" as derive_synt
 
 From elpi Require Import elpi.
 
+Elpi File derive.lib lp:{{
+  % if a derivation fails it should end by calling stop, instead of coq.error,
+  % so that derive can make the failure non fatal
+  type stop string -> prop.
+}}.
+
 Elpi Command derive.
 
 #[phase="both"]
@@ -113,5 +119,5 @@ Elpi Accumulate lp:{{
     coq.error "Usage:  derive <inductive type/definition>\n\tderive Inductive name Params : Arity := Constructors.".
 }}.
 
-Elpi Typecheck.
+
 Elpi Export derive.

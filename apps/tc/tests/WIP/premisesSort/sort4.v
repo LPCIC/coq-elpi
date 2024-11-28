@@ -52,7 +52,7 @@ Elpi Accumulate tc.db lp:{{
   
   :after "firstHook" msolve A _ :- coq.say A, sep, fail.
 }}.
-Elpi Typecheck TC.Solver.
+
 
 Goal 3 = 3.
   Fail apply f.

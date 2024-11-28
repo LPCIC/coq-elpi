@@ -81,7 +81,7 @@ let inObservation1 =
 
 let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) = 
   let open Coq_elpi_vernacular in
-  let run_program e = Interp.run_program loc name ~syndata:None ~atts e in 
+  let run_program e = Interp.run_program ~loc name ~syndata:None ~atts e in 
   match x with  
   | Event.NewClass cl -> Lib.add_leaf (inObservation (run_program,cl)) 
   | Event.NewInstance inst -> Lib.add_leaf (inObservation1 (run_program,inst))

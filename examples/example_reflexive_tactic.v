@@ -225,7 +225,7 @@ solve (goal _ _ {{ @eq lp:T lp:A lp:B }} _ [trm Zero, trm Op] as G) GS :-
 solve _ _ :- coq.error "Not an equality / no signature provided".
 
 }}.
-Elpi Typecheck.
+
 Tactic Notation "monoid" constr(zero) constr(add) := elpi monoid (zero) (add).
 
 (** Let's test the tactic *)
@@ -267,7 +267,7 @@ solve (goal _ _ {{ @eq lp:T lp:A lp:B }} _ [] as G) GL :-
   ] SubG GL.
 
 }}.
-Elpi Typecheck.
+
 Tactic Notation "monoid" := elpi monoid.
 
 (** Let's test it once more *)

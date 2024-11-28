@@ -8,7 +8,6 @@ coercion _ {{ True }} {{ Prop }} {{ bool }} {{ true }}.
 coercion _ {{ False }} {{ Prop }} {{ bool }} {{ false }}.
 
 }}.
-Elpi Typecheck coercion.
 
 Check True && False.
 
@@ -22,7 +21,6 @@ coercion _ N {{ nat }} {{ ringType_sort lp:R }} {{ natmul lp:R lp:N }} :-
   coq.typecheck R {{ ringType }} ok.
 
 }}.
-Elpi Typecheck coercion.
 
 Section TestNatMul.
 

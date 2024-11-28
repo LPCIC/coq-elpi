@@ -22,6 +22,15 @@ type eq-db term -> term -> term -> prop.
 eq-db {{ lib:num.int63.type }} {{ lib:num.int63.type }} {{ lib:elpi.derive.eq_unit63 }} :- !.
 eq-db {{ lib:num.float.type }} {{ lib:num.float.type }} {{ lib:elpi.derive.eq_float64 }} :- !.
 
+% quick access
+type eq-for inductive -> constant -> prop.
+
+}}.
+#[superglobal] Elpi Accumulate derive.eq.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.eq.db lp:{{
+
+type whd1 term -> term -> prop.
+
 :name "eq-db:fail"
 eq-db A B F :-
   ((whd1 A A1, B1 = B); (whd1 B B1, A1 = A)), !,
@@ -31,9 +40,6 @@ eq-db A B _ :-
   M is "derive.eq: can't find the comparison function for terms of type " ^
           {coq.term->string A} ^ " and " ^ {coq.term->string B} ^ " respectively",
   stop M.
-
-% quick access
-type eq-for inductive -> constant -> prop.
 
 }}.
 
@@ -50,7 +56,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.eq <inductive type name> [<output name>]".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eq.db.

@@ -11,7 +11,7 @@ From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
-From elpi.apps Require Import derive.
+From elpi.apps Require Import derive derive.param1.
 
 Elpi Db derive.param1.functor.db lp:{{
   pred param1-functor-db i:term, i:term, o:term.
@@ -29,7 +29,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.param1.functor <inductive type name> [<output suffix>]".
 }}.  
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File param1_functor.

@@ -891,7 +891,7 @@ Section prod_setoid.
       % coq.say A RA,
       tc-Equivalence A RA' R.
   }}.
-  (* Elpi Typecheck TC.Solver. *)
+  (*  *)
 
   Global Instance prod_equivalence@{i} (C D: Type@{i}) `{Equiv C, Equiv D}:
     @Equivalence C (≡@{C}) → @Equivalence D (≡@{D}) → @Equivalence (C * D) (≡@{C * D}) := _.
@@ -928,7 +928,7 @@ Section prod_setoid.
       tc-Proper A {{@respectful lp:K1 lp:K2 lp:C1 (@respectful lp:K3 lp:K4 lp:C2 lp:C3)}} C S.
    
   }}.
-  Elpi Typecheck TC.Solver.
+  
 
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
@@ -941,7 +941,7 @@ Section prod_setoid.
       remove_equiv_prod_equiv RC RC',
       tc-Inj2 A B C RA RB RC' F S.
   }}.
-  Elpi Typecheck TC.Solver.
+  
 
   Global Instance pair_equiv_inj : Inj2 (≡) (≡) (≡@{A*B}) pair := _.
   Global Instance fst_proper : Proper ((≡@{A*B}) ==> (≡)) fst := _.
@@ -1050,7 +1050,7 @@ Elpi Accumulate TC.Solver lp:{{
       remove_equiv_sum_equiv B B1,
       tc-Proper A B1 C R.
 }}.
-Elpi Typecheck TC.Solver.
+
 
 
 Global Instance inl_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inl A B) := _.
@@ -1067,7 +1067,7 @@ Elpi Accumulate TC.Solver lp:{{
     coq.unify-eq R2 R2' ok,
     tc-Inj A B R1 R2' S C.
 }}.
-Elpi Typecheck TC.Solver.
+
 
 Global Instance inl_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inl A B) := _.
 Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) := _.

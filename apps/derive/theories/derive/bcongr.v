@@ -25,6 +25,10 @@ Elpi Db derive.bcongr.db lp:{{
 
 type bcongr-db constructor -> term -> prop.
 
+}}.
+#[superglobal] Elpi Accumulate derive.bcongr.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.bcongr.db lp:{{
+
 :name "bcongr-db:fail"
 bcongr-db K _ :-
   M is "derive.bcongr: can't find the boolean congruence for constructor " ^ {std.any->string K},
@@ -49,9 +53,9 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.bcongr <inductive type name>".
 }}.
-Elpi Typecheck. 
+ 
 
-Elpi Typecheck.
+
       
 (* hook into derive *)
 Elpi Accumulate derive Db derive.bcongr.db.

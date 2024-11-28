@@ -15,11 +15,12 @@ pred coercion i:goal-ctx, i:term, i:term, i:term, o:term.
 }}.
 
 Elpi Tactic coercion.
+Elpi Accumulate Db Header coercion.db.
 Elpi Accumulate lp:{{
 
 solve (goal Ctx _ Ty Sol [trm V, trm VTy]) _ :- coercion Ctx V VTy Ty Sol.
 
 }}.
 Elpi Accumulate Db coercion.db.
-Elpi Typecheck.
+
 Elpi CoercionFallbackTactic coercion.

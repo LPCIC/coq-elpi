@@ -12,8 +12,10 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive derive.param1 derive.param1_functor.
 
 Elpi Db derive.induction.db lp:{{
-
 pred induction-db i:inductive, o:term.
+}}.
+#[superglobal] Elpi Accumulate derive.induction.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.induction.db lp:{{
 
 :name "induction-db:fail"
 induction-db T _ :-
@@ -40,7 +42,7 @@ Elpi Accumulate lp:{{
   usage :-
     coq.error "Usage: derive.induction <inductive type name>".
 }}.  
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File induction.

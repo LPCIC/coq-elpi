@@ -37,6 +37,10 @@ Elpi Db derive.eqK.db lp:{{
 
 type eqK-db constructor -> term -> prop.
 
+}}.
+#[superglobal] Elpi Accumulate derive.eqK.db File derive.lib.
+#[superglobal] Elpi Accumulate derive.eqK.db lp:{{
+
 :name "eqK-db:fail"
 eqK-db K _ :-
   M is "derive.eqK: can't find the eq.axiom for constructor " ^ {std.any->string K},
@@ -60,7 +64,7 @@ Elpi Accumulate lp:{{
 
   usage :- coq.error "Usage: derive.eqK <inductive type name> [<prefix>]".
 }}.
-Elpi Typecheck.
+
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eqK.db.

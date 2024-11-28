@@ -3,7 +3,6 @@
 
 Declare ML Module "coq-elpi.tc".
 
-From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
 (* From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler. *)
 From elpi.apps.tc.elpi Extra Dependency "ho_precompile.elpi" as ho_precompile.
@@ -43,12 +42,11 @@ Elpi Accumulate lp:{{
       tc.list-printer ClassGR Rules
     ).  
 }}.
-Elpi Typecheck.
+
 
 Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
@@ -66,7 +64,7 @@ Elpi Query lp:{{
       if (coq.option.available? L _) true
         (coq.option.add L (coq.option.bool ff) ff)).
 }}.
-Elpi Typecheck.
+
 
 Elpi Query lp:{{
   sigma Nums\ 
@@ -80,7 +78,6 @@ Elpi Query lp:{{
 Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File ho_precompile.
@@ -131,13 +128,12 @@ Elpi Accumulate lp:{{
 
   main A :- coq.error "Fail in TC.Compiler: not a valid input entry" A.
 }}.
-Elpi Typecheck.
+
 
 (* Command allowing to set if a TC is deterministic. *)
 Elpi Command TC.Set_deterministic.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
@@ -147,12 +143,11 @@ Elpi Accumulate lp:{{
     std.assert! (not (tc.instance _ _ ClassGR _)) "Cannot set deterministic a class with an already existing instance",
     tc.add-tc-db _ (after "0") (tc.class ClassGR PredName tc.deterministic Modes :- !).
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.Get_class_info.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
@@ -168,12 +163,11 @@ Elpi Accumulate lp:{{
   main [] :- coq.error "[TC] Get_class_info accepts only one argument of type str". 
   main L :- coq.error "[TC] Uncaught error on input" L. 
 }}.
-Elpi Typecheck.
+
 
 Elpi Command TC.Unfold.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate Db tc.db.
-Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   pred tc.add-unfold i:gref.
@@ -187,7 +181,7 @@ Elpi Accumulate lp:{{
     std.map L (x\r\ sigma R\ std.assert! (str R = x) ErrMsg, coq.locate R r) L',
     std.forall L' tc.add-unfold.
 }}.
-Elpi Typecheck.
+
 
 Elpi TC Solver Register TC.Solver.
 Elpi TC Solver Activate TC.Solver.

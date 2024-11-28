@@ -66,7 +66,7 @@ Elpi Accumulate lp:{{
     coq.env.add-const N BO1 TY1 @transparent! _,
   ].
 }}.
-Elpi Typecheck.
+
 
 Elpi test.API2 Inductive ind1 (A : T1) | (B : Type) :=
   K1 : ind1 B -> ind1 B | K2 : A -> ind1 B | K3 (a : A) : ind1 B.
@@ -178,11 +178,11 @@ Abort.
 Elpi Accumulate lp:{{
   main [upoly-const-decl _ _ (parameter _ _ (sort (typ U)) _ as A) (upoly-decl [UL] _ _ _)] :-
     std.assert! (coq.univ.variable U UL) "wtf",
-    @keepunivs! => std.assert-ok! (coq.elaborate-arity-skeleton A _ (parameter _ _ (sort (typ V)) _)) "wtf",
+    (@keepunivs! => std.assert-ok! (coq.elaborate-arity-skeleton A _ (parameter _ _ (sort (typ V)) _)) "wtf"),
     std.assert! (U = V) "elaboration refreshes",
     coq.say U V.
 }}.
-Elpi Typecheck.
+
 
 Elpi detype #[universes(polymorphic)] Definition f@{u|Set < u} (x : Type@{u}) := x.
 

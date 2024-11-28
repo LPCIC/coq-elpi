@@ -64,7 +64,7 @@ Elpi Accumulate lp:{{
     coq.say "Goal:" Ctx "|-" Proof ":" Type.
 
 }}.
-Elpi Typecheck.
+
 
 (*|
 
@@ -92,11 +92,12 @@ is stored in the .vo file (the external file does not need to be installed).
 We invite the reader to look up the description of data bases in the tutorial
 about commands.
   
-Once all the code is accumulated `Elpi Typecheck` verifies that the
-code does not contain the most frequent kind of mistakes. This command
-considers some mistakes minor and only warns about them. You can
-pass `-w +elpi.typecheck` to `coqc` to turn these warnings into errors.
-  
+When some code is accumulated Elpi verifies that the
+code does not contain the most frequent kind of mistakes, via some
+type checking and linting. Some mistakes are minor and Elpi only warns about
+them. You can pass `-w +elpi.typecheck` to `coqc` to turn these warnings into
+errors.
+
 The entry point for tactics is called :builtin:`solve` which maps a :type:`goal`
 into a list of :type:`sealed-goal` (representing subgoals).
   
@@ -148,7 +149,7 @@ Elpi Accumulate lp:{{
   solve (goal _ Trigger _ _ _) [] :- Trigger = {{0}}.
   solve (goal _ Trigger _ _ _) [] :- Trigger = {{I}}.
 }}.
-Elpi Typecheck.
+
 
 Lemma test_blind : True * nat.
 Proof. (* .in *)
@@ -195,7 +196,7 @@ Elpi Accumulate lp:{{
   solve G GL :- refine {{0}} G GL.
   solve G GL :- refine {{I}} G GL.
 }}.
-Elpi Typecheck.
+
 
 Lemma test_blind2 : True * nat.
 Proof. (* .in *)
@@ -240,7 +241,7 @@ Elpi Accumulate lp:{{
     % error that cannot be caught by Ltac combinators like repeat.
     coq.ltac.fail _ "not a conjunction".
 }}.
-Elpi Typecheck.
+
 
 Lemma test_split : exists t : Prop, True /\ True /\ t.
 Proof. (* .in *)
@@ -282,7 +283,7 @@ Elpi Accumulate lp:{{
   solve _ _ :-
     coq.ltac.fail _ "not a conjunction".
 }}.
-Elpi Typecheck.
+
 
 Lemma test_split2 : exists t : Prop, True /\ True /\ t.
 Proof. (* .in *)
@@ -308,7 +309,7 @@ Elpi Tactic print_args.
 Elpi Accumulate lp:{{
   solve (goal _ _ _ _ Args) _ :- coq.say Args.
 }}.
-Elpi Typecheck.
+
 
 Lemma test_print_args : True. (* .in *)
 elpi print_args 1 x "a b" (1 = 0). (* .in .messages *)
@@ -350,7 +351,7 @@ Elpi Accumulate lp:{{
     Msg is {coq.term->string S} ^ " does not fit",
     coq.ltac.fail _ Msg.
 }}.
-Elpi Typecheck.
+
 
 Lemma test_refine (P Q : Prop) (H : P -> Q) : Q.
 Proof. (* .in *)
@@ -470,7 +471,7 @@ Elpi Accumulate lp:{{
   solve _ _ :-
     coq.ltac.fail _ "no such hypothesis".
 }}.
-Elpi Typecheck.
+
 
 Lemma test_assumption  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
 Proof. (* .in *)
@@ -503,7 +504,7 @@ Elpi Accumulate lp:{{
   solve _ _ :-
     coq.ltac.fail _ "no such hypothesis".
 }}.
-Elpi Typecheck.
+
 
 Lemma test_assumption2  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
 Proof. (* .in *)
@@ -528,7 +529,7 @@ Elpi Accumulate lp:{{
   solve _ _ :-
     coq.ltac.fail _ "no such hypothesis".
 }}.
-Elpi Typecheck.
+
 
 Lemma test_assumption3  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
 Proof. (* .in *)
@@ -554,12 +555,12 @@ Elpi Accumulate lp:{{
 
 solve (goal _ _ T _ [trm X]) _ :-
   pi x\
-    copy X x => copy T (Tabs x),
+    (copy X x ==> copy T (Tabs x)),
     if (occurs x (Tabs x))
        (coq.say "found" {coq.term->string X})
        (coq.ltac.fail _ "not found").
 }}.
-Elpi Typecheck.
+
 
 Lemma test_find (P Q : Prop) : (P /\ P) \/ (P /\ Q).
 Proof. (* .in *)
@@ -611,7 +612,7 @@ Elpi Accumulate lp:{{
 
 solve (goal _ _ T _ [str ID, trm X] as G) GL :-
   pi x\
-    copy X x => copy T (Tabs x),
+    (copy X x ==> copy T (Tabs x)),
     if (occurs x (Tabs x))
        (if (coq.ltac.id-free? ID G) true
            (coq.warn ID "is already taken, Elpi will make a name up"),
@@ -621,7 +622,7 @@ solve (goal _ _ T _ [str ID, trm X] as G) GL :-
        (coq.ltac.fail _ "not found").
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test_set (P Q : Prop) : (P /\ P) \/ (P /\ Q).
 Proof. (* .in *)
@@ -659,7 +660,7 @@ Elpi Accumulate lp:{{
     coq.sigma.print.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test_show_more x : x + 1 = 0.
 elpi show_more. (* .in .messages *)
@@ -717,7 +718,7 @@ Elpi Accumulate lp:{{
   solve _ _ :-
     coq.ltac.fail _ "not a conjunction".
 }}.
-Elpi Typecheck.
+
 
 Lemma test_split_ll : exists t : Prop, True /\ True /\ t.
 Proof. (* .in *)
@@ -746,7 +747,7 @@ Elpi Accumulate lp:{{
   solve _ _ :-
     coq.ltac.fail _ "not a conjunction".
 }}.
-Elpi Typecheck.
+
 
 Lemma test_split_ll_bis : exists t : Prop, True /\ True /\ t.
 Proof. (* .in *)
@@ -797,7 +798,7 @@ Elpi Accumulate lp:{{
     coq.say GL.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test_undup (P Q : Prop) : P /\ Q.
 Proof. (* .in *)
@@ -866,7 +867,7 @@ Elpi Accumulate lp:{{
     undup G1 GS GL.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test_undup (P Q : Prop) (p : P) (q : Q) : P /\ Q /\ P.
 Proof. (* .in *)
@@ -885,7 +886,7 @@ The two calls to show proof display, respectively:
 .. mquote:: .s(Show Proof).msg{*conj [?]Goal (conj [?]Goal0 [?]Goal1)*}
    :language: text
 
-.. mquote:: .s(Show  Proof).msg{*conj [?]Goal (conj [?]Goal0 [?]Goal)*}
+.. mquote:: .s(Show  Proof).msg{*conj [?]Goal0 (conj [?]Goal [?]Goal0)*}
    :language: text
 
 the proof term is the same but for the fact that after the tactic the first
@@ -956,7 +957,7 @@ msolve SG GL :-
                open apply ]) SG GL.
 
 }}.
-Elpi Typecheck.
+
 
 Lemma test_argpass (P : Prop) : P -> P.
 Proof. (* .in *)
@@ -1013,7 +1014,7 @@ Elpi Accumulate lp:{{
     refine P G GL.
 
 }}.
-Elpi Typecheck.
+
 Elpi Export default.
 
 Definition foo : nat := default.
@@ -1039,7 +1040,7 @@ Elpi Accumulate default lp:{{
     default T MaxI P,
     refine P G GL.
 }}.
-Elpi Typecheck.
+
 
 From Coq Require Import  Uint63.
 Open Scope uint63_scope.

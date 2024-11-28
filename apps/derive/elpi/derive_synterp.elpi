@@ -10,20 +10,20 @@ dep X Y :- dep1 X Z, dep Z Y.
 
 pred selected i:string.
 selected Name :- get-option "only" Map, !,
-  Map => (get-option Name _; (get-option X _, dep X Name)).
+  Map ==> (get-option Name _; (get-option X _, dep X Name)).
 selected _.
 
 pred chain i:string, i:list derive.
 chain _ [].
 chain T [derive Name _ _|FS] :- not(selected Name), !,
   chain T FS.
-chain T [derive _ _ AlreadyDone|FS] :- (pi x\ stop x :- !, fail) => AlreadyDone, !,
+chain T [derive _ _ AlreadyDone|FS] :- ((pi x\ stop x :- !, fail) ==> AlreadyDone), !,
   chain T FS.
 chain T [derive _ F _|FS] :- get-option "only" _, !, % request this one
   F _,
   chain T FS.
 chain T [derive _ F _|FS] :- % all are selected, we can fail
-  (pi x\ stop x :- !, fail) => F _, !,
+  ((pi x\ stop x :- !, fail) ==> F _), !,
   chain T FS.
 chain T [derive _ _ _|FS] :-
   chain T FS.

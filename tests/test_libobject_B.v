@@ -8,6 +8,6 @@ Elpi Accumulate lp:{{
   solve _ _ :-
     a X, coq.say X.
 }}.
-Elpi Typecheck.
+
 
 Ltac b := elpi tac.
