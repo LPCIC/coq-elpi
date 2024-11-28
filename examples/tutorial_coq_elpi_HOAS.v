@@ -508,7 +508,7 @@ Elpi Query lp:{{
   coq.typecheck T _ ok,
   T = fun N Ty Bo,
   pi x\
-    decl x N Ty =>
+    decl x N Ty ==>
       coq.typecheck (Bo x) _ ok
 
 }}.
@@ -520,7 +520,7 @@ In order to ease this task, Coq-Elpi provides a few commodity macros such as
 
 .. code:: elpi
 
-       macro @pi-decl N T F :- pi x\ decl x N T => F x.
+       macro @pi-decl N T F :- pi x\ decl x N T ==> F x.
 
 .. note:: the precedence of lambda abstraction :e:`x\ ` lets you write the
    following code without parentheses for :e:`F`.
@@ -720,7 +720,7 @@ Elpi Query lp:{{
   coq.say "Bo1 before =" Bo1,
   % by loading this rule in the context, we set
   % the option for the APIs called under it
-  @holes! => coq.typecheck Bo1 {{ nat }} ok,
+  (@holes! ==> coq.typecheck Bo1 {{ nat }} ok),
   coq.say "Bo1 after =" Bo1.
 
 }}.

@@ -592,20 +592,20 @@ Elpi Accumulate lp:{{
     of Hd (arr A B), of Arg A.
 
   % for lambda, instead of using a context (a list) of bound
-  % variables we use pi and => , explained below
+  % variables we use pi and ==> , explained below
   of (fun F) (arr A B) :-
-    pi x\ of x A => of (F x) B.
+    pi x\ of x A ==> of (F x) B.
 
 }}.
 
 (*|
 
 The :e:`pi name\ code` syntax is reserved, as well as
-:e:`rule => code`.
+:e:`rule ==> code`.
 
 Operationally :e:`pi x\ code` introduces a fresh
 constant :e:`c` for :e:`x` and then runs :e:`code`.
-Operationally :e:`rule => code` adds :e:`rule` to
+Operationally :e:`rule ==> code` adds :e:`rule` to
 the program and runs :e:`code`.  Such extra rule is
 said to be hypothetical.
 Both the constant for :e:`x` and :e:`rule` are
@@ -744,7 +744,7 @@ A rule like:
 .. code:: elpi
 
      of (fun F) (arr A B) :-
-       pi x\ of x A => of (F x) B.
+       pi x\ of x A ==> of (F x) B.
 
 reads, as a logical formula:
 
@@ -1174,7 +1174,7 @@ Elpi Accumulate lp:{{
 pred good3 i:list int, o:list int.
 good3 L Result :-
   pi aux\
-    (pi TMP X R\ aux X R :- TMP is X + 1, R = TMP) =>
+    (pi TMP X R\ aux X R :- TMP is X + 1, R = TMP) ==>
     std.map L aux Result.
 
 }}.
@@ -1205,12 +1205,12 @@ could be written :e:`pi X R\ aux X R :- sigma TMP\ TMP is X + 1, R = TMP`.
 
 .. tip:: :e:`=>` can load more than one clause at once
 
-   It is sufficient to put a list on the left hand side, eg :e:`[ rule1, rule2 ] => code`.
+   It is sufficient to put a list on the left hand side, eg :e:`[ rule1, rule2 ] ==> code`.
    Moreover one can synthesize a rule before loading it, eg:
 
    .. code:: elpi
 
-      Rules = [ one-more-rule | ExtraRules ], Rules => code
+      Rules = [ one-more-rule | ExtraRules ], Rules ==> code
 
 The last remark worth making is that bound variables are intimately related
 to universal quantification, while unification variables are related to
@@ -1257,7 +1257,7 @@ If we look again at the rule for type checking
 .. code:: elpi
 
      of (fun F) (arr A B) :-
-       pi x\ of x A => of (F x) B.
+       pi x\ of x A ==> of (F x) B.
 
 we can see that the only unification variable that sees the fresh
 `x` is :e:`F`, because we pass :e:`x` to :e:`F` explicitly
@@ -1437,9 +1437,11 @@ Printing entire programs
 ------------------------
    
 Given that programs are not written in a single place, but rather obtained by
-accumulating code, Elpi is able to print a (full) program to an html file
+accumulating code, Elpi is able to print a (full) program to an text file
 as follows. The obtained file provides a facility to filter rules by their
-predicate. 
+predicate. Note that the first component of the path is a Coq Load Path (i.e.
+coqc options -R and -Q), the text file will be placed in the directory
+bound to it.
 
 |*)
 
@@ -1447,9 +1449,7 @@ Elpi Print stlc "elpi_examples/stlc".
 
 (*|
 
-Look at the `generated page <https://lpcic.github.io/coq-elpi/stlc.html>`_
-and type :e:`of` in the filter.
-
+Look at the `generated page <https://lpcic.github.io/coq-elpi/stlc.txt>`_.
 Finally, one can bound the number of backchaining steps
 performed by the interpreter:
 
@@ -1468,12 +1468,33 @@ Common pitfalls
 
 Well, no programming language is perfect.
 
-++++++++++++++++++++++++++++++++
-Precedence of :e:`,` and :e:`=>`
-++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++
+Precedence of :e:`,`, :e: `==>` and :e:`=>`
++++++++++++++++++++++++++++++++++++++++++++
 
+In this tutorial we only used :e: `==>` but Elpi also provides
+the standard λProlog implication :e:`=>`. They have the same meaning
+but different precedences w.r.t. :e:`,`.
 
-The precedence of :e:`,` and :e:`=>` can be surprising
+The code :e:`a, c ==> d, e` reads :e:`a, (c ==> (d,e))`, that means that
+the rule :e:`c` is available to both :e:`d` and :e:`e`.
+
+On the contrary the code :e:`a, c => d, e` reads :e:`a, (c ==> d), e`,
+making :e:`c` only available to :e:`d`.
+
+So, :e:`=>` binds stronger than :e:`,`, while :e:`==>` binds stronger only
+on the left.
+
+According to our experience the precedence of :e:`=>` is a common source
+of mistakes for beginners, if only because it is not stable by adding of
+debug prints, that is :e:`a => b` and :e:`a => print "doing b", b` have
+very different meaning (:e:`a` becomes only available to `print`!).
+
+In this tutorial we only used :e:`==>` that was introduced in Elpi 2.0, but
+there is code out there using :e:`=>`. Elpi 2.0 raises a warning if the
+right hand side of :e:`=>` is a conjenction with no parentheses.
+
+A concrete example:
 
 |*)
 
@@ -1490,6 +1511,14 @@ Elpi Query stlc lp:{{
     of x A => (of x B, of x C) % both goals see of x A
 
 }}.
+
+Elpi Query stlc lp:{{
+
+  pi x\
+    of x A ==> of x B, of x C
+
+}}.
+
 
 (*|
 

@@ -49,7 +49,7 @@ doc: build
 			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi_elpi elpi_elpi \
 			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi elpi \
 			$(tut) &&) true
-	@cp _build/default/examples/stlc.html doc/
+	@cp ./_build/default/examples/stlc.txt doc/
 	@cp etc/tracer.png doc/
 
 clean:

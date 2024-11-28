@@ -31,7 +31,7 @@ Elpi Db record.expand.db lp:{{
   %   expand R (app[k, V1, V2]), std.map L expand L1.
 
 % [expand A B] can be used to perform a replacement, eg
-%   (expand (const "foo") (const "bar") :- !) => expand A B
+%   (expand (const "foo") (const "bar") :- !) ==> expand A B
 pred expand i:term, o:term.
 
 }}.
@@ -43,14 +43,14 @@ expand (global _ as C) C :- !.
 expand (pglobal _ _ as C) C :- !.
 expand (sort _ as C) C :- !.
 expand (fun N T F) (fun N T1 F1) :- !,
-  expand T T1, pi x\ expand x x => expand (F x) (F1 x).
+  expand T T1, pi x\ expand x x ==> expand (F x) (F1 x).
 expand (let N T B F) (let N T1 B1 F1) :- !,
-  expand T T1, expand B B1, pi x\ expand x x => expand (F x) (F1 x).
+  expand T T1, expand B B1, pi x\ expand x x ==> expand (F x) (F1 x).
 expand (prod N T F) (prod N T1 F1) :- !,
-  expand T T1, (pi x\ expand x x => expand (F x) (F1 x)).
+  expand T T1, (pi x\ expand x x ==> expand (F x) (F1 x)).
 expand (app L) (app L1) :- !, map L expand L1.
 expand (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
-  expand Ty Ty1, pi x\ expand x x => expand (F x) (F1 x).
+  expand Ty Ty1, pi x\ expand x x ==> expand (F x) (F1 x).
 expand (match T Rty B) (match T1 Rty1 B1) :- !,
   expand T T1, expand Rty Rty1, map B expand B1.
 expand (primitive _ as C) C :- !.
@@ -113,12 +113,12 @@ pred expand-abstraction
   i:list prop, o:prop. % accumulator for the premises of the clause, and the clause
 
 expand-abstraction Info Rec (prod N S F) [P|PS] OldBo (fun N S Bo) KArgs Iota AccL AccR Premises (pi x\ Clause x) :- !,
-  pi x\ expand x x => 
+  pi x\ expand x x ==> 
     expand-abstraction Info Rec
       (F x) PS OldBo (Bo x) {coq.mk-app KArgs [x]} {cons_assoc_opt P x Iota} AccL [x|AccR] Premises (Clause x).
 
 expand-abstraction Info Rec (let N S B F) [P|PS] OldBo (let N S B Bo) KArgs Iota AccL AccR Premises Clause :- !,
-  pi x\ expand x x => 
+  pi x\ expand x x ==> 
     % a let in is not a real argument to KArgs, but may need a "iota" redex, since the projection could exist
     expand-abstraction Info Rec
       (F x) PS OldBo (Bo x) KArgs {cons_assoc_opt P x Iota} AccL AccR Premises Clause.
@@ -128,9 +128,9 @@ expand-abstraction Info Rec _ [] OldBo Result  ExpandedRecord Iota AccL AccR Pre
   std.map Iota (build-iotared-clause ExpandedRecord) IotaClauses,
   ExpansionClause = expand Rec ExpandedRecord,
   % eta expand the record to obtain a new body (that typechecks)
-  ExpansionClause => expand OldBo NewBo, !,
+  (ExpansionClause ==> expand OldBo NewBo), !,
   % continue, but schedule iota reductions (pre-existing projections became iota redexes)
-  IotaClauses =>
+  IotaClauses ==>
     expand-spine Info NewBo Result AccL AccR [ExpansionClause|Premises] Clause.
 
 % This predicate travrses the spine of lambdas. When it finds an abstraction
@@ -149,11 +149,11 @@ expand-spine (info R _ _ Projs K KTY as Info) (fun _ (global (indt R)) Bo) Resul
 % otherwise we traverse the spine
 expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
   expand Ty Ty1, !,
-  pi x y\ expand x y => expand y y => expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
+  pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
 expand-spine Info (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
   expand Ty Ty1, !,
   expand V V1, !,
-  pi x y\ expand x y => expand y y => expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
+  pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
 
 % at the end of the spine we fire the iota redexes and complete the clause
 expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-

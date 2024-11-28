@@ -62,7 +62,7 @@ fuzz (prod N S T) (prod N S1 T1) :-
   fuzz S S1,
   % we load the context with types for x and y, as well as the fact that
   % we fuzz x to y
-  pi x y\ decl x N S => decl y N S1 => fuzz x y => fuzz (T x) (T1 y).
+  pi x y\ decl x N S ==> decl y N S1 ==> fuzz x y ==> fuzz (T x) (T1 y).
 
 % rule for application
 fuzz (app L) (app L1) :- std.map L fuzz L1.

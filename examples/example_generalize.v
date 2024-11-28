@@ -14,16 +14,15 @@ bind M T T1 :- M > 0,
   T1 = {{ fun x => lp:(B x) }},   % we build a Coq "fun .. => "
   N is M - 1,
   pi x\                           % we allocate the fresh symbol for (abs M)
-    (copy (abs M) x :- !) =>      % we schedule the replacement (abs M) -> x
+    (copy (abs M) x :- !) ==>     % we schedule the replacement (abs M) -> x
     bind N T (B x).
 bind 0 T T1 :- copy T T1.         % we perform all the replacements
 
 main [trm T] :- std.do! [
   % example rule, abstracts all 1s.
-  (pi N M\ fold-map {{ 1 }} N (abs M) M :- !, M is N + 1)
-    => fold-map T 0 T1 M,
-  bind M T1 T2,
-  coq.say {coq.term->string T} "===>" {coq.term->string T2},
+  ((pi N M\ fold-map {{ 1 }} N (abs M) M :- !, M is N + 1) ==> fold-map T 0 T1 NVars),
+  bind NVars T1 T2,
+  coq.say {coq.term->string T} "becomes" {coq.term->string T2},
 ].
  
 
@@ -32,5 +31,5 @@ main [trm T] :- std.do! [
 
 Elpi generalize (3 + 7).
 (* prints: 
-   (3 + 7) ===> (fun (x : ?e) (x0 : ?e0) => S (S x0) + S (S (S (S (S (S x))))))
+   (3 + 7) becomes (fun (x : ?e) (x0 : ?e0) => S (S x0) + S (S (S (S (S (S x))))))
 *)
