@@ -32,7 +32,7 @@ let master = [
         coq.override.version = "8.20";
       };
       ocamlPackages = {
-        elpi.override.version = "1.20.0";
+        elpi.override.version = "v2.0.2";
       };
     };
 
@@ -42,7 +42,7 @@ let master = [
         coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
       };
       ocamlPackages = {
-        elpi.override.version = "1.20.0";
+        elpi.override.version = "v2.0.2";
       };
     };
       
@@ -54,7 +54,7 @@ let master = [
       ocamlPackages = {
         # when updating this, don't forget to update dune-project
         # then use it to regenerate coq-elpi.opam
-        elpi.override.version = "1.18.2";
+        elpi.override.version = "v2.0.2";
       };
     };
 
