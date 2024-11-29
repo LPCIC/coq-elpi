@@ -118,7 +118,7 @@ let feedback_fmt_write, feedback_fmt_flush =
         let len = Bytes.length s in
         if len > 0 && Bytes.get s (len - 1) = '\n' then Bytes.sub_string s 0 (len - 1) else Bytes.to_string s
       in
-      Feedback.msg_notice Pp.(str s);
+      Feedback.msg_debug Pp.(str s);
       Buffer.clear b )
 
 let elpi_cat = CWarnings.create_category ~name:"elpi" ()
