@@ -140,6 +140,9 @@ and `ocaml-lsp-server` (version 1.15).
 - [reduction surgery](examples/example_reduction_surgery.v) implements
   a tactic fine tuning cbv with a list of allowed unfoldings taken from a
   module.
+- [open terms](examples/example_open_terms.v) implements
+  a tactic like `replace` that receives terms containing free variables, i.e.
+  variables bound in the goal but not in the proof context.
 
 ### Applications written in Coq-Elpi
 
@@ -395,13 +398,14 @@ Tactics also accept Ltac variables as follows:
 - `ltac_string:(v)` (for `v` of type `string` or `ident`)
 - `ltac_int:(v)` (for `v` of type `int` or `integer`)
 - `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
-- `ltac_(string|int|term)_list:(v)` (for `v` of type `list` of ...)
+- `ltac_open_term:(v)` (for `v` of type `uconstr`)
+- `ltac_(string|int|term|open_term)_list:(v)` (for `v` of type `list` of ...)
 - `ltac_tactic:(t)` (for `t` of type `tactic_expr`)
 - `ltac_attributes:(v)` (for `v` of type `attributes`)
 For example:
 ```coq
-Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) simple_intropattern_list(P) :=
-  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L) ltac_tactic:(intros P).
+Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) simple_intropattern_list(P) uconstr(U) :=
+  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L) ltac_tactic:(intros P) ltac_open_term:(U).
 ```
 lets one write `tac "a" b 3 H t1 t2 t3 [|m]` in any Ltac context.
 Arguments are first interpreted by Ltac according to the types declared
@@ -413,8 +417,12 @@ unresolved implicit arguments, since this is what the `constr` Ltac type means
 If they were typed as `open_constr` or `uconstr`, the last or both checks would
 be respectively skipped. In any case they are passed to the Elpi code as `trm ...`.
 Both `"a"` and `b` are passed to Elpi as `str ...`.
+Argument `U` flagged as `ltac_open_constr` can mention free variables. The Elpi
+tactic receives `open-trm N F` where `N` is the number of free variables in `U`
+and `F` is `fun x1 => ... fun xN => U`.
 Finally, `ltac_term:(T)` and `(T)` are *not* synonyms: but the former must be used
 when defining tactic notations, the latter when invoking elpi tactics directly.
+``` `(T)``` can be used to pass an open term to `elpi tactic ...`.
 
 ##### Attributes
 

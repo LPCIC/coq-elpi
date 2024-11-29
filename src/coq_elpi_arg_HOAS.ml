@@ -539,14 +539,15 @@ type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
 type top_ltac_tactic = Geninterp.Val.t
 
-type ltac_ty = Int | String | Term | List of ltac_ty
+type ltac_ty = Int | String | Term | OpenTerm | List of ltac_ty
 
 type ('a,'f,'t) t =
   | Int : int            -> ('a,'f,'t) t
   | String : string      -> ('a,'f,'t) t
   | Term : 'a            -> ('a,'f,'t) t
+  | OpenTerm : 'a        -> ('a,'f,'t) t
   | LTac : ltac_ty * 'f  -> ('a,'f,'t) t
-  | LTacTactic : 't  -> ('a,'f,'t) t
+  | LTacTactic : 't      -> ('a,'f,'t) t
 
 type raw =  (raw_term,  raw_ltac_term,  raw_ltac_tactic) t
 type glob = (glob_term, glob_ltac_term, glob_ltac_tactic) t
@@ -564,6 +565,7 @@ let pr_arg f k t x = match x with
   | Int n -> Pp.int n
   | String s -> Pp.qstring s
   | Term s -> f s
+  | OpenTerm s -> f s
   | LTac(_, s) -> k s
   | LTacTactic s -> t s
 
@@ -597,6 +599,7 @@ let glob glob_sign : raw -> _ * glob = function
   | Int _ as x -> glob_sign, x
   | String _ as x -> glob_sign, x
   | Term t -> glob_sign, Term (intern_tactic_constr glob_sign t)
+  | OpenTerm t -> glob_sign, OpenTerm (intern_tactic_constr glob_sign t)
   | LTac(ty,t) -> glob_sign, LTac (ty,fst @@ intern_tactic_constr glob_sign t)
   | LTacTactic t -> glob_sign, LTacTactic (Ltac_plugin.Tacintern.glob_tactic t)
 
@@ -605,6 +608,8 @@ let subst mod_subst = function
   | String _ as x -> x
   | Term t ->
       Term (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr mod_subst t)
+  | OpenTerm t ->
+      OpenTerm (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr mod_subst t)
   | LTac(ty,t) ->
       LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))        
   | LTacTactic t ->
@@ -614,6 +619,7 @@ let interp return ist = function
   | Int _ as x -> return x
   | String _ as x -> return x
   | Term t -> return @@ Term(ist,t)
+  | OpenTerm t -> return @@ OpenTerm(ist,t)
   | LTac(ty,v) ->
       let id =
         match DAst.get v with
@@ -621,7 +627,6 @@ let interp return ist = function
         | _ -> assert false in
         return @@ LTac(ty,(ist,id))
   | LTacTactic t -> return @@ LTacTactic (Ltac_plugin.Tacinterp.Value.of_closure ist t)
-  
 
 let add_genarg tag pr_raw pr_glob pr_top glob subst interp =
   let wit = Genarg.make0 tag in
@@ -856,6 +861,7 @@ let rec do_context_constr coq_ctx csts fields ~depth state =
 
 let strc = E.Constants.declare_global_symbol "str"
 let trmc = E.Constants.declare_global_symbol "trm"
+let open_trmc = E.Constants.declare_global_symbol "open-trm"
 let tacc = E.Constants.declare_global_symbol "tac"
 let intc = E.Constants.declare_global_symbol "int"
 let ctxc = E.Constants.declare_global_symbol "ctx-decl"
@@ -898,13 +904,50 @@ let in_elpi_string_arg ~depth state x =
 let in_elpi_int_arg ~depth state x =
   state, E.mkApp intc (CD.of_int x) [], []
 
+module NIdSet = struct
+  include Id.Map
+  let counter = ref 0
+  let add x s =
+    if not (mem x s) then begin
+      incr counter;
+      add x !counter s
+    end else
+      s
+
+  let fold f s acc =
+    Id.Map.bindings s |> List.sort (fun (_,n) (_,m) -> m - n) |>
+      List.fold_left (fun acc (x,_) -> f x acc) acc
+
+end
+let free_glob_vars known_vars =
+  let open Glob_term in
+    let rec vars bound vs c = match DAst.get c with
+      | GVar id' -> if Id.Set.mem id' bound then vs else NIdSet.add id' vs
+      | _ -> Glob_ops.fold_glob_constr_with_binders Id.Set.add vars bound vs c in
+    fun rt ->
+      let vs = vars known_vars NIdSet.empty rt in
+      vs
+let close_glob coq_ctx term =
+  let open Glob_term in
+  let fv_set = free_glob_vars coq_ctx.names term in
+  (NIdSet.cardinal fv_set ,NIdSet.fold (fun id t ->
+    DAst.(make (GLambda(Name.Name(id),None,Explicit,mkGHole,t)))) fv_set term)
+
 let in_elpi_term_arg ~loc ~base ~depth state coq_ctx hyps sigma ist glob_or_expr =
   let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
   let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
   let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
   let state, t = Coq_elpi_glob_quotation.gterm2lp ~loc ~depth ~base g state in
   state, E.mkApp trmc t [], []
- 
+
+let in_elpi_open_term_arg ~loc ~base ~depth state coq_ctx hyps sigma ist glob_or_expr =
+  let closure = Ltac_plugin.Tacinterp.interp_glob_closure ist coq_ctx.env sigma glob_or_expr in
+  let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
+  let (n, g) = close_glob coq_ctx g in
+  let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
+  let state, t = Coq_elpi_glob_quotation.gterm2lp ~loc ~depth ~base g state in
+  state, E.mkApp open_trmc (CD.of_int n) [t], []
+
 let in_elpi_tac_econstr ~base:() ~depth ?calldepth coq_ctx hyps sigma state x =
   let state, gls0 = set_current_sigma ~depth state sigma in
   let state, t, gls1 = Coq_elpi_HOAS.constr2lp ~depth ?calldepth coq_ctx E.no_constraints state x in
@@ -939,7 +982,7 @@ let rec in_elpi_ltac_arg ~loc ~depth ~base ?calldepth coq_ctx hyps sigma state t
   | String ->
       let s = my_cast_to_string v in
       singleton @@ in_elpi_string_arg ~depth state s
-  | Term -> try
+  | Term -> begin try
         let t = Taccoerce.Value.cast (Genarg.topwit Stdarg.wit_open_constr) v in
         let state, t, gls = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state t in
         state, [E.mkApp trmc t []], gls
@@ -955,6 +998,14 @@ let rec in_elpi_ltac_arg ~loc ~depth ~base ?calldepth coq_ctx hyps sigma state t
         state, [E.mkApp trmc t []], gls
       with Taccoerce.CannotCoerceTo _ ->
         raise (Taccoerce.CannotCoerceTo "a term")
+      end
+  | OpenTerm ->
+      let closure = Taccoerce.coerce_to_uconstr v in
+      let g = Coq_elpi_utils.detype_closed_glob coq_ctx.env sigma closure in
+      let n, g = close_glob coq_ctx g in
+      let state = Coq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
+      let state, t = Coq_elpi_glob_quotation.gterm2lp ~loc ~depth ~base g state in
+      state, [E.mkApp open_trmc (CD.of_int n) [t]], []
 
 let { CD.cin = of_ltac_tactic; isc = is_ltac_tactic; cout = to_ltac_tactic }, tac = CD.declare {
   CD.name = "ltac1-tactic";
@@ -983,6 +1034,7 @@ let in_elpi_tac ~loc ~base ~depth ?calldepth coq_ctx hyps sigma state x =
   | Int x -> singleton @@ in_elpi_int_arg ~depth state x
   | String x -> singleton @@ in_elpi_string_arg ~depth state x
   | Term (ist,glob_or_expr) -> singleton @@ in_elpi_term_arg ~loc ~depth ~base state coq_ctx hyps sigma ist glob_or_expr
+  | OpenTerm (ist,glob_or_expr) -> singleton @@ in_elpi_open_term_arg ~loc ~depth ~base state coq_ctx hyps sigma ist glob_or_expr
 
 let handle_template_polymorphism = function
   | None -> Some false

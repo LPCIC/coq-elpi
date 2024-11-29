@@ -385,3 +385,11 @@ Elpi bug_394
   Definition D `{L} : Prop := True
   Definition D `{L} (n:nat) : Prop := True
   .
+
+Elpi Tactic open.
+Elpi Accumulate lp:{{
+solve (goal _ _ _ _ [open-trm N X]) _ :- coq.say N X.
+}}.
+Goal True.
+elpi open `(x + y).
+Abort.

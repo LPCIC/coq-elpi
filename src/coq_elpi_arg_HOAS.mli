@@ -74,14 +74,15 @@ type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
 type top_ltac_tactic = Geninterp.Val.t
 
-type ltac_ty = Int | String | Term | List of ltac_ty
+type ltac_ty = Int | String | Term | OpenTerm | List of ltac_ty
 
 type ('a,'f,'t) t =
   | Int : int            -> ('a,'f,'t) t
   | String : string      -> ('a,'f,'t) t
   | Term : 'a            -> ('a,'f,'t) t
+  | OpenTerm : 'a        -> ('a,'f,'t) t
   | LTac : ltac_ty * 'f  -> ('a,'f,'t) t
-  | LTacTactic : 't  -> ('a,'f,'t) t
+  | LTacTactic : 't      -> ('a,'f,'t) t
 
 type raw =  (raw_term,  raw_ltac_term,  raw_ltac_tactic) t
 type glob = (glob_term, glob_ltac_term, glob_ltac_tactic) t

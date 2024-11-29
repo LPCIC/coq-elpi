@@ -327,12 +327,15 @@ TYPED AS elpi_ftactic_arg
 | [ integer(n) ] -> { EA.Tac.Int n }
 | [ string(s) ] -> { EA.Tac.String s }
 | [ "(" lconstr(t) ")" ] -> { EA.Tac.Term t }
+| [ "`(" lconstr(t) ")" ] -> { EA.Tac.OpenTerm t }
 | [ "ltac_string" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 | [ "ltac_string_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 | [ "ltac_int" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 | [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 | [ "ltac_term" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
 | [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_open_term" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.OpenTerm, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
+| [ "ltac_open_term_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.OpenTerm,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
 | [ "ltac_tactic" ":" "(" ltac_expr(t) ")" ] -> { EA.Tac.LTacTactic t }
 END
 
