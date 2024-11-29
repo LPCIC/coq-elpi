@@ -611,53 +611,53 @@ std.set.private.elements (std.set.private.node A3 A4 A0 _) A1 A5 :- std.set.priv
  std.set.private.elements A3 [A4 | A2] A5.
 % File "builtin_set.elpi", line 255, column 0, characters 31127-31176: [246] 
 printterm A2 A0 :- term_to_string A0 A1, output A2 A1.
-% File "coq-builtin.elpi", line 269, column 0, characters 10824-10944: [247] default-declare-evar
+% File "coq-builtin.elpi", line 270, column 0, characters 10864-10984: [247] default-declare-evar
 declare-evar A0 A1 A2 A3 :- declare_constraint (declare-evar A0 A1 A2 A3) 
                              [A1].
-% File "coq-builtin.elpi", line 278, column 0, characters 11184-11259: [248] 
+% File "coq-builtin.elpi", line 279, column 0, characters 11224-11299: [248] 
 rm-evar (as uvar A0) (as uvar A1) :- !, 
  declare_constraint (rm-evar A0 A1) [A0, A1].
-% File "coq-builtin.elpi", line 279, column 0, characters 11261-11272: [249] 
+% File "coq-builtin.elpi", line 280, column 0, characters 11301-11312: [249] 
 rm-evar _ _ :- .
-% File "coq-builtin.elpi", line 300, column 0, characters 12041-12144: [250] 
+% File "coq-builtin.elpi", line 301, column 0, characters 12081-12184: [250] 
 evar (as uvar A3) A2 A0 :- var A0 _ A1, !, prune A2 A1, prune A3 A1, 
  declare_constraint (evar A3 A2 A0) [A3, A0].
-% File "coq-builtin.elpi", line 303, column 0, characters 12147-12185: [251] default-assign-evar
+% File "coq-builtin.elpi", line 304, column 0, characters 12187-12225: [251] default-assign-evar
 evar _ _ _ :- .
-% File "coq-builtin.elpi", line 751, column 3, characters 30685-30843: [252] 
+% File "coq-builtin.elpi", line 752, column 3, characters 30725-30883: [252] 
 coq.env.const-opaque? A0 :- coq.warning elpi.deprecated elpi.const-opaque 
                              use coq.env.opaque? in place of coq.env.const-opaque?, 
  coq.env.opaque? A0.
-% File "coq-builtin.elpi", line 758, column 3, characters 30933-31106: [253] 
+% File "coq-builtin.elpi", line 759, column 3, characters 30973-31146: [253] 
 coq.env.const-primitive? A0 :- coq.warning elpi.deprecated 
                                 elpi.const-primitive 
                                 use coq.env.primitive? in place of coq.env.const-primitive?, 
  coq.env.primitive? A0.
-% File "coq-builtin.elpi", line 840, column 0, characters 34275-34346: [254] 
+% File "coq-builtin.elpi", line 841, column 0, characters 34315-34386: [254] 
 coq.env.begin-module A0 A1 :- coq.env.begin-module-functor A0 A1 [].
-% File "coq-builtin.elpi", line 853, column 0, characters 34756-34833: [255] 
+% File "coq-builtin.elpi", line 854, column 0, characters 34796-34873: [255] 
 coq.env.begin-module-type A0 :- coq.env.begin-module-type-functor A0 [].
-% File "coq-builtin.elpi", line 1232, column 0, characters 49508-49698: [256] 
+% File "coq-builtin.elpi", line 1233, column 0, characters 49548-49738: [256] 
 coq.CS.canonical-projections A0 A1 :- coq.warning elpi.deprecated 
                                        elpi.canonical-projections 
                                        use coq.env.projections in place of coq.CS.canonical-projections, 
  coq.env.projections A0 A1.
-% File "coq-builtin.elpi", line 1536, column 0, characters 62266-62446: [257] 
+% File "coq-builtin.elpi", line 1537, column 0, characters 62306-62486: [257] 
 coq.reduction.cbv.whd_all A0 A1 :- coq.warning elpi.deprecated 
                                     elpi.cbv-whd-all 
                                     use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all, 
  coq.reduction.cbv.norm A0 A1.
-% File "coq-builtin.elpi", line 1543, column 0, characters 62544-62725: [258] 
+% File "coq-builtin.elpi", line 1544, column 0, characters 62584-62765: [258] 
 coq.reduction.vm.whd_all A0 A1 A2 :- coq.warning elpi.deprecated 
                                       elpi.vm-whd-all 
                                       use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all, 
  coq.reduction.vm.norm A0 A1 A2.
-% File "coq-builtin.elpi", line 1550, column 0, characters 62778-62871: [259] 
+% File "coq-builtin.elpi", line 1551, column 0, characters 62818-62911: [259] 
 coq.reduction.lazy.whd_all A0 A1 :- get-option coq:redflags coq.redflags.all
                                      => coq.reduction.lazy.whd A0 A1.
-% File "coq-builtin.elpi", line 1667, column 0, characters 67249-67289: [260] 
+% File "coq-builtin.elpi", line 1668, column 0, characters 67289-67329: [260] 
 coq.id->name A0 A1 :- coq.string->name A0 A1.
-% File "coq-builtin.elpi", line 1769, column 0, characters 71023-71087: [261] 
+% File "coq-builtin.elpi", line 1770, column 0, characters 71063-71127: [261] 
 coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
 % File "./examples/tutorial_elpi_lang.v", line 491, column 3, characters 12653-12720: [262] 
 whd (app A0 A2) A3 :- whd A0 (fun A1), !, whd (A1 A2) A3.
