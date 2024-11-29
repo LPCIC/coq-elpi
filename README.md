@@ -140,6 +140,9 @@ and `ocaml-lsp-server` (version 1.15).
 - [reduction surgery](examples/example_reduction_surgery.v) implements
   a tactic fine tuning cbv with a list of allowed unfoldings taken from a
   module.
+- [open terms](examples/example_open_terms.v) implements
+  a tactic like `replace` that receives terms containing free variables, i.e.
+  variables bound in the goal but not in the proof context.
 
 ### Applications written in Coq-Elpi
 
