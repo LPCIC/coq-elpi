@@ -13,7 +13,7 @@ fatal-error-w-data Msg Data :- !,
   M is Msg ^ ": " ^ DataS, stop M.
 
 :before "default-debug-print"
-debug-print M Data :- !, coq.say M Data.
+debug-print M Data :- !, coq.debug M Data.
 
 % HACK: elpi's stop has no argument
 type stop string -> prop.
