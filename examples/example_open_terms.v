@@ -116,7 +116,7 @@ by pi).
 Abort.
 
 
-(* We need a few helpers to cress the context *)
+(* We need a few helpers to cross the context *)
 
 Lemma congrP (A : Type) (B : A -> Type) (f g : forall x : A, B x) :
   f = g -> forall v1 v2 (p : v1 = v2), match p in _ = x return B x with eq_refl => f v1 end = g v2.
@@ -126,21 +126,52 @@ Lemma congrA (A B : Type) (f g : A -> B) :
   f = g -> forall v1 v2 (p : v1 = v2), f v1 = g v2.
 Proof. now intros fg v1 v2 v1v2; rewrite fg, v1v2. Qed.
 
+Elpi File congruence.code lp:{{
+
+% iterates congrA and congrP to prove f x1..xn = f y1..yn from proofs of xi = yi
+% [congruence F G PFG Ty XS YS PXYS R] starting from a proof PFG that F = G
+% it consumes X Y and PXY : X = Y to build a proof R : (F X = G Y). It needs to
+% look at the type of F (and G) in order to decide which congruence lemma to apply
+pred conguence i:term, i:term,  i:term, i:term, i:list term, i:list term, i: list term, o:term.
+conguence _ _ P _ [] [] [] P :- !.
+conguence F G PFG {{ _ -> lp:Ty }} [X|XS] [Y|YS] [PXY|PS] Q :- !,
+  PFXGY = {{ congrA _ _ lp:F lp:G lp:PFG lp:X lp:Y lp:PXY }},
+  conguence {coq.mk-app F [X]} {coq.mk-app G [Y]} PFXGY Ty XS YS PS Q.
+conguence F G PFG {{ forall x, lp:(Ty x) }} [X|XS] [Y|YS] [PXY|PS] Q :-
+  PFXGY = {{ congrP _ _ lp:F lp:G lp:PFG lp:X lp:Y lp:PXY }},
+  conguence {coq.mk-app F [X]} {coq.mk-app G [Y]} PFXGY (Ty X) XS YS PS Q.
+
+}}.
+
+Elpi Tactic test_congruence.
+Elpi Accumulate File congruence.code.
+Elpi Accumulate lp:{{
+  pred mk-refl i:term, o:term.
+  mk-refl T {{ @refl_equal Type lp:T }} :- coq.typecheck-ty T _ ok, !. % we don't like Set
+  mk-refl T {{ refl_equal lp:T }}.
+
+  solve (goal _ _ {{ lp:A = lp:B }} _ _ as G) GL :- std.do! [
+    A = app[HD|Args1],
+    B = app[HD|Args2],
+    std.map2 Args1 Args2 (_\ mk-refl) Proofs,
+    coq.typecheck HD Ty ok,
+    conguence HD HD {{ refl_equal lp:HD }} Ty Args1 Args2 Proofs P,
+    refine P G GL,
+].
+}}.
+
+Goal forall l, map (fun x => x) l = map (fun x => x) l :> list nat.
+intros.
+elpi test_congruence.
+Qed.
+
 (* We now build the final tactic *)
 
 Elpi Tactic replace.
 Elpi Accumulate File instantiate.code.
+Elpi Accumulate File congruence.code.
 Elpi Accumulate lp:{{
 
-% iterates congrA and congrP to prove f x1..xn = f y1..yn from proofs of xi = yi
-pred mk-app-prf i:term, i:term, i:term, i:list term, i:list term, i: list term, i:term, o:term.
-mk-app-prf _ _ _ [] [] [] P P :- !.
-mk-app-prf F G {{ _ -> lp:Ty }} [X|XS] [Y|YS] [PXY|PS] PFG Q :- !,
-  PFXGY = {{ congrA _ _ lp:F lp:G lp:PFG lp:X lp:Y lp:PXY }},
-  mk-app-prf {coq.mk-app F [X]} {coq.mk-app G [Y]} Ty XS YS PS PFXGY Q.
-mk-app-prf F G {{ forall x, lp:(Ty x) }} [X|XS] [Y|YS] [PXY|PS] PFG Q :-
-  PFXGY = {{ congrP _ _ lp:F lp:G lp:PFG lp:X lp:Y lp:PXY }},
-  mk-app-prf {coq.mk-app F [X]} {coq.mk-app G [Y]} (Ty X) XS YS PS PFXGY Q.
 
 % [replace L R X Y P] replaces L by R in X obtaining Y and
 % a proof P that X = Y. P will contain holes (sub goals) for sub proofs
@@ -161,7 +192,7 @@ replace L R (fun N T F) (fun N T F1) {{ functional_extensionality lp:{{ fun N T 
 replace L R (app [HD|TS]) (app [HD|TS1]) Prf :-
   replace-list L R TS TS1 PS,
   coq.typecheck HD Ty ok,
-  mk-app-prf HD HD Ty TS TS1 PS {{ refl_equal lp:HD }} Prf.
+  conguence HD HD {{ refl_equal lp:HD }} Ty TS TS1 PS Prf.
 
 % base cases
 replace _ _ X X {{ refl_equal lp:X }} :- name X, !.
