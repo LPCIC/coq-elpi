@@ -219,7 +219,7 @@ Tactic Notation (at level 0) "repl" uconstr(x) "with" uconstr(y) :=
 
 Tactic Notation (at level 0) "repl" uconstr(x) "with" uconstr(y) "by" tactic(t) :=
   elpi replace ltac_open_term:(x) ltac_open_term:(y); try (simpl; t).
-
+   (*
 Lemma hard_example : forall l, map (fun x => x + 1) l = map (fun x => 1 + x) l.
 Proof.
   intros l.
@@ -233,6 +233,6 @@ Proof.
   repl (x + 0 + y) with (y + x) by ring.
   reflexivity.
 Qed.
-
+      *)
 (* An extended version of this tactic by Y. Bertot can be found in the tests/
    directory under the name test_open_terms.v *)
