@@ -181,7 +181,9 @@ pred replace i:argument, i:argument, i:term, o:term, o:term.
 % all binders are crossed and we find a term identical to L.
 % the proof is a hole of type L = R.
 replace (open-trm 0 L) (open-trm 0 R) L R P :- !,
-  coq.typecheck P {{ lp:L = lp:R }} ok.
+  TY = {{ lp:L = lp:R }},
+  coq.typecheck-ty TY _ ok,
+  coq.typecheck P TY ok.
 
 % we cross the binder by functional extensionality
 replace L R (fun N T F) (fun N T F1) {{ functional_extensionality lp:{{ fun N T F }} lp:{{ fun N T F1 }} lp:{{ fun N T Prf }}}} :- !,

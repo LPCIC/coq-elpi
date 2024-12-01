@@ -150,7 +150,9 @@ instantiate_pair N T C (pr A1 A2) (pr B1 B2) :-
 pred mk-equality i:(pair argument argument), i:term i:A, o:term, o:term, o:A.
 
 mk-equality (pr (open-trm 0 S) (open-trm 0 T)) S A T P A :- !,
-  coq.typecheck P {{lp:S = lp:T}} ok.
+  TY = {{lp:S = lp:T}},
+  coq.typecheck-ty TY _ ok,
+  coq.typecheck P TY ok.
 
 :name "mk-equality:start"
 mk-equality _RW X A Z Y A :- name X,!,
