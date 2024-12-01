@@ -49,7 +49,7 @@ jobs:
         opam pin add coq-core ${{ matrix.coq_version }}
         opam pin add coq-stdlib ${{ matrix.coq_version }}
       if: ${{ matrix.coq_version != 'dev' }}
-    - run: opam install ./coq-elpi.opam --deps-only --with-test -y
+    - run: opam install ./coq-elpi.opam --deps-only --with-test -y --ignore-constraints-on coq 
     - run: opam exec make build
     - run: opam exec make test
 
