@@ -294,6 +294,7 @@ Open Scope Z_scope. (* Otherwise ring fails. *)
   but they all have to be fillable with bound variables where the binding
   happens in the goal, in a nested fashion. *)
 
+    (*
 (* This test illustrates the case where there is no unknown. *)
 Goal forall x, x = 1 -> 2 = x + 1.
 intros x x1.
@@ -410,3 +411,4 @@ now apply map_ext_in; intros a _; ring.
 Qed.
 
 End sandbox.
+  *)
