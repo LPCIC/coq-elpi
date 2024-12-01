@@ -181,7 +181,9 @@ pred replace i:argument, i:argument, i:term, o:term, o:term.
 % all binders are crossed and we find a term identical to L.
 % the proof is a hole of type L = R.
 replace (open-trm 0 L) (open-trm 0 R) L R P :- !,
-  coq.typecheck P {{ lp:L = lp:R }} ok.
+  TY = {{ lp:L = lp:R }},
+  coq.typecheck-ty TY _ ok,
+  coq.typecheck P TY ok.
 
 % we cross the binder by functional extensionality
 replace L R (fun N T F) (fun N T F1) {{ functional_extensionality lp:{{ fun N T F }} lp:{{ fun N T F1 }} lp:{{ fun N T Prf }}}} :- !,
@@ -219,7 +221,7 @@ Tactic Notation (at level 0) "repl" uconstr(x) "with" uconstr(y) :=
 
 Tactic Notation (at level 0) "repl" uconstr(x) "with" uconstr(y) "by" tactic(t) :=
   elpi replace ltac_open_term:(x) ltac_open_term:(y); try (simpl; t).
-   (*
+
 Lemma hard_example : forall l, map (fun x => x + 1) l = map (fun x => 1 + x) l.
 Proof.
   intros l.
@@ -233,6 +235,6 @@ Proof.
   repl (x + 0 + y) with (y + x) by ring.
   reflexivity.
 Qed.
-      *)
+
 (* An extended version of this tactic by Y. Bertot can be found in the tests/
    directory under the name test_open_terms.v *)
