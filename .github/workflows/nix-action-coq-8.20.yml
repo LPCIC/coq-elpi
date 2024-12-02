@@ -53,9 +53,9 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
         --argstr job "mathcomp-ssreflect"
     - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq-ext-lib'
+      name: 'Building/fetching previous CI target: ExtLib'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"
-        --argstr job "coq-ext-lib"
+        --argstr job "ExtLib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: simple-io'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-8.20"

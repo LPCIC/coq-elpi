@@ -31,9 +31,6 @@ let master = [
       coqPackages = common-bundles // {
         coq.override.version = "8.20";
       };
-      ocamlPackages = {
-        elpi.override.version = "v2.0.3";
-      };
     };
 
     "coq-master" = {
