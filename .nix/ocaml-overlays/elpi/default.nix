@@ -1,10 +1,10 @@
 { lib
-, buildDunePackage, camlp5
+, buildDunePackage
 , ocaml
 , menhir, menhirLib
 , atdgen
 , stdlib-shims
-, re, perl, ncurses
+, re, ncurses
 , ppxlib, ppx_deriving
 , coqPackages
 , version ? "2.0.3"
