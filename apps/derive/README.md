@@ -62,7 +62,7 @@ Currently there are 3 groups:
   + `map` map over a container
   + `param1_functor` functoriality lemmas (map over the param1 translation)
   + `lens` and `lens_laws` generate lenses focusing on record fields and some
-    equations governing setter/setters
+    equations governing setter/setters (aka record update syntax)
 - `derive.legacy` contains derivations superseded by `std`:
   + `eq` and `eqOK` generate sound equality tests in quadratic time/space, see
      [Deriving proved equality tests in Coq-elpi](http://drops.dagstuhl.de/opus/volltexte/2019/11084/)
