@@ -36,7 +36,7 @@ buildDunePackage {
 
   # atdgen is both a library and executable
   nativeBuildInputs = [ menhir ] ++ [ atdgen ];
-  buildInputs = [ ncurses ];
+  buildInputs = [ ncurses ] ++ [ atdgen ];
 
   propagatedBuildInputs = [ re stdlib-shims menhirLib ppxlib ppx_deriving ];
 
