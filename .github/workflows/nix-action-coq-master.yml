@@ -84,18 +84,16 @@ jobs:
         authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
         extraPullNames: coq, coq-community, math-comp
         name: coq-elpi
-    - id: hack
+    - name: No idea what this does
       run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr
         bundle \"coq-master\" --argstr job \"coq-elpi\" \\\n   --dry-run 2> err > out || (touch fail; true)"
-    - run: cat err
-    - run: "if [ -e fail ]; then exit 1; else exit 0; fi"
-    - run: "(echo out; echo -n status=; cat out | grep \"built:\" | sed \"s/.*/built/\") >> $GITHUB_OUTPUT\n"
+    - name: Error reporting
+      run: cat err
+    - name: Failure check
+      run: "if [ -e fail ]; then exit 1; else exit 0; fi"
     - id: stepCheck
       name: Checking presence of CI target coq-elpi
-      run: "nb_dry_run=$(NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr
-        bundle \"coq-master\" --argstr job \"coq-elpi\" \\\n   --dry-run 2>&1 > /dev/null)\n
-        echo $nb_dry_run\necho status=$(echo $nb_dry_run | grep \"built:\" | sed \"\
-        s/.*/built/\") >> $GITHUB_OUTPUT\n"
+      run: "(echo out; echo -n status=; cat out | grep \"built:\" | sed \"s/.*/built/\") >> $GITHUB_OUTPUT\n"
     - if: steps.stepCheck.outputs.status == 'built'
       name: 'Building/fetching previous CI target: coq'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "coq-master"
