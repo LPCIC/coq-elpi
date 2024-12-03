@@ -10,9 +10,6 @@
 , version ? "2.0.3"
 }:
 
-let p5 = camlp5; in
-let camlp5 = p5.override { legacy = true; }; in
-
 let fetched = coqPackages.metaFetch ({
     release."2.0.3".sha256 = "sha256-t2z0sWPiFgp6LuR6CsH/Zk9qfxW+3QjjFcYrB6qSPgc=";
     release."1.20.0".sha256 = "sha256-lctZAIQgOg5d+LfILtWsBVcsemV3zTZYfJfDlCxHtcA=";
