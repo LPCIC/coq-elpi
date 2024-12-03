@@ -31,6 +31,7 @@ let master = [
       coqPackages = common-bundles // {
         coq.override.version = "8.20";
       };
+      # only way to override elpi version is in .nix/coq-overlays/coq-elpi/default.nix
     };
 
     "coq-master" = {
@@ -39,7 +40,7 @@ let master = [
         coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
       };
       ocamlPackages = {
-        elpi.override.version = "v2.0.3";
+        elpi.override.version = "2.0.4";
       };
     };
       
@@ -51,7 +52,7 @@ let master = [
       ocamlPackages = {
         # when updating this, don't forget to update dune-project
         # then use it to regenerate coq-elpi.opam
-        elpi.override.version = "v2.0.3";
+        elpi.override.version = "2.0.4";
       };
     };
 

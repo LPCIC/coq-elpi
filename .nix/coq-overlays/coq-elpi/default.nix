@@ -11,7 +11,7 @@ let
     { case = "8.17"; out = { version = "1.17.0"; };}
     { case = "8.18"; out = { version = "1.18.1"; };}
     { case = "8.19"; out = { version = "1.18.1"; };}
-    { case = "8.20"; out = { version = "2.0.3"; };}
+    { case = "8.20"; out = { version = "2.0.4"; };}
   ] {} );
 in (mkCoqDerivation {
   pname = "elpi";
