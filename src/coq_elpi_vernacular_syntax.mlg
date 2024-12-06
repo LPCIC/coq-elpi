@@ -57,7 +57,7 @@ let rec inlogpath q = function
   | x :: xs -> (Libnames.string_of_qualid q ^ "/" ^ x) :: inlogpath q xs
 
 let warning_legacy_typecheck =
-  CWarnings.create ~default:CWarnings.AsError ~name:"elpi.typecheck-syntax" ~category:Coq_elpi_utils.elpi_depr_cat (fun () ->
+  CWarnings.create ~name:"elpi.typecheck-syntax" ~category:Coq_elpi_utils.elpi_depr_cat (fun () ->
     Pp.strbrk "The command 'Elpi Typecheck' is deprecated (and does nothing) since type checking is now performed by 'Elpi Accumulate'.")
 
 let warning_legacy_accumulate_gen =

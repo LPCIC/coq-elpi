@@ -1,10 +1,31 @@
-# Development version
+# [2.3.0] - 6/12/2024
+
+Requires Elpi 2.0.3 and Coq 8.20.
+
+The major change is the port to Elpi 2.0 that reports type checking errors
+to the location of the offending term and not its exclosing rule.
 
 ### Vernacular
 - `Elpi Accumulate Db Header <db>` to accumulate just the `Db` declaration
   but no code added after that
+- `Elpi File <file> <code>` to name a piece of code without
+  requiring an external file
+- `Elpi Accumulate File Signature <file>` to accumulate only
+  the types declarations from a file. 
 - `Elpi Typecheck` is deprecated and is a no-op since `Elpi Accumulate`
   performs type checking incrementally
+
+### HOAS
+- new `open-trm` argument for tactics with syntax ````(...)``` and
+  `ltac_open_term:(...)`. Open terms can mention free variables.
+- new `{{:pat ...}}` quotations inside which `_` is interpreted as a
+  wildcard, not as a regular evar.
+
+### API
+- Support export locality in `coq.TC.declare-instance`
+- `tc-instance` now just carries a priority, no matter if inferred or declared,
+  and works for instances added as `Hint Resolve` to the `typclass_instances`
+  database
 
 ### Build system
 - Support dune workspace build with `elpi`
