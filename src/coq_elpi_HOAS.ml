@@ -2976,7 +2976,6 @@ let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~templat
     ComInductive.poly;
     cumulative;
     template = Some false;
-    auto_prop_lowering = false;
     finite;
     mode = None;
   }
