@@ -30,7 +30,6 @@
    "logpath:elpi"))
  (depends
   (ocaml (>= 4.10.0))
-  stdlib-shims
   (elpi (and (>= 2.0.3) (< 2.1.0~)))
   (coq (and (>= 8.20+rc1) (< 8.21~)))
   ppx_optcomp
