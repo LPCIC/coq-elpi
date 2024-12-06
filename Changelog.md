@@ -3,7 +3,7 @@
 Requires Elpi 2.0.3 and Coq 8.20.
 
 The major change is the port to Elpi 2.0 that reports type checking errors
-to the location of the offending term and not its exclosing rule.
+to the location of the offending term and not its enclosing rule.
 
 ### Vernacular
 - `Elpi Accumulate Db Header <db>` to accumulate just the `Db` declaration
