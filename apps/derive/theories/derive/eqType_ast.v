@@ -8,26 +8,26 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 
 Elpi Db derive.eqType.db lp:{{
 
-kind arguments type.
-kind trm type.
-kind eqType type.
-kind constructor type.
+kind eqb.arguments type.
+kind eqb.trm type.
+kind eqb.eqType type.
+kind eqb.constructor type.
 
-type app    gref -> trm -> list trm -> trm.
-type global gref -> trm.
+type eqb.app    gref -> eqb.trm -> list eqb.trm -> eqb.trm.
+type eqb.global gref -> eqb.trm.
 
-type regular    trm -> arguments -> arguments.
-type irrelevant trm -> arguments -> arguments.
-type dependent  trm -> (trm -> arguments) -> arguments.
-type stop       trm -> arguments.
+type eqb.regular    eqb.trm -> eqb.arguments -> eqb.arguments.
+type eqb.irrelevant eqb.trm -> eqb.arguments -> eqb.arguments.
+type eqb.dependent  eqb.trm -> (eqb.trm -> eqb.arguments) -> eqb.arguments.
+type eqb.stop       eqb.trm -> eqb.arguments.
 
-type type-param         (trm -> eqType) -> eqType.
-type value-param trm -> (trm -> eqType) -> eqType.
-type inductive   inductive -> (trm -> list constructor) -> eqType.
+type eqb.type-param  (eqb.trm -> eqb.eqType) -> eqb.eqType.
+type eqb.value-param eqb.trm -> (eqb.trm -> eqb.eqType) -> eqb.eqType.
+type eqb.inductive   inductive -> (eqb.trm -> list eqb.constructor) -> eqb.eqType.
 
-type constructor constructor -> arguments -> constructor.
+type eqb.constructor constructor -> eqb.arguments -> eqb.constructor.
 
-pred eqType i:inductive, o:eqType.
+pred eqType i:inductive, o:eqb.eqType.
 
 }}.
 
