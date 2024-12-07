@@ -58,17 +58,17 @@ main I Prefix AllCL :- std.do! [
 
 % ----------------------------------------------------------------------
 
-pred fields_t.main i:eqType, i:term, o:term.
-fields_t.main (type-param F) I {{ fun p : Type => lp:(R p) }} :- !,
+pred fields_t.main i:eqb.eqType, i:term, o:term.
+fields_t.main (eqb.type-param F) I {{ fun p : Type => lp:(R p) }} :- !,
   @pi-trm `p` {{ Type }} x\p\
     fields_t.main (F x) {coq.mk-app I [p]} (R p).
   
-fields_t.main (value-param TY F) I {{ fun p : lp:Ty => lp:(R p) }} :- !,
+fields_t.main (eqb.value-param TY F) I {{ fun p : lp:Ty => lp:(R p) }} :- !,
   feqb.trm->term TY Ty,
   @pi-trm `p` Ty x\p\
     fields_t.main (F x) {coq.mk-app I [p]} (R p).
 
-fields_t.main (inductive _ F) I {{ fun p : lib:elpi.derive.positive => lp:(R p) }} :-
+fields_t.main (eqb.inductive _ F) I {{ fun p : lib:elpi.derive.positive => lp:(R p) }} :-
   coq.safe-dest-app I _ Params,
   @pi-decl `p` {{ lib:elpi.derive.positive }} p\ pi i\
     splay-over-positive p (F i) fields_t.rty
@@ -79,22 +79,22 @@ fields_t.main (inductive _ F) I {{ fun p : lib:elpi.derive.positive => lp:(R p) 
 pred fields_t.rty i:term, o:term.
 fields_t.rty _ {{ Type }}.
 
-pred fields_t.k i:list term, i:constructor, o:term.
-fields_t.k Params (constructor K _) T :-
+pred fields_t.k i:list term, i:eqb.constructor, o:term.
+fields_t.k Params (eqb.constructor K _) T :-
   box-for K I _, coq.mk-app (global (indt I)) Params T.
 
 % ----------------------------------------------------------------------
-pred fields.main i:eqType, i:term, i:term, i:term, o:term.
-fields.main (type-param F) I F_t Tag {{ fun p : Type => lp:(R p) }} :- !,
+pred fields.main i:eqb.eqType, i:term, i:term, i:term, o:term.
+fields.main (eqb.type-param F) I F_t Tag {{ fun p : Type => lp:(R p) }} :- !,
   @pi-trm `p` {{ Type }} x\p\
     fields.main (F x) {coq.mk-app I [p]} {coq.mk-app F_t [p]} {coq.mk-app Tag [p]} (R p).
 
-fields.main (value-param TY F) I F_t Tag {{ fun p : lp:Ty => lp:(R p) }} :- !,
+fields.main (eqb.value-param TY F) I F_t Tag {{ fun p : lp:Ty => lp:(R p) }} :- !,
   feqb.trm->term TY Ty,
   @pi-trm `p` Ty x\p\
     fields.main (F x) {coq.mk-app I [p]} {coq.mk-app F_t [p]} {coq.mk-app Tag [p]} (R p).
 
-fields.main (inductive _ _) I F_t Tag {{ fun i : lp:I => lp:(R i) }} :-
+fields.main (eqb.inductive _ _) I F_t Tag {{ fun i : lp:I => lp:(R i) }} :-
   @pi-trm `i` I _\i\
   coq.build-match i I
     (fields.rty F_t Tag)
@@ -111,7 +111,7 @@ fields.branch K _ Vars _ R :-
   coq.mk-app (global (indc B)) {std.append Params Vars} R.
 
 % ------------------------------------------------------------------------
-pred box i:term, i:list constructor, i:eqType, o:list prop.
+pred box i:term, i:list constructor, i:eqb.eqType, o:list prop.
 box I KL Decl CL :- std.do! [
   box.aux Decl I ILDr,
   box.declare KL ILDr CL,
@@ -133,39 +133,39 @@ kind box-spec type.
  type real-box indt-decl -> box-spec.
  type same-box constructor -> box-spec.
 
-pred box.aux i:eqType, i:term, o:list box-spec.
-box.aux (type-param F) I L :-
+pred box.aux i:eqb.eqType, i:term, o:list box-spec.
+box.aux (eqb.type-param F) I L :-
   (@pi-trm `p` {{ Type }} x\y\
     box.aux (F x) {coq.mk-app I [y]} (L1 y)),
   distribute L1 (f\r\ sigma U\ r = parameter "A" explicit (sort (typ U)) f) L.
 
-box.aux (value-param TY F) I L :-
+box.aux (eqb.value-param TY F) I L :-
   feqb.trm->term TY Ty,
   (@pi-trm `p` Ty x\y\ box.aux (F x) {coq.mk-app I [y]} (L1 y)),
   distribute L1 (f\r\ r = parameter "v" explicit Ty f) L.
 
-box.aux (inductive Ind F) I L :- pi x\ box.aux2 I Ind x (F x) L.
+box.aux (eqb.inductive Ind F) I L :- pi x\ box.aux2 I Ind x (F x) L.
 
-pred args-of o:constructor, o:arguments.
+pred args-of o:constructor, o:eqb.arguments.
 
-pred box.aux2 i:term, i:inductive, i:trm, o:list constructor, o:list box-spec.
+pred box.aux2 i:term, i:inductive, i:eqb.trm, o:list eqb.constructor, o:list box-spec.
 box.aux2 _ _ _ [] [].
-box.aux2 I Ind X [constructor _ Args|MoreKs] [same-box K|MoreBoxes] :- args-of K Args, !,
+box.aux2 I Ind X [eqb.constructor _ Args|MoreKs] [same-box K|MoreBoxes] :- args-of K Args, !,
   box.aux2 I Ind X MoreKs MoreBoxes.
-box.aux2 I Ind X [constructor K Args|MoreKs] [real-box (record ID1 S ID2 Fields)|MoreBoxes] :-
+box.aux2 I Ind X [eqb.constructor K Args|MoreKs] [real-box (record ID1 S ID2 Fields)|MoreBoxes] :-
   if (coq.env.informative? Ind) (S = {{ Type }}) (S = {{ Prop }}),
   ID1 is "box_" ^ {coq.gref->id (indt Ind)} ^ "_" ^ {coq.gref->id (indc K)},
   ID2 is "Box_" ^ {coq.gref->id (indt Ind)} ^ "_" ^ {coq.gref->id (indc K)},
   ((feqb.trm->term X I :- !) ==> box.box-argument ID2 0 Args Fields),
   args-of K Args ==> box.aux2 I Ind X MoreKs MoreBoxes.
 
-pred box.box-argument i:string, i:int, i:arguments, o:record-decl.
-box.box-argument _ _ (stop _) end-record.
-box.box-argument S M (regular T Args) (field [] N TY _\A) :- N is S ^ "_" ^ {std.any->string M},
+pred box.box-argument i:string, i:int, i:eqb.arguments, o:record-decl.
+box.box-argument _ _ (eqb.stop _) end-record.
+box.box-argument S M (eqb.regular T Args) (field [] N TY _\A) :- N is S ^ "_" ^ {std.any->string M},
   feqb.trm->term T TY, box.box-argument S {calc (M + 1)} Args A.
-box.box-argument S M (irrelevant T Args) (field [] N TY _\A) :- N is S ^ "_" ^ {std.any->string M},
+box.box-argument S M (eqb.irrelevant T Args) (field [] N TY _\A) :- N is S ^ "_" ^ {std.any->string M},
   feqb.trm->term T TY, box.box-argument S {calc (M + 1)} Args A.
-box.box-argument S M (dependent T Args) (field [] N TY A) :- N is S ^ "_" ^ {std.any->string M},
+box.box-argument S M (eqb.dependent T Args) (field [] N TY A) :- N is S ^ "_" ^ {std.any->string M},
   feqb.trm->term T TY,
   pi x y\ (feqb.trm->term x y :- !) ==> box.box-argument S {calc (M + 1)} (Args x) (A y).
 
@@ -175,17 +175,17 @@ distribute (x\ [real-box (X x)| XS x]) F [real-box F_X|R] :- F X F_X, distribute
 distribute (x\ [same-box K| XS x]) F [same-box K|R] :- distribute XS F R.
 
 % ----------------------------------------------------------------------
-pred construct.main i:eqType, i:term, i:constant, o:term.
-construct.main (type-param F) I F_t {{ fun p : Type => lp:(R p) }} :-
+pred construct.main i:eqb.eqType, i:term, i:constant, o:term.
+construct.main (eqb.type-param F) I F_t {{ fun p : Type => lp:(R p) }} :-
   @pi-trm `p` {{ Type }} x\p\
     construct.main (F x) {coq.mk-app I [p]} F_t (R p).
 
-construct.main (value-param TY F) I F_t {{ fun p : lp:Ty => lp:(R p) }} :-
+construct.main (eqb.value-param TY F) I F_t {{ fun p : lp:Ty => lp:(R p) }} :-
   feqb.trm->term TY Ty,
   @pi-trm `p` Ty x\p\
     construct.main (F x) {coq.mk-app I [p]} F_t (R p).
 
-construct.main (inductive _ F) I F_t {{ fun p : lib:elpi.derive.positive => lp:(R p) }} :-
+construct.main (eqb.inductive _ F) I F_t {{ fun p : lib:elpi.derive.positive => lp:(R p) }} :-
   coq.safe-dest-app I _ Params,
   coq.mk-app (global (const F_t)) Params Fields_t,
   @pi-decl `p` {{ lib:elpi.derive.positive }} p\ pi i\
@@ -197,12 +197,12 @@ construct.main (inductive _ F) I F_t {{ fun p : lib:elpi.derive.positive => lp:(
 pred construct.rty1 i:term, i:term, i:term, o:term.
 construct.rty1 Fields_t I X {{ lp:Fields_t lp:X -> option lp:I }}.
 
-pred construct.k i:term, i:list term, i:constructor, o:term.
-construct.k _ Params (constructor K (stop _)) {{ fun b : lp:BoxTy => Some lp:B }} :- !,
+pred construct.k i:term, i:list term, i:eqb.constructor, o:term.
+construct.k _ Params (eqb.constructor K (eqb.stop _)) {{ fun b : lp:BoxTy => Some lp:B }} :- !,
   box-for K BT _,
   coq.mk-app (global (indt BT)) Params BoxTy,
   coq.mk-app (global (indc K)) Params B.
-construct.k I Params (constructor K _) {{ fun b : lp:BoxTy => lp:(R b) }} :-
+construct.k I Params (eqb.constructor K _) {{ fun b : lp:BoxTy => lp:(R b) }} :-
   box-for K BT _,
   coq.mk-app (global (indt BT)) Params BoxTy,
   @pi-decl `b` BoxTy b\
