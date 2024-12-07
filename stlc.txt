@@ -624,11 +624,11 @@ evar (as uvar A3) A2 A0 :- var A0 _ A1, !, prune A2 A1, prune A3 A1,
  declare_constraint (evar A3 A2 A0) [A3, A0].
 % File "coq-builtin.elpi", line 304, column 0, characters 12187-12225: [251] default-assign-evar
 evar _ _ _ :- .
-% File "coq-builtin.elpi", line 752, column 3, characters 30725-30883: [252] 
+% File "coq-builtin.elpi", line 752, column 2, characters 30724-30883: [252] 
 coq.env.const-opaque? A0 :- coq.warning elpi.deprecated elpi.const-opaque 
                              use coq.env.opaque? in place of coq.env.const-opaque?, 
  coq.env.opaque? A0.
-% File "coq-builtin.elpi", line 759, column 3, characters 30973-31146: [253] 
+% File "coq-builtin.elpi", line 759, column 2, characters 30972-31146: [253] 
 coq.env.const-primitive? A0 :- coq.warning elpi.deprecated 
                                 elpi.const-primitive 
                                 use coq.env.primitive? in place of coq.env.const-primitive?, 
@@ -659,11 +659,11 @@ coq.reduction.lazy.whd_all A0 A1 :- get-option coq:redflags coq.redflags.all
 coq.id->name A0 A1 :- coq.string->name A0 A1.
 % File "coq-builtin.elpi", line 1770, column 0, characters 71063-71127: [261] 
 coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
-% File "./examples/tutorial_elpi_lang.v", line 491, column 3, characters 12653-12720: [262] 
+% File "./examples/tutorial_elpi_lang.v", line 491, column 2, characters 12652-12720: [262] 
 whd (app A0 A2) A3 :- whd A0 (fun A1), !, whd (A1 A2) A3.
-% File "./examples/tutorial_elpi_lang.v", line 495, column 3, characters 12776-12801: [263] 
+% File "./examples/tutorial_elpi_lang.v", line 495, column 2, characters 12775-12801: [263] 
 whd A1 A0 :- A0 = A1.
-% File "./examples/tutorial_elpi_lang.v", line 591, column 3, characters 15201-15250: [264] 
+% File "./examples/tutorial_elpi_lang.v", line 591, column 2, characters 15200-15250: [264] 
 of (app A0 A3) A2 :- of A0 (arr A1 A2), of A3 A1.
-% File "./examples/tutorial_elpi_lang.v", line 596, column 3, characters 15367-15421: [265] 
+% File "./examples/tutorial_elpi_lang.v", line 596, column 2, characters 15366-15421: [265] 
 of (fun A0) (arr A2 A1) :- pi c0 \ of c0 A2 => of (A0 c0) A1.
