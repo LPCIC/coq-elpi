@@ -43,8 +43,8 @@ jobs:
         opam-pin: false
         opam-local-packages:
     - run: opam repo add coq-dev https://coq.inria.fr/opam/core-dev
-    - run: opam install coq-core.${{ matrix.coq_version }}
-    - run: opam install coq-stdlib.${{ matrix.coq_version }}
+    - run: opam install -vvv coq-core.${{ matrix.coq_version }}
+    - run: opam install -vvv coq-stdlib.${{ matrix.coq_version }}
     - run: |
         opam pin add coq-core ${{ matrix.coq_version }}
         opam pin add coq-stdlib ${{ matrix.coq_version }}
