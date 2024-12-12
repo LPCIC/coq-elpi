@@ -26,32 +26,25 @@ env:
 
 jobs:
 
-  build:
-    runs-on: ubuntu-latest
+  docker:
+    runs-on: ubuntu-latest  # container actions require GNU/Linux
     strategy:
-      fail-fast: false
       matrix:
-        coq_version: [ '8.20+rc1' , 'dev' ]
-        ocaml_version:
-          - '4.14.x'
-          - '5.2.x'
+        image:
+          - 'coqorg/coq:dev'
+          - 'coqorg/coq:8.20.0'
+      fail-fast: false  # don't stop jobs if one fails
     steps:
-    - uses: actions/checkout@v2
-    - uses: avsm/setup-ocaml@v3
-      with:
-        ocaml-compiler: ${{ matrix.ocaml_version }}
-        opam-pin: false
-        opam-local-packages:
-    - run: opam repo add coq-dev https://coq.inria.fr/opam/core-dev
-    - run: opam install coq-core.${{ matrix.coq_version }}
-    - run: opam install coq-stdlib.${{ matrix.coq_version }}
-    - run: |
-        opam pin add coq-core ${{ matrix.coq_version }}
-        opam pin add coq-stdlib ${{ matrix.coq_version }}
-      if: ${{ matrix.coq_version != 'dev' }}
-    - run: opam install ./coq-elpi.opam --deps-only --with-test -y --ignore-constraints-on coq 
-    - run: opam exec make build
-    - run: opam exec make test
+      - uses: actions/checkout@v3
+      - uses: coq-community/docker-coq-action@v1
+        with:
+          opam_file: 'coq-elpi.opam'
+          custom_image: ${{ matrix.image }}
+          export: 'OPAMWITHTEST OPAMIGNORECONSTRAINTS OPAMVERBOSE'  # space-separated list of variables
+        env:
+          OPAMWITHTEST: 'true'
+          OPAMIGNORECONSTRAINTS: 'coq'
+          OPAMVERBOSE: '3'
 
   release:
     runs-on: ubuntu-latest
