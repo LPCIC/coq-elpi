@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        coq_version: [ '8.20+rc1' , 'dev' ]
+        coq_version: [ '8.20.0' , 'dev' ]
         ocaml_version:
           - '4.14.x'
           - '5.2.x'
@@ -42,14 +42,15 @@ jobs:
         ocaml-compiler: ${{ matrix.ocaml_version }}
         opam-pin: false
         opam-local-packages:
+    - run: opam install dune
     - run: opam repo add coq-dev https://coq.inria.fr/opam/core-dev
-    - run: opam install coq-core.${{ matrix.coq_version }}
-    - run: opam install coq-stdlib.${{ matrix.coq_version }}
+    - run: opam install -vvv coq-core.${{ matrix.coq_version }} --ignore-constraints-on dune
+    - run: opam install -vvv coq-stdlib.${{ matrix.coq_version }} --ignore-constraints-on dune
     - run: |
-        opam pin add coq-core ${{ matrix.coq_version }}
-        opam pin add coq-stdlib ${{ matrix.coq_version }}
+        opam pin add coq-core ${{ matrix.coq_version }} --ignore-constraints-on dune
+        opam pin add coq-stdlib ${{ matrix.coq_version }} --ignore-constraints-on dune
       if: ${{ matrix.coq_version != 'dev' }}
-    - run: opam install ./coq-elpi.opam --deps-only --with-test -y --ignore-constraints-on coq 
+    - run: opam install ./coq-elpi.opam --deps-only --with-test -y --ignore-constraints-on coq  --ignore-constraints-on dune
     - run: opam exec make build
     - run: opam exec make test
 
