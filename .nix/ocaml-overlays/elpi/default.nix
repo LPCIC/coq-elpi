@@ -1,17 +1,14 @@
 { lib
-, buildDunePackage, camlp5
+, buildDunePackage
 , ocaml
 , menhir, menhirLib
 , atdgen
 , stdlib-shims
-, re, perl, ncurses
+, re, ncurses
 , ppxlib, ppx_deriving
 , coqPackages
 , version ? "2.0.3"
 }:
-
-let p5 = camlp5; in
-let camlp5 = p5.override { legacy = true; }; in
 
 let fetched = coqPackages.metaFetch ({
     release."2.0.3".sha256 = "sha256-t2z0sWPiFgp6LuR6CsH/Zk9qfxW+3QjjFcYrB6qSPgc=";
@@ -38,11 +35,8 @@ buildDunePackage {
   minimalOCamlVersion = "4.07";
 
   # atdgen is both a library and executable
-  nativeBuildInputs = [ perl ]
-  ++ [ (if lib.versionAtLeast version "1.15" || version == "dev" then menhir else camlp5) ]
-  ++ lib.optional (lib.versionAtLeast version "1.16" || version == "dev") atdgen;
-  buildInputs = [ ncurses ]
-  ++ lib.optional (lib.versionAtLeast version "1.16" || version == "dev") atdgen;
+  nativeBuildInputs = [ menhir ] ++ [ atdgen ];
+  buildInputs = [ ncurses ] ++ [ atdgen ];
 
   propagatedBuildInputs = [ re stdlib-shims menhirLib ppxlib ppx_deriving ];
 
