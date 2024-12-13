@@ -21,7 +21,7 @@ main I Prefix AllCL :- std.do! [
   
   std.assert! (tag-for I Tag) "no tag for this inductive, run that derivation first",
 
-  std.assert! (eqType I FI) "this inductive is not supported",
+  std.assert! (eqType(indt I) FI) "this inductive is not supported",
   coq.env.indt I _ _ _ Arity KS _,
 
   box (global (indt I)) KS FI CLB,
