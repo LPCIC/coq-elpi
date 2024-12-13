@@ -170,3 +170,20 @@ End derive_container.
 About wimpls.wimpls.
 About wimpls.Kwi.
 Redirect "tmp" Check Kwi _ (refl_equal 3).
+
+Section TestRegister.
+Variable T : Type.
+Definition is_T : T -> Type := fun x => True.
+Definition is_T_inhab : forall x : T, is_T x := fun x => I.
+Variable eqb : T -> T -> bool.
+Variable eqb_correct : forall x y,eqb x y = true -> x = y.
+Variable eqb_refl : forall x, eqb x x = true.
+
+derive.eqbOK.register_axiom T is_T is_T_inhab eqb eqb_correct eqb_refl.
+
+Inductive foo := X : T -> foo.
+
+#[only(eqbOK)] derive foo.
+
+Redirect "tmp" Print is_foo_inhab.
+End TestRegister.

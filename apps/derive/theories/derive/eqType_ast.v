@@ -24,10 +24,11 @@ type eqb.stop       eqb.trm -> eqb.arguments.
 type eqb.type-param  (eqb.trm -> eqb.eqType) -> eqb.eqType.
 type eqb.value-param eqb.trm -> (eqb.trm -> eqb.eqType) -> eqb.eqType.
 type eqb.inductive   inductive -> (eqb.trm -> list eqb.constructor) -> eqb.eqType.
+type eqb.axiom       eqb.eqType.
 
 type eqb.constructor constructor -> eqb.arguments -> eqb.constructor.
 
-pred eqType i:inductive, o:eqb.eqType.
+pred eqType i:gref, o:eqb.eqType.
 
 }}.
 
@@ -60,6 +61,6 @@ Elpi Accumulate derive File eqType.
 
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.main T) (eqType T _)).
+derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.main T) (eqType (indt T) _)).
 
 }}.

@@ -9,7 +9,7 @@ macro @pi-trm N T F :-
 
 pred derive.eqb.main i:gref, i:string, o:list prop.
 derive.eqb.main (indt I) Prefix CL :- std.do! [
-  std.assert! (eqType I FI) "this inductive is not supported",
+  std.assert! (eqType (indt I) FI) "this inductive is not supported",
 
   derive.eqb.eqbf.main FI FI [] [] R,
   std.assert-ok! (coq.typecheck R Rty) "derive.eqbf generates illtyped term",
