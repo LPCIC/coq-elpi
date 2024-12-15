@@ -1,7 +1,7 @@
 (lang dune 3.13)
 (using coq 0.8)
 (name coq-elpi)
-(generate_opam_files)
+;(generate_opam_files)
 
 (source (github LPCIC/coq-elpi))
 (license LGPL-2.1-or-later)

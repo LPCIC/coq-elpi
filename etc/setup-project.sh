@@ -1,4 +1,7 @@
-if [ -z "$DEPS" ]; then DEPS="elpi_elpi elpi"; else DEPS="elpi_elpi elpi $DEPS"; fi
+
+if coqc --print-version | cut -d ' ' -f 1 | grep -q "^9" ; then STDLIB="Stdlib"; else STDLIB=""; fi
+
+if [ -z "$DEPS" ]; then DEPS="elpi_elpi elpi $STDLIB"; else DEPS="elpi_elpi elpi $STDLIB $DEPS"; fi
 
 cat > dune <<EOF
 (env
