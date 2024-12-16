@@ -24,10 +24,11 @@ type stop       trm -> arguments.
 type type-param         (trm -> eqType) -> eqType.
 type value-param trm -> (trm -> eqType) -> eqType.
 type inductive   inductive -> (trm -> list constructor) -> eqType.
+type axiom       eqType.
 
 type constructor constructor -> arguments -> constructor.
 
-pred eqType i:inductive, o:eqType.
+pred eqType i:gref, o:eqType.
 
 }}.
 
@@ -60,6 +61,6 @@ Elpi Accumulate derive File eqType.
 
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.main T) (eqType T _)).
+derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.main T) (eqType (indt T) _)).
 
 }}.
