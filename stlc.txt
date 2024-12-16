@@ -1,3 +1,1109 @@
+kind abbreviation type.
+kind argument type.
+kind argument_mode type.
+kind arity type.
+kind attribute type.
+kind attribute-value type.
+kind bool type.
+kind class type.
+kind clause type.
+kind cmp type.
+kind coercion type.
+kind coercion-status type.
+kind constant type.
+kind constructor type.
+kind context-decl type.
+kind conversion_strategy type.
+kind coq.gref.map type -> type.
+kind coq.gref.set type.
+kind coq.inline type.
+kind coq.option type.
+kind coq.pp type.
+kind coq.pp.box type.
+kind coq.redflag type.
+kind coq.redflags type.
+kind coq.univ.map type -> type.
+kind coq.univ.set type.
+kind coq.univ.variable.map type -> type.
+kind coq.univ.variable.set type.
+kind cs-instance type.
+kind cs-pattern type.
+kind diagnostic type.
+kind evarkey type.
+kind field-attribute type.
+kind float type.
+kind float64 type.
+kind goal type.
+kind grafting type.
+kind gref type.
+kind group type.
+kind hint-mode type.
+kind implicit_kind type.
+kind in_stream type.
+kind indc-decl type.
+kind indt-decl type.
+kind inductive type.
+kind int type.
+kind list type -> type.
+kind loc type.
+kind located type.
+kind ltac1-tactic type.
+kind modpath type.
+kind modtypath type.
+kind module-item type.
+kind name type.
+kind option type -> type.
+kind out_stream type.
+kind pair type -> type -> type.
+kind primitive-value type.
+kind projection type.
+kind pstring type.
+kind record-decl type.
+kind safe type.
+kind scope type.
+kind sealed-goal type.
+kind simplification_strategy type.
+kind sort type.
+kind std.int.map type -> type.
+kind std.int.set type.
+kind std.loc.map type -> type.
+kind std.loc.set type.
+kind std.map type -> type -> type.
+kind std.map.private.map type -> type -> type.
+kind std.set type -> type.
+kind std.set.private.set type -> type.
+kind std.string.map type -> type.
+kind std.string.set type.
+kind string type.
+kind synterp-action type.
+kind tc-instance type.
+kind term type.
+kind triple type -> type -> type -> type.
+kind ty type.
+kind uint63 type.
+kind univ type.
+kind univ-constraint type.
+kind univ-instance type.
+kind univ-variance type.
+kind univ.variable type.
+kind unix.process type.
+kind upoly-decl type.
+kind upoly-decl-cumul type.
+type ! prop.
+type (*) int -> int -> int.
+type (*) float -> float -> float.
+type (+) int -> int -> int.
+type (+) float -> float -> float.
+type (,) prop ..-> prop.
+type (-) A -> A -> A.
+type (/) float -> float -> float.
+type (:-) prop -> prop -> prop.
+type (:-) prop -> list prop -> prop.
+type (::) X -> list X -> list X.
+type (;) prop -> prop -> prop.
+type (<) A -> A -> prop.
+type (=) A -> A -> prop.
+type (=<) A -> A -> prop.
+type (==) A -> A -> prop.
+type (=>) prop -> prop -> prop.
+type (=>) list prop -> prop -> prop.
+type (>) A -> A -> prop.
+type (>=) A -> A -> prop.
+type [] list X.
+type (^) string -> string -> string.
+type abs int -> int.
+type abs float -> float.
+type after id -> grafting.
+type app term -> term -> term.
+type app list term -> term.
+type apply-module-functor id -> synterp-action.
+type apply-module-type-functor id -> synterp-action.
+type arctan float -> float.
+type arity term -> arity.
+type arr ty -> ty -> ty.
+type as A -> A -> A.
+type attribute string -> attribute-value -> attribute.
+type attributes list attribute -> prop.
+type auto univ.variable -> univ-variance.
+type bar term.
+type before id -> grafting.
+type begin-module id -> synterp-action.
+type begin-module-type id -> synterp-action.
+type begin-section id -> synterp-action.
+type calc A -> A -> prop.
+type canonical bool -> field-attribute.
+type ceil float -> int.
+type chr int -> string.
+type clause id -> grafting -> prop -> clause.
+type close_in in_stream -> prop.
+type close_out out_stream -> prop.
+type closed_term any -> prop.
+type cmp_term any -> any -> cmp -> prop.
+type coercion coercion-status -> field-attribute.
+type coercion gref -> int -> gref -> class -> coercion.
+type const constant -> gref.
+type const-decl id -> option term -> arity -> argument.
+type constant any -> any ..-> prop.
+type constructor id -> arity -> indc-decl.
+type context-end context-decl.
+type context-item id ->
+                    implicit_kind ->
+                      term ->
+                        option term -> (term -> context-decl) -> context-decl.
+type coq.CS.canonical-projections inductive -> list (option constant) -> prop.
+type coq.CS.db list cs-instance -> prop.
+type coq.CS.db-for gref -> cs-pattern -> list cs-instance -> prop.
+type coq.CS.declare-instance gref -> prop.
+type coq.TC.class? gref -> prop.
+type coq.TC.db list tc-instance -> prop.
+type coq.TC.db-for gref -> list tc-instance -> prop.
+type coq.TC.db-tc list gref -> prop.
+type coq.TC.declare-class gref -> prop.
+type coq.TC.declare-instance gref -> int -> prop.
+type coq.TC.get-inst-prio gref -> gref -> int -> prop.
+type coq.arguments.implicit gref -> list (list implicit_kind) -> prop.
+type coq.arguments.name gref -> list (option id) -> prop.
+type coq.arguments.scope gref -> list (list id) -> prop.
+type coq.arguments.set-default-implicit gref -> prop.
+type coq.arguments.set-implicit gref -> list (list implicit_kind) -> prop.
+type coq.arguments.set-name gref -> list (option id) -> prop.
+type coq.arguments.set-scope gref -> list (list id) -> prop.
+type coq.arguments.set-simplification gref -> simplification_strategy -> prop.
+type coq.arguments.simplification gref ->
+                                    option simplification_strategy -> prop.
+type coq.begin-synterp-group id -> group -> prop.
+type coq.coercion.db list coercion -> prop.
+type coq.coercion.db-for class -> class -> list (pair gref int) -> prop.
+type coq.coercion.declare coercion -> prop.
+type coq.debug any ..-> prop.
+type coq.elaborate-skeleton term -> term -> term -> diagnostic -> prop.
+type coq.elaborate-ty-skeleton term -> sort -> term -> diagnostic -> prop.
+type coq.elpi.accumulate scope -> id -> clause -> prop.
+type coq.elpi.accumulate-clauses scope -> id -> list clause -> prop.
+type coq.elpi.add-predicate string ->
+                              string ->
+                                string ->
+                                  list (pair argument_mode string) -> prop.
+type coq.elpi.predicate string -> list any -> prop -> prop.
+type coq.elpi.toposort list (pair A (list A)) -> list A -> prop.
+type coq.end-synterp-group group -> prop.
+type coq.env.add-axiom id -> term -> constant -> prop.
+type coq.env.add-const id -> term -> term -> opaque? -> constant -> prop.
+type coq.env.add-indt indt-decl -> inductive -> prop.
+type coq.env.add-section-variable id -> term -> constant -> prop.
+type coq.env.apply-module-functor id ->
+                                    option modtypath ->
+                                      modpath ->
+                                        list modpath ->
+                                          coq.inline -> modpath -> prop.
+type coq.env.apply-module-type-functor id ->
+                                         modtypath ->
+                                           list modpath ->
+                                             coq.inline -> modtypath -> prop.
+type coq.env.begin-module id -> option modtypath -> prop.
+type coq.env.begin-module-functor id ->
+                                    option modtypath ->
+                                      list (pair id modtypath) -> prop.
+type coq.env.begin-module-type id -> prop.
+type coq.env.begin-module-type-functor id -> list (pair id modtypath) -> prop.
+type coq.env.begin-section id -> prop.
+type coq.env.const constant -> option term -> term -> prop.
+type coq.env.const-body constant -> option term -> prop.
+type coq.env.const-opaque? constant -> prop.
+type coq.env.const-primitive? constant -> prop.
+type coq.env.current-path list string -> prop.
+type coq.env.current-section-path list string -> prop.
+type coq.env.dependencies gref -> modpath -> coq.gref.set -> prop.
+type coq.env.end-module modpath -> prop.
+type coq.env.end-module-type modtypath -> prop.
+type coq.env.end-section prop.
+type coq.env.export-module modpath -> prop.
+type coq.env.fresh-global-id id -> id -> prop.
+type coq.env.global gref -> term -> prop.
+type coq.env.import-module modpath -> prop.
+type coq.env.include-module modpath -> coq.inline -> prop.
+type coq.env.include-module-type modtypath -> coq.inline -> prop.
+type coq.env.indc constructor -> int -> int -> int -> term -> prop.
+type coq.env.indc->indt constructor -> inductive -> int -> prop.
+type coq.env.indt inductive ->
+                    bool ->
+                      int ->
+                        int -> term -> list constructor -> list term -> prop.
+type coq.env.indt-decl inductive -> indt-decl -> prop.
+type coq.env.informative? inductive -> prop.
+type coq.env.module modpath -> list module-item -> prop.
+type coq.env.module-type modtypath -> list id -> prop.
+type coq.env.opaque? constant -> prop.
+type coq.env.primitive-projection? projection -> constant -> prop.
+type coq.env.primitive-projections inductive ->
+                                     list (option (pair projection int)) ->
+                                       prop.
+type coq.env.primitive? constant -> prop.
+type coq.env.projection? constant -> int -> prop.
+type coq.env.projections inductive -> list (option constant) -> prop.
+type coq.env.record? inductive -> bool -> prop.
+type coq.env.recursive? inductive -> prop.
+type coq.env.section list constant -> prop.
+type coq.env.term-dependencies term -> coq.gref.set -> prop.
+type coq.env.transitive-dependencies gref -> modpath -> coq.gref.set -> prop.
+type coq.env.typeof gref -> term -> prop.
+type coq.env.univpoly? gref -> int -> prop.
+type coq.error any ..-> prop.
+type coq.extra-dep id -> option id -> prop.
+type coq.float->float64 float -> float64 -> prop.
+type coq.float64->float float64 -> float -> prop.
+type coq.goal->pp goal -> coq.pp -> prop.
+type coq.gref->id gref -> id -> prop.
+type coq.gref->path gref -> list string -> prop.
+type coq.gref->string gref -> string -> prop.
+type coq.gref.map.add gref -> A -> coq.gref.map A -> coq.gref.map A -> prop.
+type coq.gref.map.bindings coq.gref.map A -> list (pair gref A) -> prop.
+type coq.gref.map.empty coq.gref.map A -> prop.
+type coq.gref.map.filter coq.gref.map A ->
+                           (gref -> A -> prop) -> coq.gref.map A -> prop.
+type coq.gref.map.find gref -> coq.gref.map A -> A -> prop.
+type coq.gref.map.fold coq.gref.map A ->
+                         C -> (gref -> A -> C -> C -> prop) -> C -> prop.
+type coq.gref.map.map coq.gref.map A ->
+                        (gref -> A -> B -> prop) -> coq.gref.map B -> prop.
+type coq.gref.map.mem gref -> coq.gref.map A -> prop.
+type coq.gref.map.remove gref -> coq.gref.map A -> coq.gref.map A -> prop.
+type coq.gref.set.add gref -> coq.gref.set -> coq.gref.set -> prop.
+type coq.gref.set.cardinal coq.gref.set -> int -> prop.
+type coq.gref.set.choose coq.gref.set -> gref -> prop.
+type coq.gref.set.diff coq.gref.set -> coq.gref.set -> coq.gref.set -> prop.
+type coq.gref.set.elements coq.gref.set -> list gref -> prop.
+type coq.gref.set.empty coq.gref.set -> prop.
+type coq.gref.set.equal coq.gref.set -> coq.gref.set -> prop.
+type coq.gref.set.filter coq.gref.set ->
+                           (gref -> prop) -> coq.gref.set -> prop.
+type coq.gref.set.fold coq.gref.set ->
+                         A -> (gref -> A -> A -> prop) -> A -> prop.
+type coq.gref.set.inter coq.gref.set -> coq.gref.set -> coq.gref.set -> prop.
+type coq.gref.set.map coq.gref.set ->
+                        (gref -> gref -> prop) -> coq.gref.set -> prop.
+type coq.gref.set.max coq.gref.set -> gref -> prop.
+type coq.gref.set.mem gref -> coq.gref.set -> prop.
+type coq.gref.set.min coq.gref.set -> gref -> prop.
+type coq.gref.set.partition coq.gref.set ->
+                              (gref -> prop) ->
+                                coq.gref.set -> coq.gref.set -> prop.
+type coq.gref.set.remove gref -> coq.gref.set -> coq.gref.set -> prop.
+type coq.gref.set.subset coq.gref.set -> coq.gref.set -> prop.
+type coq.gref.set.union coq.gref.set -> coq.gref.set -> coq.gref.set -> prop.
+type coq.hints.add-mode gref -> string -> list hint-mode -> prop.
+type coq.hints.add-resolve gref -> string -> int -> term -> prop.
+type coq.hints.modes gref -> string -> list (list hint-mode) -> prop.
+type coq.hints.opaque constant -> string -> bool -> prop.
+type coq.hints.set-opaque constant -> string -> bool -> prop.
+type coq.id->name id -> name -> prop.
+type coq.info any ..-> prop.
+type coq.inline.at int -> coq.inline.
+type coq.inline.default coq.inline.
+type coq.inline.no coq.inline.
+type coq.int->uint63 int -> uint63 -> prop.
+type coq.locate id -> gref -> prop.
+type coq.locate-abbreviation id -> abbreviation -> prop.
+type coq.locate-all id -> list located -> prop.
+type coq.locate-module id -> modpath -> prop.
+type coq.locate-module-type id -> modtypath -> prop.
+type coq.ltac.call-ltac1 any -> goal -> list sealed-goal -> prop.
+type coq.ltac.collect-goals term ->
+                              list sealed-goal -> list sealed-goal -> prop.
+type coq.ltac.fail int -> any ..-> prop.
+type coq.ltac.fresh-id id -> term -> id -> prop.
+type coq.ltac.id-free? id -> goal -> prop.
+type coq.modpath->library modpath -> modpath -> prop.
+type coq.modpath->path modpath -> list string -> prop.
+type coq.modtypath->library modtypath -> modpath -> prop.
+type coq.modtypath->path modtypath -> list string -> prop.
+type coq.name->id name -> id -> prop.
+type coq.name-suffix name -> any -> name -> prop.
+type coq.next-synterp-action synterp-action -> prop.
+type coq.notation.abbreviation abbreviation -> list term -> term -> prop.
+type coq.notation.abbreviation-body abbreviation -> int -> term -> prop.
+type coq.notation.add-abbreviation id ->
+                                     int ->
+                                       term -> bool -> abbreviation -> prop.
+type coq.notation.add-abbreviation-for-tactic string ->
+                                                string ->
+                                                  list argument -> prop.
+type coq.notice any ..-> prop.
+type coq.option.add list string -> coq.option -> bool -> prop.
+type coq.option.available? list string -> bool -> prop.
+type coq.option.bool bool -> coq.option.
+type coq.option.get list string -> coq.option -> prop.
+type coq.option.int option int -> coq.option.
+type coq.option.set list string -> coq.option -> prop.
+type coq.option.string option string -> coq.option.
+type coq.pp->string coq.pp -> string -> prop.
+type coq.pp.box coq.pp.box -> list coq.pp -> coq.pp.
+type coq.pp.brk int -> int -> coq.pp.
+type coq.pp.comment list string -> coq.pp.
+type coq.pp.empty coq.pp.
+type coq.pp.glue list coq.pp -> coq.pp.
+type coq.pp.h coq.pp.box.
+type coq.pp.hov int -> coq.pp.box.
+type coq.pp.hv int -> coq.pp.box.
+type coq.pp.nl coq.pp.
+type coq.pp.spc coq.pp.
+type coq.pp.str string -> coq.pp.
+type coq.pp.tag string -> coq.pp -> coq.pp.
+type coq.pp.v int -> coq.pp.box.
+type coq.primitive.projection-unfolded projection -> projection -> prop.
+type coq.pstring->string pstring -> string -> prop.
+type coq.redflags.add coq.redflags ->
+                        list coq.redflag -> coq.redflags -> prop.
+type coq.redflags.all coq.redflags.
+type coq.redflags.allnolet coq.redflags.
+type coq.redflags.beta coq.redflag.
+type coq.redflags.beta coq.redflags.
+type coq.redflags.betadeltazeta coq.redflags.
+type coq.redflags.betaiota coq.redflags.
+type coq.redflags.betaiotazeta coq.redflags.
+type coq.redflags.betazeta coq.redflags.
+type coq.redflags.cofix coq.redflag.
+type coq.redflags.const constant -> coq.redflag.
+type coq.redflags.delta coq.redflag.
+type coq.redflags.delta coq.redflags.
+type coq.redflags.fix coq.redflag.
+type coq.redflags.match coq.redflag.
+type coq.redflags.nored coq.redflags.
+type coq.redflags.sub coq.redflags ->
+                        list coq.redflag -> coq.redflags -> prop.
+type coq.redflags.zeta coq.redflag.
+type coq.redflags.zeta coq.redflags.
+type coq.reduction.cbv.norm term -> term -> prop.
+type coq.reduction.cbv.whd_all term -> term -> prop.
+type coq.reduction.eta-contract term -> term -> prop.
+type coq.reduction.lazy.bi-norm term -> term -> prop.
+type coq.reduction.lazy.norm term -> term -> prop.
+type coq.reduction.lazy.whd term -> term -> prop.
+type coq.reduction.lazy.whd_all term -> term -> prop.
+type coq.reduction.native.available? prop.
+type coq.reduction.native.norm term -> term -> term -> prop.
+type coq.reduction.vm.norm term -> term -> term -> prop.
+type coq.reduction.vm.whd_all term -> term -> term -> prop.
+type coq.replay-synterp-action-group id -> prop.
+type coq.say any ..-> prop.
+type coq.sigma.print prop.
+type coq.sort.eq sort -> sort -> prop.
+type coq.sort.leq sort -> sort -> prop.
+type coq.sort.pts-triple sort -> sort -> sort -> prop.
+type coq.sort.sup sort -> sort -> prop.
+type coq.strategy.get constant -> conversion_strategy -> prop.
+type coq.strategy.set list constant -> conversion_strategy -> prop.
+type coq.string->name string -> name -> prop.
+type coq.string->pstring string -> pstring -> prop.
+type coq.term->pp term -> coq.pp -> prop.
+type coq.term->string term -> string -> prop.
+type coq.typecheck term -> term -> diagnostic -> prop.
+type coq.typecheck-ty term -> sort -> diagnostic -> prop.
+type coq.uint63->int uint63 -> int -> prop.
+type coq.unify-eq term -> term -> diagnostic -> prop.
+type coq.unify-leq term -> term -> diagnostic -> prop.
+type coq.univ id -> univ -> prop.
+type coq.univ-instance univ-instance -> list univ.variable -> prop.
+type coq.univ-instance.unify-eq gref ->
+                                  univ-instance ->
+                                    univ-instance -> diagnostic -> prop.
+type coq.univ-instance.unify-leq gref ->
+                                   univ-instance ->
+                                     univ-instance -> diagnostic -> prop.
+type coq.univ.constraints list univ-constraint -> prop.
+type coq.univ.global? univ -> prop.
+type coq.univ.map.add univ -> A -> coq.univ.map A -> coq.univ.map A -> prop.
+type coq.univ.map.bindings coq.univ.map A -> list (pair univ A) -> prop.
+type coq.univ.map.empty coq.univ.map A -> prop.
+type coq.univ.map.filter coq.univ.map A ->
+                           (univ -> A -> prop) -> coq.univ.map A -> prop.
+type coq.univ.map.find univ -> coq.univ.map A -> A -> prop.
+type coq.univ.map.fold coq.univ.map A ->
+                         C -> (univ -> A -> C -> C -> prop) -> C -> prop.
+type coq.univ.map.map coq.univ.map A ->
+                        (univ -> A -> B -> prop) -> coq.univ.map B -> prop.
+type coq.univ.map.mem univ -> coq.univ.map A -> prop.
+type coq.univ.map.remove univ -> coq.univ.map A -> coq.univ.map A -> prop.
+type coq.univ.new univ -> prop.
+type coq.univ.print prop.
+type coq.univ.set.add univ -> coq.univ.set -> coq.univ.set -> prop.
+type coq.univ.set.cardinal coq.univ.set -> int -> prop.
+type coq.univ.set.choose coq.univ.set -> univ -> prop.
+type coq.univ.set.diff coq.univ.set -> coq.univ.set -> coq.univ.set -> prop.
+type coq.univ.set.elements coq.univ.set -> list univ -> prop.
+type coq.univ.set.empty coq.univ.set -> prop.
+type coq.univ.set.equal coq.univ.set -> coq.univ.set -> prop.
+type coq.univ.set.filter coq.univ.set ->
+                           (univ -> prop) -> coq.univ.set -> prop.
+type coq.univ.set.fold coq.univ.set ->
+                         A -> (univ -> A -> A -> prop) -> A -> prop.
+type coq.univ.set.inter coq.univ.set -> coq.univ.set -> coq.univ.set -> prop.
+type coq.univ.set.map coq.univ.set ->
+                        (univ -> univ -> prop) -> coq.univ.set -> prop.
+type coq.univ.set.max coq.univ.set -> univ -> prop.
+type coq.univ.set.mem univ -> coq.univ.set -> prop.
+type coq.univ.set.min coq.univ.set -> univ -> prop.
+type coq.univ.set.partition coq.univ.set ->
+                              (univ -> prop) ->
+                                coq.univ.set -> coq.univ.set -> prop.
+type coq.univ.set.remove univ -> coq.univ.set -> coq.univ.set -> prop.
+type coq.univ.set.subset coq.univ.set -> coq.univ.set -> prop.
+type coq.univ.set.union coq.univ.set -> coq.univ.set -> coq.univ.set -> prop.
+type coq.univ.variable univ -> univ.variable -> prop.
+type coq.univ.variable.constraints univ.variable ->
+                                     list univ-constraint -> prop.
+type coq.univ.variable.map.add univ.variable ->
+                                 A ->
+                                   coq.univ.variable.map A ->
+                                     coq.univ.variable.map A -> prop.
+type coq.univ.variable.map.bindings coq.univ.variable.map A ->
+                                      list (pair univ.variable A) -> prop.
+type coq.univ.variable.map.empty coq.univ.variable.map A -> prop.
+type coq.univ.variable.map.filter coq.univ.variable.map A ->
+                                    (univ.variable -> A -> prop) ->
+                                      coq.univ.variable.map A -> prop.
+type coq.univ.variable.map.find univ.variable ->
+                                  coq.univ.variable.map A -> A -> prop.
+type coq.univ.variable.map.fold coq.univ.variable.map A ->
+                                  C ->
+                                    (univ.variable -> A -> C -> C -> prop) ->
+                                      C -> prop.
+type coq.univ.variable.map.map coq.univ.variable.map A ->
+                                 (univ.variable -> A -> B -> prop) ->
+                                   coq.univ.variable.map B -> prop.
+type coq.univ.variable.map.mem univ.variable ->
+                                 coq.univ.variable.map A -> prop.
+type coq.univ.variable.map.remove univ.variable ->
+                                    coq.univ.variable.map A ->
+                                      coq.univ.variable.map A -> prop.
+type coq.univ.variable.of-term term -> coq.univ.variable.set -> prop.
+type coq.univ.variable.set.add univ.variable ->
+                                 coq.univ.variable.set ->
+                                   coq.univ.variable.set -> prop.
+type coq.univ.variable.set.cardinal coq.univ.variable.set -> int -> prop.
+type coq.univ.variable.set.choose coq.univ.variable.set ->
+                                    univ.variable -> prop.
+type coq.univ.variable.set.diff coq.univ.variable.set ->
+                                  coq.univ.variable.set ->
+                                    coq.univ.variable.set -> prop.
+type coq.univ.variable.set.elements coq.univ.variable.set ->
+                                      list univ.variable -> prop.
+type coq.univ.variable.set.empty coq.univ.variable.set -> prop.
+type coq.univ.variable.set.equal coq.univ.variable.set ->
+                                   coq.univ.variable.set -> prop.
+type coq.univ.variable.set.filter coq.univ.variable.set ->
+                                    (univ.variable -> prop) ->
+                                      coq.univ.variable.set -> prop.
+type coq.univ.variable.set.fold coq.univ.variable.set ->
+                                  A ->
+                                    (univ.variable -> A -> A -> prop) ->
+                                      A -> prop.
+type coq.univ.variable.set.inter coq.univ.variable.set ->
+                                   coq.univ.variable.set ->
+                                     coq.univ.variable.set -> prop.
+type coq.univ.variable.set.map coq.univ.variable.set ->
+                                 (univ.variable -> univ.variable -> prop) ->
+                                   coq.univ.variable.set -> prop.
+type coq.univ.variable.set.max coq.univ.variable.set -> univ.variable -> prop.
+type coq.univ.variable.set.mem univ.variable -> coq.univ.variable.set -> prop.
+type coq.univ.variable.set.min coq.univ.variable.set -> univ.variable -> prop.
+type coq.univ.variable.set.partition coq.univ.variable.set ->
+                                       (univ.variable -> prop) ->
+                                         coq.univ.variable.set ->
+                                           coq.univ.variable.set -> prop.
+type coq.univ.variable.set.remove univ.variable ->
+                                    coq.univ.variable.set ->
+                                      coq.univ.variable.set -> prop.
+type coq.univ.variable.set.subset coq.univ.variable.set ->
+                                    coq.univ.variable.set -> prop.
+type coq.univ.variable.set.union coq.univ.variable.set ->
+                                   coq.univ.variable.set ->
+                                     coq.univ.variable.set -> prop.
+type coq.version string -> int -> int -> int -> prop.
+type coq.warn any ..-> prop.
+type coq.warning string -> string -> any ..-> prop.
+type cos float -> float.
+type counter string -> int -> prop.
+type covariant univ.variable -> univ-variance.
+type cs-default cs-pattern.
+type cs-gref gref -> cs-pattern.
+type cs-instance gref -> cs-pattern -> gref -> cs-instance.
+type cs-prod cs-pattern.
+type cs-sort sort -> cs-pattern.
+type ctx-decl context-decl -> argument.
+type current scope.
+type decl term -> name -> term -> prop.
+type declare-evar list prop -> term -> term -> term -> prop.
+type declare_constraint any -> any -> any ..-> prop.
+type def term -> name -> term -> term -> prop.
+type distinct_names list any -> prop.
+type (div) int -> int -> int.
+type dprint any ..-> prop.
+type end-module modpath -> synterp-action.
+type end-module-type modtypath -> synterp-action.
+type end-record record-decl.
+type end-section synterp-action.
+type eof in_stream -> prop.
+type eq cmp.
+type eq univ.variable -> univ.variable -> univ-constraint.
+type error string -> diagnostic.
+type evar term -> term -> term -> prop.
+type execution-site scope.
+type expand conversion_strategy.
+type explicit implicit_kind.
+type export-module modpath -> synterp-action.
+type fail prop.
+type false prop.
+type ff bool.
+type field field-attributes ->
+             id -> term -> (term -> record-decl) -> record-decl.
+type findall_solutions prop -> list prop -> prop.
+type fix name -> int -> term -> (term -> term) -> term.
+type float64 float64 -> primitive-value.
+type floor float -> int.
+type flush out_stream -> prop.
+type foo term.
+type fst pair A B -> A -> prop.
+type fun (term -> term) -> term.
+type fun name -> term -> (term -> term) -> term.
+type funclass class.
+type gc.compact prop.
+type gc.full prop.
+type gc.get int -> int -> int -> int -> int -> int -> int -> int -> prop.
+type gc.major prop.
+type gc.minor prop.
+type gc.quick-stat float ->
+                     float ->
+                       float ->
+                         int ->
+                           int -> int -> int -> int -> int -> int -> prop.
+type gc.set int -> int -> int -> int -> int -> int -> int -> int -> prop.
+type gc.stat float ->
+               float ->
+                 float ->
+                   int ->
+                     int ->
+                       int ->
+                         int ->
+                           int ->
+                             int ->
+                               int ->
+                                 int ->
+                                   int -> int -> int -> int -> int -> prop.
+type ge_ A -> A -> prop.
+type get-option string -> A -> prop.
+type getenv string -> option string -> prop.
+type gettimeofday float -> prop.
+type global gref -> term.
+type goal goal-ctx -> term -> term -> term -> list argument -> goal.
+type gref gref -> module-item.
+type grefclass gref -> class.
+type ground_term any -> prop.
+type gt cmp.
+type gt_ A -> A -> prop.
+type halt any ..-> prop.
+type (i+) int -> int -> int.
+type (i-) int -> int -> int.
+type (i<) int -> int -> prop.
+type (i=<) int -> int -> prop.
+type (i>) int -> int -> prop.
+type (i>=) int -> int -> prop.
+type iabs int -> int.
+type if prop -> prop -> prop -> prop.
+type if2 prop -> prop -> prop -> prop -> prop -> prop.
+type implicit implicit_kind.
+type import-module modpath -> synterp-action.
+type in argument_mode.
+type include-module modpath -> synterp-action.
+type include-module-type modtypath -> synterp-action.
+type indc constructor -> gref.
+type indt inductive -> gref.
+type indt-decl indt-decl -> argument.
+type inductive id -> bool -> arity -> (term -> list indc-decl) -> indt-decl.
+type input in_stream -> int -> string -> prop.
+type input_line in_stream -> string -> prop.
+type int int -> argument.
+type int_to_real int -> float.
+type int_to_string int -> string.
+type invariant univ.variable -> univ-variance.
+type irrelevant univ.variable -> univ-variance.
+type (is) A -> A -> prop.
+type (is_cdata) any -> string -> prop.
+type (i~) int -> int.
+type le univ.variable -> univ.variable -> univ-constraint.
+type le_ A -> A -> prop.
+type leaf-loc loc -> attribute-value.
+type leaf-str string -> attribute-value.
+type let name -> term -> term -> (term -> term) -> term.
+type level int -> conversion_strategy.
+type library scope.
+type ln float -> float.
+type loc-abbreviation abbreviation -> located.
+type loc-gref gref -> located.
+type loc-modpath modpath -> located.
+type loc-modtypath modtypath -> located.
+type loc.fields loc -> string -> int -> int -> int -> int -> prop.
+type lookahead in_stream -> string -> prop.
+type lt cmp.
+type lt univ.variable -> univ.variable -> univ-constraint.
+type lt_ A -> A -> prop.
+type main list argument -> prop.
+type main-interp list argument -> any -> prop.
+type main-synterp list argument -> any -> prop.
+type match term -> term -> list term -> term.
+type max int -> int -> int.
+type max float -> float -> float.
+type maximal implicit_kind.
+type min int -> int -> int.
+type min float -> float -> float.
+type (mod) int -> int -> int.
+type (mode-ground) hint-mode.
+type (mode-input) hint-mode.
+type (mode-output) hint-mode.
+type (module-functor) modpath -> list modtypath -> module-item.
+type (module-type) modtypath -> module-item.
+type (module-type-functor) modtypath -> list modtypath -> module-item.
+type msolve list sealed-goal -> list sealed-goal -> prop.
+type nabla (term -> sealed-goal) -> sealed-goal.
+type name any -> any ..-> prop.
+type names list any -> prop.
+type never simplification_strategy.
+type new_int int -> prop.
+type new_safe safe -> prop.
+type node list attribute -> attribute-value.
+type none option A.
+type not prop -> prop.
+type occurs any -> any -> prop.
+type of term -> ty -> prop.
+type off coercion-status.
+type ok diagnostic.
+type opaque conversion_strategy.
+type open-trm int -> term -> argument.
+type open_append string -> out_stream -> prop.
+type open_in string -> in_stream -> prop.
+type open_out string -> out_stream -> prop.
+type open_safe safe -> list A -> prop.
+type open_string string -> in_stream -> prop.
+type out argument_mode.
+type output out_stream -> string -> prop.
+type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
+type parameter id ->
+                 implicit_kind -> term -> (term -> indt-decl) -> indt-decl.
+type pglobal gref -> univ-instance -> term.
+type pi (A -> prop) -> prop.
+type pr A -> B -> pair A B.
+type primitive primitive-value -> term.
+type primitive? A -> string -> prop.
+type print any ..-> prop.
+type print_constraints prop.
+type printterm out_stream -> A -> prop.
+type prod name -> term -> (term -> term) -> term.
+type proj projection -> int -> primitive-value.
+type prop sort.
+type prune any -> list any -> prop.
+type pstring pstring -> primitive-value.
+type (r+) float -> float -> float.
+type (r-) float -> float -> float.
+type (r<) float -> float -> prop.
+type (r=<) float -> float -> prop.
+type (r>) float -> float -> prop.
+type (r>=) float -> float -> prop.
+type rabs float -> float.
+type random.init int -> prop.
+type random.int int -> int -> prop.
+type random.self_init prop.
+type real_to_string float -> string.
+type record id -> term -> id -> record-decl -> indt-decl.
+type regular coercion-status.
+type remove id -> grafting.
+type replace id -> grafting.
+type reversible coercion-status.
+type rex.match string -> string -> prop.
+type rex.replace string -> string -> string -> string -> prop.
+type rex.split string -> string -> list string -> prop.
+type rex_match string -> string -> prop.
+type rex_replace string -> string -> string -> string -> prop.
+type rex_split string -> string -> list string -> prop.
+type rhc string -> int.
+type rm-evar term -> term -> prop.
+type (r~) float -> float.
+type (s<) string -> string -> prop.
+type (s=<) string -> string -> prop.
+type (s>) string -> string -> prop.
+type (s>=) string -> string -> prop.
+type same_term A -> A -> prop.
+type same_var A -> A -> prop.
+type seal goal -> sealed-goal.
+type sigma (A -> prop) -> prop.
+type sin float -> float.
+type size string -> int.
+type snd pair A B -> B -> prop.
+type solve goal -> list sealed-goal -> prop.
+type some A -> option A.
+type sort sort -> term.
+type sortclass class.
+type sprop sort.
+type sqrt float -> float.
+type stash_in_safe safe -> A -> prop.
+type std.any->string A -> string -> prop.
+type std.append list A -> list A -> list A -> prop.
+type std.appendR list A -> list A -> list A -> prop.
+type std.assert! prop -> string -> prop.
+type std.assert-ok! (diagnostic -> prop) -> string -> prop.
+type std.debug-print string -> A -> prop.
+type std.do! list prop -> prop.
+type std.do-ok! diagnostic -> list (diagnostic -> prop) -> prop.
+type std.drop int -> list A -> list A -> prop.
+type std.drop-last int -> list A -> list A -> prop.
+type std.exists list A -> (A -> prop) -> prop.
+type std.exists2 list A -> list B -> (A -> B -> prop) -> prop.
+type std.fatal-error string -> prop.
+type std.fatal-error-w-data string -> A -> prop.
+type std.filter list A -> (A -> prop) -> list A -> prop.
+type std.findall prop -> list prop -> prop.
+type std.flatten list (list A) -> list A -> prop.
+type std.flip (A -> B -> prop) -> B -> A -> prop.
+type std.fold list B -> A -> (B -> A -> A -> prop) -> A -> prop.
+type std.fold-map list A ->
+                    B -> (A -> B -> C -> B -> prop) -> list C -> B -> prop.
+type std.fold-right list B -> A -> (B -> A -> A -> prop) -> A -> prop.
+type std.fold2 list C ->
+                 list B -> A -> (C -> B -> A -> A -> prop) -> A -> prop.
+type std.forall list A -> (A -> prop) -> prop.
+type std.forall-ok list A -> (A -> diagnostic -> prop) -> diagnostic -> prop.
+type std.forall2 list A -> list B -> (A -> B -> prop) -> prop.
+type std.ignore-failure! prop -> prop.
+type std.int.map.add int -> A -> std.int.map A -> std.int.map A -> prop.
+type std.int.map.bindings std.int.map A -> list (pair int A) -> prop.
+type std.int.map.empty std.int.map A -> prop.
+type std.int.map.filter std.int.map A ->
+                          (int -> A -> prop) -> std.int.map A -> prop.
+type std.int.map.find int -> std.int.map A -> A -> prop.
+type std.int.map.fold std.int.map A ->
+                        C -> (int -> A -> C -> C -> prop) -> C -> prop.
+type std.int.map.map std.int.map A ->
+                       (int -> A -> B -> prop) -> std.int.map B -> prop.
+type std.int.map.mem int -> std.int.map A -> prop.
+type std.int.map.remove int -> std.int.map A -> std.int.map A -> prop.
+type std.int.set.add int -> std.int.set -> std.int.set -> prop.
+type std.int.set.cardinal std.int.set -> int -> prop.
+type std.int.set.choose std.int.set -> int -> prop.
+type std.int.set.diff std.int.set -> std.int.set -> std.int.set -> prop.
+type std.int.set.elements std.int.set -> list int -> prop.
+type std.int.set.empty std.int.set -> prop.
+type std.int.set.equal std.int.set -> std.int.set -> prop.
+type std.int.set.filter std.int.set -> (int -> prop) -> std.int.set -> prop.
+type std.int.set.fold std.int.set ->
+                        A -> (int -> A -> A -> prop) -> A -> prop.
+type std.int.set.inter std.int.set -> std.int.set -> std.int.set -> prop.
+type std.int.set.map std.int.set ->
+                       (int -> int -> prop) -> std.int.set -> prop.
+type std.int.set.max std.int.set -> int -> prop.
+type std.int.set.mem int -> std.int.set -> prop.
+type std.int.set.min std.int.set -> int -> prop.
+type std.int.set.partition std.int.set ->
+                             (int -> prop) ->
+                               std.int.set -> std.int.set -> prop.
+type std.int.set.remove int -> std.int.set -> std.int.set -> prop.
+type std.int.set.subset std.int.set -> std.int.set -> prop.
+type std.int.set.union std.int.set -> std.int.set -> std.int.set -> prop.
+type std.intersperse A -> list A -> list A -> prop.
+type std.iota int -> list int -> prop.
+type std.last list A -> A -> prop.
+type std.length list A -> int -> prop.
+type std.lift-ok prop -> string -> diagnostic -> prop.
+type std.list.init int -> (int -> A -> prop) -> list A -> prop.
+type std.list.init.aux int -> int -> (int -> A -> prop) -> list A -> prop.
+type std.list.make int -> A -> list A -> prop.
+type std.loc.map.add loc -> A -> std.loc.map A -> std.loc.map A -> prop.
+type std.loc.map.bindings std.loc.map A -> list (pair loc A) -> prop.
+type std.loc.map.empty std.loc.map A -> prop.
+type std.loc.map.filter std.loc.map A ->
+                          (loc -> A -> prop) -> std.loc.map A -> prop.
+type std.loc.map.find loc -> std.loc.map A -> A -> prop.
+type std.loc.map.fold std.loc.map A ->
+                        C -> (loc -> A -> C -> C -> prop) -> C -> prop.
+type std.loc.map.map std.loc.map A ->
+                       (loc -> A -> B -> prop) -> std.loc.map B -> prop.
+type std.loc.map.mem loc -> std.loc.map A -> prop.
+type std.loc.map.remove loc -> std.loc.map A -> std.loc.map A -> prop.
+type std.loc.set.add loc -> std.loc.set -> std.loc.set -> prop.
+type std.loc.set.cardinal std.loc.set -> int -> prop.
+type std.loc.set.choose std.loc.set -> loc -> prop.
+type std.loc.set.diff std.loc.set -> std.loc.set -> std.loc.set -> prop.
+type std.loc.set.elements std.loc.set -> list loc -> prop.
+type std.loc.set.empty std.loc.set -> prop.
+type std.loc.set.equal std.loc.set -> std.loc.set -> prop.
+type std.loc.set.filter std.loc.set -> (loc -> prop) -> std.loc.set -> prop.
+type std.loc.set.fold std.loc.set ->
+                        A -> (loc -> A -> A -> prop) -> A -> prop.
+type std.loc.set.inter std.loc.set -> std.loc.set -> std.loc.set -> prop.
+type std.loc.set.map std.loc.set ->
+                       (loc -> loc -> prop) -> std.loc.set -> prop.
+type std.loc.set.max std.loc.set -> loc -> prop.
+type std.loc.set.mem loc -> std.loc.set -> prop.
+type std.loc.set.min std.loc.set -> loc -> prop.
+type std.loc.set.partition std.loc.set ->
+                             (loc -> prop) ->
+                               std.loc.set -> std.loc.set -> prop.
+type std.loc.set.remove loc -> std.loc.set -> std.loc.set -> prop.
+type std.loc.set.subset std.loc.set -> std.loc.set -> prop.
+type std.loc.set.union std.loc.set -> std.loc.set -> std.loc.set -> prop.
+type std.lookup list (pair A B) -> A -> B -> prop.
+type std.lookup! list (pair A B) -> A -> B -> prop.
+type std.map std.map.private.map K V ->
+               (K -> K -> cmp -> prop) -> std.map K V.
+type std.map list A -> (A -> B -> prop) -> list B -> prop.
+type std.map-filter list A -> (A -> B -> prop) -> list B -> prop.
+type std.map-i list A -> (int -> A -> B -> prop) -> list B -> prop.
+type std.map-i.aux list A -> int -> (int -> A -> B -> prop) -> list B -> prop.
+type std.map-ok list A ->
+                  (A -> B -> diagnostic -> prop) ->
+                    list B -> diagnostic -> prop.
+type std.map.add K -> V -> std.map K V -> std.map K V -> prop.
+type std.map.bindings std.map K V -> list (pair K V) -> prop.
+type std.map.find K -> std.map K V -> V -> prop.
+type std.map.make (K -> K -> cmp -> prop) -> std.map K V -> prop.
+type std.map.private.add std.map.private.map K V ->
+                           (K -> K -> cmp -> prop) ->
+                             K -> V -> std.map.private.map K V -> prop.
+type std.map.private.add.aux cmp ->
+                               std.map.private.map K V ->
+                                 (K -> K -> cmp -> prop) ->
+                                   K -> V -> std.map.private.map K V -> prop.
+type std.map.private.bal std.map.private.map K V ->
+                           K ->
+                             V ->
+                               std.map.private.map K V ->
+                                 std.map.private.map K V -> prop.
+type std.map.private.bal.aux int ->
+                               int ->
+                                 int ->
+                                   int ->
+                                     std.map.private.map K V ->
+                                       K ->
+                                         V ->
+                                           std.map.private.map K V ->
+                                             std.map.private.map K V -> prop.
+type std.map.private.bindings std.map.private.map K V ->
+                                list (pair K V) -> list (pair K V) -> prop.
+type std.map.private.create std.map.private.map K V ->
+                              K ->
+                                V ->
+                                  std.map.private.map K V ->
+                                    std.map.private.map K V -> prop.
+type std.map.private.empty std.map.private.map K V.
+type std.map.private.find std.map.private.map K V ->
+                            (K -> K -> cmp -> prop) -> K -> V -> prop.
+type std.map.private.find.aux cmp ->
+                                (K -> K -> cmp -> prop) ->
+                                  std.map.private.map K V ->
+                                    std.map.private.map K V ->
+                                      V -> K -> V -> prop.
+type std.map.private.height std.map.private.map K V -> int -> prop.
+type std.map.private.merge std.map.private.map K V ->
+                             std.map.private.map K V ->
+                               std.map.private.map K V -> prop.
+type std.map.private.min-binding std.map.private.map K V -> K -> V -> prop.
+type std.map.private.node std.map.private.map K V ->
+                            K ->
+                              V ->
+                                std.map.private.map K V ->
+                                  int -> std.map.private.map K V.
+type std.map.private.remove std.map.private.map K V ->
+                              (K -> K -> cmp -> prop) ->
+                                K -> std.map.private.map K V -> prop.
+type std.map.private.remove-min-binding std.map.private.map K V ->
+                                          std.map.private.map K V -> prop.
+type std.map.private.remove.aux cmp ->
+                                  (K -> K -> cmp -> prop) ->
+                                    std.map.private.map K V ->
+                                      std.map.private.map K V ->
+                                        K ->
+                                          V ->
+                                            K ->
+                                              std.map.private.map K V -> prop.
+type std.map.remove K -> std.map K V -> std.map K V -> prop.
+type std.map2 list A -> list B -> (A -> B -> C -> prop) -> list C -> prop.
+type std.map2-filter list A ->
+                       list B -> (A -> B -> C -> prop) -> list C -> prop.
+type std.max A -> A -> A -> prop.
+type std.mem list A -> A -> prop.
+type std.mem! list A -> A -> prop.
+type std.nth int -> list A -> A -> prop.
+type std.null list A -> prop.
+type std.omap option A -> (A -> B -> prop) -> option B -> prop.
+type std.once prop -> prop.
+type std.rev list A -> list A -> prop.
+type std.rev.aux list A -> list A -> list A -> prop.
+type std.set std.set.private.set E -> (E -> E -> cmp -> prop) -> std.set E.
+type std.set.add E -> std.set E -> std.set E -> prop.
+type std.set.cardinal std.set E -> int -> prop.
+type std.set.elements std.set E -> list E -> prop.
+type std.set.make (E -> E -> cmp -> prop) -> std.set E -> prop.
+type std.set.mem E -> std.set E -> prop.
+type std.set.private.add std.set.private.set E ->
+                           (E -> E -> cmp -> prop) ->
+                             E -> std.set.private.set E -> prop.
+type std.set.private.add.aux cmp ->
+                               (E -> E -> cmp -> prop) ->
+                                 std.set.private.set E ->
+                                   std.set.private.set E ->
+                                     E ->
+                                       E ->
+                                         int -> std.set.private.set E -> prop.
+type std.set.private.bal std.set.private.set E ->
+                           E ->
+                             std.set.private.set E ->
+                               std.set.private.set E -> prop.
+type std.set.private.bal.aux int ->
+                               int ->
+                                 int ->
+                                   int ->
+                                     std.set.private.set E ->
+                                       E ->
+                                         std.set.private.set E ->
+                                           std.set.private.set E -> prop.
+type std.set.private.cardinal std.set.private.set E -> int -> prop.
+type std.set.private.create std.set.private.set E ->
+                              E ->
+                                std.set.private.set E ->
+                                  std.set.private.set E -> prop.
+type std.set.private.elements std.set.private.set E ->
+                                list E -> list E -> prop.
+type std.set.private.empty std.set.private.set E.
+type std.set.private.height std.set.private.set E -> int -> prop.
+type std.set.private.mem std.set.private.set E ->
+                           (E -> E -> cmp -> prop) -> E -> prop.
+type std.set.private.mem.aux cmp ->
+                               (E -> E -> cmp -> prop) ->
+                                 std.set.private.set E ->
+                                   std.set.private.set E -> E -> prop.
+type std.set.private.merge std.set.private.set E ->
+                             std.set.private.set E ->
+                               std.set.private.set E -> prop.
+type std.set.private.min-binding std.set.private.set E -> E -> prop.
+type std.set.private.node std.set.private.set E ->
+                            E ->
+                              std.set.private.set E ->
+                                int -> std.set.private.set E.
+type std.set.private.remove std.set.private.set E ->
+                              (E -> E -> cmp -> prop) ->
+                                E -> std.set.private.set E -> prop.
+type std.set.private.remove-min-binding std.set.private.set E ->
+                                          std.set.private.set E -> prop.
+type std.set.private.remove.aux cmp ->
+                                  (E -> E -> cmp -> prop) ->
+                                    std.set.private.set E ->
+                                      std.set.private.set E ->
+                                        E ->
+                                          E -> std.set.private.set E -> prop.
+type std.set.remove E -> std.set E -> std.set E -> prop.
+type std.split-at int -> list A -> list A -> list A -> prop.
+type std.spy prop -> prop.
+type std.spy! prop -> prop.
+type std.spy-do! list prop -> prop.
+type std.string.concat string -> list string -> string -> prop.
+type std.string.map.add string ->
+                          A -> std.string.map A -> std.string.map A -> prop.
+type std.string.map.bindings std.string.map A -> list (pair string A) -> prop.
+type std.string.map.empty std.string.map A -> prop.
+type std.string.map.filter std.string.map A ->
+                             (string -> A -> prop) ->
+                               std.string.map A -> prop.
+type std.string.map.find string -> std.string.map A -> A -> prop.
+type std.string.map.fold std.string.map A ->
+                           C -> (string -> A -> C -> C -> prop) -> C -> prop.
+type std.string.map.map std.string.map A ->
+                          (string -> A -> B -> prop) ->
+                            std.string.map B -> prop.
+type std.string.map.mem string -> std.string.map A -> prop.
+type std.string.map.remove string ->
+                             std.string.map A -> std.string.map A -> prop.
+type std.string.set.add string -> std.string.set -> std.string.set -> prop.
+type std.string.set.cardinal std.string.set -> int -> prop.
+type std.string.set.choose std.string.set -> string -> prop.
+type std.string.set.diff std.string.set ->
+                           std.string.set -> std.string.set -> prop.
+type std.string.set.elements std.string.set -> list string -> prop.
+type std.string.set.empty std.string.set -> prop.
+type std.string.set.equal std.string.set -> std.string.set -> prop.
+type std.string.set.filter std.string.set ->
+                             (string -> prop) -> std.string.set -> prop.
+type std.string.set.fold std.string.set ->
+                           A -> (string -> A -> A -> prop) -> A -> prop.
+type std.string.set.inter std.string.set ->
+                            std.string.set -> std.string.set -> prop.
+type std.string.set.map std.string.set ->
+                          (string -> string -> prop) ->
+                            std.string.set -> prop.
+type std.string.set.max std.string.set -> string -> prop.
+type std.string.set.mem string -> std.string.set -> prop.
+type std.string.set.min std.string.set -> string -> prop.
+type std.string.set.partition std.string.set ->
+                                (string -> prop) ->
+                                  std.string.set -> std.string.set -> prop.
+type std.string.set.remove string -> std.string.set -> std.string.set -> prop.
+type std.string.set.subset std.string.set -> std.string.set -> prop.
+type std.string.set.union std.string.set ->
+                            std.string.set -> std.string.set -> prop.
+type std.take int -> list A -> list A -> prop.
+type std.take-last int -> list A -> list A -> prop.
+type std.time prop -> float -> prop.
+type std.unsafe-cast A -> B -> prop.
+type std.unzip list (pair A B) -> list A -> list B -> prop.
+type std.while-ok-do! diagnostic ->
+                        list (diagnostic -> prop) -> diagnostic -> prop.
+type std.zip list A -> list B -> list (pair A B) -> prop.
+type std_err out_stream.
+type std_in in_stream.
+type std_out out_stream.
+type stop prop.
+type str string -> argument.
+type string_to_int string -> int.
+type submodule modpath -> list module-item -> module-item.
+type substring string -> int -> int -> string.
+type system string -> int -> prop.
+type tac ltac1-tactic -> argument.
+type tc-instance gref -> int -> tc-instance.
+type term_to_string any -> string -> prop.
+type trace.counter string -> int -> prop.
+type triple A -> B -> C -> triple A B C.
+type triple_1 triple A B C -> A -> prop.
+type triple_2 triple A B C -> B -> prop.
+type triple_3 triple A B C -> C -> prop.
+type trm term -> argument.
+type true prop.
+type truncate float -> int.
+type tt bool.
+type typ univ -> sort.
+type uint63 uint63 -> primitive-value.
+type unix.process out_stream -> in_stream -> in_stream -> unix.process.
+type unix.process.close unix.process -> diagnostic -> prop.
+type unix.process.open string ->
+                         list string ->
+                           list string -> unix.process -> diagnostic -> prop.
+type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
+type upoly-decl list univ.variable ->
+                  bool -> list univ-constraint -> bool -> upoly-decl.
+type upoly-decl-cumul list univ-variance ->
+                        bool ->
+                          list univ-constraint -> bool -> upoly-decl-cumul.
+type upoly-indt-decl indt-decl -> upoly-decl -> argument.
+type upoly-indt-decl indt-decl -> upoly-decl-cumul -> argument.
+type usage prop.
+type uvar A.
+type uvar evarkey -> list term -> term.
+type var any -> any ..-> prop.
+type whd term -> term -> prop.
+type when list int -> option int -> simplification_strategy.
+type when-nomatch list int -> option int -> simplification_strategy.
+type (~) int -> int.
+type (~) float -> float.
+typeabbrv field-attributes (list field-attribute).
+typeabbrv goal-ctx (list prop).
+typeabbrv id (string).
+typeabbrv opaque? (bool).
 % File "elpi-builtin.elpi", line 11, column 0, characters 147-151: [1] 
 true :- .
 % File "elpi-builtin.elpi", line 34, column 0, characters 373-385: [2] 
