@@ -99,6 +99,9 @@ Elpi Db tc.db lp:{{
     pred dummy.
 
     pred ho-link o:term, i:term, o:A.
+    pred link.eta i:term, i:term.
+    pred link.llam i:term, i:term.
+
   }
 }}.
 From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
