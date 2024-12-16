@@ -201,6 +201,8 @@ let pr_attributes _ _ _ atts =
 
 let wit_elpi_ftactic_arg = EA.Tac.wit
 
+let binders = Pcoq.Constr.binders
+
 let def_body = G_vernac.def_body
 
 let of_coq_inductive_declaration ~atts kind id =
@@ -215,12 +217,23 @@ let of_coq_record_declaration ~atts kind id =
   | Inductive _ -> assert false
   | Record r -> r
 
-let of_coq_definition ~loc ~atts name udecl def =
+[%%if coq = "8.20"]
+let of_coq_definition ~loc ~atts name udecl bl def =
   match def with
-  | Vernacexpr.DefineBody(bl,red,c,ty) ->
+  | Vernacexpr.DefineBody(bl',red,c,ty) ->
+      (* For compatibility with Coq PR #19301, binders have been parsed in advance *)
+      assert (CList.is_empty bl');
       EA.Cmd.(ConstantDecl { name = snd name; atts; udecl; typ = (bl,ty); red; body = Some c })
   | Vernacexpr.ProveBody _ ->
       CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body")
+[%%else]
+let of_coq_definition ~loc ~atts name udecl bl def =
+  match def with
+  | Vernacexpr.DefineBody(red,c,ty) ->
+      EA.Cmd.(ConstantDecl { name = snd name; atts; udecl; typ = (bl,ty); red; body = Some c })
+  | Vernacexpr.ProveBody _ ->
+      CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body")
+[%%endif]
 
 }
 
@@ -305,8 +318,8 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_glob env sigma }
 | [ "Structure" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts:[] Vernacexpr.Structure id) }  
 | [ "#[" attributes(atts) "]" "Structure" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts Vernacexpr.Structure id) }  
 
-| [ "Definition" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts:[] name udecl def }
-| [ "#[" attributes(atts) "]" "Definition" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts name udecl def }
+| [ "Definition" qualified_name(name) univ_decl_opt(udecl) binders(bl) def_body(def) ] -> { of_coq_definition ~loc ~atts:[] name udecl bl def }
+| [ "#[" attributes(atts) "]" "Definition" qualified_name(name) univ_decl_opt(udecl) binders(bl) def_body(def) ] -> { of_coq_definition ~loc ~atts name udecl bl def }
 
 | [ "Axiom" qualified_name(name) univ_decl_opt(udecl) telescope(typ) colon_constr(t) ] -> {
       EA.Cmd.(ConstantDecl { name = snd name; atts = []; udecl; typ = (typ,Some t); red = None; body = None }) }
