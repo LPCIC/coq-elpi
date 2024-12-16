@@ -130,7 +130,7 @@ namespace tc {
       }
     }
 
-    pred eta i:term, o:term.
+    pred eta i:term, i:term.
     eta A B :- eta.eta A B.
 
     pred solve-eta.
