@@ -2060,6 +2060,17 @@ coq.env.add-section-variable Name Ty C :-
   coq.env.add-section-variable-two Name explicit Ty C.
 |};
 
+  LPCode {|
+pred coq.env.add-context i:context-decl.
+coq.env.add-context context-end.
+coq.env.add-context (context-item Name I Ty none Rest) :-
+  coq.env.add-section-variable-two Name I Ty C,
+  coq.env.add-context (Rest {coq.env.global (const C)}).
+coq.env.add-context (context-item Name _I Ty (some Bo) Rest) :-
+  coq.env.add-const Name Bo Ty ff C,
+  coq.env.add-context (Rest {coq.env.global (const C)}).
+|};
+
   MLCode(Pred("coq.env.add-indt",
     CIn(indt_decl_in, "Decl",
     Out(inductive, "I",
