@@ -2041,30 +2041,25 @@ Supported attributes:
      uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
-  MLCode(Pred("coq.env.add-section-variable-two",
+  MLCode(Pred("coq.env.add-section-variable",
     In(id,   "Name",
-    In(implicit_kind, "I",
+    In(B.unspec implicit_kind, "I",
     CIn(closed_ground_term, "Ty",
     Out(constant, "C",
     Full (global, {|Declare a new section variable: C gets a constant derived from Name
 and the current module.
 |}))))),
   (fun id bkind ty _ ~depth {options} _ -> grab_global_env_drop_sigma_keep_univs "coq.env.add-section-variable" (fun state ->
+     let bkind = Option.default Glob_term.Explicit (unspec2opt bkind) in
      let gr, uctx = add_axiom_or_variable "coq.env.add-section-variable" id ty (Some bkind) options state in
      uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
   LPCode {|
-pred coq.env.add-section-variable i:id, i:term, o:constant.
-coq.env.add-section-variable Name Ty C :-
-  coq.env.add-section-variable-two Name explicit Ty C.
-|};
-
-  LPCode {|
 pred coq.env.add-context i:context-decl.
 coq.env.add-context context-end.
 coq.env.add-context (context-item Name I Ty none Rest) :-
-  coq.env.add-section-variable-two Name I Ty C,
+  coq.env.add-section-variable Name I Ty C,
   coq.env.add-context (Rest {coq.env.global (const C)}).
 coq.env.add-context (context-item Name _I Ty (some Bo) Rest) :-
   coq.env.add-const Name Bo Ty ff C,

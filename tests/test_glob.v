@@ -19,7 +19,7 @@ Elpi Accumulate lp:{{
         field _ _ {{ @eq nat lp:f2 1 }} _\
         end-record)) _,
       coq.env.begin-section "A",
-      coq.env.add-section-variable "v" {{ nat }} _,
+      coq.env.add-section-variable "v" _ {{ nat }} _,
       coq.env.end-section,
       coq.env.begin-module "N2" none,
       coq.env.end-module _,
