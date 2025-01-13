@@ -17,7 +17,7 @@ bug-reports: "https://github.com/LPCIC/coq-elpi/issues"
 depends: [
   "dune" {>= "3.13"}
   "ocaml" {>= "4.10.0"}
-  "elpi" {>= "2.0.3" & < "2.1.0~"}
+  "elpi" {>= "2.0.7" & < "2.1.0~"}
   "coq" {>= "8.20+rc1" & < "8.21~"}
   "ppx_optcomp"
   "ocaml-lsp-server" {with-dev-setup}

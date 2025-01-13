@@ -15,5 +15,5 @@
  (name version_parser)
  (public_name coq_elpi_version_parser)
  (modules version_parser)
- (libraries str)
+ (libraries str elpi)
  (package coq-elpi))
