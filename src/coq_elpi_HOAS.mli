@@ -269,10 +269,10 @@ type module_item =
   | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
 [%%if coq = "8.20" || coq = "9.0"]
-val in_elpi_module : depth:int -> State.t -> Declarations.module_body -> module_item list
+val in_elpi_module : depth:int -> State.t -> ModPath.t -> Declarations.module_body -> module_item list
 val in_elpi_module_type : Declarations.module_type_body -> string list
 [%%else]
-val in_elpi_module : depth:int -> State.t -> Mod_declarations.module_body -> module_item list
+val in_elpi_module : depth:int -> State.t -> ModPath.t -> Mod_declarations.module_body -> module_item list
 val in_elpi_module_type : Mod_declarations.module_type_body -> string list
 [%%endif]
 
