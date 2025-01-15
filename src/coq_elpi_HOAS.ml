@@ -1675,7 +1675,8 @@ let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
     Global.body_of_constant_body Library.indirect_accessor (Environ.lookup_constant c x.global_env)
   with
   | Some (bo, priv, ctx) ->
-     let inst, ctx = UnivGen.fresh_instance_from ctx inst_opt in
+     let c, ctx = UnivGen.fresh_global_instance x.global_env (ConstRef c) ?names:inst_opt  in
+     let c, inst = Constr.destConst c in
      let bo = Vars.subst_instance_constr inst bo in
      let sigma = Evd.merge_sort_context_set Evd.univ_rigid x.sigma ctx in
      let sigma = match priv with
@@ -3274,11 +3275,9 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
 
 
 let type_of_global state r inst_opt = API.State.update_return engine state (fun x ->
-  let ty, ctx = Typeops.type_of_global_in_context x.global_env r in
-  let inst, ctx = UnivGen.fresh_instance_from ctx inst_opt in
-  let ty = Vars.subst_instance_constr inst ty in
-  let sigma = Evd.merge_sort_context_set Evd.univ_rigid x.sigma ctx in
-  { x with sigma }, (EConstr.of_constr ty, inst))
+  let sigma, c = Evd.fresh_global x.global_env x.sigma r ?names:inst_opt in
+  let ty = Retyping.get_type_of x.global_env sigma c in
+  { x with sigma }, (ty, EConstr.Unsafe.to_instance @@ snd @@ EConstr.destRef sigma c))
 
 
 let compute_with_uinstance ~depth options state f x inst_opt =
