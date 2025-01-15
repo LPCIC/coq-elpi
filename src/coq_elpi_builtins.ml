@@ -1846,7 +1846,7 @@ Supported attributes:
     Out(list module_item, "Contents",
     Read(global, "lists the contents of a module (recurses on submodules) *E*"))),
   (fun mp _ ~depth {env} _ state ->
-    let t = in_elpi_module ~depth state (Environ.lookup_module mp env) in
+    let t = in_elpi_module ~depth state mp (Environ.lookup_module mp env) in
     !: t)),
   DocAbove);
 
