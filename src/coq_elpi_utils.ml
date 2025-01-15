@@ -785,21 +785,7 @@ let option_map_acc2 f s = function
 let option_default f = function Some x -> x | None -> f ()
 
 let coq_version_parser version =
-  let ( !! ) x = try int_of_string x with Failure _ -> -100 in
-  match Str.split (Str.regexp_string ".") version with
-  | major :: minor :: patch :: _ -> (!!major, !!minor, !!patch)
-  | [ major ] -> (!!major, 0, 0)
-  | [] -> (0, 0, 0)
-  | [ major; minor ] -> (
-      match Str.split (Str.regexp_string "+") minor with
-      | [ minor ] -> (!!major, !!minor, 0)
-      | [] -> (!!major, !!minor, 0)
-      | minor :: prerelease :: _ ->
-          if Str.string_match (Str.regexp_string "beta") prerelease 0 then
-            (!!major, !!minor, !!("-" ^ String.sub prerelease 4 (String.length prerelease - 4)))
-          else if Str.string_match (Str.regexp_string "alpha") prerelease 0 then
-            (!!major, !!minor, !!("-" ^ String.sub prerelease 5 (String.length prerelease - 5)))
-          else (!!major, !!minor, -100))
+  Elpi.API.Utils.version_parser ~what:"coq" version
 
 let mp2path x =
   let open Names in

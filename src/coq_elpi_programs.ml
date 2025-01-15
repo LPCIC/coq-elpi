@@ -959,12 +959,21 @@ let file_resolver ?cwd:_ ~unit:file () =
 
 (***********************************************************************)
 
+let versions =
+  let open API.Setup.StrMap in
+  empty
+  |> add "coq-elpi" (API.Utils.version_parser ~what:"coq-elpi" "%%VERSION_NUM%%")
+  |> add "rocq-elpi" (API.Utils.version_parser ~what:"rocq-elpi" "%%VERSION_NUM%%")
+  |> add "coq" (API.Utils.version_parser ~what:"coq" Coq_config.version)
+  |> add "rocq" (API.Utils.version_parser ~what:"rocq" Coq_config.version)
+          
 module Synterp : Programs = struct
   module S = struct
     let stage = Summary.Stage.Synterp
     let in_stage x = x ^ "-synterp"
     let init () =
-      API.Setup.init ~state:synterp_state ~hoas:synterp_hoas
+      API.Setup.init ~versions
+        ~state:synterp_state ~hoas:synterp_hoas
         ~quotations:synterp_quotations ~builtins:[elpi_builtins;coq_synterp_builtins] ~file_resolver ()
   end
   include SourcesStorage(S)
@@ -986,7 +995,8 @@ module Interp : Programs = struct
     let stage = Summary.Stage.Interp
     let in_stage x = x ^ "-interp"
     let init () =
-      API.Setup.init ~state:interp_state ~hoas:interp_hoas
+      API.Setup.init ~versions
+        ~state:interp_state ~hoas:interp_hoas
         ~quotations:interp_quotations ~builtins:[elpi_builtins;coq_interp_builtins] ~file_resolver ()
   end)
 

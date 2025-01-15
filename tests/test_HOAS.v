@@ -62,7 +62,7 @@ Elpi Query lp:{{
   coq.env.begin-section "xxxxx",
   coq.univ.new U,
   T = sort (typ U),
-  coq.env.add-section-variable "a" T _,
+  coq.env.add-section-variable "a" _ T _,
   coq.env.end-section
 }}.
 

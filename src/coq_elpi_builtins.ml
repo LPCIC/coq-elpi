@@ -897,13 +897,13 @@ let warns_of_options options = options.user_warns
 [%%else]
 let warns_of_options options = options.user_warns |> Option.map UserWarn.with_empty_qf
 [%%endif]
-let add_axiom_or_variable api id ty local options state =
+let add_axiom_or_variable api id ty local_bkind options state =
   let state, poly, cumul, udecl, _ = poly_cumul_udecl_variance_of_options state options in
   let used = universes_of_term state ty in
   let sigma = restricted_sigma_of used state in
   if cumul then
     err Pp.(str api ++ str": unsupported attribute @udecl-cumul! or @univpoly-cumul!");
-  if poly && local then
+  if poly && Option.has_some local_bkind then
     err Pp.(str api ++ str": section variables cannot be universe polymorphic");
   let univs = UState.check_univ_decl (Evd.evar_universe_context sigma) udecl ~poly in
   let kind = Decls.Logical in
@@ -914,14 +914,16 @@ let add_axiom_or_variable api id ty local options state =
   if not (is_ground sigma ty) then
     err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
   let gr, _ =
-    if local then begin
-      Dumpglob.dump_definition name true "var";
-      comAssumption_declare_variable id Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) ~univs ~impargs Glob_term.Explicit ~name
-    end else begin
+    match local_bkind with
+    | Some implicit_kind -> begin
+        Dumpglob.dump_definition name true "var";
+        comAssumption_declare_variable id Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) ~univs ~impargs implicit_kind ~name
+      end
+    | None -> begin
       Dumpglob.dump_definition name false "ax";
       comAssumption_declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
         ~univs ~impargs ~inline:options.inline ~name ~id
-    end
+      end
   in
   let ucsts = match univs with UState.Monomorphic_entry x, _ -> x | _ -> Univ.ContextSet.empty in
   gr, ucsts
@@ -1960,7 +1962,7 @@ Supported attributes:
 - @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 |})))))),
   (fun id body types opaque _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-const" (fun state ->
-    let local = options.local = Some true in
+    let local_bkind = if options.local = Some true then Some Glob_term.Explicit else None in
     let state = minimize_universes state in
     (* Maybe: UState.nf_universes on body and type *)
      match body with
@@ -1970,7 +1972,7 @@ Supported attributes:
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | B.Given ty ->
        warn_deprecated_add_axiom ();
-       let gr, uctx = add_axiom_or_variable "coq.env.add-const" id ty local options state in
+       let gr, uctx = add_axiom_or_variable "coq.env.add-const" id ty local_bkind options state in
        uctx, state, !: (global_constant_of_globref gr), []
      end
     | B.Given body ->
@@ -1993,7 +1995,7 @@ Supported attributes:
        let state, poly, cumul, udecl, _ = poly_cumul_udecl_variance_of_options state options in
        if cumul then err Pp.(str"coq.env.add-const: unsupported attribute @udecl-cumul! or @univpoly-cumul!");
        let kind = Decls.(IsDefinition Definition) in
-       let scope = if local
+       let scope = if Option.has_some local_bkind
         then Locality.Discharge
         else Locality.(Global ImportDefaultBehavior) in
        let cinfo = cinfo_make state types options.using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
@@ -2035,21 +2037,34 @@ Supported attributes:
 - @inline! (default: no inlining)
 - @inline-at! N (default: no inlining)|})))),
   (fun id ty _ ~depth {options} _ -> grab_global_env "coq.env.add-axiom" (fun state ->
-     let gr, uctx = add_axiom_or_variable "coq.env.add-axiom" id ty false options state in
+     let gr, uctx = add_axiom_or_variable "coq.env.add-axiom" id ty None options state in
      uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
   MLCode(Pred("coq.env.add-section-variable",
     In(id,   "Name",
+    In(B.unspec implicit_kind, "I",
     CIn(closed_ground_term, "Ty",
     Out(constant, "C",
     Full (global, {|Declare a new section variable: C gets a constant derived from Name
 and the current module.
-|})))),
-  (fun id ty _ ~depth {options} _ -> grab_global_env_drop_sigma_keep_univs "coq.env.add-section-variable" (fun state ->
-     let gr, uctx = add_axiom_or_variable "coq.env.add-section-variable" id ty true options state in
+|}))))),
+  (fun id bkind ty _ ~depth {options} _ -> grab_global_env_drop_sigma_keep_univs "coq.env.add-section-variable" (fun state ->
+     let bkind = Option.default Glob_term.Explicit (unspec2opt bkind) in
+     let gr, uctx = add_axiom_or_variable "coq.env.add-section-variable" id ty (Some bkind) options state in
      uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
+
+  LPCode {|
+pred coq.env.add-context i:context-decl.
+coq.env.add-context context-end.
+coq.env.add-context (context-item Name I Ty none Rest) :-
+  coq.env.add-section-variable Name I Ty C,
+  coq.env.add-context (Rest {coq.env.global (const C)}).
+coq.env.add-context (context-item Name _I Ty (some Bo) Rest) :-
+  coq.env.add-const Name Bo Ty ff C,
+  coq.env.add-context (Rest {coq.env.global (const C)}).
+|};
 
   MLCode(Pred("coq.env.add-indt",
     CIn(indt_decl_in, "Decl",

@@ -1,3 +1,11 @@
+# [2.4.0] 15/1/2025
+
+Requires Elpi 2.0.7 and Coq 8.20.
+
+### API
+- Change `coq.env.add-section-variable` now takes the implicit status of the
+  variable
+
 # [2.3.0] - 6/12/2024
 
 Requires Elpi 2.0.3 and Coq 8.20.

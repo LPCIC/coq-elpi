@@ -17,8 +17,8 @@ Elpi Query lp:{{
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
   coq.env.const CC (some (global (const CB))) _,
-  coq.env.add-section-variable "d" {{ nat }} _,
-  coq.env.add-section-variable "d1" {{ nat }} _,
+  coq.env.add-section-variable "d" _ {{ nat }} _,
+  coq.env.add-section-variable "d1" _ {{ nat }} _,
   @local! => coq.env.add-const "e" {{ 3 }} {{ nat }} _ _.
 }}.
 About d.
@@ -33,7 +33,7 @@ Elpi Query lp:{{
   std.do! [ coq.env.begin-section "Foo", coq.env.end-section ]  
 }} lp:{{
   coq.env.begin-section "Foo",
-  coq.env.add-section-variable "x" {{ nat }} X,
+  coq.env.add-section-variable "x" _ {{ nat }} X,
   coq.env.section [X],
   coq.env.add-const "fx" (global (const X)) _ _ _,
   coq.env.end-section.

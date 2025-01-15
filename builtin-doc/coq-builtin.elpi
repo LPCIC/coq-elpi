@@ -804,11 +804,23 @@ external pred coq.env.add-const i:id, i:term, i:term, i:opaque?,
 % - @inline-at! N (default: no inlining)
 external pred coq.env.add-axiom i:id, i:term, o:constant.
 
-% [coq.env.add-section-variable Name Ty C] Declare a new section variable: C
-% gets a constant derived from Name
+% [coq.env.add-section-variable Name I Ty C] Declare a new section variable:
+% C gets a constant derived from Name
 % and the current module.
 % 
-external pred coq.env.add-section-variable i:id, i:term, o:constant.
+external pred coq.env.add-section-variable i:id, i:implicit_kind, i:term, 
+                                           o:constant.
+
+
+pred coq.env.add-context i:context-decl.
+coq.env.add-context context-end.
+coq.env.add-context (context-item Name I Ty none Rest) :-
+  coq.env.add-section-variable Name I Ty C,
+  coq.env.add-context (Rest {coq.env.global (const C)}).
+coq.env.add-context (context-item Name _I Ty (some Bo) Rest) :-
+  coq.env.add-const Name Bo Ty ff C,
+  coq.env.add-context (Rest {coq.env.global (const C)}).
+
 
 % [coq.env.add-indt Decl I] Declares an inductive type.
 % Supported attributes:
