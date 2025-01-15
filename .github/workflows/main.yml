@@ -12,8 +12,18 @@ on:
     branches: [ master ]
   workflow_dispatch:
     inputs:
+      release:
+        description: "Force GH release"
+        required: true
+        default: false
+        type: bool
+      opam:
+        description: "Force OPAM release"
+        required: true
+        default: false
+        type: bool
       suite:
-        description: "Coq OPAM suite"
+        description: "OPAM suite"
         required: true
         default: "released"
         type: choice
@@ -48,7 +58,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || inputs.release
     #needs: [build]
     steps:
       - name: Checkout
@@ -71,6 +81,13 @@ jobs:
           generate_release_notes: true
           name: Coq-Elpi ${{ github.ref }} for Coq XXX
 
+  opam:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || inputs.opam
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Use OCaml 4.14.x
         uses: avsm/setup-ocaml@v3
         with:
@@ -91,7 +108,7 @@ jobs:
           ssh-private-key: ${{ secrets.BOT_SSH_KEY }}
           
       - name: Install opam-publish # 2.0.3 because more recent versions do not respect OPAMYES
-        run: opam install -y -j 2 opam-publish=2.0.3
+        run: opam install -y -j 2 opam-publish=2.5.0
 
       - name: Publish
         run: |
@@ -99,4 +116,4 @@ jobs:
           git config --global user.name coqelpibot
           git config --global user.email coqelpibot@inria.fr
           TAG=`git tag --sort=-v:refname|head -1`
-          opam-publish --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam --no-browser -v ${TAG##v}	coq-elpi.opam https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz
+          opam-publish --no-confirmation --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam --no-browser -v ${TAG##v}	coq-elpi.opam https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz
