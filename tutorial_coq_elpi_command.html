@@ -187,9 +187,9 @@ Incremental checking <span class="kr">for</span> commands <span class="kr">in</s
 <p>The first one <code class="highlight coq"><span class="n">Elpi</span> <span class="n">Command</span> <span class="n">hello</span><span class="o">.</span></code> sets the current program to hello.
 Since it is declared as a <code class="highlight coq"><span class="n">Command</span></code> some code is loaded automatically:</p>
 <ul class="simple">
-<li>APIs (eg <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L531">coq.say</a>) and data types (eg Coq <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L180">term</a> s) are loaded from
+<li>APIs (eg <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L531">coq.say</a>) and data types (eg Coq <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L180">term</a> s) are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi">coq-builtin.elpi</a></li>
-<li>some utilities, like <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L94">copy</a> or <a class="reference external libred ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/elpi-reduction.elpi#L15">whd1</a> are loaded from
+<li>some utilities, like <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L94">copy</a> or <a class="reference external libred ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/elpi-reduction.elpi#L15">whd1</a> are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi">elpi-command-template.elpi</a></li>
 </ul>
 <p>The second one <code class="highlight coq"><span class="n">Elpi</span> <span class="n">Accumulate</span> <span class="o">...</span></code> loads some extra code.
@@ -215,7 +215,7 @@ code if you are reading this online):</p>
 as <code class="e elpi">(str <span class="s2">&quot;world!&quot;</span><span class="o">)</span></code>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last"><a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L531">coq.say</a> won't print quotes around strings</p>
+<p class="last"><a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L531">coq.say</a> won't print quotes around strings</p>
 </div>
 </div>
 <div class="section" id="command-arguments">
@@ -264,7 +264,7 @@ attributes, like being a coercions (the <code class="highlight coq"><span class=
 the type of the record (which was omitted) defaults to <code class="highlight coq"><span class="kt">Type</span></code>.
 Finally note that the type of the second field
 sees <code class="e elpi">c0</code> (the value of the first field).</p>
-<p>See the <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L46">argument</a> data type
+<p>See the <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L46">argument</a> data type
 for a detailed description of all the arguments a command can receive.</p>
 <div class="section" id="processing-raw-arguments">
 <h2><a class="toc-backref" href="#toc-entry-3">Processing raw arguments</a></h2>
@@ -297,9 +297,9 @@ cannot be applied to the terms
  <span class="s2">&quot;true&quot;</span> : <span class="s2">&quot;bool&quot;</span>
 The <span class="mi">3</span>rd term has type <span class="s2">&quot;bool&quot;</span> which should be a subtype of <span class="s2">&quot;nat&quot;</span>.</blockquote></div></div></small></span></pre><p>The command <code class="highlight coq"><span class="n">check_arg</span></code> receives a term <code class="e elpi"><span class="n-ElpiVariable">T</span></code> and type checks it, then it
 prints the term and its type.</p>
-<p>The <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1442">coq.typecheck</a> API has 3 arguments: a term, its type and a
-<a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/elpi-builtin.elpi#L281">diagnostic</a> which can either be <code class="e elpi">ok</code> or <code class="e elpi">(error <span class="n-ElpiVariable">Message</span><span class="o">)</span></code>.
-The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/elpi-builtin.elpi#L482">assert-ok!</a> combinator checks if the diagnostic is <code class="e elpi">ok</code>,
+<p>The <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1442">coq.typecheck</a> API has 3 arguments: a term, its type and a
+<a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/elpi-builtin.elpi#L281">diagnostic</a> which can either be <code class="e elpi">ok</code> or <code class="e elpi">(error <span class="n-ElpiVariable">Message</span><span class="o">)</span></code>.
+The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/elpi-builtin.elpi#L482">assert-ok!</a> combinator checks if the diagnostic is <code class="e elpi">ok</code>,
 and if not it prints the error message and bails out.</p>
 <p>The first invocation succeeds while the second one fails and prints
 the type checking error (given by Coq) following the string passed to
@@ -315,10 +315,10 @@ The <span class="mi">3</span>rd term has type <span class="s2">&quot;bool&quot;<
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chkc" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chkc"><span class="kn">Check</span> (<span class="mi">1</span> = true).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="mi">1</span> = true
      : <span class="kt">Prop</span></blockquote></div></div></small></span></pre><p>The command still fails even if we told Coq how to inject booleans values
 into the natural numbers. Indeed the <code class="highlight coq"><span class="kn">Check</span></code> commands works.</p>
-<p>The call to <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1442">coq.typecheck</a> modifies the term in place, it can assign
+<p>The call to <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1442">coq.typecheck</a> modifies the term in place, it can assign
 implicit arguments (like the type parameter of <code class="highlight coq"><span class="n">eq</span></code>) but it cannot modify the
 structure of the term. To do so, one has to use the
-<a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1461">coq.elaborate-skeleton</a> API.</p>
+<a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1461">coq.elaborate-skeleton</a> API.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input">#[arguments(raw)]
 <span class="kn">Elpi</span> <span class="kn">Command</span> elaborate_arg.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
@@ -356,8 +356,8 @@ context is temporarily augmented with ad-hoc canonical structure instances.</p>
 <h2><a class="toc-backref" href="#toc-entry-5">Synthesizing a term</a></h2>
 <p>Synthesizing a term typically involves reading an existing declaration
 and writing a new one. The relevant APIs are in the <code class="highlight coq"><span class="n">coq</span><span class="o">.</span><span class="n">env</span><span class="o">.*</span></code> namespace
-and are named after the global reference they manipulate, eg <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L684">coq.env.const</a>
-for reading and <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L772">coq.env.add-const</a> for writing.</p>
+and are named after the global reference they manipulate, eg <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L684">coq.env.const</a>
+for reading and <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L772">coq.env.add-const</a> for writing.</p>
 <p>Here we implement a little command that given an inductive type name
 generates a term of type <code class="highlight coq"><span class="n">nat</span></code> whose value is the number of constructors
 of the given inductive type.</p>
@@ -389,20 +389,20 @@ main <span class="k k-ElpiKeyword">[</span>str <span class=" -ElpiVariable">IndN
 </span></span><span class="alectryon-wsp">
 </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chk10"><span class="kn">Elpi</span> constructors_num plus nK_plus.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">not an inductive type: coq.locate plus (indt X0)</blockquote></div></div></small><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-coq-elpi-command-v-chk11"><span class="kn">Elpi</span> constructors_num not_there bla.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Global</span> reference not found: not_there</blockquote></div></div></small></span></pre><p>The command starts by locating the first argument and asserting it points to
-an inductive type. This line is idiomatic: <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L604">coq.locate</a> aborts if
+an inductive type. This line is idiomatic: <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L604">coq.locate</a> aborts if
 the string cannot be located, and if it relates it to a <code class="e elpi">gref</code> which is not
-<code class="e elpi">indt</code> (for example <code class="e elpi">const plus</code>) <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/elpi-builtin.elpi#L478">assert!</a> aborts with the given
+<code class="e elpi">indt</code> (for example <code class="e elpi">const plus</code>) <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/elpi-builtin.elpi#L478">assert!</a> aborts with the given
 error message.</p>
-<p><a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L634">coq.env.indt</a> lets one access all the details of an inductive type,
+<p><a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L634">coq.env.indt</a> lets one access all the details of an inductive type,
 here we just use the list of constructors.
-The twin API <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L645">coq.env.indt-decl</a> lets
+The twin API <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L645">coq.env.indt-decl</a> lets
 one access the declaration of the inductive in HOAS form, which might be
 easier to manipulate in other situations, like the next example.</p>
 <p>Then the program crafts a natural number and declares a constant for it.</p>
 </div>
 <div class="section" id="abstracting-an-inductive">
 <h2><a class="toc-backref" href="#toc-entry-6">Abstracting an inductive</a></h2>
-<p>For the sake of introducing <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L94">copy</a>, the swiss army knife of λProlog, we
+<p>For the sake of introducing <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L94">copy</a>, the swiss army knife of λProlog, we
 write a command which takes an inductive type declaration and builds a new
 one abstracting the former one on a given term. The new inductive has a
 parameter in place of the occurrences of that term.</p>
@@ -459,7 +459,7 @@ parameter in place of the occurrences of that term.</p>
 <span class="kn">Arguments</span> tree&#39; A%type_scope
 <span class="kn">Arguments</span> leaf&#39; A%type_scope
 <span class="kn">Arguments</span> node&#39; A%type_scope _ _ _</blockquote></div></div></small></span></pre><p>As expected <code class="highlight coq"><span class="n">tree'</span></code> has a parameter <code class="highlight coq"><span class="n">A</span></code>.</p>
-<p>Now let's focus on <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L94">copy</a>. The standard
+<p>Now let's focus on <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L94">copy</a>. The standard
 coq library (loaded by the command template) contains a definition of copy
 for terms and declarations.</p>
 <p>An excerpt:</p>
@@ -481,19 +481,19 @@ copy <span class="n-ElpiVariable">P</span> a
 copy (app <span class="k-ElpiKeyword">[</span>global <span class="o">(</span>indt <span class="err">«</span>option<span class="err">»</span><span class="o">)</span><span class="k-ElpiKeyword">,</span> global <span class="o">(</span>indt <span class="err">«</span>nat<span class="err">»</span><span class="o">)</span><span class="k-ElpiKeyword">]</span><span class="o">)</span> c0
 </pre>
 <p>and that rule masks the one for <code class="highlight coq"><span class="n">app</span></code> when the sub-term being copied is
-exactly <code class="highlight coq"><span class="n">option</span> <span class="n">nat</span></code>. The API <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L129">copy-indt-decl</a> copies an inductive
+exactly <code class="highlight coq"><span class="n">option</span> <span class="n">nat</span></code>. The API <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L129">copy-indt-decl</a> copies an inductive
 declaration and calls <code class="highlight coq"><span class="n">copy</span></code> on all the terms it contains (e.g. the
 type of the constructors).</p>
-<p>The <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L94">copy</a> predicate is very flexible, but sometimes one needs to collect
-some data along the way. The sibling API <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L149">fold-map</a> lets one do that.</p>
+<p>The <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L94">copy</a> predicate is very flexible, but sometimes one needs to collect
+some data along the way. The sibling API <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L149">fold-map</a> lets one do that.</p>
 <p>An excerpt:</p>
 <pre class="code elpi literal-block">
 fold-map (fun <span class="n-ElpiVariable">N</span> <span class="n-ElpiVariable">T</span> <span class="n-ElpiVariable">F</span><span class="o">)</span> <span class="n-ElpiVariable">A</span> (fun <span class="n-ElpiVariable">N</span> <span class="n-ElpiVariable">T1</span> <span class="n-ElpiVariable">F1</span><span class="o">)</span> <span class="n-ElpiVariable">A2</span> <span class="k-ElpiKeyword">:-</span>
   fold-map <span class="n-ElpiVariable">T</span> <span class="n-ElpiVariable">A</span> <span class="n-ElpiVariable">T1</span> <span class="n-ElpiVariable">A1</span><span class="k-ElpiKeyword">,</span> <span class="k-ElpiKeyword">pi</span> <span class="n-ElpiVariable">x</span>\ fold-map (<span class="n-ElpiVariable">F</span> x<span class="o">)</span> <span class="n-ElpiVariable">A1</span> (<span class="n-ElpiVariable">F1</span> x<span class="o">)</span> <span class="n-ElpiVariable">A2</span><span class="o">.</span>
 </pre>
-<p>For example one can use <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L149">fold-map</a> to collect into a list all the occurrences
+<p>For example one can use <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L149">fold-map</a> to collect into a list all the occurrences
 of inductive type constructors in a given term, then use the list to postulate
-the right number of binders for them, and finally use <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L94">copy</a> to capture them.</p>
+the right number of binders for them, and finally use <a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L94">copy</a> to capture them.</p>
 </div>
 </div>
 <div class="section" id="using-dbs-to-store-data-across-calls">
@@ -506,7 +506,7 @@ other programs and is accumulated <em>by name</em>.
 Since is a Db is accumulated <em>when a program runs</em> the <em>current
 contents of the Db are used</em>.
 Moreover the Db can be extended by Elpi programs themselves
-thanks to the API <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1788">coq.elpi.accumulate</a>, enabling code to save a state
+thanks to the API <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1788">coq.elpi.accumulate</a>, enabling code to save a state
 which is then visible at subsequent runs.</p>
 <p>The initial contents of a Db, <code class="highlight coq"><span class="n">pred</span> <span class="n">some</span><span class="o">-</span><span class="n">pred</span><span class="o">.</span></code> in the example
 above, is usually just the type declaration for the predicates part of the Db,
@@ -547,7 +547,7 @@ we need the new ones to be put before it.</p>
 </span></span><span class="alectryon-wsp">
 </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk14" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk14"><span class="kn">Elpi</span> age bob.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">bob <span class="kr">is</span> <span class="mi">24</span> years old</blockquote></div></div></small></span></pre><p>Extending data bases this way is fine, but requires the user of our command
 to be familiar with Elpi's syntax, which is not very nice. Instead,
-we can write a new program that uses the <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1788">coq.elpi.accumulate</a> API
+we can write a new program that uses the <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1788">coq.elpi.accumulate</a> API
 to extend the Db.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> set_age.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="kn">Db</span> age.db.</span><span class="alectryon-wsp">
@@ -565,9 +565,9 @@ to extend the Db.</p>
 instance: these object live inside a Coq module (or a Coq file) and become
 active when that module is Imported.</p>
 <p>Deciding to which Coq module these
-extra rules belong is important and <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1788">coq.elpi.accumulate</a> provides
+extra rules belong is important and <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1788">coq.elpi.accumulate</a> provides
 a few options to tune that. Here we passed <code class="e elpi"><span class="n-ElpiVariable">_</span></code>, that uses the default
-setting. See the <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1781">scope</a> and <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1769">clause</a> data types for more info.</p>
+setting. See the <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1781">scope</a> and <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1769">clause</a> data types for more info.</p>
 <div class="section" id="inspecting-a-db">
 <span id="inspecting"></span><h2><a class="toc-backref" href="#toc-entry-8">Inspecting a Db</a></h2>
 <p>So far we did query a Db but sometimes one needs to inspect the whole
@@ -588,11 +588,11 @@ contents.</p>
 
 <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
-</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk16"><span class="kn">Elpi</span> print_all_ages.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">bob <span class="kr">is</span> <span class="mi">24</span> years old</blockquote><blockquote class="alectryon-message">alice <span class="kr">is</span> <span class="mi">21</span> years old</blockquote></div></div></small></span></pre><p>The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/elpi-builtin.elpi#L398">std.findall</a> predicate gathers in a list all solutions to
-a query, while <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/elpi-builtin.elpi#L652">std.forall</a> iterates a predicate over a list.
-It is important to notice that <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L546">coq.error</a> is a fatal error which
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk16"><span class="kn">Elpi</span> print_all_ages.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">bob <span class="kr">is</span> <span class="mi">24</span> years old</blockquote><blockquote class="alectryon-message">alice <span class="kr">is</span> <span class="mi">21</span> years old</blockquote></div></div></small></span></pre><p>The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/elpi-builtin.elpi#L398">std.findall</a> predicate gathers in a list all solutions to
+a query, while <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/elpi-builtin.elpi#L652">std.forall</a> iterates a predicate over a list.
+It is important to notice that <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L546">coq.error</a> is a fatal error which
 aborts an Elpi program. Here we shadow the catch all clause with a regular
-failure so that <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/elpi-builtin.elpi#L398">std.findall</a> can complete to list all the results.</p>
+failure so that <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/elpi-builtin.elpi#L398">std.findall</a> can complete to list all the results.</p>
 </div>
 </div>
 <div class="section" id="polishing-a-command">
@@ -621,8 +621,8 @@ location in the source file of the command. Then we find an attribute for
 <code class="e elpi"><span class="s2">&quot;this&quot;</span></code> holding the empty string and an attribute for <code class="e elpi"><span class="s2">&quot;more.stuff&quot;</span></code> holding
 the string <code class="e elpi"><span class="s2">&quot;33&quot;</span></code>.</p>
 <p>Attributes are usually validated (parsed) and turned into regular options
-using <a class="reference external lib-common ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib-common.elpi#L25">coq.parse-attributes</a> and a description of their types using 
-the <a class="reference external libtype-common ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib-common.elpi#L65">attribute-type</a> data type:</p>
+using <a class="reference external lib-common ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib-common.elpi#L25">coq.parse-attributes</a> and a description of their types using 
+the <a class="reference external libtype-common ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib-common.elpi#L65">attribute-type</a> data type:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Command</span> parse_attr.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
@@ -695,10 +695,10 @@ inconvenience to the authors of the program.</blockquote></div></div></small></s
 error:</p>
 <pre class="alectryon-block highlight"><!-- Generator: Alectryon -->The elpi tactic/command bad failed without giving a
 specific error message. Please report this
-inconvenience to the authors of the program.</pre><p>You should use the <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L546">coq.error</a> API or the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/elpi-builtin.elpi#L478">assert!</a> one
-to abort a program. There is a dedicated <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1599">coq.ltac.fail</a> API to abort
+inconvenience to the authors of the program.</pre><p>You should use the <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L546">coq.error</a> API or the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/elpi-builtin.elpi#L478">assert!</a> one
+to abort a program. There is a dedicated <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1599">coq.ltac.fail</a> API to abort
 tactics.</p>
-<p>Warnings can be reported using the <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L540">coq.warning</a> which lets you
+<p>Warnings can be reported using the <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L540">coq.warning</a> which lets you
 pick a name and category. In turn these can be used to disable or make fatal
 your warnings (as any other Coq warning).</p>
 </div>
@@ -823,13 +823,13 @@ we pass the name from one to the other.</p>
 <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-wsp">
 
-</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk20" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk20"><span class="kn">Elpi</span> mk_random_module.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The module <span class="kr">is</span> «tutorial_coq_elpi_command.Module81»</blockquote></div></div></small></span></pre><p>If the only data to be passed to the interp phase is the list of
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-coq-elpi-command-v-chk20" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-coq-elpi-command-v-chk20"><span class="kn">Elpi</span> mk_random_module.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The module <span class="kr">is</span> «tutorial_coq_elpi_command.Module61»</blockquote></div></div></small></span></pre><p>If the only data to be passed to the interp phase is the list of
 synterp actions, then a few APIs can come in handy.
-The synterp phase has access to the API <a class="reference external builtin-synterp ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin-synterp.elpi#L380">coq.synterp-actions</a>
+The synterp phase has access to the API <a class="reference external builtin-synterp ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin-synterp.elpi#L380">coq.synterp-actions</a>
 that lists the actions performed so far. The interp phase can use
-<a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/elpi/coq-lib.elpi#L631">coq.replay-synterp-action</a> and <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1853">coq.next-synterp-action</a> to
+<a class="reference external lib ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/elpi/coq-lib.elpi#L631">coq.replay-synterp-action</a> and <a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1853">coq.next-synterp-action</a> to
 replay an action or peek the next one to be performed.</p>
-<p>An excerpt of the <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/48cddc4b072e2a8a3c7b08100348d2a2a91b2ca4/builtin-doc/coq-builtin.elpi#L1835">synterp-action</a>.</p>
+<p>An excerpt of the <a class="reference external type ghref" href="https://github.com/LPCIC/coq-elpi/blob/95c44bb6b46c48486639e88f8fa72d378f923e9f/builtin-doc/coq-builtin.elpi#L1835">synterp-action</a>.</p>
 <pre class="code elpi literal-block">
 <span class="c">% Action executed during the parsing phase (aka synterp)
 </span><span class="k-ElpiKeyword">kind</span> <span class="n-ElpiFunction">synterp-action</span> <span class="kt">type</span>.
