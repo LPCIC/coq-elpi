@@ -1,15 +1,12 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: RELEASE
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
     tags: [ "v*.*.*" ]
-  pull_request:
-    branches: [ master ]
   workflow_dispatch:
     inputs:
       release:
@@ -35,26 +32,6 @@ env:
   OPAM_SUITE: ${{ inputs.suite }}
 
 jobs:
-
-  docker:
-    runs-on: ubuntu-latest  # container actions require GNU/Linux
-    strategy:
-      matrix:
-        image:
-          - 'coqorg/coq:dev'
-          - 'coqorg/coq:8.20.0'
-      fail-fast: false  # don't stop jobs if one fails
-    steps:
-      - uses: actions/checkout@v3
-      - uses: coq-community/docker-coq-action@v1
-        with:
-          opam_file: 'coq-elpi.opam'
-          custom_image: ${{ matrix.image }}
-          export: 'OPAMWITHTEST OPAMIGNORECONSTRAINTS OPAMVERBOSE'  # space-separated list of variables
-        env:
-          OPAMWITHTEST: 'true'
-          OPAMIGNORECONSTRAINTS: 'coq'
-          OPAMVERBOSE: '3'
 
   release:
     runs-on: ubuntu-latest
