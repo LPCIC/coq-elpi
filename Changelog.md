@@ -1,4 +1,4 @@
-# UNRELEASED
+# [2.4.0] 15/1/2025
 
 Requires Elpi 2.0.7 and Coq 8.20.
 
