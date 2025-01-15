@@ -3698,6 +3698,34 @@ type module_item =
   | Functor of Names.ModPath.t * Names.ModPath.t list
   | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
+[%%if coq = "8.20" || coq = "9.0"]
+type 'a generic_module_body = 'a Declarations.generic_module_body
+let module_view m = (m.Declarations.mod_mp, m.Declarations.mod_type)
+let mod_type m = m.Declarations.mod_type
+let mod_mp m = m.Declarations.mod_mp
+
+let rec functor_params x =
+  let open Declarations in
+  match x with
+  | MoreFunctor(_,{ mod_type_alg = Some (MENoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
+  | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
+[%%else]
+type 'a generic_module_body = 'a Mod_declarations.generic_module_body
+let module_view m = (Mod_declarations.mod_mp m, Mod_declarations.mod_type m)
+let mod_type = Mod_declarations.mod_type
+let mod_mp = Mod_declarations.mod_mp
+
+let rec functor_params x =
+  let open Declarations in
+  match x with
+  | MoreFunctor (_, mtb, rest) ->
+    begin match Mod_declarations.mod_type_alg mtb with
+    | Some (MENoFunctor (MEident mod_mp)) -> mod_mp :: functor_params rest
+    | _ -> [] (* XXX *)
+    end
+  | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
+[%%endif]
+
 let rec in_elpi_module_item ~depth path state (name, item) =
   let open Declarations in
   match item with
@@ -3706,31 +3734,24 @@ let rec in_elpi_module_item ~depth path state (name, item) =
   | SFBmind { mind_packets } ->
       CList.init (Array.length mind_packets) (fun i -> Gref (GlobRef.IndRef (MutInd.make2 path name,i)))
   | SFBrules _ -> nYI "rewrite rules"
-  | SFBmodule ({ mod_mp; mod_type = NoFunctor _ } as b) -> [Module (mod_mp,in_elpi_module ~depth state b) ]
-  | SFBmodule { mod_mp; mod_type = MoreFunctor _ as l } -> [Functor(mod_mp,functor_params l)]
-  | SFBmodtype { mod_mp; mod_type = NoFunctor _ }  -> [ModuleType mod_mp]
-  | SFBmodtype { mod_mp; mod_type = MoreFunctor _ as l }  -> [FunctorType (mod_mp,functor_params l)]
+  | SFBmodule b ->
+    begin match module_view b with
+    | mod_mp, NoFunctor _ -> [Module (mod_mp,in_elpi_module ~depth state b) ]
+    | mod_mp, (MoreFunctor _ as l) -> [Functor(mod_mp,functor_params l)]
+    end
+  | SFBmodtype m ->
+    begin match module_view m with
+    | mod_mp, NoFunctor _ -> [ModuleType mod_mp]
+    | mod_mp, (MoreFunctor _ as l) -> [FunctorType (mod_mp,functor_params l)]
+    end
 
-and functor_params x =
-  let open Declarations in
-  match x with
-  | MoreFunctor(_,{ mod_type_alg = Some (MENoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
-  | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
-
-and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a Declarations.generic_module_body -> module_item list =
-  fun ~depth state { Declarations.
-  mod_mp;             (* Names.module_path *)
-  mod_expr;           (* Declarations.module_implementation *)
-  mod_type;           (* Declarations.module_signature *)
-  mod_type_alg;       (* Declarations.module_expression option *)
-  mod_delta;          (* Mod_subst.delta_resolver *)
-  mod_retroknowledge; (* Retroknowledge.action list *)
-} ->
-  match mod_type with
+and in_elpi_module : 'a. depth:int -> API.Data.state -> 'a generic_module_body -> module_item list =
+  fun ~depth state mb ->
+  match mod_type mb with
   | Declarations.MoreFunctor _ -> nYI "functors"
   | Declarations.NoFunctor contents ->
       let l =
-        CList.map (in_elpi_module_item ~depth mod_mp state) contents in
+        CList.map (in_elpi_module_item ~depth (mod_mp mb) state) contents in
       CList.flatten l
 
 let rec in_elpi_modty_item (name, item) = match item with
@@ -3742,16 +3763,16 @@ let rec in_elpi_modty_item (name, item) = match item with
   | Declarations.SFBmodule mb -> in_elpi_modty mb
   | Declarations.SFBmodtype _ -> []
 
-and in_elpi_modty : 'a.'a Declarations.generic_module_body -> string list =
-  fun { Declarations.mod_type; (* Declarations.modty_signature *) } ->
-  match mod_type with
+and in_elpi_modty : 'a.'a generic_module_body -> string list =
+  fun mb ->
+  match mod_type mb with
   | Declarations.MoreFunctor _ -> nYI "functors"
   | Declarations.NoFunctor contents ->
       CList.flatten (CList.map in_elpi_modty_item contents)
 
-let in_elpi_module ~depth s (x : Declarations.module_body) = in_elpi_module ~depth s x
+let in_elpi_module ~depth s x = in_elpi_module ~depth s x
 
-let in_elpi_module_type (x : Declarations.module_type_body) = in_elpi_modty x
+let in_elpi_module_type x = in_elpi_modty x
 
 (* ********************************* }}} ********************************** *)
 
