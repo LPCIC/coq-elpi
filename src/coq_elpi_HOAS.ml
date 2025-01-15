@@ -3700,7 +3700,7 @@ type module_item =
 
 [%%if coq = "8.20" || coq = "9.0"]
 type 'a generic_module_body = 'a Declarations.generic_module_body
-let module_view m = (m.mod_mp, m.mod_type)
+let module_view m = (m.Declarations.mod_mp, m.Declarations.mod_type)
 let mod_type m = m.Declarations.mod_type
 let mod_mp m = m.Declarations.mod_mp
 
