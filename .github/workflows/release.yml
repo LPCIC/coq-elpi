@@ -81,7 +81,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.BOT_SSH_KEY }}
           
-      - name: Install opam-publish # 2.0.3 because more recent versions do not respect OPAMYES
+      - name: Install opam-publish
         run: opam install -y -j 2 opam-publish=2.5.0
 
       - name: Publish
@@ -89,5 +89,8 @@ jobs:
           eval $(opam env)
           git config --global user.name coqelpibot
           git config --global user.email coqelpibot@inria.fr
+          echo known tags:
+          git tag
           TAG=`git tag --sort=-v:refname|head -1`
+          echo selected tag: $TAG
           opam-publish --no-confirmation --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam --no-browser -v ${TAG##v}	coq-elpi.opam https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz
