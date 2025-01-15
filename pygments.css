@@ -14,6 +14,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .highlight .c1, .code .c1 { color: #008000 } /* Comment.Single */
 .highlight .cs, .code .cs { color: #008000 } /* Comment.Special */
 .highlight .ge, .code .ge { font-style: italic } /* Generic.Emph */
+.highlight .ges, .code .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
 .highlight .gh, .code .gh { font-weight: bold } /* Generic.Heading */
 .highlight .gp, .code .gp { font-weight: bold } /* Generic.Prompt */
 .highlight .gs, .code .gs { font-weight: bold } /* Generic.Strong */
