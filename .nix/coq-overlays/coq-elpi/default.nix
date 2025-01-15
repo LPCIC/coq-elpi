@@ -81,7 +81,7 @@ in
   defaultVersion = lib.switch coq.coq-version [
     {
       case = "8.20";
-      out = "#737";
+      out = "2.2.0";
     }
     {
       case = "8.19";

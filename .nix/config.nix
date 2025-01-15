@@ -14,7 +14,6 @@ let master = [
   common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
-    hierarchy-builder.override.version = "VojtechStep:feature/breaking-add-section-variable";
     mathcomp-single-planB-src.job = false;
     mathcomp-single-planB.job = false;
     mathcomp-single.job = false;
