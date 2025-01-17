@@ -40,15 +40,18 @@ let master = [
         stdlib.override.version = "master";
         coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
       };
+      ocamlPackages = { elpi.override.version = "2.0.7"; };
     };
       
+    /* uncomment bundle below if min and max elpi version start to differ
     "coq-master-min-elpi" = {
       coqPackages = common-bundles // {
         coq.override.version = "master";
         stdlib.override.version = "master";
         coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
       };
-    };
+      ocamlPackages = { elpi.override.version = "2.0.7"; };
+    }; */
 
   };
 
