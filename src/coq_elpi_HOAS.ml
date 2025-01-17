@@ -2993,7 +2993,7 @@ let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~fin
   }
   in
   let env_ar = Environ.pop_rel_context (List.length ctx_params) env_ar_params in
-  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~flags ~env_ar ~ctx_params
+  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly ()] ~flags ~env_ar ~ctx_params
 [%%endif]
 
 
