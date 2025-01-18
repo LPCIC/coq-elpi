@@ -27,30 +27,24 @@ let master = [
   default-bundle = "coq-8.20";
   bundles = {
 
-    "coq-8.20" = {
-      coqPackages = common-bundles // {
-        coq.override.version = "8.20";
-      };
-      # only way to override elpi version is in .nix/coq-overlays/coq-elpi/default.nix
+    "coq-8.20".coqPackages = common-bundles // {
+      coq.override.version = "8.20";
+      coq-elpi.override.elpi-version = "2.0.7";
     };
 
-    "coq-master" = {
-      coqPackages = common-bundles // {
-        coq.override.version = "master";
-        stdlib.override.version = "master";
-        coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
-      };
-      ocamlPackages = { elpi.override.version = "2.0.7"; };
+    "coq-master".coqPackages = common-bundles // {
+      coq.override.version = "master";
+      coq-elpi.override.elpi-version = "2.0.7";
+      stdlib.override.version = "master";
+      coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
     };
       
     /* uncomment bundle below if min and max elpi version start to differ
-    "coq-master-min-elpi" = {
-      coqPackages = common-bundles // {
-        coq.override.version = "master";
-        stdlib.override.version = "master";
-        coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
-      };
-      ocamlPackages = { elpi.override.version = "2.0.7"; };
+    "coq-master-min-elpi"coqPackages = common-bundles // {
+      coq.override.version = "master";
+      coq-elpi.override.elpi-version = "2.0.7";
+      stdlib.override.version = "master";
+      coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
     }; */
 
   };
