@@ -30,29 +30,20 @@ Elpi Accumulate lp:{{
                 % We only want to create one hole,
                 % the one corresponding to the 
                 % contents of the (single) branch of the match.
-                [{{_}}])
+                [Hole_])
                 G GL 
             )
             (coq.ltac.fail _ "Couldn't unify.")).
 
-    nested_forall Eqpf (prod _ A B) G GL :-
-        Hole = {{ _ }},
-        coq.typecheck Hole A ok,
-        % This might not make progress if
-        % Eqpf is opaque or an assumption.
-        whd (app [Eqpf, Hole]) [] HD ARGS,
-        unwind HD ARGS Eqpf',
-        nested_forall Eqpf' (B Hole) G GL.
-
     solve (goal Ctx _ _ _ [trm Eq] as G) GL :- (
-        % Eq is a direct reference to a global definition or axiom
-        Eq = global Gref, coq.env.typeof Gref Ty;
-        % Eq is a direct Gallina term and we will infer its type
+        % Eq is a direct Gallina term or a gref and we will infer its type
         % from context
         coq.typecheck Eq Ty ok;
         % Eq is a reference to a declared variable in the context
         std.mem Ctx (decl Eq _ Ty)),
-        nested_forall Eq Ty G GL.
+        coq.saturate Ty Eq Eq',
+        coq.typecheck Eq' Ty' ok,
+        nested_forall Eq' Ty' G GL.
 }}.
 
 Tactic Notation "eltac.rewrite" ident(T) := elpi rewrite ltac_term:(T).
