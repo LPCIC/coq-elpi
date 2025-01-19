@@ -6,8 +6,7 @@ Elpi Accumulate lp:{{
 
     apply T _ G GL :- refine T G GL.
 
-    apply Term (prod _ A B) G GL :-
-        coq.typecheck Hole A ok,
+    apply Term (prod _ _ B) G GL :-
         whd (app [Term, Hole]) [] HD ARGS,
         unwind HD ARGS Term',
         apply Term' (B Hole) G GL.
