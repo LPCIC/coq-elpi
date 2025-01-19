@@ -3709,6 +3709,11 @@ Tac can either be a string (the tactic name), or a value
 of type ltac1-tactic, see the tac argument constructor
 and the ltac_tactic:(...) syntax to pass arguments to
 an elpi tactic.
+Caveat:
+  if Tac is a tactic name, then the tactic must be defined using
+  "Ltac name := body", it cannot be a builtin one. For example
+  "Ltac myapply x := apply x." lets one call apply by running
+  coq.ltac.call-ltac1 "myapply" G GL.
 Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|})))),
     (fun tac (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->

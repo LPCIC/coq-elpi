@@ -1619,6 +1619,11 @@ external pred coq.ltac.collect-goals i:term, o:list sealed-goal,
 % of type ltac1-tactic, see the tac argument constructor
 % and the ltac_tactic:(...) syntax to pass arguments to
 % an elpi tactic.
+% Caveat:
+%   if Tac is a tactic name, then the tactic must be defined using
+%   "Ltac name := body", it cannot be a builtin one. For example
+%   "Ltac myapply x := apply x." lets one call apply by running
+%   coq.ltac.call-ltac1 "myapply" G GL.
 % Supported attributes:
 % - @no-tc! (default false, do not infer typeclasses)
 external pred coq.ltac.call-ltac1 i:any, i:goal, o:list sealed-goal.
