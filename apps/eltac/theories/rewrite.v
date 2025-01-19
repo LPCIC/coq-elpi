@@ -1,7 +1,6 @@
 From elpi Require Export elpi.
 
 Elpi Tactic rewrite.
-(* Print eq. *)
 Elpi Accumulate lp:{{
     % Second argument is a type of the form forall x1 x2 x3... P = Q.
     % First argument is a term of that type.
