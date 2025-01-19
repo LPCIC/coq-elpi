@@ -538,9 +538,9 @@ see [coq-builtin](builtin-doc/coq-builtin.elpi).
   look here for list processing code
 - [coq-lib](elpi/coq-lib.elpi) provides some utilities to manipulate Coq terms;
   it is an addendum to coq-builtin
-- [elpi-command-template](elpi/elpi-command-template.elpi) provides the pre-loaded code for `Elpi Command` (execution phase)
+- [elpi-command-template](elpi/elpi-command-template.elpi) provides the pre-loaded code for `Elpi Command` (execution phase) and `Elpi Tactic`
 - [elpi-command-template-synterp](elpi/elpi-command-template-synterp.elpi) provides the pre-loaded code for `Elpi Command` (parsing phase)
-- [elpi-tactic-template](elpi/elpi-tactic-template.elpi) provides the pre-loaded code for `Elpi Tactic`
+- [elpi-tactic-template](elpi/elpi-tactic-template.elpi) provides the pre-loaded code for `Elpi Tactic` (note tactics also load [elpi-command-template](elpi/elpi-command-template.elpi))
 
 #### Organization of the repository
 
