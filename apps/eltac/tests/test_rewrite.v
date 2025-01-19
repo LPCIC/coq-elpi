@@ -5,8 +5,8 @@ Goal (forall x : nat, 1 + x = x + 1) ->
 Proof.
     intro H. 
     intro x.
-    elpi rewrite (H).
-    elpi rewrite (PeanoNat.Nat.mul_comm).
+    eltac.rewrite H.
+    eltac.rewrite PeanoNat.Nat.mul_comm.
     exact eq_refl.
 Defined.
 
@@ -21,7 +21,7 @@ Goal forall (a : A) (b : B a) (x y : C a b),
     add x y = add y x /\ add x y = add y x.
 Proof.
     intros a b x y.
-    elpi rewrite (@sym). (* @sym is a gref *)
+    eltac.rewrite @sym. (* @sym is a gref *)
     (** [add y x = add y x /\ add y x = add y x] *)
     easy.
 Defined.
@@ -30,7 +30,7 @@ Goal forall (a : A) (b : B a) (x y : C a b),
     add x y = add y x /\ add x y = add y x.
 Proof.
     intros a b x y.
-    elpi rewrite (sym). (* because of implicit arguments, this is sym _ _, which is a term *)
+    eltac.rewrite sym. (* because of implicit arguments, this is sym _ _, which is a term *)
     easy.
 Defined.
 

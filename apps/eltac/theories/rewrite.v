@@ -55,4 +55,5 @@ Elpi Accumulate lp:{{
         nested_forall Eq Ty G GL.
 }}.
 
-Tactic Notation "eltac.rewrite" := elpi rewrite.
+Tactic Notation "eltac.rewrite" ident(T) := elpi rewrite ltac_term:(T).
+Tactic Notation "eltac.rewrite" uconstr(T) := elpi rewrite ltac_term:(T).
