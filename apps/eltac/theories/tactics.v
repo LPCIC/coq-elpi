@@ -1,4 +1,5 @@
 From elpi.apps.eltac Require Export
+  apply
   intro
   constructor
   assumption
