@@ -31,7 +31,14 @@ Goal forall (a : A) (b : B a) (x y : C a b),
 Proof.
     intros a b x y.
     eltac.rewrite sym. (* because of implicit arguments, this is sym _ _, which is a term *)
-    easy.
+   easy.
 Defined.
+
+Goal forall n, 2 * n = n * 2.
+Proof.
+    intro n.
+    Fail eltac.rewrite PeanoNat.Nat.add_comm.
+    eltac.rewrite PeanoNat.Nat.add_comm "strong".
+    Abort.
 
 End Example_rewrite.
