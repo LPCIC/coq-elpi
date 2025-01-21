@@ -1,3 +1,12 @@
+# Development version
+
+### API
+- `coq.count-prods` now count products modulo reduction,
+  rather than purely syntactically
+- `coq.arity->sort` now attempts reduction to find a sort or prod,
+  before failing
+- `coq.arity->sort` now handles let-in
+
 # [2.4.0] 15/1/2025
 
 Requires Elpi 2.0.7 and Coq 8.20.
