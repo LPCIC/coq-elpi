@@ -25,10 +25,7 @@ Elpi Accumulate lp:{{
         % causing Q to be replaced with P everywhere.
             if (occurs x (A x))
             (refine (match
-                Eqpf 
-                (fun _ S (a\
-                   fun _ {{ @eq lp:S lp:P lp:Q }} (_\ A a )
-                   ))
+                Eqpf {{ fun a (e : @eq lp:S lp:P a) => lp:(A a) }}
                 % We only want to create one hole,
                 % the one corresponding to the 
                 % contents of the (single) branch of the match.
