@@ -4,15 +4,14 @@ Elpi Tactic apply.
 Elpi Accumulate lp:{{
     pred apply i:term, i:term, o:goal, o:list sealed-goal.
 
-    apply T _ G GL :- refine T G GL.
+    apply T _ G GL :- refine T G GL, !.
 
-    apply Term (prod _ _ B) G GL :-
-        whd (app [Term, Hole]) [] HD ARGS,
-        unwind HD ARGS Term',
-        apply Term' (B Hole) G GL.
+    apply Term Ty G GL :-
+        whd Ty [] (prod _ _ B) [],
+        apply {coq.mk-app Term [Hole]} (B Hole) G GL.
 
     apply _ _ _ _ :- coq.ltac.fail _ "Couldn't unify type of term with goal".
-        
+
     solve (goal Ctx _ _ _ [trm T] as G) GL :-
         (% T is a direct Gallina term and we will infer its type
         % from context
