@@ -864,8 +864,13 @@ let comAssumption_declare_variable id coe ~kind ty ~univs ~impargs impl ~name:_ 
   ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:id
 let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name:_ ~id ty =
   ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name:id ty
+[%%if coq = "8.20" || coq = "9.0"]
 let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
   DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z
+[%%else]
+let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
+  DeclareInd.declare_mutual_inductive_with_eliminations ~default_dep_elim x y z
+[%%endif]
 
 let cinfo_make _ _ _using =
   Declare.CInfo.make
@@ -1317,6 +1322,14 @@ Supported attributes:
        Univ.ContextSet.empty, state, (), []
      | _ -> err Pp.(str "reset-simplification must be called on constant")))),
   DocAbove)]
+[%%endif]
+
+[%%if coq = "8.20" || coq = "9.0"]
+let declare_projections ind ~kind univs id flags implicits fields =
+  Record.Internal.declare_projections ind ~kind univs id flags implicits fields
+[%%else]
+let declare_projections ind ~kind _ id flags implicits _ =
+  Record.Internal.declare_projections ind ~kind ~inhabitant_id:id flags implicits
 [%%endif]
 
 let coq_misc_builtins =
@@ -2114,7 +2127,7 @@ Supported attributes:
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_decls k_ty in
          let projections =
-           Record.Internal.declare_projections ind ~kind:Decls.Definition
+           declare_projections ind ~kind:Decls.Definition
              (uentry, ubinders)
              (Names.Id.of_string "record")
              flags is_implicit fields_as_relctx

@@ -2969,10 +2969,10 @@ let poly_cumul_udecl_variance_of_options state options =
     Array.of_list variance
 
 [%%if coq = "8.20"]
-let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~template ~finite = 
+let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite =
   ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~cumulative ~poly ~template ~finite 
-[%%else]
-let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~template ~finite =
+[%%elif coq = "9.0"]
+let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite =
   let flags = {
     ComInductive.poly;
     cumulative;
@@ -2982,6 +2982,18 @@ let comInductive_interp_mutual_inductive_constr _ _ _ ~cumulative ~poly ~templat
   }
   in
   ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~flags
+[%%else]
+let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite ~ctx_params ~env_ar_params =
+  let flags = {
+    ComInductive.poly;
+    cumulative;
+    template = Some false;
+    finite;
+    mode = None;
+  }
+  in
+  let env_ar = Environ.pop_rel_context (List.length ctx_params) env_ar_params in
+  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~flags ~env_ar ~ctx_params
 [%%endif]
 
 
@@ -3093,7 +3105,6 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       let sigma = restricted_sigma_of used state in
 
       state, comInductive_interp_mutual_inductive_constr
-      env_ar_params sigma arity
         ~sigma
         ~template:(Some false)
         ~udecl
@@ -3529,6 +3540,7 @@ let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   state, upoly_decl_of i, gls @ upoly_decl_gls
 ;;
 
+[%%if coq = "8.20" || coq = "9.0"]
 let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let open Record.Record_decl in
   let open Record.Data in
@@ -3589,6 +3601,66 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let ind = { params; decl = Record { id; kid; typ; fields } } in
   let state, i, gls = hoas_ind2lp ~depth coq_ctx state ind in
   state, upoly_decl_of i, gls @ upoly_decl_gls
+[%%else]
+let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl (decl:Record.Record_decl.t) =
+  let open Record.Record_decl in
+  let open Record.Data in
+  let open Entries in
+  let i_impls = List.map binding_kind_of_manual_implicit decl.entry.param_impls in
+
+  let mie = decl.entry.mie in
+  let ind = match mie.mind_entry_inds with
+  | [ x ] -> x
+  | _ -> nYI "mutual record"
+  in
+  let record = match decl.records with
+  | [ x ] -> x
+  | _ -> nYI "mutual record" in
+  let indno = 1 in
+
+  let state =
+    S.update engine state (fun e ->
+        { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma decl.entry.global_univs})
+  in
+
+  let state = match mie.mind_entry_universes with
+    | Template_ind_entry _ -> nYI "template polymorphic inductives"
+    | Monomorphic_ind_entry -> state
+    | Polymorphic_ind_entry cs -> S.update engine state (fun e ->
+      { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma (snd (UVars.UContext.to_context_set cs)) }) (* ???? *) in
+
+  let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie in
+
+  let params = mie.mind_entry_params in
+  let params = Vars.lift_rel_context indno params in
+
+  let params = EConstr.of_rel_context params in
+  let params = safe_combine2_impls params i_impls ~default2:Glob_term.Explicit |> param2ctx in
+
+  let id = ind.mind_entry_typename in
+  let typ = EConstr.of_constr ind.mind_entry_arity in
+  let kid = List.hd ind.mind_entry_consnames in
+
+  let fieldsno = List.length record.proj_flags in
+  let kctx, _ = Term.decompose_prod_decls @@ List.hd ind.mind_entry_lc in
+  let kctx = EConstr.of_rel_context kctx in
+  if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
+
+  let fields = List.map2 (fun { pf_coercion; pf_reversible; pf_canonical } ->
+    let open Context.Rel.Declaration in
+    let coe_status = if pf_coercion then if pf_reversible then Reversible else Regular else Off in
+    function
+    | LocalAssum( { Context.binder_name = Anonymous },typ) ->
+        { id = Id.of_string "_"; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
+    | LocalAssum( { Context.binder_name = Name id },typ) ->
+        { id; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
+    | _ -> nYI "let-in in record fields"
+    ) (List.rev record.proj_flags) kctx in
+
+  let ind = { params; decl = Record { id; kid; typ; fields } } in
+  let state, i, gls = hoas_ind2lp ~depth coq_ctx state ind in
+  state, upoly_decl_of i, gls @ upoly_decl_gls
+[%%endif]
 
 let merge_universe_context state uctx =
   S.update engine state (fun e -> { e with sigma = Evd.merge_universe_context e.sigma uctx })
