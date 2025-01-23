@@ -48,10 +48,13 @@ coq.prod->fun (let N T B F) (let N T B R) :- !, pi x\ coq.prod->fun (F x) (R x).
 coq.prod->fun X X.
 
 pred coq.count-prods i:term, o:int.
-coq.count-prods (prod _ _ B) N :- !, (pi x\ coq.count-prods (B x) M), N is M + 1.
-coq.count-prods (let _ _ _ B) N :- !, (pi x\ coq.count-prods (B x) N).
-:name "count-prod:end"
-coq.count-prods _ 0 :- !.
+coq.count-prods (prod N T B) C :- !,
+  (@pi-decl N T x\ coq.count-prods (B x) C'), C is C' + 1.
+coq.count-prods (let N T V B) C :- !,
+  (@pi-def N T V x\ coq.count-prods (B x) C).
+coq.count-prods T C :- !,
+  coq.reduction.lazy.whd T Tr,
+  if (T == Tr) (C = 0) (coq.count-prods Tr C).
 
 pred coq.mk-n-holes  i:int, o:list A.
 coq.mk-n-holes  0 [] :- !.
@@ -454,8 +457,10 @@ coq.term->arity (prod Name S T) N (parameter ID explicit S R) :-
 % extracts the sort at the end of an arity
 pred coq.arity->sort i:term, o:sort.
 coq.arity->sort (prod N S X) Y :- !, @pi-decl N S x\ coq.arity->sort (X x) Y.
+coq.arity->sort (let N T V X) Y :- !, @pi-def N T V x\ coq.arity->sort (X x) Y.
 coq.arity->sort (sort X) X :- !.
-:name "arity->sort:fail"
+coq.arity->sort X Y :- coq.reduction.lazy.whd X Xr, not (X == Xr), !,
+  coq.arity->sort Xr Y.
 coq.arity->sort T _ :- fatal-error-w-data "arity->sort: not a sort or prod" T.
 
 % Counts how many parameters are there
