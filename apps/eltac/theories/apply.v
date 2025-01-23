@@ -13,8 +13,6 @@ Elpi Accumulate lp:{{
     apply _ _ _ _ :- coq.ltac.fail _ "Couldn't unify type of term with goal".
 
     solve (goal Ctx _ _ _ [trm T] as G) GL :-
-        (% T is a direct Gallina term and we will infer its type
-        % from context
         std.assert-ok! (coq.typecheck T Ty) "Illtyped argument",
        
         apply T Ty G GL.
