@@ -1,5 +1,6 @@
 From elpi.apps.eltac Require Export
   intro
+  rewrite
   constructor
   assumption
   discriminate
