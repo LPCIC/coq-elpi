@@ -15,9 +15,7 @@ Elpi Accumulate lp:{{
     solve (goal Ctx _ _ _ [trm T] as G) GL :-
         (% T is a direct Gallina term and we will infer its type
         % from context
-        coq.typecheck T Ty ok;
-        % Eq is a reference to a declared variable in the context
-        std.mem Ctx (decl T _ Ty)),
+        std.assert-ok! (coq.typecheck T Ty) "Illtyped argument",
        
         apply T Ty G GL.
 }}.
