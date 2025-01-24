@@ -19,5 +19,9 @@ cat > dune-project <<EOF
 (using coq 0.8)
 EOF
 
-export COQPATH="$DUNE_SOURCEROOT/_build/install/default/lib/coq/user-contrib"
+if ocamlfind query rocq-core; then
+  export ROCQPATH="$DUNE_SOURCEROOT/_build/install/default/lib/coq/user-contrib"
+else
+  export COQPATH="$DUNE_SOURCEROOT/_build/install/default/lib/coq/user-contrib"
+fi
 export DUNE_CACHE=disabled
