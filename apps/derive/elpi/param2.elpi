@@ -159,6 +159,8 @@ dispatch (const GR as C) Suffix Clauses :- do! [
 
   param Ty _ TyR,
   coq.mk-app TyR [Term, Term] TyRTermTerm,
+  % coq.typecheck is needed to add universe constraints
+  std.assert-ok! (coq.typecheck TyRTermTerm _) "param2: illtyped param type",
   param X _ XR,
   % apparently calling the type checker with the expected type is weaker in this case
   std.assert-ok! (coq.typecheck XR XRTy) "param2: illtyped constant",

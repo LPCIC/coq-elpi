@@ -85,3 +85,10 @@ Elpi derive.param2 bla.
 Fixpoint silly (n : nat) := n.
 Elpi derive.param2 silly.
 
+Definition size_of (A : Type) := A -> nat.
+
+Definition size_seq (A : Type) : size_of (list A) := fun _ => 0.
+
+Elpi derive.param2 size_of.
+
+Elpi derive.param2 size_seq.  (* Fixed by https://github.com/LPCIC/coq-elpi/pull/754 *)
