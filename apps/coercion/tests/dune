@@ -1,7 +1,6 @@
-(cram
- (applies_to :whole_subtree)
- (deps
-  %{bin:coqc}
-  %{bin:coqdep}
-  (package coq-elpi)
-  setup-project.sh))
+(coq.theory
+ (name elpi.apps.coercion.tests)
+ (package coq-elpi-tests)
+ (theories elpi elpi.apps.coercion))
+
+(include_subdirs qualified)
