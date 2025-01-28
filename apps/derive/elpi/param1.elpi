@@ -136,6 +136,8 @@ dispatch (const GR) Prefix Clauses :- !, do! [
   reali V VR,
   reali Ty TyR,
   coq.mk-app TyR [Term] TyRV,
+  % coq.typecheck is needed to add universe constraints
+  std.assert-ok! (coq.typecheck TyRV _) "param1: illtyped param type",
   % apparently calling the type checker with the expected type is weaker in this case
   std.assert-ok! (coq.typecheck VR VRTy) "param1: illtyped constant",
   std.assert-ok! (coq.unify-leq VRTy TyRV) "param1: constant does not have the right type",
