@@ -222,6 +222,15 @@ pred main i:gref, i:string, o:list prop.
 main T _ Clauses :-
   dispatch T "_R" Clauses.
 
+pred main_register i:gref, i:gref.
+main_register I R :-
+  GI = global I, GR = global R,
+  C1 = (param GI GI GR :- !),
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
+  C2 = (paramR GI GI GR :- !),
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C2),
+  coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done I)).
+
 }
 
 /*
