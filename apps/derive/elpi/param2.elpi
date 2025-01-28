@@ -20,7 +20,8 @@ param (sort _ as P) P
   coq.univ.new U, coq.univ.new V.
 
 param (fun N T B) (fun N T1 B1)
-      (fun N T x\ fun N T1 x1\ fun N (TRsubst x x1) xR\ BR x x1 xR) :- !, do! [
+      (fun N1 T x\ fun N2 T1 x1\ fun NR (TRsubst x x1) xR\ BR x x1 xR) :- !, do! [
+  derive.param2.names12R N N1 N2 NR,
   param T T1 TR,
   (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)),
   (TRsubst = x\ x1\ {coq.subst-fun [x,x1] TR})
@@ -30,8 +31,9 @@ param (prod N T P as Prod) Prod1 ProdR :- !, do! [
   param T T1 TR,
   (pi x x1 xR\ param x x1 xR => param (P x) (P1 x1) (PR x x1 xR)),
   Prod1 = prod N T1 P1,
+  derive.param2.names12R N N1 N2 NR,
   ProdR = fun `f` Prod f\ fun `g` Prod1 g\
-       prod N T x\ prod N T1 x1\ prod N {coq.subst-fun [x,x1] TR} xR\
+       prod N1 T x\ prod N2 T1 x1\ prod NR {coq.subst-fun [x,x1] TR} xR\
        {coq.subst-fun [{coq.mk-app f [x]}, {coq.mk-app g [x1]}] (PR x x1 xR)}
 ].
 
@@ -46,7 +48,8 @@ param (let N T V B) Let1 LetR :- !, do! [
   param V V1 VR,
   (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)),
   Let1 = let N T1 V1 B1,
-  LetR = let N T V x\ let N T1 V1 x1\ let N {coq.mk-app TR [x,x1]} VR xR\ BR x x1 xR
+  derive.param2.names12R N N1 N2 NR,
+  LetR = let N1 T V x\ let N2 T1 V1 x1\ let NR {coq.mk-app TR [x,x1]} VR xR\ BR x x1 xR
 ].
 
 param (match T P Bs) M1 MR :- !, do! [
@@ -68,11 +71,16 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !, do! [
       {paramX.mk-trivial-match RnoR (TRsubst f f1) [] fr}),
   (pi f f1 xR\ coq.mk-eta RnoR1 (TRsubst f f1) (FixBody f f1 xR)
               (EtaFixBody f f1 xR)),
-  FixR = (let N T Fix f\ let N T1 Fix1 f1\
-          fix N RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR)
+  derive.param2.names12R N N1 N2 NR,
+  FixR = (let N1 T Fix f\ let N2 T1 Fix1 f1\
+          fix NR RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR)
 ].
 
 namespace derive.param2 {
+
+pred names12R i:name, o:name, o:name, o:name.
+names12R N N1 N2 NR :- !,
+  coq.name-suffix N 1 N1, coq.name-suffix N 2 N2, coq.name-suffix N "_R" NR.
 
 pred param-args o:list term, o:list term, o:list term.
 param-args [] [] [] :- !.
@@ -91,16 +99,18 @@ param-match (fun N T B) P1 PRM :- pi x\ not (B x = fun _ _ _), !,
   param T T1 TR, !,
   (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
   P1 = fun N T1 B1,
-  (pi z z1\ PRM z z1 = fun N T x\ fun N T1 x1\
-                       fun N {coq.subst-fun [x,x1] TR} xR\
+  derive.param2.names12R N N1 N2 NR,
+  (pi z z1\ PRM z z1 = fun N1 T x\ fun N2 T1 x1\
+                       fun NR {coq.subst-fun [x,x1] TR} xR\
 		       {coq.mk-app (BR x x1 xR) [z x, z1 x1]}).
 
 param-match (fun N T B) P1 PRM :-
   param T T1 TR, !,
   (pi x x1 xR\ param x x1 xR => param-match (B x) (B1 x1) (BR x x1 xR)), !,
   P1 = fun N T1 B1,
-  (pi z z1\ PRM z z1 = fun N T x\ fun N T1 x1\
-                       fun N {coq.subst-fun [x,x1] TR} xR\
+  derive.param2.names12R N N1 N2 NR,
+  (pi z z1\ PRM z z1 = fun N1 T x\ fun N2 T1 x1\
+                       fun NR {coq.subst-fun [x,x1] TR} xR\
 		       BR x x1 xR z z1).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -125,7 +135,16 @@ rename-indc Suffix GR (pr GR NameR) :-
 
 pred param-indc i:term, i:term, o:term.
 param-indc K T TRK :- !,
-  param T _ TR, coq.subst-fun [K, K] TR TRK.
+  coq.env.global N K, coq.arguments.name N LN, rename T LN Tn,
+  param Tn _ TR, coq.subst-fun [K, K] TR TRK.
+
+% helper to improve name hints
+pred rename i:term, i:list (option id), o:term.
+rename (prod _ T P) [some Ni|LN] (prod Nn T P') :- !,
+  pi x\ rename (P x) LN (P' x), coq.id->name Ni Nn.
+rename (prod N T P) [none|LN] (prod N T P') :- !,
+  pi x\ rename (P x) LN (P' x).
+rename T _ T :- !.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Class storage functions: %
