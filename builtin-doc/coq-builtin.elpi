@@ -1458,7 +1458,7 @@ external pred coq.unify-eq i:term, i:term, o:diagnostic.
 % if they are types)
 external pred coq.unify-leq i:term, i:term, o:diagnostic.
 
-% [coq.elaborate-skeleton T ETy E Diagnostic] elabotares T against the
+% [coq.elaborate-skeleton T ETy E Diagnostic] elaborates T against the
 % expected type ETy.
 % T is allowed to contain holes (unification variables) but these are
 % not assigned even if the elaborated term has a term in place of the
