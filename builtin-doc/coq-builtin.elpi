@@ -1465,7 +1465,7 @@ external pred coq.unify-leq i:term, i:term, o:diagnostic.
 % hole. Similarly universe levels present in T are disregarded.
 % Supported attributes:
 % - @keepunivs! (default false, do not disregard universe levels)
-% - @no-tc! (default false, do not infer typeclasses) 
+% - @no-tc! (default false, do infer typeclasses) 
 external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 
 % [coq.elaborate-ty-skeleton T U E Diagnostic] elabotares T expecting it to
