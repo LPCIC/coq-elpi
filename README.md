@@ -1,4 +1,4 @@
-[![Docker CI](https://github.com/LPCIC/coq-elpi/actions/workflows/main.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/main.yml)
+[![CI](https://github.com/LPCIC/coq-elpi/actions/workflows/ci.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/ci.yml)
 [![Nix CI](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-8.20.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-8.20.yml)
 [![Nix CI](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml)
 [![DOC](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml)
