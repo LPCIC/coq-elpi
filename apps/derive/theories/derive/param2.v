@@ -54,6 +54,17 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.param2 <object name>".
 }}. 
 
+Elpi Command derive.param2.register.
+Elpi Accumulate File param2.
+Elpi Accumulate Db derive.param2.db.
+Elpi Accumulate lp:{{
+  main [str I, str R] :- !, coq.locate I GRI, coq.locate R GRR,
+    derive.param2.main_register GRI GRR.
+  main _ :- usage.
+
+  usage :- coq.error "Usage: derive.param2.register <name> <name_R>".
+}}.
+
 
 (* hook into derive *)
 Elpi Accumulate derive File param2.

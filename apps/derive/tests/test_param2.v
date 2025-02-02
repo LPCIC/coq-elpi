@@ -92,3 +92,12 @@ Definition size_seq (A : Type) : size_of (list A) := fun _ => 0.
 Elpi derive.param2 size_of.
 
 Elpi derive.param2 size_seq.  (* Fixed by https://github.com/LPCIC/coq-elpi/pull/754 *)
+
+Definition fa := 0.
+Definition fb := fa.
+
+Fail Elpi derive.param2 fb.
+
+Definition fa_R := O_R.
+Elpi derive.param2.register fa fa_R.
+Elpi derive.param2 fb.

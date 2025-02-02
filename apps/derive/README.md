@@ -120,6 +120,34 @@ Inductive is_nat : nat -> Type :=
 | is_S : forall n : nat, is_nat n -> is_nat (S n) *)
 ```
 
+### `param2`
+
+Binary parametricity translation.
+
+Main command is `derive.param2`
+```coq
+Elpi derive.param2 nat.
+Print nat_R. (*
+Inductive nat_R : nat -> nat -> Set :=
+| O_R : nat_R 0 0
+| S_R : forall H H0 : nat, nat_R H H0 -> nat_R (S H) (S H0).
+```
+
+The command `derive.param2.register` can be used to register
+handcrafted parametricity rules, so that they can be used by further
+`derive.param2` commands.
+```coq
+Definition fa := 0.
+Definition fb := fa.
+
+Fail Elpi derive.param2 fb.
+(* derive.param2: No binary parametricity translation for fa *)
+
+Definition fa_R := O_R.
+Elpi derive.param2.register fa fa_R.
+Elpi derive.param2 fb.
+```
+
 ### `param1_functor`
 
 ```coq
