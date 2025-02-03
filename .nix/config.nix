@@ -17,7 +17,6 @@ let master = [
     mathcomp-single-planB-src.job = false;
     mathcomp-single-planB.job = false;
     mathcomp-single.job = false;
-    coqeal.job = false;  # broken in master, c.f. https://github.com/coq/coq/pull/19228
 
     deriving.job = false;
     reglang.job = false;
@@ -42,6 +41,7 @@ let master = [
       coq.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
       stdlib.override.version = "master";
+      bignums.override.version = "master";
     };
       
     /* uncomment bundle below if min and max elpi version start to differ
