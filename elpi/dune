@@ -1,7 +1,6 @@
 (coq.theory
  (name elpi_elpi) ; FIXME
- (package coq-elpi)
- @@STDLIB_THEORY@@)
+ (package coq-elpi))
 
 (rule
  (target dummy.v)

@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 From elpi.apps Require Import derive derive.param1.
-From Coq Require Import ssrbool ssreflect Uint63.
-From Coq Require Import PArith.
+From elpi.core Require Import ssrbool ssreflect PrimInt63.
+From elpi.core Require Import PosDef.
 
 From elpi.apps.derive.elpi Extra Dependency "fields.elpi" as fields.
 From elpi.apps.derive.elpi Extra Dependency "eqb.elpi" as eqb.

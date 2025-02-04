@@ -11,12 +11,15 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps Require Import  derive.eq derive.induction derive.eqK derive.param1.
 
-From Coq Require Import ssreflect Uint63.
+From elpi.core Require Import ssreflect PrimInt63.
+From elpi.core Require Uint63Axioms.
 
 Lemma uint63_eq_correct i : is_uint63 i -> eq_axiom_at PrimInt63.int PrimInt63.eqb i.
 Proof.
-move=> _ j; case: (Uint63.eqb_spec i j); case: PrimInt63.eqb => [-> // _|_ abs];
-  [ by constructor | by constructor=> /abs ].
+move=> _ j; have [] : (eqb i j) = true <-> i = j.
+  split; first exact: Uint63Axioms.eqb_correct.
+  by move=> ->; rewrite Uint63Axioms.eqb_refl.
+by case: PrimInt63.eqb => [-> // _| _ abs]; constructor=> // /abs.
 Qed.
 Register uint63_eq_correct as elpi.derive.uint63_eq_correct.
 

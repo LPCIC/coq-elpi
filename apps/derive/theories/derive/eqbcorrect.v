@@ -1,4 +1,4 @@
-From Coq Require Import ssreflect ssrfun ssrbool Eqdep_dec.
+From elpi.core Require Import ssreflect ssrfun ssrbool.
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps.derive Require Import induction param1_functor param1_trivial eqb_core_defs tag fields eqb.
@@ -22,7 +22,7 @@ Ltac solver_irrelevant :=
   match goal with
   | p1 : ?x = true , p2 : ?x = true |- _ =>
      let top := fresh "x" in
-     have top := @Eqdep_dec.UIP_dec bool Bool.bool_dec _ _ p1 p2;
+     have top := @eqb_core_defs.UIP_dec bool eqb_core_defs.bool_dec _ _ p1 p2;
      subst p1
   end.
 
@@ -35,11 +35,14 @@ Ltac eqb_refl_on__solver :=
   repeat ((apply /andP; split) || reflexivity || assumption).
 End exports.
 
+From elpi.core Require Uint63Axioms.
+
 Lemma uint63_eqb_correct i : eqb_correct_on PrimInt63.eqb i.
-Proof. by move=> j; case: (Uint63.eqb_spec i j); case: PrimInt63.eqb. Qed.
+Proof. exact: Uint63Axioms.eqb_correct. Qed.
 
 Lemma uint63_eqb_refl i : eqb_refl_on PrimInt63.eqb i.
-Proof. by case: (Uint63.eqb_spec i i) => _ H; exact: H. Qed.
+Proof. exact: Uint63Axioms.eqb_refl. Qed.
+
 
 Elpi Db derive.eqbcorrect.db lp:{{
 
@@ -92,7 +95,6 @@ Elpi Accumulate lp:{{
   usage :- coq.error "Usage: derive.eqbcorrect <inductive name>".
 
 }}.
-
 
 (* hook into derive *)
 Elpi Accumulate derive File eqbcorrect.

@@ -8,7 +8,6 @@ From elpi.apps.derive.elpi Extra Dependency "bcongr.elpi" as bcongr.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
-From Coq Require Export Bool.
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.
 From elpi.apps Require Export derive.projK.

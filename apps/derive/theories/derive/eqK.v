@@ -8,18 +8,19 @@ From elpi.apps.derive.elpi Extra Dependency "eqK.elpi" as eqK.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
+From elpi.core Require Import Bool.  (* remove when requiring Rocq >= 9.0 *)
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps Require Import derive.bcongr derive.eq derive.isK.
 
 Definition eq_axiom T eqb :=
-  forall (x y : T), Bool.Bool.reflect (x = y) (eqb x y).
+  forall (x y : T), Datatypes.reflect (x = y) (eqb x y).
 
 Definition eq_axiom_at T eqb (x : T) :=
-  forall y, Bool.Bool.reflect (x = y) (eqb x y).
+  forall y, Datatypes.reflect (x = y) (eqb x y).
 
 Definition eq_axiom_on T eqb (x y : T) :=
-  Bool.Bool.reflect (x = y) (eqb x y).
+  Datatypes.reflect (x = y) (eqb x y).
 
 Register eq_axiom    as elpi.derive.eq_axiom.
 Register eq_axiom_at as elpi.derive.eq_axiom_at.

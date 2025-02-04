@@ -1,6 +1,6 @@
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
-From Coq Require Import PArith.
+From elpi.core Require Import PosDef.
 From elpi.apps Require Export derive.eqType_ast derive.tag.
 From elpi.apps.derive.elpi Extra Dependency "fields.elpi" as fields.
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
