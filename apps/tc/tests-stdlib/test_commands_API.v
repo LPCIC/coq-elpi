@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-From elpi.apps.tc.tests Require Import eqSimplDef.
+From elpi_apps_tc_tests_stdlib Require Import eqSimplDef.
 
 Elpi Command len_test.
 Elpi Accumulate Db tc.db.

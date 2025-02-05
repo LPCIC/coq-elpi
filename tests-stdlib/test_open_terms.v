@@ -1,6 +1,5 @@
-Require Import Arith List FunctionalExtensionality.
+From elpi_stdlib Require Import ZArith Arith List FunctionalExtensionality.
 From elpi Require Import elpi.
-Require Import ZArith.
 
 Lemma ring_example x : x + 1 = 1 + x.
 Proof. ring. Qed.

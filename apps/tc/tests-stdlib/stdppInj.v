@@ -1,9 +1,11 @@
 (* Test inspired from https://gitlab.mpi-sws.org/iris/stdpp/-/blob/8c98553ad0ca2029b30cf18b58e321ec3a79172b/stdpp/base.v *)
 
-From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
-From Coq Require Import Permutation.
+From elpi.core Require Export Morphisms RelationClasses ListDef Bool Setoid.
+From elpi_stdlib Require Export List Peano Utf8 Permutation.
+From elpi_stdlib Require Export Program.Basics Program.Syntax.
+
 Export ListNotations.
-From Coq.Program Require Export Basics Syntax.
+
 
 From elpi.apps Require Import tc.
 Elpi TC Solver Override TC.Solver All.
@@ -165,7 +167,7 @@ Section prod_setoid.
   Context `{Equiv A, Equiv B}.
 
   Elpi Accumulate TC.Solver lp:{{
-    shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj2}.
+    shorten tc-elpi_apps_tc_tests_stdlib.stdppInj.{tc-Inj2}.
     % shorten tc-stdppInj.{tc-Inj2}.
     tc-Inj2 A B C RA RB RC F S :-
       RC = app [global {coq.locate "equiv"} | _],
@@ -210,7 +212,7 @@ End sum_relation.
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
 Elpi Accumulate TC.Solver lp:{{
-  shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
+  shorten tc-elpi_apps_tc_tests_stdlib.stdppInj.{tc-Inj}.
   % shorten tc-stdppInj.{tc-Inj}.
   tc-Inj A B RA {{@equiv (sum _ _) (@sum_equiv _ _ _ _)}} S C :-
     tc-Inj A B RA {{sum_relation _ _}} S C.
@@ -223,7 +225,7 @@ Global Instance inr_equiv_inj `{Equiv A, Equiv B} : Inj (≡) (≡) (@inr A B) :
 Notation "` x" := (proj1_sig x) (at level 10, format "` x") : stdpp_scope.
 
 Elpi Accumulate TC.Solver lp:{{
-  shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
+  shorten tc-elpi_apps_tc_tests_stdlib.stdppInj.{tc-Inj}.
   tc-Inj A B RA RB F X :-
     F = fun _ _ _, 
     G = {{@compose _ _ _ _ _}}, 
@@ -238,7 +240,7 @@ Global Instance h: Inj eq eq f.
 Qed.
 
 Elpi Accumulate TC.Solver lp:{{
-  shorten tc-elpi.apps.tc.tests.stdppInj.{tc-Inj}.
+  shorten tc-elpi_apps_tc_tests_stdlib.stdppInj.{tc-Inj}.
   :after "lastHook"
   tc-Inj A B RA RB F S :- 
     F = (fun _ _ _), !,

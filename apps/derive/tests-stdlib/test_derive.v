@@ -170,7 +170,3 @@ End derive_container.
 About wimpls.wimpls.
 About wimpls.Kwi.
 Redirect "tmp" Check Kwi _ (refl_equal 3).
-
-From Coq Require Ascii.
-
-#[only(param2)] derive Ascii.ascii.

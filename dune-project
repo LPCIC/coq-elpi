@@ -40,3 +40,9 @@
  (synopsis "Technical package to run tests")
  (description "Do not install")
  (depends coq-elpi))
+
+(package
+ (name coq-elpi-tests-stdlib)
+ (synopsis "Technical package to run tests depending on Stdlib")
+ (description "Do not install")
+ (depends coq-elpi coq-stdlib))

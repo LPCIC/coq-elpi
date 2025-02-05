@@ -89,7 +89,7 @@ Elpi Accumulate TC_solver lp:{{
 
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""\
-From elpi.apps.tc.tests Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
+From elpi_apps_tc_tests_stdlib Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
 {"" if isCoq else 'Elpi TC.Solver. Set TC Time Refine. Set TC Time Instance Search. Set TC Time Build Query. Set Debug "elpitime".'}
 """
     GOAL = buildTree(composeLen)

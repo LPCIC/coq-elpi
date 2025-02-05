@@ -1,0 +1,87 @@
+(coq.theory
+ (name elpi_stdlib)
+ (plugins coq-elpi.elpi)
+ (package coq-elpi-tests-stdlib)
+ (theories elpi_elpi elpi @@STDLIB@@))
+
+(rule
+ (target Bool.v)
+ (deps
+  (glob_files Bool.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target Vector.v)
+ (deps
+  (glob_files Vector.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target Arith.v)
+ (deps
+  (glob_files Arith.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target ZArith.v)
+ (deps
+  (glob_files ZArith.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target FunctionalExtensionality.v)
+ (deps
+  (glob_files FunctionalExtensionality.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target List.v)
+ (deps
+  (glob_files List.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target Ranalysis5.v)
+ (deps
+  (glob_files Ranalysis5.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target Utf8.v)
+ (deps
+  (glob_files Utf8.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target Peano.v)
+ (deps
+  (glob_files Peano.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target Permutation.v)
+ (deps
+  (glob_files Permutation.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(include_subdirs qualified)

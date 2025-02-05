@@ -11,10 +11,11 @@ These two functions being defined both in [Coq.Bool] and in [Coq.Peano],
 we must export [Coq.Peano] later than any export of [Coq.Bool]. *)
 (* We also want to ensure that notations from [Coq.Utf8] take precedence
 over the ones of [Coq.Peano] (see Coq PR#12950), so we import [Utf8] last. *)
-From Coq Require Export Morphisms RelationClasses List Bool Setoid Peano Utf8.
-From Coq Require Import Permutation.
+From elpi.core Require Export Morphisms RelationClasses ListDef Bool Setoid.
+From elpi_stdlib Require Export Bool List Peano Utf8 Permutation.
+From elpi_stdlib Require Export Program.Basics Program.Syntax.
+
 Export ListNotations.
-From Coq.Program Require Export Basics Syntax.
 
 TC.AddAllClasses.
 TC.AddAllInstances.
@@ -933,7 +934,7 @@ Section prod_setoid.
   Global Instance pair_proper : Proper ((≡) ==> (≡) ==> (≡@{A*B})) pair := _.
 
   Elpi Accumulate TC.Solver lp:{{
-    shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj2}.
+    shorten tc-elpi_apps_tc_tests_stdlib.bigTest.{tc-Inj2}.
     % shorten tc-bigTest.{tc-Inj2}.
     :after "lastHook" 
     tc-Inj2 A B C RA RB RC F S :-
@@ -1058,7 +1059,7 @@ Global Instance inr_proper `{Equiv A, Equiv B} : Proper ((≡) ==> (≡)) (@inr 
 
 
 Elpi Accumulate TC.Solver lp:{{
-  shorten tc-elpi.apps.tc.tests.bigTest.{tc-Inj}.
+  shorten tc-elpi_apps_tc_tests_stdlib.bigTest.{tc-Inj}.
   % shorten tc-bigTest.{tc-Inj}.
   :after "lastHook" 
   tc-Inj A B R1 R2 S C :-

@@ -29,7 +29,7 @@ Elpi Query lp:{{
   coq.say BO1.
 }}.
 
-Require Vector.
+From elpi_stdlib Require Vector.
 
 Elpi Query lp:{{
   T = {{ fun v : Vector.t nat 2 =>
@@ -92,7 +92,6 @@ Fail Elpi Query lp:{{ std.do! [
 
 Fail Check hd.
 Fail Elpi File boom lp:{{ p :- X = {{ hd }}.  }}.
-From elpi.tests Extra Dependency "boom.elpi" as boom2.
 Import List.
 Check hd.
 Elpi File boom lp:{{ p :- X = {{ hd }}.  }}.

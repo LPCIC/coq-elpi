@@ -1,0 +1,6 @@
+(coq.theory
+ (package coq-elpi-tests-stdlib)
+ (name elpi_apps_eltac_tests_stdlib)
+ (theories elpi elpi.apps.eltac elpi_stdlib))
+
+(include_subdirs qualified)
