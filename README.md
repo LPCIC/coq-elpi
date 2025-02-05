@@ -5,7 +5,8 @@
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users.20.26.20devs)
 <img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/logo.png" alt="Coq-Elpi logo" width="25%" />
 
-# Coq-Elpi
+<h1 tabindex="-1" class="heading-element" dir="auto" style="width: 60%">Coq-Elpi</h1>
+
 [Coq](https://github.com/coq/coq) plugin embedding [Elpi](https://github.com/LPCIC/elpi).
 
 ## What is Elpi
