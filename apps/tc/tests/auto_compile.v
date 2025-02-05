@@ -2,8 +2,6 @@ From elpi.apps Require Import tc.
 
 Elpi TC Solver Override TC.Solver All.
 
-Require Import Bool.
-
 (* TODO: How to add the #[deterministic] pragma in front of the class? *)
 (* #[deterministic] Class A (T : Type) := {succ : T -> T}. *)
 Class A (T : Type) := {succ : T -> T}.

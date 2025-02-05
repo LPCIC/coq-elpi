@@ -1,3 +1,5 @@
+From elpi.core Require Import PrimFloat.
+
 From elpi_elpi Extra Dependency "elpi_elaborator.elpi" as elab.
 
 From elpi Require Import elpi.
@@ -150,10 +152,8 @@ Elpi Query lp:{{get-option "of:coerce" tt =>
 }}.
 
 (* primitive *)
-From Coq Require Import Uint63.
+From elpi.core Require Import PrimInt63.
 Elpi Query lp:{{ of {{ 99%uint63 }} T X }}.
-From Coq Require Import Floats.
 Elpi Query lp:{{ of {{ 99.3e4%float }} T X }}.
-Elpi Query lp:{{ whd1 {{ (99 + 1)%uint63 }} {{ 100%uint63 }} }}.
-Elpi Query lp:{{ not(whd1 {{ (99 + _)%uint63 }} _) }}.
-
+Elpi Query lp:{{ whd1 {{ PrimInt63.add 99 1 }} {{ 100%uint63 }} }}.
+Elpi Query lp:{{ not(whd1 {{ PrimInt63.add 99 _ }} _) }}.

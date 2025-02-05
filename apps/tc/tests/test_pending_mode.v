@@ -1,5 +1,4 @@
 From elpi Require Import tc.
-Require Import Bool.
 
 Module m1.
   Elpi TC.Pending_mode +.
@@ -115,7 +114,7 @@ Module simplEq.
   Global Instance eqU : MyEqb unit := { eqb x y := true }.
   Global Instance eqB : MyEqb bool := { eqb x y := if x then y else negb y }.
   Global Instance eqP {A B} `{MyEqb A} `{MyEqb B} : MyEqb (A * B) := { 
-    eqb x y := (fst x == fst y) && (snd x == snd y) }.
+    eqb x y := andb (fst x == fst y) (snd x == snd y) }.
 
   Fail Goal exists T: Type, forall n m : T, eqb n m = false.
   Goal forall n m : bool, eqb n m = false. Abort.

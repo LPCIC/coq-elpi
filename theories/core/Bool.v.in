@@ -1,0 +1,4 @@
+#[only="8.20"] From Coq Require Export Bool.
+#[only="8.20"] Module Datatypes.
+#[only="8.20"] Notation reflect := Bool.reflect.
+#[only="8.20"] End Datatypes.

@@ -1,6 +1,6 @@
 (* Some standard data types using different features *)
-From Coq Require Uint63.
-From Coq Require Floats.
+From elpi.core Require PrimInt63.
+From elpi.core Require PrimFloat.
 
 Module Coverage.
 
@@ -68,7 +68,7 @@ Inductive large :=
 | K25(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) 
 | K26(_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit) (_ : unit).
 
-Inductive prim_int := PI (i : Uint63.int).
+Inductive prim_int := PI (i : PrimInt63.int).
 Inductive prim_float := PF (f : PrimFloat.float).
 
 Record fo_record := { f1 : peano; f2 : unit; }.

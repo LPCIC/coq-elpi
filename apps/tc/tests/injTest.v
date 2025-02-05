@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-From Coq Require Import Morphisms RelationClasses List Bool Setoid Peano Utf8.
+From elpi.core Require Import Morphisms RelationClasses ListDef Setoid.
 
 Generalizable All Variables.
 Elpi TC Solver Override TC.Solver All.
@@ -8,8 +8,8 @@ Class Inj {A B} (R : relation A) (S : relation B) (f : A -> B) :=
   inj x y : S (f x) (f y) -> R x y.
 
 Class Inj2 {A B C} (R1 : relation A) (R2 : relation B)
-    (S : relation C) (f : A → B → C) : Prop :=
-  inj2 x1 x2 y1 y2 : S (f x1 x2) (f y1 y2) → R1 x1 y1 ∧ R2 x2 y2.
+    (S : relation C) (f : A -> B -> C) : Prop :=
+  inj2 x1 x2 y1 y2 : S (f x1 x2) (f y1 y2) -> R1 x1 y1 /\ R2 x2 y2.
 
 (* Elpi TC Solver Override TC.Solver Only Inj Inj2. *)
 
@@ -65,7 +65,7 @@ Goal forall (T1 T2 : Type) (f: T1 -> T2),
 Qed. 
 
 Elpi TC Solver Override TC.Solver All.
-Local Instance inj2_inj_1 `{Inj2 A B C R1 R2 R3 ff} y : Inj R1 R3 (λ x, ff x y).
+Local Instance inj2_inj_1 `{Inj2 A B C R1 R2 R3 ff} y : Inj R1 R3 (fun x => ff x y).
 Admitted.
 
 Global Instance inj2_inj_2 `{Inj2 A B C R1 R2 R3 ff} x : Inj R2 R3 (ff x).

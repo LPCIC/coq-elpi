@@ -39,7 +39,7 @@ Elpi derive.tag val.
 End Coverage.
 
 Import Coverage.
-Import PArith.
+From elpi.core Require Import PosDef.
 
 Local Notation tag X := (X -> positive).
 

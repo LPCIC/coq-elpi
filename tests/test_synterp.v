@@ -1,4 +1,3 @@
-From Coq Require Import Bool.
 From elpi Require Import elpi.
 
 Elpi Command foo.

@@ -1,0 +1,2 @@
+#[only="8.20"] From Coq Require Export Floats.
+#[skip="8.20"] From Corelib Require Export PrimFloat.

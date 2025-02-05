@@ -80,7 +80,7 @@ main [] :- !, coq.say {coq.float->float64 1.2}.
 }}.
 
 
-From Coq Require Import PrimFloat Uint63.
+From elpi.core Require Import PrimFloat PrimInt63.
 
 Open Scope uint63_scope.
 

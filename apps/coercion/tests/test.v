@@ -1,6 +1,5 @@
 From elpi.apps Require Import coercion.
 #[warning="-deprecated-from-Coq"]
-From Coq Require Import Bool.
 
 Elpi Accumulate coercion.db lp:{{
 
@@ -9,7 +8,7 @@ coercion _ {{ False }} {{ Prop }} {{ bool }} {{ false }}.
 
 }}.
 
-Check True && False.
+Check andb True False.
 
 Parameter ringType : Type.
 Parameter ringType_sort : ringType -> Type.

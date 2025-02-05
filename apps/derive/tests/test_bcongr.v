@@ -1,3 +1,4 @@
+From elpi.core Require Import Bool.
 From elpi.apps Require Import derive.bcongr.
 
 From elpi.apps Require Import test_derive_corelib test_projK.
