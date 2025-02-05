@@ -1,6 +1,6 @@
 From elpi.apps Require Import derive derive.projK.
 
-From elpi.apps Require Import test_derive_stdlib.
+From elpi.apps Require Import test_derive_corelib.
 
 Elpi derive.projK Coverage.vect.
 

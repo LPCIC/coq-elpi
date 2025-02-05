@@ -1,8 +1,8 @@
 From elpi.apps Require Import derive.eqbcorrect.
 From elpi.apps.derive Require Import param1. (* FIXME, the clause is in param1 *)
-From elpi.apps.derive.tests Require Import test_derive_stdlib test_eqType_ast test_tag test_fields test_eqb test_induction 
+From elpi.apps.derive.tests Require Import test_derive_corelib test_eqType_ast test_tag test_fields test_eqb test_induction 
                                            test_param1 test_param1_trivial test_param1_functor.
-Import test_derive_stdlib.Coverage 
+Import test_derive_corelib.Coverage 
        test_eqType_ast.Coverage 
        test_tag.Coverage 
        test_fields.Coverage

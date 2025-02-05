@@ -1,7 +1,7 @@
 From elpi.apps Require Import derive.fields.
 
-From elpi.apps.derive.tests Require Import test_derive_stdlib test_eqType_ast test_tag.
-Import test_derive_stdlib.Coverage test_eqType_ast.Coverage test_tag.Coverage.
+From elpi.apps.derive.tests Require Import test_derive_corelib test_eqType_ast test_tag.
+Import test_derive_corelib.Coverage test_eqType_ast.Coverage test_tag.Coverage.
 
 Module Coverage.
 Elpi derive.fields empty.

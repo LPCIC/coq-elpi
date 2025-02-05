@@ -1,6 +1,6 @@
-From elpi.apps Require Import test_derive_stdlib derive.isK.
+From elpi.apps Require Import test_derive_corelib derive.isK.
 
-Import test_derive_stdlib.Coverage.
+Import test_derive_corelib.Coverage.
 
 (* coverage *)
 Module Coverage.

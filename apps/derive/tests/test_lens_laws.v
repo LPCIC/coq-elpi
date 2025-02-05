@@ -1,9 +1,9 @@
 
 From elpi.apps Require Import derive.lens_laws.
 
-From elpi.apps Require Import test_derive_stdlib test_lens.
+From elpi.apps Require Import test_derive_corelib test_lens.
 
-Import test_derive_stdlib.Coverage.
+Import test_derive_corelib.Coverage.
 Import test_lens.Coverage.
 
 (* coverage *)

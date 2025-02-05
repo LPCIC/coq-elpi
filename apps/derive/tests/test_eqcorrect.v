@@ -1,8 +1,8 @@
 From elpi.apps Require Import derive.eqcorrect.
 
-From elpi.apps Require Import test_derive_stdlib derive.tests.test_eq test_param1 test_param1_functor test_induction test_eqK.
+From elpi.apps Require Import test_derive_corelib derive.tests.test_eq test_param1 test_param1_functor test_induction test_eqK.
 
-Import test_derive_stdlib.Coverage.
+Import test_derive_corelib.Coverage.
 Import tests.test_eq.Coverage.
 Import test_param1.Coverage.
 Import test_param1_functor.Coverage.
