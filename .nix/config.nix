@@ -14,6 +14,11 @@ let master = [
   common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
+    coq-elpi-no-stdlib.job = true;
+    coq-elpi-tests.job = true;
+    stdlib.job = true;
+    coq-elpi-tests-stdlib.job = true;
+
     mathcomp-single-planB-src.job = false;
     mathcomp-single-planB.job = false;
     mathcomp-single.job = false;
@@ -30,6 +35,8 @@ let master = [
     "coq-8.20".coqPackages = common-bundles // {
       coq.override.version = "8.20";
       coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi-no-stdlib.job = false;
+      coq-elpi-tests-stdlib.job = false;
     };
 
     "rocq-9.0".coqPackages = common-bundles // {
@@ -49,6 +56,7 @@ let master = [
       coq.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
       stdlib.override.version = "master";
+      bignums.override.version = "master";
     }; */
 
   };
