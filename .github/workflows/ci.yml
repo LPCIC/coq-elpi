@@ -17,7 +17,8 @@ jobs:
     strategy:
       matrix:
         image:
-          - 'coqorg/coq:dev'
+          - 'rocq/rocq-prover:dev'
+          - 'rocq/rocq-prover:9.0'
           - 'coqorg/coq:8.20'
       fail-fast: false  # don't stop jobs if one fails
     steps:
