@@ -1,0 +1,54 @@
+(* license: GNU Lesser General Public License Version 2.1 or later           *)
+(* ------------------------------------------------------------------------- *)
+
+DECLARE PLUGIN "rocq-elpi.tc"
+
+{
+open Stdarg
+open Elpi_plugin
+open Rocq_elpi_arg_syntax
+open Rocq_elpi_tc_register
+open Rocq_elpi_class_tactics_takeover
+}
+
+VERNAC COMMAND EXTEND ElpiTypeclasses CLASSIFIED AS SIDEFF
+
+| #[ atts = any_attribute ] [ "Elpi" "Register" "TC" "Compiler" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     register_observer (fst p, snd p, atts) }
+
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Activate" "Observer" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     activate_observer (snd p) }
+
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Deactivate" "Observer" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     deactivate_observer (snd p) }
+
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Register" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     solver_register(snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Activate" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     solver_activate(snd p) }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Deactivate" qualified_name(p) ] -> {
+     let () = ignore_unknown_attributes atts in
+     solver_deactivate(snd p) }
+
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "All" ] -> {
+     let () = ignore_unknown_attributes atts in
+     set_solver_mode AAll (snd p) [] }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "None" ] -> {
+     let () = ignore_unknown_attributes atts in
+     set_solver_mode ANone (snd p) [] }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Only" ne_reference_list(cs) ] -> {
+     let () = ignore_unknown_attributes atts in
+     set_solver_mode ASet (snd p) cs }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Add" reference_list(cs) ] -> {
+     let () = ignore_unknown_attributes atts in
+     set_solver_mode AAdd (snd p) cs }
+| #[ atts = any_attribute ] [ "Elpi" "TC" "Solver" "Override" qualified_name(p) "Rm" reference_list(cs) ] -> {
+     let () = ignore_unknown_attributes atts in
+     set_solver_mode ARm (snd p) cs }
+
+END

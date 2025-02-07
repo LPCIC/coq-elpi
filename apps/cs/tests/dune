@@ -3,5 +3,5 @@
  (deps
   %{bin:coqc}
   %{bin:coqdep}
-  (package coq-elpi)
+  (package rocq-elpi)
   setup-project.sh))

@@ -13,7 +13,7 @@ Elpi Query lp:{{
 Elpi Command version.
 Elpi Accumulate lp:{{
 
-% elpi:if version coq-elpi < 2.0.0
+% elpi:if version rocq-elpi < 2.0.0
 main _ :- coq.error "bad".
 % elpi:endif
 

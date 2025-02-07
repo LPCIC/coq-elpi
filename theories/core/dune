@@ -7,7 +7,7 @@
   (glob_files Bool.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target ListDef.v)
@@ -15,7 +15,7 @@
   (glob_files ListDef.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target Morphisms.v)
@@ -23,7 +23,7 @@
   (glob_files Morphisms.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target PosDef.v)
@@ -31,7 +31,7 @@
   (glob_files PosDef.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target PrimInt63.v)
@@ -39,7 +39,7 @@
   (glob_files PrimInt63.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target PrimFloat.v)
@@ -47,7 +47,7 @@
   (glob_files PrimFloat.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target RelationClasses.v)
@@ -55,7 +55,7 @@
   (glob_files RelationClasses.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target Setoid.v)
@@ -63,7 +63,7 @@
   (glob_files Setoid.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target Uint63Axioms.v)
@@ -71,7 +71,7 @@
   (glob_files Uint63Axioms.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target ssreflect.v)
@@ -79,7 +79,7 @@
   (glob_files ssreflect.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target ssrfun.v)
@@ -87,7 +87,7 @@
   (glob_files ssrfun.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
  (target ssrbool.v)
@@ -95,4 +95,4 @@
   (glob_files ssrbool.v.in))
  (action
   (with-stdout-to %{target}
-   (run coq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))

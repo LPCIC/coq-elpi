@@ -39,7 +39,7 @@ inference, and to provide an alternative elaborator for Coq.
 The simplest way is to use [OPAM](http://opam.ocaml.org/) and type
 ```
 opam repo add coq-released https://coq.inria.fr/opam/released
-opam install coq-elpi
+opam install rocq-elpi
 ```
 
 ### Editor Setup
@@ -72,10 +72,10 @@ highlighting and handles quotations.
 
 To install the development version one can type
 ```
-opam pin add coq-elpi https://github.com/LPCIC/coq-elpi.git
+opam pin add rocq-elpi https://github.com/LPCIC/coq-elpi.git
 ```
 One can also clone this repository and type `make`, but check you have
-all the dependencies installed first (see [coq-elpi.opam](coq-elpi.opam)).
+all the dependencies installed first (see [rocq-elpi.opam](rocq-elpi.opam)).
 
 We recommend to look at the [CI setup](.github/workflows) for
 ocaml versions being tested. Also, we recommend to install `dot-merlin-reader`

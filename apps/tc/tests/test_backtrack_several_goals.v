@@ -44,7 +44,7 @@ Module M1.
   Qed.
 End M1.
 
-(* Here similar problems using the coq-elpi solver *)
+(* Here similar problems using the rocq-elpi solver *)
 From elpi Require Import elpi tc.
 
 Module ElpiBt.

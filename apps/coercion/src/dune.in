@@ -1,0 +1,9 @@
+(library
+ (name elpi_coercion_plugin)
+ (public_name rocq-elpi.coercion)
+ (flags :standard -w -27)
+ (preprocess (pps ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
+ (libraries @@ROCQ_RUNTIME@@.plugins.ltac @@ROCQ_RUNTIME@@.vernac rocq-elpi.elpi))
+
+(coq.pp
+ (modules rocq_elpi_coercion_hook))

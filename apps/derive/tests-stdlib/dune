@@ -1,5 +1,5 @@
 (coq.theory
- (package coq-elpi-tests-stdlib)
+ (package rocq-elpi-tests-stdlib)
  (name elpi_apps_derive_tests_stdlib)
  (flags :standard -w -default-output-directory)
  (theories elpi elpi.apps.derive elpi.apps.derive.tests elpi_stdlib))

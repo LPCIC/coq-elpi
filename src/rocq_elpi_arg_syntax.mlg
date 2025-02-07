@@ -1,0 +1,354 @@
+(* rocq-elpi: Coq terms as the object language of elpi                       *)
+(* license: GNU Lesser General Public License Version 2.1 or later           *)
+(* ------------------------------------------------------------------------- *)
+
+DECLARE PLUGIN "rocq-elpi.elpi"
+
+{
+
+open Ltac_plugin
+open Gramlib
+
+open Pcoq.Constr
+open Pcoq.Prim
+open Pvernac.Vernac_
+open Pltac
+
+module EA = Rocq_elpi_arg_HOAS
+module U = Rocq_elpi_utils
+
+(* Arguments ************************************************************* *)
+let pr_elpi_string _ _ _ (s : Elpi.API.Ast.Loc.t * string) = Pp.str (snd s)
+
+let trim_loc loc =
+  let open Loc in
+  { loc with bp = loc.bp + 1; ep = loc.ep - 1 }
+
+let idents_of loc s =
+  let s = String.sub s 1 (String.length s - 2) in
+  let l = Str.(split (regexp "[\t \n]+") s) in
+  List.iter (fun x -> if not (CLexer.is_ident x) then raise Stream.Failure) l;
+  Rocq_elpi_utils.of_coq_loc (trim_loc loc), l
+
+let rec strip_curly loc s =
+  if s.[0] = '\123' then strip_curly (trim_loc loc) String.(sub s 1 (length s - 2))
+  else Rocq_elpi_utils.of_coq_loc loc, s
+let rec strip_round loc s =
+  if s.[0] = '(' then strip_round (trim_loc loc) String.(sub s 1 (length s - 2))
+  else Rocq_elpi_utils.of_coq_loc loc, s
+let rec strip_square loc s =
+  if s.[0] = '[' then strip_square (trim_loc loc) String.(sub s 1 (length s - 2))
+  else Rocq_elpi_utils.of_coq_loc loc, s
+
+}
+
+ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
+END
+GRAMMAR EXTEND Gram GLOBAL: elpi_string;
+elpi_string : FIRST [
+  [ s = QUOTATION "lp:" -> {
+    let loc = { loc with Loc.bp = loc.Loc.bp + 3 } in
+    if s.[0] = '\123' then strip_curly loc s
+    else if s.[0] = '(' then strip_round loc s
+    else if s.[0] = '[' then strip_square loc s
+    else Rocq_elpi_utils.of_coq_loc loc, s
+  }
+  | s = STRING -> {
+    Rocq_elpi_utils.of_coq_loc loc, s
+  }
+  ]];
+END
+
+{
+let pr_fp _ _ _ (_,x) = U.pr_qualified_name x
+let pp_elpi_loc _ _ _ (l : Loc.t) = Pp.mt ()
+
+let the_qname = ref ""
+let any_qname kwstate strm =
+  let re = Str.regexp "[A-Za-z][A-Za-z0-9]*\\(\\.?[A-Za-z][A-Za-z0-9]*\\)*" in
+  match LStream.peek kwstate strm with
+  | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 ->
+      let pos = LStream.count strm in
+      let _, ep = Loc.unloc (LStream.get_loc pos strm) in
+      LStream.junk kwstate strm;
+      begin match LStream.peek kwstate strm with
+      | Some (Tok.IDENT id) ->
+          let bp, _ = Loc.unloc (LStream.get_loc (pos+1) strm) in
+          if Int.equal ep bp then
+            (LStream.junk kwstate strm; the_qname := sym ^ id)
+          else
+            the_qname := sym
+      | _ -> the_qname := sym
+      end
+  | _ -> raise Stream.Failure
+let any_qname = Pcoq.Entry.(of_parser "any_qname" { parser_fun = any_qname })
+
+}
+
+ARGUMENT EXTEND qualified_name PRINTED BY { pr_fp }
+END
+GRAMMAR EXTEND Gram GLOBAL: qualified_name;
+qualified_name : FIRST
+  [ [ i = IDENT; s = LIST0 FIELD -> { loc, i :: s }
+    | "_"; s = LIST0 FIELD -> { loc, match s with [] -> [] | _ -> "_" :: s }
+    | any_qname -> { loc, Str.split_delim (Str.regexp_string ".") !the_qname } ]
+  ];
+END
+
+ARGUMENT EXTEND elpi_loc
+PRINTED BY { pp_elpi_loc }
+| [ ] -> { loc }
+END
+
+{
+
+let telescope = Pcoq.Entry.make "elpi:telescope"
+let colon_sort = Pcoq.Entry.make "elpi:colon_sort"
+let colon_constr = Pcoq.Entry.make "elpi:colon_constr"
+
+let any_attribute : Attributes.vernac_flags Attributes.attribute =
+  Attributes.make_attribute (fun x -> [],x)
+
+let ignore_unknown_attributes extra =
+  CWarnings.with_warn "unsupported-attributes" Attributes.unsupported_attributes extra
+
+let scope_attribute : Rocq_elpi_utils.clause_scope Attributes.attribute =
+  let open Attributes.Notations in
+  let open Rocq_elpi_utils in
+  Attributes.attribute_of_list
+    ["local",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Local
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[local]"));
+     "global",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Global
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[global]"));
+     "superglobal",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> SuperGlobal
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[superglobal]"));
+    ] |> map (Option.default Regular)
+
+
+let skip_attribute : (Str.regexp list option * Str.regexp list option) Attributes.attribute =
+  let open Attributes.Notations in
+  let o2l = function None -> [] | Some l -> l in
+  Attributes.attribute_of_list
+    ["skip",
+      fun ?loc old -> function
+      | Attributes.VernacFlagLeaf (Attributes.FlagString rex) -> Str.regexp rex :: o2l old
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[skip=\"rex\"]")]
+  ++
+  Attributes.attribute_of_list
+   ["only",
+      fun ?loc old -> function
+      | Attributes.VernacFlagLeaf (Attributes.FlagString rex) -> Str.regexp rex :: o2l old
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[only=\"rex\"]")]
+
+let synterp_attribute : EA.phase option Attributes.attribute =
+  let open EA in
+  Attributes.attribute_of_list
+    ["phase",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "parsing") -> Synterp
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "execution") -> Interp
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "both") -> Both
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[phase=\"parsing\"] or #[phase=\"execution\"] or #[phase=\"both\"]"))
+    ;"phases",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagLeaf (Attributes.FlagString "both") -> Both
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[phases=\"both\"]"))
+    ;"synterp",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Synterp
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[synterp]"))
+    ;"interp",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Interp
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[interp]"))
+    ;"both",
+      (fun ?loc old -> function
+      | Attributes.VernacFlagEmpty -> Both
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[both]"))
+
+    ]
+
+let skip_and_synterp_attributes = Attributes.Notations.(skip_attribute ++ synterp_attribute)
+let scope_and_skip_and_synterp_attributes = Attributes.Notations.(scope_attribute ++ skip_attribute ++ synterp_attribute)
+
+let raw_args_attributes =
+  Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw"))
+
+let validate_attributes a flags =
+  let extra, raw_args = Attributes.parse_with_extra a flags in
+  ignore_unknown_attributes extra;
+  raw_args
+
+let coq_kwd_or_symbol = Pcoq.Entry.make "elpi:kwd_or_symbol"
+
+let opt2list = function None -> [] | Some l -> l
+
+let the_kwd = ref ""
+let any_kwd kwstate strm =
+  match LStream.peek kwstate strm with
+  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk kwstate strm; the_kwd := sym
+  | _ -> raise Stream.Failure
+let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
+
+let pr_attributes _ _ _ atts =
+  Pp.(prlist_with_sep (fun () -> str ",") Attributes.pr_vernac_flag atts)
+
+let wit_elpi_ftactic_arg = EA.Tac.wit
+
+let def_body = G_vernac.def_body
+
+let of_coq_inductive_declaration ~atts kind id =
+  let open Vernacentries in let open Preprocessed_Mind_decl in
+  match preprocess_inductive_decl ~atts kind [id] with
+  | Inductive i -> i
+  | Record _ -> assert false
+
+let of_coq_record_declaration ~atts kind id =
+  let open Vernacentries in let open Preprocessed_Mind_decl in
+  match preprocess_inductive_decl ~atts kind [id] with
+  | Inductive _ -> assert false
+  | Record r -> r
+
+let of_coq_definition ~loc ~atts name udecl def =
+  match def with
+  | Vernacexpr.DefineBody(bl,red,c,ty) ->
+      EA.Cmd.(ConstantDecl { name = snd name; atts; udecl; typ = (bl,ty); red; body = Some c })
+  | Vernacexpr.ProveBody _ ->
+      CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body")
+
+}
+
+GRAMMAR EXTEND Gram
+  GLOBAL: telescope colon_sort colon_constr coq_kwd_or_symbol pipe_telescope;
+
+  telescope:
+    [ [ bl = binders -> { bl } ] ];
+
+  colon_sort:
+    [ [ ":"; s = sort -> { s } ] ];
+
+  colon_constr:
+    [ [ ":"; s = lconstr -> { s } ] ];
+
+  coq_kwd_or_symbol:
+    [ [ any_kwd -> { !the_kwd }] ];
+END
+
+{
+
+[%%if coq = "8.20"]
+let mkAttributesFlagQualid q = Attributes.FlagIdent (Names.Id.to_string (Libnames.qualid_basename q)) 
+[%%else]
+let mkAttributesFlagQualid q = Attributes.FlagQualid q
+[%%endif]
+
+}
+
+ARGUMENT EXTEND attributes
+  PRINTED BY { pr_attributes } 
+END
+GRAMMAR EXTEND Gram GLOBAL: attributes;
+  my_attribute_list:
+    [ [ a = LIST0 my_attribute SEP "," -> { a } ]
+    ]
+  ;
+  my_attribute:
+    [ [ k = ident ; v = my_attr_value -> { CAst.make ~loc (Names.Id.to_string k, v) }
+      (* Required because "ident" is declared a keyword when loading Ltac. *)
+      | IDENT "using" ; v = my_attr_value -> { CAst.make ~loc ("using", v) } ]
+    ]
+  ;
+  my_attr_value:
+    [ [ "=" ; v = string -> { Attributes.VernacFlagLeaf (Attributes.FlagString v) }
+      | "=" ; v = qualid -> { Attributes.VernacFlagLeaf (mkAttributesFlagQualid v) }
+      | "(" ; a = my_attribute_list ; ")" -> { Attributes.VernacFlagList a }
+      | -> { Attributes.VernacFlagEmpty } ]
+    ]
+  ;
+
+  attributes : FIRST [[ atts = LIST1 my_attribute SEP "," -> { atts } ]];
+
+END
+
+ARGUMENT EXTEND elpi_cmd_arg
+PRINTED BY { fun _ _ _ -> EA.Cmd.pp_top env sigma }
+INTERPRETED BY { EA.Cmd.interp }
+GLOBALIZED BY { EA.Cmd.glob }
+SUBSTITUTED BY { EA.Cmd.subst }
+RAW_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_raw env sigma }
+GLOB_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_glob env sigma }
+| [ qualified_name(s) ] -> { EA.Cmd.String (String.concat "." (snd s)) }
+| [ integer(n) ] -> { EA.Cmd.Int n }
+| [ string(s) ] -> { EA.Cmd.String s }
+
+| [ "Inductive" inductive_or_record_definition(id) ] -> { EA.Cmd.IndtDecl (of_coq_inductive_declaration ~atts:[] Vernacexpr.Inductive_kw id) }
+| [ "#[" attributes(atts) "]" "Inductive" inductive_or_record_definition(id) ] -> { EA.Cmd.IndtDecl (of_coq_inductive_declaration ~atts Vernacexpr.Inductive_kw id) }
+
+| [ "CoInductive" inductive_or_record_definition(id) ] -> { EA.Cmd.IndtDecl (of_coq_inductive_declaration ~atts:[] Vernacexpr.CoInductive id) }
+| [ "#[" attributes(atts) "]" "CoInductive" inductive_or_record_definition(id) ] -> { EA.Cmd.IndtDecl (of_coq_inductive_declaration ~atts Vernacexpr.CoInductive id) }
+
+| [ "Variant" inductive_or_record_definition(id) ] -> { EA.Cmd.IndtDecl (of_coq_inductive_declaration ~atts:[] Vernacexpr.Variant id) }
+| [ "#[" attributes(atts) "]" "Variant" inductive_or_record_definition(id) ] -> { EA.Cmd.IndtDecl (of_coq_inductive_declaration ~atts Vernacexpr.Variant id) }
+
+| [ "Record" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts:[] Vernacexpr.Record id) }
+| [ "#[" attributes(atts) "]" "Record" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts Vernacexpr.Record id) }
+
+| [ "Class" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts:[] Vernacexpr.(Class true) id) }
+| [ "#[" attributes(atts) "]" "Class" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts Vernacexpr.(Class true) id) }
+
+| [ "Structure" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts:[] Vernacexpr.Structure id) }  
+| [ "#[" attributes(atts) "]" "Structure" inductive_or_record_definition(id) ] -> { EA.Cmd.RecordDecl (of_coq_record_declaration ~atts Vernacexpr.Structure id) }  
+
+| [ "Definition" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts:[] name udecl def }
+| [ "#[" attributes(atts) "]" "Definition" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts name udecl def }
+
+| [ "Axiom" qualified_name(name) univ_decl_opt(udecl) telescope(typ) colon_constr(t) ] -> {
+      EA.Cmd.(ConstantDecl { name = snd name; atts = []; udecl; typ = (typ,Some t); red = None; body = None }) }
+| [ "#[" attributes(atts) "]" "Axiom" qualified_name(name) univ_decl_opt(udecl) telescope(typ) colon_constr(t) ] -> {
+      EA.Cmd.(ConstantDecl { name = snd name; atts; udecl; typ = (typ,Some t); red = None; body = None }) }
+
+
+| [ "Context" telescope(ty) ] -> { EA.Cmd.Context ty }
+
+| [ "(" lconstr(t) ")" ] -> { EA.Cmd.Term t }
+
+| [ coq_kwd_or_symbol(x) ] -> { EA.Cmd.String x }
+END
+
+ARGUMENT EXTEND elpi_tactic_arg
+TYPED AS elpi_ftactic_arg
+| [ qualified_name(s) ] -> { EA.Tac.String (String.concat "." (snd s)) }
+| [ integer(n) ] -> { EA.Tac.Int n }
+| [ string(s) ] -> { EA.Tac.String s }
+| [ "(" lconstr(t) ")" ] -> { EA.Tac.Term t }
+| [ "`(" lconstr(t) ")" ] -> { EA.Tac.OpenTerm t }
+| [ "ltac_string" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_string_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.String, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_int" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_int_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Int, (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_term" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.Term, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
+| [ "ltac_term_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.Term,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_open_term" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.OpenTerm, CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None)) }
+| [ "ltac_open_term_list" ":" "(" ident(t) ")" ] -> { EA.Tac.LTac(EA.Tac.List EA.Tac.OpenTerm,(CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string t,None))) }
+| [ "ltac_tactic" ":" "(" ltac_expr(t) ")" ] -> { EA.Tac.LTacTactic t }
+END
+
+ARGUMENT EXTEND ltac_attributes
+  PRINTED BY { pr_attributes } 
+  INTERPRETED BY { fun ist env evd x -> match DAst.get x with
+      | Glob_term.GVar id ->
+          Ltac_plugin.Tacinterp.interp_ltac_var (Ltac_plugin.Tacinterp.Value.cast (Genarg.topwit wit_attributes)) ist None (CAst.make id)
+      | _ -> assert false }
+  GLOBALIZED BY { fun gsig t -> fst @@ Ltac_plugin.Tacintern.intern_constr gsig t }
+  SUBSTITUTED BY { fun x -> Detyping.subst_glob_constr (Global.env()) x }
+  RAW_PRINTED BY { fun _ _ _ -> Ppconstr.pr_constr_expr env sigma }
+  GLOB_PRINTED BY { fun _ _ _ -> Printer.pr_glob_constr_env env sigma }
+| [ ident(v) ] -> { (CAst.make ~loc @@ Constrexpr.CRef (Libnames.qualid_of_string ~loc @@ Names.Id.to_string v,None)) }
+END
+

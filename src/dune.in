@@ -1,0 +1,50 @@
+(library
+ (name elpi_plugin)
+ (public_name rocq-elpi.elpi)
+ (synopsis "Elpi")
+ (flags :standard -w -27)
+ (preprocessor_deps rocq_elpi_config.mlh)
+ (preprocess
+  (pps ppx_deriving.std ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
+ (libraries @@ROCQ_RUNTIME@@.plugins.ltac @@ROCQ_RUNTIME@@.vernac elpi))
+
+(rule
+  (target rocq_elpi_builtins_arg_HOAS.ml)
+  (deps ../elpi/coq-arg-HOAS.elpi (package elpi))
+  (action (with-stdout-to %{target}
+    (progn
+      (echo "(* Automatically generated from %{deps}, don't edit *)\n")
+	     (echo "let code = {|\n")
+      (cat %{deps})
+	     (echo "|}\n")))))
+
+(rule
+  (target rocq_elpi_builtins_HOAS.ml)
+  (deps ../elpi/coq-HOAS.elpi)
+  (action (with-stdout-to %{target}
+    (progn
+      (echo "(* Automatically generated from %{deps}, don't edit *)\n")
+	     (echo "let code = {|\n")
+      (cat %{deps})
+	     (echo "|}\n")))))
+
+(rule
+  (target rocq_elpi_config.ml)
+  (action (with-stdout-to %{target}
+    (progn
+      (echo "(* Automatically generated, don't edit *)\n")
+      (echo "[%%import \"rocq_elpi_config.mlh\"]\n")
+      (echo "let elpi_version = \"%{version:elpi}\"\n")))))
+
+(rule
+  (target rocq_elpi_config.mlh)
+  (action (with-stdout-to %{target}
+    (progn
+      (echo "(* Automatically generated, don't edit *)\n")
+      (echo "[%%define elpi ")
+      (run rocq_elpi_version_parser %{version:elpi})
+      (echo "]\n")))))
+
+
+(coq.pp
+ (modules rocq_elpi_vernacular_syntax rocq_elpi_arg_syntax))

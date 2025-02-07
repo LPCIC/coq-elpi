@@ -1,7 +1,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* --------------------------------------------------------------------------*)
 
-Declare ML Module "coq-elpi.tc".
+Declare ML Module "rocq-elpi.tc".
 From elpi Require Import elpi.
 
 From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.

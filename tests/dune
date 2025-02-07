@@ -1,6 +1,6 @@
 (coq.theory
  (name elpi.tests)
- (plugins coq-elpi.elpi)
+ (plugins rocq-elpi.elpi)
  (theories elpi))
 
 (include_subdirs qualified)

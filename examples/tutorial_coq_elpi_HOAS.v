@@ -515,7 +515,7 @@ Elpi Query lp:{{
 
 (*|
      
-In order to ease this task, Coq-Elpi provides a few commodity macros such as
+In order to ease this task, Rocq-Elpi provides a few commodity macros such as
 `@pi-decl`:
 
 .. code:: elpi
@@ -580,7 +580,7 @@ and is expected to have type `nat`.
 Now the bijective mapping from Coq evars to Elpi's unification variables
 is not empty anymore:
 
-.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X11 <-> X1*}
+.. mquote:: .s(Elpi).msg{Rocq-Elpi mapping:*[?]X11 <-> X1*}
    :language: text
 
 Note that Coq's evar identifiers are of the form `?X<n>`, while the Elpi ones
@@ -631,7 +631,7 @@ conclusion (the suspended goal).
  
 The mapping between Coq and Elpi is:
 
-.. mquote:: .s(Elpi).msg{Coq-Elpi mapping:*[?]X13 <-> X1*}
+.. mquote:: .s(Elpi).msg{Rocq-Elpi mapping:*[?]X13 <-> X1*}
    :language: text
 
 where `?X13` can be found in Coq's sigma:

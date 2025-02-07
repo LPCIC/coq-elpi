@@ -162,7 +162,7 @@ type end-record  record-decl.
 %
 % Note: when and inductive type declaration is passed as an argument to an
 % Elpi command non uniform parameters must be separated from the uniform ones
-% with a | (a syntax introduced in Coq 8.12 and accepted by coq-elpi since
+% with a | (a syntax introduced in Coq 8.12 and accepted by rocq-elpi since
 % version 1.4, in Coq this separator is optional, but not in Elpi).
 
 % Context declaration (used as an argument to Elpi commands)

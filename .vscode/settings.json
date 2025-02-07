@@ -23,8 +23,8 @@
         "**/*.crashcoqide": true,
         "**/\\#*\\#": true,
         ".deps.elpi": true,
-        "src/coq_elpi_config.ml": true,
-        "src/coq_elpi_vernacular_syntax.ml": true,
+        "src/rocq_elpi_config.ml": true,
+        "src/rocq_elpi_vernacular_syntax.ml": true,
         "**/Makefile.coq": true,
         "**/Makefile.coq.conf": true,
         "**/.merlin": true
