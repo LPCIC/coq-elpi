@@ -110,9 +110,15 @@ val lp2skeleton :
 type coercion_status = Regular | Off | Reversible
 type record_field_spec = { name : Name.t; is_coercion : coercion_status; is_canonical : bool }
 
+[%%if coq = "8.20" || coq = "9.0"]
+val lp2inductive_entry :
+  depth:int -> empty coq_context -> constraints -> State.t -> term ->
+  State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+[%%else]
 val lp2inductive_entry :
   depth:int -> empty coq_context -> constraints -> State.t -> term ->
   State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UState.named_universes_entry * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+[%%endif]
 
 val inductive_decl2lp :
   depth:int -> empty coq_context -> constraints -> State.t -> (Names.MutInd.t * UVars.Instance.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->

@@ -1505,7 +1505,13 @@ It's a fatal error if Name cannot be located.|})),
   (fun s _ ~depth:_ -> !: (locate_gref s))),
   DocAbove);
 ]
-  
+
+[%%if coq = "8.20" || coq = "9.0"]
+let univ_binder_compat_820 a b = a
+[%%else]
+let univ_binder_compat_820 a b = b
+[%%endif]
+
 let coq_rest_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -2101,6 +2107,7 @@ Supported attributes:
        in
      let () = global_push_context_set uctx in
      let mind =
+       let univ_binders = univ_binder_compat_820 (uentry', ubinders) univ_binders in
        declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim me univ_binders ind_impls in
      let ind = mind, 0 in
      let id, cids = match me.Entries.mind_entry_inds with
