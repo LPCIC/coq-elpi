@@ -124,11 +124,10 @@ main [trm T] :-
 }}.
 
 
-From Coq Require Import PrimInt63.
-Open Scope int63_scope.
+From elpi.core Require Import PrimInt63.
 Elpi primitive (PrimInt63.add 2000000003333002 1).
 
-From Coq Require Import PrimFloat.
+From elpi.core Require Import PrimFloat.
 Open Scope float_scope.
 Elpi primitive (2.4e13 + 1).
 End Pint.

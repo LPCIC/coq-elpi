@@ -1,6 +1,6 @@
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
-From Coq Require Import PArith.
+From elpi.core Require Import PosDef.
 From elpi.apps.derive.elpi Extra Dependency "tag.elpi" as tag.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.

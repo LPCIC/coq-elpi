@@ -5,7 +5,9 @@ Proof.
     eltac.apply H.
 Qed.
 
+Axiom add_comm : forall x y, x + y = y + x.
+
 Goal (3 + 4 = 4 + 3).
 Proof.
-    eltac.apply PeanoNat.Nat.add_comm.
+    eltac.apply add_comm.
 Qed.

@@ -1,6 +1,6 @@
-From elpi.apps Require Import test_derive_stdlib derive.eq.
+From elpi.apps Require Import test_derive_corelib derive.eq.
 
-Import test_derive_stdlib.Coverage.
+Import test_derive_corelib.Coverage.
 
 Module Coverage.
 Elpi derive.eq empty.

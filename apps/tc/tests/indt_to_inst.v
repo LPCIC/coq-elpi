@@ -1,4 +1,4 @@
-From Coq Require Export List.
+From elpi.core Require Export ListDef.
 From elpi.apps Require Export tc.
 Global Generalizable All Variables.
 

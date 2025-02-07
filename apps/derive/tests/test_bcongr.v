@@ -1,8 +1,9 @@
+From elpi.core Require Import Bool.
 From elpi.apps Require Import derive.bcongr.
 
-From elpi.apps Require Import test_derive_stdlib test_projK.
+From elpi.apps Require Import test_derive_corelib test_projK.
 
-Import test_derive_stdlib.Coverage.
+Import test_derive_corelib.Coverage.
 Import test_projK.Coverage.
 
 Module Coverage.

@@ -1,12 +1,15 @@
 From elpi.apps Require Import eltac.rewrite.
 
+Axiom add_comm : forall x y, x + y = y + x.
+Axiom mul_comm : forall x y, x * y = y * x.
+
 Goal (forall x : nat, 1 + x = x + 1) -> 
     forall y,  2 * ((y+y) + 1) = ((y + y)+1) * 2.
 Proof.
     intro H. 
     intro x.
     eltac.rewrite H.
-    eltac.rewrite PeanoNat.Nat.mul_comm.
+    eltac.rewrite mul_comm.
     exact eq_refl.
 Defined.
 
@@ -37,8 +40,8 @@ Defined.
 Goal forall n, 2 * n = n * 2.
 Proof.
     intro n.
-    Fail eltac.rewrite PeanoNat.Nat.add_comm.
-    eltac.rewrite PeanoNat.Nat.add_comm "strong".
+    Fail eltac.rewrite add_comm.
+    eltac.rewrite add_comm "strong".
     Abort.
 
 End Example_rewrite.

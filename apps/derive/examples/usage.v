@@ -2,7 +2,6 @@
    This example shows how to use derive
 *)
 
-From Coq Require Import Bool.
 From elpi.apps Require Import derive.std.
 Set Uniform Inductive Parameters.
 

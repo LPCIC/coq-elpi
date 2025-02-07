@@ -1,7 +1,7 @@
 From elpi.apps Require Import derive.eqb.
 
-From elpi.apps.derive.tests Require Import test_derive_stdlib test_eqType_ast test_tag test_fields.
-Import test_derive_stdlib.Coverage test_eqType_ast.Coverage test_tag.Coverage test_fields.Coverage.
+From elpi.apps.derive.tests Require Import test_derive_corelib test_eqType_ast test_tag test_fields.
+Import test_derive_corelib.Coverage test_eqType_ast.Coverage test_tag.Coverage test_fields.Coverage.
     
 Module Coverage.
 Elpi derive.eqb empty.
@@ -41,7 +41,7 @@ Elpi derive.eqb alias.
 
 End Coverage.
 Import Coverage.
-Import PArith.
+From elpi.core Require Import PosDef.
 
 Notation eq_test T := (T -> T -> bool).
 Notation eq_test2 T1 T2 := (T1 -> T2 -> bool).

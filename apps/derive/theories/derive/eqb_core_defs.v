@@ -1,11 +1,9 @@
-Require Import Eqdep_dec.
-Require Import PArith.
+From elpi.core Require Import PosDef.
 Require Import ssreflect ssrbool.
+From elpi.apps.derive Require Import EqdepFacts.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
-Local Open Scope positive_scope.
 
 Section Section.
 Context {A:Type}.
@@ -31,6 +29,16 @@ Definition eqax_on (eqb : A -> A -> bool) (a1:A) :=
 
 End Section.
 
+Lemma pos_eq_dec : forall x y:positive, {x = y} + {x <> y}.
+Proof. decide equality. Qed.
+
+Theorem UIP_dec (A : Type) (eq_dec : forall x y : A, {x = y} + {x <> y}) :
+  forall (x y : A) (p1 p2 : x = y), p1 = p2.
+Proof. exact (eq_dep_eq__UIP A (eq_dep_eq_dec eq_dec)). Qed.
+
+Theorem bool_dec (b1 b2 : bool) : {b1 = b2} + {b1 <> b2}.
+Proof. decide equality. Qed.
+
 Section Section.
 Context {A B:Type}.
 
@@ -51,13 +59,13 @@ Variable constructPB : forall a, constructB (fieldsB a) = Some a.
 
 Variable eqb_fields : forall t, fields_tA t -> fields_tB t -> bool.
 
-Definition eqb_body (t1:positive) (f1:fields_tA t1) (x2:B) := 
+Definition eqb_body (t1:positive) (f1:fields_tA t1) (x2:B) :=
   let t2 := tagB x2 in
-  match Pos.eq_dec t2 t1 with
-  | left heq => 
+  match pos_eq_dec t2 t1 with
+  | left heq =>
     let f2 : fields_tB t2 := fieldsB x2 in
     @eqb_fields t1 f1 (match heq with eq_refl => f2 end)
-  | right _ => false 
+  | right _ => false
   end.
 #[global] Arguments eqb_body _ _ _ /.
 
@@ -90,21 +98,21 @@ Proof.
   move=> hf a2 hb.
   suff : Some a1 = Some a2 by move=> [->].
   rewrite -(constructP a2); move: hb; rewrite /eqb_body.
-  case: Pos.eq_dec => // heq.
+  case: pos_eq_dec => // heq.
   move: (tag a2) heq (fields a2) => t2 ?; subst t2 => f2 /=; apply hf.
 Qed.
 
 Definition eqb_fields_refl_on (a:A) := 
   eqb_fields (fields a) (fields a).
 
-Lemma eqb_body_refl a : 
-  eqb_fields_refl_on a -> 
+Lemma eqb_body_refl a :
+  eqb_fields_refl_on a ->
   eqb_body fields eqb_fields (fields a) a.
 Proof.
   pose h := constructP. (* dummy dependence to have the same type as eqb_body_correct *)
   rewrite /eqb_body => hf.
-  case: Pos.eq_dec => // heq.
-  have -> /= := Eqdep_dec.UIP_dec Pos.eq_dec heq eq_refl; apply hf.
+  case: pos_eq_dec => // heq.
+  have -> /= := UIP_dec pos_eq_dec heq eq_refl; apply hf.
 Qed.
 
 Inductive blist := bnil | bcons (b : bool) (bs : blist).

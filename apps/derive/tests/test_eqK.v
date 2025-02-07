@@ -2,13 +2,13 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.eqK.
 
 From elpi.apps.derive.tests Require Import
-  test_derive_stdlib
+  test_derive_corelib
   test_isK
   test_projK
   test_bcongr
   test_eq.
 
-Import test_derive_stdlib.Coverage.
+Import test_derive_corelib.Coverage.
 Import test_isK.Coverage.
 Import test_projK.Coverage.
 Import test_bcongr.Coverage.

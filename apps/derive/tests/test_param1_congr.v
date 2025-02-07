@@ -1,7 +1,7 @@
 From elpi.apps Require Import derive.param1_congr.
 
-From elpi.apps Require Import test_derive_stdlib test_param1.
-Import test_derive_stdlib.Coverage.
+From elpi.apps Require Import test_derive_corelib test_param1.
+Import test_derive_corelib.Coverage.
 Import test_param1.Coverage.
 
 

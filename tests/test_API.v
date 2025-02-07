@@ -1,5 +1,4 @@
 From elpi Require Import elpi.
-From Coq Require Vector.
 
 Elpi Command test.API.
 

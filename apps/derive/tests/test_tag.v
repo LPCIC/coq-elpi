@@ -1,7 +1,7 @@
 From elpi.apps Require Import derive.tag.
 
-From elpi.apps.derive.tests Require Import test_derive_stdlib.
-Import test_derive_stdlib.Coverage.
+From elpi.apps.derive.tests Require Import test_derive_corelib.
+Import test_derive_corelib.Coverage.
 
 Module Coverage.
 
@@ -39,7 +39,7 @@ Elpi derive.tag val.
 End Coverage.
 
 Import Coverage.
-Import PArith.
+From elpi.core Require Import PosDef.
 
 Local Notation tag X := (X -> positive).
 

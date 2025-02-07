@@ -1,5 +1,5 @@
 From elpi Require Import elpi.
-From Coq Require Import PrimInt63 PrimFloat.
+From elpi.core Require Import PrimInt63 PrimFloat.
 From elpi.apps Require Import derive.
 
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.

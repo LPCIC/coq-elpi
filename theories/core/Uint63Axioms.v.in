@@ -1,0 +1,4 @@
+#[only="8.20"] From Coq Require Export Uint63.
+#[skip="8.20"] From Corelib Require Export Uint63Axioms.
+Definition eqb_correct := eqb_correct.
+Definition eqb_refl := eqb_refl.

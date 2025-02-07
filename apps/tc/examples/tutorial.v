@@ -1,4 +1,4 @@
-Require Import Bool.
+From elpi_stdlib Require Import Bool.
 From elpi.apps Require Import tc.
 
 Class Eqb (T: Type) := {
@@ -93,4 +93,5 @@ Module Backtrack.
 End Backtrack.
 
 TC.Print_instances.
-TC.Get_class_info DecidableClass.Decidable.
+(* Require Stdlib *)
+(* TC.Get_class_info DecidableClass.Decidable. *)

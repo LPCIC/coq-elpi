@@ -1,6 +1,5 @@
-
 From elpi Require Export elpi.
-From Coq Require Import ssreflect ssrfun ssrbool.
+From elpi.core Require Import ssreflect ssrfun ssrbool.
 
 Ltac ltac_foo := cut True; [ idtac | abstract (exact I) ].
 

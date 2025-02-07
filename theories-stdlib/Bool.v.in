@@ -1,0 +1,2 @@
+#[only="8.20"] From Coq Require Export Bool.
+#[skip="8.20"] From Stdlib Require Export Bool.

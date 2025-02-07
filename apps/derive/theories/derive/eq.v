@@ -6,11 +6,10 @@ From elpi.apps.derive.elpi Extra Dependency "eq.elpi" as eq.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
-From Coq Require Import Bool.
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 
-From Coq Require Import PrimInt63 PrimFloat.
+From elpi.core Require Import PrimInt63 PrimFloat.
 
 Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.

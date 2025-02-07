@@ -1,8 +1,7 @@
 From elpi.apps Require Import coercion.
-#[warning="-deprecated-from-Coq"]
-From Coq Require Import Arith ssreflect.
+From elpi.core Require Import ssreflect.
 
-Ltac my_solver := trivial with arith.
+Ltac my_solver := try ((repeat apply: le_n_S); apply: le_0_n).
 
 Elpi Accumulate coercion lp:{{
 

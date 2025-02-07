@@ -1,8 +1,9 @@
+From elpi.core Require Import Bool.
 From elpi.apps Require Import derive.eqbOK.
 
-From elpi.apps.derive.tests Require Import test_derive_stdlib test_eqb test_eqbcorrect.
+From elpi.apps.derive.tests Require Import test_derive_corelib test_eqb test_eqbcorrect.
 
-Import test_derive_stdlib.Coverage 
+Import test_derive_corelib.Coverage 
        test_eqType_ast.Coverage
        test_eqb.Coverage
        test_eqbcorrect.Coverage.
@@ -48,7 +49,7 @@ End Coverage.
 
 Import Coverage.
 
-Redirect "tmp" Check peano_eqb_OK : forall n m, Bool.reflect (n = m) (peano_eqb n m).
-Redirect "tmp" Check seq_eqb_OK : forall A eqA (h : forall a1 a2 : A, Bool.reflect (a1 = a2) (eqA a1 a2)) l1 l2, Bool.reflect (l1 = l2) (seq_eqb A eqA l1 l2).
-Redirect "tmp" Check ord_eqb_OK : forall n (o1 o2 : ord n), Bool.reflect (o1 = o2) (ord_eqb n n o1 o2).
-Redirect "tmp" Check alias_eqb_OK : forall x y : alias, Bool.reflect (x = y) (alias_eqb x y).
+Redirect "tmp" Check peano_eqb_OK : forall n m, Datatypes.reflect (n = m) (peano_eqb n m).
+Redirect "tmp" Check seq_eqb_OK : forall A eqA (h : forall a1 a2 : A, Datatypes.reflect (a1 = a2) (eqA a1 a2)) l1 l2, Datatypes.reflect (l1 = l2) (seq_eqb A eqA l1 l2).
+Redirect "tmp" Check ord_eqb_OK : forall n (o1 o2 : ord n), Datatypes.reflect (o1 = o2) (ord_eqb n n o1 o2).
+Redirect "tmp" Check alias_eqb_OK : forall x y : alias, Datatypes.reflect (x = y) (alias_eqb x y).

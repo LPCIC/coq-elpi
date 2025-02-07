@@ -1,4 +1,4 @@
-From Coq Require Import ssreflect.
+From elpi.core Require Import ssreflect.
 From elpi.apps Require Import locker.
 
 (* ----------------------- *)
