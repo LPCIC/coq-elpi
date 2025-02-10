@@ -1107,6 +1107,15 @@ let find_hint_db s =
   with Not_found ->
     err Pp.(str "Hint DB not found: " ++ str s)
 
+[%%if coq = "8.20" || coq = "9.0"]
+let hint_mode env gr db =
+  let modes = Hints.Hint_db.modes db in
+  List.map (fun a -> Array.to_list a) @@ GlobRef.Map.find gr modes
+[%%else]
+let hint_mode env gr db =
+  List.map (fun a -> Array.to_list a) @@ Hints.Hint_db.find_mode env gr db
+[%%endif]
+
 let hint_db : (string * Hints.Hint_db.t) Conv.t = {
   Conv.ty = B.string.Conv.ty;
   Conv.pp_doc = B.string.Conv.pp_doc;
@@ -2925,11 +2934,9 @@ Supported attributes:|} ^ hint_locality_doc)))),
     In(gref, "GR",
     In(hint_db, "DB",
     Out(B.list (B.list mode), "Modes",
-    Easy {|Gets all the mode declarations in DB about GR|}))),
-  (fun gr (_,db) _ ~depth:_ ->
-     try
-       let modes = Hints.Hint_db.modes db in
-       !: (List.map (fun a -> Array.to_list a) @@ GlobRef.Map.find gr modes)
+    Read(global, {|Gets all the mode declarations in DB about GR|})))),
+  (fun gr (_,db) _ ~depth:_ { env } _ _ ->
+     try !: (hint_mode env gr db)
      with Not_found ->
        !: []
     )),
