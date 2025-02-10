@@ -1,4 +1,4 @@
-dune = dune $(1) $(DUNE_$(1)_FLAGS)
+dune = dune $(1) $(DUNE_$(1)_FLAGS) --stop-on-first-error
 
 all: theories-stdlib/dune
 	$(call dune,build)
