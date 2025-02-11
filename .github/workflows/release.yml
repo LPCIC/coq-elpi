@@ -41,16 +41,16 @@ jobs:
       - name: Create archive
         run: |
           VERSION="${GITHUB_REF_NAME_SLUG#v}"
-          git archive -o coq-elpi-$VERSION.tar.gz --prefix=coq-elpi-$VERSION/ $GITHUB_SHA .
+          git archive -o rocq-elpi-$VERSION.tar.gz --prefix=rocq-elpi-$VERSION/ $GITHUB_SHA .
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: coq-elpi-*.tar.gz
+          files: rocq-elpi-*.tar.gz
           fail_on_unmatched_files: true
           prerelease: true
           generate_release_notes: true
-          name: Coq-Elpi ${{ github.ref }} for Coq XXX
+          name: Rocq-Elpi ${{ github.ref }} for Rocq XXX
 
   opam:
     runs-on: ubuntu-latest
@@ -68,6 +68,7 @@ jobs:
           ocaml-compiler: 4.14.x
           opam-local-packages: |
             !coq-elpi.opam
+            !rocq-elpi.opam
 
       - name: Write PAT
         env:
@@ -93,4 +94,4 @@ jobs:
           git tag
           TAG=`git tag --sort=-v:refname|head -1`
           echo selected tag: $TAG
-          opam-publish --no-confirmation --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam --no-browser -v ${TAG##v}	coq-elpi.opam https://github.com/LPCIC/coq-elpi/releases/download/$TAG/coq-elpi-${TAG##v}.tar.gz
+          opam-publish --no-confirmation --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam --no-browser -v ${TAG##v}	rocq-elpi.opam coq-elpi.opam https://github.com/LPCIC/coq-elpi/releases/download/$TAG/rocq-elpi-${TAG##v}.tar.gz
