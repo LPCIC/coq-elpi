@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pred feqb.trm->term i:trm, o:term.
+pred feqb.trm->term i:eqb.trm, o:term.
 
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
@@ -46,21 +46,21 @@ derive.eqb.main (const C) Prefix CL :- std.do! [
 namespace derive.eqb.eqb {
 
 % -----------------------------------------------------------------------------
-pred main i:eqType, i:eqType, i:list term, i:list term, i:term, o:term.
+pred main i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, o:term.
 
-main (type-param FI) (type-param FJ) PI PJ EF {{ fun (x : Type) (eqx : x -> x -> bool) => lp:(R x eqx) }} :-
+main (eqb.type-param FI) (eqb.type-param FJ) PI PJ EF {{ fun (x : Type) (eqx : x -> x -> bool) => lp:(R x eqx) }} :-
   @pi-trm `x` {{ Type }} y\x\
   @pi-decl `eqx` {{ lp:x -> lp:x -> bool }} eqx\
     main (FI y) (FJ y) [x|PI] [x|PJ] {coq.mk-app EF [x,eqx]} (R x eqx).
 
-main (value-param TYI FI) (value-param TYJ FJ) PI PJ EF {{ fun (x : lp:TI) (y : lp:TJ) => lp:(R x y) }} :-
+main (eqb.value-param TYI FI) (eqb.value-param TYJ FJ) PI PJ EF {{ fun (x : lp:TI) (y : lp:TJ) => lp:(R x y) }} :-
   feqb.trm->term TYI TI,
   feqb.trm->term TYJ TJ,
   @pi-trm `x` TI xx\x\
   @pi-trm `y` TJ yy\y\
    main (FI xx) (FJ yy) [x|PI] [y|PJ] {coq.mk-app EF [x,y]} (R x y).
 
-main (inductive Ind _) (inductive Ind _) PI PJ EF {{ fix rec (x1 : lp:I) (x2 : lp:J) {struct x1} : bool := lp:(R rec x1 x2) }} :- coq.env.recursive? Ind, !,
+main (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ EF {{ fix rec (x1 : lp:I) (x2 : lp:J) {struct x1} : bool := lp:(R rec x1 x2) }} :- coq.env.recursive? Ind, !,
   coq.mk-app (global (indt Ind)) {std.rev PI} I,
   coq.mk-app (global (indt Ind)) {std.rev PJ} J,
   @pi-decl `rec` {{ lp:I -> lp:J -> bool }} rec\
@@ -68,7 +68,7 @@ main (inductive Ind _) (inductive Ind _) PI PJ EF {{ fix rec (x1 : lp:I) (x2 : l
   @pi-decl `x2` J x2\
     do-match x1 I x2 J {coq.mk-app EF [rec]} (R rec x1 x2).
 
-main (inductive Ind _) (inductive Ind _) PI PJ EF {{ fun (x1 : lp:I) (x2 : lp:J) => lp:(R x1 x2) }} :-
+main (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ EF {{ fun (x1 : lp:I) (x2 : lp:J) => lp:(R x1 x2) }} :-
   coq.mk-app (global (indt Ind)) {std.rev PI} I,
   coq.mk-app (global (indt Ind)) {std.rev PJ} J,
   @pi-decl `x1` I x1\
@@ -102,17 +102,17 @@ do-branch X2 J F K KTY Vars _ {{ @eqb_core_defs.eqb_body _ _ _ _ lp:FLDP lp:F lp
 % -----------------------------------------------------------------------------
 % example: eqb-for {{ list lp:A }} {{ @list_eqb lp:A lp:F }} :- eqb-for A F.
 
-pred do-clause i:eqType, i:eqType, i:list term, i:list term, i:term, i:list prop, o:prop.
+pred do-clause i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, i:list prop, o:prop.
 
-do-clause (type-param AI) (type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
+do-clause (eqb.type-param AI) (eqb.type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
   pi x a ea\
     do-clause (AI x) (AJ x) [a|PI] [a|PJ] {coq.mk-app F [a,ea]} [eqb-for a a ea|Todo] (C a ea).
 
-do-clause (value-param _ AI) (value-param _ AJ) PI PJ F Todo (pi a b\ C a b) :- !,
+do-clause (eqb.value-param _ AI) (eqb.value-param _ AJ) PI PJ F Todo (pi a b\ C a b) :- !,
   pi x a b\
     do-clause (AI x) (AJ x) [a|PI] [b|PJ] {coq.mk-app F [a,b]} Todo (C a b).
 
-do-clause (inductive Ind _) (inductive Ind _) PI PJ F Todo (eqb-for I J F :- Todo) :-
+do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (eqb-for I J F :- Todo) :-
   coq.mk-app (global (indt Ind)) {std.rev PI} I,
   coq.mk-app (global (indt Ind)) {std.rev PJ} J.
 
@@ -122,22 +122,22 @@ do-clause (inductive Ind _) (inductive Ind _) PI PJ F Todo (eqb-for I J F :- Tod
 namespace derive.eqb.eqbf {
 
 % -----------------------------------------------------------------------------
-pred main i:eqType, i:eqType, i:list term, i:list term, o:term.
+pred main i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, o:term.
 
-main (type-param FI) (type-param FJ) PI PJ {{ fun (p : Type) (eqp : p -> p -> bool) => lp:(R p eqp) }} :-
+main (eqb.type-param FI) (eqb.type-param FJ) PI PJ {{ fun (p : Type) (eqp : p -> p -> bool) => lp:(R p eqp) }} :-
   @pi-trm `P` {{ Type }} x\p\
   @pi-decl `eqP` {{ lp:p -> lp:p -> bool }} eqP\
     eqb-for p p eqP =>
     main (FI x) (FJ x) [p|PI] [p|PJ] (R p eqP).
 
-main (value-param TYI FI) (value-param TYJ FJ) PI PJ {{ fun (x y : lp:T) => lp:(R x y) }} :-
+main (eqb.value-param TYI FI) (eqb.value-param TYJ FJ) PI PJ {{ fun (x y : lp:T) => lp:(R x y) }} :-
   feqb.trm->term TYI TI,
   feqb.trm->term TYJ TJ,
   @pi-trm `P` TI xx\x\
   @pi-trm `P` TJ yy\y\
     main (FI xx) (FJ yy) [x|PI] [y|PJ] (R x y).
 
-main (inductive Ind F) (inductive Ind G) PI PJ {{ fun (rec : lp:I -> lp:J -> bool) (x : positive) => lp:(R rec x) }} :- std.do! [
+main (eqb.inductive Ind F) (eqb.inductive Ind G) PI PJ {{ fun (rec : lp:I -> lp:J -> bool) (x : positive) => lp:(R rec x) }} :- std.do! [
   std.rev PI ParamsI,
   std.rev PJ ParamsJ,
   coq.mk-app (global (indt Ind)) ParamsI I,
@@ -160,15 +160,15 @@ pred rty i:term, i:term, i:term, o:term.
 rty Fields_t_I Fields_t_J X {{ lp:Fields_t_I lp:X -> lp:Fields_t_J lp:X -> bool }}.
 
 % -----------------------------------------------------------------------------
-pred fields i:list term, i:list term, i:pair constructor constructor, o:term.
+pred fields i:list term, i:list term, i:pair eqb.constructor eqb.constructor, o:term.
 
-fields ParamsI ParamsJ (pr (constructor K (stop _)) (constructor K (stop _))) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => true }} :- std.do! [
+fields ParamsI ParamsJ (pr (eqb.constructor K (eqb.stop _)) (eqb.constructor K (eqb.stop _))) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => true }} :- std.do! [
   std.assert! (box-for K IB _) "derive.eqb: run derive.fields before",
   coq.mk-app (global (indt IB)) ParamsI BoxTy1,
   coq.mk-app (global (indt IB)) ParamsJ BoxTy2,
 ].
 
-fields ParamsI ParamsJ (pr (constructor K Args) (constructor K Args2)) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => lp:(R a b) }} :- std.do! [
+fields ParamsI ParamsJ (pr (eqb.constructor K Args) (eqb.constructor K Args2)) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => lp:(R a b) }} :- std.do! [
   std.assert! (box-for K IB _) "derive.eqb: run derive.fields before",
   coq.mk-app (global (indt IB)) ParamsI BoxTy1,
   coq.mk-app (global (indt IB)) ParamsJ BoxTy2,
@@ -180,14 +180,14 @@ fields ParamsI ParamsJ (pr (constructor K Args) (constructor K Args2)) {{ fun (a
 pred fields.rty1 i:term, i:list term, i:list term, o:term.
 fields.rty1  _ _ _ {{ bool }}.
 
-pred fields.branch1 i:term, i:term, i:arguments, i:arguments, i:term, i:term, i:list term, i:list term, o:term.
+pred fields.branch1 i:term, i:term, i:eqb.arguments, i:eqb.arguments, i:term, i:term, i:list term, i:list term, o:term.
 fields.branch1 B BoxTy2 Args Args2 _ _ VarsA _ R :-
     coq.build-match B BoxTy2 fields.rty2 (fields.branch2 Args Args2 VarsA) R.
 
 pred fields.rty2 i:term, i:list term, i:list term, o:term.
 fields.rty2 _ _ _ {{ bool }}.
 
-pred fields.branch2 i:arguments, i:arguments, i:list term, i:term, i:term, i:list term, i:list term, o:term.
+pred fields.branch2 i:eqb.arguments, i:eqb.arguments, i:list term, i:term, i:term, i:list term, i:list term, o:term.
 fields.branch2 Args Args2 VarsA _ _ VarsB _ R :-
 fields.aux Args Args2 VarsA VarsB R.
 
@@ -198,9 +198,9 @@ mk-eqb-for T1 _ _ :-
   Msg is "derive.eqb: missing boolean equality for " ^ {coq.term->string T1} ^ ", maybe use derive.eqb first",
   stop Msg.
 
-pred fields.aux i:arguments, i:arguments, i:list term, i:list term, o:term.
+pred fields.aux i:eqb.arguments, i:eqb.arguments, i:list term, i:list term, o:term.
 
-fields.aux (dependent TYX FX) (dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R1 }} :- 
+fields.aux (eqb.dependent TYX FX) (eqb.dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R1 }} :- 
   feqb.trm->term TYX TX,
   feqb.trm->term TYY TY,
   mk-eqb-for TX TY EQB,
@@ -209,31 +209,31 @@ fields.aux (dependent TYX FX) (dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb 
     fields.aux (FX a) (FY b) XS YS (R n m)),
   R1 = R X Y.
 
-fields.aux (regular TYX FX) (regular TYY FY)  [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R }} :- 
+fields.aux (eqb.regular TYX FX) (eqb.regular TYY FY)  [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R }} :- 
   feqb.trm->term TYX TX,
   feqb.trm->term TYY TY,
   mk-eqb-for TX TY EQB,
   fields.aux FX FY XS YS R.
 
-fields.aux (irrelevant _ FX) (irrelevant _ FY) [_|XS] [_|YS] R :- fields.aux FX FY XS YS R.
+fields.aux (eqb.irrelevant _ FX) (eqb.irrelevant _ FY) [_|XS] [_|YS] R :- fields.aux FX FY XS YS R.
 
-fields.aux (stop _) (stop _) [] [] {{ true }}.
+fields.aux (eqb.stop _) (eqb.stop _) [] [] {{ true }}.
 
 % -----------------------------------------------------------------------------
 % example:
 %   eqb-fields {{ list lp:A }} {{ @list_eqb_fields lp:A lp:EA lp:ELA }} :-
 %      eqb-for A EA, eqb-for {{ list lp:A }} ELA.
-pred do-clause i:eqType, i:eqType, i:list term, i:list term, i:term, i:list prop, o:prop.
+pred do-clause i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, i:list prop, o:prop.
 
-do-clause (type-param AI) (type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
+do-clause (eqb.type-param AI) (eqb.type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
   pi x a ea\
     do-clause (AI x) (AJ x) [a|PI] [a|PJ] {coq.mk-app F [a,ea]} [eqb-for a a ea|Todo] (C a ea).
 
-do-clause (value-param _ AI) (value-param _ AJ) PI PJ F Todo (pi a b\ C a b) :- !,
+do-clause (eqb.value-param _ AI) (eqb.value-param _ AJ) PI PJ F Todo (pi a b\ C a b) :- !,
   pi x a b\
     do-clause (AI x) (AJ x) [a|PI] [b|PJ] {coq.mk-app F [a,b]} Todo (C a b).
 
-do-clause (inductive Ind _) (inductive Ind _) PI PJ F Todo (pi ela\ eqb-fields I J (F1 ela) :- [C ela|Todo]) :- !,
+do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (pi ela\ eqb-fields I J (F1 ela) :- [C ela|Todo]) :- !,
   coq.mk-app (global (indt Ind)) {std.rev PI} I,
   coq.mk-app (global (indt Ind)) {std.rev PJ} J,
   pi ela\

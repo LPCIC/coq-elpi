@@ -3,15 +3,15 @@
 /* ------------------------------------------------------------------------- */
 
 
-pred feqb.trm->term i:trm, o:term.
+pred feqb.trm->term i:eqb.trm, o:term.
 
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
 
 namespace derive.eqbOK {
 
-pred add-reflect i:eqType, i:term, i:term, o:term.
-add-reflect (type-param F) Correct Refl {{
+pred add-reflect i:eqb.eqType, i:term, i:term, o:term.
+add-reflect (eqb.type-param F) Correct Refl {{
      fun (a : lp:Type) (eqA: a -> a -> bool) (heqA : lp:(HeqA a eqA)) => lp:(R a eqA heqA)
   }} :-
   Type = sort (typ {coq.univ.new}),
@@ -23,14 +23,14 @@ add-reflect (type-param F) Correct Refl {{
     {{lp:Correct lp:a lp:eqA (fun (a1 a2 : lp:a) => @elimT (@eq lp:a a1 a2) (lp:eqA a1 a2) (lp:heqA a1 a2))}}
     {{lp:Refl lp:a lp:eqA (fun (a1: lp:a) => @introT (@eq lp:a a1 a1) (lp:eqA a1 a1) (lp:heqA a1 a1) (@refl_equal lp:a a1))}}
     (R a eqA heqA).
-add-reflect (value-param TY F) Correct Refl  {{ fun x : lp:Ty => lp:(R x) }} :-
+add-reflect (eqb.value-param TY F) Correct Refl  {{ fun x : lp:Ty => lp:(R x) }} :-
   feqb.trm->term TY Ty,
   @pi-trm `x` Ty xx\x\
   add-reflect (F xx)
     {{lp:Correct lp:x}}
     {{lp:Refl lp:x}}
     (R x).
-add-reflect (inductive _ _) Correct Refl {{iffP2 lp:Correct lp:Refl}}.
+add-reflect (eqb.inductive _ _) Correct Refl {{iffP2 lp:Correct lp:Refl}}.
 
 pred main i:gref, i:string, o:list prop.
 main (indt I) Prefix [CL] :- std.do! [
@@ -51,7 +51,7 @@ main (indt I) Prefix [CL] :- std.do! [
 main (const C) Prefix [CL] :- std.do! [
   std.assert! (eqb-for (global (const C)) (global (const C)) F) "run eqb before",
   std.assert! (eqcorrect-for (const C) Correct Refl) "run eqbcorrect before",
-  add-reflect (inductive _ _) (global (const Correct)) (global (const Refl)) Breflect,
+  add-reflect (eqb.inductive _ _) (global (const Correct)) (global (const Refl)) Breflect,
 
   std.assert-ok! (coq.typecheck Breflect _) "eqbOK generates illtyped term", 
   coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
