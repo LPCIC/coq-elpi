@@ -1,6 +1,6 @@
 (lang dune 3.13)
 (using coq 0.8)
-(name coq-elpi)
+(name rocq-elpi)
 ;(generate_opam_files)
 
 (source (github LPCIC/coq-elpi))
@@ -9,7 +9,7 @@
 (maintainers "Enrico Tassi <enrico.tassi@inria.fr>")
 
 (package
- (name coq-elpi)
+ (name rocq-elpi)
  (synopsis "Elpi extension language for Coq")
  (description
   "Coq-elpi provides a Coq plugin that embeds ELPI. It also provides \
@@ -36,13 +36,21 @@
   (ocaml-lsp-server :with-dev-setup)))
 
 (package
- (name coq-elpi-tests)
+ (name rocq-elpi-tests)
  (synopsis "Technical package to run tests")
  (description "Do not install")
- (depends coq-elpi))
+ (depends rocq-elpi))
 
 (package
- (name coq-elpi-tests-stdlib)
+ (name rocq-elpi-tests-stdlib)
  (synopsis "Technical package to run tests depending on Stdlib")
  (description "Do not install")
- (depends coq-elpi coq-stdlib))
+ (depends rocq-elpi rocq-stdlib))
+
+(package
+ (name coq-elpi)
+ (allow_empty)
+ (depends
+  coq-core
+  (rocq-elpi (= :version)))
+ (synopsis "Compatibility metapackage for Elpi extension language after the Rocq renaming"))

@@ -1,7 +1,7 @@
 (coq.theory
  (name elpi.apps.cs)
- (package coq-elpi)
+ (package rocq-elpi)
  (theories elpi)
- (plugins coq-elpi.cs))
+ (plugins rocq-elpi.cs))
 
 (include_subdirs qualified)

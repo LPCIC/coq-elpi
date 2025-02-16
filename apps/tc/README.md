@@ -377,12 +377,12 @@ which allows to set a solver to be called on type class goals. We have taken the
 file [`classes.ml`] from
 [here](https://github.com/coq/coq/blob/f022d5d194cb42c2321ea91cecbcce703a9bcad3/vernac/classes.ml#L1)
 and slightly modified the function
-[`resolve_all_evars`](https://github.com/FissoreD/coq-elpi/blob/17d1f20d3d4f37abfeee7edcf31f3757fd515ff3/apps/tc/src/coq_elpi_class_tactics_hacked.ml#L1165).
+[`resolve_all_evars`](https://github.com/FissoreD/coq-elpi/blob/17d1f20d3d4f37abfeee7edcf31f3757fd515ff3/apps/tc/src/rocq_elpi_class_tactics_hacked.ml#L1165).
 Now that function, before solving a goal verifies if the current goal contains
 only type classes overriden by the user and if so, it uses the elpi solver for
 its resolution, otherwise, it calls the default coq solver. Note that the choice
 of using elpi or coq solver is done
-[here](src/coq_elpi_class_tactics_takeover.ml). Moreover, we provide different 
+[here](src/rocq_elpi_class_tactics_takeover.ml). Moreover, we provide different 
 commands to
 
 1. Override all type class goals and solve them by the solver of elpi, that

@@ -1,5 +1,5 @@
 (coq.theory
- (package coq-elpi-tests-stdlib)
+ (package rocq-elpi-tests-stdlib)
  (name elpi_apps_tc_tests_stdlib)
  (flags :standard -async-proofs-cache force)
  (theories elpi elpi.apps.tc elpi.apps.tc.tests elpi_stdlib))

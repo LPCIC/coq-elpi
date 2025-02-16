@@ -120,7 +120,7 @@ pred instantiate i:name, i:term, i:term, i:argument, o:argument.
 
 pred remove_one_unknown i:name, i:term, i:term, i:term, o:term.
 
-% TODO : needs a fix in a coq-elpi to detect if renaming has happened in
+% TODO : needs a fix in a rocq-elpi to detect if renaming has happened in
 % in the current context.
 remove_one_unknown N _T C (fun N1 _T1 F) Res :-
   {coq.name->id N} = {coq.name->id N1},!,

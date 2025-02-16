@@ -1,8 +1,8 @@
 (coq.theory
  (name elpi.apps.tc)
- (package coq-elpi)
+ (package rocq-elpi)
  (theories elpi elpi.apps.tc.elpi)
  (flags -w -all -w -elpi)
- (plugins coq-elpi.tc))
+ (plugins rocq-elpi.tc))
 
 (include_subdirs qualified)

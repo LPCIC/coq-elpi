@@ -23,7 +23,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: setup ocaml
-      uses: avsm/setup-ocaml@v3
+      uses: ocaml/setup-ocaml@v3
       with:
         ocaml-compiler: 4.14.2
 
@@ -34,13 +34,15 @@ jobs:
         opam repo add coq-dev https://coq.inria.fr/opam/core-dev
         opam repo add extra-dev https://coq.inria.fr/opam/extra-dev
         opam update
-        opam install coq-serapi.8.20.0+0.20.0 ./coq-elpi.opam coq-core.8.20.0
+        opam install coq-serapi.8.20.0+0.20.0 ./rocq-elpi.opam coq-core.8.20.0
         sudo apt-get update
         sudo apt-get install python3-pip -y
         pip3 install git+https://github.com/cpitclaudel/alectryon.git@c8ab1ec
 
     - name: build doc
-      run: opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
+      run: |
+        opam exec -- make dune-files
+        opam exec -- make doc COQ_ELPI_ALREADY_INSTALLED=1
 
     - name: Save artifact
       uses: actions/upload-artifact@v4

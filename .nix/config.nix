@@ -14,7 +14,6 @@ let master = [
   common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
-    coq-elpi-no-stdlib.job = true;
     coq-elpi-tests.job = true;
     stdlib.job = true;
     coq-elpi-tests-stdlib.job = true;
@@ -35,7 +34,6 @@ let master = [
     "coq-8.20".coqPackages = common-bundles // {
       coq.override.version = "8.20";
       coq-elpi.override.elpi-version = "2.0.7";
-      coq-elpi-no-stdlib.job = false;
       coq-elpi-tests-stdlib.job = false;
     };
 

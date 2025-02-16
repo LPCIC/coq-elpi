@@ -1,7 +1,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-Declare ML Module "coq-elpi.tc".
+Declare ML Module "rocq-elpi.tc".
 
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
 (* From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler. *)

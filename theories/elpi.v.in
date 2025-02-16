@@ -1,6 +1,6 @@
 (*From Coq Require Ltac.*)
 From elpi_elpi Require Import dummy.
-Declare ML Module "coq-elpi.elpi".
+Declare ML Module "rocq-elpi.elpi".
 
 (* Generate coq-bultins.elpi *)
 Elpi Document Builtins.

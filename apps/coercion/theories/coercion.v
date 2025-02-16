@@ -1,4 +1,4 @@
-Declare ML Module "coq-elpi.coercion".
+Declare ML Module "rocq-elpi.coercion".
 From elpi Require Import elpi.
 
 Elpi Db coercion.db lp:{{

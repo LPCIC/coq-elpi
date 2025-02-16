@@ -1,6 +1,6 @@
 (coq.theory
  (name elpi_elpi) ; FIXME
- (package coq-elpi))
+ (package rocq-elpi))
 
 (rule
  (target dummy.v)
@@ -9,10 +9,10 @@
  (action
   (with-stdout-to %{target}
    (progn
-     (run coq_elpi_shafile %{deps})))))
+     (run rocq_elpi_shafile %{deps})))))
 
 (install
  (files
   (glob_files (*.elpi with_prefix coq/user-contrib/elpi_elpi/)))
  (section lib_root)
- (package coq-elpi))
+ (package rocq-elpi))

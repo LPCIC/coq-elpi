@@ -17,4 +17,4 @@
   coq-builtin-synterp.elpi
   elpi-builtin.elpi)
  (section doc)
- (package coq-elpi))
+ (package rocq-elpi))

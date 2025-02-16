@@ -1,2 +1,2 @@
 let _ =
-  Elpi_plugin.Coq_elpi_programs.document_builtins ()
+  Elpi_plugin.Rocq_elpi_programs.document_builtins ()
