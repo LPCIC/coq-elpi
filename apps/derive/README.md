@@ -36,7 +36,7 @@ See the [documentation of that option in the Coq reference manual](https://coq.i
 ## Usage and attributes
 
 Using `derive Inductive ty := ...` produces the inductive `ty`, together with
-derivations, all in the current scope. The `#[module=<string>]` attriute can
+derivations, all in the current scope. The `#[module=<string>]` attribute can
 be used to specify that the inductive and the derivations should be wrapped
 in a module of the given name (the name of the inductive is used if no name
 is specified).
@@ -282,7 +282,7 @@ projcons1
           A -> forall n : nat, Vector.t A n ->
           Vector.t A H -> A
 ```
-The intended use is to perform injection, i.e. one aleady has a term of the
+The intended use is to perform injection, i.e. one already has a term of the
 shape `K args` and can just use these args to provide the default values.
 
 If the projected argument's type depends on the value of other arguments, then it
