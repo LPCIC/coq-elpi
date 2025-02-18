@@ -14,6 +14,7 @@ Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0.
 - derive: new `param2.register` command
 - derive: improve generated names in `param2`
 - derive: put eqb AST into a dedicated namespace
+- derive: new (experimental) derive.eqbOK.register_axiom
 - eltac: apply and rewrite examples
 
 ### API
