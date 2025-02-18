@@ -30,7 +30,7 @@ Definition eqax_on (eqb : A -> A -> bool) (a1:A) :=
 End Section.
 
 Lemma pos_eq_dec : forall x y:positive, {x = y} + {x <> y}.
-Proof. decide equality. Qed.
+Proof. decide equality. Defined.
 
 Theorem UIP_dec (A : Type) (eq_dec : forall x y : A, {x = y} + {x <> y}) :
   forall (x y : A) (p1 p2 : x = y), p1 = p2.
