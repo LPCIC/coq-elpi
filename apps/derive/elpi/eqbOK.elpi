@@ -34,7 +34,7 @@ add-reflect (eqb.inductive _ _) Correct Refl {{iffP2 lp:Correct lp:Refl}}.
 
 pred main i:gref, i:string, o:list prop.
 main (indt I) Prefix [CL] :- std.do! [
-  std.assert! (eqType I FI) "this inductive is not supported",
+  std.assert! (eqType (indt I) FI) "this inductive is not supported",
   std.assert! (eqcorrect-for (indt I) Correct Refl) "run eqbcorrect before",
 
   add-reflect FI (global (const Correct)) (global (const Refl)) Breflect,

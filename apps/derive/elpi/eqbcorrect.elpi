@@ -23,7 +23,7 @@ pred config  o:term,            o:term,               o:term,                 o:
 pred main i:gref, i:string, o:list prop.
 main (indt I) Prefix CLs :- std.do! [
 
-  std.assert! (eqType I FI) "this inductive is not supported",
+  std.assert! (eqType (indt I) FI) "this inductive is not supported",
 
   std.assert! (induction-db I Indu) "call derive.induction before",
  
@@ -102,11 +102,11 @@ main (indc _) _ _ :- stop "derive.eqbcorrect does not work on a constructor".
 
 pred search-eqcorrect-for i:term, o:term, o:term.
 search-eqcorrect-for (global (indt I)) (global (const C)) (global (const R)) :-
-  std.assert! (eqType I (eqb.inductive _ _)) "unknown or not applied enough type",
+  std.assert! (eqType (indt I) (eqb.inductive _ _)) "unknown or not applied enough type",
   eqcorrect-for (indt I) C R.
 
 search-eqcorrect-for (app[global (indt I)|Args]) CArgs RArgs :-
-  std.assert! (eqType I F) "unknown",
+  std.assert! (eqType (indt I) F) "unknown",
   eqcorrect-for (indt I) C R,
   search-eqcorrect-apply F Args (global (const C)) (global (const R)) CArgs RArgs.
 

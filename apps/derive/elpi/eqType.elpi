@@ -64,8 +64,8 @@ pred self o:eqb.trm.
 
 pred valid i:eqb.trm, o:diagnostic.
 valid (eqb.global X) ok :- global X = {{ PrimInt63.int }}, !.
-valid (eqb.global (indt I)) ok :- eqType I _, !.
-valid (eqb.app (indt I) A Args) D :- eqType I EQT, !, valid-eqType EQT [A|Args] D.
+valid (eqb.global GR) ok :- eqType GR _, !.
+valid (eqb.app GR A Args) D :- eqType GR EQT, !, valid-eqType EQT [A|Args] D.
 valid T (error S) :- S is "not an eqType: " ^ {std.any->string T}.
 
 pred valid-eqType i:eqb.eqType, i:list eqb.trm, o:diagnostic.
@@ -79,10 +79,10 @@ valid-eqType (eqb.value-param _ F) [_|TS] D :- std.do-ok! D [
 ].
 
 pred irrelevant? i:term, o:eqb.trm, o:diagnostic.
-irrelevant? (app [{{ @eq }}, global (indt EqType), A, B]) (eqb.app EQ EQTYPE [A1,B1]) D :- std.do-ok! D [
+irrelevant? (app [{{ @eq }}, global EqType, A, B]) (eqb.app EQ EQTYPE [A1,B1]) D :- std.do-ok! D [
   std.lift-ok (eqType EqType _) "Not an eqType", %eqb-for Bool Bool _,
   std.lift-ok ({{ @eq }} = global EQ) "",
-  term->trm (global (indt EqType)) EQTYPE,
+  term->trm (global EqType) EQTYPE,
   term->trm A A1,
   term->trm B B1,
 ].
@@ -138,7 +138,7 @@ pred main i:inductive, o:list prop.
 main I [C] :-
   std.assert-ok! (translate-indt I EQT) "derive.eqType.ast: translate",
   std.assert-ok! (validate-eqType EQT) "derive.eqType.ast: validate",
-  C = (eqType I EQT),
+  C = (eqType (indt I) EQT),
   coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ C).
 
 }

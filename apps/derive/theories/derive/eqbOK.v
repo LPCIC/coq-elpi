@@ -2,9 +2,9 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
-   
-Require Import eqb_core_defs.
-Require Import tag eqType_ast fields eqb eqbcorrect derive.
+
+From elpi.apps.derive Require Import eqb_core_defs.
+From elpi.apps.derive Require Import tag eqType_ast fields eqb eqbcorrect derive.
 
 From elpi.apps.derive.elpi Extra Dependency "eqbOK.elpi" as eqbOK.
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
@@ -61,3 +61,35 @@ derivation (indt T) Prefix ff (derive "eqbOK" (derive.eqbOK.main (indt T) Prefix
 derivation (const T) Prefix ff (derive "eqbOK-alias" (derive.eqbOK.main (const T) Prefix) (eqbok-for (const T) _)).
 
 }}.
+
+
+Elpi Command derive.eqbOK.register_axiom.
+Elpi Accumulate Db derive.eqb.db.
+Elpi Accumulate Db derive.eqbcorrect.db.
+Elpi Accumulate Db derive.param1.db.
+Elpi Accumulate Db derive.param1.trivial.db.
+Elpi Accumulate Db derive.eqType.db.
+Elpi Accumulate File eqType.
+Elpi Accumulate lp:{{
+   main [str Type, str IsT, str IsTinhab, str Eqb, str Correct, str Refl] :- !,
+     coq.locate Type GrType,
+     coq.locate IsT GRisT,
+     coq.locate IsTinhab GRisTinhab,
+     coq.locate Eqb GrEqb,
+     coq.locate Correct GrCorrect,
+     coq.locate Refl GrRefl,
+     GrRefl = const R,
+     GrCorrect = const C,
+     coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done GrType)),
+     coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-for (global GrType) (global GrType) (global GrEqb))),
+     coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (eqcorrect-for GrType C R)),
+     coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (correct-lemma-for (global GrType) (global GrCorrect))),
+     coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (refl-lemma-for (global GrType) (global GrRefl))),
+     coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ (eqType GrType eqb.axiom)),
+     coq.elpi.accumulate _ "derive.param1.db" (clause _ _ (reali-done GrType)),
+     coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") (reali (global GrType) (global GRisT) :- !)),
+     coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") (realiR (global GrType) (global GRisT) :- !)),
+     coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-inhab-db (global GRisT) (global GRisTinhab))).
+  main _ :- coq.error "usage: derive.eqbOK.register_axiom T is_T is_T_inhab eqb eqb_correct eqb_refl.".
+}}.
+Elpi Export derive.eqbOK.register_axiom.
