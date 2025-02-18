@@ -183,7 +183,8 @@ derive.eqbOK.register_axiom T is_T is_T_inhab eqb eqb_correct eqb_refl.
 
 Inductive foo := X : T -> foo.
 
-#[only(eqbOK)] derive foo.
+#[only(eqbOK),verbose] derive foo.
 
-Redirect "tmp" Print is_foo_inhab.
+Redirect "tmp" Print foo_eqb_OK.
+
 End TestRegister.
