@@ -1,4 +1,21 @@
-# Development version
+# [2.5.0] 18/2/2025
+
+Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0.
+
+### Packaging
+- rename to `rocq-elpi` (`coq-elpi` is a transitional package)
+- remove cram tests
+- separate tests bsed on `rocq-stdlib`, the main build targets
+  just depend on `rocq-core`
+- CI based on docker images rather than ocaml setup
+
+### APPS
+- derive: fix missing universe constraints in `param2`
+- derive: new `param2.register` command
+- derive: improve generated names in `param2`
+- derive: put eqb AST into a dedicated namespace
+- derive: new (experimental) derive.eqbOK.register_axiom
+- eltac: apply and rewrite examples
 
 ### API
 - `coq.count-prods` now count products modulo reduction,
