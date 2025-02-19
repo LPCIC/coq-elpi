@@ -43,7 +43,7 @@ module-lock ID Bo Arity UnivDecl :- std.do! [
   % extra universe constraints (if upoly) which are necessary for the body!
   if (UnivDecl = some UD)
     (std.do![
-      PTY = {{ lp:Bo = lp:Bo }},
+      PTY = {{ @eq lp:Ty lp:Bo lp:Bo }},
       std.assert-ok! (coq.typecheck-ty PTY _) "lock: unlock statement illtyped",
       P = {{ @refl_equal lp:Ty lp:Bo }},
       std.assert-ok! (coq.typecheck P PTY) "locker: unlock proof illtyped",
@@ -83,10 +83,10 @@ lock-module-body Signature ID Ty Bo UnivDecl B M :- std.do! [
   if (UnivDecl = some UD) (coq.upoly-decl->attribute UD Poly!) (Poly! = true),
   Poly! => coq.env.add-const "body" Bo Ty @transparent! C,
   coq.env.global (const C) B,
-  P = {{ @refl_equal lp:Ty lp:B }},
-  std.assert-ok! (coq.typecheck P _) "locker: unlock proof illtyped",
   PTY = {{ lp:B = lp:Bo }},
   std.assert-ok! (coq.typecheck-ty PTY _) "locker: unlock statement illtyped",
+  P = {{ @refl_equal lp:Ty lp:B }},
+  std.assert-ok! (coq.typecheck P PTY) "locker: unlock proof illtyped",
   if (UnivDecl = some UD) (coq.upoly-decl.complete-constraints UD UD1, coq.upoly-decl->attribute UD1 Poly1!) (Poly1! = true),
   Poly1! => coq.env.add-const "unlock" P PTY @opaque! _,
   coq.env.end-module M,

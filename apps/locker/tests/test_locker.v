@@ -111,3 +111,8 @@ About up2.body.
 Elpi Query lp:{{ coq.locate "up2" GR, coq.env.univpoly? GR 2 }}.
 
 Fail mlock Definition up3@{u} (T : Type@{u}) (W : Type) (x : T) := x.
+
+(* #704 ----------------------- *)
+
+Set Universe Polymorphism.
+mlock Definition Bla (T : bool) : Type := nat.
