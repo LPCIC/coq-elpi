@@ -1372,13 +1372,6 @@ external pred coq.arguments.simplification i:gref,
 external pred coq.arguments.set-simplification i:gref, 
                                                i:simplification_strategy.
 
-% [coq.arguments.reset-simplification GR] resets the behavior of the
-% simplification tactics.
-% Also resets the ! and / modifiers for the Arguments command.
-% Supported attributes:
-% - @global! (default: false)
-external pred coq.arguments.reset-simplification i:gref.
-
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.
 external pred coq.locate-abbreviation i:id, o:abbreviation.
