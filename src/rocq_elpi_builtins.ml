@@ -860,14 +860,16 @@ let warn_deprecated_add_axiom =
            "section variables is deprecated. Use coq.env.add-axiom or " ^
            "coq.env.add-section-variable instead"))
 
-let comAssumption_declare_variable id coe ~kind ty ~univs ~impargs impl ~name:_ =
-  ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:id
-let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name:_ ~id ty =
-  ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name:id ty
+let comAssumption_declare_variable coe ~kind ty ~univs ~impargs impl ~name =
+  ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:name.CAst.v
 [%%if coq = "8.20" || coq = "9.0"]
+let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ty =
+  ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name:name.CAst.v ty
 let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
   DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z
 [%%else]
+let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ty =
+  ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name ty
 let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
   DeclareInd.declare_mutual_inductive_with_eliminations ~default_dep_elim x y z
 [%%endif]
@@ -922,12 +924,12 @@ let add_axiom_or_variable api id ty local_bkind options state =
     match local_bkind with
     | Some implicit_kind -> begin
         Dumpglob.dump_definition name true "var";
-        comAssumption_declare_variable id Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) ~univs ~impargs implicit_kind ~name
+        comAssumption_declare_variable Vernacexpr.NoCoercion ~kind (EConstr.to_constr sigma ty) ~univs ~impargs implicit_kind ~name
       end
     | None -> begin
       Dumpglob.dump_definition name false "ax";
       comAssumption_declare_axiom Vernacexpr.NoCoercion ~local:Locality.ImportDefaultBehavior ~kind (EConstr.to_constr sigma ty)
-        ~univs ~impargs ~inline:options.inline ~name ~id
+        ~univs ~impargs ~inline:options.inline ~name
       end
   in
   let ucsts = match univs with UState.Monomorphic_entry x, _ -> x | _ -> Univ.ContextSet.empty in
