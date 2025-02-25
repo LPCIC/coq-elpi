@@ -42,12 +42,18 @@ let master = [
       coq-elpi.override.elpi-version = "2.0.7";
     };
 
-    "coq-master".coqPackages = common-bundles // {
+    "coq-master" = { rocqPackages = {
+      rocq-core.override.version = "master";
+      rocq-elpi.override.version = ".";
+      rocq-elpi.override.elpi-version = "2.0.7";
+      stdlib.override.version = "master";
+      bignums.override.version = "master";
+    }; coqPackages = common-bundles // {
       coq.override.version = "master";
       coq-elpi.override.elpi-version = "2.0.7";
       stdlib.override.version = "master";
       bignums.override.version = "master";
-    };
+    }; };
       
     /* uncomment bundle below if min and max elpi version start to differ
     "coq-master-min-elpi"coqPackages = common-bundles // {
