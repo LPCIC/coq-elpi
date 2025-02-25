@@ -46,9 +46,11 @@ Register Coq.Init.Datatypes.false as elpi.false.
 #[only="8.20"] Register Coq.Bool.Bool.reflect  as elpi.reflect.
 #[only="8.20"] Register Coq.Bool.Bool.ReflectF as elpi.ReflectF.
 #[only="8.20"] Register Coq.Bool.Bool.ReflectT as elpi.ReflectT.
+#[only="8.20"] Register Coq.Init.Datatypes.is_true as elpi.is_true.
 #[skip="8.20"] Register Corelib.Init.Datatypes.reflect  as elpi.reflect.
 #[skip="8.20"] Register Corelib.Init.Datatypes.ReflectF as elpi.ReflectF.
 #[skip="8.20"] Register Corelib.Init.Datatypes.ReflectT as elpi.ReflectT.
+#[skip="8.20"] Register Corelib.Init.Datatypes.is_true as elpi.is_true.
 
 #[only="8.20"] From Coq Require PrimString.
 #[skip="8.20"] From Corelib Require PrimString.
