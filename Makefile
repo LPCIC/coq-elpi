@@ -2,6 +2,10 @@ dune_wrap = $(shell command -v coqc > /dev/null || echo "etc/with-rocq-wrap.sh")
 dune = $(dune_wrap) dune $(1) $(DUNE_$(1)_FLAGS --stop-on-first-error
 DUNE_IN_FILES = $(shell find . -name "dune.in" | sed -e 's/.in$$//')
 
+# This makefile is mostly calling dune and dune doesn't like
+# being called in parralel, so we enforce -j1
+.NOTPARALLEL:
+
 all: $(DUNE_IN_FILES)
 	$(call dune,build)
 	$(call dune,build) builtin-doc
