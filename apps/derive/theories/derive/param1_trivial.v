@@ -16,58 +16,7 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.param1 derive.param1_congr.
 
-  
-Definition is_uint63_inhab x : is_uint63 x. Proof. constructor. Defined.
-Register is_uint63_inhab as elpi.derive.is_uint63_inhab.
-
-Definition is_float64_inhab x : is_float64 x. Proof. constructor. Defined.
-Register is_float64_inhab as elpi.derive.is_float64_inhab.
-
-Definition is_eq_inhab
-  A (PA : A -> Type) (HA : trivial A PA) (x : A) (px: PA x) y (py : PA y) (eq_xy : x = y) :
-    is_eq A PA x px y py eq_xy.
-Proof.
-  revert py.
-  case eq_xy; clear eq_xy y.
-  intro py.
-  rewrite <- (trivial_uniq A PA HA x px); clear px.
-  rewrite <- (trivial_uniq A PA HA x py); clear py.
-  apply (is_eq_refl A PA x (trivial_full A PA HA x)).
-Defined.
-Register is_eq_inhab as elpi.derive.is_eq_inhab.
-
-Definition is_uint63_trivial : trivial PrimInt63.int is_uint63 :=
-  fun x => contracts _ is_uint63 x (is_uint63_inhab x)
-    (fun y => match y with uint63 i => eq_refl end).
-Register is_uint63_trivial as elpi.derive.is_uint63_trivial.
-  
-Definition is_float64_trivial : trivial PrimFloat.float is_float64 :=
-  fun x => contracts _ is_float64 x (is_float64_inhab x)
-    (fun y => match y with float64 i => eq_refl end).
-Register is_float64_trivial as elpi.derive.is_float64_trivial.
-
-Lemma is_eq_trivial A (PA : A -> Type) (HA : trivial A PA) (x : A) (px: PA x) 
-   y (py : PA y)
-  : trivial (x = y) (is_eq A PA x px y py).
-Proof.
-  intro p.
-  apply (contracts (x = y) (is_eq A PA x px y py) p (is_eq_inhab A PA HA x px y py p)).
-  revert py.
-  case p; clear p y.
-  rewrite <- (trivial_uniq _ _ HA x px). clear px.
-  intros py.
-  rewrite <- (trivial_uniq _ _ HA x py). clear py.
-  intro v; case v; clear v.
-  unfold is_eq_inhab.
-  unfold trivial_full.
-  unfold trivial_uniq.
-  case (HA x); intros it def_it; compute.
-  case (def_it it).
-  reflexivity.
-Defined.
-Register is_eq_trivial as elpi.derive.is_eq_trivial.
-
-Elpi Db derive.param1.trivial.db lp:{{
+  Elpi Db derive.param1.trivial.db lp:{{
 
   pred param1-trivial-done i:inductive.
   type param1-trivial-db term -> term -> prop.
@@ -82,13 +31,7 @@ Elpi Db derive.param1.trivial.db lp:{{
 #[superglobal] Elpi Accumulate derive.param1.trivial.db Db Header derive.param1.db.
 #[superglobal] Elpi Accumulate derive.param1.trivial.db lp:{{
 
-  pred coq.mk-app i:term, i:list term, o:term.
-  pred coq.sort? i:term.
-
-  param1-inhab-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_inhab }}.
-  param1-inhab-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_inhab }}.
-  param1-inhab-db {{ lib:elpi.derive.is_eq }} {{ lib:elpi.derive.is_eq_inhab }}.
-
+  :name "param1:inhab:start"
   param1-inhab-db (fun `f` (prod `_` S _\ T) f\
               prod `x` S x\ prod `px` (RS x) _)
             (fun `f` (prod `_` S _\ T) f\
@@ -98,11 +41,6 @@ Elpi Db derive.param1.trivial.db lp:{{
               reali T R,
               param1-inhab-db R PT,
               coq.mk-app PT [{coq.mk-app f [x]}] (P f x).
-              
-  param1-inhab-db
-    {{ lib:elpi.derive.is_eq lp:A lp:PA lp:X lp:PX lp:Y lp:PY }}
-    {{ lib:elpi.derive.is_eq_inhab lp:A lp:PA lp:QA lp:X lp:PX lp:Y lp:PY }} :- !,
-    param1-trivial-db PA QA.
 
   param1-inhab-db (app [Hd|Args]) (app[P|PArgs]) :-
     param1-inhab-db Hd P, !,
@@ -115,9 +53,7 @@ Elpi Db derive.param1.trivial.db lp:{{
        (param1-inhab-db P Q, R = [T,P,Q|PArgs], param1-inhab-db-args Args PArgs)
        (R = [T,P|PArgs], param1-inhab-db-args Args PArgs).
    
-  param1-trivial-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_trivial }}.
-  param1-trivial-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_trivial }}.
-
+  :name "param1:trivial:start"
   param1-trivial-db (fun `f` (prod `_` S _\ T) f\
               prod `x` S x\ prod `px` (RS x) _)
             (fun `f` (prod `_` S _\ T) f\
@@ -127,11 +63,6 @@ Elpi Db derive.param1.trivial.db lp:{{
               reali T R,
               param1-trivial-db R PT,
               coq.mk-app PT [{coq.mk-app f [x]}] (P f x).
-
-  param1-trivial-db
-    {{ lib:elpi.derive.is_eq lp:A lp:PA lp:X lp:PX lp:Y lp:PY }}
-    {{ lib:elpi.derive.is_eq_trivial lp:A lp:PA lp:QA lp:X lp:PX lp:Y lp:PY }} :-
-    param1-trivial-db PA QA.
 
   param1-trivial-db (app [Hd|Args]) (app[P|PArgs]) :-
     param1-trivial-db Hd P, !,
@@ -146,6 +77,7 @@ Elpi Db derive.param1.trivial.db lp:{{
 
 }}.
   
+
 (* standalone *)
 Elpi Command derive.param1.trivial.
 Elpi Accumulate File derive_hook.
@@ -184,7 +116,132 @@ Elpi Accumulate lp:{{
     coq.error "Usage: derive.param1.inhab <inductive type name>".
 }}.
 
+(* ad-hoc rules for primitive data, eq and is_true *)
 
+Module Export exports.
+Elpi derive.param1.trivial is_bool.
+End exports.
+
+Definition is_uint63_inhab x : is_uint63 x. Proof. constructor. Defined.
+Register is_uint63_inhab as elpi.derive.is_uint63_inhab.
+
+Definition is_float64_inhab x : is_float64 x. Proof. constructor. Defined.
+Register is_float64_inhab as elpi.derive.is_float64_inhab.
+
+Definition is_pstring_inhab s : is_pstring s. Proof. constructor. Defined.
+Register is_pstring_inhab as elpi.derive.is_pstring_inhab.
+
+Definition is_eq_inhab
+  A (PA : A -> Type) (HA : trivial A PA) (x : A) (px: PA x) y (py : PA y) (eq_xy : x = y) :
+    is_eq A PA x px y py eq_xy.
+Proof.
+  revert py.
+  case eq_xy; clear eq_xy y.
+  intro py.
+  rewrite <- (trivial_uniq A PA HA x px); clear px.
+  rewrite <- (trivial_uniq A PA HA x py); clear py.
+  apply (is_eq_refl A PA x (trivial_full A PA HA x)).
+Defined.
+Register is_eq_inhab as elpi.derive.is_eq_inhab.
+
+Definition is_true_inhab b (H : is_bool b) p : is_is_true b H p :=
+  is_eq_inhab bool is_bool is_bool_trivial b H true is_true p.
+Register is_true_inhab as elpi.derive.is_true_inhab.
+
+
+Elpi Accumulate derive.param1.trivial.db lp:{{
+
+  :before "param1:inhab:start"
+  param1-inhab-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_inhab }}.
+  :before "param1:inhab:start"
+  param1-inhab-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_inhab }}.
+  :before "param1:inhab:start"
+  param1-inhab-db {{ lib:elpi.derive.is_pstring }} {{ lib:elpi.derive.is_pstring_inhab }}.
+  :before "param1:inhab:start"
+  param1-inhab-db {{ lib:elpi.derive.is_eq }} {{ lib:elpi.derive.is_eq_inhab }}.
+  :before "param1:inhab:start"
+  param1-inhab-db {{ lib:elpi.derive.is_true }} {{ lib:elpi.derive.is_true_inhab }}.
+
+
+  :before "param1:inhab:start"
+  param1-inhab-db
+    {{ lib:elpi.derive.is_eq lp:A lp:PA lp:X lp:PX lp:Y lp:PY }}
+    {{ lib:elpi.derive.is_eq_inhab lp:A lp:PA lp:QA lp:X lp:PX lp:Y lp:PY }} :- !,
+    param1-trivial-db PA QA.
+
+  :before "param1:inhab:start"
+  param1-inhab-db {{ lib:elpi.derive.is_is_true lp:B lp:PB }} R :- !,
+    param1-inhab-db {{ lib:elpi.derive.is_eq lib:elpi.bool lib:elpi.derive.is_bool lp:B lp:PB lib:elpi.true lib:elpi.derive.is_true }} R.
+
+}}.
+
+
+Definition is_uint63_trivial : trivial PrimInt63.int is_uint63 :=
+  fun x => contracts _ is_uint63 x (is_uint63_inhab x)
+    (fun y => match y with uint63 i => eq_refl end).
+Register is_uint63_trivial as elpi.derive.is_uint63_trivial.
+  
+Definition is_float64_trivial : trivial PrimFloat.float is_float64 :=
+  fun x => contracts _ is_float64 x (is_float64_inhab x)
+    (fun y => match y with float64 i => eq_refl end).
+Register is_float64_trivial as elpi.derive.is_float64_trivial.
+
+Definition is_pstring_trivial : trivial lib:elpi.pstring is_pstring :=
+  fun x => contracts _ is_pstring x (is_pstring_inhab x)
+    (fun y => match y with pstring i => eq_refl end).
+Register is_pstring_trivial as elpi.derive.is_pstring_trivial.
+
+Lemma is_eq_trivial A (PA : A -> Type) (HA : trivial A PA) (x : A) (px: PA x) 
+   y (py : PA y)
+  : trivial (x = y) (is_eq A PA x px y py).
+Proof.
+  intro p.
+  apply (contracts (x = y) (is_eq A PA x px y py) p (is_eq_inhab A PA HA x px y py p)).
+  revert py.
+  case p; clear p y.
+  rewrite <- (trivial_uniq _ _ HA x px). clear px.
+  intros py.
+  rewrite <- (trivial_uniq _ _ HA x py). clear py.
+  intro v; case v; clear v.
+  unfold is_eq_inhab.
+  unfold trivial_full.
+  unfold trivial_uniq.
+  case (HA x); intros it def_it; compute.
+  case (def_it it).
+  reflexivity.
+Defined.
+Register is_eq_trivial as elpi.derive.is_eq_trivial.
+
+Definition is_true_trivial b (H : is_bool b) : trivial (lib:elpi.is_true b) (is_is_true b H) :=
+  is_eq_trivial bool is_bool is_bool_trivial b H true is_true.
+Register is_true_trivial as elpi.derive.is_true_trivial.
+
+
+Elpi Accumulate derive.param1.trivial.db lp:{{
+
+  :before "param1:trivial:start"
+  param1-trivial-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_trivial }}.
+  :before "param1:trivial:start"
+  param1-trivial-db {{ lib:elpi.derive.is_float64 }} {{ lib:elpi.derive.is_float64_trivial }}.
+  :before "param1:trivial:start"
+  param1-trivial-db {{ lib:elpi.derive.is_pstring }} {{ lib:elpi.derive.is_pstring_trivial }}.
+  :before "param1:trivial:start"
+  param1-trivial-db {{ lib:elpi.derive.is_eq }} {{ lib:elpi.derive.is_eq_trivial }}.
+  :before "param1:trivial:start"
+  param1-trivial-db {{ lib:elpi.derive.is_true }} {{ lib:elpi.derive.is_true_trivial }}.
+
+
+  :before "param1:trivial:start"
+  param1-trivial-db
+    {{ lib:elpi.derive.is_eq lp:A lp:PA lp:X lp:PX lp:Y lp:PY }}
+    {{ lib:elpi.derive.is_eq_trivial lp:A lp:PA lp:QA lp:X lp:PX lp:Y lp:PY }} :-
+    param1-trivial-db PA QA.
+
+  :before "param1:trivial:start"
+  param1-trivial-db {{ lib:elpi.derive.is_is_true lp:B lp:PB }} R :- !,
+    param1-trivial-db {{ lib:elpi.derive.is_eq lib:elpi.bool lib:elpi.derive.is_bool lp:B lp:PB lib:elpi.true lib:elpi.derive.is_true }} R.
+
+}}.
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.param1.trivial.db.

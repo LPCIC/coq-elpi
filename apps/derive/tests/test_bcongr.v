@@ -29,6 +29,7 @@ Elpi derive.bcongr large.
 *)
 Elpi derive.bcongr prim_int.
 Elpi derive.bcongr prim_float.
+Elpi derive.bcongr prim_string.
 Elpi derive.bcongr fo_record.
 Elpi derive.bcongr pa_record.
 Elpi derive.bcongr pr_record.

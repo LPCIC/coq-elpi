@@ -8,8 +8,8 @@
 
 # Theories
 
--Q theories elpi
--Q _build/default/theories elpi
+-R theories elpi
+-R _build/default/theories elpi
 -Q theories-stdlib elpi_stdlib
 -Q _build/default/theories-stdlib elpi_stdlib
 

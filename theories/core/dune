@@ -50,6 +50,14 @@
    (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
 (rule
+ (target PrimString.v)
+ (deps
+  (glob_files PrimString.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
  (target RelationClasses.v)
  (deps
   (glob_files RelationClasses.v.in))
@@ -69,6 +77,14 @@
  (target Uint63Axioms.v)
  (deps
   (glob_files Uint63Axioms.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
+ (target PrimStringAxioms.v)
+ (deps
+  (glob_files PrimStringAxioms.v.in))
  (action
   (with-stdout-to %{target}
    (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))

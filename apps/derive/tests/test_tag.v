@@ -25,6 +25,7 @@ Elpi derive.tag iota.
 Elpi derive.tag large.
 Elpi derive.tag prim_int.
 Elpi derive.tag prim_float.
+Elpi derive.tag prim_string.
 Elpi derive.tag fo_record.
 Elpi derive.tag pa_record.
 Elpi derive.tag pr_record.
@@ -33,6 +34,7 @@ Elpi derive.tag enum.
 Elpi derive.tag eq.
 Elpi derive.tag bool.
 Elpi derive.tag sigma_bool.
+Elpi derive.tag sigma_bool2.
 Elpi derive.tag ord.
 Elpi derive.tag ord2.
 Elpi derive.tag val.

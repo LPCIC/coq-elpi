@@ -25,6 +25,7 @@ Elpi derive.param1 iota.
 Elpi derive.param1 large.
 Elpi derive.param1 prim_int.
 Elpi derive.param1 prim_float.
+Elpi derive.param1 prim_string.
 Elpi derive.param1 fo_record.
 Elpi derive.param1 pa_record.
 Elpi derive.param1 pr_record.
@@ -32,10 +33,11 @@ Elpi derive.param1 dep_record.
 Elpi derive.param1 enum.
 (*
 Elpi derive.param1 eq. (* done in param1.v *)
+Elpi derive.param1 bool. (* done in param1.v *)
 *)
-Elpi derive.param1 bool.
 Elpi derive.param1 is_zero.
 Elpi derive.param1 sigma_bool.
+Elpi derive.param1 sigma_bool2.
 Elpi derive.param1 is_leq.
 Elpi derive.param1 ord.
 Elpi derive.param1 ord2.
@@ -101,7 +103,6 @@ Fixpoint vec_length (A : Type) n (v : vec A n) :=
 Elpi derive.param1 vec_length.
 Elpi derive.param1 list.
 Elpi derive.param1 is_list.
-Elpi derive.param1 eq.
 
 Fixpoint plus' m n := match n with 0 => m | S n => S (plus' m n) end.
 Elpi derive.param1 plus'.
@@ -109,7 +110,6 @@ Elpi derive.param1 plus.
 Elpi derive.param1 prod.
 Elpi derive.param1 fst.
 Elpi derive.param1 snd.
-Elpi derive.param1 bool.
 Elpi derive.param1 Nat.divmod.
 Elpi derive.param1 Nat.div.
 

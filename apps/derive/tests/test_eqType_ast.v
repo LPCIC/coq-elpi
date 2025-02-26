@@ -24,6 +24,7 @@ Fail Elpi derive.eqType.ast iota.
 Elpi derive.eqType.ast large.
 Elpi derive.eqType.ast prim_int.
 Fail Elpi derive.eqType.ast prim_float.
+Elpi derive.eqType.ast prim_string.
 Elpi derive.eqType.ast fo_record.
 Elpi derive.eqType.ast pa_record.
 Elpi derive.eqType.ast pr_record.
@@ -32,6 +33,7 @@ Elpi derive.eqType.ast enum.
 Elpi derive.eqType.ast bool.
 Fail Elpi derive.eqType.ast eq.
 Elpi derive.eqType.ast sigma_bool.
+Elpi derive.eqType.ast sigma_bool2.
 Elpi derive.eqType.ast ord.
 Elpi derive.eqType.ast ord2.
 Elpi derive.eqType.ast val.

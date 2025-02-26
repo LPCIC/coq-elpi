@@ -29,6 +29,7 @@ Elpi derive.param1.congr is_large. (* slow *)
 *)
 Elpi derive.param1.congr is_prim_int.
 Elpi derive.param1.congr is_prim_float.
+Elpi derive.param1.congr is_prim_string.
 Elpi derive.param1.congr is_fo_record.
 Elpi derive.param1.congr is_pa_record.
 Elpi derive.param1.congr is_pr_record.
@@ -37,6 +38,7 @@ Elpi derive.param1.congr is_enum.
 Elpi derive.param1.congr is_bool.
 Elpi derive.param1.congr is_eq.
 Elpi derive.param1.congr is_sigma_bool.
+Elpi derive.param1.congr is_sigma_bool2.
 Elpi derive.param1.congr is_ord.
 Elpi derive.param1.congr is_val.
 End Coverage.

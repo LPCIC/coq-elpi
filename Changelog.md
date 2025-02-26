@@ -1,3 +1,10 @@
+# UNRELEASED
+
+### APPS:
+- derive: support for primitive strings in `param1` and `param1_trivial`
+- derive: support for `is_true` in `param1_trivial` (based on pre-existing
+  special support for `is_eq` and `is_bool`)
+
 # [2.5.0] 18/2/2025
 
 Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0.

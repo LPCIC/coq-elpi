@@ -27,6 +27,10 @@ jobs:
         with:
           opam_file: 'rocq-elpi.opam'
           custom_image: ${{ matrix.image }}
+          after_script: |
+            sudo chmod -R a+w .
+            make all-examples
+            make all-tests
           export: 'OPAMWITHTEST OPAMIGNORECONSTRAINTS OPAMVERBOSE'  # space-separated list of variables
         env:
           OPAMWITHTEST: 'true'

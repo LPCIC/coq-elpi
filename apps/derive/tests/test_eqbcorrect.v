@@ -37,6 +37,7 @@ Elpi derive.eqbcorrect large.
 *)
 Elpi derive.eqbcorrect prim_int.
 Fail Elpi derive.eqbcorrect prim_float. (* Can not work, we don't have a syntaxtic test *)
+Elpi derive.eqbcorrect prim_string.
 Elpi derive.eqbcorrect fo_record.
 Elpi derive.eqbcorrect pa_record.
 Elpi derive.eqbcorrect pr_record.   
@@ -45,6 +46,7 @@ Elpi derive.eqbcorrect enum.
 Fail Elpi derive.eqbcorrect eq.
 Elpi derive.eqbcorrect bool.
 Elpi derive.eqbcorrect sigma_bool.
+Elpi derive.eqbcorrect sigma_bool2.
 Elpi derive.eqbcorrect ord.
 Elpi derive.eqbcorrect ord2.
 Elpi derive.eqbcorrect val.

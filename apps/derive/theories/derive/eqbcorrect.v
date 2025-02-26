@@ -43,6 +43,19 @@ Proof. exact: Uint63Axioms.eqb_correct. Qed.
 Lemma uint63_eqb_refl i : eqb_refl_on PrimInt63.eqb i.
 Proof. exact: Uint63Axioms.eqb_refl. Qed.
 
+From elpi.core Require PrimString PrimStringAxioms.
+
+Lemma pstring_eqb_correct i : eqb_correct_on PrimString.eqb i.
+Proof.
+   move=> j; rewrite /PrimString.eqb; have [] := PrimStringAxioms.compare_ok i j.
+   by case: PrimString.compare => // /(_ erefl).
+Qed.
+
+Lemma pstring_eqb_refl i : eqb_refl_on PrimString.eqb i.
+Proof.
+   rewrite /PrimString.eqb /eqb_refl_on; have [] := PrimStringAxioms.compare_ok i i.
+   by case: PrimString.compare => // _ /(_ erefl).
+Qed.
 
 Elpi Db derive.eqbcorrect.db lp:{{
 
@@ -58,10 +71,12 @@ Elpi Db derive.eqbcorrect.db lp:{{
   :index(2)
   pred correct-lemma-for i:term, o:term.
   correct-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_correct }}.
+  correct-lemma-for {{ PrimString.string }} {{ @pstring_eqb_correct }}.
 
   :index(2)
   pred refl-lemma-for i:term, o:term.
   refl-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_refl }}.
+  refl-lemma-for {{ PrimString.string }} {{ @pstring_eqb_refl }}.
 
 }}.
 

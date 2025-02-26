@@ -41,13 +41,16 @@ Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
 
 Register store_reali as param1.store_reali.
 
-From elpi.core Require Import PrimInt63 PrimFloat.
+From elpi.core Require Import PrimInt63 PrimFloat PrimString.
 
 Inductive is_uint63 : PrimInt63.int -> Type := uint63 (i : PrimInt63.int) : is_uint63 i.
 Register is_uint63 as elpi.derive.is_uint63.
 
 Inductive is_float64 : PrimFloat.float -> Type := float64 (f : PrimFloat.float ) : is_float64 f.
 Register is_float64 as elpi.derive.is_float64.
+
+Inductive is_pstring : PrimString.string -> Type := pstring (s : PrimString.string) : is_pstring s.
+Register is_pstring as elpi.derive.is_pstring.
 
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
@@ -62,6 +65,7 @@ pred reali-done i:gref.
 
 reali {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
 reali {{ lib:num.float.type }} {{ lib:elpi.derive.is_float64 }} :- !.
+reali {{ lib:elpi.pstring }} {{ lib:elpi.derive.is_pstring }} :- !.
 
 :name "reali:fail"
 reali X _ :-
@@ -71,6 +75,7 @@ reali X _ :-
 
 realiR {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
 realiR {{ lib:num.float.type }} {{ lib:elpi.derive.is_float64 }} :- !.
+realiR {{ lib:elpi.pstring }} {{ lib:elpi.derive.is_pstring }} :- !.
 
 :name "realiR:fail"
 realiR T TR :-
@@ -93,10 +98,20 @@ Elpi Accumulate lp:{{
 }}. 
 
 Module Export exports.
-Elpi derive.param1 eq.
-End exports.
-Register is_eq as elpi.derive.is_eq.
 
+Local Notation core_is_true := is_true. (* avoid shadowing by param1 is_true *)
+
+Elpi derive.param1 eq.
+Elpi derive.param1 bool.
+Elpi derive.param1 core_is_true.
+
+End exports.
+
+Register is_eq as elpi.derive.is_eq.
+Register is_bool as elpi.derive.is_bool.
+Register is_true as elpi.derive.is_true.
+Register is_false as elpi.derive.is_false.
+Register is_is_true as elpi.derive.is_is_true.
 
 (* hook into derive *)
 Elpi Accumulate derive File paramX.

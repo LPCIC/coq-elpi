@@ -33,6 +33,7 @@ Elpi derive.map enum.
 Fail Elpi derive.map eq.
 Elpi derive.map bool.
 Elpi derive.map sigma_bool.
+Elpi derive.map sigma_bool2.
 Fail Elpi derive.map ord.
 Elpi derive.map val.
 End Coverage.

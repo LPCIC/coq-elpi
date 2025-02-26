@@ -9,7 +9,7 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 
-From elpi.core Require Import PrimInt63 PrimFloat.
+From elpi.core Require Import PrimInt63 PrimFloat PrimString.
 
 Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
@@ -20,6 +20,7 @@ Elpi Db derive.eq.db lp:{{
 type eq-db term -> term -> term -> prop.
 eq-db {{ lib:num.int63.type }} {{ lib:num.int63.type }} {{ lib:elpi.derive.eq_unit63 }} :- !.
 eq-db {{ lib:num.float.type }} {{ lib:num.float.type }} {{ lib:elpi.derive.eq_float64 }} :- !.
+eq-db {{ lib:elpi.pstring }} {{ lib:elpi.pstring }} {{ lib:elpi.pstring_eqb }} :- !.
 
 % quick access
 type eq-for inductive -> constant -> prop.

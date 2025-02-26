@@ -32,6 +32,7 @@ Elpi derive.eqbOK large.
 *)
 Elpi derive.eqbOK prim_int.
 Fail Elpi derive.eqbOK prim_float.
+Elpi derive.eqbOK prim_string.
 Elpi derive.eqbOK fo_record.
 Elpi derive.eqbOK pa_record.
 Elpi derive.eqbOK pr_record.
@@ -40,6 +41,7 @@ Elpi derive.eqbOK enum.
 Fail Elpi derive.eqbOK eq.
 Elpi derive.eqbOK bool.
 Elpi derive.eqbOK sigma_bool.
+Elpi derive.eqbOK sigma_bool2.
 Elpi derive.eqbOK ord.
 Elpi derive.eqbOK ord2.
 Elpi derive.eqbOK val.

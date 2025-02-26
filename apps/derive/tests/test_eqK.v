@@ -37,6 +37,7 @@ Elpi derive.eqK large.
 *)
 Elpi derive.eqK prim_int.
 Elpi derive.eqK prim_float.
+Elpi derive.eqK prim_string.
 Elpi derive.eqK fo_record.
 Elpi derive.eqK pa_record.
 Elpi derive.eqK pr_record.

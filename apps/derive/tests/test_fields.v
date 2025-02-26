@@ -24,6 +24,7 @@ Fail Elpi derive.fields iota.
 Elpi derive.fields large.
 Elpi derive.fields prim_int.
 Fail Elpi derive.fields prim_float.
+Elpi derive.fields prim_string.
 Elpi derive.fields fo_record.
 Elpi derive.fields pa_record.
 Elpi derive.fields pr_record.
@@ -32,6 +33,7 @@ Elpi derive.fields enum.
 Elpi derive.fields bool.
 Fail Elpi derive.fields eq.
 Elpi derive.fields sigma_bool.
+Elpi derive.fields sigma_bool2.
 Elpi derive.fields ord.
 Elpi derive.fields ord2.
 Elpi derive.fields val.

@@ -63,7 +63,6 @@ translate-record-constructor (field _ ID _ _) _ (error S) :- S is "unsupported r
 pred self o:eqb.trm.
 
 pred valid i:eqb.trm, o:diagnostic.
-valid (eqb.global X) ok :- global X = {{ PrimInt63.int }}, !.
 valid (eqb.global GR) ok :- eqType GR _, !.
 valid (eqb.app GR A Args) D :- eqType GR EQT, !, valid-eqType EQT [A|Args] D.
 valid T (error S) :- S is "not an eqType: " ^ {std.any->string T}.
@@ -86,7 +85,7 @@ irrelevant? (app [{{ @eq }}, global EqType, A, B]) (eqb.app EQ EQTYPE [A1,B1]) D
   term->trm A A1,
   term->trm B B1,
 ].
-irrelevant? T R D :- whd1 T T1, coq.say "whd" T T1, irrelevant? T1 R D.
+irrelevant? T R D :- whd1 T T1, irrelevant? T1 R D.
 
 pred term->trm i:term, o:eqb.trm, o:diagnostic.
 term->trm (global GR) (eqb.global GR) ok :- !.

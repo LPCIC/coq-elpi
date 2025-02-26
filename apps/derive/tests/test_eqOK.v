@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.eqOK.
+From elpi.apps Require Import derive.param1 derive.eqOK.
 
 From elpi.apps Require Import test_derive_corelib test_eqcorrect test_param1 test_param1_trivial.
 
@@ -31,6 +31,7 @@ Elpi derive.eqOK large.
 *)
 Elpi derive.eqOK prim_int.
 Fail Elpi derive.eqOK prim_float.
+Elpi derive.eqOK prim_string.
 Elpi derive.eqOK fo_record.
 Elpi derive.eqOK pa_record.
 Elpi derive.eqOK pr_record.

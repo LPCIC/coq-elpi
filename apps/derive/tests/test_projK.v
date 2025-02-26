@@ -24,6 +24,7 @@ Elpi derive.projK iota.
 Elpi derive.projK large.
 Elpi derive.projK prim_int.
 Elpi derive.projK prim_float.
+Elpi derive.projK prim_string.
 Elpi derive.projK fo_record.
 Elpi derive.projK pa_record.
 Elpi derive.projK pr_record.

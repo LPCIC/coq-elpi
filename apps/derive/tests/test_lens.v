@@ -24,7 +24,7 @@ intros; unfold _pf3.
 match goal with
 | |- x = {| over := fun f r => {| pf3 := f (_ r); pf4 := _ r |} ;
             view := _ |}
-    => idtac "ok"
+    => idtac
 | |- _ => fail "not primitive"
 end.
 Abort.

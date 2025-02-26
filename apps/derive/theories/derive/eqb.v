@@ -31,6 +31,7 @@ Elpi Db derive.eqb.db lp:{{
   
   eqb-for {{ PrimFloat.float }} {{ PrimFloat.float }} {{ PrimFloat.eqb }}.
   eqb-for {{ PrimInt63.int }} {{ PrimInt63.int }} {{ PrimInt63.eqb }}.
+  eqb-for {{ lib:elpi.pstring }} {{ lib:elpi.pstring }} {{ lib:elpi.pstring_eqb }}.
 
   :name "eqb-for:whd"
   eqb-for T1 T2 X :- whd1 T1 T1', !, eqb-for T1' T2 X. 
