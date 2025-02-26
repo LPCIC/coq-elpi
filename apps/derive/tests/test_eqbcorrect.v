@@ -37,6 +37,7 @@ Elpi derive.eqbcorrect large.
 *)
 Elpi derive.eqbcorrect prim_int.
 Fail Elpi derive.eqbcorrect prim_float. (* Can not work, we don't have a syntaxtic test *)
+Elpi derive.eqbcorrect prim_string.
 Elpi derive.eqbcorrect fo_record.
 Elpi derive.eqbcorrect pa_record.
 Elpi derive.eqbcorrect pr_record.   

@@ -71,6 +71,7 @@ Inductive large :=
 
 Inductive prim_int := PI (i : PrimInt63.int).
 Inductive prim_float := PF (f : PrimFloat.float).
+Inductive prim_string := PS (s : lib:elpi.pstring).
 
 Record fo_record := { f1 : peano; f2 : unit; }.
 

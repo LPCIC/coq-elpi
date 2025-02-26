@@ -25,6 +25,7 @@ Elpi derive.param1 iota.
 Elpi derive.param1 large.
 Elpi derive.param1 prim_int.
 Elpi derive.param1 prim_float.
+Elpi derive.param1 prim_string.
 Elpi derive.param1 fo_record.
 Elpi derive.param1 pa_record.
 Elpi derive.param1 pr_record.

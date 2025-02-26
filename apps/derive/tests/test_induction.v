@@ -28,6 +28,7 @@ Elpi derive.induction iota.
 Elpi derive.induction large.
 Elpi derive.induction prim_int.
 Elpi derive.induction prim_float.
+Elpi derive.induction prim_string.
 Elpi derive.induction fo_record.
 Elpi derive.induction pa_record.
 Elpi derive.induction pr_record.
