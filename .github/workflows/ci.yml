@@ -28,8 +28,6 @@ jobs:
           opam_file: 'rocq-elpi.opam'
           custom_image: ${{ matrix.image }}
           after_script: |
-            ls -l
-            id
             sudo chmod -R a+w .
             make all-examples
             make all-tests
