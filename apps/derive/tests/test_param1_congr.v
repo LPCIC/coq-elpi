@@ -29,6 +29,7 @@ Elpi derive.param1.congr is_large. (* slow *)
 *)
 Elpi derive.param1.congr is_prim_int.
 Elpi derive.param1.congr is_prim_float.
+Elpi derive.param1.congr is_prim_string.
 Elpi derive.param1.congr is_fo_record.
 Elpi derive.param1.congr is_pa_record.
 Elpi derive.param1.congr is_pr_record.

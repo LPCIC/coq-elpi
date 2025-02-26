@@ -63,7 +63,6 @@ translate-record-constructor (field _ ID _ _) _ (error S) :- S is "unsupported r
 pred self o:eqb.trm.
 
 pred valid i:eqb.trm, o:diagnostic.
-valid (eqb.global X) ok :- global X = {{ PrimInt63.int }}, !.
 valid (eqb.global GR) ok :- eqType GR _, !.
 valid (eqb.app GR A Args) D :- eqType GR EQT, !, valid-eqType EQT [A|Args] D.
 valid T (error S) :- S is "not an eqType: " ^ {std.any->string T}.

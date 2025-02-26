@@ -41,7 +41,7 @@ Class reali {X : Type} {XR : X -> Type} (x : X) (xR : XR x) := Reali {}.
 
 Register store_reali as param1.store_reali.
 
-From elpi.core Require Import PrimInt63 PrimFloat.
+From elpi.core Require Import PrimInt63 PrimFloat PrimString.
 
 Inductive is_uint63 : PrimInt63.int -> Type := uint63 (i : PrimInt63.int) : is_uint63 i.
 Register is_uint63 as elpi.derive.is_uint63.
@@ -49,7 +49,7 @@ Register is_uint63 as elpi.derive.is_uint63.
 Inductive is_float64 : PrimFloat.float -> Type := float64 (f : PrimFloat.float ) : is_float64 f.
 Register is_float64 as elpi.derive.is_float64.
 
-Inductive is_pstring : lib:elpi.pstring -> Type := pstring (s : lib:elpi.pstring) : is_pstring s.
+Inductive is_pstring : PrimString.string -> Type := pstring (s : PrimString.string) : is_pstring s.
 Register is_pstring as elpi.derive.is_pstring.
 
 (* Links a term (constant, inductive type, inductive constructor) with

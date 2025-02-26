@@ -23,6 +23,7 @@ Fail Elpi derive.eq iota.
 Elpi derive.eq large.
 Elpi derive.eq prim_int.
 Elpi derive.eq prim_float.
+Elpi derive.eq prim_string.
 Elpi derive.eq fo_record.
 Elpi derive.eq pa_record.
 Elpi derive.eq pr_record.

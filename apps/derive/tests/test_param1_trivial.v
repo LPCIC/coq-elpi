@@ -28,6 +28,7 @@ Fail Elpi derive.param1.trivial is_iota.
 Elpi derive.param1.trivial is_large.
 Elpi derive.param1.trivial is_prim_int.
 Elpi derive.param1.trivial is_prim_float.
+Elpi derive.param1.trivial is_prim_string.
 Elpi derive.param1.trivial is_fo_record.
 Elpi derive.param1.trivial is_pa_record.
 Elpi derive.param1.trivial is_pr_record.

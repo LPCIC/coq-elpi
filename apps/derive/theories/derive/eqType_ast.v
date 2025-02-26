@@ -1,5 +1,5 @@
 From elpi Require Import elpi.
-From elpi.core Require Import PrimInt63 PrimFloat.
+From elpi.core Require Import PrimInt63 PrimFloat PrimString.
 From elpi.apps Require Import derive.
 
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
@@ -29,6 +29,8 @@ type eqb.axiom       eqb.eqType.
 type eqb.constructor constructor -> eqb.arguments -> eqb.constructor.
 
 pred eqType i:gref, o:eqb.eqType.
+eqType {{:gref PrimInt63.int }} eqb.axiom :- !.
+eqType {{:gref lib:elpi.pstring }} eqb.axiom :- !.
 
 }}.
 

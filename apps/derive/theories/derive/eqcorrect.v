@@ -11,17 +11,30 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps Require Import  derive.eq derive.induction derive.eqK derive.param1.
 
-From elpi.core Require Import ssreflect PrimInt63.
-From elpi.core Require Uint63Axioms.
+From elpi.core Require Import ssreflect.
+
+From elpi.core Require PrimInt63 Uint63Axioms.
 
 Lemma uint63_eq_correct i : is_uint63 i -> eq_axiom_at PrimInt63.int PrimInt63.eqb i.
 Proof.
-move=> _ j; have [] : (eqb i j) = true <-> i = j.
+move=> _ j; have [] : (PrimInt63.eqb i j) = true <-> i = j.
   split; first exact: Uint63Axioms.eqb_correct.
   by move=> ->; rewrite Uint63Axioms.eqb_refl.
 by case: PrimInt63.eqb => [-> // _| _ abs]; constructor=> // /abs.
 Qed.
 Register uint63_eq_correct as elpi.derive.uint63_eq_correct.
+
+From elpi.core Require PrimString PrimStringAxioms.
+
+Lemma pstring_eq_correct i : is_pstring i -> eq_axiom_at PrimString.string PrimString.eqb i.
+Proof.
+  move=> _ j; have [] : (PrimString.eqb i j) = true <-> i = j.
+  rewrite /PrimString.eqb; have := PrimStringAxioms.compare_ok i j.
+   case: PrimString.compare => - [c r] //; split => //; [move=> _| by move=>/r ..].
+   by apply: c.
+by case: PrimString.eqb => [-> // _| _ abs]; constructor=> // /abs.
+Qed.
+Register pstring_eq_correct as elpi.derive.pstring_eq_correct.
 
 Elpi Db derive.eqcorrect.db lp:{{
   type eqcorrect-db gref -> term -> prop.
@@ -29,7 +42,8 @@ Elpi Db derive.eqcorrect.db lp:{{
 #[superglobal] Elpi Accumulate derive.eqcorrect.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.eqcorrect.db lp:{{
   
-eqcorrect-db X {{ lib:elpi.derive.uint63_eq_correct }} :- {{ lib:num.int63.type }} = global X, !.
+eqcorrect-db {{:gref lib:num.int63.type }} {{ lib:elpi.derive.uint63_eq_correct }} :- !.
+eqcorrect-db {{:gref lib:elpi.pstring }} {{ lib:elpi.derive.pstring_eq_correct }} :- !.
 eqcorrect-db X _ :- {{ lib:num.float.type }} = global X, !, stop "float64 comparison is not syntactic".
 
 :name "eqcorrect-db:fail"

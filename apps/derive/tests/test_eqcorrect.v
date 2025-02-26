@@ -32,6 +32,7 @@ Elpi derive.eqcorrect large.
 *)
 Elpi derive.eqcorrect prim_int.
 Fail Elpi derive.eqcorrect prim_float.
+Elpi derive.eqcorrect prim_string.
 Elpi derive.eqcorrect fo_record.
 Elpi derive.eqcorrect pa_record.
 Elpi derive.eqcorrect pr_record.

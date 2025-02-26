@@ -24,6 +24,7 @@ Elpi derive.isK iota.
 Elpi derive.isK large.
 Elpi derive.isK prim_int.
 Elpi derive.isK prim_float.
+Elpi derive.isK prim_string.
 Elpi derive.isK fo_record.
 Elpi derive.isK pa_record.
 Elpi derive.isK pr_record.

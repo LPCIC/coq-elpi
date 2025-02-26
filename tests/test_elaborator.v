@@ -1,4 +1,4 @@
-From elpi.core Require Import PrimFloat.
+From elpi.core Require Import PrimInt63 PrimFloat PrimString.
 
 From elpi_elpi Extra Dependency "elpi_elaborator.elpi" as elab.
 

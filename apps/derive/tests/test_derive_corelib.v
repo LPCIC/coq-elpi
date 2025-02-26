@@ -1,7 +1,6 @@
 (* Some standard data types using different features *)
 From elpi Require elpi.
-From elpi.core Require PrimInt63.
-From elpi.core Require PrimFloat.
+From elpi.core Require PrimInt63 PrimFloat PrimString.
 
 Module Coverage.
 
