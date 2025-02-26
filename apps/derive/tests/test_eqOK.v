@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.eqOK.
+From elpi.apps Require Import derive.param1 derive.eqOK.
 
 From elpi.apps Require Import test_derive_corelib test_eqcorrect test_param1 test_param1_trivial.
 

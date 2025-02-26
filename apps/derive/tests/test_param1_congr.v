@@ -37,6 +37,7 @@ Elpi derive.param1.congr is_enum.
 Elpi derive.param1.congr is_bool.
 Elpi derive.param1.congr is_eq.
 Elpi derive.param1.congr is_sigma_bool.
+Elpi derive.param1.congr is_sigma_bool2.
 Elpi derive.param1.congr is_ord.
 Elpi derive.param1.congr is_val.
 End Coverage.

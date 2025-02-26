@@ -33,6 +33,7 @@ Elpi derive.tag enum.
 Elpi derive.tag eq.
 Elpi derive.tag bool.
 Elpi derive.tag sigma_bool.
+Elpi derive.tag sigma_bool2.
 Elpi derive.tag ord.
 Elpi derive.tag ord2.
 Elpi derive.tag val.

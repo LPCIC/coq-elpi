@@ -32,6 +32,7 @@ Elpi derive.fields enum.
 Elpi derive.fields bool.
 Fail Elpi derive.fields eq.
 Elpi derive.fields sigma_bool.
+Elpi derive.fields sigma_bool2.
 Elpi derive.fields ord.
 Elpi derive.fields ord2.
 Elpi derive.fields val.

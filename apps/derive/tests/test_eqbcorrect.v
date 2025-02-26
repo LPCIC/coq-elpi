@@ -45,6 +45,7 @@ Elpi derive.eqbcorrect enum.
 Fail Elpi derive.eqbcorrect eq.
 Elpi derive.eqbcorrect bool.
 Elpi derive.eqbcorrect sigma_bool.
+Elpi derive.eqbcorrect sigma_bool2.
 Elpi derive.eqbcorrect ord.
 Elpi derive.eqbcorrect ord2.
 Elpi derive.eqbcorrect val.

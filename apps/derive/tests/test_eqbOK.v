@@ -40,6 +40,7 @@ Elpi derive.eqbOK enum.
 Fail Elpi derive.eqbOK eq.
 Elpi derive.eqbOK bool.
 Elpi derive.eqbOK sigma_bool.
+Elpi derive.eqbOK sigma_bool2.
 Elpi derive.eqbOK ord.
 Elpi derive.eqbOK ord2.
 Elpi derive.eqbOK val.

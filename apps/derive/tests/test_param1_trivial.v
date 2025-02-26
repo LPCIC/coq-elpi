@@ -38,6 +38,7 @@ Elpi derive.param1.trivial is_bool.
 Elpi derive.param1.trivial is_eq. (* ad-hoc *)
 *)
 Elpi derive.param1.trivial is_sigma_bool.
+Elpi derive.param1.trivial is_sigma_bool2.
 Elpi derive.param1.trivial is_ord.
 Elpi derive.param1.trivial is_ord2.
 Elpi derive.param1.trivial is_val.
@@ -104,8 +105,3 @@ Redirect "tmp" Check is_sigma_bool_inhab : full sigma_bool is_sigma_bool.
 Redirect "tmp" Check is_ord_inhab : forall p px, full (ord p) (is_ord p px).
 Redirect "tmp" Check is_ord2_inhab : forall p px, full (ord2 p) (is_ord2 p px).
 Redirect "tmp" Check is_val_inhab : full val is_val.
-
-Redirect "tmp" Record sigma_bool2 := { depn : peano; depeq : lib:elpi.is_true (is_zero depn) }.
-Redirect "tmp" Elpi derive.param1 sigma_bool2.
-Redirect "tmp" Elpi derive.param1.trivial is_sigma_bool2.
-Redirect "tmp" Check is_sigma_bool2_inhab.

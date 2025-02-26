@@ -1,4 +1,5 @@
 (* Some standard data types using different features *)
+From elpi Require elpi.
 From elpi.core Require PrimInt63.
 From elpi.core Require PrimFloat.
 
@@ -90,6 +91,8 @@ Definition is_zero (n:peano) : bool :=
   end.
 
 Record sigma_bool := { depn : peano; depeq : is_zero depn = true }.
+
+Record sigma_bool2 := { depn2 : peano; depeq2 : lib:elpi.is_true (is_zero depn2) }.
 
 Fixpoint is_leq (n m:peano) : bool := 
   match n, m with 

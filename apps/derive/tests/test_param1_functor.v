@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.param1_functor.
+From elpi.apps Require Import derive.param1 derive.param1_functor.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib test_param1.
 Import test_derive_corelib.Coverage.
@@ -31,9 +31,10 @@ Elpi derive.param1.functor is_pa_record.
 Elpi derive.param1.functor is_pr_record.
 Elpi derive.param1.functor is_dep_record.
 Elpi derive.param1.functor is_enum.
-Fail Elpi derive.param1.functor param1.is_eq.
-Elpi derive.param1.functor is_bool.
+Fail Elpi derive.param1.functor derive.param1.exports.is_eq.
+Elpi derive.param1.functor derive.param1.exports.is_bool.
 Elpi derive.param1.functor is_sigma_bool.
+Elpi derive.param1.functor is_sigma_bool2.
 Elpi derive.param1.functor is_ord.
 Elpi derive.param1.functor is_ord2.
 Elpi derive.param1.functor is_val.

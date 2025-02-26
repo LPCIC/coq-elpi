@@ -33,9 +33,9 @@ Elpi derive.induction pa_record.
 Elpi derive.induction pr_record.
 Elpi derive.induction dep_record.
 Elpi derive.induction enum.
-Elpi derive.induction eq.
-Elpi derive.induction bool.
 Elpi derive.induction sigma_bool.
+Elpi derive.induction bool.
+Elpi derive.induction sigma_bool2.
 Elpi derive.induction ord.
 Elpi derive.induction ord2.
 Elpi derive.induction val.
@@ -66,5 +66,6 @@ Redirect "tmp" Check pr_record_induction : forall A pr P, (forall x, is_peano x 
 Redirect "tmp" Check dep_record_induction : forall P, (forall x (px : is_peano x) y, is_vect unit is_unit x px y -> P (Build_dep_record x y)) -> forall x, is_dep_record x -> P x.
 Redirect "tmp" Check enum_induction : forall P, (P E1) -> (P E2) -> (P E3) -> forall x, is_enum x -> P x.
 Redirect "tmp" Check sigma_bool_induction.
+Redirect "tmp" Check sigma_bool2_induction.
 Redirect "tmp" Check ord_induction : forall p Pp P, (forall n Pn l, is_eq bool is_bool (is_leq n p) (is_is_leq n Pn p Pp) true is_true l -> P (mkOrd p n l)) -> forall (o : ord p), is_ord p Pp o -> P o.
 Redirect "tmp" Check ord2_induction : forall p Pp P, (forall (o1 : ord p), is_ord p Pp o1 -> forall (o2 : ord p), is_ord p Pp o2 -> P (mkOrd2 p o1 o2)) -> forall (o : ord2 p), is_ord2 p Pp o -> P o.
