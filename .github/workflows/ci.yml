@@ -29,7 +29,8 @@ jobs:
           custom_image: ${{ matrix.image }}
           after_script: |
             ls -l
-            chmod -R a+w .
+            id
+            sudo chmod -R a+w .
             make all-examples
             make all-tests
           export: 'OPAMWITHTEST OPAMIGNORECONSTRAINTS OPAMVERBOSE'  # space-separated list of variables
