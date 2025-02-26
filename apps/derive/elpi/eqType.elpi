@@ -86,7 +86,7 @@ irrelevant? (app [{{ @eq }}, global EqType, A, B]) (eqb.app EQ EQTYPE [A1,B1]) D
   term->trm A A1,
   term->trm B B1,
 ].
-irrelevant? T R D :- whd1 T T1, coq.say "whd" T T1, irrelevant? T1 R D.
+irrelevant? T R D :- whd1 T T1, irrelevant? T1 R D.
 
 pred term->trm i:term, o:eqb.trm, o:diagnostic.
 term->trm (global GR) (eqb.global GR) ok :- !.
