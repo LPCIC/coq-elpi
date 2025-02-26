@@ -2,7 +2,7 @@
 #[only="8.20"] Definition compare_ok := compare_eq.
 
 #[skip="8.20"] From Corelib Require Import ssreflect ssrbool Uint63Axioms PrimStringAxioms.
-#[skip="8.20"] Lemma compare_refl (s : string) : compare s s = Eq.
+#[skip="8.20"] Lemma compare_Eq_refl (s : string) : compare s s = Eq.
 #[skip="8.20"] Proof.
 #[skip="8.20"]   rewrite PrimStringAxioms.compare_spec.
 #[skip="8.20"]   elim: (to_list s) => //= x xs ->.
@@ -11,13 +11,7 @@
 #[skip="8.20"]   have [+ _] := ltb_spec x x.
 #[skip="8.20"]   by case: ltb => // /(_ isT); case: (to_Z x) => //=; elim.
 #[skip="8.20"] Qed.
-#[skip="8.20"] Lemma to_list_inj (s1 s2 : string) :
-#[skip="8.20"]   to_list s1 = to_list s2 -> s1 = s2.
-#[skip="8.20"] Proof.
-#[skip="8.20"]   intros H. rewrite -(of_to_list s1) -(of_to_list s2) H.
-#[skip="8.20"]   reflexivity.
-#[skip="8.20"] Qed.
-#[skip="8.20"] Lemma compare_eq_correct (s1 s2 : string) :
+#[skip="8.20"] Lemma compare_Eq_correct (s1 s2 : string) :
 #[skip="8.20"]   compare s1 s2 = Eq -> s1 = s2.
 #[skip="8.20"] Proof.
 #[skip="8.20"]   move=> E; rewrite -[s1]of_to_list -[s2]of_to_list; congr (of_list _).
@@ -31,4 +25,4 @@
 #[skip="8.20"]   by case: ltb.
 #[skip="8.20"] Qed.
 #[skip="8.20"] Lemma compare_ok (s1 s2 : string) : compare s1 s2 = Eq <-> s1 = s2.
-#[skip="8.20"] Proof. split; [apply compare_eq_correct|intros []; apply compare_refl]. Qed.
+#[skip="8.20"] Proof. split; [apply compare_Eq_correct|intros []; apply compare_Eq_refl]. Qed.
