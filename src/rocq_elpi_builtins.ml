@@ -2363,11 +2363,8 @@ denote the same x as before.|};
   MLCode(Pred("coq.env.primitive-projection?",
     In(projection, "Projection",
     Out(constant, "Compatibility constant",
-    Easy "relates a projection to its compatibility constant.")),
-    (fun p _ ~depth ->
-      let c = Projection.constant p in 
-      try !: (ignore (Structures.Structure.find_from_projection c); Constant c)
-      with Not_found -> raise No_clause)),
+    Easy "relates a primitive projection to its compatibility constant.")),
+    (fun p _ ~depth -> !: (Constant (Projection.constant p)))),
   DocAbove);
 
   LPDoc "-- Sorts (and their universe level, if applicable) ----------------";
