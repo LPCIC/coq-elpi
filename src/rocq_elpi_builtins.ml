@@ -2363,14 +2363,15 @@ denote the same x as before.|};
   MLCode(Pred("coq.env.primitive-projection?",
     InOut(B.ioarg projection, "Projection",
     InOut(B.ioarg constant, "Compatibility constant",
-    Read(global, "Relates a primitive projection to its compatibility constant."))),
-    (fun p c ~depth coq_context _ _ ->
+    Out(int, "Index",
+    Read(global, "Relates a primitive projection to its compatibility constant and its index in the record.")))),
+    (fun p c _ ~depth coq_context _ _ ->
       match p, c with
       | _, Data (Variable c) -> raise No_clause
       | Data p, Data (Constant c) ->
-          if Constant.equal (Projection.constant p) c then ?: None +? None else raise No_clause
+          if Constant.equal (Projection.constant p) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
       | NoData, NoData -> U.type_error "coq.env.primitive-projection?: got no input data"
-      | Data p, NoData -> ?: None +! (Constant (Projection.constant p))
+      | Data p, NoData -> ?: None +! (Constant (Projection.constant p)) +! Names.Projection.(arg p + npars p)
       | NoData, Data (Constant c) ->
           (match Environ.constant_opt_value_in coq_context.env (UVars.in_punivs c) with
           | None -> raise No_clause
@@ -2381,7 +2382,9 @@ denote the same x as before.|};
               | App (hd, _) -> get_proj hd
               | Proj (p, _, _) -> p
               | _ -> raise No_clause
-            in !: (get_proj p) +? None))),
+            in
+            let p = get_proj p in
+            !: p +? None +! Names.Projection.(arg p + npars p)))),
   DocAbove);
 
   LPDoc "-- Sorts (and their universe level, if applicable) ----------------";
