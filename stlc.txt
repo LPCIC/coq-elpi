@@ -150,6 +150,7 @@ type context-item id ->
                     implicit_kind ->
                       term ->
                         option term -> (term -> context-decl) -> context-decl.
+type coq.CS.canonical-projection? constant -> prop.
 type coq.CS.canonical-projections inductive -> list (option constant) -> prop.
 type coq.CS.db list cs-instance -> prop.
 type coq.CS.db-for gref -> cs-pattern -> list cs-instance -> prop.
@@ -236,7 +237,7 @@ type coq.env.informative? inductive -> prop.
 type coq.env.module modpath -> list module-item -> prop.
 type coq.env.module-type modtypath -> list id -> prop.
 type coq.env.opaque? constant -> prop.
-type coq.env.primitive-projection? projection -> constant -> prop.
+type coq.env.primitive-projection? projection -> constant -> int -> prop.
 type coq.env.primitive-projections inductive ->
                                      list (option (pair projection int)) ->
                                        prop.
@@ -1755,27 +1756,27 @@ coq.env.add-context (context-item A0 _ A2 (some A1) A5) :- coq.env.add-const
 coq.env.begin-module A0 A1 :- coq.env.begin-module-functor A0 A1 [].
 % File "coq-builtin.elpi", line 866, column 0, characters 35255-35332: [258] 
 coq.env.begin-module-type A0 :- coq.env.begin-module-type-functor A0 [].
-% File "coq-builtin.elpi", line 1245, column 0, characters 50008-50198: [259] 
+% File "coq-builtin.elpi", line 1251, column 0, characters 50322-50512: [259] 
 coq.CS.canonical-projections A0 A1 :- coq.warning elpi.deprecated 
                                        elpi.canonical-projections 
                                        use coq.env.projections in place of coq.CS.canonical-projections, 
  coq.env.projections A0 A1.
-% File "coq-builtin.elpi", line 1549, column 0, characters 62766-62946: [260] 
+% File "coq-builtin.elpi", line 1555, column 0, characters 63080-63260: [260] 
 coq.reduction.cbv.whd_all A0 A1 :- coq.warning elpi.deprecated 
                                     elpi.cbv-whd-all 
                                     use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all, 
  coq.reduction.cbv.norm A0 A1.
-% File "coq-builtin.elpi", line 1556, column 0, characters 63044-63225: [261] 
+% File "coq-builtin.elpi", line 1562, column 0, characters 63358-63539: [261] 
 coq.reduction.vm.whd_all A0 A1 A2 :- coq.warning elpi.deprecated 
                                       elpi.vm-whd-all 
                                       use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all, 
  coq.reduction.vm.norm A0 A1 A2.
-% File "coq-builtin.elpi", line 1563, column 0, characters 63278-63371: [262] 
+% File "coq-builtin.elpi", line 1569, column 0, characters 63592-63685: [262] 
 coq.reduction.lazy.whd_all A0 A1 :- get-option coq:redflags coq.redflags.all
                                      => coq.reduction.lazy.whd A0 A1.
-% File "coq-builtin.elpi", line 1685, column 0, characters 67995-68035: [263] 
+% File "coq-builtin.elpi", line 1691, column 0, characters 68309-68349: [263] 
 coq.id->name A0 A1 :- coq.string->name A0 A1.
-% File "coq-builtin.elpi", line 1787, column 0, characters 71769-71833: [264] 
+% File "coq-builtin.elpi", line 1793, column 0, characters 72083-72147: [264] 
 coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
 % File "./examples/tutorial_elpi_lang.v", line 491, column 2, characters 12652-12720: [265] 
 whd (app A0 A2) A3 :- whd A0 (fun A1), !, whd (A1 A2) A3.
