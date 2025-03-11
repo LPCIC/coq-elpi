@@ -2361,13 +2361,30 @@ denote the same x as before.|};
   DocAbove);
 
   MLCode(Pred("coq.env.primitive-projection?",
-    In(projection, "Projection",
-    Out(constant, "Compatibility constant",
-    Easy "relates a projection to its compatibility constant.")),
-    (fun p _ ~depth ->
-      let c = Projection.constant p in 
-      try !: (ignore (Structures.Structure.find_from_projection c); Constant c)
-      with Not_found -> raise No_clause)),
+    InOut(B.ioarg projection, "Projection",
+    InOut(B.ioarg constant, "Compatibility constant",
+    Out(int, "Index",
+    Read(global, "Relates a primitive projection to its compatibility constant. Index is set to the constructor argument extracted by the projection (starting from 0).")))),
+    (fun p c _ ~depth coq_context _ _ ->
+      match p, c with
+      | _, Data (Variable c) -> raise No_clause
+      | Data p, Data (Constant c) ->
+          if Constant.equal (Projection.constant p) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
+      | NoData, NoData -> U.type_error "coq.env.primitive-projection?: got no input data"
+      | Data p, NoData -> ?: None +! (Constant (Projection.constant p)) +! Names.Projection.(arg p + npars p)
+      | NoData, Data (Constant c) ->
+          (match Environ.constant_opt_value_in coq_context.env (UVars.in_punivs c) with
+          | None -> raise No_clause
+          | Some p ->
+            let rec get_proj c =
+              match Constr.kind c with
+              | Lambda (_, _, t) -> get_proj t
+              | App (hd, _) -> get_proj hd
+              | Proj (p, _, _) -> p
+              | _ -> raise No_clause
+            in
+            let p = get_proj p in
+            !: p +? None +! Names.Projection.(arg p + npars p)))),
   DocAbove);
 
   LPDoc "-- Sorts (and their universe level, if applicable) ----------------";
@@ -2761,6 +2778,17 @@ Supported attributes:
            let _, { CanonicalSolution.constant } = CanonicalSolution.find env sigma (p,v) in
            !: [{ CSTable.projection = p; value = v; solution = fst @@ EConstr.destRef sigma constant }]
          with Not_found -> !: [])),
+  DocAbove);
+
+  MLCode(Pred("coq.CS.canonical-projection?",
+    In(constant, "Projection",
+    Easy "Tells if the projection can be used for CS inference."),
+    (fun c ~depth ->
+      match c with
+      | Variable _ -> raise No_clause
+      | Constant c ->
+        try ignore (Structures.Structure.find_from_projection c)
+        with Not_found -> raise No_clause)),
   DocAbove);
 
   MLCode(Pred("coq.TC.declare-class",

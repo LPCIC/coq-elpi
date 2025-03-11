@@ -221,7 +221,7 @@ Module P''.
 
   Elpi Query  lp:{{
     app[primitive (proj P _) | _] = {{X.(proj1 _)}},
-    coq.env.primitive-projection? P C,
+    coq.env.primitive-projection? P C _,
     global (const C) = {{proj1}}.
   }}.
 
