@@ -2364,7 +2364,7 @@ denote the same x as before.|};
     InOut(B.ioarg projection, "Projection",
     InOut(B.ioarg constant, "Compatibility constant",
     Out(int, "Index",
-    Read(global, "Relates a primitive projection to its compatibility constant and its index in the record.")))),
+    Read(global, "Relates a primitive projection to its compatibility constant. Index is set to the constructor argument extracted by the projection (starting from 0).")))),
     (fun p c _ ~depth coq_context _ _ ->
       match p, c with
       | _, Data (Variable c) -> raise No_clause
