@@ -977,7 +977,7 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
     let args = args |> List.map (fun (arg,_) -> Rocq_elpi_arg_HOAS.Tac.Term(arg)) in
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Rocq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
-  CAst.make @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac)) in
+  CAst.make @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit Tacarg.wit_ltac_in_term) (CAst.make tac)) in
   let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
   Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
     (Gramlib.Gramext.Before "10",
