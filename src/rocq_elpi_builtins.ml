@@ -951,6 +951,12 @@ let rec gbpmp f = function
       Gbpmp (Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a))
   | [] -> assert false
 
+[%%if coq = "8.20" || coq = "9.0"]
+let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_tactic
+[%%else]
+let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_ltac_in_term
+[%%endif]
+
 let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
   let action args loc =
   let open Ltac_plugin in
@@ -977,7 +983,7 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
     let args = args |> List.map (fun (arg,_) -> Rocq_elpi_arg_HOAS.Tac.Term(arg)) in
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Rocq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
-  CAst.make @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit Tacarg.wit_tactic) (CAst.make tac)) in
+  CAst.make @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit wit_ltac_in_term) (CAst.make tac)) in
   let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
   Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
     (Gramlib.Gramext.Before "10",
