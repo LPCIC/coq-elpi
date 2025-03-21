@@ -3702,13 +3702,15 @@ let get_global_env_current_sigma ~depth hyps constraints state =
   state, coq_ctx, get_sigma state, gls
 ;;
 
-let lp2goal ~depth hyps syntactic_constraints state t =
+let rec lp2goal ~depth hyps syntactic_constraints state t =
   match get_goal_ref ~depth (E.constraints syntactic_constraints) state t with
   | Closed_by_side_effect -> assert false
   | Not_a_goal -> assert false
   | Open {ctx; evar = k; scope; args} ->
     let state, _, changed, gl1 =
       elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth syntactic_constraints state in
+    if changed then lp2goal ~depth hyps syntactic_constraints state t
+    else
     let visible_set = dblset_of_canonical_ctx ~depth Int.Set.empty scope in
     let state, coq_ctx, gl2 =
       of_elpi_ctx ~calldepth:depth syntactic_constraints depth
