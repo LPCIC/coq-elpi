@@ -1349,6 +1349,16 @@ let declare_projections ind ~kind _ id flags implicits _ =
   Record.Internal.declare_projections ind ~kind ~inhabitant_id:id flags implicits
 [%%endif]
 
+[%%if coq = "8.20" || coq = "9.0"]
+let apply_proof ~name ~poly env tac pf =
+  let (), pv, _, _ = Proofview.apply ~name ~poly env tac pf in
+  pv
+[%%else]
+let apply_proof ~name ~poly env tac pf =
+  let (), pv, _, _, _ = Proofview.apply ~name ~poly env tac pf in
+  pv
+[%%endif]
+
 let coq_misc_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -3816,10 +3826,10 @@ Supported attributes:
            Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
          with_no_tc ~no_tc (fun sigma ->
             let _, pv = init sigma [] in
-            let (), pv, _, _ =
+            let pv =
               let vernac_state = Vernacstate.freeze_full_state () in
               try
-                let rc = apply ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
+                let rc = apply_proof ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
                 let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
                 let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
                 Vernacstate.unfreeze_full_state vernac_state;
