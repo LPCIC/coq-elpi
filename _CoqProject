@@ -38,7 +38,7 @@
 -Q _build/default/apps/derive/theories elpi.apps.derive
 -Q apps/derive/theories/derive elpi.apps.derive.derive
 -Q _build/default/apps/derive/theories/derive elpi.apps.derive.derive
--Q apps/derive/tests elpi.apps.derive.tests
+
 -Q _build/default/apps/derive/tests elpi.apps.derive.tests
 -Q apps/derive/tests-stdlib elpi_apps_derive_tests_stdlib
 -Q _build/default/apps/derive/tests-stdlib elpi_apps_derive_tests_stdlib

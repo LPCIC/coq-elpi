@@ -11,11 +11,11 @@
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
 % msolve is for tactics that operate on multiple goals (called via all: ).
-pred solve i:goal, o:list sealed-goal.
-pred msolve i:list sealed-goal, o:list sealed-goal.
+external pred solve i:goal, o:list sealed-goal.
+external pred msolve i:list sealed-goal, o:list sealed-goal.
 
 % Extra arguments for tactics
-type tac       ltac1-tactic -> argument.
+external symbol tac : ltac1-tactic -> argument.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
@@ -26,23 +26,23 @@ type tac       ltac1-tactic -> argument.
 % -- terms --------------------------------------------------------------------
 kind term type.
 
-type sort  sort -> term. % Prop, Type@{i}
+external symbol sort    : sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-type global gref -> term.
-type pglobal gref -> univ-instance -> term.
+external symbol global  : gref -> term.
+external symbol pglobal : gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
-type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
-type prod name -> term -> (term -> term) -> term.         % forall x : t,
-type let  name -> term -> term -> (term -> term) -> term. % let x : T := v in
+external symbol fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
+external symbol prod    : name -> term -> (term -> term) -> term.         % forall x : t,
+external symbol let     : name -> term -> term -> (term -> term) -> term. % let x : T := v in
 
 % other term formers: function application, pattern matching and recursion
-type app   list term -> term.                   % app [hd|args]
-type match term -> term -> list term -> term.   % match t p [branch])
-type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+external symbol app     : list term -> term.                   % app [hd|args]
+external symbol match   : term -> term -> list term -> term.   % match t p [branch])
+external symbol fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-type primitive primitive-value -> term.
+external symbol primitive : primitive-value -> term.
 
 % NYI
 %type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
@@ -70,15 +70,6 @@ type primitive primitive-value -> term.
 
 % -- helpers ------------------------------------------------------------------
 macro @cast T TY :- (let `cast` TY T x\x).
-
-% -- misc ---------------------------------------------------------------------
-
-% When one writes Constraint Handling Rules unification variables are "frozen",
-% i.e. represented by a fresh constant (the evar key) and a list of terms
-% (typically the variables in scope).
-kind evarkey type.
-type uvar  evarkey -> list term -> term.
-
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's evar_map
@@ -110,9 +101,11 @@ type uvar  evarkey -> list term -> term.
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
 
-pred decl i:term, o:name, o:term. % Var Name Ty
-pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
-pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
+external pred decl o:term, o:name, o:term. % Var Name Ty
+external pred def  o:term, o:name, o:term, o:term. % Var Name Ty Bo
+external func cache term -> term.
+
+external pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-
@@ -122,7 +115,7 @@ declare-evar Ctx RawEv Ty Ev :-
 % to only contain decl, def, pp.  For now no handling rules for this set of
 % constraints other than one to remove a constraint
 
-pred rm-evar i:term, i:term.
+external pred rm-evar i:term, i:term.
 rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
 rm-evar _ _.
 
@@ -144,7 +137,7 @@ constraint declare-evar evar def decl cache rm-evar {
 % elaborates to a term of type Ty that gets assigned to E.
 % In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
-pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
+external pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- var S _ VL, !,
   prune T VL, prune X VL, declare_constraint (evar X T S) [X, S].
 
@@ -155,10 +148,19 @@ evar _ _ _. % volatile, only unresolved evars are considered as evars
 % Eg.  @pi-decl `x` <t> x1\ @pi-def `y` <t> <v> y\ ...
 macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
+
+% Converts an arity to a term
+pred coq.arity->term i:arity, o:term.
+coq.arity->term (parameter ID _ Ty Rest) (prod Name Ty R) :-
+  coq.id->name ID Name,
+  @pi-decl Name Ty x\ coq.arity->term (Rest x) (R x).
+coq.arity->term (arity A) A.
+
 macro @pi-parameter ID T F :-
   sigma N\ (coq.id->name ID N, pi x\ decl x N T => F x).
 macro @pi-inductive ID A F :-
   sigma N\ (coq.id->name ID N, coq.arity->term A T, pi x\ decl x N T => F x).
+
 
 % Sometimes it can be useful to pass to Coq a term with unification variables
 % representing "untyped holes" like an implicit argument _. In particular
@@ -205,11 +207,11 @@ macro @holes! :- get-option "HOAS:holes" tt.
 
 kind goal type.
 kind sealed-goal type.
-type nabla (term -> sealed-goal) -> sealed-goal.
-type seal goal -> sealed-goal.
+external symbol nabla : (term -> sealed-goal) -> sealed-goal.
+external symbol seal  : goal -> sealed-goal.
 
 typeabbrev goal-ctx (list prop).
-type goal goal-ctx -> term -> term -> term -> list argument -> goal.
+external symbol goal : goal-ctx -> term -> term -> term -> list argument -> goal.
 
 % A sealed-goal closes with nabla the bound names of a
 % 
@@ -335,7 +337,7 @@ macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 macro @inline-at! N :- get-option "coq:inline" (coq.inline.at N). % like Inline(N)
 macro @inline! N :- get-option "coq:inline" coq.inline.default. % like
 
-macro @redflags! F :- get-option "coq:redflags" F. % for whd & co
+macro @redflags! F :- get-option "coq:redflags" (F : coq.redflags). % for whd & co
 
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-

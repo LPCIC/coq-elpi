@@ -16,7 +16,7 @@ fatal-error-w-data Msg Data :- !,
 debug-print M Data :- !, coq.debug M Data.
 
 % HACK: elpi's stop has no argument
-type stop string -> prop.
+func stop string.
 :name "stop:begin"
 stop S :- coq.error S. % halt S
 
@@ -97,17 +97,17 @@ coq.typecheck-attribute N int Value _ (error Msg) :-
 
 coq.typecheck-attribute _ string V V ok.
 
-coq.typecheck-attribute _ bool "true"  tt ok.
-coq.typecheck-attribute _ bool "tt"    tt ok.
-coq.typecheck-attribute _ bool "True"  tt ok.
-coq.typecheck-attribute _ bool "on"    tt ok.
-coq.typecheck-attribute _ bool "yes"    tt ok.
-coq.typecheck-attribute _ bool ""      tt ok.
-coq.typecheck-attribute _ bool "false" ff ok.
-coq.typecheck-attribute _ bool "False" ff ok.
-coq.typecheck-attribute _ bool "off"   ff ok.
-coq.typecheck-attribute _ bool "ff"    ff ok.
-coq.typecheck-attribute _ bool "no"    ff ok.
+coq.typecheck-attribute _ bool "true"  tt ok :- !.
+coq.typecheck-attribute _ bool "tt"    tt ok :- !.
+coq.typecheck-attribute _ bool "True"  tt ok :- !.
+coq.typecheck-attribute _ bool "on"    tt ok :- !.
+coq.typecheck-attribute _ bool "yes"   tt ok :- !.
+coq.typecheck-attribute _ bool ""      tt ok :- !.
+coq.typecheck-attribute _ bool "false" ff ok :- !.
+coq.typecheck-attribute _ bool "False" ff ok :- !.
+coq.typecheck-attribute _ bool "off"   ff ok :- !.
+coq.typecheck-attribute _ bool "ff"    ff ok :- !.
+coq.typecheck-attribute _ bool "no"    ff ok :- !.
 coq.typecheck-attribute N bool Value _ (error Msg) :-
   Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
 

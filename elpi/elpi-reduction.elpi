@@ -86,7 +86,6 @@ unfold GR none A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
 unfold GR (some I) A BO BOC :- (@uinstance! I ==> coq.env.const GR (some B) _), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
-pred cache i:term, o:term.
 pred cache-whd i:term, i:term, i:term.
 cache-whd N K V :- cache N VN, var VN, !, whd V [] X XC, unwind X XC VN, K = VN.
 cache-whd N K _ :- cache N K, !.

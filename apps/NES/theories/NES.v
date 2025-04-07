@@ -8,7 +8,7 @@ From elpi Require Import elpi.
 typeabbrev path (list string).
 
 :index (2)
-pred ns o:path, o:modpath.
+pred ns o:list string, o:modpath.
 
 }}.
 
@@ -35,9 +35,9 @@ main _ :-
 Elpi Export NES.Status.
 
 Elpi Command NES.Begin.
+#[phase="both"] Elpi Accumulate Db NES.db.
 #[synterp] Elpi Accumulate File nes_synterp.
 #[interp] Elpi Accumulate File nes_interp.
-#[phase="both"] Elpi Accumulate Db NES.db.
 #[synterp] Elpi Accumulate lp:{{
 
   main [str NS] :- !, nes.begin-path {nes.string->non-empty-ns NS} _.
@@ -49,9 +49,9 @@ Elpi Command NES.Begin.
 Elpi Export NES.Begin.
 
 Elpi Command NES.End.
+#[phase="both"] Elpi Accumulate Db NES.db.
 #[synterp] Elpi Accumulate File nes_synterp.
 #[interp] Elpi Accumulate File nes_interp.
-#[phase="both"] Elpi Accumulate Db NES.db.
 #[synterp] Elpi Accumulate lp:{{
 
   main [str NS] :- nes.end-path {nes.string->non-empty-ns NS} _.
@@ -64,9 +64,9 @@ Elpi Export NES.End.
 
 
 Elpi Command NES.Open.
+#[phase="both"] Elpi Accumulate Db NES.db.
 #[synterp] Elpi Accumulate File nes_synterp.
 #[interp] Elpi Accumulate File nes_interp.
-#[phase="both"] Elpi Accumulate Db NES.db.
 #[synterp] Elpi Accumulate lp:{{
 
   main [str NS] :- nes.open-path {nes.resolve NS}.

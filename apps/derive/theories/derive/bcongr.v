@@ -25,7 +25,6 @@ Elpi Db derive.bcongr.db lp:{{
 type bcongr-db constructor -> term -> prop.
 
 }}.
-#[superglobal] Elpi Accumulate derive.bcongr.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.bcongr.db lp:{{
 
 :name "bcongr-db:fail"

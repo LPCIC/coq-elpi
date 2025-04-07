@@ -17,7 +17,7 @@ From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_
 From elpi.apps Require Import db.
 From elpi.apps Require Export add_commands.
 
-Set Warnings "+elpi".
+(* Set Warnings "+elpi". *)
 
 Elpi Command TC.Print_instances.
 Elpi Accumulate Db tc.db.

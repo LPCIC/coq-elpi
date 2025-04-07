@@ -237,16 +237,16 @@ case-refl-rty Tag Fields Construct _ Vs _ {{ lp:Construct (lp:Tag lp:X) (lp:Fiel
 pred case-refl-branch i:term, i:term, i:list term,i:list term, o:term.
 case-refl-branch _ _ _ _ {{ refl_equal }}.
 
-pred splay-over-positive i:term, i:list A, i:(term -> term -> prop), i:term, i:(A -> term -> prop), o:term.
+pred splay-over-positive i:term, i:list A, i:(pred i:term, o:term), i:term, i:(pred i:A, o:term), o:term.
 splay-over-positive X L DoRty Def DoBranch R :-
   splay-over-positive.aux X (x\x) L DoRty DoBranch Def R.
-pred splay-over-positive.aux i:term, i:(term -> term), i:list A, i:(term -> term -> prop), i:(A -> term -> prop), i:term, o:term.
+pred splay-over-positive.aux i:term, i:(term -> term), i:list A, i:(pred i:term, o:term), i:(pred i:A, o:term), i:term, o:term.
 splay-over-positive.aux _ _ [] _ _ Def Def :- !.
 splay-over-positive.aux _ _ [X] _ DoBranch _ R :-  DoBranch X R, !.
 splay-over-positive.aux X XCtx KL DoRty DoBranch Def R :-
   coq.build-match X {{ lib:elpi.derive.positive }} (do-rty XCtx DoRty) (do-branch XCtx DoRty DoBranch Def KL) R.
 
-pred do-rty i:(term -> term), i:(term -> term -> prop), i:term, i:list term,i:list term, o:term.
+pred do-rty i:(term -> term), i:(pred i:term, o:term), i:term, i:list term,i:list term, o:term.
 do-rty Ctx DoRty _ Vs _ R :-  P = Ctx {std.last Vs}, DoRty P R.
 
 pred list-bitmask i:list A, o:list A, o:list A.
@@ -254,7 +254,7 @@ list-bitmask [] [] [].
 list-bitmask [X] [X] [].
 list-bitmask [X,Y|L] [X|A] [Y|B] :- list-bitmask L A B.
 
-pred do-branch i:(term -> term), i:(term -> term -> prop), i:(A -> term -> prop), i:term, i:list A, i:term, i:term, i:list term, i:list term, o:term.
+pred do-branch i:(term -> term), i:(pred i:term, o:term), i:(pred i:A, o:term), i:term, i:list A, i:term, i:term, i:list term, i:list term, o:term.
 do-branch PCtx DoRty DoBranch Def [_|KS] {{ xO }} _ [P] _ R :- !,
   list-bitmask KS KODD _,
   splay-over-positive.aux P (x\ PCtx {{ xO lp:x }}) KODD DoRty DoBranch Def R.

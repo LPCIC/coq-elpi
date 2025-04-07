@@ -1,7 +1,7 @@
 namespace nes {
 
 % Print a namespace
-pred print-path i:list string, i:(gref -> coq.pp -> prop).
+pred print-path i:list string, i:(pred i:gref, o:coq.pp).
 print-path Path PP :- std.do! [
   std.map {std.findall (ns Path _)} (p\ mp\ p = ns _ mp) MPs,
   print.pp-list MPs (print.pp-module Path PP) Out,
@@ -19,7 +19,7 @@ open-path :- coq.replay-synterp-action-group "nes.open-path".
 
 namespace print {
 
-  pred pp-list i:list A, i:(A -> coq.pp -> prop), o:coq.pp.
+  pred pp-list i:list A, i:(pred i:A, o:coq.pp), o:coq.pp.
   pp-list L F Out :- std.do! [
     std.map-filter L F PPs,
     Out = coq.pp.box (coq.pp.v 0) {std.intersperse (coq.pp.brk 0 0) PPs},
@@ -29,7 +29,7 @@ namespace print {
   type context
     list string ->	% readable path
     int ->	% length of full path
-    (gref -> coq.pp -> prop) ->
+    (pred i:gref, o:coq.pp) ->
     context.
 
   % Hides `aux` modules
@@ -39,7 +39,7 @@ namespace print {
     std.append Prefix RelPath Path,
   ].
 
-  pred module-context i:list string, i:modpath, i:(gref -> coq.pp -> prop), o:context.
+  pred module-context i:list string, i:modpath, i:(pred i:gref, o:coq.pp), o:context.
   module-context Prefix MP PP Ctx :- std.do! [
     coq.modpath->path MP FullPath,
     Ctx = context Prefix {std.length FullPath} PP,
@@ -52,7 +52,7 @@ namespace print {
     Ctx' = context Path {std.length FullPath} PP,
   ].
 
-  pred pp-module i:list string, i:(gref -> coq.pp -> prop), i:modpath, o:coq.pp.
+  pred pp-module i:list string, i:(pred i:gref, o:coq.pp), i:modpath, o:coq.pp.
   pp-module Prefix PP MP Out :- std.do! [
     pp-module-items {module-context Prefix MP PP} {coq.env.module MP} Out,
   ].

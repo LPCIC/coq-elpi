@@ -9,7 +9,6 @@ Canonical unit_fooType := Foo unit.
 Elpi Tactic fail_foo.
 Elpi Accumulate lp:{{
 
-pred solve i:goal, o:list sealed-goal.
 solve (goal _ _ _ _ [_] as G) GS :-
   coq.ltac.call "ltac_foo" [] G GS.
 

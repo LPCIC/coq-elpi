@@ -6,7 +6,7 @@ pred derivation i:gref, i:string, o:bool, o:derive.
 pred export i:modpath.
 pred dep1 o:string, o:string.
 kind derive type.
-type derive string -> (list prop -> prop) -> prop -> derive.
+type derive string -> (pred o:list (pred)) -> prop -> derive.
+
 % if a derivation fails it should end by calling stop, instead of coq.error,
 % so that derive can make the failure non fatal
-type stop string -> prop.

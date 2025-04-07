@@ -291,9 +291,13 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   of ResRtyRaw _ ResRty, unify-eq Rty ResRty,
   % Rty must type each branch
   map2 KsLArgs Kn (mk-bty Rty Lno) BsTy,
-  map2 Bs BsTy of ResBs,
+  map2R Bs BsTy of ResBs,
   % Outside type
   unify-leq {coq.mk-app ResRty {append RArgs [ResT]}} ResRtyInst.
+
+pred map2R i:list A, o:list B, i:(pred i:A, o:B, o:C), o:list C.
+map2R [] [] _ [].
+map2R [X|XS] [Y|YS] F [Z|ZS] :- F X Y Z, map2R XS YS F ZS.
 
 of (let N Ty Bo F) TyFx (let N ResTy ResBo ResF) :-
   of Ty (sort _) ResTy, of Bo ResTy ResBo,
@@ -366,7 +370,7 @@ mk-rty ARGS HD (prod N S T) (fun N S F) :- !,
 mk-rty ARGS HD _ (fun _ IndApp _FRESH) :-
   coq.mk-app HD {rev ARGS} IndApp.
 
-type mk-bty term -> int -> term -> constructor -> term -> prop.
+pred mk-bty i:term, i:int, i:term, i:constructor, o:term.
 mk-bty Rty Lno (prod N S T) Ki (prod N S B) :- !,
   pi x\ mk-bty Rty Lno (T x) Ki (B x).
 mk-bty Rty Lno T Ki AppRtyNorm :-

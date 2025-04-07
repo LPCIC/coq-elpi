@@ -47,8 +47,8 @@ Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.fields.db.
 Elpi Accumulate Db derive.eqb.db.
 Elpi Accumulate File fields.
-Elpi Accumulate File eqb.
 Elpi Accumulate File eqType.
+Elpi Accumulate File eqb.
 
 Elpi Accumulate lp:{{
 

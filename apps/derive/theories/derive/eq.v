@@ -26,7 +26,6 @@ eq-db {{ lib:elpi.pstring }} {{ lib:elpi.pstring }} {{ lib:elpi.pstring_eqb }} :
 type eq-for inductive -> constant -> prop.
 
 }}.
-#[superglobal] Elpi Accumulate derive.eq.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.eq.db lp:{{
 
 pred whd1 i:term, o:term.

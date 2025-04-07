@@ -189,18 +189,18 @@ namespace tc{
   }
 }
 
-pred tc.unif-aux i:(A -> A -> prop), i:A, i:A.
+pred tc.unif-aux i:(pred i:A, i:A), i:A, i:A.
 tc.unif-aux P A B :-
-  [(pi K A AS X C TA F\
+  (pi K A AS X C TA F\
     hd-beta (uvar as K) [A|AS] X C :- !, % auto-intro
       std.assert-ok! (coq.typecheck A TA) "already typed",
       K = (fun `hd_beta_auto` TA F),
-      hd-beta (F A) AS X C),
+      hd-beta (F A) AS X C) =>
   (pi K A AS X C TA F\
     hd-beta-zeta (uvar as K) [A|AS] X C :- !, % auto-intro
       std.assert-ok! (coq.typecheck A TA) "already typed",
       K = (fun `hd_beta_zeta_auto` TA F),
-      hd-beta-zeta (F A) AS X C)] =>
+      hd-beta-zeta (F A) AS X C) =>
   P A B.
 
 pred tc.unify-eq i:term, i:term.

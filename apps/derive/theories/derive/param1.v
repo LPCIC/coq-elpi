@@ -60,7 +60,6 @@ pred reali i:term, o:term.
 type realiR term -> term -> prop.
 pred reali-done i:gref.
 }}.
-#[superglobal] Elpi Accumulate derive.param1.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.param1.db lp:{{
 
 reali {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
@@ -124,7 +123,7 @@ Elpi Accumulate derive Db derive.param1.db.
 
 Elpi Accumulate derive lp:{{
   
-pred derive.on_param1 i:gref, i:(gref -> gref -> string -> list prop -> prop), i:string, o:list prop.
+pred derive.on_param1 i:gref, i:(pred i:gref, i:gref, i:string, o:list prop), i:string, o:list prop.
 derive.on_param1 GR F N C :- reali (global GR) (global P), !, F GR P N C.
 
 derivation T N ff (derive "param1" (derive.param1.main T N ) (reali-done T)).

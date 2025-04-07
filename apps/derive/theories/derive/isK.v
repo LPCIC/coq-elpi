@@ -14,7 +14,6 @@ From elpi.apps Require Import derive.
 Elpi Db derive.isK.db lp:{{
   type isK-db constructor -> term -> prop.
 }}.
-#[superglobal] Elpi Accumulate derive.isK.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.isK.db lp:{{
 
   :name "isK-db:fail"

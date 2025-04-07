@@ -4,7 +4,7 @@
 
 namespace derive {
 
-pred exists-indc i:inductive, i:(constructor -> prop).
+pred exists-indc i:inductive, i:(pred i:constructor).
 exists-indc I P :-
   coq.env.indt I _ _ _ _ KL _,
   std.exists KL P.
@@ -60,7 +60,7 @@ toposort L SL :-
   std.findall (dep1 _ _) Deps,
   topo L Deps SL.
 
-pred std.partition i:list A, i:(A -> prop), o:list A, o:list A.
+pred std.partition i:list A, i:(pred i:A), o:list A, o:list A.
 std.partition [] _ [] [].
 std.partition [X|XS] P [X|R] L :- P X, !, std.partition XS P R L.
 std.partition [X|XS] P R [X|L] :- std.partition XS P R L.

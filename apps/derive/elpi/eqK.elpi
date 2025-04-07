@@ -14,7 +14,7 @@ pred axiom-db i:term, o:term, o:term.
 % case split on the second constructor
 
 % same constructor, we use the bcongr lemma
-pred branch i:term, i:term, i:term, i:list term, i:list term, i:term.
+pred branch i:term, i:term, i:term, i:list term, i:list term, o:term.
 branch K1 K2 _ V _ R :-
   coq.safe-dest-app K1 (global (indc GR)) Args1,
   coq.safe-dest-app K2 (global (indc GR)) LArgs2, !, do! [
