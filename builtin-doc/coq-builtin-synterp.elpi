@@ -11,33 +11,33 @@ kind upoly-decl-cumul type.
 % -- Misc ---------------------------------------------------------
 
 % [coq.info ...] Prints an info message
-external type coq.info variadic any prop.
+external type coq.info variadic any fprop.
 
 % [coq.notice ...] Prints a notice message
-external type coq.notice variadic any prop.
+external type coq.notice variadic any fprop.
 
 % [coq.say ...] Prints a notice message
-external type coq.say variadic any prop.
+external type coq.say variadic any fprop.
 
 % [coq.debug ...] Prints a debug message
-external type coq.debug variadic any prop.
+external type coq.debug variadic any fprop.
 
 % [coq.warn ...] Prints a generic warning message
-external type coq.warn variadic any prop.
+external type coq.warn variadic any fprop.
 
 % [coq.warning Category Name ...] 
 % Prints a warning message with a Name and Category which can be used
 % to silence this warning or turn it into an error. See coqc -w command
 % line option
-external type coq.warning string -> string -> variadic any prop.
+external type coq.warning string -> string -> variadic any fprop.
 
 % [coq.error ...] Prints and *aborts* the program. It is a fatal error for
 % Elpi and Ltac
-external type coq.error variadic any prop.
+external type coq.error variadic any fprop.
 
 % [coq.version VersionString Major Minor Patch] Fetches the version of Coq,
 % as a string and as 3 numbers
-external pred coq.version o:string, o:int, o:int, o:int.
+external func coq.version -> string, int, int, int.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -60,36 +60,35 @@ external pred coq.version o:string, o:int, o:int, o:int.
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
-pred main i:list argument.
-pred main-interp i:list argument, i:any.
-pred main-synterp i:list argument, o:any.
+external pred main i:list argument.
+external pred main-interp i:list argument, i:any.
+external pred main-synterp i:list argument, o:any.
 pred usage.
-pred attributes o:list attribute.
+external pred attributes o:list attribute.
 
 % see coq-lib.elpi for coq.parse-attributes generating the options below
-type get-option string -> A -> prop.
+external pred get-option o:string, o:A.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
-type int       int    -> argument. % Eg. 1 -2.
-type str       string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
-type trm       term   -> argument. % Eg. (t).
-type open-trm  int -> term -> argument.
+external symbol int      : int    -> argument. % Eg. 1 -2.
+external symbol str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
+external symbol trm      : term   -> argument. % Eg. (t).
+external symbol open-trm : int -> term -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
 % Eg. Record or Inductive
-type indt-decl indt-decl -> argument.
+external symbol indt-decl : indt-decl -> argument.
 % Eg. #[universes(polymorphic,...)] Record or Inductive
-type upoly-indt-decl indt-decl -> upoly-decl -> argument.
-type upoly-indt-decl indt-decl -> upoly-decl-cumul -> argument.
+external symbol upoly-indt-decl : indt-decl -> upoly-decl -> argument.
 % Eg. Definition or Axiom (when the body is none)
-type const-decl id -> option term -> arity -> argument.
+external symbol const-decl : id -> option term -> arity -> argument.
 % Eg. #[universes(polymorphic,...)] Definition or Axiom
-type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
+external symbol upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
-type ctx-decl context-decl -> argument.
+external symbol ctx-decl : context-decl -> argument.
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -117,17 +116,17 @@ kind record-decl type.
 % See also the arity->term predicate in coq-lib.elpi
 
 kind arity type.
-type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
-type arity term -> arity.
+external symbol parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "1".
+external symbol arity       : term -> arity.
 
-type parameter   id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
-type record      id -> term -> id -> record-decl -> indt-decl.
+external symbol parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
+external symbol inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+external symbol record      : id -> term -> id -> record-decl -> indt-decl.
 
-type constructor id -> arity -> indc-decl.
+external symbol constructor : id -> arity -> indc-decl.
 
-type field       field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
-type end-record  record-decl.
+external symbol field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
+external symbol end-record  : record-decl.
 
 % Example.
 % Remark that A is a regular parameter; y is a non-uniform parameter and t
@@ -168,8 +167,8 @@ type end-record  record-decl.
 % Context declaration (used as an argument to Elpi commands)
 kind context-decl type.
 % Eg. (x : T) or (x := B), body is optional, type may be a variable
-type context-item  id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
-type context-end   context-decl.
+external symbol context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
+external symbol context-end  : context-decl.
 
 typeabbrev field-attributes (list field-attribute).
 
@@ -180,6 +179,10 @@ macro @local!    :- get-option "coq:locality" "local".
 % Coq terms are not visible at synterp time, they are always holes
 
 kind term type.
+
+kind gref type.
+
+kind abbreviation type.
 
 % -- Parsing time APIs
 % ----------------------------------------------------
@@ -199,32 +202,33 @@ kind modtypath type.
 
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
 % if ModName cannot be located. *E*
-external pred coq.locate-module i:id, o:modpath.
+external func coq.locate-module id -> modpath.
 
 % [coq.locate-module-type ModName ModPath] locates a module.  It's a fatal
 % error if ModName cannot be located. *E*
-external pred coq.locate-module-type i:id, o:modtypath.
+external func coq.locate-module-type id -> modtypath.
 
-
+% Result of coq.locate-all
 kind located type.
-type loc-modpath modpath -> located.
-type loc-modtypath modtypath -> located.
-
+external symbol loc-gref : gref -> located = "1". 
+external symbol loc-modpath : modpath -> located = "1". 
+external symbol loc-modtypath : modtypath -> located = "1". 
+external symbol loc-abbreviation : abbreviation -> located = "1". 
 
 % [coq.locate-all Name Located] finds all possible meanings of a string.
 % Does not fail.
-external pred coq.locate-all i:id, o:list located.
+external func coq.locate-all id -> list located.
 
 % Coq Module inline directive
 kind coq.inline type.
-type coq.inline.no coq.inline. % Coq's [no inline] (aka !)
-type coq.inline.default coq.inline. % The default, can be omitted
-type coq.inline.at int -> coq.inline. % Coq's [inline at <num>]
+external symbol coq.inline.no : coq.inline = "1".  % Coq's [no inline] (aka !)
+external symbol coq.inline.default : coq.inline = "1".  % The default, can be omitted
+external symbol coq.inline.at : int -> coq.inline = "1".  % Coq's [inline at <num>]
 
-external pred coq.env.begin-module-functor % Starts a functor *E*
-  i:id,                       % The name of the functor
-  i:option modtypath,         % Its module type
-  i:list (pair id modtypath). % Parameters of the functor
+external func coq.env.begin-module-functor % Starts a functor *E*
+  id,                        % The name of the functor
+  option modtypath,          % Its module type
+  list (pair id modtypath).  % Parameters of the functor
   
 
 pred coq.env.begin-module i:id, i:option modtypath.
@@ -234,11 +238,11 @@ coq.env.begin-module Name MP :-
 
 % [coq.env.end-module ModPath] end the current module that becomes known as
 % ModPath *E*
-external pred coq.env.end-module o:modpath.
+external func coq.env.end-module -> modpath.
 
-external pred coq.env.begin-module-type-functor % Starts a module type functor *E*
-  i:id,                       % The name of the functor
-  i:list (pair id modtypath). % The parameters of the functor
+external func coq.env.begin-module-type-functor % Starts a module type functor *E*
+  id,                        % The name of the functor
+  list (pair id modtypath).  % The parameters of the functor
   
 
 pred coq.env.begin-module-type i:id.
@@ -248,64 +252,64 @@ coq.env.begin-module-type Name :-
 
 % [coq.env.end-module-type ModTyPath] end the current module type that
 % becomes known as ModPath *E*
-external pred coq.env.end-module-type o:modtypath.
+external func coq.env.end-module-type -> modtypath.
 
-external pred coq.env.apply-module-functor % Applies a functor *E*
-  i:id,               % The name of the new module
-  i:option modtypath, % Its module type
-  i:modpath,          % The functor being applied
-  i:list modpath,     % Its arguments
-  i:coq.inline,       % Arguments inlining
-  o:modpath.          % The modpath of the new module
+external func coq.env.apply-module-functor % Applies a functor *E*
+  id,                % The name of the new module
+  option modtypath,  % Its module type
+  modpath,           % The functor being applied
+  list modpath,      % Its arguments
+  coq.inline         % Arguments inlining
+  -> modpath.        % The modpath of the new module
   
-external pred coq.env.apply-module-type-functor % Applies a type functor *E*
-  i:id,           % The name of the new module type
-  i:modtypath,    % The functor
-  i:list modpath, % Its arguments
-  i:coq.inline,   % Arguments inlining
-  o:modtypath.    % The modtypath of the new module type
+external func coq.env.apply-module-type-functor % Applies a type functor *E*
+  id,            % The name of the new module type
+  modtypath,     % The functor
+  list modpath,  % Its arguments
+  coq.inline     % Arguments inlining
+  -> modtypath.  % The modtypath of the new module type
   
 % [coq.env.include-module ModPath Inline] is like the vernacular Include,
 % Inline can be omitted *E*
-external pred coq.env.include-module i:modpath, i:coq.inline.
+external func coq.env.include-module modpath, coq.inline.
 
 % [coq.env.include-module-type ModTyPath Inline] is like the vernacular
 % Include Type, Inline can be omitted  *E*
-external pred coq.env.include-module-type i:modtypath, i:coq.inline.
+external func coq.env.include-module-type modtypath, coq.inline.
 
 % [coq.env.import-module ModPath] is like the vernacular Import *E*
-external pred coq.env.import-module i:modpath.
+external func coq.env.import-module modpath.
 
 % [coq.env.export-module ModPath] is like the vernacular Export *E*
-external pred coq.env.export-module i:modpath.
+external func coq.env.export-module modpath.
 
 % [coq.env.begin-section Name] starts a section named Name *E*
-external pred coq.env.begin-section i:id.
+external func coq.env.begin-section id.
 
 % [coq.env.end-section] end the current section *E*
-external pred coq.env.end-section .
+external func coq.env.end-section.
 
 % [coq.modpath->path MP FullPath] extract the full kernel name, each
 % component is a separate list item
-external pred coq.modpath->path i:modpath, o:list string.
+external func coq.modpath->path modpath -> list string.
 
 % [coq.modtypath->path MTP FullPath] extract the full kernel name, each
 % component is a separate list item
-external pred coq.modtypath->path i:modtypath, o:list string.
+external func coq.modtypath->path modtypath -> list string.
 
 % [coq.modpath->library MP LibraryPath] extract the enclosing module which
 % can be Required
-external pred coq.modpath->library i:modpath, o:modpath.
+external func coq.modpath->library modpath -> modpath.
 
 % [coq.modtypath->library MTP LibraryPath] extract the enclosing module
 % which can be Required
-external pred coq.modtypath->library i:modtypath, o:modpath.
+external func coq.modtypath->library modtypath -> modpath.
 
 % [coq.env.current-path Path] lists the current module path
-external pred coq.env.current-path o:list string.
+external func coq.env.current-path -> list string.
 
 % [coq.env.current-section-path Path] lists the current section path
-external pred coq.env.current-section-path o:list string.
+external func coq.env.current-section-path -> list string.
 
 % clauses
 % 
@@ -317,21 +321,21 @@ external pred coq.env.current-section-path o:list string.
 % 
 % The name and the grafting specification can be left unspecified.
 kind clause type.
-type clause id -> grafting -> prop -> clause.
+external symbol clause : id -> grafting -> prop -> clause = "1". 
 
 % Specify if the clause has to be grafted before, grafted after or replace
 % a named clause
 kind grafting type.
-type before id -> grafting.
-type after id -> grafting.
-type remove id -> grafting.
-type replace id -> grafting.
+external symbol before : id -> grafting = "1". 
+external symbol after : id -> grafting = "1". 
+external symbol remove : id -> grafting = "1". 
+external symbol replace : id -> grafting = "1". 
 
 % Specify to which module the clause should be attached to
 kind scope type.
-type execution-site scope. % The module inside which the Elpi program is run
-type current scope. % The module being defined (see begin/end-module)
-type library scope. % The outermost module (carrying the file name)
+external symbol execution-site : scope = "1".  % The module inside which the Elpi program is run
+external symbol current : scope = "1".  % The module being defined (see begin/end-module)
+external symbol library : scope = "1".  % The outermost module (carrying the file name)
 
 
 % see coq.elpi.accumulate-clauses
@@ -356,22 +360,22 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 % - @local! (default: false, discard at the end of section or module)
 % - @global! (default: false, always active, only if Scope is
 % execution-site, discouraged)
-external pred coq.elpi.accumulate-clauses i:scope, i:id, i:list clause.
+external func coq.elpi.accumulate-clauses scope, id, list clause.
 
 % Action executed during the parsing phase (aka synterp)
 kind synterp-action type.
-type begin-module id -> synterp-action.
-type begin-module-type id -> synterp-action.
-type begin-section id -> synterp-action.
-type end-module modpath -> synterp-action.
-type end-module-type modtypath -> synterp-action.
-type end-section synterp-action.
-type apply-module-functor id -> synterp-action.
-type apply-module-type-functor id -> synterp-action.
-type include-module modpath -> synterp-action.
-type include-module-type modtypath -> synterp-action.
-type import-module modpath -> synterp-action.
-type export-module modpath -> synterp-action.
+external symbol begin-module : id -> synterp-action = "1". 
+external symbol begin-module-type : id -> synterp-action = "1". 
+external symbol begin-section : id -> synterp-action = "1". 
+external symbol end-module : modpath -> synterp-action = "1". 
+external symbol end-module-type : modtypath -> synterp-action = "1". 
+external symbol end-section : synterp-action = "1". 
+external symbol apply-module-functor : id -> synterp-action = "1". 
+external symbol apply-module-type-functor : id -> synterp-action = "1". 
+external symbol include-module : modpath -> synterp-action = "1". 
+external symbol include-module-type : modtypath -> synterp-action = "1". 
+external symbol import-module : modpath -> synterp-action = "1". 
+external symbol export-module : modpath -> synterp-action = "1". 
 
 % Synterp action group
 kind group type.
@@ -379,25 +383,25 @@ kind group type.
 
 % [coq.synterp-actions A] Get the list of actions performed during the
 % parsing phase (aka synterp) up to now.
-external pred coq.synterp-actions o:list synterp-action.
+external func coq.synterp-actions -> list synterp-action.
 
 % [coq.begin-synterp-group ID Group] Create and open a new synterp action
 % group with the given name.
-external pred coq.begin-synterp-group i:id, o:group.
+external func coq.begin-synterp-group id -> group.
 
 % [coq.end-synterp-group Group] End the synterp action group Group. Group
 % must refer to the most recently openned group.
-external pred coq.end-synterp-group i:group.
+external func coq.end-synterp-group group.
 
 % Generic attribute value
 kind attribute-value type.
-type leaf-str string -> attribute-value.
-type leaf-loc loc -> attribute-value.
-type node list attribute -> attribute-value.
+external symbol leaf-str : string -> attribute-value = "1". 
+external symbol leaf-loc : loc -> attribute-value = "1". 
+external symbol node : list attribute -> attribute-value = "1". 
 
 % Generic attribute
 kind attribute type.
-type attribute string -> attribute-value -> attribute.
+external symbol attribute : string -> attribute-value -> attribute = "1". 
 
 
 

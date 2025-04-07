@@ -18,36 +18,35 @@
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
-pred main i:list argument.
-pred main-interp i:list argument, i:any.
-pred main-synterp i:list argument, o:any.
+external pred main i:list argument.
+external pred main-interp i:list argument, i:any.
+external pred main-synterp i:list argument, o:any.
 pred usage.
-pred attributes o:list attribute.
+external pred attributes o:list attribute.
 
 % see coq-lib.elpi for coq.parse-attributes generating the options below
-type get-option string -> A -> prop.
+external pred get-option o:string, o:A.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
-type int       int    -> argument. % Eg. 1 -2.
-type str       string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
-type trm       term   -> argument. % Eg. (t).
-type open-trm  int -> term -> argument.
+external symbol int      : int    -> argument. % Eg. 1 -2.
+external symbol str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
+external symbol trm      : term   -> argument. % Eg. (t).
+external symbol open-trm : int -> term -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
 % Eg. Record or Inductive
-type indt-decl indt-decl -> argument.
+external symbol indt-decl : indt-decl -> argument.
 % Eg. #[universes(polymorphic,...)] Record or Inductive
-type upoly-indt-decl indt-decl -> upoly-decl -> argument.
-type upoly-indt-decl indt-decl -> upoly-decl-cumul -> argument.
+external symbol upoly-indt-decl : indt-decl -> upoly-decl -> argument.
 % Eg. Definition or Axiom (when the body is none)
-type const-decl id -> option term -> arity -> argument.
+external symbol const-decl : id -> option term -> arity -> argument.
 % Eg. #[universes(polymorphic,...)] Definition or Axiom
-type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
+external symbol upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
-type ctx-decl context-decl -> argument.
+external symbol ctx-decl : context-decl -> argument.
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -75,17 +74,17 @@ kind record-decl type.
 % See also the arity->term predicate in coq-lib.elpi
 
 kind arity type.
-type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
-type arity term -> arity.
+external symbol parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "1".
+external symbol arity       : term -> arity.
 
-type parameter   id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
-type record      id -> term -> id -> record-decl -> indt-decl.
+external symbol parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
+external symbol inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+external symbol record      : id -> term -> id -> record-decl -> indt-decl.
 
-type constructor id -> arity -> indc-decl.
+external symbol constructor : id -> arity -> indc-decl.
 
-type field       field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
-type end-record  record-decl.
+external symbol field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
+external symbol end-record  : record-decl.
 
 % Example.
 % Remark that A is a regular parameter; y is a non-uniform parameter and t
@@ -126,8 +125,8 @@ type end-record  record-decl.
 % Context declaration (used as an argument to Elpi commands)
 kind context-decl type.
 % Eg. (x : T) or (x := B), body is optional, type may be a variable
-type context-item  id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
-type context-end   context-decl.
+external symbol context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
+external symbol context-end  : context-decl.
 
 typeabbrev field-attributes (list field-attribute).
 

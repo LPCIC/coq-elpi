@@ -4,8 +4,8 @@ namespace tc {
   namespace compile {
 
     namespace instance {
-      pred is-name o:term.
-      pred is-uvar o:term.
+      pred is-name i:term.
+      pred is-uvar i:term.
 
       % [name-pair H0 Hn Ar]
       % the variable H0 (applied 0 time) is associated to the variable Hn which is
@@ -191,7 +191,7 @@ namespace tc {
 
       % Accumulates pi for eta-links
       pred add-link-eta-dedup 
-        i:(list prop -> prop -> prop),
+        i:(pred i:list prop, o:prop),
         i:range-arity, i:term, i:term, i:(list (pair term name)), i:list prop, o:prop.
       % Base case when the variable is always used at same arity
       add-link-eta-dedup F (r-ar _ z) _ _ [] PremR Clause :- !, 

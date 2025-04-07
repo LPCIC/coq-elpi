@@ -30,3 +30,17 @@ Check natmul R n : ringType_sort R.
 Check n : ringType_sort R.
 
 End TestNatMul.
+
+
+Axiom ord : nat -> Type.
+Axiom bump : forall n, ord n -> ord (S n).
+
+Elpi Accumulate coercion.db lp:{{
+
+coercion _ X {{ ord lp:N }} {{ ord (S lp:N) }} {{ bump lp:N lp:X }}.
+
+}}.
+
+
+
+Check fun i : ord 1 => (i  : ord 2).

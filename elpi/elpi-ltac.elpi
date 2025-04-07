@@ -1,8 +1,8 @@
 /* elpi-ltac: building blocks for tactics                                    */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
-typeabbrev tactic (sealed-goal -> (list sealed-goal -> prop)).
-typeabbrev open-tactic (goal -> (list sealed-goal -> prop)).
+typeabbrev tactic (pred i:sealed-goal, o:list sealed-goal).
+typeabbrev open-tactic (pred i:goal, o:list sealed-goal).
 
 % The one tactic ------------------------------------------------------------
 pred refine i:term, i:goal, o:list sealed-goal.
@@ -56,7 +56,8 @@ pred try i:tactic, i:sealed-goal, o:list sealed-goal.
 try T G GS :- T G GS.
 try _ G [G].
 
-:index(_ 1)
+%:index (_ 1) % TODO
+:external
 pred all i:tactic, i:list sealed-goal, o:list sealed-goal.
 all T [G|Gs] O :- T G O1, all T Gs O2, std.append O1 O2 O.
 all _ [] [].
@@ -76,7 +77,8 @@ repeat! _ G [G].
 pred or i:list tactic, i:sealed-goal, o:list sealed-goal.
 or TL G GS :- std.exists TL (t\ t G GS).
 
-:index(_ 1)
+% :index (_ 1) TODO
+:external
 pred open i:open-tactic, i:sealed-goal, o:list sealed-goal.
 open T (nabla G) O :- (pi x\ open T (G x) (NG x)), private.distribute-nabla NG O.
 open _ (seal (goal _ _ _ Solution _)) [] :- not (var Solution), !. % solved by side effect

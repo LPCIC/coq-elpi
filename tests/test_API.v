@@ -70,7 +70,7 @@ Fail Elpi Query lp:{{
 Elpi Query lp:{{
   coq.locate "plus"    (const GR),
   coq.locate "Nat.add" (const GR),
-  coq.locate-module "Init.Datatypes" MP.
+  coq.locate-module "Init.Datatypes" MP_.
 }}.
 
 Notation succ x := (S x).
@@ -78,8 +78,8 @@ Notation succ x := (S x).
 Elpi Query lp:{{ std.do! [
   coq.locate-all "plus"    X1, X1 = [loc-gref (const GR)],
   coq.locate-all "Nat.add" X2, X2 = [loc-gref (const GR)],
-  coq.locate-all "succ"    X3, X3 = [loc-abbreviation A],
-  coq.locate-all "Init.Datatypes" X4, X4 = [loc-modpath MP],
+  coq.locate-all "succ"    X3, X3 = [loc-abbreviation A_],
+  coq.locate-all "Init.Datatypes" X4, X4 = [loc-modpath MP_],
   coq.locate-all "fdsfdsjkfdksljflkdsjlkfdjkls" [],
 ].
 }}.
@@ -88,11 +88,11 @@ Elpi Query lp:{{ std.do! [
 (***** Univs *******************************)
 
 Elpi Query lp:{{coq.univ.print}}.
-Elpi Query lp:{{coq.univ.new X}}.
-Elpi Query lp:{{coq.sort.leq X Y}}.
-Elpi Query lp:{{coq.sort.eq X Y}}.
-Elpi Query lp:{{coq.sort.pts-triple X Y Z}}.
-Elpi Query lp:{{coq.sort.sup X Y}}.
+Elpi Query lp:{{coq.univ.new X_}}.
+Elpi Query lp:{{coq.sort.leq X_ Y_}}.
+Elpi Query lp:{{coq.sort.eq X_ Y_}}.
+Elpi Query lp:{{coq.sort.pts-triple X_ Y_ Z_}}.
+Elpi Query lp:{{coq.sort.sup X_ Y_}}.
 
 
 (********* accumulate *************** *)
@@ -264,6 +264,6 @@ main _ :- std.do! [
   @ppmost! => coq.say {coq.term->string {{ fix foo x y {struct x} := match x in bool with false => y | true => 3 end }} },
 ].
 }}.
-
+Elpi Trace.
 Elpi test.pp.
 

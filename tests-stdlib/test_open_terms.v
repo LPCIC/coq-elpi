@@ -106,7 +106,7 @@ mk-app-prf [F1, A | Args1] [F2, B | Args2] [Pf, Pa | Ps] P :-
   mk-app-prf [app [F1, A] | Args1] [app [F2, B] | Args2]
     [{{app_prf lp:F1 lp:F2 lp:A lp:B lp:Pf lp:Pa}} | Ps] P.
 
-pred fold-map2 i:list term i:A i:(term -> A -> term -> term -> A -> prop)
+pred fold-map2 i:list term i:A i:(pred i:term, i:A, o:term, o:term, o:A)
   o:list term o:list term o:A.
 
 fold-map2 [] A _ [] [] A.

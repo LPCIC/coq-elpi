@@ -244,32 +244,26 @@ let universe_variance : (Univ.Level.t * UVars.Variance.t option) API.Conversion.
 } |> API.ContextualConversion.(!<)
 
 type universe_decl = (Univ.Level.t list * bool) * (Univ.Constraints.t * bool)
-let universe_decl : universe_decl API.Conversion.t =
+type universe_decl_cumul = ((Univ.Level.t * UVars.Variance.t option) list  * bool) * (Univ.Constraints.t * bool)
+
+type any_universe_decl =
+  | NonCumul of universe_decl
+  | Cumul of universe_decl_cumul
+
+let universe_decl : any_universe_decl API.Conversion.t =
   let open API.Conversion in let open API.BuiltInData in let open API.AlgebraicData in let open Elpi.Builtin in declare {
   ty = TyName "upoly-decl";
   doc = "Constraints for a non-cumulative declaration. Boolean tt means loose (e.g. the '+' in f@{u v + | u < v +})";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("upoly-decl","",A(list universe_level_variable,A(bool,A(list universe_constraint,A(bool,N)))),
-     B (fun x sx y sy-> (x,sx),(Univ.Constraints.of_list  y,sy)),
-     M (fun ~ok ~ko:_ ((x,sx),(y,sy)) -> ok x sx (Univ.Constraints.elements y) sy))
-  ]
-} |> API.ContextualConversion.(!<)
-
-type universe_decl_cumul = ((Univ.Level.t * UVars.Variance.t option) list  * bool) * (Univ.Constraints.t * bool)
-let universe_decl_cumul : universe_decl_cumul API.Conversion.t =
-  let open API.Conversion in let open API.BuiltInData in let open API.AlgebraicData in let open Elpi.Builtin in declare {
-  ty = TyName "upoly-decl-cumul";
-  doc = "Constraints for a cumulative declaration. Boolean tt means loose (e.g. the '+' in f@{u v + | u < v +})";
-  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
-  constructors = [
+     B (fun x sx y sy-> NonCumul ((x,sx),(Univ.Constraints.of_list  y,sy))),
+     M (fun ~ok ~ko -> function NonCumul ((x,sx),(y,sy)) -> ok x sx (Univ.Constraints.elements y) sy | Cumul _ -> ko ()));
     K("upoly-decl-cumul","",A(list universe_variance,A(bool,A(list universe_constraint,A(bool,N)))),
-     B (fun x sx y sy -> ((x,sx),(Univ.Constraints.of_list y,sy))),
-     M (fun ~ok ~ko:_ ((x,sx),(y,sy)) -> ok x sx (Univ.Constraints.elements y) sy))
+     B (fun x sx y sy -> Cumul ((x,sx),(Univ.Constraints.of_list y,sy))),
+     M (fun ~ok ~ko -> function Cumul ((x,sx),(y,sy)) -> ok x sx (Univ.Constraints.elements y) sy | NonCumul _ -> ko ()))
   ]
 } |> API.ContextualConversion.(!<)
-
-
 
 (* All in one data structure to represent the Coq context and its link with
    the elpi one:
@@ -566,9 +560,9 @@ let gref : Names.GlobRef.t API.Conversion.t = {
   pp_doc = (fun fmt () ->
     Format.fprintf fmt "%% Global objects: inductive types, inductive constructors, definitions@\n";
     Format.fprintf fmt "kind gref type.@\n";
-    Format.fprintf fmt "type const constant -> gref. %% Nat.add, List.append, ...@\n";
-    Format.fprintf fmt "type indt inductive -> gref. %% nat, list, ...@\n";
-    Format.fprintf fmt "type indc constructor -> gref. %% O, S, nil, cons, ...@\n";
+    Format.fprintf fmt "external symbol const : constant    -> gref. %% Nat.add, List.append, ...@\n";
+    Format.fprintf fmt "external symbol indt  : inductive   -> gref. %% nat, list, ...@\n";
+    Format.fprintf fmt "external symbol indc  : constructor -> gref. %% O, S, nil, cons, ...@\n";
     );
   pp = (fun fmt x ->
     Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global x));
@@ -1284,13 +1278,19 @@ let get_options ~depth hyps state =
     | None, None -> NotUniversePolymorphic
     | Some _, Some _ -> err Pp.(str"Conflicting attributes: @udecl! and @udecl-cumul! (or @univpoly! and @univpoly-cumul!)")
     | Some (t,depth), None ->
-        let _, ud, gl = universe_decl_cumul.Elpi.API.Conversion.readback ~depth state t in
+        let _, ud, gl = universe_decl.Elpi.API.Conversion.readback ~depth state t in
         assert (gl = []);
-        Cumulative ud
+        begin match ud with
+        | Cumul ud -> Cumulative ud
+        | NonCumul _ -> U.type_error "@udecl-cumul! containing a non-cumulative declaration"
+        end
     | None, Some (t,depth) ->
       let _, ud, gl = universe_decl.Elpi.API.Conversion.readback ~depth state t in
       assert (gl = []);
-      NonCumulative ud
+      begin match ud with
+      | NonCumul ud -> NonCumulative ud
+      | Cumul _ -> U.type_error "@udecl! containing a cumulative declaration"
+      end
     in
   let get_redflags_option () =
     match API.Data.StrMap.find_opt "coq:redflags" map with
@@ -1428,10 +1428,10 @@ let defc = E.Constants.declare_global_symbol "def"
 let evarc = E.Constants.declare_global_symbol "evar"
 
 let mk_pi rest =
-  E.mkApp E.Constants.pic (E.mkLam rest) []
+  E.mkBuiltin E.Pi [E.mkLam rest]
 
 let mk_pi_arrow hyp rest =
-  mk_pi (E.mkApp E.Constants.implc hyp [rest])
+  mk_pi (E.mkBuiltin E.Impl [hyp;rest])
 
 let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
@@ -2835,7 +2835,8 @@ let in_elpi_imp ~depth st x =
   assert (gl = []);
   st, x
 
-let parameterc = E.Constants.declare_global_symbol "parameter"
+let arity_parameterc = E.Constants.declare_global_symbol ~variant:1 "parameter"
+let inductive_parameterc = E.Constants.declare_global_symbol ~variant:2 "parameter"
 let arityc = E.Constants.declare_global_symbol "arity"
 let constructorc = E.Constants.declare_global_symbol "constructor"
 let inductivec = E.Constants.declare_global_symbol "inductive"
@@ -2856,8 +2857,11 @@ let in_coq_bool ~depth state ~default b =
   | Elpi.Builtin.Given b -> b
   | Elpi.Builtin.Unspec -> default
 
-let in_elpi_parameter id ~imp ty rest =
-  E.mkApp parameterc (in_elpi_id id) [imp;ty;E.mkLam rest]
+let in_elpi_arity_parameter id ~imp ty rest =
+  E.mkApp arity_parameterc (in_elpi_id id) [imp;ty;E.mkLam rest]
+let in_elpi_inductive_parameter id ~imp ty rest =
+  E.mkApp inductive_parameterc (in_elpi_id id) [imp;ty;E.mkLam rest]
+  
 let in_elpi_arity t =
   E.mkApp arityc t []
 
@@ -2904,7 +2908,7 @@ let readback_arity ~depth coq_ctx constraints state t =
     lp2constr constraints coq_ctx ~depth state t in
   let rec aux_arity coq_ctx ~depth params impls state extra t =
     match E.look ~depth t with
-    | E.App(c,name,[imp;ty;decl]) when is_coq_name ~depth name && c == parameterc ->
+    | E.App(c,name,[imp;ty;decl]) when is_coq_name ~depth name && c == arity_parameterc ->
         let name = in_coq_annot ~depth name in
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
@@ -3175,7 +3179,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
   let rec aux_decl coq_ctx ~depth params impls state extra t =
 
     match E.look ~depth t with
-    | E.App(c,name,[imp;ty;decl]) when is_coq_name ~depth name && c == parameterc ->
+    | E.App(c,name,[imp;ty;decl]) when is_coq_name ~depth name && c == inductive_parameterc ->
         let name = in_coq_annot ~depth name in
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
@@ -3276,10 +3280,13 @@ type hoas_ind = {
   decl : ind_decl;
 }
 
-let mk_parameter2 ~depth name impl ty rest state =
+let mk_inductive_parameter2 ~depth name impl ty rest state =
   let state, imp = in_elpi_imp ~depth state impl in
-  state, in_elpi_parameter ~imp name ty rest
-
+  state, in_elpi_inductive_parameter ~imp name ty rest
+let mk_arity_parameter2 ~depth name impl ty rest state =
+  let state, imp = in_elpi_imp ~depth state impl in
+  state, in_elpi_arity_parameter ~imp name ty rest
+  
 let mk_ctx_item_record_field ~depth name atts ty rest state =
   let state, atts, gls = record_field_attributes.API.Conversion.embed ~depth state (Elpi.Builtin.Given atts) in
   state, in_elpi_field atts name ty rest
@@ -3334,7 +3341,7 @@ let compute_with_uinstance ~depth options state f x inst_opt =
 let embed_arity ~depth coq_ctx state (relctx,ty) =
   let calldepth = depth in
   under_coq2elpi_relctx ~calldepth ~coq_ctx state relctx
-    ~mk_ctx_item:mk_parameter2
+    ~mk_ctx_item:mk_arity_parameter2
     (fun coq_ctx hyps ~depth state ->
         let state, ty, gl = constr2lp coq_ctx ~calldepth ~depth state ty in
         state, in_elpi_arity ty, gl)
@@ -3344,7 +3351,7 @@ let embed_arity ~depth coq_ctx state (relctx,ty) =
 let hoas_ind2lp ~depth coq_ctx state { params; decl } =
   let calldepth = depth in
   under_coq2elpi_relctx ~calldepth ~coq_ctx state params
-    ~mk_ctx_item:mk_parameter2
+    ~mk_ctx_item:mk_inductive_parameter2
     (fun coq_ctx hyps ~depth state -> match decl with
     | Inductive { id; nuparams; typ; constructors; kind } ->
       let sigma = get_sigma state in
@@ -3503,12 +3510,12 @@ let upoly_decl_of ~depth state ~loose_udecl mie =
       let csts = UVars.UContext.constraints uc in
       begin match mie.mind_entry_variance with
       | None ->
-          let state, up, gls = universe_decl.API.Conversion.embed ~depth state ((Array.to_list vars,loose_udecl),(csts,loose_udecl)) in
+          let state, up, gls = universe_decl.API.Conversion.embed ~depth state (NonCumul ((Array.to_list vars,loose_udecl),(csts,loose_udecl))) in
           state, (fun i -> E.mkApp uideclc i [up]), gls
       | Some variance ->
           assert(Array.length variance = Array.length vars);
           let uv = Array.map2 (fun x y -> (x,y)) vars variance |> Array.to_list in
-          let state, up, gls = universe_decl_cumul.API.Conversion.embed ~depth state ((uv,loose_udecl),(csts,loose_udecl)) in
+          let state, up, gls = universe_decl.API.Conversion.embed ~depth state (Cumul((uv,loose_udecl),(csts,loose_udecl))) in
           state, (fun i -> E.mkApp uideclc i [up]), gls
       end
   | Monomorphic_ind_entry -> state, (fun i -> E.mkApp ideclc i []), []

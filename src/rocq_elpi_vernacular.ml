@@ -54,7 +54,7 @@ let atts2impl ~depth loc phase
             CErrors.user_err Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
   let state, atts, _ = EU.map_acc (Rocq_elpi_builtins_synterp.attribute.API.Conversion.embed ~depth) state atts in
   let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
-  state, ET.mkApp ET.Constants.implc atts [q] 
+  state, ET.mkBuiltin ET.Impl [atts;q] 
 
 let same_phase y x =
   match x, y with

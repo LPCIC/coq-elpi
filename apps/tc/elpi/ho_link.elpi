@@ -124,7 +124,7 @@ namespace tc {
           pi x\ llam F Bo'.
       llam A B :- !, tc.unify-eq A B.
 
-      constraint solve-llam solve-llam-t llam {
+      constraint solve-llam llam {
         rule solve-llam \ (llam A B) <=> (A = B).
         rule \ solve-llam.
       }

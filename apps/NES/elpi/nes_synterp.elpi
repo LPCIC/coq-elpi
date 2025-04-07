@@ -57,12 +57,12 @@ end-ns NS Stack In Out :- In => std.do! [
   std.forall New (c\ Local => coq.elpi.accumulate current "NES.db" (clause _ _ c)),
 ].
 
-pred iter-> i:list A, i:list A, i:(A -> list A -> list prop -> list prop -> prop), i:list prop, o:list prop.
+pred iter-> i:list A, i:list A, i:(pred i:A, i:list A, i:list prop, o:list prop), i:list prop, o:list prop.
 iter-> _ [] _ O O :- coq.error "No elements".
 iter-> INIT [X] F In Out :- !, F X INIT In Out.
 iter-> INIT [X|XS] F In Out :- F X {std.append XS INIT} In Mid, iter-> INIT XS F Mid Out.
 
-pred iter<- i:list A, i:list A, i:(A -> list A -> list prop -> list prop -> prop), i:list prop, o:list prop.
+pred iter<- i:list A, i:list A, i:(pred i:A, i:list A, i:list prop, o:list prop), i:list prop, o:list prop.
 iter<- _ [] _ _ _ :- coq.error "No elements".
 iter<- INIT [X] F In Out :- !, F X INIT In Out.
 iter<- INIT [X|XS] F In Out :- iter<- INIT XS F In Mid, F X {std.append XS INIT} Mid Out.

@@ -39,7 +39,6 @@ Elpi Db derive.eqK.db lp:{{
 type eqK-db constructor -> term -> prop.
 
 }}.
-#[superglobal] Elpi Accumulate derive.eqK.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.eqK.db lp:{{
 
 :name "eqK-db:fail"

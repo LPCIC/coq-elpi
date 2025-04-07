@@ -2,129 +2,132 @@
 /* ------------------------------------------------------------------------- */
 
 namespace tc {
-  shorten tc.{search-mode}.
+shorten tc.{search-mode}.
 
-  % The predicate of a class is local if inside a section and readded at section end.
-  % This way, section variables are generalized
-  pred get-class-locality o:list prop. 
-  get-class-locality [@local!] :- coq.env.current-section-path [_ | _], !.
-  get-class-locality [@global!].
+% The predicate of a class is local if inside a section and readded at section end.
+% This way, section variables are generalized
+pred get-class-locality o:list prop. 
+get-class-locality [@local!] :- coq.env.current-section-path [_ | _], !.
+get-class-locality [@global!].
 
-  % [add-class-gr SearchMode ClassGR] adds the predicate for the class with its corresponing mode
-  % NOTE: the mode inside TC.declare_mode has the priority over Coq mode or #[mode=(...)] TC.Declare
-  pred add-class-gr i:search-mode, i:gref.
-  % the predicate for the class has alread been added
-  add-class-gr _ ClassGR :- tc.class ClassGR _ _ _, !. 
-  add-class-gr SearchMode ClassGR :-
-    std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
-    tc.get-elpi-mode ClassGR EM SM, 
-    tc.gref->pred-name ClassGR PredName,
-    get-class-locality Locality, 
-    Locality => (
-      coq.elpi.add-predicate "tc.db" _ PredName EM,
-      tc.add-tc-db _ _ (tc.class ClassGR PredName SearchMode SM)).
+% [add-class-gr SearchMode ClassGR] adds the predicate for the class with its corresponing mode
+% NOTE: the mode inside TC.declare_mode has the priority over Coq mode or #[mode=(...)] TC.Declare
+pred add-class-gr i:search-mode, i:gref.
+% the predicate for the class has alread been added
+add-class-gr _ ClassGR :- tc.class ClassGR _ _ _, !. 
+add-class-gr SearchMode ClassGR :-
+  std.assert! (coq.TC.class? ClassGR) "Only gref of type classes can be added as new predicates",
+  tc.get-elpi-mode ClassGR EM SM, 
+  tc.gref->pred-name ClassGR PredName,
+  get-class-locality Locality, 
+  Locality => (
+    coq.elpi.add-predicate "tc.db" _ PredName EM,
+    tc.add-tc-db _ _ (tc.class ClassGR PredName SearchMode SM)).
 
-  pred add-class-str i:search-mode, i:string.
-  add-class-str SearchMode ClassStr :-
-    coq.locate ClassStr ClassGR,
-    add-class-gr SearchMode ClassGR.
+pred add-class-str i:search-mode, i:string.
+add-class-str SearchMode ClassStr :-
+  coq.locate ClassStr ClassGR,
+  add-class-gr SearchMode ClassGR.
 
-  pred attr->search-mode o:search-mode. 
-  attr->search-mode tc.deterministic :- get-option "deterministic" tt, !.
-  attr->search-mode tc.classic.
+pred attr->search-mode o:search-mode. 
+attr->search-mode tc.deterministic :- get-option "deterministic" tt, !.
+attr->search-mode tc.classic.
 
-  pred attr->modes o:list hint-mode.
-  attr->modes CoqModes :- 
-    get-option "mode" L,
-    std.map L get-key-from-option RawModes, 
-    std.map RawModes tc.string->coq-mode CoqModes, !.
-  attr->modes [].
+pred attr->modes o:list hint-mode.
+attr->modes CoqModes :- 
+  get-option "mode" L,
+  std.map L get-key-from-option RawModes, 
+  std.map RawModes string->coq-mode1 CoqModes, !.
+attr->modes [].
 
-  pred get-key-from-option i:prop, o:string. 
-  get-key-from-option (get-option A tt) A :- !.
-  get-key-from-option (get-option "i" ff) "o" :- !.
-  get-key-from-option (get-option "o" ff) "i" :- !.
-  get-key-from-option A _ :- coq.error A "should be an option".
+pred string->coq-mode1 i:string, o:hint-mode.
+string->coq-mode1 X Y :- tc.string->coq-mode X Y.
 
-  pred declare-class-in-coq i:gref.
-  declare-class-in-coq ClassGR :- 
-    attr->modes CoqModes,
-    if (CoqModes = [])
-      (
-        tc.modes-of-class ClassGR EM,
-        std.map EM tc.elpi->string-mode SM
-      )(
-        coq.hints.add-mode ClassGR "typeclass_instances" CoqModes,
-        std.map CoqModes (x\y\tc.string->coq-mode y x) SM',
-        std.append SM' ["o"] SM
-      ),
-    % CAVEAT: this triggers the observer
-    coq.TC.declare-class ClassGR,
-    attr->search-mode SearchMode, 
-    tc.gref->pred-name ClassGR PredName,
-    % HACK: we override the clauses added by the observer, since it does not know
-    % the SearchMode.
-    get-class-locality Locality, 
-    
-    Locality => tc.add-tc-db _ (after "0") (tc.class ClassGR PredName SearchMode SM :- !).
+pred get-key-from-option i:prop, o:string. 
+get-key-from-option (get-option A tt) A :- !.
+get-key-from-option (get-option "i" ff) "o" :- !.
+get-key-from-option (get-option "o" ff) "i" :- !.
+get-key-from-option A _ :- coq.error A "should be an option".
 
-  pred declare-class i:indt-decl. 
-  declare-class D :- !, 
-    coq.env.add-indt D I,
-    coq.parse-attributes {attributes} 
-      [ att "mode" attlist, att "deterministic" bool ] Opts,
-    Opts => declare-class-in-coq (indt I).
+pred declare-class-in-coq i:gref.
+declare-class-in-coq ClassGR :- 
+  attr->modes CoqModes,
+  if (CoqModes = [])
+    (
+      tc.modes-of-class ClassGR EM,
+      std.map EM tc.elpi->string-mode SM
+    )(
+      coq.hints.add-mode ClassGR "typeclass_instances" CoqModes,
+      std.map CoqModes (x\y\tc.string->coq-mode y x) SM',
+      std.append SM' ["o"] SM
+    ),
+  % CAVEAT: this triggers the observer
+  coq.TC.declare-class ClassGR,
+  attr->search-mode SearchMode, 
+  tc.gref->pred-name ClassGR PredName,
+  % HACK: we override the clauses added by the observer, since it does not know
+  % the SearchMode.
+  get-class-locality Locality, 
+  
+  Locality => tc.add-tc-db _ (after "0") (tc.class ClassGR PredName SearchMode SM :- !).
 
-  % Contains some instruction that are executed just after the creation of
-  % the predicate for the class
-  namespace eta-reduction-aux {
-    pred is-functional i:term.
-    is-functional (prod _ _ _).
+pred declare-class i:indt-decl. 
+declare-class D :- !, 
+  coq.env.add-indt D I,
+  coq.parse-attributes {attributes} 
+    [ att "mode" attlist, att "deterministic" bool ] Opts,
+  Opts => declare-class-in-coq (indt I).
 
-    pred replace i:list term, i:term, o:list term, o:term.
-    replace [] _ [] _ :- !.
-    replace [(fun _ _ _ as T) | Xs] X' [X' | Xs] T :- !.
-    replace [X | XS] NEW [X | YS] S :- replace XS NEW YS S.
+% Contains some instruction that are executed just after the creation of
+% the predicate for the class
+namespace eta-reduction-aux {
+  pred is-functional i:term.
+  is-functional (prod _ _ _).
 
-    % a call to compile builds a new rule for the given class where only one 
-    % parameter P of function type is crafted. Compiled rules have only one
-    % premise where P is possibly eta-contructed at runtime. The absence of bang
-    % in the first rule (after is-functional T) allows to get all rules for and
-    % functional parameter through the std.findall in the main predicate below.
-    pred compile i:gref, i:term, i:bool, i:list term, o:prop.
-    compile ClassGR (prod _ T Bo) ff L (pi name ty body\ Cl body ty name) :-
-      is-functional T, pi name ty body x\ sigma Inp\
-        Inp = (fun name ty body),
-        compile ClassGR (Bo x) tt [Inp|L] (Cl name ty body).
+  pred replace i:list term, i:term, o:list term, o:term.
+  replace [] _ [] _ :- !.
+  replace [(fun _ _ _ as T) | Xs] X' [X' | Xs] T :- !.
+  replace [X | XS] NEW [X | YS] S :- replace XS NEW YS S.
 
-    compile ClassGR (prod _ _ Bo) S L (pi x\ Cl x) :-
-      pi x\ compile ClassGR (Bo x) S [x|L] (Cl x).
+  % a call to compile builds a new rule for the given class where only one 
+  % parameter P of function type is crafted. Compiled rules have only one
+  % premise where P is possibly eta-contructed at runtime. The absence of bang
+  % in the first rule (after is-functional T) allows to get all rules for and
+  % functional parameter through the std.findall in the main predicate below.
+  pred compile i:gref, i:term, i:bool, i:list term, o:prop.
+  compile ClassGR (prod _ T Bo) ff L (pi name ty body\ Cl body ty name) :-
+    is-functional T, pi name ty body x\ sigma Inp\
+      Inp = (fun name ty body),
+      compile ClassGR (Bo x) tt [Inp|L] (Cl name ty body).
 
-    compile ClassGR (sort _) tt L (pi sol new-term\ Cl new-term sol) :-
-      pi solution new-term\ sigma Args Args' Q Q'\
-        std.do![
-          tc.gref->pred-name ClassGR PredName,
-          std.rev [solution | L] Args,
-          replace Args new-term Args' T,
-          coq.elpi.predicate PredName Args Q,
-          coq.elpi.predicate PredName Args' Q',
-          (Cl new-term solution) =
-            (Q :- [coq.reduction.eta-contract T new-term,
-                  if (T == new-term) fail (Q')])
-        ].
+  compile ClassGR (prod _ _ Bo) S L (pi x\ Cl x) :-
+    pi x\ compile ClassGR (Bo x) S [x|L] (Cl x).
 
-    % A debug predicate to print the genereted clauses
-    pred generated-clauses.
+  compile ClassGR (sort _) tt L (pi sol new-term\ Cl new-term sol) :-
+    pi solution new-term\ sigma Args Args' Q Q'\
+      std.do![
+        tc.gref->pred-name ClassGR PredName,
+        std.rev [solution | L] Args,
+        replace Args new-term Args' T,
+        coq.elpi.predicate PredName Args Q,
+        coq.elpi.predicate PredName Args' Q',
+        (Cl new-term solution) =
+          (Q :- [coq.reduction.eta-contract T new-term,
+                if (T == new-term) fail (Q')])
+      ].
 
-    pred main i:string.
-    main S :-
-      coq.locate S ClassGR,
-      coq.env.typeof ClassGR ClassTy,
-      % a clause for eta contruction per argument of functional type is created
-      % we get all the rules with the finall
-      std.findall (compile ClassGR ClassTy ff [] _) SFindall,
-      std.map SFindall (x\r\ compile _ _ _ _ r = x) SMap,
-      if generated-clauses (coq.say SMap) true,
-      std.forall SMap (tc.add-tc-db _ _).
-  }
+  % A debug predicate to print the genereted clauses
+  pred generated-clauses.
+
+  pred main i:string.
+  main S :-
+    coq.locate S ClassGR,
+    coq.env.typeof ClassGR ClassTy,
+    % a clause for eta contruction per argument of functional type is created
+    % we get all the rules with the finall
+    std.findall (compile ClassGR ClassTy ff [] _) SFindall,
+    std.map SFindall (x\r\ compile _ _ _ _ r = x) SMap,
+    if generated-clauses (coq.say SMap) true,
+    std.forall SMap (tc.add-tc-db _ _).
+}
 }

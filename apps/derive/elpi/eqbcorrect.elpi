@@ -18,7 +18,7 @@ has-params? (eqb.value-param _ _).
 % to make the code agnostic on the proof of correctness or reflexivity
 %
 % eg: config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for
-pred config  o:term,            o:term,               o:term,                 o:string,                o:(term -> term -> prop).
+pred config  o:term,            o:term,               o:term,                 o:string,                o:(pred i:term, o:term).
 
 pred main i:gref, i:string, o:list prop.
 main (indt I) Prefix CLs :- std.do! [
@@ -398,11 +398,11 @@ mkblistrefl [X|XS] ACC R :-
 
 % prove {{ is_option (seq A) (is_seq A (eqb_correrct A eqA)) }} T
 % such that T has type {{ forall x (px : is_option ...), eqb_correrct (option (seq A)) x }}
-pred prove i:(term -> term -> prop), i:term, o:term.
+pred prove i:(pred i:term, o:term), i:term, o:term.
 prove Lemma T R :- search Lemma (prove Lemma) T R.
 %prove T R :- whd1 T T', !, prove T' R.
 
-pred search i:(term -> term -> prop), i:(term -> term -> prop), i:term, o:term.
+pred search i:(pred i:term, o:term), i:(pred i:term, o:term), i:term, o:term.
 search What Rec (app [GR|L] as GRL) R :- !, std.do! [
   What GR Aux,
   mk-reali GR (global (indt ISGR)),
@@ -424,7 +424,7 @@ apply-aux Aux [T|L] Aux1 :- !, std.do![
   apply-aux {coq.mk-app Aux [T, EQB]} L Aux1
 ].
 
-pred apply-functor i:term, i:list bool, i:list term, i:(term -> term -> prop), o:term.
+pred apply-functor i:term, i:list bool, i:list term, i:(pred i:term, o:term), o:term.
 apply-functor X _ [] _ X.
 apply-functor X [ff,tt|Mask] [Y|YS] Rec R :- Rec Y Y1, apply-functor {coq.mk-app X [_,_,_,Y1]} Mask YS Rec R.
 apply-functor X [ff|Mask] [Y|YS] Rec R :- reali Y PY, apply-functor {coq.mk-app X [Y,PY]} Mask YS Rec R.

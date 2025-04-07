@@ -19,16 +19,16 @@ last-no-error A B :-
   (std.last [] _ :- !, fail) => std.last A B.
 
 % [find L F R] returns the first R in L such that (F R) is valid
-pred find i:list A, i:(A -> prop), o:A.
+pred find i:list A, i:(pred i:A), o:A.
 find [R | _] F R :- F R, !.
 find [_ | L] F R :- find L F R.
 
-pred find-opt i:list A, i:(A -> prop), o:(option A).
+pred find-opt i:list A, i:(pred i:A), o:(option A).
 find-opt [] _ none.
 find-opt [R | _] F (some R) :- F R, !.
 find-opt [_ | L] F R :- find-opt L F R.
 
-pred exists! i:list A, i:(A -> prop).
+pred exists! i:list A, i:(pred i:A).
 exists! [X|_] A :- A X, !.
 exists! [_|L] A :- exists! L A.
 
@@ -70,7 +70,7 @@ if-true A B :- if A B true.
 pred if-false i:prop, i:prop.
 if-false A B :- if A true B.
 
-pred std.findall-unary i:(A -> prop), o:list A.
+pred std.findall-unary i:(pred o:A), o:list A.
 std.findall-unary P L :-
   std.findall (P _) V,
   std.map V (x\y\ P y = x) L.

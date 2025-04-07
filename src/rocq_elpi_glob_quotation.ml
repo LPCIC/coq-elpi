@@ -612,22 +612,24 @@ let runtime_gterm2lp ~loc ~base glob ~depth state =
   handle_elpi_compiler_errors ~loc (fun () ->
     API.Utils.term_to_raw_term ~ctx state base ~depth t)
 
-let rec gparams2lp ~loc ~base params (kont : depth:int -> S.t -> S.t * _) ~depth state =
+let rec gparams2lp ~loc ~base inp params (kont : depth:int -> S.t -> S.t * _) ~depth state =
   match params with
   | [] -> kont ~depth state
   | (name,imp,ob,src) :: params ->
       if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let state, src = gterm2lp ~loc ~depth ~base src state in
-      let k = nogls (gparams2lp ~loc ~base params kont) in
+      let k = nogls (gparams2lp ~loc ~base inp params kont) in
       let state, tgt, () = under_ctx name src None ~k ~depth state in
       let state, imp = in_elpi_imp ~depth state imp in
-      state, in_elpi_parameter name ~imp src tgt
+      state, inp name ~imp src tgt
 
 let drop_relevance (a,_,c,d,e) = (a,c,d,e)
     
-let gparams2lp ~loc ~base params ~k ~depth s =
-  gparams2lp ~loc ~base (List.map drop_relevance params) k ~depth s
-
+let gindparams2lp ~loc ~base params ~k ~depth s =
+  gparams2lp ~loc ~base in_elpi_inductive_parameter (List.map drop_relevance params) k ~depth s
+let garityparams2lp ~loc ~base params ~k ~depth s =
+  gparams2lp ~loc ~base in_elpi_arity_parameter(List.map drop_relevance params) k ~depth s
+  
 let garity2lp ~loc ~base t ~depth state =
   let state, t = gterm2lp ~loc t ~depth ~base state in
   state, in_elpi_arity t

@@ -33,36 +33,35 @@
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
-pred main i:list argument.
-pred main-interp i:list argument, i:any.
-pred main-synterp i:list argument, o:any.
+external pred main i:list argument.
+external pred main-interp i:list argument, i:any.
+external pred main-synterp i:list argument, o:any.
 pred usage.
-pred attributes o:list attribute.
+external pred attributes o:list attribute.
 
 % see coq-lib.elpi for coq.parse-attributes generating the options below
-type get-option string -> A -> prop.
+external pred get-option o:string, o:A.
 
 % The data type of arguments (for commands or tactics)
 kind argument type.
-type int       int    -> argument. % Eg. 1 -2.
-type str       string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
-type trm       term   -> argument. % Eg. (t).
-type open-trm  int -> term -> argument.
+external symbol int      : int    -> argument. % Eg. 1 -2.
+external symbol str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
+external symbol trm      : term   -> argument. % Eg. (t).
+external symbol open-trm : int -> term -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
 % Eg. Record or Inductive
-type indt-decl indt-decl -> argument.
+external symbol indt-decl : indt-decl -> argument.
 % Eg. #[universes(polymorphic,...)] Record or Inductive
-type upoly-indt-decl indt-decl -> upoly-decl -> argument.
-type upoly-indt-decl indt-decl -> upoly-decl-cumul -> argument.
+external symbol upoly-indt-decl : indt-decl -> upoly-decl -> argument.
 % Eg. Definition or Axiom (when the body is none)
-type const-decl id -> option term -> arity -> argument.
+external symbol const-decl : id -> option term -> arity -> argument.
 % Eg. #[universes(polymorphic,...)] Definition or Axiom
-type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
+external symbol upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
-type ctx-decl context-decl -> argument.
+external symbol ctx-decl : context-decl -> argument.
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -90,17 +89,17 @@ kind record-decl type.
 % See also the arity->term predicate in coq-lib.elpi
 
 kind arity type.
-type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
-type arity term -> arity.
+external symbol parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "1".
+external symbol arity       : term -> arity.
 
-type parameter   id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl.
-type inductive   id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
-type record      id -> term -> id -> record-decl -> indt-decl.
+external symbol parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
+external symbol inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+external symbol record      : id -> term -> id -> record-decl -> indt-decl.
 
-type constructor id -> arity -> indc-decl.
+external symbol constructor : id -> arity -> indc-decl.
 
-type field       field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
-type end-record  record-decl.
+external symbol field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
+external symbol end-record  : record-decl.
 
 % Example.
 % Remark that A is a regular parameter; y is a non-uniform parameter and t
@@ -141,8 +140,8 @@ type end-record  record-decl.
 % Context declaration (used as an argument to Elpi commands)
 kind context-decl type.
 % Eg. (x : T) or (x := B), body is optional, type may be a variable
-type context-item  id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
-type context-end   context-decl.
+external symbol context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
+external symbol context-end  : context-decl.
 
 typeabbrev field-attributes (list field-attribute).
 
@@ -164,11 +163,11 @@ macro @local!    :- get-option "coq:locality" "local".
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
 % msolve is for tactics that operate on multiple goals (called via all: ).
-pred solve i:goal, o:list sealed-goal.
-pred msolve i:list sealed-goal, o:list sealed-goal.
+external pred solve i:goal, o:list sealed-goal.
+external pred msolve i:list sealed-goal, o:list sealed-goal.
 
 % Extra arguments for tactics
-type tac       ltac1-tactic -> argument.
+external symbol tac : ltac1-tactic -> argument.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
@@ -179,23 +178,23 @@ type tac       ltac1-tactic -> argument.
 % -- terms --------------------------------------------------------------------
 kind term type.
 
-type sort  sort -> term. % Prop, Type@{i}
+external symbol sort    : sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-type global gref -> term.
-type pglobal gref -> univ-instance -> term.
+external symbol global  : gref -> term.
+external symbol pglobal : gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
-type fun  name -> term -> (term -> term) -> term.         % fun x : t =>
-type prod name -> term -> (term -> term) -> term.         % forall x : t,
-type let  name -> term -> term -> (term -> term) -> term. % let x : T := v in
+external symbol fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
+external symbol prod    : name -> term -> (term -> term) -> term.         % forall x : t,
+external symbol let     : name -> term -> term -> (term -> term) -> term. % let x : T := v in
 
 % other term formers: function application, pattern matching and recursion
-type app   list term -> term.                   % app [hd|args]
-type match term -> term -> list term -> term.   % match t p [branch])
-type fix   name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+external symbol app     : list term -> term.                   % app [hd|args]
+external symbol match   : term -> term -> list term -> term.   % match t p [branch])
+external symbol fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-type primitive primitive-value -> term.
+external symbol primitive : primitive-value -> term.
 
 % NYI
 %type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
@@ -223,15 +222,6 @@ type primitive primitive-value -> term.
 
 % -- helpers ------------------------------------------------------------------
 macro @cast T TY :- (let `cast` TY T x\x).
-
-% -- misc ---------------------------------------------------------------------
-
-% When one writes Constraint Handling Rules unification variables are "frozen",
-% i.e. represented by a fresh constant (the evar key) and a list of terms
-% (typically the variables in scope).
-kind evarkey type.
-type uvar  evarkey -> list term -> term.
-
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's evar_map
@@ -263,9 +253,11 @@ type uvar  evarkey -> list term -> term.
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
 
-pred decl i:term, o:name, o:term. % Var Name Ty
-pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
-pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
+external pred decl o:term, o:name, o:term. % Var Name Ty
+external pred def  o:term, o:name, o:term, o:term. % Var Name Ty Bo
+external func cache term -> term.
+
+external pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-
@@ -275,7 +267,7 @@ declare-evar Ctx RawEv Ty Ev :-
 % to only contain decl, def, pp.  For now no handling rules for this set of
 % constraints other than one to remove a constraint
 
-pred rm-evar i:term, i:term.
+external pred rm-evar i:term, i:term.
 rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
 rm-evar _ _.
 
@@ -297,7 +289,7 @@ constraint declare-evar evar def decl cache rm-evar {
 % elaborates to a term of type Ty that gets assigned to E.
 % In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
-pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
+external pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- var S _ VL, !,
   prune T VL, prune X VL, declare_constraint (evar X T S) [X, S].
 
@@ -308,10 +300,19 @@ evar _ _ _. % volatile, only unresolved evars are considered as evars
 % Eg.  @pi-decl `x` <t> x1\ @pi-def `y` <t> <v> y\ ...
 macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
+
+% Converts an arity to a term
+pred coq.arity->term i:arity, o:term.
+coq.arity->term (parameter ID _ Ty Rest) (prod Name Ty R) :-
+  coq.id->name ID Name,
+  @pi-decl Name Ty x\ coq.arity->term (Rest x) (R x).
+coq.arity->term (arity A) A.
+
 macro @pi-parameter ID T F :-
   sigma N\ (coq.id->name ID N, pi x\ decl x N T => F x).
 macro @pi-inductive ID A F :-
   sigma N\ (coq.id->name ID N, coq.arity->term A T, pi x\ decl x N T => F x).
+
 
 % Sometimes it can be useful to pass to Coq a term with unification variables
 % representing "untyped holes" like an implicit argument _. In particular
@@ -358,11 +359,11 @@ macro @holes! :- get-option "HOAS:holes" tt.
 
 kind goal type.
 kind sealed-goal type.
-type nabla (term -> sealed-goal) -> sealed-goal.
-type seal goal -> sealed-goal.
+external symbol nabla : (term -> sealed-goal) -> sealed-goal.
+external symbol seal  : goal -> sealed-goal.
 
 typeabbrev goal-ctx (list prop).
-type goal goal-ctx -> term -> term -> term -> list argument -> goal.
+external symbol goal : goal-ctx -> term -> term -> term -> list argument -> goal.
 
 % A sealed-goal closes with nabla the bound names of a
 % 
@@ -488,7 +489,7 @@ macro @using! S :- get-option "coq:using" S. % like the #[using=S] attribute
 macro @inline-at! N :- get-option "coq:inline" (coq.inline.at N). % like Inline(N)
 macro @inline! N :- get-option "coq:inline" coq.inline.default. % like
 
-macro @redflags! F :- get-option "coq:redflags" F. % for whd & co
+macro @redflags! F :- get-option "coq:redflags" (F : coq.redflags). % for whd & co
 
 % both arguments are strings eg "8.12.0" "use foo instead"
 macro @deprecated! Since Msg :-
@@ -503,14 +504,14 @@ macro @coercion! :- [coercion reversible].
 % Attributes for a record field. Can be left unspecified, see defaults
 % below.
 kind field-attribute type.
-type coercion coercion-status -> field-attribute. % default off
-type canonical bool -> field-attribute. % default true, if field is named
+external symbol coercion : coercion-status -> field-attribute = "1".  % default off
+external symbol canonical : bool -> field-attribute = "1".  % default true, if field is named
 
 % Status of a record field w.r.t. coercions
 kind coercion-status type.
-type regular coercion-status.
-type reversible coercion-status.
-type off coercion-status.
+external symbol regular : coercion-status = "1". 
+external symbol reversible : coercion-status = "1". 
+external symbol off : coercion-status = "1". 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -525,33 +526,33 @@ type off coercion-status.
 % -- Misc ---------------------------------------------------------
 
 % [coq.info ...] Prints an info message
-external type coq.info variadic any prop.
+external type coq.info variadic any fprop.
 
 % [coq.notice ...] Prints a notice message
-external type coq.notice variadic any prop.
+external type coq.notice variadic any fprop.
 
 % [coq.say ...] Prints a notice message
-external type coq.say variadic any prop.
+external type coq.say variadic any fprop.
 
 % [coq.debug ...] Prints a debug message
-external type coq.debug variadic any prop.
+external type coq.debug variadic any fprop.
 
 % [coq.warn ...] Prints a generic warning message
-external type coq.warn variadic any prop.
+external type coq.warn variadic any fprop.
 
 % [coq.warning Category Name ...] 
 % Prints a warning message with a Name and Category which can be used
 % to silence this warning or turn it into an error. See coqc -w command
 % line option
-external type coq.warning string -> string -> variadic any prop.
+external type coq.warning string -> string -> variadic any fprop.
 
 % [coq.error ...] Prints and *aborts* the program. It is a fatal error for
 % Elpi and Ltac
-external type coq.error variadic any prop.
+external type coq.error variadic any fprop.
 
 % [coq.version VersionString Major Minor Patch] Fetches the version of Coq,
 % as a string and as 3 numbers
-external pred coq.version o:string, o:int, o:int, o:int.
+external func coq.version -> string, int, int, int.
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -579,9 +580,9 @@ kind constructor type.
 
 % Global objects: inductive types, inductive constructors, definitions
 kind gref type.
-type const constant -> gref. % Nat.add, List.append, ...
-type indt inductive -> gref. % nat, list, ...
-type indc constructor -> gref. % O, S, nil, cons, ...
+external symbol const : constant    -> gref. % Nat.add, List.append, ...
+external symbol indt  : inductive   -> gref. % nat, list, ...
+external symbol indc  : constructor -> gref. % O, S, nil, cons, ...
 
 % [id] is a name that matters, we piggy back on Elpi's strings.
 % Note: [name] is a name that does not matter.
@@ -598,14 +599,14 @@ kind modtypath type.
 
 % Result of coq.locate-all
 kind located type.
-type loc-gref gref -> located.
-type loc-modpath modpath -> located.
-type loc-modtypath modtypath -> located.
-type loc-abbreviation abbreviation -> located.
+external symbol loc-gref : gref -> located = "1". 
+external symbol loc-modpath : modpath -> located = "1". 
+external symbol loc-modtypath : modtypath -> located = "1". 
+external symbol loc-abbreviation : abbreviation -> located = "1". 
 
 % [coq.locate-all Name Located] finds all possible meanings of a string.
 % Does not fail.
-external pred coq.locate-all i:id, o:list located.
+external func coq.locate-all id -> list located.
 
 % [coq.locate Name GlobalReference] locates a global definition, inductive
 % type or constructor via its name.
@@ -614,7 +615,7 @@ external pred coq.locate-all i:id, o:list located.
 % It understands Coqlib Registered names using the "lib:" prefix,
 % eg "lib:core.bool.true".
 % It's a fatal error if Name cannot be located.
-external pred coq.locate i:id, o:gref.
+external func coq.locate id -> gref.
 
 % -- Environment: read ------------------------------------------------
 
@@ -623,7 +624,7 @@ external pred coq.locate i:id, o:gref.
 % [coq.env.typeof GR Ty] reads the type Ty of a global reference.
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-external pred coq.env.typeof i:gref, o:term.
+external func coq.env.typeof gref -> term.
 
 % [coq.env.global GR T] turns a global reference GR into a term, or
 % viceversa.
@@ -631,28 +632,30 @@ external pred coq.env.typeof i:gref, o:term.
 % T = (pglobal GR I).
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-external pred coq.env.global o:gref, o:term.
+external func coq.env.global -> gref, term.
 
-external pred coq.env.indt % reads the inductive type declaration for the environment.
+external func coq.env.indt % reads the inductive type declaration for the environment.
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-  i:inductive,        % reference to the inductive type
-  o:bool,             % tt if the type is inductive (ff for co-inductive)
-  o:int,              % number of parameters
-  o:int,              % number of parameters that are uniform (<= parameters)
-  o:term,             % type of the inductive type constructor including parameters
-  o:list constructor, % list of constructor names
-  o:list term.        % list of the types of the constructors (type of KNames) including parameters
+  inductive        % reference to the inductive type
+  -> bool,         % tt if the type is inductive (ff for co-inductive)
+  int,             % number of parameters
+  int,             % number of parameters that are uniform (<= parameters)
+  term,            % type of the inductive type constructor including parameters
+  list constructor, 
+   % list of constructor names
+  list term.       % list of the types of the constructors (type of KNames) including parameters
   
-external pred coq.env.indt-decl % reads the inductive type declaration for the environment.
+external func coq.env.indt-decl % reads the inductive type declaration for the environment.
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-  i:inductive, % reference to the inductive type
-  o:indt-decl. % HOAS description of the inductive type
+  inductive % reference to the inductive type
+  -> indt-decl.
+   % HOAS description of the inductive type
   
 % [coq.env.indc->indt K I N] finds the inductive I to which constructor K
 % belongs and its position N among the other constructors
-external pred coq.env.indc->indt i:constructor, o:inductive, o:int.
+external func coq.env.indc->indt constructor -> inductive, int.
 
 % [coq.env.indc GR ParamNo UnifParamNo Kno Ty] reads the type Ty of an
 % inductive constructor GR, as well as
@@ -660,94 +663,95 @@ external pred coq.env.indc->indt i:constructor, o:inductive, o:int.
 % UnifParamNo and the number of the constructor Kno (0 based).
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-external pred coq.env.indc i:constructor, o:int, o:int, o:int, o:term.
+external func coq.env.indc constructor -> int, int, int, term.
 
 % [coq.env.informative? Ind] Checks if Ind is informative, that is, if
 % it can be eliminated to build a Type. Inductive types in Type
 % are
 % informative, as well a singleton types in Prop (which are
 % regarded as not non-informative).
-external pred coq.env.informative? i:inductive.
+external func coq.env.informative? inductive.
 
 % [coq.env.record? Ind PrimProjs] checks if Ind is a record (PrimProjs = tt
 % if Ind has primitive projections)
-external pred coq.env.record? i:inductive, o:bool.
+external func coq.env.record? inductive -> bool.
 
 % [coq.env.recursive? Ind] checks if Ind is recursive
-external pred coq.env.recursive? i:inductive.
+external func coq.env.recursive? inductive.
 
 % [coq.env.opaque? GR] checks if GR is an opaque constant
-external pred coq.env.opaque? i:constant.
+external func coq.env.opaque? constant.
 
 % [coq.env.univpoly? GR PolyArity] checks if GR is universe polymorphic and
 % if so returns the number of universe variables
-external pred coq.env.univpoly? i:gref, o:int.
+external func coq.env.univpoly? gref -> int.
 
 % [coq.env.const GR Bo Ty] reads the type Ty and the body Bo of constant
 % GR.
 % Opaque constants have Bo = none.
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-external pred coq.env.const i:constant, o:option term, o:term.
+external func coq.env.const constant -> option term, term.
 
 % [coq.env.const-body GR Bo] reads the body of a constant, even if it is
 % opaque.
 % If such body is none, then the constant is a true axiom.
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
-external pred coq.env.const-body i:constant, o:option term.
+external func coq.env.const-body constant -> option term.
 
 % [coq.env.primitive? GR] tests if GR is a primitive constant (like uin63
 % addition) or a primitive type (like uint63)
-external pred coq.env.primitive? i:constant.
+external func coq.env.primitive? constant.
 
 % [coq.locate-module ModName ModPath] locates a module.  It's a fatal error
 % if ModName cannot be located. *E*
-external pred coq.locate-module i:id, o:modpath.
+external func coq.locate-module id -> modpath.
 
 % [coq.locate-module-type ModName ModPath] locates a module.  It's a fatal
 % error if ModName cannot be located. *E*
-external pred coq.locate-module-type i:id, o:modtypath.
+external func coq.locate-module-type id -> modtypath.
 
 % Contents of a module
 kind module-item type.
-type submodule modpath -> list module-item -> module-item.
-type module-type modtypath -> module-item.
-type gref gref -> module-item.
-type module-functor modpath -> list modtypath -> module-item.
-type module-type-functor modtypath -> list modtypath -> module-item.
+external symbol submodule : modpath -> list module-item -> module-item = "1". 
+external symbol module-type : modtypath -> module-item = "1". 
+external symbol gref : gref -> module-item = "1". 
+external symbol module-functor : modpath -> list modtypath -> module-item = "1". 
+external symbol module-type-functor : modtypath -> list modtypath ->
+                                      module-item = "1". 
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
-external pred coq.env.module i:modpath, o:list module-item.
+external func coq.env.module modpath -> list module-item.
 
 % [coq.env.module-type MTP Entries] lists the items made visible by module
 % type (does not recurse on submodules) *E*
-external pred coq.env.module-type i:modtypath, o:list id.
+external func coq.env.module-type modtypath -> list id.
 
 % [coq.env.section GlobalObjects] lists the global objects that are marked
 % as to be abstracted at the end of the enclosing sections
-external pred coq.env.section o:list constant.
+external func coq.env.section -> list constant.
 
 % [coq.env.dependencies GR MP Deps] Computes the direct dependencies of GR.
 % If MP is given, Deps only contains grefs from that module
-external pred coq.env.dependencies i:gref, i:modpath, o:coq.gref.set.
+external func coq.env.dependencies gref, modpath -> coq.gref.set.
 
 % [coq.env.transitive-dependencies GR MP Deps] Computes the transitive
 % dependencies of GR. If MP is given, Deps only contains grefs from that
 % module
-external pred coq.env.transitive-dependencies i:gref, i:modpath, 
-                                              o:coq.gref.set.
+external func coq.env.transitive-dependencies gref, 
+                                             modpath -> coq.gref.set.
 
 % [coq.env.term-dependencies T S] Computes all the grefs S occurring in the
 % term T
-external pred coq.env.term-dependencies i:term, o:coq.gref.set.
+external func coq.env.term-dependencies term -> coq.gref.set.
 
 % [coq.env.current-path Path] lists the current module path
-external pred coq.env.current-path o:list string.
+external func coq.env.current-path -> list string.
 
 % [coq.env.current-section-path Path] lists the current section path
-external pred coq.env.current-section-path o:list string.
+external func coq.env.current-section-path -> list string.
 
 % Deprecated, use coq.env.opaque?
   pred coq.env.const-opaque? i:constant.
@@ -792,8 +796,7 @@ external pred coq.env.current-section-path o:list string.
 % - @dropunivs! (default: false, drops all universe constraints from the
 % store after the definition)
 % 
-external pred coq.env.add-const i:id, i:term, i:term, i:opaque?, 
-                                o:constant.
+external func coq.env.add-const id, term, term, opaque? -> constant.
 
 % [coq.env.add-axiom Name Ty C] Declare a new axiom: C gets a constant
 % derived from Name
@@ -804,14 +807,14 @@ external pred coq.env.add-const i:id, i:term, i:term, i:opaque?,
 % - @using! (default: section variables actually used)
 % - @inline! (default: no inlining)
 % - @inline-at! N (default: no inlining)
-external pred coq.env.add-axiom i:id, i:term, o:constant.
+external func coq.env.add-axiom id, term -> constant.
 
 % [coq.env.add-section-variable Name I Ty C] Declare a new section variable:
 % C gets a constant derived from Name
 % and the current module.
 % 
-external pred coq.env.add-section-variable i:id, i:implicit_kind, i:term, 
-                                           o:constant.
+external func coq.env.add-section-variable id, implicit_kind, 
+                                          term -> constant.
 
 
 pred coq.env.add-context i:context-decl.
@@ -829,26 +832,26 @@ coq.env.add-context (context-item Name _I Ty (some Bo) Rest) :-
 % - @dropunivs! (default: false, drops all universe constraints from the
 % store after the definition)
 % - @primitive! (default: false, makes records primitive)
-external pred coq.env.add-indt i:indt-decl, o:inductive.
+external func coq.env.add-indt indt-decl -> inductive.
 
 % Interactive module construction
 
 % Coq Module inline directive
 kind coq.inline type.
-type coq.inline.no coq.inline. % Coq's [no inline] (aka !)
-type coq.inline.default coq.inline. % The default, can be omitted
-type coq.inline.at int -> coq.inline. % Coq's [inline at <num>]
+external symbol coq.inline.no : coq.inline = "1".  % Coq's [no inline] (aka !)
+external symbol coq.inline.default : coq.inline = "1".  % The default, can be omitted
+external symbol coq.inline.at : int -> coq.inline = "1".  % Coq's [inline at <num>]
 
 % [coq.env.fresh-global-id ID FID] Generates an id FID which is fresh in
 % the current module and looks similar to ID, i.e. it is ID concatenated
 % with a number, starting from 1.
 % [coq.env.fresh-global-id X X] can be used to check if X is taken
-external pred coq.env.fresh-global-id i:id, o:id.
+external func coq.env.fresh-global-id id -> id.
 
-external pred coq.env.begin-module-functor % Starts a functor. bla bla
-  i:id,                       % The name of the functor
-  i:option modtypath,         % Its module type (optional)
-  i:list (pair id modtypath). % Parameters of the functor (optional)
+external func coq.env.begin-module-functor % Starts a functor. bla bla
+  id,                        % The name of the functor
+  option modtypath,          % Its module type (optional)
+  list (pair id modtypath).  % Parameters of the functor (optional)
   
 
 pred coq.env.begin-module i:id, i:option modtypath.
@@ -857,11 +860,11 @@ coq.env.begin-module Name MP :- coq.env.begin-module-functor Name MP [].
 
 % [coq.env.end-module ModPath] end the current module that becomes known as
 % ModPath *E*. bla bla
-external pred coq.env.end-module o:modpath.
+external func coq.env.end-module -> modpath.
 
-external pred coq.env.begin-module-type-functor % Starts a module type functor *E*. bla bla
-  i:id,                       % The name of the functor
-  i:list (pair id modtypath). % The parameters of the functor (optional)
+external func coq.env.begin-module-type-functor % Starts a module type functor *E*. bla bla
+  id,                        % The name of the functor
+  list (pair id modtypath).  % The parameters of the functor (optional)
   
 
 pred coq.env.begin-module-type i:id.
@@ -871,36 +874,36 @@ coq.env.begin-module-type Name :-
 
 % [coq.env.end-module-type ModTyPath] end the current module type that
 % becomes known as ModPath *E*. bla bla
-external pred coq.env.end-module-type o:modtypath.
+external func coq.env.end-module-type -> modtypath.
 
-external pred coq.env.apply-module-functor % Applies a functor *E*. bla bla
-  i:id,               % The name of the new module
-  i:option modtypath, % Its module type (optional)
-  i:modpath,          % The functor being applied (optional)
-  i:list modpath,     % Its arguments (optional)
-  i:coq.inline,       % Arguments inlining (optional)
-  o:modpath.          % The modpath of the new module
+external func coq.env.apply-module-functor % Applies a functor *E*. bla bla
+  id,                % The name of the new module
+  option modtypath,  % Its module type (optional)
+  modpath,           % The functor being applied (optional)
+  list modpath,      % Its arguments (optional)
+  coq.inline         % Arguments inlining (optional)
+  -> modpath.        % The modpath of the new module
   
-external pred coq.env.apply-module-type-functor % Applies a type functor *E*. bla bla
-  i:id,           % The name of the new module type
-  i:modtypath,    % The functor (optional)
-  i:list modpath, % Its arguments (optional)
-  i:coq.inline,   % Arguments inlining (optional)
-  o:modtypath.    % The modtypath of the new module type
+external func coq.env.apply-module-type-functor % Applies a type functor *E*. bla bla
+  id,            % The name of the new module type
+  modtypath,     % The functor (optional)
+  list modpath,  % Its arguments (optional)
+  coq.inline     % Arguments inlining (optional)
+  -> modtypath.  % The modtypath of the new module type
   
 % [coq.env.include-module ModPath Inline (optional)] is like the vernacular
 % Include, Inline can be omitted *E*. bla bla
-external pred coq.env.include-module i:modpath, i:coq.inline.
+external func coq.env.include-module modpath, coq.inline.
 
 % [coq.env.include-module-type ModTyPath Inline (optional)] is like the
 % vernacular Include Type, Inline can be omitted  *E*. bla bla
-external pred coq.env.include-module-type i:modtypath, i:coq.inline.
+external func coq.env.include-module-type modtypath, coq.inline.
 
 % [coq.env.import-module ModPath] is like the vernacular Import *E*
-external pred coq.env.import-module i:modpath.
+external func coq.env.import-module modpath.
 
 % [coq.env.export-module ModPath] is like the vernacular Export *E*
-external pred coq.env.export-module i:modpath.
+external func coq.env.export-module modpath.
 
 % Support for sections is limited, in particular sections and
 % Coq quotations may interact in surprising ways. For example
@@ -918,29 +921,27 @@ external pred coq.env.export-module i:modpath.
 % denote the same x as before.
 
 % [coq.env.begin-section Name] starts a section named Name *E*
-external pred coq.env.begin-section i:id.
+external func coq.env.begin-section id.
 
 % [coq.env.end-section] end the current section *E*
-external pred coq.env.end-section .
+external func coq.env.end-section.
 
 % [coq.env.projections StructureName Projections] given a record
 % StructureName lists all projections
-external pred coq.env.projections i:inductive, o:list (option constant).
+external func coq.env.projections inductive -> list (option constant).
 
 % [coq.env.projection? Constant Number of parameters] if the constant is a
 % projection, returns the number of parameters of its record.
-external pred coq.env.projection? i:constant, o:int.
+external func coq.env.projection? constant -> int.
 
 % [coq.env.primitive-projections StructureName Projections] given a record
 % StructureName lists all primitive projections
-external pred coq.env.primitive-projections i:inductive, 
-                                            o:list (option (pair projection int)).
+external func coq.env.primitive-projections inductive -> list (option (pair projection int)).
 
 % [coq.env.primitive-projection? Projection Compatibility constant Index]
 % Relates a primitive projection to its compatibility constant. Index is set
 % to the constructor argument extracted by the projection (starting from 0).
-external pred coq.env.primitive-projection? o:projection, o:constant, 
-                                            o:int.
+external func coq.env.primitive-projection? -> projection, constant, int.
 
 % -- Sorts (and their universe level, if applicable) ----------------
 
@@ -980,28 +981,28 @@ kind univ type.
 
 % Sorts (kinds of types)
 kind sort type.
-type prop sort. % impredicative sort of propositions
-type sprop sort. % impredicative sort of propositions with definitional proof irrelevance
-type typ univ -> sort. % predicative sort of data (carries a universe level)
+external symbol prop : sort = "1".  % impredicative sort of propositions
+external symbol sprop : sort = "1".  % impredicative sort of propositions with definitional proof irrelevance
+external symbol typ : univ -> sort = "1".  % predicative sort of data (carries a universe level)
 
 % [coq.sort.leq S1 S2] constrains S1 <= S2
-external pred coq.sort.leq o:sort, o:sort.
+external func coq.sort.leq -> sort, sort.
 
 % [coq.sort.eq S1 S2] constrains S1 = S2
-external pred coq.sort.eq o:sort, o:sort.
+external func coq.sort.eq -> sort, sort.
 
 % [coq.sort.sup S1 S2] constrains S2 = S1 + 1
-external pred coq.sort.sup o:sort, o:sort.
+external func coq.sort.sup -> sort, sort.
 
 % [coq.sort.pts-triple S1 S2 S3] constrains S3 = sort of product with domain
 % in S1 and codomain in S2
-external pred coq.sort.pts-triple o:sort, o:sort, o:sort.
+external func coq.sort.pts-triple -> sort, sort, sort.
 
 % [coq.univ.print] prints the set of universe constraints
-external pred coq.univ.print .
+external func coq.univ.print.
 
 % [coq.univ.new U] A fresh universe.
-external pred coq.univ.new o:univ.
+external func coq.univ.new -> univ.
 
 % [coq.univ.alg-super U V] relates a univ U to its algebraic successor V,
 % that is U+1 and not any V s.t. U < V
@@ -1012,14 +1013,14 @@ external pred coq.univ.alg-super i:univ, o:univ.
 external pred coq.univ.alg-max i:univ, i:univ, o:univ.
 
 % [coq.univ Name U] Finds a named unvierse. Can fail.
-external pred coq.univ o:id, o:univ.
+external func coq.univ -> id, univ.
 
 % [coq.univ.global? U] succeeds if U is a global universe
-external pred coq.univ.global? i:univ.
+external func coq.univ.global? univ.
 
 % [coq.univ.constraints CL] gives the list of constraints, see also
 % coq.univ.variable.constraints
-external pred coq.univ.constraints o:list univ-constraint.
+external func coq.univ.constraints -> list univ-constraint.
 
 % -- Universe variables ------
 
@@ -1028,15 +1029,14 @@ kind univ.variable type.
 
 
 % [coq.univ.variable U L] relates a univ.variable L to a univ U
-external pred coq.univ.variable o:univ, o:univ.variable.
+external func coq.univ.variable -> univ, univ.variable.
 
 % [coq.univ.variable.constraints L CL] gives the list of constraints on L.
 % Can be used to craft a strict upoly-decl
-external pred coq.univ.variable.constraints i:univ.variable, 
-                                            o:list univ-constraint.
+external func coq.univ.variable.constraints univ.variable -> list univ-constraint.
 
 % [coq.univ.variable.of-term T S] collects all univ.variables occurring in T
-external pred coq.univ.variable.of-term i:term, o:coq.univ.variable.set.
+external func coq.univ.variable.of-term term -> coq.univ.variable.set.
 
 % -- Universe instance (for universe polymorphic global terms) ------
 
@@ -1058,19 +1058,19 @@ kind univ-instance type.
 
 % [coq.univ-instance UI UL] relates a univ-instance UI and a list of
 % universe level variables UL
-external pred coq.univ-instance o:univ-instance, o:list univ.variable.
+external func coq.univ-instance -> univ-instance, list univ.variable.
 
 % [coq.univ-instance.unify-eq GR UI1 UI2 Diagnostic] unifies the two
 % universe instances for the same gref
-external pred coq.univ-instance.unify-eq i:gref, i:univ-instance, 
-                                         i:univ-instance, o:diagnostic.
+external func coq.univ-instance.unify-eq gref, univ-instance, 
+                                        univ-instance -> diagnostic.
 
 % [coq.univ-instance.unify-leq GR UI1 UI2 Diagnostic] unifies the two
 % universe instances for the same gref. Note: if the GR is not *cumulative*
 % (see Cumulative or #[universes(cumulative)]) then this API imposes an
 % equality constraint.
-external pred coq.univ-instance.unify-leq i:gref, i:univ-instance, 
-                                          i:univ-instance, o:diagnostic.
+external func coq.univ-instance.unify-leq gref, univ-instance, 
+                                         univ-instance -> diagnostic.
 
 % -- Declaration of universe polymorphic global terms -----------
 
@@ -1082,28 +1082,25 @@ external pred coq.univ-instance.unify-leq i:gref, i:univ-instance,
 
 % Constraint between two universes level variables
 kind univ-constraint type.
-type lt univ.variable -> univ.variable -> univ-constraint.
-type le univ.variable -> univ.variable -> univ-constraint.
-type eq univ.variable -> univ.variable -> univ-constraint.
+external symbol lt : univ.variable -> univ.variable -> univ-constraint = "2". 
+external symbol le : univ.variable -> univ.variable -> univ-constraint = "1". 
+external symbol eq : univ.variable -> univ.variable -> univ-constraint = "2". 
 
 % Variance of a universe level variable
 kind univ-variance type.
-type auto univ.variable -> univ-variance.
-type covariant univ.variable -> univ-variance.
-type invariant univ.variable -> univ-variance.
-type irrelevant univ.variable -> univ-variance.
+external symbol auto : univ.variable -> univ-variance = "1". 
+external symbol covariant : univ.variable -> univ-variance = "1". 
+external symbol invariant : univ.variable -> univ-variance = "1". 
+external symbol irrelevant : univ.variable -> univ-variance = "1". 
 
 % Constraints for a non-cumulative declaration. Boolean tt means loose
 % (e.g. the '+' in f@{u v + | u < v +})
 kind upoly-decl type.
-type upoly-decl list univ.variable -> bool -> list univ-constraint ->
-                bool -> upoly-decl.
-
-% Constraints for a cumulative declaration. Boolean tt means loose (e.g.
-% the '+' in f@{u v + | u < v +})
-kind upoly-decl-cumul type.
-type upoly-decl-cumul list univ-variance -> bool ->
-                      list univ-constraint -> bool -> upoly-decl-cumul.
+external symbol upoly-decl : list univ.variable -> bool ->
+                             list univ-constraint -> bool -> upoly-decl = "1". 
+external symbol upoly-decl-cumul : list univ-variance -> bool ->
+                                   list univ-constraint -> bool ->
+                                   upoly-decl = "1". 
 
 % -- Primitive --------------------------------------------------------
 
@@ -1121,42 +1118,40 @@ kind projection type.
 
 % Primitive values
 kind primitive-value type.
-type uint63 uint63 -> primitive-value. % unsigned integers over 63 bits
-type float64 float64 ->
-             primitive-value. % double precision foalting points
-type pstring pstring -> primitive-value. % primitive string
-type proj projection -> int -> primitive-value. % primitive projection
+external symbol uint63 : uint63 -> primitive-value = "1".  % unsigned integers over 63 bits
+external symbol float64 : float64 -> primitive-value = "1".  % double precision foalting points
+external symbol pstring : pstring -> primitive-value = "1".  % primitive string
+external symbol proj : projection -> int -> primitive-value = "1".  % primitive projection
 
 % [coq.uint63->int U I] Transforms a primitive unsigned integer U into an
 % elpi integer I. Fails if it does not fit.
-external pred coq.uint63->int i:uint63, o:int.
+external func coq.uint63->int uint63 -> int.
 
 % [coq.int->uint63 I U] Transforms an elpi integer I into a primitive
 % unsigned integer U. Fails if I is negative.
-external pred coq.int->uint63 i:int, o:uint63.
+external func coq.int->uint63 int -> uint63.
 
 % [coq.float64->float F64 F] Transforms a primitive float on 64 bits to an
 % elpi one. Currently, it should not fail.
-external pred coq.float64->float i:float64, o:float.
+external func coq.float64->float float64 -> float.
 
 % [coq.float->float64 F F64] Transforms an elpi float F to a primitive float
 % on 64 bits. Currently, it should not fail.
-external pred coq.float->float64 i:float, o:float64.
+external func coq.float->float64 float -> float64.
 
 % [coq.primitive.projection-unfolded P PU] Relates a primitive projection P
 % to its unfolded version PU. PU is still a primitive projection, but it is
 % displayed as a match and some Ltac code can see that.
-external pred coq.primitive.projection-unfolded o:projection, 
-                                                o:projection.
+external func coq.primitive.projection-unfolded -> projection, projection.
 
 % [coq.pstring->string PS S] Transforms a Coq primitive string to an elpi
 % string. It does not fail.
-external pred coq.pstring->string i:pstring, o:string.
+external func coq.pstring->string pstring -> string.
 
 % [coq.string->pstring S PS] Transforms an elpi string into a Coq primitive
 % string. It fails if the lenght of S is greater than the maximal primitive
 % string length.
-external pred coq.string->pstring i:string, o:pstring.
+external func coq.string->pstring string -> pstring.
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1167,76 +1162,79 @@ external pred coq.string->pstring i:string, o:pstring.
 
 % Pattern for canonical values
 kind cs-pattern type.
-type cs-gref gref -> cs-pattern.
-type cs-prod cs-pattern.
-type cs-default cs-pattern.
-type cs-sort sort -> cs-pattern.
+external symbol cs-gref : gref -> cs-pattern = "1". 
+external symbol cs-prod : cs-pattern = "1". 
+external symbol cs-default : cs-pattern = "1". 
+external symbol cs-sort : sort -> cs-pattern = "1". 
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
 kind cs-instance type.
-type cs-instance gref -> cs-pattern -> gref -> cs-instance.
+external symbol cs-instance : gref -> cs-pattern -> gref -> cs-instance = "1". 
 
 % [coq.CS.declare-instance GR] Declares GR as a canonical structure
 % instance.
 % Supported attributes:
 % - @local! (default: false)
-external pred coq.CS.declare-instance i:gref.
+external func coq.CS.declare-instance gref.
 
 % [coq.CS.db Db] reads all instances
-external pred coq.CS.db o:list cs-instance.
+external func coq.CS.db -> list cs-instance.
 
 % [coq.CS.db-for Proj Value Db] reads all instances for a given Projection
 % or canonical Value, or both
-external pred coq.CS.db-for i:gref, i:cs-pattern, o:list cs-instance.
+external func coq.CS.db-for gref, cs-pattern -> list cs-instance.
+
+% [coq.CS.canonical-projection? Projection] Tells if the projection can be
+% used for CS inference.
+external func coq.CS.canonical-projection? constant.
 
 % [coq.CS.canonical-projection? Projection] Tells if the projection can be
 % used for CS inference.
 external pred coq.CS.canonical-projection? i:constant.
 
 % [coq.TC.declare-class GR] Declare GR as a type class
-external pred coq.TC.declare-class i:gref.
+external func coq.TC.declare-class gref.
 
 % [coq.elpi.toposort Graph Nodes in toposort order] takes a graph and
 % returns the nodes in topological order
-external pred coq.elpi.toposort i:list (pair A (list A)), o:list A.
+external func coq.elpi.toposort list (pair A (list A)) -> list A.
 
 % Type class instance with priority
 kind tc-instance type.
-type tc-instance gref -> int -> tc-instance.
+external symbol tc-instance : gref -> int -> tc-instance = "1". 
 
 % [coq.TC.declare-instance GR Priority] Declare GR as a Global type class
 % instance with Priority.
 % Supported attributes:
 % - @global! (default: true)
-external pred coq.TC.declare-instance i:gref, i:int.
+external func coq.TC.declare-instance gref, int.
 
 % [coq.TC.db Instances] reads all type class instances
-external pred coq.TC.db o:list tc-instance.
+external func coq.TC.db -> list tc-instance.
 
 % [coq.TC.db-tc TypeClasses] reads all type classes
-external pred coq.TC.db-tc o:list gref.
+external func coq.TC.db-tc -> list gref.
 
 % [coq.TC.db-for GR InstanceList] reads all instances of the given class GR.
 % Instances are in their precedence order.
-external pred coq.TC.db-for i:gref, o:list tc-instance.
+external func coq.TC.db-for gref -> list tc-instance.
 
 % [coq.TC.get-inst-prio ClassGR InstGR InstPrio] reads the priority of an
 % instance
-external pred coq.TC.get-inst-prio i:gref, i:gref, o:int.
+external func coq.TC.get-inst-prio gref, gref -> int.
 
 % [coq.TC.class? GR] checks if GR is a class
-external pred coq.TC.class? i:gref.
+external func coq.TC.class? gref.
 
 % Node of the coercion graph
 kind class type.
-type funclass class.
-type sortclass class.
-type grefclass gref -> class.
+external symbol funclass : class = "1". 
+external symbol sortclass : class = "1". 
+external symbol grefclass : gref -> class = "1". 
 
 % Edge of the coercion graph
 kind coercion type.
-type coercion gref -> int -> gref -> class ->
-              coercion. % ref, nparams, src, tgt
+external symbol coercion : gref -> int -> gref -> class -> coercion = "2".  % ref, nparams, src, tgt
 
 % [coq.coercion.declare C] Declares C = (coercion GR NParams From To) as a
 % coercion From >-> To.
@@ -1246,14 +1244,13 @@ type coercion gref -> int -> gref -> class ->
 % - @global! (default: false)
 % - @nonuniform! (default: false)
 % - @reversible! (default: false)
-external pred coq.coercion.declare i:coercion.
+external func coq.coercion.declare coercion.
 
 % [coq.coercion.db L] reads all declared coercions
-external pred coq.coercion.db o:list coercion.
+external func coq.coercion.db -> list coercion.
 
 % [coq.coercion.db-for From To L] L is a path From -> To
-external pred coq.coercion.db-for i:class, i:class, 
-                                  o:list (pair gref int).
+external func coq.coercion.db-for class, class -> list (pair gref int).
 
 % Deprecated, use coq.env.projections
 pred coq.CS.canonical-projections i:inductive, o:list (option constant).
@@ -1278,51 +1275,51 @@ coq.CS.canonical-projections I L :-
 
 % Hint Mode
 kind hint-mode type.
-type mode-ground hint-mode. % No Evar
-type mode-input hint-mode. % No Head Evar
-type mode-output hint-mode. % Anything
+external symbol mode-ground : hint-mode = "1".  % No Evar
+external symbol mode-input : hint-mode = "1".  % No Head Evar
+external symbol mode-output : hint-mode = "1".  % Anything
 
 % [coq.hints.add-mode GR DB Mode] Adds a mode declaration to DB about
 % GR.
 % Supported attributes:
 % - @local! (default is export)
 % - @global! (discouraged, may become deprecated)
-external pred coq.hints.add-mode i:gref, i:string, i:list hint-mode.
+external func coq.hints.add-mode gref, string, list hint-mode.
 
 % [coq.hints.modes GR DB Modes] Gets all the mode declarations in DB about
 % GR
-external pred coq.hints.modes i:gref, i:string, o:list (list hint-mode).
+external func coq.hints.modes gref, string -> list (list hint-mode).
 
 % [coq.hints.set-opaque C DB Opaque] Like Hint Opaque C : DB (or Hint
 % Transparent, if the boolean is ff).
 % Supported attributes:
 % - @local! (default is export)
 % - @global! (discouraged, may become deprecated)
-external pred coq.hints.set-opaque i:constant, i:string, i:bool.
+external func coq.hints.set-opaque constant, string, bool.
 
 % [coq.hints.opaque C DB Opaque] Reads if constant C is opaque (tt) or
 % transparent (ff) in DB
-external pred coq.hints.opaque i:constant, i:string, o:bool.
+external func coq.hints.opaque constant, string -> bool.
 
 % [coq.hints.add-resolve GR DB Priority Pattern] Like Hint Resolve GR |
 % Priority Pattern : DB.
 % Supported attributes:
 % - @local! (default is export)
 % - @global! (discouraged, may become deprecated)
-external pred coq.hints.add-resolve i:gref, i:string, i:int, i:term.
+external func coq.hints.add-resolve gref, string, int, term.
 
 % -- Coq's notational mechanisms -------------------------------------
 
 % Implicit status of an argument
 kind implicit_kind type.
-type implicit implicit_kind. % regular implicit argument, eg Arguments foo [x]
-type maximal implicit_kind. % maximally inserted implicit argument, eg Arguments foo {x}
-type explicit implicit_kind. % explicit argument, eg Arguments foo x
+external symbol implicit : implicit_kind = "1".  % regular implicit argument, eg Arguments foo [x]
+external symbol maximal : implicit_kind = "1".  % maximally inserted implicit argument, eg Arguments foo {x}
+external symbol explicit : implicit_kind = "1".  % explicit argument, eg Arguments foo x
 
 % [coq.arguments.implicit GR Imps] reads the implicit arguments declarations
 % associated to a global reference. See also the [] and {} flags for the
 % Arguments command.
-external pred coq.arguments.implicit i:gref, o:list (list implicit_kind).
+external func coq.arguments.implicit gref -> list (list implicit_kind).
 
 % [coq.arguments.set-implicit GR Imps] sets the implicit arguments
 % declarations associated to a global reference.
@@ -1330,31 +1327,30 @@ external pred coq.arguments.implicit i:gref, o:list (list implicit_kind).
 % See also the [] and {} flags for the Arguments command.
 % Supported attributes:
 % - @global! (default: false)
-external pred coq.arguments.set-implicit i:gref, 
-                                         i:list (list implicit_kind).
+external func coq.arguments.set-implicit gref, list (list implicit_kind).
 
 % [coq.arguments.set-default-implicit GR] sets the default implicit
 % arguments declarations associated to a global reference.
 % See also the "default implicits" flag to the Arguments command.
 % Supported attributes:
 % - @global! (default: false)
-external pred coq.arguments.set-default-implicit i:gref.
+external func coq.arguments.set-default-implicit gref.
 
 % [coq.arguments.name GR Names] reads the Names of the arguments of a global
 % reference. See also the (f (A := v)) syntax.
-external pred coq.arguments.name i:gref, o:list (option id).
+external func coq.arguments.name gref -> list (option id).
 
 % [coq.arguments.set-name GR Names] sets the Names of the arguments of a
 % global reference.
 % See also the :rename flag to the Arguments command.
 % Supported attributes:
 % - @global! (default: false)
-external pred coq.arguments.set-name i:gref, i:list (option id).
+external func coq.arguments.set-name gref, list (option id).
 
 % [coq.arguments.scope GR Scopes] reads the notation scope of the arguments
 % of a global reference. See also the %scope modifier for the Arguments
 % command
-external pred coq.arguments.scope i:gref, o:list (list id).
+external func coq.arguments.scope gref -> list (list id).
 
 % [coq.arguments.set-scope GR Scopes] sets the notation scope of the
 % arguments of a global reference.
@@ -1362,21 +1358,19 @@ external pred coq.arguments.scope i:gref, o:list (list id).
 % See also the %scope modifier for the Arguments command.
 % Supported attributes:
 % - @global! (default: false)
-external pred coq.arguments.set-scope i:gref, i:list (list id).
+external func coq.arguments.set-scope gref, list (list id).
 
 % Strategy for simplification tactics
 kind simplification_strategy type.
-type never simplification_strategy. % Arguments foo : simpl never
-type when list int -> option int ->
-          simplification_strategy. % Arguments foo .. / .. ! ..
-type when-nomatch list int -> option int ->
-                  simplification_strategy. % Arguments foo .. / .. ! .. : simpl nomatch
+external symbol never : simplification_strategy = "1".  % Arguments foo : simpl never
+external symbol when : list int -> option int -> simplification_strategy = "1".  % Arguments foo .. / .. ! ..
+external symbol when-nomatch : list int -> option int ->
+                               simplification_strategy = "1".  % Arguments foo .. / .. ! .. : simpl nomatch
 
 % [coq.arguments.simplification GR Strategy] reads the behavior of the
 % simplification tactics. Positions are 0 based. See also the ! and /
 % modifiers for the Arguments command
-external pred coq.arguments.simplification i:gref, 
-                                           o:option simplification_strategy.
+external func coq.arguments.simplification gref -> option simplification_strategy.
 
 % [coq.arguments.set-simplification GR Strategy] sets the behavior of the
 % simplification tactics.
@@ -1384,12 +1378,12 @@ external pred coq.arguments.simplification i:gref,
 % See also the ! and / modifiers for the Arguments command.
 % Supported attributes:
 % - @global! (default: false)
-external pred coq.arguments.set-simplification i:gref, 
-                                               i:simplification_strategy.
+external func coq.arguments.set-simplification gref, 
+                                              simplification_strategy.
 
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.
-external pred coq.locate-abbreviation i:id, o:abbreviation.
+external func coq.locate-abbreviation id -> abbreviation.
 
 % Name of an abbreviation
 kind abbreviation type.
@@ -1403,17 +1397,15 @@ kind abbreviation type.
 % - @deprecated! (default: not deprecated)
 % - @warn! (default: no warning)
 % - @global! (default: false)
-external pred coq.notation.add-abbreviation i:id, i:int, i:term, i:bool, 
-                                            o:abbreviation.
+external func coq.notation.add-abbreviation id, int, term, 
+                                           bool -> abbreviation.
 
 % [coq.notation.abbreviation Abbreviation Args Body] Unfolds an abbreviation
-external pred coq.notation.abbreviation i:abbreviation, i:list term, 
-                                        o:term.
+external func coq.notation.abbreviation abbreviation, list term -> term.
 
 % [coq.notation.abbreviation-body Abbreviation Nargs Body] Retrieves the
 % body of an abbreviation
-external pred coq.notation.abbreviation-body i:abbreviation, o:int, 
-                                             o:term.
+external func coq.notation.abbreviation-body abbreviation -> int, term.
 
 % [coq.notation.add-abbreviation-for-tactic Name TacticName FixedArgs]
 % Declares a parsing rule similar to
@@ -1427,44 +1419,43 @@ external pred coq.notation.abbreviation-body i:abbreviation, o:int,
 % declared by hand).
 % A call to coq.notation.add-abbreviation-for-tactic TacName TacName []
 % is equivalent to Elpi Export TacName.
-external pred coq.notation.add-abbreviation-for-tactic i:string, 
-                                                       i:string, 
-                                                       i:list argument.
+external func coq.notation.add-abbreviation-for-tactic string, string, 
+                                                      list argument.
 
 % Generic attribute value
 kind attribute-value type.
-type leaf-str string -> attribute-value.
-type leaf-loc loc -> attribute-value.
-type node list attribute -> attribute-value.
+external symbol leaf-str : string -> attribute-value = "1". 
+external symbol leaf-loc : loc -> attribute-value = "1". 
+external symbol node : list attribute -> attribute-value = "1". 
 
 % Generic attribute
 kind attribute type.
-type attribute string -> attribute-value -> attribute.
+external symbol attribute : string -> attribute-value -> attribute = "1". 
 
 % -- Coq's pretyper ---------------------------------------------------
 
 % [coq.sigma.print] Prints Coq's Evarmap and the mapping to/from Elpi's
 % unification variables
-external pred coq.sigma.print .
+external func coq.sigma.print.
 
 % [coq.typecheck T Ty Diagnostic] typchecks a term T returning its type Ty.
 % If Ty is provided, then
 % the inferred type is unified (see unify-leq) with it.
 % Universe constraints are put in the constraint store.
-external pred coq.typecheck i:term, o:term, o:diagnostic.
+external func coq.typecheck term -> term, diagnostic.
 
 % [coq.typecheck-ty Ty U Diagnostic] typchecks a type Ty returning its
 % universe U. If U is provided, then
 % the inferred universe is unified (see unify-leq) with it.
 % Universe constraints are put in the constraint store.
-external pred coq.typecheck-ty i:term, o:sort, o:diagnostic.
+external func coq.typecheck-ty term -> sort, diagnostic.
 
 % [coq.unify-eq A B Diagnostic] unifies the two terms
-external pred coq.unify-eq i:term, i:term, o:diagnostic.
+external func coq.unify-eq term, term -> diagnostic.
 
 % [coq.unify-leq A B Diagnostic] unifies the two terms (with cumulativity,
 % if they are types)
-external pred coq.unify-leq i:term, i:term, o:diagnostic.
+external func coq.unify-leq term, term -> diagnostic.
 
 % [coq.elaborate-skeleton T ETy E Diagnostic] elabotares T against the
 % expected type ETy.
@@ -1474,7 +1465,7 @@ external pred coq.unify-leq i:term, i:term, o:diagnostic.
 % Supported attributes:
 % - @keepunivs! (default false, do not disregard universe levels)
 % - @no-tc! (default false, do not infer typeclasses) 
-external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
+external func coq.elaborate-skeleton term -> term, term, diagnostic.
 
 % [coq.elaborate-ty-skeleton T U E Diagnostic] elabotares T expecting it to
 % be a type of sort U.
@@ -1484,80 +1475,78 @@ external pred coq.elaborate-skeleton i:term, o:term, o:term, o:diagnostic.
 % Supported attributes:
 % - @keepunivs! (default false, do not disregard universe levels)
 % - @no-tc! (default false, do not infer typeclasses)
-external pred coq.elaborate-ty-skeleton i:term, o:sort, o:term, 
-                                        o:diagnostic.
+external func coq.elaborate-ty-skeleton term -> sort, term, diagnostic.
 
 % -- Coq's reduction flags    ------------------------------------
 
 % Flags for lazy, cbv, ... reductions
 kind coq.redflag type.
-type coq.redflags.beta coq.redflag.
-type coq.redflags.delta coq.redflag. % if set then coq.redflags.const disables unfolding
-type coq.redflags.match coq.redflag.
-type coq.redflags.fix coq.redflag.
-type coq.redflags.cofix coq.redflag.
-type coq.redflags.zeta coq.redflag.
-type coq.redflags.const constant ->
-                        coq.redflag. % enable/disable unfolding
+external symbol coq.redflags.beta : coq.redflag = "2". 
+external symbol coq.redflags.delta : coq.redflag = "2".  % if set then coq.redflags.const disables unfolding
+external symbol coq.redflags.match : coq.redflag = "1". 
+external symbol coq.redflags.fix : coq.redflag = "1". 
+external symbol coq.redflags.cofix : coq.redflag = "1". 
+external symbol coq.redflags.zeta : coq.redflag = "2". 
+external symbol coq.redflags.const : constant -> coq.redflag = "1".  % enable/disable unfolding
 
 % Set of flags for lazy, cbv, ... reductions
 kind coq.redflags type.
 
-type coq.redflags.all coq.redflags.
-type coq.redflags.allnolet coq.redflags.
-type coq.redflags.beta coq.redflags.
-type coq.redflags.betadeltazeta coq.redflags.
-type coq.redflags.betaiota coq.redflags.
-type coq.redflags.betaiotazeta coq.redflags.
-type coq.redflags.betazeta coq.redflags.
-type coq.redflags.delta coq.redflags.
-type coq.redflags.zeta coq.redflags.
-type coq.redflags.nored coq.redflags.
+external symbol coq.redflags.nored : coq.redflags = "1".
+external symbol coq.redflags.zeta : coq.redflags = "1".
+external symbol coq.redflags.delta : coq.redflags = "1".
+external symbol coq.redflags.betazeta : coq.redflags = "1".
+external symbol coq.redflags.betaiotazeta : coq.redflags = "1".
+external symbol coq.redflags.betaiota : coq.redflags = "1".
+external symbol coq.redflags.betadeltazeta : coq.redflags = "1".
+external symbol coq.redflags.beta : coq.redflags = "1".
+external symbol coq.redflags.allnolet : coq.redflags = "1".
+external symbol coq.redflags.all : coq.redflags = "1".
 
 % [coq.redflags.add Flags Options NewFlags] Updates reduction Flags by
 % adding Options
-external pred coq.redflags.add i:coq.redflags, i:list coq.redflag, 
-                               o:coq.redflags.
+external func coq.redflags.add coq.redflags, 
+                              list coq.redflag -> coq.redflags.
 
 % [coq.redflags.sub Flags Options NewFlags] Updates reduction Flags by
 % removing Options
-external pred coq.redflags.sub i:coq.redflags, i:list coq.redflag, 
-                               o:coq.redflags.
+external func coq.redflags.sub coq.redflags, 
+                              list coq.redflag -> coq.redflags.
 
 % -- Coq's reduction machines ------------------------------------
 
 % [coq.reduction.lazy.whd T Tred] Puts T in weak head normal form.
 % Supported attributes:
 % - @redflags! (default coq.redflags.all)
-external pred coq.reduction.lazy.whd i:term, o:term.
+external func coq.reduction.lazy.whd term -> term.
 
 % [coq.reduction.lazy.norm T Tred] Puts T in normal form.
 % Supported attributes:
 % - @redflags! (default coq.redflags.all)
-external pred coq.reduction.lazy.norm i:term, o:term.
+external func coq.reduction.lazy.norm term -> term.
 
 % [coq.reduction.lazy.bi-norm T Tred] Puts T in normal form only reducing
 % beta and iota redexes
-external pred coq.reduction.lazy.bi-norm i:term, o:term.
+external func coq.reduction.lazy.bi-norm term -> term.
 
 % [coq.reduction.cbv.norm T Tred] Puts T in normal form using the call by
 % value strategy.
 % Supported attributes:
 % - @redflags! (default coq.redflags.all)
-external pred coq.reduction.cbv.norm i:term, o:term.
+external func coq.reduction.cbv.norm term -> term.
 
 % [coq.reduction.vm.norm T Ty Tred] Puts T in normal form using
 % [vm_compute]'s machinery. Its type Ty can be omitted (but is recomputed)
-external pred coq.reduction.vm.norm i:term, i:term, o:term.
+external func coq.reduction.vm.norm term, term -> term.
 
 % [coq.reduction.native.norm T Ty Tred] Puts T in normal form using
 % [native_compute]'s machinery. Its type Ty can be omitted (but is
 % recomputed). Falls back to vm.norm if native compilation is not available.
-external pred coq.reduction.native.norm i:term, i:term, o:term.
+external func coq.reduction.native.norm term, term -> term.
 
 % [coq.reduction.native.available?] Is native compilation available on this
 % system/configuration?
-external pred coq.reduction.native.available? .
+external func coq.reduction.native.available?.
 
 % Deprecated, use coq.reduction.cbv.norm
 pred coq.reduction.cbv.whd_all i:term, o:term.
@@ -1580,23 +1569,23 @@ coq.reduction.lazy.whd_all X Y :-
 
 
 % [coq.reduction.eta-contract T Tred] Removes all eta expansions from T
-external pred coq.reduction.eta-contract i:term, o:term.
+external func coq.reduction.eta-contract term -> term.
 
 % -- Coq's conversion strategy tweaks --------------------------
 
 % Strategy for conversion test
 % expand < ... < level -1 < level 0 < level 1 < ... < opaque
 kind conversion_strategy type.
-type opaque conversion_strategy.
-type expand conversion_strategy.
-type level int -> conversion_strategy. % default is 0, aka transparent
+external symbol opaque : conversion_strategy = "1". 
+external symbol expand : conversion_strategy = "1". 
+external symbol level : int -> conversion_strategy = "1".  % default is 0, aka transparent
 
 % [coq.strategy.set CL Level] Sets the unfolding priority for all the
 % constants in the list CL. See the command Strategy.
-external pred coq.strategy.set i:list constant, i:conversion_strategy.
+external func coq.strategy.set list constant, conversion_strategy.
 
 % [coq.strategy.get C Level] Gets the unfolding priority for C
-external pred coq.strategy.get i:constant, o:conversion_strategy.
+external func coq.strategy.get constant -> conversion_strategy.
 
 % -- Coq's tactics --------------------------------------------
 
@@ -1607,7 +1596,7 @@ kind ltac1-tactic type.
 % [coq.ltac.fail Level ...] Interrupts the Elpi program and calls Ltac's
 % fail Level Msg, where Msg is the printing of the remaining arguments.
 % Level can be left unspecified and defaults to 0
-external type coq.ltac.fail int -> variadic any prop.
+external type coq.ltac.fail int -> variadic any fprop.
 
 % [coq.ltac.collect-goals T Goals ShelvedGoals] 
 % Turns the holes in T into Goals.
@@ -1618,8 +1607,8 @@ external type coq.ltac.fail int -> variadic any prop.
 % (a
 % fold_left over the terms, letin body comes before the type).
 % 
-external pred coq.ltac.collect-goals i:term, o:list sealed-goal, 
-                                     o:list sealed-goal.
+external func coq.ltac.collect-goals term -> list sealed-goal, 
+                                    list sealed-goal.
 
 % [coq.ltac.call-ltac1 Tac G GL] Calls Ltac1 tactic Tac on goal G (passing
 % the arguments of G, see coq.ltac.call for a handy wrapper).
@@ -1634,7 +1623,7 @@ external pred coq.ltac.collect-goals i:term, o:list sealed-goal,
 %   coq.ltac.call-ltac1 "myapply" G GL.
 % Supported attributes:
 % - @no-tc! (default false, do not infer typeclasses)
-external pred coq.ltac.call-ltac1 i:any, i:goal, o:list sealed-goal.
+external func coq.ltac.call-ltac1 any, goal -> list sealed-goal.
 
 % [coq.ltac.id-free? ID G] 
 %     Fails if ID is already used in G. Note that ids which are taken are
@@ -1643,30 +1632,30 @@ external pred coq.ltac.call-ltac1 i:any, i:goal, o:list sealed-goal.
 %     hints), but for the ergonomy of a tactic it may help to know if an
 %     hypothesis name is already taken.
 % 
-external pred coq.ltac.id-free? i:id, i:goal.
+external func coq.ltac.id-free? id, goal.
 
 % [coq.ltac.fresh-id Default Ty FreshID] TODO
-external pred coq.ltac.fresh-id i:id, i:term, o:id.
+external func coq.ltac.fresh-id id, term -> id.
 
 % -- Coq's options system --------------------------------------------
 
 % Coq option value
 kind coq.option type.
-type coq.option.int option int -> coq.option. % none means unset
-type coq.option.string option string -> coq.option. % none means unset
-type coq.option.bool bool -> coq.option.
+external symbol coq.option.int : option int -> coq.option = "1".  % none means unset
+external symbol coq.option.string : option string -> coq.option = "1".  % none means unset
+external symbol coq.option.bool : bool -> coq.option = "1". 
 
 % [coq.option.get Option Value] reads Option. Reading a non existing option
 % is a fatal error.
-external pred coq.option.get i:list string, o:coq.option.
+external func coq.option.get list string -> coq.option.
 
 % [coq.option.set Option Value] writes Option. Writing a non existing option
 % is a fatal error.
-external pred coq.option.set i:list string, i:coq.option.
+external func coq.option.set list string, coq.option.
 
 % [coq.option.available? Option Deprecated] checks if Option exists and
 % tells if is deprecated (tt) or not (ff)
-external pred coq.option.available? i:list string, o:bool.
+external func coq.option.available? list string -> bool.
 
 % [coq.option.add Option Value Deprecated] 
 % adds a new option to Coq setting its current value (and type).
@@ -1677,7 +1666,7 @@ external pred coq.option.available? i:list string, o:bool.
 %   Elpi Query lp:{{ coq.option.add ... }}.
 %   
 % 
-external pred coq.option.add i:list string, i:coq.option, i:bool.
+external func coq.option.add list string, coq.option, bool.
 
 % -- Datatypes conversions --------------------------------------------
 
@@ -1690,46 +1679,46 @@ kind name type.
 
 % [coq.name-suffix Name Suffix NameSuffix] suffixes a Name with a string or
 % an int or another name
-external pred coq.name-suffix i:name, i:any, o:name.
+external func coq.name-suffix name, any -> name.
 
 % [coq.string->name Hint Name] creates a name hint
-external pred coq.string->name i:string, o:name.
+external func coq.string->name string -> name.
 
 
-pred coq.id->name i:id, o:name.
+func coq.id->name id -> name.
 coq.id->name S N :- coq.string->name S N.
   
 
 % [coq.name->id Name Id] tuns a pretty printing hint into a string. This API
 % is for internal use, no guarantee on its behavior.
-external pred coq.name->id i:name, o:id.
+external func coq.name->id name -> id.
 
 % [coq.gref->id GR Id] extracts the label (last component of a full kernel
 % name)
-external pred coq.gref->id i:gref, o:id.
+external func coq.gref->id gref -> id.
 
 % [coq.gref->string GR FullPath] extract the full kernel name
-external pred coq.gref->string i:gref, o:string.
+external func coq.gref->string gref -> string.
 
 % [coq.gref->path GR FullPath] extract the full path (kernel name without
 % final id), each component is a separate list item
-external pred coq.gref->path i:gref, o:list string.
+external func coq.gref->path gref -> list string.
 
 % [coq.modpath->path MP FullPath] extract the full kernel name, each
 % component is a separate list item
-external pred coq.modpath->path i:modpath, o:list string.
+external func coq.modpath->path modpath -> list string.
 
 % [coq.modtypath->path MTP FullPath] extract the full kernel name, each
 % component is a separate list item
-external pred coq.modtypath->path i:modtypath, o:list string.
+external func coq.modtypath->path modtypath -> list string.
 
 % [coq.modpath->library MP LibraryPath] extract the enclosing module which
 % can be Required
-external pred coq.modpath->library i:modpath, o:modpath.
+external func coq.modpath->library modpath -> modpath.
 
 % [coq.modtypath->library MTP LibraryPath] extract the enclosing module
 % which can be Required
-external pred coq.modtypath->library i:modtypath, o:modpath.
+external func coq.modtypath->library modtypath -> modpath.
 
 % [coq.term->string T S] prints a term T to a string S using Coq's pretty
 % printer
@@ -1740,7 +1729,7 @@ external pred coq.modtypath->library i:modtypath, o:modpath.
 % - @pplevel! (default: _, prints parentheses to reach that level, 200 =
 % off)
 % - @holes! (default: false, prints evars as _)
-external pred coq.term->string i:term, o:string.
+external func coq.term->string term -> string.
 
 % [coq.term->pp T B] prints a term T to a pp.t B using Coq's pretty
 % printer"
@@ -1750,7 +1739,7 @@ external pred coq.term->string i:term, o:string.
 % - @pplevel! (default: _, prints parentheses to reach that level, 200 =
 % off)
 % - @holes! (default: false, prints evars as _)
-external pred coq.term->pp i:term, o:coq.pp.
+external func coq.term->pp term -> coq.pp.
 
 % [coq.goal->pp G B] prints a goal G to a pp.t B using Coq's pretty
 % printer"
@@ -1760,7 +1749,7 @@ external pred coq.term->pp i:term, o:coq.pp.
 % - @pplevel! (default: _, prints parentheses to reach that level, 200 =
 % off)
 % - @holes! (default: false, prints evars as _)
-external pred coq.goal->pp i:goal, o:coq.pp.
+external func coq.goal->pp goal -> coq.pp.
 
 % -- Register -----------------------------------------------
 
@@ -1807,7 +1796,7 @@ external pred coq.register i:gref, i:coq.register.
 
 % [coq.extra-dep Identifier FileName] Resolve the file name of an extra
 % dependency. See also Coq's From xxx Extra Dependency yyy as zzz.
-external pred coq.extra-dep i:id, o:option id.
+external func coq.extra-dep id -> option id.
 
 % -- Access to Elpi's data --------------------------------------------
 
@@ -1821,21 +1810,21 @@ external pred coq.extra-dep i:id, o:option id.
 % 
 % The name and the grafting specification can be left unspecified.
 kind clause type.
-type clause id -> grafting -> prop -> clause.
+external symbol clause : id -> grafting -> prop -> clause = "1". 
 
 % Specify if the clause has to be grafted before, grafted after or replace
 % a named clause
 kind grafting type.
-type before id -> grafting.
-type after id -> grafting.
-type remove id -> grafting.
-type replace id -> grafting.
+external symbol before : id -> grafting = "1". 
+external symbol after : id -> grafting = "1". 
+external symbol remove : id -> grafting = "1". 
+external symbol replace : id -> grafting = "1". 
 
 % Specify to which module the clause should be attached to
 kind scope type.
-type execution-site scope. % The module inside which the Elpi program is run
-type current scope. % The module being defined (see begin/end-module)
-type library scope. % The outermost module (carrying the file name)
+external symbol execution-site : scope = "1".  % The module inside which the Elpi program is run
+external symbol current : scope = "1".  % The module being defined (see begin/end-module)
+external symbol library : scope = "1".  % The outermost module (carrying the file name)
 
 
 % see coq.elpi.accumulate-clauses
@@ -1861,12 +1850,12 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 % - @local! (default: false, discard at the end of section or module)
 % - @global! (default: false, always active, only if Scope is
 % execution-site, discouraged)
-external pred coq.elpi.accumulate-clauses i:scope, i:id, i:list clause.
+external func coq.elpi.accumulate-clauses scope, id, list clause.
 
 % Specify if a predicate argument is in input or output mode
 kind argument_mode type.
-type in argument_mode.
-type out argument_mode.
+external symbol in : argument_mode = "1". 
+external symbol out : argument_mode = "1". 
 
 % [coq.elpi.add-predicate Db Indexing PredName Spec] Declares a new
 % predicate PredName in the data base Db.
@@ -1876,29 +1865,29 @@ type out argument_mode.
 % Supported attributes:
 % - @local! (default: false, discard at the end of section or module)
 % - @global! (default: false, always active
-external pred coq.elpi.add-predicate i:string, i:string, i:string, 
-                                     i:list (pair argument_mode string).
+external func coq.elpi.add-predicate string, string, string, 
+                                    list (pair argument_mode string).
 
 % [coq.elpi.predicate PredName Args Pred] Pred is the application of
 % PredName to Args
-external pred coq.elpi.predicate i:string, i:list any, o:prop.
+external func coq.elpi.predicate string, list any -> prop.
 
 % -- Synterp ----------------------------------------------------------
 
 % Action executed during the parsing phase (aka synterp)
 kind synterp-action type.
-type begin-module id -> synterp-action.
-type begin-module-type id -> synterp-action.
-type begin-section id -> synterp-action.
-type end-module modpath -> synterp-action.
-type end-module-type modtypath -> synterp-action.
-type end-section synterp-action.
-type apply-module-functor id -> synterp-action.
-type apply-module-type-functor id -> synterp-action.
-type include-module modpath -> synterp-action.
-type include-module-type modtypath -> synterp-action.
-type import-module modpath -> synterp-action.
-type export-module modpath -> synterp-action.
+external symbol begin-module : id -> synterp-action = "1". 
+external symbol begin-module-type : id -> synterp-action = "1". 
+external symbol begin-section : id -> synterp-action = "1". 
+external symbol end-module : modpath -> synterp-action = "1". 
+external symbol end-module-type : modtypath -> synterp-action = "1". 
+external symbol end-section : synterp-action = "1". 
+external symbol apply-module-functor : id -> synterp-action = "1". 
+external symbol apply-module-type-functor : id -> synterp-action = "1". 
+external symbol include-module : modpath -> synterp-action = "1". 
+external symbol include-module-type : modtypath -> synterp-action = "1". 
+external symbol import-module : modpath -> synterp-action = "1". 
+external symbol export-module : modpath -> synterp-action = "1". 
 
 % Synterp action group
 kind group type.
@@ -1907,310 +1896,292 @@ kind group type.
 % [coq.next-synterp-action A] Get the next action performed during parsing
 % (aka synterp), that is also the next action to be performed during
 % execution (aka interp). See also coq.replay-synterp-action
-external pred coq.next-synterp-action o:synterp-action.
+external func coq.next-synterp-action -> synterp-action.
 
 % [coq.replay-synterp-action-group ID] Execute all actions of synterp action
 % group ID. ID must be the name of the next group, it must not be opened
 % already, and there must not be any actions before it.
-external pred coq.replay-synterp-action-group i:id.
+external func coq.replay-synterp-action-group id.
 
 % [coq.begin-synterp-group ID Group] Match a begin-synterp-group synterp
 % operation. ID must be the name of the next synterp action group and there
 % must not be any actions before it.
-external pred coq.begin-synterp-group i:id, o:group.
+external func coq.begin-synterp-group id -> group.
 
 % [coq.end-synterp-group Group] Match a end-synterp-group synterp operation.
 % Group must be the currently opened synterp action group and the group must
 % not have any more synterp actions or groups left to replay.
-external pred coq.end-synterp-group i:group.
+external func coq.end-synterp-group group.
 
 % -- Utils ------------------------------------------------------------
 
 kind coq.gref.set type.
 
 % [coq.gref.set.empty A] The empty set
-external pred coq.gref.set.empty o:coq.gref.set.
+external func coq.gref.set.empty -> coq.gref.set.
 
 % [coq.gref.set.mem Elem A] Checks if Elem is in a
-external pred coq.gref.set.mem i:gref, i:coq.gref.set.
+external func coq.gref.set.mem gref, coq.gref.set.
 
 % [coq.gref.set.add Elem A B] B is A union {Elem}
-external pred coq.gref.set.add i:gref, i:coq.gref.set, o:coq.gref.set.
+external func coq.gref.set.add gref, coq.gref.set -> coq.gref.set.
 
 % [coq.gref.set.remove Elem A B] B is A \ {Elem}
-external pred coq.gref.set.remove i:gref, i:coq.gref.set, o:coq.gref.set.
+external func coq.gref.set.remove gref, coq.gref.set -> coq.gref.set.
 
 % [coq.gref.set.union A B X] X is A union B
-external pred coq.gref.set.union i:coq.gref.set, i:coq.gref.set, 
-                                 o:coq.gref.set.
+external func coq.gref.set.union coq.gref.set, 
+                                coq.gref.set -> coq.gref.set.
 
 % [coq.gref.set.inter A B X] X is A intersection B
-external pred coq.gref.set.inter i:coq.gref.set, i:coq.gref.set, 
-                                 o:coq.gref.set.
+external func coq.gref.set.inter coq.gref.set, 
+                                coq.gref.set -> coq.gref.set.
 
 % [coq.gref.set.diff A B X] X is A \ B
-external pred coq.gref.set.diff i:coq.gref.set, i:coq.gref.set, 
-                                o:coq.gref.set.
+external func coq.gref.set.diff coq.gref.set, 
+                               coq.gref.set -> coq.gref.set.
 
 % [coq.gref.set.equal A B] tests A and B for equality
-external pred coq.gref.set.equal i:coq.gref.set, i:coq.gref.set.
+external func coq.gref.set.equal coq.gref.set, coq.gref.set.
 
 % [coq.gref.set.subset A B] tests if A is a subset of B
-external pred coq.gref.set.subset i:coq.gref.set, i:coq.gref.set.
+external func coq.gref.set.subset coq.gref.set, coq.gref.set.
 
 % [coq.gref.set.elements M L] L is M transformed into list
-external pred coq.gref.set.elements i:coq.gref.set, o:list gref.
+external func coq.gref.set.elements coq.gref.set -> list gref.
 
 % [coq.gref.set.choose M X] X is an element of M
-external pred coq.gref.set.choose i:coq.gref.set, o:gref.
+external func coq.gref.set.choose coq.gref.set -> gref.
 
 % [coq.gref.set.min M X] X is the smallest element of M
-external pred coq.gref.set.min i:coq.gref.set, o:gref.
+external func coq.gref.set.min coq.gref.set -> gref.
 
 % [coq.gref.set.max M X] X is the bigger of M
-external pred coq.gref.set.max i:coq.gref.set, o:gref.
+external func coq.gref.set.max coq.gref.set -> gref.
 
 % [coq.gref.set.cardinal M N] N is the number of elements of M
-external pred coq.gref.set.cardinal i:coq.gref.set, o:int.
+external func coq.gref.set.cardinal coq.gref.set -> int.
 
 % [coq.gref.set.filter M F M1] Filter M w.r.t. the predicate F
-external pred coq.gref.set.filter i:coq.gref.set, i:gref -> prop, 
-                                  o:coq.gref.set.
+external func coq.gref.set.filter coq.gref.set, 
+                                 (gref -> prop) -> coq.gref.set.
 
 % [coq.gref.set.map M F M1] Map M w.r.t. the predicate F
-external pred coq.gref.set.map i:coq.gref.set, i:gref -> gref -> prop, 
-                               o:coq.gref.set.
+external func coq.gref.set.map coq.gref.set, 
+                              (gref -> gref -> prop) -> coq.gref.set.
 
 % [coq.gref.set.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.gref.set.fold i:coq.gref.set, i:A, 
-                                i:gref -> A -> A -> prop, o:A.
+external func coq.gref.set.fold coq.gref.set, A, 
+                               (gref -> A -> A -> prop) -> A.
 
 % [coq.gref.set.partition M F M1 M2] Partitions M w.r.t. the predicate F, M1
 % is where F holds
-external pred coq.gref.set.partition i:coq.gref.set, i:gref -> prop, 
-                                     o:coq.gref.set, o:coq.gref.set.
+external func coq.gref.set.partition coq.gref.set, 
+                                    (gref -> prop) -> coq.gref.set, 
+                                    coq.gref.set.
 
 % CAVEAT: the type parameter of coq.gref.map must be a closed term
 
 kind coq.gref.map type -> type.
 
 % [coq.gref.map.empty M] The empty map
-external pred coq.gref.map.empty o:coq.gref.map A.
+external func coq.gref.map.empty -> coq.gref.map A.
 
 % [coq.gref.map.mem S M] Checks if S is bound in M
-external pred coq.gref.map.mem i:gref, i:coq.gref.map A.
+external func coq.gref.map.mem gref, coq.gref.map A.
 
 % [coq.gref.map.add S V M M1] M1 is M where V is bound to S
-external pred coq.gref.map.add i:gref, i:A, i:coq.gref.map A, 
-                               o:coq.gref.map A.
+external func coq.gref.map.add gref, A, coq.gref.map A -> coq.gref.map A.
 
 % [coq.gref.map.remove S M M1] M1 is M where S is unbound
-external pred coq.gref.map.remove i:gref, i:coq.gref.map A, 
-                                  o:coq.gref.map A.
+external func coq.gref.map.remove gref, coq.gref.map A -> coq.gref.map A.
 
 % [coq.gref.map.find S M V] V is the binding of S in M
-external pred coq.gref.map.find i:gref, i:coq.gref.map A, o:A.
+external func coq.gref.map.find gref, coq.gref.map A -> A.
 
 % [coq.gref.map.bindings M L] L is M transformed into an associative list
-external pred coq.gref.map.bindings i:coq.gref.map A, 
-                                    o:list (pair gref A).
+external func coq.gref.map.bindings coq.gref.map A -> list (pair gref A).
 
 % [coq.gref.map.filter M F M1] Filter M w.r.t. the predicate F
-external pred coq.gref.map.filter i:coq.gref.map A, i:gref -> A -> prop, 
-                                  o:coq.gref.map A.
+external func coq.gref.map.filter coq.gref.map A, 
+                                 (gref -> A -> prop) -> coq.gref.map A.
 
 % [coq.gref.map.map M F M1] Map M w.r.t. the predicate F
-external pred coq.gref.map.map i:coq.gref.map A, 
-                               i:gref -> A -> B -> prop, o:coq.gref.map B.
+external func coq.gref.map.map coq.gref.map A, 
+                              (gref -> A -> B -> prop) -> coq.gref.map B.
 
 % [coq.gref.map.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.gref.map.fold i:coq.gref.map A, i:C, 
-                                i:gref -> A -> C -> C -> prop, o:C.
+external func coq.gref.map.fold coq.gref.map A, C, 
+                               (gref -> A -> C -> C -> prop) -> C.
 
 kind coq.univ.set type.
 
 % [coq.univ.set.empty A] The empty set
-external pred coq.univ.set.empty o:coq.univ.set.
+external func coq.univ.set.empty -> coq.univ.set.
 
 % [coq.univ.set.mem Elem A] Checks if Elem is in a
-external pred coq.univ.set.mem i:univ, i:coq.univ.set.
+external func coq.univ.set.mem univ, coq.univ.set.
 
 % [coq.univ.set.add Elem A B] B is A union {Elem}
-external pred coq.univ.set.add i:univ, i:coq.univ.set, o:coq.univ.set.
+external func coq.univ.set.add univ, coq.univ.set -> coq.univ.set.
 
 % [coq.univ.set.remove Elem A B] B is A \ {Elem}
-external pred coq.univ.set.remove i:univ, i:coq.univ.set, o:coq.univ.set.
+external func coq.univ.set.remove univ, coq.univ.set -> coq.univ.set.
 
 % [coq.univ.set.union A B X] X is A union B
-external pred coq.univ.set.union i:coq.univ.set, i:coq.univ.set, 
-                                 o:coq.univ.set.
+external func coq.univ.set.union coq.univ.set, 
+                                coq.univ.set -> coq.univ.set.
 
 % [coq.univ.set.inter A B X] X is A intersection B
-external pred coq.univ.set.inter i:coq.univ.set, i:coq.univ.set, 
-                                 o:coq.univ.set.
+external func coq.univ.set.inter coq.univ.set, 
+                                coq.univ.set -> coq.univ.set.
 
 % [coq.univ.set.diff A B X] X is A \ B
-external pred coq.univ.set.diff i:coq.univ.set, i:coq.univ.set, 
-                                o:coq.univ.set.
+external func coq.univ.set.diff coq.univ.set, 
+                               coq.univ.set -> coq.univ.set.
 
 % [coq.univ.set.equal A B] tests A and B for equality
-external pred coq.univ.set.equal i:coq.univ.set, i:coq.univ.set.
+external func coq.univ.set.equal coq.univ.set, coq.univ.set.
 
 % [coq.univ.set.subset A B] tests if A is a subset of B
-external pred coq.univ.set.subset i:coq.univ.set, i:coq.univ.set.
+external func coq.univ.set.subset coq.univ.set, coq.univ.set.
 
 % [coq.univ.set.elements M L] L is M transformed into list
-external pred coq.univ.set.elements i:coq.univ.set, o:list univ.
+external func coq.univ.set.elements coq.univ.set -> list univ.
 
 % [coq.univ.set.choose M X] X is an element of M
-external pred coq.univ.set.choose i:coq.univ.set, o:univ.
+external func coq.univ.set.choose coq.univ.set -> univ.
 
 % [coq.univ.set.min M X] X is the smallest element of M
-external pred coq.univ.set.min i:coq.univ.set, o:univ.
+external func coq.univ.set.min coq.univ.set -> univ.
 
 % [coq.univ.set.max M X] X is the bigger of M
-external pred coq.univ.set.max i:coq.univ.set, o:univ.
+external func coq.univ.set.max coq.univ.set -> univ.
 
 % [coq.univ.set.cardinal M N] N is the number of elements of M
-external pred coq.univ.set.cardinal i:coq.univ.set, o:int.
+external func coq.univ.set.cardinal coq.univ.set -> int.
 
 % [coq.univ.set.filter M F M1] Filter M w.r.t. the predicate F
-external pred coq.univ.set.filter i:coq.univ.set, i:univ -> prop, 
-                                  o:coq.univ.set.
+external func coq.univ.set.filter coq.univ.set, 
+                                 (univ -> prop) -> coq.univ.set.
 
 % [coq.univ.set.map M F M1] Map M w.r.t. the predicate F
-external pred coq.univ.set.map i:coq.univ.set, i:univ -> univ -> prop, 
-                               o:coq.univ.set.
+external func coq.univ.set.map coq.univ.set, 
+                              (univ -> univ -> prop) -> coq.univ.set.
 
 % [coq.univ.set.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.univ.set.fold i:coq.univ.set, i:A, 
-                                i:univ -> A -> A -> prop, o:A.
+external func coq.univ.set.fold coq.univ.set, A, 
+                               (univ -> A -> A -> prop) -> A.
 
 % [coq.univ.set.partition M F M1 M2] Partitions M w.r.t. the predicate F, M1
 % is where F holds
-external pred coq.univ.set.partition i:coq.univ.set, i:univ -> prop, 
-                                     o:coq.univ.set, o:coq.univ.set.
+external func coq.univ.set.partition coq.univ.set, 
+                                    (univ -> prop) -> coq.univ.set, 
+                                    coq.univ.set.
 
 % CAVEAT: the type parameter of coq.univ.map must be a closed term
 
 kind coq.univ.map type -> type.
 
 % [coq.univ.map.empty M] The empty map
-external pred coq.univ.map.empty o:coq.univ.map A.
+external func coq.univ.map.empty -> coq.univ.map A.
 
 % [coq.univ.map.mem S M] Checks if S is bound in M
-external pred coq.univ.map.mem i:univ, i:coq.univ.map A.
+external func coq.univ.map.mem univ, coq.univ.map A.
 
 % [coq.univ.map.add S V M M1] M1 is M where V is bound to S
-external pred coq.univ.map.add i:univ, i:A, i:coq.univ.map A, 
-                               o:coq.univ.map A.
+external func coq.univ.map.add univ, A, coq.univ.map A -> coq.univ.map A.
 
 % [coq.univ.map.remove S M M1] M1 is M where S is unbound
-external pred coq.univ.map.remove i:univ, i:coq.univ.map A, 
-                                  o:coq.univ.map A.
+external func coq.univ.map.remove univ, coq.univ.map A -> coq.univ.map A.
 
 % [coq.univ.map.find S M V] V is the binding of S in M
-external pred coq.univ.map.find i:univ, i:coq.univ.map A, o:A.
+external func coq.univ.map.find univ, coq.univ.map A -> A.
 
 % [coq.univ.map.bindings M L] L is M transformed into an associative list
-external pred coq.univ.map.bindings i:coq.univ.map A, 
-                                    o:list (pair univ A).
+external func coq.univ.map.bindings coq.univ.map A -> list (pair univ A).
 
 % [coq.univ.map.filter M F M1] Filter M w.r.t. the predicate F
-external pred coq.univ.map.filter i:coq.univ.map A, i:univ -> A -> prop, 
-                                  o:coq.univ.map A.
+external func coq.univ.map.filter coq.univ.map A, 
+                                 (univ -> A -> prop) -> coq.univ.map A.
 
 % [coq.univ.map.map M F M1] Map M w.r.t. the predicate F
-external pred coq.univ.map.map i:coq.univ.map A, 
-                               i:univ -> A -> B -> prop, o:coq.univ.map B.
+external func coq.univ.map.map coq.univ.map A, 
+                              (univ -> A -> B -> prop) -> coq.univ.map B.
 
 % [coq.univ.map.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.univ.map.fold i:coq.univ.map A, i:C, 
-                                i:univ -> A -> C -> C -> prop, o:C.
+external func coq.univ.map.fold coq.univ.map A, C, 
+                               (univ -> A -> C -> C -> prop) -> C.
 
 kind coq.univ.variable.set type.
 
 % [coq.univ.variable.set.empty A] The empty set
-external pred coq.univ.variable.set.empty o:coq.univ.variable.set.
+external func coq.univ.variable.set.empty -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.mem Elem A] Checks if Elem is in a
-external pred coq.univ.variable.set.mem i:univ.variable, 
-                                        i:coq.univ.variable.set.
+external func coq.univ.variable.set.mem univ.variable, 
+                                       coq.univ.variable.set.
 
 % [coq.univ.variable.set.add Elem A B] B is A union {Elem}
-external pred coq.univ.variable.set.add i:univ.variable, 
-                                        i:coq.univ.variable.set, 
-                                        o:coq.univ.variable.set.
+external func coq.univ.variable.set.add univ.variable, 
+                                       coq.univ.variable.set -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.remove Elem A B] B is A \ {Elem}
-external pred coq.univ.variable.set.remove i:univ.variable, 
-                                           i:coq.univ.variable.set, 
-                                           o:coq.univ.variable.set.
+external func coq.univ.variable.set.remove univ.variable, 
+                                          coq.univ.variable.set -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.union A B X] X is A union B
-external pred coq.univ.variable.set.union i:coq.univ.variable.set, 
-                                          i:coq.univ.variable.set, 
-                                          o:coq.univ.variable.set.
+external func coq.univ.variable.set.union coq.univ.variable.set, 
+                                         coq.univ.variable.set -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.inter A B X] X is A intersection B
-external pred coq.univ.variable.set.inter i:coq.univ.variable.set, 
-                                          i:coq.univ.variable.set, 
-                                          o:coq.univ.variable.set.
+external func coq.univ.variable.set.inter coq.univ.variable.set, 
+                                         coq.univ.variable.set -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.diff A B X] X is A \ B
-external pred coq.univ.variable.set.diff i:coq.univ.variable.set, 
-                                         i:coq.univ.variable.set, 
-                                         o:coq.univ.variable.set.
+external func coq.univ.variable.set.diff coq.univ.variable.set, 
+                                        coq.univ.variable.set -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.equal A B] tests A and B for equality
-external pred coq.univ.variable.set.equal i:coq.univ.variable.set, 
-                                          i:coq.univ.variable.set.
+external func coq.univ.variable.set.equal coq.univ.variable.set, 
+                                         coq.univ.variable.set.
 
 % [coq.univ.variable.set.subset A B] tests if A is a subset of B
-external pred coq.univ.variable.set.subset i:coq.univ.variable.set, 
-                                           i:coq.univ.variable.set.
+external func coq.univ.variable.set.subset coq.univ.variable.set, 
+                                          coq.univ.variable.set.
 
 % [coq.univ.variable.set.elements M L] L is M transformed into list
-external pred coq.univ.variable.set.elements i:coq.univ.variable.set, 
-                                             o:list univ.variable.
+external func coq.univ.variable.set.elements coq.univ.variable.set -> list univ.variable.
 
 % [coq.univ.variable.set.choose M X] X is an element of M
-external pred coq.univ.variable.set.choose i:coq.univ.variable.set, 
-                                           o:univ.variable.
+external func coq.univ.variable.set.choose coq.univ.variable.set -> univ.variable.
 
 % [coq.univ.variable.set.min M X] X is the smallest element of M
-external pred coq.univ.variable.set.min i:coq.univ.variable.set, 
-                                        o:univ.variable.
+external func coq.univ.variable.set.min coq.univ.variable.set -> univ.variable.
 
 % [coq.univ.variable.set.max M X] X is the bigger of M
-external pred coq.univ.variable.set.max i:coq.univ.variable.set, 
-                                        o:univ.variable.
+external func coq.univ.variable.set.max coq.univ.variable.set -> univ.variable.
 
 % [coq.univ.variable.set.cardinal M N] N is the number of elements of M
-external pred coq.univ.variable.set.cardinal i:coq.univ.variable.set, 
-                                             o:int.
+external func coq.univ.variable.set.cardinal coq.univ.variable.set -> int.
 
 % [coq.univ.variable.set.filter M F M1] Filter M w.r.t. the predicate F
-external pred coq.univ.variable.set.filter i:coq.univ.variable.set, 
-                                           i:univ.variable -> prop, 
-                                           o:coq.univ.variable.set.
+external func coq.univ.variable.set.filter coq.univ.variable.set, 
+                                          (univ.variable -> prop) -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.map M F M1] Map M w.r.t. the predicate F
-external pred coq.univ.variable.set.map i:coq.univ.variable.set, 
-                                        i:univ.variable -> univ.variable -> prop, 
-                                        o:coq.univ.variable.set.
+external func coq.univ.variable.set.map coq.univ.variable.set, 
+                                       (univ.variable -> univ.variable -> prop) -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.univ.variable.set.fold i:coq.univ.variable.set, i:A, 
-                                         i:univ.variable -> A -> A -> prop, 
-                                         o:A.
+external func coq.univ.variable.set.fold coq.univ.variable.set, A, 
+                                        (univ.variable -> A -> A -> prop) -> A.
 
 % [coq.univ.variable.set.partition M F M1 M2] Partitions M w.r.t. the
 % predicate F, M1 is where F holds
-external pred coq.univ.variable.set.partition i:coq.univ.variable.set, 
-                                              i:univ.variable -> prop, 
-                                              o:coq.univ.variable.set, 
-                                              o:coq.univ.variable.set.
+external func coq.univ.variable.set.partition coq.univ.variable.set, 
+                                             (univ.variable -> prop) -> coq.univ.variable.set, 
+                                             coq.univ.variable.set.
 
 % CAVEAT: the type parameter of coq.univ.variable.map must be a closed
 % term
@@ -2218,45 +2189,39 @@ external pred coq.univ.variable.set.partition i:coq.univ.variable.set,
 kind coq.univ.variable.map type -> type.
 
 % [coq.univ.variable.map.empty M] The empty map
-external pred coq.univ.variable.map.empty o:coq.univ.variable.map A.
+external func coq.univ.variable.map.empty -> coq.univ.variable.map A.
 
 % [coq.univ.variable.map.mem S M] Checks if S is bound in M
-external pred coq.univ.variable.map.mem i:univ.variable, 
-                                        i:coq.univ.variable.map A.
+external func coq.univ.variable.map.mem univ.variable, 
+                                       coq.univ.variable.map A.
 
 % [coq.univ.variable.map.add S V M M1] M1 is M where V is bound to S
-external pred coq.univ.variable.map.add i:univ.variable, i:A, 
-                                        i:coq.univ.variable.map A, 
-                                        o:coq.univ.variable.map A.
+external func coq.univ.variable.map.add univ.variable, A, 
+                                       coq.univ.variable.map A -> coq.univ.variable.map A.
 
 % [coq.univ.variable.map.remove S M M1] M1 is M where S is unbound
-external pred coq.univ.variable.map.remove i:univ.variable, 
-                                           i:coq.univ.variable.map A, 
-                                           o:coq.univ.variable.map A.
+external func coq.univ.variable.map.remove univ.variable, 
+                                          coq.univ.variable.map A -> coq.univ.variable.map A.
 
 % [coq.univ.variable.map.find S M V] V is the binding of S in M
-external pred coq.univ.variable.map.find i:univ.variable, 
-                                         i:coq.univ.variable.map A, o:A.
+external func coq.univ.variable.map.find univ.variable, 
+                                        coq.univ.variable.map A -> A.
 
 % [coq.univ.variable.map.bindings M L] L is M transformed into an
 % associative list
-external pred coq.univ.variable.map.bindings i:coq.univ.variable.map A, 
-                                             o:list (pair univ.variable A).
+external func coq.univ.variable.map.bindings coq.univ.variable.map A -> list (pair univ.variable A).
 
 % [coq.univ.variable.map.filter M F M1] Filter M w.r.t. the predicate F
-external pred coq.univ.variable.map.filter i:coq.univ.variable.map A, 
-                                           i:univ.variable -> A -> prop, 
-                                           o:coq.univ.variable.map A.
+external func coq.univ.variable.map.filter coq.univ.variable.map A, 
+                                          (univ.variable -> A -> prop) -> coq.univ.variable.map A.
 
 % [coq.univ.variable.map.map M F M1] Map M w.r.t. the predicate F
-external pred coq.univ.variable.map.map i:coq.univ.variable.map A, 
-                                        i:univ.variable -> A -> B -> prop, 
-                                        o:coq.univ.variable.map B.
+external func coq.univ.variable.map.map coq.univ.variable.map A, 
+                                       (univ.variable -> A -> B -> prop) -> coq.univ.variable.map B.
 
 % [coq.univ.variable.map.fold M Acc F Acc1] fold M w.r.t. the predicate F
-external pred coq.univ.variable.map.fold i:coq.univ.variable.map A, i:C, 
-                                         i:univ.variable -> A -> C -> C -> prop, 
-                                         o:C.
+external func coq.univ.variable.map.fold coq.univ.variable.map A, C, 
+                                        (univ.variable -> A -> C -> C -> prop) -> C.
 
 % Coq box types for pretty printing:
 % - Vertical block: each break leads to a new line
@@ -2268,10 +2233,10 @@ external pred coq.univ.variable.map.fold i:coq.univ.variable.map A, i:C,
 %   necessary to print the content of the block (the contents flow
 %   inside the box)
 kind coq.pp.box type.
-type coq.pp.v int -> coq.pp.box.
-type coq.pp.h coq.pp.box.
-type coq.pp.hv int -> coq.pp.box.
-type coq.pp.hov int -> coq.pp.box.
+external symbol coq.pp.v : int -> coq.pp.box = "1". 
+external symbol coq.pp.h : coq.pp.box = "1". 
+external symbol coq.pp.hv : int -> coq.pp.box = "1". 
+external symbol coq.pp.hov : int -> coq.pp.box = "1". 
 
 % Coq box model for pretty printing. Items:
 % - empty
@@ -2285,20 +2250,20 @@ type coq.pp.hov int -> coq.pp.box.
 % - tag: ignored
 % - nl: break the line (should not be used)
 kind coq.pp type.
-type coq.pp.empty coq.pp.
-type coq.pp.spc coq.pp.
-type coq.pp.str string -> coq.pp.
-type coq.pp.brk int -> int -> coq.pp.
-type coq.pp.glue list coq.pp -> coq.pp.
-type coq.pp.box coq.pp.box -> list coq.pp -> coq.pp.
-type coq.pp.comment list string -> coq.pp.
-type coq.pp.tag string -> coq.pp -> coq.pp.
-type coq.pp.nl coq.pp.
+external symbol coq.pp.empty : coq.pp = "1". 
+external symbol coq.pp.spc : coq.pp = "1". 
+external symbol coq.pp.str : string -> coq.pp = "1". 
+external symbol coq.pp.brk : int -> int -> coq.pp = "1". 
+external symbol coq.pp.glue : list coq.pp -> coq.pp = "1". 
+external symbol coq.pp.box : coq.pp.box -> list coq.pp -> coq.pp = "1". 
+external symbol coq.pp.comment : list string -> coq.pp = "1". 
+external symbol coq.pp.tag : string -> coq.pp -> coq.pp = "1". 
+external symbol coq.pp.nl : coq.pp = "1". 
 
 % [coq.pp->string B S] Prints a pp.t box expression B to a string S
 % Supported attributes:
 % - @ppwidth! N (default 80, max line length)
-external pred coq.pp->string i:coq.pp, o:string.
+external func coq.pp->string coq.pp -> string.
 
 
 

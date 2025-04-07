@@ -31,7 +31,7 @@ main-K Prefix Ity Arity GRK Clause :-
   coq.env.add-const Name T Ty _ IsK,
   Clause = (isK-db GRK (global (const IsK)) :- !).
 
-pred main i:inductive, i:string, i:list prop.
+pred main i:inductive, i:string, o:list prop.
 main GR Prefix Clauses :-
   T = global (indt GR),
   coq.env.indt GR _ _ _ Arity Kn _,

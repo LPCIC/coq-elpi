@@ -3,6 +3,7 @@ From elpi Require Import elpi.
 
 Elpi Command test.program1.
 Elpi Accumulate lp:{{
+  pred foo i:list argument.
   main X :- coq.say "test1", foo X.
 }}.
 

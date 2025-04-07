@@ -24,7 +24,6 @@ Elpi Db derive.param2.db lp:{{
     type paramR term -> term -> term -> prop.
     pred param-done i:gref.
 }}.
-#[superglobal] Elpi Accumulate derive.param2.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.param2.db lp:{{
 
     :name "param:fail"

@@ -27,7 +27,6 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
   type param1-inhab-db-args list term -> list term -> prop.
 
 }}.
-#[superglobal] Elpi Accumulate derive.param1.trivial.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.param1.trivial.db Db Header derive.param1.db.
 #[superglobal] Elpi Accumulate derive.param1.trivial.db lp:{{
 

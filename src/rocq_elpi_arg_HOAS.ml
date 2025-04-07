@@ -653,24 +653,33 @@ let mk_indt_decl state univpoly r =
   match univpoly with
   | Cmd.Mono -> state, E.mkApp ideclc r []
   | Cmd.Poly -> 
-      let state, up, gls = universe_decl.API.Conversion.embed ~depth:0 state (([],true),(Univ.Constraints.empty,true)) in
+      let state, up, gls = universe_decl.API.Conversion.embed ~depth:0 state (NonCumul(([],true),(Univ.Constraints.empty,true))) in
       assert(gls=[]);
       state, E.mkApp uideclc r [up]
   | Cmd.CumulPoly ->
-      let state, up, gls = universe_decl_cumul.API.Conversion.embed ~depth:0 state (([],true),(Univ.Constraints.empty,true)) in
+      let state, up, gls = universe_decl.API.Conversion.embed ~depth:0 state (Cumul(([],true),(Univ.Constraints.empty,true))) in
       assert(gls=[]);
       state, E.mkApp uideclc r [up]
 
-let rec gparams2lp_synterp ~depth params k state =
+let rec garityparams2lp_synterp ~depth params k state =
   match params with
   | [] -> k state
   | (name,imp,ob,src) :: params ->
       if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let src = E.mkDiscard in
-      let state, tgt = gparams2lp_synterp ~depth params k state in
+      let state, tgt = garityparams2lp_synterp ~depth params k state in
       let state, imp = in_elpi_imp ~depth state imp in
-      state, in_elpi_parameter name ~imp src tgt
-      
+      state, in_elpi_arity_parameter name ~imp src tgt
+let rec gindparams2lp_synterp ~depth params k state =
+  match params with
+  | [] -> k state
+  | (name,imp,ob,src) :: params ->
+      if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
+      let src = E.mkDiscard in
+      let state, tgt = gindparams2lp_synterp ~depth params k state in
+      let state, imp = in_elpi_imp ~depth state imp in
+      state, in_elpi_inductive_parameter name ~imp src tgt
+            
       
 let rec gfields2lp_synterp ~depth fields state =
   match fields with
@@ -692,12 +701,12 @@ let grecord2lp_synterp ~depth ~name ~constructorname arity fields state =
 
 let grecord2lp_synterp ~depth state { Cmd.name; arity; params; constructorname; fields; univpoly } =
   let params = List.map drop_relevance params in
-  let state, r = gparams2lp_synterp ~depth params (grecord2lp_synterp ~depth ~name ~constructorname arity fields) state in
+  let state, r = gindparams2lp_synterp ~depth params (grecord2lp_synterp ~depth ~name ~constructorname arity fields) state in
   mk_indt_decl state univpoly r
       
 let grecord2lp ~loc ~base ~depth state { Cmd.name; arity; params; constructorname; fields; univpoly } =
   let open Rocq_elpi_glob_quotation in
-  let state, r = gparams2lp ~loc ~base params ~k:(grecord2lp ~loc ~base ~name ~constructorname arity fields) ~depth state in
+  let state, r = gindparams2lp ~loc ~base params ~k:(grecord2lp ~loc ~base ~name ~constructorname arity fields) ~depth state in
   mk_indt_decl state univpoly r
   
 let contract_params env sigma name params nuparams_given t =
@@ -745,16 +754,16 @@ let ginductive2lp_synterp ~depth state { Cmd.finiteness; name; arity; params; nu
   let nuparams = List.map drop_relevance nuparams in
   let params = List.map drop_relevance params in
   let do_constructor ~depth state (name, ty) =
-    let state, ty = gparams2lp_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
+    let state, ty = garityparams2lp_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
     state, in_elpi_indtdecl_constructor (Name.Name name) ty
   in
   let do_inductive_synterp ~depth state =
     let qindt_name = Id.of_string_soft @@ String.concat "." (space @ [Id.to_string indt_name]) in
-    let state, arity = gparams2lp_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
+    let state, arity = garityparams2lp_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
     let state, constructors = Rocq_elpi_utils.list_map_acc (do_constructor ~depth ) state constructors in
     state, in_elpi_indtdecl_inductive state finiteness (Name.Name qindt_name) arity constructors
   in
-  let state, r = gparams2lp_synterp params (do_inductive_synterp ~depth) ~depth state in
+  let state, r = gindparams2lp_synterp params (do_inductive_synterp ~depth) ~depth state in
   mk_indt_decl state univpoly r
   
 let ginductive2lp ~loc ~depth ~base state { Cmd.finiteness; name; arity; params; nuparams; nuparams_given; constructors; univpoly } =
@@ -764,20 +773,20 @@ let ginductive2lp ~loc ~depth ~base state { Cmd.finiteness; name; arity; params;
     let params = List.map drop_relevance params in
     contract_params (get_global_env state) (get_sigma state) indt_name params nuparams_given x in
   let do_constructor ~depth state (name, ty) =
-    let state, ty = gparams2lp ~loc ~base nuparams ~k:(garity2lp ~loc ~base (contract state ty)) ~depth state in
+    let state, ty = garityparams2lp ~loc ~base nuparams ~k:(garity2lp ~loc ~base (contract state ty)) ~depth state in
     state, in_elpi_indtdecl_constructor (Name.Name name) ty
   in
   let do_inductive ~depth state =
     let short_name = Name.Name indt_name in
     let qindt_name = Id.of_string_soft @@ String.concat "." (space @ [Id.to_string indt_name]) in
     let state, term_arity = gterm2lp ~loc ~depth ~base (Rocq_elpi_utils.mk_gforall arity nuparams) state in
-    let state, arity = gparams2lp ~loc ~base nuparams ~k:(garity2lp ~loc ~base arity) ~depth state in
+    let state, arity = garityparams2lp ~loc ~base nuparams ~k:(garity2lp ~loc ~base arity) ~depth state in
     under_ctx short_name term_arity None ~k:(fun ~depth state ->
       let state, constructors = Rocq_elpi_utils.list_map_acc (do_constructor ~depth ) state constructors in
       state, in_elpi_indtdecl_inductive state finiteness (Name.Name qindt_name) arity constructors, ())
     ~depth state
   in
-  let state, r = gparams2lp ~loc ~base params ~k:(drop_unit do_inductive) ~depth state in
+  let state, r = gindparams2lp ~loc ~base params ~k:(drop_unit do_inductive) ~depth state in
   mk_indt_decl state univpoly r
 
 let in_option = Elpi.(Builtin.option API.BuiltInData.any).API.Conversion.embed
@@ -793,7 +802,7 @@ let ucdeclc = E.Constants.declare_global_symbol "upoly-const-decl"
 
 let gdecl2lp_synterp ~depth state { Cmd.name; params; typ : _; body; udecl } =
   let params = List.map drop_relevance params in
-  let state, typ = gparams2lp_synterp ~depth params (fun state -> state, in_elpi_arity E.mkDiscard) state in
+  let state, typ = garityparams2lp_synterp ~depth params (fun state -> state, in_elpi_arity E.mkDiscard) state in
   let body = Option.map (fun _ -> E.mkDiscard) body in
   let name = decl_name2lp name in
   let state, body, gls = in_option ~depth state body in
@@ -801,12 +810,12 @@ let gdecl2lp_synterp ~depth state { Cmd.name; params; typ : _; body; udecl } =
   | NotUniversePolymorphic -> state, E.mkApp cdeclc name [body;typ], gls
   | Cumulative _ -> assert false
   | NonCumulative ud ->
-      let state, ud, gls1 = universe_decl.API.Conversion.embed ~depth state ud in
+      let state, ud, gls1 = universe_decl.API.Conversion.embed ~depth state (NonCumul ud) in
       state, E.mkApp ucdeclc name [body;typ;ud], gls @ gls1
 
 let cdecl2lp ~loc ~depth ~base state { Cmd.name; params; typ; body; udecl } =
   let open Rocq_elpi_glob_quotation in
-  let state, typ = gparams2lp ~loc ~base params ~k:(garity2lp ~loc ~base typ) ~depth state in
+  let state, typ = garityparams2lp ~loc ~base params ~k:(garity2lp ~loc ~base typ) ~depth state in
   let state, body = option_map_acc (fun state bo -> gterm2lp ~loc ~depth ~base (Rocq_elpi_utils.mk_gfun bo params) state) state body in
   let name = decl_name2lp name in
   let state, body, gls = in_option ~depth state body in
@@ -814,7 +823,7 @@ let cdecl2lp ~loc ~depth ~base state { Cmd.name; params; typ; body; udecl } =
   | NotUniversePolymorphic -> state, E.mkApp cdeclc name [body;typ], gls
   | Cumulative _ -> assert false
   | NonCumulative ud ->
-      let state, ud, gls1 = universe_decl.API.Conversion.embed ~depth state ud in
+      let state, ud, gls1 = universe_decl.API.Conversion.embed ~depth state (NonCumul ud) in
       state, E.mkApp ucdeclc name [body;typ;ud], gls @ gls1
 
 let ctxitemc = E.Constants.declare_global_symbol "context-item"
@@ -892,7 +901,7 @@ let best_effort_recover_arity ~depth state glob_sign typ bl =
       | Some(ty,bo) ->
           let state, imp = in_elpi_imp ~depth state ik in
           let state, bo = aux ~depth:(depth+1) state bo gbl in
-          state, in_elpi_parameter name ~imp ty bo
+          state, in_elpi_arity_parameter name ~imp ty bo
       end
     | _ -> state, in_elpi_arity typ
     in
@@ -1162,7 +1171,7 @@ let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       | NotUniversePolymorphic -> state, E.mkApp cdeclc c [body;typ], gls0 @ gls1 @ gls2
       | Cumulative _ -> assert false
       | NonCumulative udecl ->
-          let state, ud, gls3 = universe_decl.API.Conversion.embed ~depth state udecl in
+          let state, ud, gls3 = universe_decl.API.Conversion.embed ~depth state (NonCumul udecl) in
           state, E.mkApp ucdeclc c [body;typ;ud], gls0 @ gls1 @ gls2 @ gls3
       end
   | Context (_ist,(glob_sign,raw_ctx)) when raw ->

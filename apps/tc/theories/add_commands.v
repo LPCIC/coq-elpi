@@ -14,7 +14,7 @@ From elpi.apps.tc.elpi Extra Dependency "parser_addInstances.elpi" as parser_add
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
-Set Warnings "+elpi".
+(* Set Warnings "+elpi". *)
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
