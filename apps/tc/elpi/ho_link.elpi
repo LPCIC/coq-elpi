@@ -130,6 +130,62 @@ namespace tc {
       }
     }
 
+    namespace cs {
+      pred cs i:term, i:term.
+      % TODO: suspend link on vars in T
+      cs V T :- var V, !, get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
+      cs T1 T2 :- coq.unify-eq T1 T2 ok.
+
+      % pred unify-rebinding-names i:list prop, i:list prop, i:term, i:term.
+      % unify-rebinding-names [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
+      % unify-rebinding-names [N|NS] T1 [V|VS] T2 C :- !, copy N V => unify-rebinding-names NS T1 VS T2 C.
+      % unify-rebinding-names [] T1 VS T2 C :- !, unify-rebinding-names [] {coq.subst-prod VS T1} [] T2 C. % FIXME: reduction
+      % unify-rebinding-names [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
+      %   assert! (pi x\ F x = F1) "restriction bug", unify-rebinding-names NS F1 [] T2 C.
+
+      pred unify-under-ctx i:list term, i:list term, i:term, i:term, i:term, i:term.
+      unify-under-ctx [] [] A B V1 V2 :- copy A A', copy V1 V1', !, coq.unify-eq A' B ok, !, V1' = V2.
+      unify-under-ctx [X|XS] [Y|YS] A B V1 V2:- (copy X Y :- !) => unify-under-ctx XS YS A B V1 V2.
+
+      % TODO: there could be two same variables suspended on non unifyable
+      % terms, this should be detected and raise a failure.
+      % An example of this is in test/canonical_struct.v
+      constraint cache def decl coq.unify-eq ?- solve-cs cs {
+        rule solve-cs \ (Ctx ?- cs A B) <=> (Ctx => coq.unify-eq A B ok).
+        rule (Ctx1 ?- cs (uvar A L1 as X) T1) \ (Ctx2 ?- cs (uvar A L2 as Y) T2) <=>
+          (Ctx2 => unify-under-ctx L1 L2 T1 T2 X Y).
+        rule \ solve-cs.
+      }
+    }
+
+    namespace cs {
+      pred cs i:term, i:term.
+      % TODO: suspend link on vars in T
+      cs V T :- var V, !, get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
+      cs T1 T2 :- coq.unify-eq T1 T2 ok.
+
+      % pred unify-rebinding-names i:list prop, i:list prop, i:term, i:term.
+      % unify-rebinding-names [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
+      % unify-rebinding-names [N|NS] T1 [V|VS] T2 C :- !, copy N V => unify-rebinding-names NS T1 VS T2 C.
+      % unify-rebinding-names [] T1 VS T2 C :- !, unify-rebinding-names [] {coq.subst-prod VS T1} [] T2 C. % FIXME: reduction
+      % unify-rebinding-names [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
+      %   assert! (pi x\ F x = F1) "restriction bug", unify-rebinding-names NS F1 [] T2 C.
+
+      pred unify-under-ctx i:list term, i:list term, i:term, i:term, i:term, i:term.
+      unify-under-ctx [] [] A B V1 V2 :- copy A A', copy V1 V1', !, coq.unify-eq A' B ok, !, V1' = V2.
+      unify-under-ctx [X|XS] [Y|YS] A B V1 V2:- (copy X Y :- !) => unify-under-ctx XS YS A B V1 V2.
+
+      % TODO: there could be two same variables suspended on non unifyable
+      % terms, this should be detected and raise a failure.
+      % An example of this is in test/canonical_struct.v
+      constraint cache def decl coq.unify-eq ?- solve-cs cs {
+        rule solve-cs \ (Ctx ?- cs A B) <=> (Ctx => coq.unify-eq A B ok).
+        rule (Ctx1 ?- cs (uvar A L1 as X) T1) \ (Ctx2 ?- cs (uvar A L2 as Y) T2) <=>
+          (Ctx2 => unify-under-ctx L1 L2 T1 T2 X Y).
+        rule \ solve-cs.
+      }
+    }
+
     pred eta i:term, i:term.
     eta A B :- eta.eta A B.
 
@@ -141,5 +197,11 @@ namespace tc {
 
     pred solve-llam.
     solve-llam :- declare_constraint solve-llam [_].
+
+    pred cs i:term, i:term.
+    cs A B :- cs.cs A B.
+
+    pred solve-cs.
+    solve-cs :- declare_constraint solve-cs [_].
   }
 }
