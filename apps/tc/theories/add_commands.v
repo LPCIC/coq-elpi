@@ -19,6 +19,7 @@ Set Warnings "+elpi".
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File ho_precompile.
 Elpi Accumulate File unif.
