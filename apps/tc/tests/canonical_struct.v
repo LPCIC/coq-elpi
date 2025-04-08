@@ -7,6 +7,8 @@ Module CS1.
   }.
   Canonical ofe_nat : ofe := Ofe nat.
 
+  TC.AddRecordFields (ofe) (Ofe) 1.
+
   Class C (I : Type).
 
   Instance c : C (ofe_car ofe_nat). Qed.
@@ -126,6 +128,8 @@ End CS6.
 Module CS7.
   Structure ofe := Ofe { ofe_car :> Type; }.
   Structure cmra := Cmra { cmra_car :> Type; }.
+  TC.AddRecordFields (ofe) (Ofe) 1.
+  TC.AddRecordFields (cmra) (Cmra) 1.
 
   Coercion cmra_ofeO (A : cmra) := Ofe A.
 
@@ -142,7 +146,6 @@ Module CS7.
   Instance d : D bool := {}.
 
   Instance i: forall (c : cmra), D (cmra_car c) -> C (cmra_ofeO c) := {}.
-  Elpi Print TC.Solver.
 
   Goal C ofe_bool.
     apply _.
@@ -206,6 +209,7 @@ End CS9.
 Module CS10.
   Structure ofe := Ofe { ofe_car :> Type; }.
   Canonical Structure ofe_bool := Ofe bool.
+  TC.AddRecordFields (ofe) (Ofe) 1.
 
   Class C (i : Type).
   Instance i : C bool := {}.
@@ -227,5 +231,5 @@ Module CS11.
   (* Here the projection is in the goal *)
   Goal exists X, C (ofe_car X). eexists.
     apply _.
-    Show Proof.
   Qed.
+End CS11.

@@ -102,6 +102,9 @@ Elpi Db tc.db lp:{{
     pred link.eta i:term, i:term.
     pred link.llam i:term, i:term.
 
+
+    % relates a projection to the its record
+    pred proj->record i:constant, o:term.
   }
 }}.
 From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
