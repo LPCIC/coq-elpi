@@ -23,7 +23,7 @@ namespace tc {
         decompile-term-aux (pglobal _ _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (sort _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (uvar as X) L X L :- !.
-        decompile-term-aux (primitive _ as P) L P L :- !.
+        decompile-term-aux (primitive _ as X) L X L :- !.
 
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
@@ -328,6 +328,8 @@ namespace tc {
         get-uva-pair-arity Y L Z.
 
       pred decompile-problematic-term i:term, i:list prop, o:term, o:list prop.
+      decompile-problematic-term (primitive _ as C) A C A :- !.
+      
       decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
         prune V S, !, fold-map T L T' L2.
 
