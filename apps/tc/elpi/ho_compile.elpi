@@ -59,18 +59,23 @@ namespace tc {
         % This happens when the instance to be compiled comes from the context
         % Example: Goal exists (X : T1 -> T2), forall a, c (X a) -> ...
         %            intros; eexists. (* In the context we have the instance `H: c (?X a)` *)
-        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) A Z (pr XS' [NL | L3]) :-  !,
-          var H _ Scope, !,
-          std.append Scope S S',
-          prune Z S',
-          tc.compile.goal.make-pairs [T] Pairs,
-          % We build on the fly the eta-links for T
-          (Pairs =>
-            (tc.compile.goal.build-eta-links-of-vars [T] P,
-              tc.compile.goal.get-uva-pair-arity T PF Y)),
-          std.fold-map NPF A decompile-term-aux Tl (pr XS' L2), 
-          std.append P L2 L3,
-          NL = tc.link.llam Z (app [Y|Tl]).
+        decompile-term-aux (tc.maybe-llam-tm (app[app[V | PF] | NPF] as T) S_) L G'' (pr XS' L'') :-  !,
+          var V _ Scope, !,
+          std.fold-map NPF L decompile-term-aux NPF' (pr XS' L'),
+          free-names T Names,
+          coq.typecheck V Ty ok,
+          tc.link.build-eta-llam-links V Scope Ty Names PF NPF' L' G' L'',
+          prune G'' Names,
+          var G'' G' Names.
+
+        % HO var when H is a hole appearing in the shelved goals
+        decompile-term-aux (app [V|PF] as T) (pr XS' L') G'' (pr XS' L'') :-
+          var V _ Scope, !,
+          free-names T Names,
+          coq.typecheck V Ty ok,
+          tc.link.build-eta-llam-links V Scope Ty Names PF [] L' G' L'',
+          prune G'' Names,
+          var G'' G' Names.
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty' Bo') (pr XS2 L3) :- !,
           (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
@@ -95,21 +100,6 @@ namespace tc {
           length-nat L Len,
           std.assert! (name-pair H V Len) "[TC] name-pair not found",
           name R V L.
-
-        % HO var when H is a hole appearing in the shelved goals
-        decompile-term-aux (app [T|L]) (pr A B) Z (pr A B') :-
-          var T _ Scope,
-          std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
-          distinct_names L, !,      % Not needed, since decompile for llam leaves only PF
-          std.append Scope L Scope',
-          prune Z Scope',
-          tc.compile.goal.make-pairs [T] Pairs,
-          % We build on the fly the eta-links for `T`
-          (Pairs =>
-            (tc.compile.goal.build-eta-links-of-vars [T] P,
-              tc.compile.goal.get-uva-pair-arity T L Y)),
-          var Z Y Scope',
-          std.append P B B'.
 
         decompile-term-aux (app L) PR (app L') PR' :- !,
           std.fold-map L PR decompile-term-aux L' PR'.
@@ -174,10 +164,10 @@ namespace tc {
         o:prop,            % Link         : The new eta-link
         o:term,            % Ty'          : The cleaned version of the binder in Ty
         o:(term -> term).  % Bo           : the body of the type of A
-      make-eta-link-aux A (prod _ Ty Bo) (pr B Name) L Link Ty' Bo :- !,
+      make-eta-link-aux A (prod _ Ty Bo) (pr B Name_) L Link Ty' Bo :- !,
         clean-term Ty Ty',
         name A' A {std.rev L},
-        Link = tc.link.eta A' (fun Name Ty' B'),
+        Link = tc.link.eta A' (fun `_` Ty' B'),
         pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
       % Going under prod-range
       make-eta-link-aux A (tc.prod-range Prod _) BN L Link Ty' Bo :- !,
@@ -313,129 +303,5 @@ namespace tc {
     instance-gr InstGR Clause :-
       coq.env.typeof InstGR Ty,
       tc.compile.instance Ty (global InstGR) Clause.
-    
-    namespace goal {
-      % [uvar-pair V1 Ty V2] List of uvar for link-eta-dedup
-      %                      V1 has arity n and V2 has arity n+1
-      %                      If V1 has type A -> B, then A = Ty
-      pred uvar-pair i:term, o:term, o:term.
-
-      %                    Type     Var    Cnt    uvar-pair-list
-      pred make-pairs-aux i:term, i:term, o:list prop.
-      make-pairs-aux Ty (fun _ _ IBo) L' :- !,
-        pi x\ make-pairs-aux Ty (IBo x) (L x), close-prop-no-prune L L'.
-      make-pairs-aux (prod _ Ty Bo) V [pi x\ uvar-pair x Ty X' :- x == V, ! | L] :- !,
-        pi x\ make-pairs-aux (Bo x) X' L.
-      make-pairs-aux _ _ [].
-
-      pred make-pairs i:list term, o:list prop.
-      make-pairs [] [] :- !.
-      make-pairs [X|Xs] L :- !,
-        coq.typecheck X Ty ok,
-        make-pairs-aux Ty X L',
-        make-pairs Xs L'',
-        std.append L' L'' L.
-
-      pred get-uva-pair-arity i:term, i:list term, o:term.
-      get-uva-pair-arity X [] X :- !.
-      get-uva-pair-arity X [_|L] Z :- uvar-pair X _ Y, !, 
-        get-uva-pair-arity Y L Z.
-
-      pred decompile-problematic-term i:term, i:list prop, o:term, o:list prop.
-      % there is no need to decompile T since no precompilation is done inside coercions
-      decompile-problematic-term (tc.coercion T S) L1 Y [tc.link.cs Y T|L1] :- !,
-        prune Y S.
-      % there is no need to decompile T since no precompilation is done inside CS
-      decompile-problematic-term (tc.canonical-projection T S _) L1 Y [tc.link.cs Y T|L1] :- !,
-        prune Y S.
-
-      decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :- !,
-        prune V S, decompile-problematic-term T L T' L2.
-
-      decompile-problematic-term (tc.prod-range T _) A T' A' :- !,
-        decompile-problematic-term T A T' A'.
-
-      decompile-problematic-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
-        prune Z Sc,
-        get-uva-pair-arity H S Y,
-        std.fold-map NPF L decompile-problematic-term Tl L',
-        NL = tc.link.llam Z (app[Y | Tl]).
-
-      decompile-problematic-term (app[X|S]) L Z L :-
-        var X _ Scope, 
-        std.append Scope S Scope',
-        distinct_names Scope', !,
-        get-uva-pair-arity X S Y,
-        prune Z Scope', var Z Y Scope'.
-      
-      decompile-problematic-term (fun N Ty Bo) L (fun N Ty' Bo') L3 :- !,
-        (pi x\ decompile-problematic-term (Bo x) [] (Bo' x) (Lx x)),
-        close-term-no-prune-ty Lx {tc.compile.instance.clean-term Ty} L1,
-        decompile-problematic-term Ty L Ty' L2,
-        std.append L2 L1 L3.
-
-      decompile-problematic-term (prod N Ty Bo) L (prod N Ty' Bo') L3 :- !,
-        (pi x\ decompile-problematic-term (Bo x) [] (Bo' x) (Lx x)),
-        close-term-no-prune-ty Lx {tc.compile.instance.clean-term Ty} L1,
-        decompile-problematic-term Ty L Ty' L2,
-        std.append L2 L1 L3.
-
-      decompile-problematic-term (global _ as C) A C A :- !.
-      decompile-problematic-term (pglobal _ _ as C) A C A :- !.
-      decompile-problematic-term (sort _ as C) A C A :- !.
-      decompile-problematic-term (let N T B F) A (let N T1 B1 F1) A3 :- !,
-        decompile-problematic-term T A T1 A1, decompile-problematic-term B A1 B1 A2, pi x\ decompile-problematic-term (F x) A2 (F1 x) A3.
-      decompile-problematic-term (app L) A (app L1) A1 :- !, std.fold-map L A decompile-problematic-term L1 A1.
-      decompile-problematic-term (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
-        decompile-problematic-term Ty A Ty1 A1, pi x\ decompile-problematic-term (F x) A1 (F1 x) A2.
-      decompile-problematic-term (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
-        decompile-problematic-term T A T1 A1, decompile-problematic-term Rty A1 Rty1 A2, std.fold-map B A2 decompile-problematic-term B1 A3.
-      decompile-problematic-term (primitive _ as C) A C A :- !.
-      decompile-problematic-term (uvar _ _ as V) A V A :- !.
-      decompile-problematic-term X A Y A :- name X, !, X = Y, !.
-
-      pred compile i:term, i:list prop, o:term, o:list prop.
-      compile T L T' L' :- decompile-problematic-term T L T' L'.
-
-      %                                  Uva      Binders      LinkEta 
-      pred build-eta-links-of-vars-aux i:term, i:list term, o:list prop.
-      build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
-        uvar-pair Old Ty Next, !,
-        prune OldScope L,
-        prune Name L,
-        var OldScope Old L,
-        Hd = tc.link.eta OldScope (fun Name Ty (x\ NextScope x)),
-        pi x\ sigma L'\
-          std.append L [x] L',
-          prune (NextScope x) L',
-          var (NextScope x) Next L',
-          build-eta-links-of-vars-aux Next L' (Ys x), !,
-        sigma Closed\ (close-term-no-prune-ty Ys Ty Closed),
-        Xs = Closed.
-      build-eta-links-of-vars-aux _ _ [].
-
-      pred build-eta-links-of-vars i:list term, o:list prop.
-      build-eta-links-of-vars [] [].
-      build-eta-links-of-vars [V|Vars] L :-
-        var V Hd S,
-        build-eta-links-of-vars-aux Hd S L',
-        build-eta-links-of-vars Vars L'',
-        std.append L' L'' L.
-      build-eta-links-of-vars [fun _ Ty Bo|Vars] L :-
-        (pi x\ build-eta-links-of-vars [Bo x] (L' x), close-term-no-prune-ty L' Ty L''),
-        build-eta-links-of-vars Vars L''',
-        std.append L'' L''' L.
-    }
-    
-    %          Goal    Goal'      Links
-    pred goal i:term, o:term, o:list prop.
-    :name "compile-goal"
-    goal Goal Goal' Links :-
-      tc.precomp.goal Goal GoalPrecomp Vars, !,
-      goal.make-pairs Vars Pairs,
-      Pairs => (
-        std.assert!(goal.build-eta-links-of-vars Vars EtaLinks) "[TC] cannot build eta-links",
-        std.assert!(goal.compile GoalPrecomp EtaLinks Goal' Links) "[TC] cannot compile goal"
-      ).
   }
 }
