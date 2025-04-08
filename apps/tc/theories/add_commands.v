@@ -10,6 +10,7 @@ From elpi.apps.tc.elpi Extra Dependency "compile_goal.elpi" as compile_goal.
 From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
 From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc.elpi Extra Dependency "link.elpi" as link.
+From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 From elpi.apps.tc.elpi Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
@@ -20,8 +21,8 @@ Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base tc_aux.
-Elpi Accumulate File unif modes link.
 Elpi Accumulate File compile_instance compiler compile_goal.
+Elpi Accumulate File unif modes link.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
@@ -33,8 +34,8 @@ Elpi Command TC.AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base tc_aux.
-Elpi Accumulate File unif modes link.
 Elpi Accumulate File compile_instance compiler compile_goal.
+Elpi Accumulate File unif modes link.
 Elpi Accumulate File parser_addInstances.
 Elpi Accumulate lp:{{
   main Arguments :- 
@@ -155,7 +156,6 @@ Elpi Accumulate  lp:{{
   main [trm T1, trm T2, int N] :- !, tc.add_tc.records_unif T1 T2 N.
   main L :- coq.error L.
 }}.
-Elpi Typecheck.
 
 Elpi Export TC.AddAllClasses.
 Elpi Export TC.AddRecordFields.

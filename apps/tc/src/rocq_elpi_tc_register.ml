@@ -23,7 +23,7 @@ let gref2elpi_term (gref: GlobRef.t) : Cmd.raw =
 let observer_class (x : Typeclasses.typeclass) : Rocq_elpi_arg_HOAS.Cmd.raw list = 
   [Cmd.String "new_class"; gref2elpi_term x.cl_impl]
 
-let observer_coercion add (x : Typeclasses.typeclass) : Coq_elpi_arg_HOAS.Cmd.raw list = 
+let observer_coercion add (x : Typeclasses.typeclass) : Rocq_elpi_arg_HOAS.Cmd.raw list = 
   let name2str x = Cmd.String (Names.Name.print x |> Pp.string_of_ppcmds) in
   let proj = x.cl_projs |> List.map (fun (x: Typeclasses.class_method) -> x.meth_name) in
   let mode = if add then "add_coercions" else "remove_coercions" in

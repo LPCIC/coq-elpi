@@ -101,7 +101,8 @@ Elpi Db tc.db lp:{{
     pred ho-link o:term, i:term, o:A.
     pred link.eta i:term, i:term.
     pred link.llam i:term, i:term.
-
+    pred link.cs i:term, i:term.
+    pred link.build-eta-llam-links i:term, i:list prop, o:term, o:list prop.
 
     % relates a projection to the its record type fully applied to fresh
     % variables, eg, rules have the shape: (pi P1 ... PN\ proj->record {{p}} {{r P1 .. PN}})

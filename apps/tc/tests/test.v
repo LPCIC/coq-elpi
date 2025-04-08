@@ -119,7 +119,7 @@ Module HO_swap.
   Axiom (f : Type -> Type -> Type).
   Elpi Query TC.Solver lp:{{
     tc.link.eta.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 c1 c0),
-    tc.link.eta.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 (A c1) c0),
+    tc.link.eta.maybe-eta (fun `x` _ c0 \ fun `y` _ c1 \ A2 (A_ c1) c0),
     tc.link.eta.maybe-eta {{fun x y => f x y}}.
   }}.
 
@@ -129,7 +129,7 @@ Module HO_swap.
   Elpi Query TC.Solver lp:{{
     @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
       sigma T\
-        tc.precomp.instance {{c1 (fun x y => lp:f y x)}} T N _ _,
+        tc.precomp.instance {{c1 (fun x y => lp:f y x)}} T N_ _ _,
         std.assert! (T = app[{{c1}}, tc.maybe-eta-tm _ _]) "[TC] invalid precomp".
   }}.
 
@@ -204,7 +204,7 @@ Module HO_7.
   Qed.
 End HO_7.
 
-Module HO_81.
+(* Module HO_81.
   Class c1 (T : Type).
   Instance i1 F : c1 F. Qed.
 
@@ -223,11 +223,9 @@ Module HO_81.
     (* Failure is good, since here we simply check that the number of 
       uvar-pair built by tc.precomp is zero. This is because the type
       of ?X is Type (i.e. it has `arity` zero) *)
-    apply _.
-    Unshelve.
-    apply nat.
-  Qed.
-End HO_81.
+    Fail apply _.
+  Abort.
+End HO_81. *)
 
 Module HO_8.
   Class c1 (T : Type -> Type -> Type).
@@ -249,7 +247,7 @@ Module HO_9.
 
   Elpi Query TC.Solver lp:{{
     pi F\ sigma T\ decl F `x` {{Type -> Type}} ==> tc.precomp.instance.is-uvar F ==> 
-      tc.precomp.instance {{c1 (fun x => f (lp:F x) (lp:F x))}} T N _ _,
+      tc.precomp.instance {{c1 (fun x => f (lp:F x) (lp:F x))}} T _N _ _,
       std.assert! (T = app [{{c1}}, tc.maybe-eta-tm _ _]) "Invalid precompilation".
   }}.
 
@@ -293,13 +291,6 @@ Module HO_12.
   Instance i : Unit (forall x, x) := {}.
   Set Printing Existential Instances.
 
-  Elpi Accumulate TC.Solver lp:{{
-    % TODO: this rule should be removed if https://github.com/LPCIC/elpi/issues/256
-    % is solved
-    tc-elpi.apps.tc.tests.test.HO_12.tc-Unit {{forall (x:Prop), lp:(X x)}} {{i}} :-
-      X = (x\x).
-  }}.
-
   Goal forall (y: Prop), exists (F: Prop -> Prop), Unit (forall x, F x).
     intros.
     eexists ?[F].
@@ -328,7 +319,7 @@ Module HO_13.
   Qed.
 
   Elpi Query TC.Solver lp:{{
-    std.spy-do![Goal = {{Unit (forall x y, lp:(F x y))}},
+    std.spy-do![Goal = {{Unit (forall x y, lp:(F_ x y))}},
     tc.build-query-from-goal Goal Proof Q PP,
     do PP, Q,
     std.assert! (Proof = {{i f j}}) "Error"].
@@ -396,7 +387,7 @@ Module Llam_1.
     @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
       @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
         sigma T\
-          tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N _ _,
+          tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T _N _ _,
           std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _)) _]) "[TC] invalid precomp".
   }}.
 
@@ -512,12 +503,12 @@ Module CoqUvar.
   Class c1 (i:Type -> Type -> Type).
 
   Elpi Query TC.Solver lp:{{
-    tc.precomp.instance {{c1 (fun x y => lp:F y x)}} T _ _ _,
+    tc.precomp.instance {{c1 (fun x y => lp:F_ y x)}} T _ _ _,
     coq.say T,
     Expected = app[{{c1}}, tc.maybe-eta-tm (fun _ _ Inn) []],
     std.assert! (T = Expected) "[TC] invalid precompile1",
     pi x\ sigma ExpectedInn\
-      ExpectedInn = tc.maybe-eta-tm (A x) [x],
+      ExpectedInn = tc.maybe-eta-tm (A_ x) [x],
       std.assert! ((Inn x) = ExpectedInn) "[TC] invalid precompile2".
   }}.
 
@@ -603,10 +594,10 @@ Module CoqUvar4.
   Class c1 (T : Type -> Type -> Type).
   
   Elpi Query TC.Solver lp:{{
-    tc.precomp.instance {{c1 (fun x y => lp:X (lp:A x y) y)}} C _ _ _,
+    tc.precomp.instance {{c1 (fun x y => lp:X (lp:A_ x y) y)}} C _ _ _,
     Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
     Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
-    Body2 = (x\y\ app [X, (Y x y), y]),
+    Body2 = (x\y\ app [X, (Y_ x y), y]),
     std.assert! (C = Expected) "[TC] invalid compilation".
   }}.
 

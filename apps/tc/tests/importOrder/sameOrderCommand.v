@@ -14,8 +14,8 @@ Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File base.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File unif.
-Elpi Accumulate File link.
 Elpi Accumulate File compile_goal.
+Elpi Accumulate File link.
 Elpi Accumulate File tc_same_order.
 
 

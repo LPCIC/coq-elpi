@@ -9,6 +9,7 @@ From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
 
 From elpi.apps.tc.elpi Extra Dependency "link.elpi" as link.
+From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc.elpi Extra Dependency "compile_goal.elpi" as compile_goal.
 From elpi.apps.tc.elpi Extra Dependency "compile_instance.elpi" as compile_instance.

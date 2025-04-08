@@ -101,7 +101,7 @@ namespace tc {
         (pi x\ get-range-arity-aux T (B x) R1),
         min-max-nat R R1 R2.
       get-range-arity-aux _ (global _) @max-min :- !.
-      get-range-arity-aux _ (uvar _) @max-min :- !.
+      get-range-arity-aux _ uvar @max-min :- !.
       get-range-arity-aux _ (sort _) @max-min :- !.
       get-range-arity-aux _ (pglobal _ _) @max-min :- !.
       get-range-arity-aux A B _ :- coq.error "Count maximal arity failure" A B.
@@ -118,7 +118,7 @@ namespace tc {
       precompile-aux _ (primitive _ as C) A C A :- !.
       precompile-aux _ T A (tc.coercion T Scope) (s A) :- coq.safe-dest-app T HD _, tc.coercion-unify HD, !, free-var Scope.
       precompile-aux _ (app [global (const C) | _] as T) A (tc.canonical-projection T Scope N) (s A) :- coq.env.projection? C N, !, free-var Scope.
-      precompile-aux _ (app [primitive (proj P _) | _] as T) A (tc.canonical-projection T Scope 0) (s A) :- coq.env.primitive-projection? P _, !, free-var Scope.
+      precompile-aux _ (app [primitive (proj P _) | _] as T) A (tc.canonical-projection T Scope 0) (s A) :- coq.env.primitive-projection? P _ _, !, free-var Scope.
 
       % Detect maybe-eta term
       % TODO: should I precompile also the type of the fun and put it in the output term
@@ -387,8 +387,8 @@ namespace tc {
         i:list prop,
         o:prop.
       compile-premise L L2 P PTy ProofHd IsPositive ITy ProofArgsR PremR Clause :-
-        (pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
-          tc.get-TC-of-inst-type PTy TC, !,
+        ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
+          tc.get-TC-of-inst-type PTy TC), !,
         compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
         deterministic-prem TC NewPrem NewPrem',
         compile-ty L1 L2 ProofHd IsPositive ITy ProofArgsR [NewPrem' | PremR] Clause.

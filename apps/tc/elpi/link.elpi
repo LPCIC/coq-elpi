@@ -83,7 +83,7 @@ namespace tc {
       :index (_ 1)
       pred occurs-rigidly i:term, i:term.
       occurs-rigidly N N :- name N, !.
-      occurs-rigidly _ (uvar _) :- !, fail.
+      occurs-rigidly _ uvar :- !, fail.
       occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
       occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
@@ -127,10 +127,10 @@ namespace tc {
         rule solve-eta \ (eta A B _) <=> (unify-eta A B).
         rule \ solve-eta.
         % If two eta links have same lhs they rhs should unify
-        rule (N1 : G1 ?- eta (uvar X L1) (fun _ T1 B1) _) 
-            \ (N2 : G2 ?- eta (uvar X L2) (fun _ T2 B2) _) 
+        rule (N1 :> G1 ?- eta (uvar X L1) (fun _ T1 B1) _) 
+            \ (N2 :> G2 ?- eta (uvar X L2) (fun _ T2 B2) _) 
             | (pi x\ relocate L1 L2 (B2 x) (B2' x))
-        <=> (N1 : G1 ?- B1 = B2').
+        <=> (N1 :> G1 ?- B1 = B2').
       }
 
       :index (0 1)
@@ -139,7 +139,7 @@ namespace tc {
       eta A (fun _ _ B as T) _ :- not (var A), not (var B), !, unify-left-right A T.
       eta A (fun _ _ B as T) _ :- not (var (B _)), progress-eta-right? T T', !, A = T'. 
       eta A B                _ :- not (var A), !, progress-eta-left A B.
-      eta (uvar _ as A) B Vars :- 
+      eta (uvar as A) B Vars :- 
         scope-check A B, std.filter Vars (x\ var x) Vars', 
         declare_constraint (eta A B Vars') [_,A|Vars'].
     }
@@ -154,7 +154,7 @@ namespace tc {
       % app[A' x, t] instead of (A' x t).
       pred llam i:term, i:term.
       llam A (uvar _ S as T) :- distinct_names S, !, A = T.
-      llam (uvar _ as A) (app [(uvar HD _)|_] as T) :- !, 
+      llam (uvar as A) (app [(uvar as HD)|_] as T) :- !, 
         declare_constraint (llam A T) [_,A,HD].
       llam (fun _ _ _ as F) (app [(uvar _ Scope as H) | TL]) :- !, 
           std.drop-last 1 TL TL', 
@@ -168,10 +168,10 @@ namespace tc {
         rule solve-llam \ (llam A B) <=> (A = B).
         rule \ solve-llam.
         % If two llam links have same lhs they rhs should unify
-        rule (N1 : G1 ?- llam (uvar X L1) T1) 
-            \ (N2 : G2 ?- llam (uvar X L2) T2) 
+        rule (N1 :> G1 ?- llam (uvar X L1) T1) 
+            \ (N2 :> G2 ?- llam (uvar X L2) T2) 
             | (pi x\ relocate L1 L2 T2 T2')  
-        <=> (N1 : G1 ?- T1 = T2'). % TODO: instead of elpi unif, should use heuristics...
+        <=> (N1 :> G1 ?- T1 = T2'). % TODO: instead of elpi unif, should use heuristics...
       }
     }
 
@@ -184,19 +184,19 @@ namespace tc {
         coq.unify-eq T Record Err, Err = ok,
         Q = [coq.redflags.const Proj],
         coq.redflags.add coq.redflags.nored [coq.redflags.delta, coq.redflags.beta, coq.redflags.match | Q] RF,
-        @redflags! RF => coq.reduction.lazy.whd (app [ProjT, Record]) V',
+        (@redflags! RF => coq.reduction.lazy.whd (app [ProjT, Record]) V'),
         not (V' = match _ _ _), !,
         cs V V'.
       reduce-cs V T _ _ :- V = T.
 
       pred cs i:term, i:term.
       cs T1 T2 :- not (var T1), !, coq.unify-eq T1 T2 ok.
-      cs (uvar _ as V) (app [_, Arg] as T) :- not (ground_term Arg), !, get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
-      cs (uvar _ as V) (app [HD, _Arg] as T) :- 
+      cs (uvar as V) (app [_, Arg] as T) :- not (ground_term Arg), !, get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
+      cs (uvar as V) (app [HD, _Arg] as T) :- 
         tc.coercion-unify HD, !, 
         get-vars T Vars, declare_constraint (cs V T) [_, V | Vars].
 
-      cs (uvar _ as V) (app [HD | TL] as T) :- 
+      cs (uvar as V) (app [HD | TL] as T) :- 
         if (HD = global (const Proj), tc.proj->record Proj Record)
           (reduce-cs V T Record Proj)
           % Note: Below we cannot unify V and T since T may contain
