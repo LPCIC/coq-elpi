@@ -9,7 +9,6 @@ From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
 
 From elpi.apps.tc.elpi Extra Dependency "link.elpi" as link.
-From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
 From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler.
 From elpi.apps.tc.elpi Extra Dependency "compile_goal.elpi" as compile_goal.
 From elpi.apps.tc.elpi Extra Dependency "compile_instance.elpi" as compile_instance.
@@ -50,7 +49,7 @@ Elpi Accumulate lp:{{
 Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base tc_aux.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File unif modes link.
 Elpi Accumulate File compile_instance compile_goal.
 Elpi Accumulate File solver.
@@ -75,7 +74,7 @@ Elpi Query lp:{{
 Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base tc_aux.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate File unif modes link.
 Elpi Accumulate File compile_instance compiler compile_goal.
 Elpi Accumulate File create_tc_predicate.
@@ -123,7 +122,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Set_deterministic.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base tc_aux.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
     coq.locate ClassStr ClassGR, 
@@ -137,7 +136,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Get_class_info.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File base tc_aux.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   main [str ClassStr] :- 
     coq.locate ClassStr ClassGR, 
@@ -157,7 +156,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Unfold.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate Db tc.db.
-Elpi Accumulate File base tc_aux.
+Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
   pred tc.add-unfold i:gref.
   tc.add-unfold (const C) :-
