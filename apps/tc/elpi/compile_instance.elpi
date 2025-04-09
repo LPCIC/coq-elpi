@@ -110,7 +110,12 @@ namespace tc {
       get-range-arity _ Ty _ (r-ar z N) :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
       get-range-arity B _ T N :- !, get-range-arity-aux B T N. 
 
-      pred precompile-aux i:positivity, i:term, i:nat, o:term, o:nat.
+      pred precompile-aux 
+        i:positivity, % Positive or negaive position of the term being pre-compiled
+        i:term,       % Term being explored
+        i:nat,        % Number of pi to quantified accumulated
+        o:term,       % Precompiled term: problematic sub-terms are tagged with custom constructors
+        o:nat.        % Final number of pi to quantify
       precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
       precompile-aux _ (global _ as C) A C A :- !.
       precompile-aux _ (pglobal _ _ as C) A C A :- !.
@@ -376,16 +381,16 @@ namespace tc {
       deterministic-prem _ P P.
 
       pred compile-premise
-        i:list term,
-        o:list term,
-        i:term,
-        i:term,
-        i:term,
-        i:bool,
-        i:term,
-        i:list term,
-        i:list prop,
-        o:prop.
+        i:list term,       % List of pi-quantified vars to consume
+        o:list term,       % List of remaining pi-quantified variables
+        i:term,            % (Local) Name of the proof of the premise
+        i:term,            % Type of the local premise being consumed by compile-ty
+        i:term,            % Name of the instance being compiled (global {{:gref InstName}})
+        i:bool,            % Positive or negative position of the term
+        i:term,            % Type of InstName to compile
+        i:list term,       % List of the name of all local proofs
+        i:list prop,       % List of premises to add to the fianal clause
+        o:prop.            % The final clause
       compile-premise L L2 P PTy ProofHd IsPositive ITy ProofArgsR PremR Clause :-
         ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
           tc.get-TC-of-inst-type PTy TC), !,
@@ -396,14 +401,14 @@ namespace tc {
         compile-ty L L1 ProofHd IsPositive ITy ProofArgsR PremR Clause. 
 
       pred compile-ty 
-        i:list term,
-        i:list term,
-        i:term,
-        i:bool,
-        i:term,
-        i:list term,
-        i:list prop,
-        o:prop.
+        i:list term,       % List of pi-quantified vars to consume
+        o:list term,       % List of remaining pi-quantified variables
+        i:term,            % Name of the instance being compiled (global {{:gref InstName}}) 
+        i:bool,            % Positive or negative position of the term
+        i:term,            % Type of InstName to compile
+        i:list term,       % List of the name of all local proofs
+        i:list prop,       % List of premises to add to the fianal clause
+        o:prop.            % The final clause
       compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofArgsR PremR Clause :- !,
         std.do![
           if (IsPositive = tt) 
