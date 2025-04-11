@@ -351,7 +351,31 @@ let handle_uinst_option_for_inductive ~depth options i state =
  *     unify-list-eq R1 R2.
  *
  *)
-
+[%%if coq = "8.20" || coq = "9.0"]
+let build_of_sort = API.AlgebraicData.B (fun s -> Structures.ValuePattern.Sort_cs (Sorts.family s))
+let match_of_sort =
+  let open API.AlgebraicData in let open Structures.ValuePattern in
+  MS (fun ~ok ~ko p state -> match p with
+        | Sort_cs Sorts.InSet -> ok Sorts.set state
+        | Sort_cs Sorts.InProp -> ok Sorts.prop state
+        | Sort_cs Sorts.InType ->
+              let state, (_,u) = new_univ_level_variable state in
+              let u = Sorts.sort_of_univ u in
+              ok u state
+        | _ -> ko state)
+[%%else]
+let build_of_sort = API.AlgebraicData.B (fun s -> Structures.ValuePattern.Sort_cs (UnivGen.QualityOrSet.of_sort s))
+let match_of_sort =
+  let open API.AlgebraicData in let open Structures.ValuePattern in
+  MS (fun ~ok ~ko p state -> match p with
+        | Sort_cs UnivGen.QualityOrSet.Set -> ok Sorts.set state
+        | Sort_cs UnivGen.QualityOrSet.(Qual (QConstant QProp)) -> ok Sorts.prop state
+        | Sort_cs UnivGen.QualityOrSet.(Qual (QConstant QType)) ->
+              let state, (_,u) = new_univ_level_variable state in
+              let u = Sorts.sort_of_univ u in
+              ok u state
+        | _ -> ko state)
+[%%endif]
 
 
 let cs_pattern =
@@ -379,16 +403,7 @@ let cs_pattern =
     K("cs-default","",N,
       B Default_cs,
       M (fun ~ok ~ko -> function Default_cs -> ok | _ -> ko ()));
-    K("cs-sort","",A(sort,N),
-      B (fun s -> Sort_cs (Sorts.family s)),
-      MS (fun ~ok ~ko p state -> match p with
-        | Sort_cs Sorts.InSet -> ok Sorts.set state
-        | Sort_cs Sorts.InProp -> ok Sorts.prop state
-        | Sort_cs Sorts.InType ->
-              let state, (_,u) = new_univ_level_variable state in
-              let u = Sorts.sort_of_univ u in
-              ok u state
-        | _ -> ko state))
+    K("cs-sort","",A(sort,N),build_of_sort,match_of_sort)
   ]
 } |> CConv.(!<)
 
