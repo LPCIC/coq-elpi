@@ -17,6 +17,14 @@ let eq_cunit x y =
   | Signature s1, Signature s2 -> Hashtbl.hash s1 == Hashtbl.hash s2 (* BUG *)
   | _ -> false
 
+[%%if coq = "8.20" || coq = "9.0"]
+let my_filtered_open = Libobject.simple_open
+let my_simple_open ?cat f = my_filtered_open ?cat (fun i v -> if Int.equal i 1 then f v)
+[%%else]
+let my_filtered_open = Libobject.filtered_open
+let my_simple_open = Libobject.simple_open
+[%%endif]
+
 
 module SLMap = Map.Make(struct type t = qualified_name let compare = compare_qualified_name end)
 module SLSet = Set.Make(struct type t = qualified_name let compare = compare_qualified_name end)
@@ -356,7 +364,7 @@ let in_source : Names.Id.t -> string option * EC.compilation_unit * EC.flags -> 
     subst_function =(fun _ -> CErrors.user_err Pp.(str"elpi: No functors"));
     load_function  = import;
     cache_function  = cache;
-    open_function = simple_open import;
+    open_function = my_filtered_open import;
     discharge_function = (fun o -> Some o);
     classify_function = (fun _ -> Keep);
   }
@@ -550,8 +558,6 @@ let get ?(fail_if_not_exists=false) p =
       if Int.equal i 1 ||
         (s.scope = Rocq_elpi_utils.Global && is_inside_current_library kn) ||
         s.scope = Rocq_elpi_utils.SuperGlobal then cache o in
-    let import i (_,s as o) =
-      if Int.equal i 1 then cache o in
     declare_named_object @@ { (default_object "ELPI-DB") with
       classify_function = (fun { scope; program; _ } ->
         match scope with
@@ -562,7 +568,7 @@ let get ?(fail_if_not_exists=false) p =
       load_function  = load;
       cache_function  = cache;
       subst_function = (fun (_,o) -> o);
-      open_function = simple_open import;
+      open_function = my_simple_open cache;
       discharge_function = (fun (({ scope; program; vars; } as o)) ->
         if scope = Rocq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
         else Some o);
@@ -573,14 +579,12 @@ let get ?(fail_if_not_exists=false) p =
       let cache ((_,kn),((_,name),p)) =
         file_name_src := SLMap.add name p !file_name_src in
       let load i ((_,kn),_ as o) = cache o in
-      let import i (_,s as o) =
-        if Int.equal i 1 then cache o in
       declare_named_object @@ { (default_object "ELPI-FILE") with
         classify_function = (fun _ -> Keep);
         load_function  = load;
         cache_function  = cache;
         subst_function = (fun (_,o) -> o);
-        open_function = simple_open import;
+        open_function = my_simple_open cache;
         discharge_function = (fun o -> Some o);
       }
 
