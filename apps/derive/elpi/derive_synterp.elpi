@@ -33,7 +33,8 @@ toposort L SL :-
   std.findall (dep1 _ _) Deps,
   topo L Deps SL.
 
-func std.partition list A, (func A ->) -> list A, list A.
+:index(1)
+func std.partition list A, (pred i:A) -> list A, list A.
 std.partition [] _ [] [].
 std.partition [X|XS] P [X|R] L :- P X, !, std.partition XS P R L.
 std.partition [X|XS] P R [X|L] :- std.partition XS P R L.
