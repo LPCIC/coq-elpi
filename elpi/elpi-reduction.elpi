@@ -6,12 +6,12 @@
 
 typeabbrev stack (list term).
 
-pred hd-beta i:term, i:stack, o:term, o:stack.
+func hd-beta term, stack -> term, stack.
 pred hd-beta-zeta i:term, i:stack, o:term, o:stack.
 pred hd-beta-zeta-reduce i:term, o:term.
-pred whd i:term, i:stack, o:term, o:stack.
+func whd term, stack -> term, stack.
 pred whd-indc i:term, o:constructor, o:stack.
-pred unwind i:term, i:stack, o:term.
+func unwind term, stack -> term.
 pred whd1 i:term, o:term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -58,20 +58,24 @@ whd1 T R :-
   not(same_term T R).
 
 % iota step
-pred match-red i:constructor, i:list term, i:list term, i:stack, o:term, o:stack.
+:index (1)
+func match-red constructor, list term, list term, stack -> term, stack.
 match-red GR KArgs BL C X XC :-
   coq.env.indc GR Lno _ Ki _,
   drop Lno KArgs Args,
   nth Ki BL Bi,
   hd-beta {coq.mk-app Bi Args} C X XC.
-pred proj-red i:list term, i:int, i:stack, o:term, o:stack.
+
+:index (1)
+func proj-red list term, int, stack -> term, stack.
 proj-red Args FieldNo C V C :-
   nth FieldNo Args V.
 
 % iota step
-pred fix-red
-  i:(term -> term), i:term,
-  i:list term, i:constructor, i:list term, i:list term, o:term, o:stack. 
+:index (1)
+func fix-red
+  (term -> term), term,
+  list term, constructor, list term, list term -> term, stack. 
 fix-red F Fix LA GR KA RA X XC :-
   append LA [{coq.mk-app (global (indc GR)) KA}|RA] ArgsWRedRecNo,
   hd-beta {coq.mk-app (F Fix) ArgsWRedRecNo} [] X XC.
@@ -86,7 +90,8 @@ unfold GR none A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
 unfold GR (some I) A BO BOC :- (@uinstance! I ==> coq.env.const GR (some B) _), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
-pred cache-whd i:term, i:term, i:term.
+:index (1)
+func cache-whd term, term, term ->.
 cache-whd N K V :- cache N VN, var VN, !, whd V [] X XC, unwind X XC VN, K = VN.
 cache-whd N K _ :- cache N K, !.
 cache-whd N _ _ :- coq.error "anomaly: def with no cache:" {coq.term->string N}.

@@ -21,7 +21,7 @@ stop S :- get-option "ltac:fail" N, !, coq.ltac.fail N S.
 
 % Term surgery %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq.subst-prod i:list term, i:term, o:term.
+func coq.subst-prod list term, term -> term.
 coq.subst-prod [] P P :- !.
 coq.subst-prod [X|XS] (prod _ _ F) P :- !, coq.subst-prod XS (F X) P.
 coq.subst-prod XS (let _ _ X F) P :- !, coq.subst-prod XS (F X) P.
@@ -56,7 +56,7 @@ coq.count-prods T C :- !,
   coq.reduction.lazy.whd T Tr,
   if (T == Tr) (C = 0) (coq.count-prods Tr C).
 
-pred coq.mk-n-holes  i:int, o:list A.
+func coq.mk-n-holes int -> list A.
 coq.mk-n-holes  0 [] :- !.
 coq.mk-n-holes  N [HOLE_|R] :- !, M is N - 1, coq.mk-n-holes  M R.
 
@@ -65,14 +65,15 @@ coq.safe-dest-app (app [X|XS]) HD AllArgs :- !,
   coq.safe-dest-app X HD ARGS, append ARGS XS AllArgs.
 coq.safe-dest-app X X [].
 
-pred coq.mk-app i:term, i:list term, o:term.
+:index (_ 1)
+func coq.mk-app term, list term -> term.
 coq.mk-app HD [] HD :- !.
 coq.mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
 coq.mk-app (fun _ _ F) [A|Args] R :- !, coq.mk-app (F A) Args R.
 coq.mk-app (let _ _ A F) Args R :- !, coq.mk-app (F A) Args R.
 coq.mk-app HD Args (app [HD|Args]).
 
-pred coq.mk-app-uvar i:any, i:list term, o:term.
+func coq.mk-app-uvar any, list term -> term.
 coq.mk-app-uvar HD [] HD :- !.
 coq.mk-app-uvar ((uvar as K) : term) [A|Args] R :- !, unsafe-cast K K', coq.mk-app-uvar (K' A) Args R.
 
@@ -97,7 +98,7 @@ coq.saturate _ X X.
 % [copy A B] can be used to perform a replacement, eg
 %   (copy (const "foo") (const "bar") :- !) => copy A B
 % traverses A replacing foo with bar.
-pred copy i:term, o:term.
+func copy term -> term.
 :name "copy:start"
 copy X Y :- name X, !, X = Y, !. % avoid loading "copy x x" at binders
 copy (global _ as C) C :- !.
@@ -223,8 +224,8 @@ coq.build-indt-decl-aux (pr GR I) IsInd NUPno 0 Ty Kns KtysNu Params (inductive 
   std.map KtysNu (k\coq.term->arity k NUPno) Ktys,
   rev Params ParamsR,
   (pi i\ Sub i = [ % we factor uniform parameters
-    (pi x l\ copy (app[global (indt GR)|l]) (app[i|x]):- !, appendR ParamsR x l),
-    (pi x l ui\ copy (app[pglobal (indt GR) ui|l]) (app[i|x]):- !, appendR ParamsR x l),
+    (pi x l\ copy (app[global (indt GR)|l]) (app[i|x]):- !, appendR ParamsR x l, !),
+    (pi x l ui\ copy (app[pglobal (indt GR) ui|l]) (app[i|x]):- !, appendR ParamsR x l, !),
     (copy (global (indt GR)) i :- !),
     (pi ui\ copy (pglobal (indt GR) ui) i :- !) 
      ]),
@@ -497,7 +498,7 @@ pred coq.any-implicit? i:list implicit_kind.
 coq.any-implicit? L :- std.exists L (x\not(x = explicit)).
 
 % extract gref from terms that happen to have one
-pred coq.term->gref i:term, o:gref.
+func coq.term->gref term -> gref.
 coq.term->gref (global GR) GR :- !.
 coq.term->gref (pglobal GR _) GR :- !.
 coq.term->gref (app [Hd|_]) GR :- !, coq.term->gref Hd GR.

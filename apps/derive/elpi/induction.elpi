@@ -90,7 +90,7 @@ mk-subst-clause Ity P C :-
  coq.safe-dest-app Ity IT ITArgs,
  C = [(copy IT P :- !),
       (pi Args Rest O\
-        copy (app[IT|Args]) O :- !, appendR ITArgs Rest Args, coq.mk-app P Rest O)].
+        copy (app[IT|Args]) O :- !, appendR ITArgs Rest Args, coq.mk-app P Rest O, !)].
 
 pred params i:int, i:term, i:list term, i:list term, i:term, o:term.
 params N Ity K KT (prod Nx Sx x\ prod NP (SP x) (T x)) (fun Nx Sx x\ fun NP (SP x) (R1 x)) :- N > 0, !,
