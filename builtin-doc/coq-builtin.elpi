@@ -1412,7 +1412,7 @@ external func coq.arguments.set-simplification gref,
 % Also resets the ! and / modifiers for the Arguments command.
 % Supported attributes:
 % - @global! (default: false)
-external pred coq.arguments.reset-simplification i:gref.
+external func coq.arguments.reset-simplification gref.
 
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.
@@ -1597,7 +1597,7 @@ coq.reduction.vm.whd_all T TY R :-
 
 
 
-pred coq.reduction.lazy.whd_all i:term, o:term.
+func coq.reduction.lazy.whd_all term -> term.
 coq.reduction.lazy.whd_all X Y :-
   @redflags! coq.redflags.all => coq.reduction.lazy.whd X Y.
 

@@ -3794,7 +3794,7 @@ coq.reduction.vm.whd_all T TY R :-
 |};
 
   LPCode {|
-pred coq.reduction.lazy.whd_all i:term, o:term.
+func coq.reduction.lazy.whd_all term -> term.
 coq.reduction.lazy.whd_all X Y :-
   @redflags! coq.redflags.all => coq.reduction.lazy.whd X Y.
 |};

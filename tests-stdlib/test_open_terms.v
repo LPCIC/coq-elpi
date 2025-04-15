@@ -64,7 +64,7 @@ preserve_bound_variables I O :-
         (@pi-decl N1 T1 x\
           copy (F x) (F1 x)))) => copy I O).
 
-pred fresh-name i:name, i:term, o:name.
+func fresh-name name, term -> name.
 
 fresh-name N T M :-
   coq.ltac.fresh-id {coq.name->id N} T Mi,
