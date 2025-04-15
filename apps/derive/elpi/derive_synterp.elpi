@@ -33,12 +33,6 @@ toposort L SL :-
   std.findall (dep1 _ _) Deps,
   topo L Deps SL.
 
-:index(1)
-func std.partition list A, (pred i:A) -> list A, list A.
-std.partition [] _ [] [].
-std.partition [X|XS] P [X|R] L :- P X, !, std.partition XS P R L.
-std.partition [X|XS] P R [X|L] :- std.partition XS P R L.
-
 pred not-a-src i:list prop, i:derive.
 not-a-src Deps (derive A _ _) :- not(std.mem! Deps (dep1 A _)).
 
