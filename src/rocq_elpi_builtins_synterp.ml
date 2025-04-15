@@ -1024,7 +1024,7 @@ let coq_synterp_builtins =
   DocNext);
 
   LPCode {|
-pred coq.env.begin-module i:id, i:option modtypath.
+func coq.env.begin-module id, option modtypath -> .
 coq.env.begin-module Name MP :-
   coq.env.begin-module-functor Name MP [].
 |};
@@ -1061,7 +1061,7 @@ coq.env.begin-module Name MP :-
   DocNext);
 
   LPCode {|
-pred coq.env.begin-module-type i:id.
+func coq.env.begin-module-type id ->.
 coq.env.begin-module-type Name :-
   coq.env.begin-module-type-functor Name [].
 |};

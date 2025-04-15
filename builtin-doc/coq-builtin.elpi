@@ -854,7 +854,7 @@ external func coq.env.begin-module-functor % Starts a functor. bla bla
   list (pair id modtypath).  % Parameters of the functor (optional)
   
 
-pred coq.env.begin-module i:id, i:option modtypath.
+func coq.env.begin-module id, option modtypath -> .
 coq.env.begin-module Name MP :- coq.env.begin-module-functor Name MP [].
 
 
@@ -867,7 +867,7 @@ external func coq.env.begin-module-type-functor % Starts a module type functor *
   list (pair id modtypath).  % The parameters of the functor (optional)
   
 
-pred coq.env.begin-module-type i:id.
+func coq.env.begin-module-type id ->.
 coq.env.begin-module-type Name :-
   coq.env.begin-module-type-functor Name [].
 
