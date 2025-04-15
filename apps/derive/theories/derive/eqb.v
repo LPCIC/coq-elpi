@@ -15,7 +15,7 @@ Require Import eqType_ast tag fields.
 Register eqb_body as elpi.derive.eqb_body.
 
 Elpi Db derive.eqb.db lp:{{
-  pred whd1 i:term, o:term.
+  func whd1 term -> term.
   
   pred eqb-done o:gref.
 

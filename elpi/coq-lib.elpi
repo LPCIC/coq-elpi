@@ -440,15 +440,15 @@ coq.elaborate-arity-skeleton-nuparams XXX N U (parameter ID Imp T1 A1) Diag :- X
 coq.elaborate-arity-skeleton-nuparams (arity A) _ U (arity A1) Diag :-
   coq.elaborate-ty-skeleton A U A1 Diag.
 
-pred coq.term->arity i:term, i:int, o:arity.
-coq.term->arity T 0 (arity T).
+func coq.term->arity term, int -> arity.
+coq.term->arity T 0 (arity T) :- !.
 coq.term->arity (prod Name S T) N (parameter ID explicit S R) :-
   M is N - 1,
   coq.name->id Name ID,
   @pi-decl Name S x\ coq.term->arity (T x) M (R x).
 
 % extracts the sort at the end of an arity
-pred coq.arity->sort i:term, o:sort.
+func coq.arity->sort term -> sort.
 coq.arity->sort (prod N S X) Y :- !, @pi-decl N S x\ coq.arity->sort (X x) Y.
 coq.arity->sort (let N T V X) Y :- !, @pi-def N T V x\ coq.arity->sort (X x) Y.
 coq.arity->sort (sort X) X :- !.
@@ -457,13 +457,13 @@ coq.arity->sort X Y :- coq.reduction.lazy.whd X Xr, not (X == Xr), !,
 coq.arity->sort T _ :- fatal-error-w-data "arity->sort: not a sort or prod" T.
 
 % Counts how many parameters are there
-pred coq.arity->nparams i:arity, o:int.
+func coq.arity->nparams arity -> int.
 coq.arity->nparams (parameter _ _ _ In) O :-
   pi x\ coq.arity->nparams (In x) O1, O is O1 + 1.
 coq.arity->nparams (arity _) 0.
 
 % Prints an arity
-pred coq.arity->pp o:arity, o:coq.pp.
+func coq.arity->pp arity -> coq.pp.
 coq.arity->pp (parameter ID Imp T Arity) (coq.pp.glue Res) :-
   Res = [coq.pp.box (coq.pp.hv 2)
            [coq.pp.str A, coq.pp.str ID,
@@ -477,13 +477,13 @@ coq.arity->pp (parameter ID Imp T Arity) (coq.pp.glue Res) :-
 coq.arity->pp (arity T) (coq.pp.glue [coq.pp.str" : ",TPP]) :- coq.term->pp T TPP.
 
 % Get impargs setting from an arity
-pred coq.arity->implicits i:arity, o:list implicit_kind.
+func coq.arity->implicits arity -> list implicit_kind.
 coq.arity->implicits (parameter Id I Ty F) [I|Is] :-
   @pi-parameter Id Ty x\ coq.arity->implicits (F x) Is.
 coq.arity->implicits (arity _) [].
 
 % Get impargs setting from an indt-decl
-pred coq.indt-decl->implicits i:indt-decl, o:list implicit_kind, o:list (list implicit_kind).
+func coq.indt-decl->implicits indt-decl -> list implicit_kind, list (list implicit_kind).
 coq.indt-decl->implicits (parameter Id I Ty F) [I|Is] R :-
   @pi-parameter Id Ty x\ coq.indt-decl->implicits (F x) Is R1,
   std.map R1 (l\r\r = [I|l]) R.
@@ -494,8 +494,8 @@ coq.indt-decl->implicits (inductive Id _ A Ks) Is R :-
     std.map (Ks x) (c\i\sigma a\c = constructor _ a,coq.arity->implicits a i) R.
 
 % Check if some implicits are set
-pred coq.any-implicit? i:list implicit_kind.
-coq.any-implicit? L :- std.exists L (x\not(x = explicit)).
+func coq.any-implicit? list implicit_kind ->.
+coq.any-implicit? L :- std.exists! L (x\not(x = explicit)).
 
 % extract gref from terms that happen to have one
 func coq.term->gref term -> gref.
@@ -508,11 +508,11 @@ coq.term->gref (primitive (proj Proj _)) (const C) :- coq.env.primitive-projecti
 coq.term->gref Term _ :-
   fatal-error-w-data "term->gref: input has no global reference" Term.
 
-pred coq.fresh-type o:term.
+func coq.fresh-type -> term.
 coq.fresh-type (sort (typ U)) :- coq.univ.new U.
 
-pred coq.sort? i:term.
-coq.sort? (sort _).
+func coq.sort? term -> .
+coq.sort? (sort _) :- !.
 coq.sort? T :- whd1 T T1, coq.sort? T1.
 
 % Map the term under a spine of fun nodes
