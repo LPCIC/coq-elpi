@@ -7,12 +7,12 @@
 typeabbrev stack (list term).
 
 func hd-beta term, stack -> term, stack.
-pred hd-beta-zeta i:term, i:stack, o:term, o:stack.
-pred hd-beta-zeta-reduce i:term, o:term.
+func hd-beta-zeta term, stack -> term, stack.
+func hd-beta-zeta-reduce term -> term.
 func whd term, stack -> term, stack.
-pred whd-indc i:term, o:constructor, o:stack.
+func whd-indc term -> constructor, stack.
 func unwind term, stack -> term.
-pred whd1 i:term, o:term.
+func whd1 term -> term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

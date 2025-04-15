@@ -302,7 +302,7 @@ macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
 
 % Converts an arity to a term
-pred coq.arity->term i:arity, o:term.
+func coq.arity->term arity -> term.
 coq.arity->term (parameter ID _ Ty Rest) (prod Name Ty R) :-
   coq.id->name ID Name,
   @pi-decl Name Ty x\ coq.arity->term (Rest x) (R x).

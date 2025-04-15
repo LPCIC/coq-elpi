@@ -28,7 +28,7 @@ type eq-for inductive -> constant -> prop.
 }}.
 #[superglobal] Elpi Accumulate derive.eq.db lp:{{
 
-pred whd1 i:term, o:term.
+func whd1 term -> term.
 
 :name "eq-db:fail"
 eq-db A B F :-
