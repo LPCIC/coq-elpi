@@ -77,7 +77,7 @@ topo L Deps SL :-
   topo Other NewDeps SOther,
   std.append LNoDeps SOther SL.
 
-pred export? i:prop, o:prop.
+func export? prop -> prop.
 export? (export M) (coq.env.export-module M).
 
 pred indt-or-const i:gref.
