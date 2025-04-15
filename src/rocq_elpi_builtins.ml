@@ -4243,7 +4243,8 @@ Supported attributes:
 
   LPCode {|
 % see coq.elpi.accumulate-clauses
-pred coq.elpi.accumulate i:scope, i:id, i:clause.
+:index (1)
+func coq.elpi.accumulate scope, id, clause.
 coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 |};
 

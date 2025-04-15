@@ -60,7 +60,7 @@ func coq.mk-n-holes int -> list A.
 coq.mk-n-holes  0 [] :- !.
 coq.mk-n-holes  N [HOLE_|R] :- !, M is N - 1, coq.mk-n-holes  M R.
 
-pred coq.safe-dest-app i:term, o:term, o:list term.
+func coq.safe-dest-app term -> term, list term.
 coq.safe-dest-app (app [X|XS]) HD AllArgs :- !,
   coq.safe-dest-app X HD ARGS, append ARGS XS AllArgs.
 coq.safe-dest-app X X [].
@@ -627,7 +627,7 @@ coq.with-TC Class Instance->Clause Code :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq.replay-synterp-action i:synterp-action.
+func coq.replay-synterp-action synterp-action.
 coq.replay-synterp-action (begin-module ID) :- coq.env.begin-module ID _.
 coq.replay-synterp-action (end-module MP) :- coq.env.end-module MP.
 coq.replay-synterp-action (begin-module-type ID) :- coq.env.begin-module-type ID.
@@ -641,7 +641,7 @@ coq.replay-synterp-action (export-module MP) :- coq.env.export-module MP.
 coq.replay-synterp-action (begin-section ID) :- coq.env.begin-section ID.
 coq.replay-synterp-action (end-section) :- coq.env.end-section.
 
-pred coq.replay-next-synterp-actions.
+func coq.replay-next-synterp-actions.
 coq.replay-next-synterp-actions :-
   coq.next-synterp-action Action, !,
   coq.replay-synterp-action Action, !,
