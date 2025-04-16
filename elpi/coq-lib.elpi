@@ -29,7 +29,7 @@ coq.subst-prod XS (let _ _ X F) P :- !, coq.subst-prod XS (F X) P.
 coq.subst-prod [_|_] T _ :- !,
   fatal-error-w-data "subst-prod: not a product" T.
 
-pred coq.subst-fun i:list term, i:term, o:term.
+func coq.subst-fun list term, term -> term.
 coq.subst-fun [] T T :- !.
 coq.subst-fun [X|XS] (fun _ _ F) T :- !, coq.subst-fun XS (F X) T.
 coq.subst-fun XS (let _ _ X F) T :- !, coq.subst-fun XS (F X) T.
@@ -37,17 +37,17 @@ coq.subst-fun XS (let _ _ X F) T :- !, coq.subst-fun XS (F X) T.
 coq.subst-fun [_|_] T _ :- !, 
   fatal-error-w-data "subst-fun: not a lambda" T.
 
-pred coq.prod-R-fun o:term, o:term.
+func coq.prod-R-fun -> term, term.
 coq.prod-R-fun (prod N T F) (fun N T R) :- !, pi x\ coq.prod-R-fun (F x) (R x).
 coq.prod-R-fun (let N T B F) (let N T B R) :- !, pi x\ coq.prod-R-fun (F x) (R x).
 coq.prod-R-fun X X.
 
-pred coq.prod->fun i:term, o:term.
+func coq.prod->fun term -> term.
 coq.prod->fun (prod N T F) (fun N T R) :- !, pi x\ coq.prod->fun (F x) (R x).
 coq.prod->fun (let N T B F) (let N T B R) :- !, pi x\ coq.prod->fun (F x) (R x).
 coq.prod->fun X X.
 
-pred coq.count-prods i:term, o:int.
+func coq.count-prods term -> int.
 coq.count-prods (prod N T B) C :- !,
   (@pi-decl N T x\ coq.count-prods (B x) C'), C is C' + 1.
 coq.count-prods (let N T V B) C :- !,
@@ -80,7 +80,7 @@ coq.mk-app-uvar ((uvar as K) : term) [A|Args] R :- !, unsafe-cast K K', coq.mk-a
 % coq.mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
 % according to its type Ty. If n < 0 it makes as many step as
 % products in Ty. There be dragons if T has not type Ty.
-pred coq.mk-eta i:int, i:term, i:term, o:term.
+func coq.mk-eta int, term, term -> term.
 coq.mk-eta 0 _ B B :- !.
 coq.mk-eta N (prod Name Ty P) (fun _ _ F) (fun Name Ty F1) :- !, N1 is N - 1,
   pi x \ coq.mk-eta N1 (P x) (F x) (F1 x).
@@ -89,7 +89,7 @@ coq.mk-eta N (prod Name Ty P) B           (fun Name Ty B1) :- !, N1 is N - 1,
 :name "mk-eta:end"
 coq.mk-eta _ _ B B :- !.
 
-pred coq.saturate i:term, i:term, o:term.
+func coq.saturate term, term -> term.
 coq.saturate Ty T O :- whd Ty [] (prod N Src Tgt) [], !,
   coq.mk-app T [Hole_] R,
   @pi-decl N Src x\ coq.saturate (Tgt x) R O.
@@ -120,17 +120,17 @@ copy (uvar M L as X) W :- var X, !, map L copy L1, coq.mk-app-uvar M L1 W.
 % when used in CHR rules
 copy (uvar X L) (uvar X L1) :- map L copy L1.
 
-pred copy-ctx-item i:prop, o:prop.
+func copy-ctx-item prop -> prop.
 copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.
 copy-ctx-item (def X N T B) (def X1 N T1 B1) :-
   copy X X1, copy T T1, copy B B1.
 
-pred copy-arity i:arity, o:arity.
+func copy-arity arity -> arity.
 copy-arity (parameter ID IMP T R) (parameter ID IMP T1 R1) :-
   copy T T1, pi x\ copy-arity (R x) (R1 x).
 copy-arity (arity T) (arity T1) :- copy T T1.
 
-pred copy-indt-decl i:indt-decl, o:indt-decl.
+func copy-indt-decl indt-decl -> indt-decl.
 copy-indt-decl (parameter ID I Ty D) (parameter ID I Ty1 D1) :-
   copy Ty Ty1,
   @pi-parameter ID Ty1 x\ copy-indt-decl (D x) (D1 x).
@@ -141,16 +141,16 @@ copy-indt-decl (record ID T IDK F) (record ID T1 IDK F1) :-
   copy T T1,
   copy-fields F F1.
 
-pred copy-fields i:record-decl, o:record-decl.
+func copy-fields record-decl -> record-decl.
 copy-fields end-record end-record.
 copy-fields (field Att ID T F) (field Att ID T1 F1) :-
   copy T T1,
   @pi-parameter ID T1 x\ copy-fields (F x) (F1 x).
 
-pred copy-constructor i:indc-decl, o:indc-decl.
+func copy-constructor indc-decl -> indc-decl.
 copy-constructor (constructor ID A) (constructor ID A1) :- copy-arity A A1.
 
-pred fold-map i:term, i:A, o:term, o:A.
+func fold-map term, A -> term, A.
 :name "fold-map:start"
 fold-map X A Y A :- name X, !, X = Y, !. % avoid loading "fold-map x A x A" at binders
 fold-map (global _ as C) A C A :- !.
@@ -172,12 +172,12 @@ fold-map (uvar M L as X) A W A1 :- var X, !, std.fold-map L A fold-map L1 A1, co
 % when used in CHR rules
 fold-map (uvar X L) A (uvar X L1) A1 :- std.fold-map L A fold-map L1 A1.
 
-pred fold-map-ctx-item i:prop,  i:A, o:prop,o:A.
+func fold-map-ctx-item prop, A -> prop, A.
 fold-map-ctx-item (decl X N T) A (decl X1 N T1) A2 :- fold-map X A X1 A1, fold-map T A1 T1 A2.
 fold-map-ctx-item (def X N T B) A (def X1 N T1 B1) A3 :-
   fold-map X A X1 A1, fold-map T A1 T1 A2, fold-map B A2 B1 A3.
 
-pred fold-map-arity i:arity,  i:A, o:arity, o:A.
+func fold-map-arity arity, A -> arity, A.
 fold-map-arity (parameter ID IMP T R) A (parameter ID IMP T1 R1) A2 :-
   fold-map T A T1 A1, pi x\ fold-map-arity (R x) A1 (R1 x) A2.
 fold-map-arity (arity T) A (arity T1) A1 :- fold-map T A T1 A1.
@@ -187,11 +187,11 @@ fold-map-arity (arity T) A (arity T1) A1 :- fold-map T A T1 A1.
 % The arguments are the same of coq.env.indt plus an an extra one being
 % the output (of type indt-decl).
 
-pred coq.upoly-decl->attribute i:any, o:prop.
+func coq.upoly-decl->attribute any -> prop.
 coq.upoly-decl->attribute (upoly-decl A B C D) (@udecl! A B C D).
 coq.upoly-decl->attribute (upoly-decl-cumul A B C D) (@udecl-cumul! A B C D).
 
-pred coq.upoly-decl.complete-constraints i:upoly-decl, o:upoly-decl.
+func coq.upoly-decl.complete-constraints upoly-decl -> upoly-decl.
 coq.upoly-decl.complete-constraints (upoly-decl VS LV CS LC) (upoly-decl VS LV CS1 LC) :- std.do! [
   std.map VS coq.univ.variable.constraints ExtraL,
   std.flatten ExtraL Extra,
@@ -204,21 +204,21 @@ coq.upoly-decl.complete-constraints (upoly-decl-cumul VS LV CS LC) (upoly-decl-c
   std.filter Extra (c\not(std.mem CS c)) New,
   std.append CS New CS1,
 ].
-pred coq.upoly-decl-cumul.complete-constraints.aux i:univ-variance, o:list univ-constraint.
+func coq.upoly-decl-cumul.complete-constraints.aux univ-variance -> list univ-constraint.
 coq.upoly-decl-cumul.complete-constraints.aux (auto V) CS :- coq.univ.variable.constraints V CS.
 coq.upoly-decl-cumul.complete-constraints.aux (covariant V) CS :- coq.univ.variable.constraints V CS.
 coq.upoly-decl-cumul.complete-constraints.aux (invariant V) CS :- coq.univ.variable.constraints V CS.
 coq.upoly-decl-cumul.complete-constraints.aux (irrelevant V) CS :- coq.univ.variable.constraints V CS.
 
-
-pred coq.build-indt-decl
-  i:(pair inductive id), i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, o:indt-decl.
+:index (1)
+func coq.build-indt-decl
+  (pair inductive id), bool, int, int, term, list (pair constructor id), list term -> indt-decl.
 
 coq.build-indt-decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
   coq.build-indt-decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
 
-pred coq.build-indt-decl-aux
-  i:pair inductive id, i:bool, i:int, i:int, i:term, i:list (pair constructor id), i:list term, i:list term, o:indt-decl.
+func coq.build-indt-decl-aux
+  pair inductive id, bool, int, int, term, list (pair constructor id), list term, list term -> indt-decl.
 coq.build-indt-decl-aux (pr GR I) IsInd NUPno 0 Ty Kns KtysNu Params (inductive I IsInd Arity Ks) :- !,
   coq.term->arity Ty NUPno Arity,
   std.map KtysNu (k\coq.term->arity k NUPno) Ktys,
@@ -249,10 +249,11 @@ coq.build-indt-decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (paramete
 coq.build-indt-decl-aux _ _ _ _ _ _ _ _ _ :- !,
   fatal-error "coq.build-indt-decl-aux: invalid declaration".
 
-pred coq.rename-arity
-  i:(pred i:id, o:id),
-  i:arity,
-  o:arity.
+:index (_ 1)
+func coq.rename-arity
+  (func id -> id),
+  arity ->
+  arity.
 coq.rename-arity RP (parameter ID I TY In) (parameter ID1 I TY Out) :-
   RP ID ID1,
   @pi-parameter ID TY p\
@@ -261,11 +262,12 @@ coq.rename-arity _ (arity T) (arity T).
 
 % [coq.rename-indt-decl RenameParam RenameIndType RenameIndConstr D D1]
 % can be used to rename all [id] part of an inductive type declaration
-pred coq.rename-indt-decl
-  i:(pred i:id, o:id),
-  i:(pred i:id, o:id),
-  i:(pred i:id, o:id),
-  i:indt-decl, o:indt-decl.
+:index (_ _ _ 1)
+func coq.rename-indt-decl
+  (func id -> id),
+  (func id -> id),
+  (func id -> id),
+  indt-decl -> indt-decl.
 coq.rename-indt-decl RP RI RK (parameter ID I TY In) (parameter ID1 I TY Out) :-
   RP ID ID1,
   @pi-parameter ID TY p\
@@ -281,16 +283,16 @@ coq.rename-indt-decl _ RI RK (record ID A KID F) (record ID1 A KID1 F) :-
   RI ID ID1,
   RK KID KID1.
 
-pred coq.rename-indt-decl.aux
-  i:(pred i:id, o:id),
-  i:(pred i:id, o:id),
-  i:(pred i:id, o:id),
-  i:indc-decl, o:indc-decl.
+func coq.rename-indt-decl.aux
+  (func id -> id),
+  (func id -> id),
+  (func id -> id),
+  indc-decl -> indc-decl.
 coq.rename-indt-decl.aux RP _ RK (constructor ID A) (constructor ID1 A1) :-
   RK ID ID1,
   coq.rename-arity RP A A1.
 
-pred coq.ensure-fresh-global-id i:string, o:string.
+func coq.ensure-fresh-global-id string -> string.
 coq.ensure-fresh-global-id Exp S :-
   Name is Exp,
   coq.env.fresh-global-id Name S,
@@ -298,12 +300,12 @@ coq.ensure-fresh-global-id Exp S :-
      (coq.warning "elpi" "elpi.renamed" "Global name" Name "is taken, using" S "instead").
 
 % Lifts coq.typecheck to inductive declarations
-pred coq.typecheck-indt-decl.heuristic-var-type i:term, o:diagnostic.
+func coq.typecheck-indt-decl.heuristic-var-type term -> diagnostic.
 coq.typecheck-indt-decl.heuristic-var-type (uvar _ _ as X) D :- !,
   coq.univ.new U, coq.unify-eq X (sort (typ U)) D.
 coq.typecheck-indt-decl.heuristic-var-type _ ok.
 
-pred coq.typecheck-indt-arity i:arity, o:term, o:int, o:diagnostic.
+func coq.typecheck-indt-arity arity -> term, int, diagnostic.
 coq.typecheck-indt-arity (parameter ID _ T D) (prod N T F) NU1 Diag :- do-ok! Diag [
   coq.typecheck-ty T _,
   (d\ @pi-parameter ID T x\ coq.typecheck-indt-arity (D x) (F x) NU d),
@@ -315,7 +317,7 @@ coq.typecheck-indt-arity (arity T) T 0 Diag :- do-ok! Diag [
   coq.typecheck-indt-decl.heuristic-var-type T,
 ].
 
-pred coq.typecheck-indt-decl i:indt-decl, o:diagnostic.
+func coq.typecheck-indt-decl indt-decl -> diagnostic.
 coq.typecheck-indt-decl (parameter ID _ T Decl) Diag :- do-ok! Diag [
   coq.typecheck-ty T _,
   (d\ @pi-parameter ID T x\ coq.typecheck-indt-decl (Decl x) d),
@@ -332,7 +334,7 @@ coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- do-ok! Diag [
   ]
 ].
 
-pred coq.typecheck-indc-arity i:arity, i:int, o:term, o:sort, o:diagnostic.
+func coq.typecheck-indc-arity arity, int -> term, sort, diagnostic.
 coq.typecheck-indc-arity A 0 T S Diag :- !,
   coq.arity->term A T,
   coq.typecheck-ty T S Diag.
@@ -343,7 +345,7 @@ coq.typecheck-indc-arity (parameter ID _ T D) NUPNO (prod N T F) S Diag :- do-ok
   lift-ok (coq.id->name ID N) "",
 ].
 
-pred coq.typecheck-indt-decl-c i:term, i:term, i:int, i:indc-decl, o:diagnostic.
+func coq.typecheck-indt-decl-c term, term, int, indc-decl -> diagnostic.
 coq.typecheck-indt-decl-c I S NUPNO (constructor _ID Arity) Diag :- do-ok! Diag [
   coq.typecheck-indc-arity Arity NUPNO T KS,
   coq.typecheck-indt-decl-c.unify-arrow-tgt I 0 S T,
@@ -351,7 +353,8 @@ coq.typecheck-indt-decl-c I S NUPNO (constructor _ID Arity) Diag :- do-ok! Diag 
   lift-ok (coq.sort.leq KS IS) "constructor universe too large"
 ].
 
-pred coq.typecheck-indt-decl-c.unify-arrow-tgt i:term, i:int, i:term, i:term, o:diagnostic.
+:index (_ _ _ 1)
+func coq.typecheck-indt-decl-c.unify-arrow-tgt term, int, term, term -> diagnostic.
 coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (prod N S T) D :-
   @pi-decl N S x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (T x) D.
 coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (let N S B T) D :-
@@ -362,14 +365,16 @@ coq.typecheck-indt-decl-c.unify-arrow-tgt I P A Concl D :-
   coq.mk-app I Args IArgs,
   coq.unify-eq Concl IArgs D.
 
-pred coq.typecheck-indt-decl-field i:term, i:record-decl, o:term.
+:index (_ 2)
+func coq.typecheck-indt-decl-field term, record-decl -> term.
 coq.typecheck-indt-decl-field I end-record I.
 coq.typecheck-indt-decl-field I (field _ ID T F) (prod N T F1) :-
   coq.id->name ID N,
   @pi-decl N T a\ coq.typecheck-indt-decl-field I (F a) (F1 a).
 
 % Lifts coq.elaborate-skeleton to inductive declarations
-pred coq.elaborate-indt-decl-skeleton i:indt-decl, o:indt-decl, o:diagnostic.
+:index (1)
+func coq.elaborate-indt-decl-skeleton indt-decl -> indt-decl, diagnostic.
 coq.elaborate-indt-decl-skeleton (parameter ID Imp T Decl) (parameter ID Imp T1 Decl1) Diag :- do-ok! Diag [
   coq.elaborate-ty-skeleton T _ T1,
   (d\ @pi-parameter ID T1 x\ coq.elaborate-indt-decl-skeleton (Decl x) (Decl1 x) d),
@@ -388,7 +393,8 @@ coq.elaborate-indt-decl-skeleton (record ID A IDK FDecl) (record ID A1 IDK FDecl
   d\ @pi-parameter ID A1 i\ coq.elaborate-indt-decl-skeleton-fields U FDecl FDecl1 d
 ].
 
-pred coq.elaborate-indt-decl-skeleton-fields i:sort, i:record-decl, o:record-decl, o:diagnostic.
+:index (_ 1)
+func coq.elaborate-indt-decl-skeleton-fields sort, record-decl -> record-decl, diagnostic.
 coq.elaborate-indt-decl-skeleton-fields _ end-record end-record ok.
 coq.elaborate-indt-decl-skeleton-fields U (field Att ID A Fields) (field Att ID A1 Fields1) Diag :- do-ok! Diag [
   coq.elaborate-ty-skeleton A UA A1,
@@ -397,7 +403,7 @@ coq.elaborate-indt-decl-skeleton-fields U (field Att ID A Fields) (field Att ID 
        coq.elaborate-indt-decl-skeleton-fields U (Fields p) (Fields1 p) d
 ].
 
-pred coq.elaborate-indt-decl-skeleton-c i:term, i:arity, i:int, i:indc-decl, o:indc-decl, o:diagnostic.
+func coq.elaborate-indt-decl-skeleton-c term, arity, int, indc-decl -> indc-decl, diagnostic.
 coq.elaborate-indt-decl-skeleton-c I SA NUPNO (constructor ID Arity) (constructor ID Arity1) Diag :- do-ok! Diag [
   coq.elaborate-arity-skeleton-nuparams Arity NUPNO KS Arity1,
   coq.typecheck-indt-decl-c.unify-arity I 0 SA Arity1,
@@ -405,7 +411,8 @@ coq.elaborate-indt-decl-skeleton-c I SA NUPNO (constructor ID Arity) (constructo
   lift-ok (coq.sort.leq KS IS) "constructor universe too large"
 ].
 
-pred coq.typecheck-indt-decl-c.unify-arity i:term, i:int, i:arity, i:arity, o:diagnostic.
+:index (_ _ 1 1)
+func coq.typecheck-indt-decl-c.unify-arity term, int, arity, arity -> diagnostic.
 coq.typecheck-indt-decl-c.unify-arity I PNO (parameter _ _ T1 A) (parameter ID _ T C) D :- do-ok! D [
   coq.unify-eq T1 T,
   lift-ok (PNO1 is PNO + 1) "",
@@ -417,7 +424,7 @@ coq.typecheck-indt-decl-c.unify-arity I PNO (arity A) (arity C) D :-
   coq.typecheck-indt-decl-c.unify-arrow-tgt I PNO A C D.
 
 % Lifts coq.elaborate-skeleton to arity
-pred coq.elaborate-arity-skeleton i:arity, o:sort, o:arity, o:diagnostic.
+func coq.elaborate-arity-skeleton arity -> sort, arity, diagnostic.
 coq.elaborate-arity-skeleton (parameter ID Imp T A) U3 (parameter ID Imp T1 A1) Diag :- do-ok! Diag [
   coq.elaborate-ty-skeleton T U1 T1,
   (d\ @pi-parameter ID T1 i\ coq.elaborate-arity-skeleton (A i) U2 (A1 i) d),
@@ -426,13 +433,14 @@ coq.elaborate-arity-skeleton (parameter ID Imp T A) U3 (parameter ID Imp T1 A1) 
 coq.elaborate-arity-skeleton (arity A) U (arity A1) Diag :-
   coq.elaborate-ty-skeleton A U A1 Diag.
 
-pred coq.elaborate-arity-skeleton-nuparams i:arity, i:int, o:sort, o:arity, o:diagnostic.
+:index (1)
+func coq.elaborate-arity-skeleton-nuparams arity, int -> sort, arity, diagnostic.
 coq.elaborate-arity-skeleton-nuparams (parameter ID Imp T A) 0 U3 (parameter ID Imp T1 A1) Diag :- !, do-ok! Diag [
   coq.elaborate-ty-skeleton T U1 T1,
   (d\ @pi-parameter ID T1 i\ coq.elaborate-arity-skeleton-nuparams (A i) 0 U2 (A1 i) d),
   lift-ok (coq.sort.pts-triple U1 U2 U3) "coq.elaborate-arity-skeleton-nuparams: should not happen",
 ].
-coq.elaborate-arity-skeleton-nuparams XXX N U (parameter ID Imp T1 A1) Diag :- XXX = (parameter ID Imp T A), do-ok! Diag [
+coq.elaborate-arity-skeleton-nuparams (parameter ID Imp T A) N U (parameter ID Imp T1 A1) Diag :- do-ok! Diag [
   coq.elaborate-ty-skeleton T _ T1,
   lift-ok (M is N - 1) "",
   (d\ @pi-parameter ID T1 i\ coq.elaborate-arity-skeleton-nuparams (A i) M U (A1 i) d),
@@ -516,30 +524,31 @@ coq.sort? (sort _) :- !.
 coq.sort? T :- whd1 T T1, coq.sort? T1.
 
 % Map the term under a spine of fun nodes
-pred coq.map-under-fun i:term,
+func coq.map-under-fun term,
   % InputTermUnderLams LamBoundVars TheirTypes Result
-  i:(pred i:term, i:list term, i:list term, o:term),
-  o:term.
+  (func term, list term, list term -> term) ->
+  term.
 coq.map-under-fun T F R :- map-under-fun.aux T [] [] F R.
 
-pred map-under-fun.aux i:term,
-  i:list term, i:list term,
-  i:(pred i:term, i:list term, i:list term, o:term),
-  o:term.
+:index (1)
+func map-under-fun.aux term,
+  list term, list term,
+  (func term, list term, list term -> term)
+  -> term.
 map-under-fun.aux (fun N T B) AccT AccTy F (fun N T R) :- !,
   @pi-decl N T x\ map-under-fun.aux (B x) [x|AccT] [T|AccTy] F (R x).
 map-under-fun.aux (let N T X B) AccT AccTy F (let N T X R) :- !,
   @pi-def N T X x\ map-under-fun.aux (B x) AccT AccTy F (R x).
 map-under-fun.aux End AccT AccTy F R :- F End {rev AccT} {rev AccTy} R.
 
-pred coq.iter-under-fun i:term,
+func coq.iter-under-fun term,
   % InputTermUnderLams LamBoundVars TheirTypes
-  i:(term -> list term -> list term -> prop).
+  (func term, list term, list term ->).
 coq.iter-under-fun T F :- iter-under-fun.aux T [] [] F.
 
-pred iter-under-fun.aux i:term,
-  i:list term, i:list term,
-  i:(term -> list term -> list term -> prop).
+func iter-under-fun.aux term,
+  list term, list term,
+  (func term, list term, list term ->) ->.
 iter-under-fun.aux (fun N T B) AccT AccTy F :- !,
   @pi-decl N T x\ iter-under-fun.aux (B x) [x|AccT] [T|AccTy] F.
 iter-under-fun.aux (let _ _ X B) AccT AccTy F :- !,
@@ -548,14 +557,14 @@ iter-under-fun.aux End AccT AccTy F :- F End {rev AccT} {rev AccTy}.
 
 % Build a match given the term and function to build the return type and the
 % branches
-pred coq.build-match
-  i:term, % T, the term being matched
-  i:term, % the type of T, expected to be an inductive, eventually applied
+func coq.build-match
+  term, % T, the term being matched
+  term, % the type of T, expected to be an inductive, eventually applied
   % MkRty: IndSort LamBoundVars TheirTypes Result
-  i:(pred i:term, i:list term, i:list term, o:term),
+  (func term, list term, list term -> term),
   % MkBranch: Constructor ConstructorTyUnderLams LamBoundVars TheirTypes Result
-  i:(pred i:term, i:term, i:list term, i:list term, o:term),
-  o:term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
+  (func term, term, list term, list term -> term)
+  -> term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   whd Tty [] HD Args,
   if2 (HD = global (indt GR)) true
@@ -575,16 +584,18 @@ coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
 
 % XXX the list of arguments are often needed in reverse order
+:functional
 pred coq.bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
   i:term, % the inductive type
   i:term, % the arity
-  i:(pred i:term, i:list term, i:list term, o:term), % Sort Vars Tys Out
+  i:(func term, list term, list term -> term), % Sort Vars Tys Out
   o:term. %
+:functional
 pred coq.bind-ind-arity.aux 
   i:term,
   o:term,
   i:list term, i:list term, i:term,
-  i:(pred i:term, i:list term, i:list term, o:term).
+  i:(func term, list term, list term -> term).
 coq.bind-ind-arity.aux (prod N T B) (fun N T F) AccT AccTy IT K :- !,
   @pi-decl N T x\ coq.bind-ind-arity.aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
 coq.bind-ind-arity.aux (let N T X B) (let N T X F) AccT AccTy IT K :- !,
@@ -595,18 +606,18 @@ coq.bind-ind-arity.aux (sort _ as Sort) (fun `i` ITy F) AccT AccTy IT K :-
   @pi-decl `i` ITy x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
 coq.bind-ind-arity IT Arity F R :- coq.bind-ind-arity.aux Arity R [] [] IT F.
 % As above but let-ins are reduced
-pred coq.bind-ind-arity-no-let i:term, i:term, i:(pred i:term, i:list term, i:list term, o:term), o:term.
+func coq.bind-ind-arity-no-let term, term, (func term, list term, list term -> term) -> term.
 coq.bind-ind-arity-no-let IT Arity F R :-
   (pi N T X B F AccT AccTy IT K\
     coq.bind-ind-arity.aux (let N T X B) F AccT AccTy IT K :- !,
       coq.bind-ind-arity.aux (B X) F AccT AccTy IT K) =>
   coq.bind-ind-arity.aux Arity R [] [] IT F.
   
-pred coq.bind-ind-parameters i:inductive, i:(pred i:term, i:list term, i:list term, o:term), o:term.
+func coq.bind-ind-parameters inductive, (func term, list term, list term -> term) -> term.
 coq.bind-ind-parameters I K O :-
   coq.env.indt I _ _ N A _ _,
   coq.bind-ind-parameters.aux N A [] [] K O.
-pred coq.bind-ind-parameters.aux i:int, i:term, i:list term, i:list term, i:(pred i:term, i:list term, i:list term, o:term), o:term.
+func coq.bind-ind-parameters.aux int, term, list term, list term, (func term, list term, list term -> term) -> term.
 coq.bind-ind-parameters.aux 0 Ty Vars Tys K O :- !, K Ty {std.rev Vars} {std.rev Tys} O.
 coq.bind-ind-parameters.aux I (prod N T F) Vs Ts K (fun N T G) :- I > 0, !, J is I - 1,
   @pi-decl N T x\
@@ -619,7 +630,7 @@ coq.bind-ind-parameters.aux I T Vs Ts K O :- I > 0, whd1 T T', !,
 
 % coq.with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
-pred coq.with-TC i:term, i:(pred i:tc-instance, o:prop), i:prop.
+func coq.with-TC term, (func tc-instance -> prop), fprop ->.
 coq.with-TC Class Instance->Clause Code :-
   coq.TC.db-for {coq.term->gref Class} Instances,
   map Instances Instance->Clause Hyps, !,
