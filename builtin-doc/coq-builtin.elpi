@@ -1381,13 +1381,6 @@ external func coq.arguments.simplification gref -> option simplification_strateg
 external func coq.arguments.set-simplification gref, 
                                               simplification_strategy.
 
-% [coq.arguments.reset-simplification GR] resets the behavior of the
-% simplification tactics.
-% Also resets the ! and / modifiers for the Arguments command.
-% Supported attributes:
-% - @global! (default: false)
-external func coq.arguments.reset-simplification gref.
-
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.
 external func coq.locate-abbreviation id -> abbreviation.
