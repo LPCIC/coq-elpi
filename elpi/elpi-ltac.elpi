@@ -5,10 +5,10 @@ typeabbrev tactic (pred i:sealed-goal, o:list sealed-goal).
 typeabbrev open-tactic (pred i:goal, o:list sealed-goal).
 
 % The one tactic ------------------------------------------------------------
-pred refine i:term, i:goal, o:list sealed-goal.
+func refine term, goal -> list sealed-goal.
 refine T G GS :- refine.elaborate T G GS.
 
-pred refine.elaborate i:term, i:goal, o:list sealed-goal.
+func refine.elaborate term, goal -> list sealed-goal.
 refine.elaborate T (goal _ RawEv Ty Ev _) GS :-
   rm-evar RawEv Ev,
   (@keepunivs! => coq.elaborate-skeleton T Ty TR ok),
@@ -16,7 +16,7 @@ refine.elaborate T (goal _ RawEv Ty Ev _) GS :-
   RawEv = T,
   Ev = TR.
 
-pred refine.typecheck i:term, i:goal, o:list sealed-goal.
+func refine.typecheck term, goal -> list sealed-goal.
 refine.typecheck T (goal _ RawEv Ty Ev _) GS :-
   rm-evar RawEv Ev,
   coq.typecheck T Ty ok,
@@ -24,7 +24,7 @@ refine.typecheck T (goal _ RawEv Ty Ev _) GS :-
   RawEv = T,
   Ev = T.
 
-pred refine.no_check i:term, i:goal, o:list sealed-goal.
+func refine.no_check term, goal -> list sealed-goal.
 refine.no_check T (goal _ RawEv _ Ev _) GS :-
   rm-evar RawEv Ev,
   coq.ltac.collect-goals T GS _,
