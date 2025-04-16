@@ -101,8 +101,8 @@ macro @cast T TY :- (let `cast` TY T x\x).
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
 
-external pred decl o:term, o:name, o:term. % Var Name Ty
-external pred def  o:term, o:name, o:term, o:term. % Var Name Ty Bo
+external func decl term -> name, term. % Var Name Ty
+external func def  term -> name, term, term. % Var Name Ty Bo
 external func cache term -> term.
 
 external pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
