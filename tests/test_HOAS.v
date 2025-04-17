@@ -647,3 +647,24 @@ coq.env.add-indt D _,
 coq.env.end-module _
 }}.
 
+Elpi Command Comm.
+Elpi Accumulate  lp:{{
+  main [indt-decl X] :- coq.say X,
+    coq.env.add-indt X _.
+}}.
+Elpi Comm Class c {A : Type} (x : A -> A).
+Goal c S. Abort.
+
+Elpi Query lp:{{
+  coq.typecheck-ty (sort (typ X)) A ok,
+  A = typ TX,
+  not(coq.univ.alg-super X TX),
+  coq.say X ":" TX,
+  @keep-alg-univs! => coq.typecheck-ty (sort (typ Y)) B ok,
+  B = typ TY,
+  coq.say Y ":" TY,
+  coq.univ.alg-super Y TY,
+  coq.say Y ":" TY
+  .
+
+}}.

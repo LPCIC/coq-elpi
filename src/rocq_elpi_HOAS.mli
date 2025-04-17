@@ -48,6 +48,7 @@ type options = {
   keepunivs : bool option;
   redflags : RedFlags.reds option;
   no_tc: bool option;
+  algunivs : bool option;
 }
 
 type 'a coq_context = {
@@ -154,7 +155,7 @@ val in_elpi_gr : depth:int -> State.t -> Names.GlobRef.t -> term
 val in_elpi_poly_gr : depth:int -> State.t -> Names.GlobRef.t -> term -> term
 val in_elpi_poly_gr_instance : depth:int -> State.t -> Names.GlobRef.t -> UVars.Instance.t -> term
 val in_elpi_flex_sort : term -> term
-val in_elpi_sort : depth:int -> state -> Sorts.t -> state * term
+val in_elpi_sort : depth:int -> 'a coq_context -> constraints -> state -> Sorts.t -> state * term * Conversion.extra_goals
 val in_elpi_prod : Name.t -> term -> term -> term
 val in_elpi_lam : Name.t -> term -> term -> term
 val in_elpi_let : Name.t -> term -> term -> term -> term
@@ -197,7 +198,7 @@ val gref : Names.GlobRef.t Conversion.t
 val inductive : inductive Conversion.t
 val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
-val sort : Sorts.t Conversion.t
+val sort : (Sorts.t,'a coq_context,constraints) ContextualConversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.abbreviation Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t

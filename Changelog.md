@@ -5,6 +5,14 @@
 - derive: support for `is_true` in `param1_trivial` (based on pre-existing
   special support for `is_eq` and `is_bool`)
 
+### API
+- New `coq.univ.alg-super` that relates a univ `U` to its algebraic successor
+  `V`, that is `U+1` and not any `V` s.t. `U < V`
+
+### HOAS
+- New `@keep-alg-univs!` option for all APIs taking terms. By default algebraic
+  universes are replaced by named universes. See the `coq.univ.alg-super` API.
+
 # [2.5.0] 18/2/2025
 
 Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0.
