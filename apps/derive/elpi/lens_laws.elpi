@@ -19,7 +19,9 @@ law1 _ Lens IT Bo :-
   TyS = {{ lib:elpi.derive.lens.view_set lp:Lens }},
   std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "derive.lens_laws: law1 statement illtyped",
   std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "derive.lens_laws: law1 proof illtyped".
+pred law1-rty.aux i:term, i:term, i:list term, i:list term, o:term.
 law1-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.view_set_on lp:L lp:R }} :- std.last Vs R.
+pred law1-bo.aux i:term, i:term, i:list term, i:list term, o:term.
 law1-bo.aux _ _ _ _ {{ fun x => lib:@elpi.erefl _ _ }}.
 
 pred declare-law2 i:string, i:prop.
@@ -37,7 +39,9 @@ law2 _ Lens IT Bo :-
   TyS = {{ lib:elpi.derive.lens.set_set lp:Lens }},
   std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "derive.lens_laws: law2 statement illtyped",
   std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "derive.lens_laws: law2 proof illtyped".
+pred law2-rty.aux i:term, i:term, i:list term, i:list term, o:term.
 law2-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.set_set_on lp:L lp:R }} :- std.last Vs R.
+pred law2-bo.aux i:term, i:term, i:list term, i:list term, o:term.
 law2-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 
 pred declare-law3 i:string, i:prop.
@@ -55,7 +59,9 @@ law3 _ Lens IT Bo :-
   TyS = {{ lib:elpi.derive.lens.set_view lp:Lens }},
   std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "derive.lens_laws: law3 statement illtyped",
   std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "derive.lens_laws: law3 proof illtyped".
+pred law3-rty.aux i:term, i:term, i:list term, i:list term, o:term.
 law3-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.set_view_on lp:L lp:R }} :- std.last Vs R.
+pred law3-bo.aux i:term, i:term, i:list term, i:list term, o:term.
 law3-bo.aux _ _ _ _ {{ lib:@elpi.erefl _ _ }}.
 
 pred declare-law4 i:string, i:prop, i:prop.
@@ -74,7 +80,9 @@ law4 _ Lens1 Lens2 IT Bo :-
   TyS = {{ lib:elpi.derive.lens.exchange lp:Lens1 lp:Lens2 }},
   std.assert-ok! (coq.elaborate-ty-skeleton TyS _ Ty) "derive.lens_laws: law4 statement illtyped",
   std.assert-ok! (coq.elaborate-skeleton BoS Ty Bo) "derive.lens_laws: law4 proof illtyped".
+pred law4-rty.aux i:term, i:term, i:term, i:list term, i:list term, o:term.
 law4-rty.aux L1 L2 _ Vs _ {{ lib:elpi.derive.lens.exchange_on lp:L1 lp:L2 lp:R }} :- std.last Vs R.
+pred law4-bo.aux i:term, i:term, i:list term, i:list term, o:term.
 law4-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 
 pred main i:inductive, i:string, o:list prop.
