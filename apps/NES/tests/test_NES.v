@@ -41,7 +41,6 @@ NES.Begin A1.
 NES.Begin B1.
 Definition c := 1.
 NES.End B1.
-#[synterp] Elpi Trace.
 NES.Begin B1.
 Definition d := 1.
 NES.End B1.

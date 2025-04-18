@@ -642,7 +642,6 @@ Elpi Accumulate lp:{{
     Opts ==> some-code.
 
 }}.
-Elpi Trace.
 #[this, more(stuff="33")] Elpi parse_attr.
 Fail #[unknown] Elpi parse_attr.  (* .fails *)
 
