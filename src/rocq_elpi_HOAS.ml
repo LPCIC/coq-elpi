@@ -1694,7 +1694,7 @@ let mk_global state gr inst_opt = S.update_return engine state (fun x ->
 
 let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
   match
-    Global.body_of_constant_body Library.indirect_accessor (Environ.lookup_constant c x.global_env)
+    Global.body_of_constant_body (Library.indirect_accessor[@alert "-deprecated"]) (Environ.lookup_constant c x.global_env)
   with
   | Some (bo, priv, ctx) ->
      let c, ctx = UnivGen.fresh_global_instance x.global_env (ConstRef c) ?names:inst_opt  in
@@ -2429,7 +2429,7 @@ let customtac2query sigma goals loc text ~depth:calldepth ~base state =
     state, query, evar_decls @ gls
 ;;
 
-type 'arg tactic_main = Solve of 'arg list | Custom of string
+(* type 'arg tactic_main = Solve of 'arg list | Custom of string *)
 
 let solvegoals2query sigma goals loc ~main:args ~in_elpi_tac_arg ~depth ~base state =
   solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth ~base state
