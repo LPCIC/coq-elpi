@@ -660,7 +660,7 @@ Elpi Query lp:{{
   A = typ TX,
   not(coq.univ.alg-super X TX),
   coq.say X ":" TX,
-  @keep-alg-univs! => coq.typecheck-ty (sort (typ Y)) B ok,
+  (@keep-alg-univs! => coq.typecheck-ty (sort (typ Y)) B ok),
   B = typ TY,
   coq.say Y ":" TY,
   coq.univ.alg-super Y TY,
