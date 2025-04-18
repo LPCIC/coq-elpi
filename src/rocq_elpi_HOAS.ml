@@ -174,53 +174,6 @@ let isuniv, univout, univino, (univ : Univ.Universe.t API.Conversion.t) =
   end
 }
 
-let propc = E.Constants.declare_global_symbol "prop"
-let spropc = E.Constants.declare_global_symbol "sprop"
-let typc = E.Constants.declare_global_symbol "typ"
-
-let sort =
-  let open API.AlgebraicData in  declare {
-  ty = API.Conversion.TyName "sort";
-  doc = "Sorts (kinds of types)";
-  pp = (fun fmt -> function
-    | Sorts.Type _ -> Format.fprintf fmt "Type"
-    | Sorts.Set -> Format.fprintf fmt "Set"
-    | Sorts.Prop -> Format.fprintf fmt "Prop"
-    | Sorts.SProp -> Format.fprintf fmt "SProp"
-    | Sorts.QSort _ -> Format.fprintf fmt "Type");
-  constructors = [
-    K("prop","impredicative sort of propositions",N,
-      B Sorts.prop,
-      M (fun ~ok ~ko -> function Sorts.Prop -> ok | _ -> ko ()));
-    K("sprop","impredicative sort of propositions with definitional proof irrelevance",N,
-      B Sorts.sprop,
-      M (fun ~ok ~ko -> function Sorts.SProp -> ok | _ -> ko ()));
-    K("typ","predicative sort of data (carries a universe level)",A(univ,N),
-      B (fun x -> Sorts.sort_of_univ x),
-      M (fun ~ok ~ko -> function
-        | Sorts.Type x -> ok x
-        | Sorts.Set -> ok Univ.Universe.type0
-        | _ -> ko ()));
-    K("uvar","",A(F.uvar,N),
-      BS (fun (k,_) state ->
-        let m = S.get um state in
-        try
-          let u = UM.host k m in
-          state, Sorts.sort_of_univ u
-        with Not_found ->
-          let state, (_,u) = new_univ_level_variable state in
-          let state = S.update um state (UM.add k u) in
-          state, Sorts.sort_of_univ u),
-      M (fun ~ok ~ko _ -> ko ()));
-  ]
-} |> API.ContextualConversion.(!<)
-
-let ast_sort ~loc = function
-  | Sorts.Prop -> A.mkGlobal ~loc propc
-  | Sorts.SProp -> A.mkGlobal ~loc spropc
-  | Sorts.Set -> A.mkAppGlobal ~loc typc (A.mkOpaque ~loc @@ univino Univ.Universe.type0) []
-  | Sorts.Type u -> A.mkAppGlobal ~loc typc (A.mkOpaque ~loc @@ univino u) []
-  | _ -> assert false
 
 let universe_level_variable =
   let { CD.cin = levelin }, universe_level_variable_to_patch = CD.declare {
@@ -476,6 +429,14 @@ let sort : (Sorts.t, _ coq_context, API.Data.constraints) API.ContextualConversi
         end
     | _ ->  raise API.Conversion.(TypeErr(TyName"sort",depth,t)));
 }
+
+let ast_sort ~loc = function
+  | Sorts.Prop -> A.mkGlobal ~loc propc
+  | Sorts.SProp -> A.mkGlobal ~loc spropc
+  | Sorts.Set -> A.mkAppGlobal ~loc typc (A.mkOpaque ~loc @@ univino Univ.Universe.type0) []
+  | Sorts.Type u -> A.mkAppGlobal ~loc typc (A.mkOpaque ~loc @@ univino u) []
+  | _ -> assert false
+
 
 let in_coq_fresh ~id_only =
   let mk_fresh dbl =
@@ -1107,7 +1068,6 @@ let section_ids env =
       ~init:[] named_ctx
 
 let sortc  = E.Constants.declare_global_symbol "sort"
-let typc   = E.Constants.declare_global_symbol "typ"  
 
 let force_level_of_universe state u =
   match Univ.Universe.level u with
