@@ -133,19 +133,18 @@ let () = API.Setup.set_anomaly (fun ?loc s -> err ?loc Pp.(str s))
 let () = API.Setup.set_type_error (fun ?loc s -> err ?loc Pp.(str s))
 let warn = CWarnings.create ~name:"elpi.runtime" ~category:elpi_cat (fun x -> x)
 let warn_impl = CWarnings.create ~name:"elpi.implication-precedence" ~category:elpi_cat (fun x -> x)
-let warn_impl_rex = Re.Str.regexp_string "The standard λProlog infix operator for implication"
 let warn_linear = CWarnings.create ~name:"elpi.linear-variable" ~category:elpi_tc_cat (fun x -> x)
-let warn_linear_rex = Re.Str.regexp ".*is linear:.*discard.*fresh variable"
 let warn_missing_types = CWarnings.create ~name:"elpi.missing-types" ~category:elpi_tc_cat (fun x -> x)
-let warn_missing_types_rex = Re.Str.regexp_string "Undeclared globals"
+let warn_flex_clause = CWarnings.create ~name:"elpi.flex-clause" ~category:elpi_tc_cat (fun x -> x)
 
-let () = API.Setup.set_warn (fun ?loc x ->
+let () = API.Setup.set_warn (fun ?loc ~id x ->
   let loc = Option.map to_coq_loc loc in
   let msg = Pp.(hv 0 (Option.cata (fun loc -> Loc.pr loc ++ spc ()) (mt()) loc ++ str x)) in
-  if Re.Str.string_match warn_impl_rex x 0 then warn_impl ?loc msg
-  else if Re.Str.string_match warn_linear_rex x 0 then warn_linear ?loc msg
-  else if Re.Str.string_match warn_missing_types_rex x 0 then warn_missing_types ?loc msg
-  else warn ?loc msg)
+  match id with
+  | API.Setup.ImplicationPrecedence -> warn_impl ?loc msg
+  | LinearVariable -> warn_linear ?loc msg
+  | UndeclaredGlobal -> warn_missing_types ?loc msg
+  | FlexClause -> warn_flex_clause ?loc msg)
 let () = API.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let () = API.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let nYI s = err Pp.(str "Not Yet Implemented: " ++ str s)
