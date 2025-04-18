@@ -264,6 +264,5 @@ main _ :- std.do! [
   @ppmost! => coq.say {coq.term->string {{ fix foo x y {struct x} := match x in bool with false => y | true => 3 end }} },
 ].
 }}.
-Elpi Trace.
 Elpi test.pp.
 
