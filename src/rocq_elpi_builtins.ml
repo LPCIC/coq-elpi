@@ -15,7 +15,7 @@ module B = struct
   let ioarg_any = API.BuiltInPredicate.ioarg_any
   let ioargC = API.BuiltInPredicate.ioargC
   let ioargC_flex = API.BuiltInPredicate.ioargC_flex
-  let ioarg_flex = API.BuiltInPredicate.ioarg_flex
+  (* let ioarg_flex = API.BuiltInPredicate.ioarg_flex *)
   let ioarg_poly s = { ioarg_any with API.Conversion.ty = API.Conversion.TyName s }
 end
 module Pred = API.BuiltInPredicate
@@ -403,20 +403,20 @@ let cs_pattern =
     K("cs-default","",N,
       B Default_cs,
       M (fun ~ok ~ko -> function Default_cs -> ok | _ -> ko ()));
-    K("cs-sort","",A(sort,N),build_of_sort,match_of_sort)
+    K("cs-sort","",CA(sort,N),build_of_sort,match_of_sort)
   ]
-} |> CConv.(!<)
+}
 
 let cs_instance = let open Conv in let open API.AlgebraicData in let open Structures.CSTable in declare {
   ty = TyName "cs-instance";
   doc = "Canonical Structure instances: (cs-instance Proj ValPat Inst)";
   pp = (fun fmt { solution } -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((Printer.pr_global solution)));
   constructors = [
-    K("cs-instance","",A(gref,A(cs_pattern,A(gref,N))),
+    K("cs-instance","",A(gref,CA(cs_pattern,A(gref,N))),
       B (fun p v i -> assert false),
       M (fun ~ok ~ko { solution; value; projection } -> ok projection value solution))
   ]
-} |> CConv.(!<)
+}
 
 
 type type_class_instance = {
@@ -2400,7 +2400,7 @@ denote the same x as before.|};
       match p, c with
       | _, Data (Variable c) -> raise No_clause
       | Data p, Data (Constant c) ->
-          if Constant.equal (Projection.constant p) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
+          if Environ.QConstant.equal coq_context.env (Projection.constant p) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
       | NoData, NoData -> U.type_error "coq.env.primitive-projection?: got no input data"
       | Data p, NoData -> ?: None +! (Constant (Projection.constant p)) +! Names.Projection.(arg p + npars p)
       | NoData, Data (Constant c) ->
@@ -2448,40 +2448,46 @@ The different data types stay, since Coq will eventually become
 able to handle algebraic universes consistently, making this purging
 phase unnecessary.|};
   MLData univ;
-  MLData sort;
+  MLDataC sort;
 
   MLCode(Pred("coq.sort.leq",
-    InOut(B.ioarg_flex sort, "S1",
-    InOut(B.ioarg_flex sort, "S2",
-    Full(unit_ctx, "constrains S1 <= S2"))),
-  (fun u1 u2 ~depth _ _ state ->
+    CInOut(B.ioargC_flex sort, "S1",
+    CInOut(B.ioargC_flex sort, "S2",
+    Full(global, "constrains S1 <= S2"))),
+  (fun u1 u2 ~depth { options } _ -> grab_global_env "coq.sort.leq"
+  (fun state ->
     match u1, u2 with
     | Data u1, Data u2 ->
-        if Sorts.equal u1 u2 then state, !: u1 +! u2,[]
+        if Sorts.equal u1 u2 then Univ.ContextSet.empty, state, !: u1 +! u2,[]
         else
-          let state, u2 = purge_algebraic_univs_sort state (EConstr.ESorts.make u2) in
-          add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2,[]
-    | _ -> err Pp.(str"coq.sort.leq: called with _ as argument"))),
+          let state, u2 = if true (* options.algunivs != Some true *)
+          then purge_algebraic_univs_sort state (EConstr.ESorts.make u2)
+          else state, u2 in
+        Univ.ContextSet.empty, add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2,[]
+    | _ -> err Pp.(str"coq.sort.leq: called with _ as argument")))),
   DocAbove);
 
   MLCode(Pred("coq.sort.eq",
-    InOut(B.ioarg_flex sort, "S1",
-    InOut(B.ioarg_flex sort, "S2",
-    Full(unit_ctx, "constrains S1 = S2"))),
-  (fun u1 u2 ~depth _ _ state ->
+    CInOut(B.ioargC_flex sort, "S1",
+    CInOut(B.ioargC_flex sort, "S2",
+    Full(global, "constrains S1 = S2"))),
+  (fun u1 u2 ~depth { options } _ -> grab_global_env "coq.sort.eq"
+  (fun state ->
     match u1, u2 with
     | Data u1, Data u2 ->
-      if Sorts.equal u1 u2 then state, !: u1 +! u2,[]
+      if Sorts.equal u1 u2 then Univ.ContextSet.empty, state, !: u1 +! u2,[]
       else
-        let state, u2 = purge_algebraic_univs_sort state (EConstr.ESorts.make u2) in
-        add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, []
-    | _ -> err Pp.(str"coq.sort.eq: called with _ as argument"))),
+        let state, u2 = if true (* options.algunivs != Some true *)
+        then purge_algebraic_univs_sort state (EConstr.ESorts.make u2)
+        else state, u2 in
+        Univ.ContextSet.empty, add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, []
+    | _ -> err Pp.(str"coq.sort.eq: called with _ as argument")))),
   DocAbove);
 
   MLCode(Pred("coq.sort.sup",
-    InOut(B.ioarg_flex sort, "S1",
-    InOut(B.ioarg_flex sort, "S2",
-    Full(unit_ctx,  "constrains S2 = S1 + 1"))),
+    CInOut(B.ioargC_flex sort, "S1",
+    CInOut(B.ioargC_flex sort, "S2",
+    Full(global,  "constrains S2 = S1 + 1"))),
   (fun u1 u2 ~depth _ _ state ->
     match u1, u2 with
     | Data u1, Data u2 -> univ_super state u1 u2, !: u1 +! u2, []
@@ -2489,10 +2495,10 @@ phase unnecessary.|};
   DocAbove);
 
   MLCode(Pred("coq.sort.pts-triple",
-    InOut(B.ioarg_flex sort, "S1",
-    InOut(B.ioarg_flex sort, "S2",
-    Out(sort, "S3",
-    Full(unit_ctx,  "constrains S3 = sort of product with domain in S1 and codomain in S2")))),
+    CInOut(B.ioargC_flex sort, "S1",
+    CInOut(B.ioargC_flex sort, "S2",
+    COut(sort, "S3",
+    Full(global,  "constrains S3 = sort of product with domain in S1 and codomain in S2")))),
   (fun u1 u2 _ ~depth _ _ state ->
     match u1, u2 with
     | Data u1, Data u2 -> let state, u3 = univ_product state u1 u2 in state, !: u1 +! u2 +! u3, []
@@ -2515,6 +2521,14 @@ phase unnecessary.|};
   (fun _ ~depth _ _ state ->
      let state, (_,u) = new_univ_level_variable state in
      state, !: u, [])),
+  DocAbove);
+
+  MLCode(Pred("coq.univ.alg-super",
+    In(univ,"U",
+    Out(univ,"V",
+    Full(unit_ctx,  "relates a univ U to its algebraic successor V, that is U+1 and not any V s.t. U < V"))),
+  (fun u _ ~depth _ _ state ->
+    state, !: (Univ.Universe.super u), [])),
   DocAbove);
 
   MLCode(Pred("coq.univ",
@@ -2768,8 +2782,8 @@ declared as cumulative.|};
 
   LPDoc "-- Databases (TC, CS, Coercions) ------------------------------------";
 
-  MLData cs_pattern;
-  MLData cs_instance;
+  MLDataC cs_pattern;
+  MLDataC cs_instance;
 
   MLCode(Pred("coq.CS.declare-instance",
     In(gref, "GR",
@@ -2782,7 +2796,7 @@ Supported attributes:
   DocAbove);
 
   MLCode(Pred("coq.CS.db",
-    Out(list cs_instance, "Db",
+    COut(CConv.(!>>) list cs_instance, "Db",
     Read(global,"reads all instances")),
   (fun _ ~depth _ _ _ ->
      !: (Structures.CSTable.(entries ())))),
@@ -2790,8 +2804,8 @@ Supported attributes:
 
   MLCode(Pred("coq.CS.db-for",
     In(B.unspec gref, "Proj",
-    In(B.unspec cs_pattern, "Value",
-    Out(list cs_instance, "Db",
+    CIn(B.unspecC cs_pattern, "Value",
+    COut(CConv.(!>>) list cs_instance, "Db",
     Read(global,"reads all instances for a given Projection or canonical Value, or both")))),
   (fun proj value _ ~depth _ _ state ->
     let env = get_global_env state in
@@ -3399,7 +3413,7 @@ Universe constraints are put in the constraint store.|})))),
 
   MLCode(Pred("coq.typecheck-ty",
     CIn(term,  "Ty",
-    InOut(B.ioarg sort, "U",
+    CInOut(B.ioargC sort, "U",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full (proof_context,
 {|typchecks a type Ty returning its universe U. If U is provided, then
@@ -3522,7 +3536,7 @@ Supported attributes:
 
    MLCode(Pred("coq.elaborate-ty-skeleton",
      CIn(term_skeleton,  "T",
-     Out(sort, "U",
+     COut(sort, "U",
      COut(term,  "E",
      InOut(B.ioarg B.diagnostic, "Diagnostic",
      Full (proof_context,{|elabotares T expecting it to be a type of sort U.
