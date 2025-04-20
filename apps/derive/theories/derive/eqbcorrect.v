@@ -119,7 +119,7 @@ Elpi Accumulate derive Db derive.eqbcorrect.db.
 dep1 "eqbcorrect" "eqb".
 dep1 "eqbcorrect" "induction".
 dep1 "eqbcorrect" "param1_inhab".
-dep1 "eqbcorrect-alias" "eqb-alias".
+dep1 "eqbcorrect_alias" "eqb_alias".
 }}.
 
 #[synterp] Elpi Accumulate derive lp:{{
@@ -129,6 +129,6 @@ dep1 "eqbcorrect-alias" "eqb-alias".
 Elpi Accumulate derive lp:{{
 
 derivation (indt T) Prefix ff (derive "eqbcorrect" (derive.eqbcorrect.main (indt T) Prefix) (eqcorrect-for (indt T) _ _)).
-derivation (const C) Prefix ff (derive "eqbcorrect-alias" (derive.eqbcorrect.main (const C) Prefix) (eqcorrect-for (const C) _ _)).
+derivation (const C) Prefix ff (derive "eqbcorrect_alias" (derive.eqbcorrect.main (const C) Prefix) (eqcorrect-for (const C) _ _)).
 
 }}.
