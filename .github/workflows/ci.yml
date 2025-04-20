@@ -23,7 +23,7 @@ jobs:
         profile:
           - dev
         include:
-          - image: 'rocq/rocq-prover:dev'
+          - image: 'coqorg/coq:8.20'
             profile: fatalwarnings
       fail-fast: false  # don't stop jobs if one fails
     steps:
