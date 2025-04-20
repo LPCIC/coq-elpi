@@ -1,7 +1,4 @@
 (env
  (dev
   (flags (:standard -w -9 -w -32 -w -27 -w -6 -w -37 -warn-error -A))
-  (coq (flags -w +elpi.deprecated -w +elpi.implication-precedence -bt)))
- (fatalwarnings
-  (flags (:standard -w -9 -w -32 -w -27 -w -6 -w -37 -warn-error +A))
   (coq (flags -w +elpi.deprecated -w +elpi.implication-precedence -bt))))

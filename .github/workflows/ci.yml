@@ -20,6 +20,11 @@ jobs:
           - 'rocq/rocq-prover:dev'
           - 'rocq/rocq-prover:9.0'
           - 'coqorg/coq:8.20'
+        profile:
+          - dev
+        include:
+          - image: 'rocq/rocq-prover:dev'
+            profile: fatalwarnings
       fail-fast: false  # don't stop jobs if one fails
     steps:
       - uses: actions/checkout@v3
@@ -27,6 +32,8 @@ jobs:
         with:
           opam_file: 'rocq-elpi.opam'
           custom_image: ${{ matrix.image }}
+          before_script: |
+            if [ "${{ matrix.profile }}" = "fatalwarnings" ]; then sed -i 's/-A/+A/' dune; fi
           after_script: |
             sudo chmod -R a+w .
             make all-examples
