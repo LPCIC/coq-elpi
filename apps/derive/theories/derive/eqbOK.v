@@ -48,7 +48,7 @@ Elpi Accumulate derive Db derive.eqbOK.db.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqbOK" "eqbcorrect".
-dep1 "eqbOK-alias" "eqbcorrect-alias".
+dep1 "eqbOK_alias" "eqbcorrect_alias".
 }}.
 
 #[synterp] Elpi Accumulate derive lp:{{
@@ -58,7 +58,7 @@ dep1 "eqbOK-alias" "eqbcorrect-alias".
 Elpi Accumulate derive lp:{{
 
 derivation (indt T) Prefix ff (derive "eqbOK" (derive.eqbOK.main (indt T) Prefix) (eqbok-for (indt T) _)).
-derivation (const T) Prefix ff (derive "eqbOK-alias" (derive.eqbOK.main (const T) Prefix) (eqbok-for (const T) _)).
+derivation (const T) Prefix ff (derive "eqbOK_alias" (derive.eqbOK.main (const T) Prefix) (eqbok-for (const T) _)).
 
 }}.
 

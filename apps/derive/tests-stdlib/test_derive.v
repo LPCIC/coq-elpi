@@ -188,3 +188,12 @@ Inductive foo := X : T -> foo.
 Redirect "tmp" Print foo_eqb_OK.
 
 End TestRegister.
+
+Module TestAlias.
+
+Definition nat' := nat.
+#[only(eqb_alias)] derive nat'.
+
+Check nat'_eqb.
+
+End TestAlias.
