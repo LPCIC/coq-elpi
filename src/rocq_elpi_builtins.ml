@@ -3511,8 +3511,10 @@ Supported attributes:
             | Constr.Evar _ -> `NoUnify ety, Pretyping.WithoutTypeConstraint
             | _ -> `Yes, Pretyping.OfType ety
       in
+      let sigma = Evd.push_future_goals sigma in
       let sigma, uj_val, uj_type =
         Pretyping.understand_tcc_ty ~flags proof_context.env sigma ~expected_type gt in
+      let _, sigma = Evd.pop_future_goals sigma in
       match ety_given with
       | `No ->
           let state, assignments = set_current_sigma ~depth state sigma in
@@ -3551,8 +3553,10 @@ Supported attributes:
       let sigma = get_sigma state in
       let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
       let expected_type = Pretyping.IsType in
+      let sigma = Evd.push_future_goals sigma in
       let sigma, uj_val, uj_type =
         Pretyping.understand_tcc_ty ~flags proof_context.env sigma ~expected_type gt in
+      let _, sigma = Evd.pop_future_goals sigma in
       let sort = EConstr.ESorts.kind sigma @@ EConstr.destSort sigma uj_type in
       let state, assignments = set_current_sigma ~depth state sigma in
       state, !: sort +! uj_val +! B.mkOK, assignments
