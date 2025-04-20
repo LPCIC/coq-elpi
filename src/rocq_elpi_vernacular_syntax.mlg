@@ -78,6 +78,19 @@ let lib_ref id =
           ++ str " (you may need to require some .v file with \
                   `Register ... as " ++ str id ++ str ".`).")
 
+let lookahead_lib_colon kwstate strm =
+  match Gramlib.LStream.peek_nth kwstate 0 strm with
+  | Tok.IDENT "lib" ->
+      (match Gramlib.LStream.peek_nth kwstate 1 strm with
+      | Tok.KEYWORD ":" -> ()
+      | _ -> raise Gramlib.Stream.Failure)
+  | _ -> raise Gramlib.Stream.Failure
+
+[%%if coq = "8.18" || coq = "8.19" || coq = "8.20"]
+let lookahead_lib_colon = Pcoq.Entry.(of_parser "lookahead_lib_colon" { parser_fun = lookahead_lib_colon })
+[%%else]
+let lookahead_lib_colon = Procq.Entry.(of_parser "lookahead_lib_colon" { parser_fun = lookahead_lib_colon })
+[%%endif]
 }
 GRAMMAR EXTEND Gram
   GLOBAL: term;
@@ -102,11 +115,11 @@ GRAMMAR EXTEND Gram
   GLOBAL: term;
 
   term: LEVEL "0"
-    [ [ "lib"; ":"; id = qualified_name -> {
+    [ [ lookahead_lib_colon;IDENT "lib"; ":"; id = qualified_name -> {
           let ref = lib_ref id in
           let path = Nametab.path_of_global ref in
           CAst.make ~loc Constrexpr.(CRef (Libnames.qualid_of_path ~loc:(fst id) path,None)) }
-      | "lib"; ":"; "@"; id = qualified_name -> {
+      | lookahead_lib_colon;IDENT "lib"; ":"; "@"; id = qualified_name -> {
           let ref = lib_ref id in
           let path = Nametab.path_of_global ref in
           let f = Libnames.qualid_of_path ~loc:(fst id) path in
