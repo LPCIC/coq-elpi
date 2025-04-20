@@ -33,9 +33,9 @@ jobs:
           opam_file: 'rocq-elpi.opam'
           custom_image: ${{ matrix.image }}
           before_script: |
+            sudo chmod -R a+w .
             if [ "${{ matrix.profile }}" = "fatalwarnings" ]; then sed -i 's/-A/+A/' dune; fi
           after_script: |
-            sudo chmod -R a+w .
             make all-examples
             make all-tests
           export: 'OPAMWITHTEST OPAMIGNORECONSTRAINTS OPAMVERBOSE'  # space-separated list of variables
