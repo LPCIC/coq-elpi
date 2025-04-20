@@ -18,6 +18,17 @@ Elpi Db derive.eqbOK.db lp:{{
 }}.
 #[superglobal] Elpi Accumulate derive.eqbOK.db File derive.lib.
 
+Lemma reflect_dec : forall a b, (forall x y : a, reflect (x=y) (b x y)) -> forall x y : a, {x=y}+{x<>y}.
+Proof.
+ intros A b H x y.
+ destruct (H x y); auto.
+Defined.
+
+Definition eqb_of_dec : forall a (H : forall x y : a, {x=y}+{x<>y}), a -> a -> bool :=
+  fun a H x y => (match H x y with left _ => true | right _ => false end).
+
+Definition dec_reflect : forall a (H : forall x y : a, {x=y}+{x<>y}), forall x y : a, reflect (x=y) (eqb_of_dec a H x y) :=
+  fun a H x y => match H x y as H return reflect (x=y) (match H with left _ => true | right _ => false end) with left p => ReflectT _ p | right p => ReflectF _ p end.
 
 (* standalone *)
 Elpi Command derive.eqbOK.

@@ -1759,6 +1759,47 @@ external pred coq.term->pp i:term, o:coq.pp.
 % - @holes! (default: false, prints evars as _)
 external pred coq.goal->pp i:goal, o:coq.pp.
 
+% -- Register -----------------------------------------------
+
+% Coq scheme kind (currently undocumented in Rocq)
+kind coq.register.scheme-kind type.
+type coq.register.scheme.rect_dep coq.register.scheme-kind.
+type coq.register.scheme.rec_dep coq.register.scheme-kind.
+type coq.register.scheme.ind_dep coq.register.scheme-kind.
+type coq.register.scheme.sind_dep coq.register.scheme-kind.
+type coq.register.scheme.rect_nodep coq.register.scheme-kind.
+type coq.register.scheme.rec_nodep coq.register.scheme-kind.
+type coq.register.scheme.ind_nodep coq.register.scheme-kind.
+type coq.register.scheme.sind_nodep coq.register.scheme-kind.
+type coq.register.scheme.case_dep coq.register.scheme-kind.
+type coq.register.scheme.case_nodep coq.register.scheme-kind.
+type coq.register.scheme.casep_dep coq.register.scheme-kind.
+type coq.register.scheme.casep_nodep coq.register.scheme-kind.
+type coq.register.scheme.sym_internal coq.register.scheme-kind.
+type coq.register.scheme.sym_involutive coq.register.scheme-kind.
+type coq.register.scheme.rew_r_dep coq.register.scheme-kind.
+type coq.register.scheme.rew_dep coq.register.scheme-kind.
+type coq.register.scheme.rew_fwd_dep coq.register.scheme-kind.
+type coq.register.scheme.rew_fwd_r_dep coq.register.scheme-kind.
+type coq.register.scheme.rew_r coq.register.scheme-kind.
+type coq.register.scheme.rew coq.register.scheme-kind.
+type coq.register.scheme.congr coq.register.scheme-kind.
+type coq.register.scheme.beq coq.register.scheme-kind.
+type coq.register.scheme.dec_bl coq.register.scheme-kind.
+type coq.register.scheme.dec_lb coq.register.scheme-kind.
+type coq.register.scheme.eq_dec coq.register.scheme-kind.
+type coq.register.scheme.other string -> coq.register.scheme-kind.
+
+% Coq register value
+kind coq.register type.
+type coq.register.inline coq.register.
+type coq.register.lib string -> coq.register.
+type coq.register.scheme gref -> coq.register.scheme-kind -> coq.register.
+
+% [coq.register GR R] Registers GR as R (See Register Inline, Register
+% Scheme)
+external pred coq.register i:gref, i:coq.register.
+
 % -- Extra Dependencies -----------------------------------------------
 
 % [coq.extra-dep Identifier FileName] Resolve the file name of an extra

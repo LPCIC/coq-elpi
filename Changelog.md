@@ -8,6 +8,7 @@
 ### API
 - New `coq.univ.alg-super` that relates a univ `U` to its algebraic successor
   `V`, that is `U+1` and not any `V` s.t. `U < V`
+- New `coq.register` API
 
 ### HOAS
 - New `@keep-alg-univs!` option for all APIs taking terms. By default algebraic

@@ -1124,6 +1124,106 @@ let goption = let open API.AlgebraicData in let open Goptions in declare {
   ]
 } |> CConv.(!<)
 
+
+type scheme_kind =
+  | Rect_dep
+  | Rec_dep
+  | Ind_dep
+  | Sind_dep
+  | Rect_nodep
+  | Rec_nodep
+  | Ind_nodep
+  | Sind_nodep
+  | Case_dep
+  | Case_nodep
+  | Casep_dep
+  | Casep_nodep
+  | Sym_internal
+  | Sym_involutive
+  | Rew_r_dep
+  | Rew_dep
+  | Rew_fwd_dep
+  | Rew_fwd_r_dep
+  | Rew_r
+  | Rew
+  | Congr
+  | Beq
+  | Dec_bl
+  | Dec_lb
+  | Eq_dec
+  | Other of string
+
+type register =
+  | Scheme of GlobRef.t * scheme_kind
+  | Rocqlib of string
+  | Inline
+
+let string_of_scheme_kind = function
+  | Rect_dep -> "rect_dep"
+  | Rec_dep -> "rec_dep"
+  | Ind_dep -> "ind_dep"
+  | Sind_dep -> "sind_dep"
+  | Rect_nodep -> "rect_nodep"
+  | Rec_nodep -> "rec_nodep"
+  | Ind_nodep -> "ind_nodep"
+  | Sind_nodep -> "sind_nodep"
+  | Case_dep -> "case_dep"
+  | Case_nodep -> "case_nodep"
+  | Casep_dep -> "casep_dep"
+  | Casep_nodep -> "casep_nodep"
+  | Sym_internal -> "sym_internal"
+  | Sym_involutive -> "sym_involutive"
+  | Rew_r_dep -> "rew_r_dep"
+  | Rew_dep -> "rew_dep"
+  | Rew_fwd_dep -> "rew_fwd_dep"
+  | Rew_fwd_r_dep -> "rew_fwd_r_dep"
+  | Rew_r -> "rew_r"
+  | Rew -> "rew"
+  | Congr -> "congr"
+  | Beq -> "beq"
+  | Dec_bl -> "dec_bl"
+  | Dec_lb -> "dec_lb"
+  | Eq_dec -> "eq_dec"
+  | Other x -> x
+
+let scheme_kind = let open API.AlgebraicData in declare {
+  ty = Conv.TyName "coq.register.scheme-kind";
+  doc = "Coq scheme kind (currently undocumented in Rocq)";
+  pp = (fun fmt k -> Format.fprintf fmt "%s" (string_of_scheme_kind k));
+  constructors = 
+  List.map (fun k ->
+    let s = string_of_scheme_kind k in
+    K("coq.register.scheme."^s,"",N,B k,M (fun ~ok ~ko x -> if x = k then ok else ko ()))
+    ) [ Rect_dep ; Rec_dep ; Ind_dep ; Sind_dep ; Rect_nodep ; Rec_nodep ; Ind_nodep ; Sind_nodep ; Case_dep ; Case_nodep ; Casep_dep ; Casep_nodep ; Sym_internal ; Sym_involutive ; Rew_r_dep ; Rew_dep ; Rew_fwd_dep ; Rew_fwd_r_dep ; Rew_r ; Rew ; Congr ; Beq ; Dec_bl ; Dec_lb ; Eq_dec ] @
+   [K("coq.register.scheme.other","",A(B.string,N),B (fun x -> Other x), M (fun ~ok ~ko -> function Other x -> ok x | _ -> ko ()))]
+} |> CConv.(!<)
+
+let register = let open API.AlgebraicData in declare {
+  ty = Conv.TyName "coq.register";
+  doc = "Coq register value";
+  pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
+  constructors = [
+    K("coq.register.inline", "",N,
+      B (Inline),
+      M (fun ~ok ~ko -> function (Inline) -> ok | _ -> ko ()));
+    K("coq.register.lib","",A(B.string,N),
+      B (fun y -> Rocqlib(y)),
+      M (fun ~ok ~ko -> function (Rocqlib y) -> ok y | _ -> ko ()));
+    K("coq.register.scheme","",A(gref,A(scheme_kind,N)),
+      B (fun i k -> Scheme(i,k)),
+      M (fun ~ok ~ko -> function (Scheme(i,k))-> ok i k | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
+[%%if coq = "8.20"]
+let register_ref _ = Coqlib.register_ref
+let declare_scheme _ = DeclareScheme.declare_scheme 
+[%%else]
+let register_ref = Rocqlib.register_ref
+let declare_scheme = DeclareScheme.declare_scheme 
+[%%endif]
+
+
 let find_hint_db s =
   try
     Hints.searchtable_map s
@@ -1373,6 +1473,10 @@ let apply_proof ~name ~poly env tac pf =
   let (), pv, _, _, _ = Proofview.apply ~name ~poly env tac pf in
   pv
 [%%endif]
+
+
+
+
 
 let coq_misc_builtins =
   let open API.BuiltIn in
@@ -4087,6 +4191,42 @@ Supported attributes:
         Printer.pr_econstr_env proof_context.env sigma
           Evd.(evar_concl @@ find_undefined sigma evar))) in
      state, !: s, [])),
+  DocAbove);
+
+  LPDoc "-- Register -----------------------------------------------";
+
+  MLData scheme_kind;
+  MLData register;
+
+  MLCode(Pred("coq.register",
+    In(gref,"GR",
+    In(register,"R",
+    Full(global,"Registers GR as R (See Register Inline, Register Scheme)"))),
+    (fun gr r ~depth ctx _ state ->
+      let local = hint_locality ctx.options in
+      match r with
+      | Inline ->
+        begin match gr with
+        | GlobRef.ConstRef c -> Global.register_inline c
+        | _ -> U.type_error "Register Inline: expecting a constant."
+        end;
+        state, (), []
+      | Rocqlib x ->
+        register_ref local x gr;
+        state, (), []
+      | Scheme(x,k) ->
+        let gr = match gr with
+        | ConstRef c -> c
+        | _ -> U.type_error "Register Scheme: expecing a constant."
+        in
+        let k = string_of_scheme_kind k in
+         let ind =
+          match x with
+          | GlobRef.IndRef i -> i
+          | _ -> U.type_error "Register_scheme: expecting an inductive" in
+        declare_scheme local k (ind,gr);
+        state, (), []
+      )),
   DocAbove);
 
   LPDoc "-- Extra Dependencies -----------------------------------------------";
