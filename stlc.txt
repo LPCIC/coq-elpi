@@ -22,6 +22,8 @@ kind coq.pp type.
 kind coq.pp.box type.
 kind coq.redflag type.
 kind coq.redflags type.
+kind coq.register type.
+kind coq.register.scheme-kind type.
 kind coq.univ.map type -> type.
 kind coq.univ.set type.
 kind coq.univ.variable.map type -> type.
@@ -387,6 +389,36 @@ type coq.reduction.native.available? prop.
 type coq.reduction.native.norm term -> term -> term -> prop.
 type coq.reduction.vm.norm term -> term -> term -> prop.
 type coq.reduction.vm.whd_all term -> term -> term -> prop.
+type coq.register gref -> coq.register -> prop.
+type coq.register.inline coq.register.
+type coq.register.lib string -> coq.register.
+type coq.register.scheme gref -> coq.register.scheme-kind -> coq.register.
+type coq.register.scheme.beq coq.register.scheme-kind.
+type coq.register.scheme.case_dep coq.register.scheme-kind.
+type coq.register.scheme.case_nodep coq.register.scheme-kind.
+type coq.register.scheme.casep_dep coq.register.scheme-kind.
+type coq.register.scheme.casep_nodep coq.register.scheme-kind.
+type coq.register.scheme.congr coq.register.scheme-kind.
+type coq.register.scheme.dec_bl coq.register.scheme-kind.
+type coq.register.scheme.dec_lb coq.register.scheme-kind.
+type coq.register.scheme.eq_dec coq.register.scheme-kind.
+type coq.register.scheme.ind_dep coq.register.scheme-kind.
+type coq.register.scheme.ind_nodep coq.register.scheme-kind.
+type coq.register.scheme.other string -> coq.register.scheme-kind.
+type coq.register.scheme.rec_dep coq.register.scheme-kind.
+type coq.register.scheme.rec_nodep coq.register.scheme-kind.
+type coq.register.scheme.rect_dep coq.register.scheme-kind.
+type coq.register.scheme.rect_nodep coq.register.scheme-kind.
+type coq.register.scheme.rew coq.register.scheme-kind.
+type coq.register.scheme.rew_dep coq.register.scheme-kind.
+type coq.register.scheme.rew_fwd_dep coq.register.scheme-kind.
+type coq.register.scheme.rew_fwd_r_dep coq.register.scheme-kind.
+type coq.register.scheme.rew_r coq.register.scheme-kind.
+type coq.register.scheme.rew_r_dep coq.register.scheme-kind.
+type coq.register.scheme.sind_dep coq.register.scheme-kind.
+type coq.register.scheme.sind_nodep coq.register.scheme-kind.
+type coq.register.scheme.sym_internal coq.register.scheme-kind.
+type coq.register.scheme.sym_involutive coq.register.scheme-kind.
 type coq.replay-synterp-action-group id -> prop.
 type coq.say any ..-> prop.
 type coq.sigma.print prop.
@@ -1777,7 +1809,7 @@ coq.reduction.lazy.whd_all A0 A1 :- get-option coq:redflags coq.redflags.all
                                      => coq.reduction.lazy.whd A0 A1.
 % File "coq-builtin.elpi", line 1696, column 0, characters 68524-68564: [263] 
 coq.id->name A0 A1 :- coq.string->name A0 A1.
-% File "coq-builtin.elpi", line 1798, column 0, characters 72298-72362: [264] 
+% File "coq-builtin.elpi", line 1839, column 0, characters 74361-74425: [264] 
 coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
 % File "./examples/tutorial_elpi_lang.v", line 491, column 2, characters 12652-12720: [265] 
 whd (app A0 A2) A3 :- whd A0 (fun A1), !, whd (A1 A2) A3.
