@@ -1,4 +1,6 @@
-# UNRELEASED
+# [2.5.1] 22/4/2025
+
+Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0.
 
 ### APPS:
 - derive: support for primitive strings in `param1` and `param1_trivial`
