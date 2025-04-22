@@ -94,4 +94,4 @@ jobs:
           TAG=`git tag --sort=-v:refname|head -1`
           echo selected tag: $TAG
           # do not use the new name of the repo, or you get a 404 using GH APIs
-          GITHUB_DEBUG=1 opam-publish --no-confirmation --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=coq/opam-coq-archive --no-browser -v ${TAG##v}	rocq-elpi.opam coq-elpi.opam https://github.com/LPCIC/coq-elpi/releases/download/$TAG/rocq-elpi-${TAG##v}.tar.gz
+          GITHUB_DEBUG=1 opam-publish --no-confirmation --tag=$TAG --packages-directory=${OPAM_SUITE:-released}/packages --repo=rocq/opam --no-browser -v ${TAG##v}	rocq-elpi.opam coq-elpi.opam https://github.com/LPCIC/coq-elpi/releases/download/$TAG/rocq-elpi-${TAG##v}.tar.gz
