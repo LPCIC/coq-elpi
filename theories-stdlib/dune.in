@@ -84,4 +84,12 @@
   (with-stdout-to %{target}
    (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
 
+(rule
+ (target Eqdep_dec.v)
+ (deps
+  (glob_files Eqdep_dec.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
 (include_subdirs qualified)

@@ -1,0 +1,2 @@
+#[only="8.20"] From Coq Require Export Eqdep_dec.
+#[skip="8.20"] From Stdlib Require Export Eqdep_dec.

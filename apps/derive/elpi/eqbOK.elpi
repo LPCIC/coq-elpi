@@ -32,6 +32,26 @@ add-reflect (eqb.value-param TY F) Correct Refl  {{ fun x : lp:Ty => lp:(R x) }}
     (R x).
 add-reflect (eqb.inductive _ _) Correct Refl {{iffP2 lp:Correct lp:Refl}}.
 
+pred add-sumbool i:eqb.eqType, i:term, o:term.
+add-sumbool (eqb.type-param F) Reflect {{
+     fun (a : lp:Type) (heqA : lp:(HeqA a)) => lp:(R a heqA)
+  }} :-
+  Type = sort (typ {coq.univ.new}),
+  HeqA = (a\ {{ forall x1 x2 : lp:a, { @eq lp:a x1 x2 } + { ~ (@eq lp:a x1 x2) } }}),
+  @pi-trm `a` Type aa\a\
+  @pi-decl `heqA` (HeqA a) heqA\
+  add-sumbool (F aa)
+    {{lp:Reflect lp:a (eqb_of_dec lp:a lp:heqA) (dec_reflect lp:a lp:heqA) }}
+    (R a heqA).
+add-sumbool (eqb.value-param TY F) Reflect  {{ fun x : lp:Ty => lp:(R x) }} :-
+  feqb.trm->term TY Ty,
+  @pi-trm `x` Ty xx\x\
+  add-sumbool (F xx)
+    {{lp:Reflect lp:x}}
+    (R x).
+add-sumbool (eqb.inductive _ _) Reflect {{reflect_dec _ _ lp:Reflect}}.
+
+
 pred main i:gref, i:string, o:list prop.
 main (indt I) Prefix [CL] :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
@@ -43,9 +63,17 @@ main (indt I) Prefix [CL] :- std.do! [
   coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
   coq.env.add-const Namerf Breflect Treflect @opaque! Reflect,
 
+
+  add-sumbool FI (global (const Reflect)) Breflect_sb,
+  std.assert-ok! (coq.typecheck Breflect_sb Treflect_sb) "eqbOK generates illtyped term", 
+  coq.ensure-fresh-global-id (Prefix ^ "eqb_OK_sumbool") Namerf_sb,
+  coq.env.add-const Namerf_sb Breflect_sb Treflect_sb @opaque! Reflect_sb,
+
   CL = eqbok-for (indt I) Reflect,
 
   coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
+
+  coq.register (const Reflect_sb) (coq.register.scheme (indt I) coq.register.scheme.eq_dec),
 
 ].
 main (const C) Prefix [CL] :- std.do! [
