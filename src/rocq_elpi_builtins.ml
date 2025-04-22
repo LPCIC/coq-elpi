@@ -4131,7 +4131,7 @@ select which module:
   begin/end-module), the clauses will be accumulated when the execution of the program ends
   or the start of another program (whichever comes first)
 - library is the current file (the module that is named after the file),
-  the clauses will be accumulated at the end of the program
+  the clauses will be accumulated when the execution of the program ends
 The clauses are visible as soon as the enclosing module is Imported.
 A clause that mentions a section variable is automatically discarded
 at the end of the section.
