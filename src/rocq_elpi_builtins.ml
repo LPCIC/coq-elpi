@@ -4126,7 +4126,7 @@ Declare that the given clauses have to be added to the given db (see Elpi Db).
 Clauses usually belong to Coq modules: the Scope argument lets one
 select which module:
 - execution site (default) is the module in which the program is
-  invoked, the clauses will be accumulated at the end of the program
+  invoked, the clauses will be accumulated when the execution of the program ends
 - current is the module currently being constructed (see
   begin/end-module), the clauses will be accumulated at the end of the program
   or the start of another program (whichever comes first)
