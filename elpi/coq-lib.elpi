@@ -355,9 +355,9 @@ coq.typecheck-indt-decl-c I S NUPNO (constructor _ID Arity) Diag :- do-ok! Diag 
 
 :index (_ _ _ 1)
 func coq.typecheck-indt-decl-c.unify-arrow-tgt term, int, term, term -> diagnostic.
-coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (prod N S T) D :-
+coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (prod N S T) D :- !,
   @pi-decl N S x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (T x) D.
-coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (let N S B T) D :-
+coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (let N S B T) D :- !,
   @pi-def N S B x\ coq.typecheck-indt-decl-c.unify-arrow-tgt I P A (T x) D.
 coq.typecheck-indt-decl-c.unify-arrow-tgt I P A Concl D :-
   coq.count-prods A N,

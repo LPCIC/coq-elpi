@@ -54,7 +54,7 @@ elim-all _ [] {{ lib:elpi.reflect lp:P lp:_}}
 
 elim-all N [arg H X Y B|Hs] P R :-
   decl H _ TH,
-  (pi x b\ copy Y x => copy B b => copy P (Pxb x b)), !,
+  (pi x b\ (copy Y x :- !) => (copy B b :- !) => copy P (Pxb x b)), !,
   coq.build-match H TH (otyR Pxb Y) (branchR Pxb X Y N Hs) R.
 
 pred otyR i:(term -> term -> term), i:term, i:term, i:list term,  i:list term, o:term.

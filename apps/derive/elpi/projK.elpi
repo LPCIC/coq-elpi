@@ -18,7 +18,7 @@ exT-close [N|Mask] Ctx Args T Ty {{ @existT lp:S lp:P lp:A lp:R1 }}
   copy TX S,
   P = fun {coq.name-suffix `i` N} S B,
   nth N Args A,
-  (pi x\ copy X x => exT-close Mask Ctx Args T Ty (R x) (B x)),
+  (pi x\ (copy X x :- !) => exT-close Mask Ctx Args T Ty (R x) (B x)),
   R1 = R A.
 
 pred sigT-close i:list int, i:list (pair term term), i:term, o:term.
@@ -27,7 +27,7 @@ sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
   nth N Ctx (pr X TX),
   copy TX S,
   P = fun {coq.name-suffix `i` N} S B,
-  pi x\ copy X x => sigT-close Mask Ctx Ty (B x).
+  pi x\ (copy X x :- !) => sigT-close Mask Ctx Ty (B x).
 
 pred body-branch i:int, i:constructor, i:term, i:term, i:list term, i:list term, o:term.
 body-branch J K  K1 _ VS TS R :-

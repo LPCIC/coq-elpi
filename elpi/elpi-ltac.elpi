@@ -107,9 +107,9 @@ move-goal-argument C D (trm T) (trm T1) :-
 pred move-term i:list prop, i:list prop, i:term, o:term.
 move-term [] _ T T1 :- copy T T1.
 move-term [decl X _ TX|C1] [decl Y _ TY|C2] T T1 :- std.do! [ copy TX TX1, same_term TX1 TY ], !,
-  copy X Y => move-term C1 C2 T T1.
+  (copy X Y :- !) => move-term C1 C2 T T1.
 move-term [def X _ TX BX|C1] [def Y _ TY BY|C2] T T1 :- std.do! [ copy TX TX1, same_term TX1 TY, copy BX BX1, same_term BX1 BY ], !,
-  copy X Y => move-term C1 C2 T T1.
+  (copy X Y :- !) => move-term C1 C2 T T1.
 move-term [decl X _ _|C1] C2 T T1 :- not(occurs X T), !, move-term C1 C2 T T1.
 move-term [def X _ _ _|C1] C2 T T1 :- not(occurs X T), !, move-term C1 C2 T T1.
 move-term C1 [_|C2] T T1 :- move-term C1 C2 T T1.
