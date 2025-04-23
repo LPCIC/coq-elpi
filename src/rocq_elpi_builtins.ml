@@ -4128,7 +4128,7 @@ select which module:
 - execution site (default) is the module in which the program is
   invoked, the clauses will be accumulated when the execution of the program ends
 - current is the module currently being constructed (see
-  begin/end-module), the clauses will be accumulated at the end of the program
+  begin/end-module), the clauses will be accumulated when the execution of the program ends
   or the start of another program (whichever comes first)
 - library is the current file (the module that is named after the file),
   the clauses will be accumulated at the end of the program
