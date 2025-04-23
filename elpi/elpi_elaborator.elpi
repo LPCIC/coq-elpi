@@ -5,8 +5,8 @@
 shorten std.{rev, append, ignore-failure!, mem, map2, split-at, map, assert!}.
 
 % Entry points
-func unify-eq term, term ->.
-func unify-list-eq list term, list term ->.
+pred unify-eq i:term, i:term.
+pred unify-list-eq i:list term, i:list term.
 pred unify-leq i:term, i:term.
 pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
 
@@ -17,13 +17,13 @@ pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
 :before "hd-beta:end"
 hd-beta (uvar as K) [A|AS] X C :- !, % auto-intro
   assert! (of A TA _) "already typed",
-  unify-eq K (fun `hd_beta_auto` TA F),
+  unify-eq K (fun `hd_beta_auto` TA F), !,
   hd-beta (F A) AS X C.
 
 :before "hd-beta-zeta:end"
 hd-beta-zeta (uvar as K) [A|AS] X C :- !, % auto-intro
   assert! (of A TA _) "already typed",
-  unify-eq K (fun `hd_beta_zeta_auto` TA F),
+  unify-eq K (fun `hd_beta_zeta_auto` TA F), !,
   hd-beta-zeta (F A) AS X C.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -45,13 +45,12 @@ macro @tail-cut-if Option Hd Hyps :- (
   (Hd :- not(get-option Option tt), Hyps   )
 ).
 
-func unif term, stack, term, stack, bool, cumul ->.
+pred unif i:term, i:stack, i:term, i:stack, i:bool, i:cumul.
 :if "DBG:unif"
 unif X CX Y CY D M :-
   coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
 
-:index (1)
-func swap bool, (func A, A ->), A, A ->.
+pred swap i:bool, i:(A -> A -> prop), i:A, i:A.
 swap tt F A B :- F B A.
 swap ff F A B :- F A B.
 
@@ -119,7 +118,7 @@ unif (pglobal (const GR) I1) C (pglobal (const GR) I2) D _ eq :-
 unif (pglobal (const GR) I1) C (pglobal (const GR) I2) D _ leq :-
   coq.univ-instance.unify-leq (const GR) I1 I2 ok,
   unify-ctxs C D, !.
-unif X C T D _ _ :- name X, !, name T, X = T, unify-ctxs C D.
+unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
 
 % 1 step reduction  TODO:1
 unif (global (const GR)) C T D M U :- unfold GR none C X1 C1, !, unif X1 C1 T D M U.
@@ -142,16 +141,15 @@ unif X C T D ff U :- !, unif T D X C tt U.
 %   print "Error: " {coq.term->string {unwind X C1}} "vs" {coq.term->string {unwind Y C2}}. %, halt.
 
 % Contexts happens to be lists, so we just reuse the code
-func unify-list list term, list term ->.
+pred unify-list i:list term, i:list term.
 unify-list L1 L2 :- unify-ctxs L1 L2.
 
 % the entry points of rec calls: unify unify-ctxs
-:index(1)
-func unify-ctxs list term, list term ->.
+pred unify-ctxs i:list term, i:list term.
 unify-ctxs [] [].
 unify-ctxs [X|XS] [Y|YS] :- unify X Y eq, !, unify-ctxs XS YS.
 
-func unify term, term, cumul ->.
+pred unify i:term, i:term, i:cumul.
 unify A B C :- unif {hd-beta A []} {hd-beta B []} ff C.
 
 %%%%%% entry points for clients %%%%%%%
@@ -170,12 +168,12 @@ key (pglobal _ _) :- !.
 key C :- name C, !.
 key (primitive _) :- !.
 
-func bind-list list term, term -> any.
+pred bind-list i:list term, i:term, o:any.
 bind-list [] T T' :- bind T T1, T1 = T'.
 bind-list [app [C| AS] |VS] T R :- key C, !,
   pi x\
     (pi L X\ bind (app[C|L]) X :- get-option "unif:greedy" tt,      unify-list-eq L AS, X = x, !) =>
-    (pi L X\ bind (app[C|L]) X :- not (get-option "unif:greedy" tt),unify-list-eq L AS, X = x, !) =>
+    (pi L X\ bind (app[C|L]) X :- not (get-option "unif:greedy" tt),unify-list-eq L AS, X = x) =>
     bind-list VS T (R x).
 bind-list [C|VS] T R :- key C, def C _ _ V, key V, !,
   pi x\ @tail-cut-if "unif:greedy" (bind C x) true => 
@@ -186,7 +184,7 @@ bind-list [C|VS] T R :- key C, !,
 bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
 
 % CAVEAT: (app FLEX), (match _ _ FLEX) are not terms!
-func bind term -> term.
+pred bind i:term, o:term.
 bind X Y :- name X, X = Y, !.
 bind X Y :- name X, def X _ _ T, !, bind T Y.
 bind (global _ as C) C :- !.
@@ -342,7 +340,7 @@ pred utc % Uniqueness of typing
   i:term,      % type living in values
   o:prop.      % goal checking compatibility of the two types
 utc [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
-utc [N|NS] T1 [V|VS] T2 C :- !, copy N V => utc NS T1 VS T2 C.
+utc [N|NS] T1 [V|VS] T2 C :- !, (copy N V :- !) => utc NS T1 VS T2 C.
 utc [] T1 VS T2 C :- !, utc [] {coq.subst-prod VS T1} [] T2 C. % FIXME: reduction
 utc [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
   assert! (pi x\ F x = F1) "restriction bug", utc NS F1 [] T2 C.

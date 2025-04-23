@@ -22,8 +22,8 @@ body-params 0 (prod X TX x\ prod P (PX x) (Ty x)) KArgs1 KArgs2 R RT :- !,
       (B1 x p1 p2 e) (RTB x p1 p2 e),
     OT x p1 = {{ fun (i : lp:{{PX x}}) (eq : lib:@elpi.eq lp:{{PX x}} lp:p1 i) =>
               lp:(OTy i eq) }},
-    (pi i eq \ copy p2 i => copy e eq => copy (RTB x p1 p2 e) (OTy i eq)), !,
-    (copy p2 p1 => copy (B1 x p1 p2 e) (B x p1)), !,
+    (pi i eq \ (copy p2 i :- !) => (copy e eq :- !) => copy (RTB x p1 p2 e) (OTy i eq)), !,
+    ((copy p2 p1 :- !) => copy (B1 x p1 p2 e) (B x p1)), !,
     BoTy x p1 p2 e = OTy p2 e.
 
 body-params 0 Ty KArgs1 KArgs2 R RT :- !,

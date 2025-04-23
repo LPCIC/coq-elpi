@@ -359,7 +359,7 @@ Elpi Accumulate lp:{{
 
     % let's make a copy, capturing all occurrences of P with a
     % (which stands for the parameter)
-    (pi a\ copy P a ==> copy-indt-decl Decl (Decl' a)),
+    (pi a\ (copy P a :- !) ==> copy-indt-decl Decl (Decl' a)),
 
     % to avoid name clashes, we rename the type and its constructors
     % (we don't need to rename the parameters)

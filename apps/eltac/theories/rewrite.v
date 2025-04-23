@@ -16,8 +16,8 @@ Elpi Accumulate lp:{{
     % sending a type T to the same type, but with all 
     % subterms of T unifiable with Q to be replaced with a fresh constant x.
         pi x\ 
-        (pi J\ copy J x :- Strong = [str "strong"| _], coq.unify-leq Q J ok) =>
-        (pi J\ copy J x :- [] = Strong, Q = J) =>
+        (pi J\ copy J x :- Strong = [str "strong"| _], coq.unify-leq Q J ok, !) =>
+        (pi J\ copy J x :- [] = Strong, Q = J, !) =>
         % Apply this copy function to the goal type.
             (copy GoalType (A x),
         % If the subterm Q did indeed appear in the goal,

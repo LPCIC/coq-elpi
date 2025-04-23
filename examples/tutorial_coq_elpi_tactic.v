@@ -555,7 +555,7 @@ Elpi Accumulate lp:{{
 
 solve (goal _ _ T _ [trm X]) _ :-
   pi x\
-    (copy X x ==> copy T (Tabs x)),
+    ((copy X x :- !) ==> copy T (Tabs x)),
     if (occurs x (Tabs x))
        (coq.say "found" {coq.term->string X})
        (coq.ltac.fail _ "not found").
@@ -612,7 +612,7 @@ Elpi Accumulate lp:{{
 
 solve (goal _ _ T _ [str ID, trm X] as G) GL :-
   pi x\
-    (copy X x ==> copy T (Tabs x)),
+    ((copy X x :- !) ==> copy T (Tabs x)),
     if (occurs x (Tabs x))
        (if (coq.ltac.id-free? ID G) true
            (coq.warn ID "is already taken, Elpi will make a name up"),

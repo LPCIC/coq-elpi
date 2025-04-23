@@ -57,7 +57,7 @@ do-args [PX,X|XS] [_,TX|PS] [Triv,P|Trivs] Old K R :- std.do! [
 ].
 
 pred do-oty i:(term -> term), i:term, i:term, i:list term, i:list term, o:term.
-do-oty K E _ [V,_] _ {{ lib:@elpi.eq _ _ lp:KV }} :- copy E V => copy (K V) KV.
+do-oty K E _ [V,_] _ {{ lib:@elpi.eq _ _ lp:KV }} :- (copy E V :- !) => copy (K V) KV.
 
 pred do-body i:list term, i:list term, i:list term, i:list term, i:term, i:term, i:term, i:list term, i:list term, o:term.
 do-body XS PS Trivs Old K _ _ _ _ R :- do-args XS PS Trivs Old K R.

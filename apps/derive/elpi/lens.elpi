@@ -68,7 +68,7 @@ declare-lens Prefix I FieldName RawBody (lens-db I FieldName C):-
   % In order to support primitive records we call the elaborator, which
   % eventually compiles the match into primitive projections
   std.assert-ok! (coq.elaborate-skeleton RawBody Ty Body) "derive.lens generates illtyped term",
-  ((pi P P1 N\ copy (primitive (proj P N)) (primitive (proj P1 N)) :- coq.primitive.projection-unfolded P1 P) => copy Body Body1),
+  ((pi P P1 N\ copy (primitive (proj P N)) (primitive (proj P1 N)) :- coq.primitive.projection-unfolded P1 P, !) => copy Body Body1),
   coq.env.add-const Name Body1 Ty @transparent! C,
   std.map {std.iota Nparams} (_\r\ r = maximal) Implicits,
   if (Nparams > 0)
