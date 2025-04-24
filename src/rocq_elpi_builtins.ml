@@ -2635,6 +2635,15 @@ phase unnecessary.|};
     state, !: (Univ.Universe.super u), [])),
   DocAbove);
 
+  MLCode(Pred("coq.univ.alg-max",
+    In(univ, "U1",
+    In(univ, "U2",
+    Out(univ, "UMax",
+    Full(unit_ctx, "relates univs U1 and U2 to their algebraic maximum UMax, that is max(U1, U2)")))),
+  (fun u1 u2 _ ~depth _ _ state ->
+    state, !: (Univ.Universe.sup u1 u2), [])),
+  DocAbove);
+
   MLCode(Pred("coq.univ",
     InOut(B.ioarg id, "Name",
     InOut(B.ioarg univ, "U",
