@@ -169,7 +169,8 @@ store-param-indc Suffix K KR :-
 % toplevel predicates %
 %%%%%%%%%%%%%%%%%%%%%%%
 
-pred dispatch i:gref, i:string, o:list prop.
+:index (1)
+func dispatch gref, string -> list prop.
 
 dispatch (const GR as C) Suffix Clauses :- do! [
   Term = global C,
@@ -237,7 +238,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
 dispatch (indc _) _ _ :-
   coq.error "derive.param2: cannot translate a constructor".
 
-pred main i:gref, i:string, o:list prop.
+func main gref, string -> list prop.
 main T _ Clauses :-
   dispatch T "_R" Clauses.
 

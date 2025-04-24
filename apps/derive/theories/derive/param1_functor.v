@@ -15,7 +15,7 @@ From elpi.apps Require Import derive derive.param1.
 
 Elpi Db derive.param1.functor.db lp:{{
   pred param1-functor-db i:term, i:term, o:term.
-  pred param1-functor-for i:inductive, o:gref, o:list bool.
+  func param1-functor-for inductive -> gref, list bool.
 }}.
 
 Elpi Command derive.param1.functor.

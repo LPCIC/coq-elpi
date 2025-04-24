@@ -6,23 +6,24 @@ shorten std.{assert!, last, forall, map}.
 
 namespace derive.isK {
 
-pred ty i:term, i:list term, i:list term, o:term.
+func ty term, list term, list term -> term.
 ty _ _ _ {{ bool }}.
 
 % if the branch of the match (corresponding to KParams) is the one
 % for K (the constructor we are generating the isK function for) we say
 % true, else we say false.
-pred branch i:term, i:term, i:term, i:list term, i:list term, o:term.
+:index (1)
+func branch term, term, term, list term, list term -> term.
 branch K KParams _ _ _ {{ true }} :- coq.safe-dest-app KParams K _, !.
 branch _ _ _ _ _ {{ false }}.
 
-pred body i:term, i:term, i:list term, i:list term, o:term.
+func body term, term, list term, list term -> term.
 body K _ Vars Tys R :-
   last Vars X,
   last Tys TX,
   coq.build-match X TX ty (branch K) R.
 
-pred main-K i:string, i:term, i:term, i:constructor, o:prop.
+func main-K string, term, term, constructor -> prop.
 main-K Prefix Ity Arity GRK Clause :-
   K = (global (indc GRK)),
   coq.bind-ind-arity Ity Arity (body K) TSek,
@@ -31,7 +32,7 @@ main-K Prefix Ity Arity GRK Clause :-
   coq.env.add-const Name T Ty _ IsK,
   Clause = (isK-db GRK (global (const IsK)) :- !).
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Prefix Clauses :-
   T = global (indt GR),
   coq.env.indt GR _ _ _ Arity Kn _,

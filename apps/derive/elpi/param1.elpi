@@ -123,10 +123,11 @@ reali-store-indc Prefix K XR :-
 
 % toplevel predicates %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred dispatch
-  i:gref,   % input of the translation
-  i:string, % the name
-  o:list prop.   % the clause
+:index (1)
+func dispatch
+  gref,   % input of the translation
+  string  % the name
+  -> list prop.   % the clause
 
 dispatch (const GR) Prefix Clauses :- !, do! [
   Term = global (const GR),
@@ -155,7 +156,7 @@ dispatch (const GR) Prefix Clauses :- !, do! [
   Clauses = [C1, C2, reali-done (const GR)]
 ].
 
-pred prefix-indc i:string, i:constructor, o:pair constructor id.
+func prefix-indc string, constructor -> pair constructor id.
 prefix-indc Prefix K (pr K NewName) :-
   coq.gref->id (indc K) Name, NewName is Prefix ^ Name.
 
@@ -202,7 +203,7 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
 dispatch (indc _) _ _ :-
   coq.error "derive.param1: cannot translate a constructor".
 
-pred main i:gref, i:string, o:list prop.
+func main gref, string -> list prop.
 main T _ Clauses :-
   dispatch T "is_" Clauses.
 

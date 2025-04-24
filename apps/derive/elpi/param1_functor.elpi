@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 pred param1-functor-db i:term, i:term, o:term.
-pred param1-functor-for i:inductive, o:gref, o:list bool.
+func param1-functor-for inductive -> gref, list bool.
 
 shorten std.{assert!, do!, length, split-at, drop-last, rev, append}.
 
@@ -195,7 +195,7 @@ mk-clause N Lno Ity1 Ity2 X Todo Map C I M CF :- whd1 X X1, !,
   mk-clause N Lno Ity1 Ity2 X1 Todo Map C I M CF.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Suffix C :- do! [
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",

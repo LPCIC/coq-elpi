@@ -87,7 +87,7 @@ param L (prod N S T) K R :- L > 0, !,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the case split lemma
 
-pred main-constructor i:int, i:string, i:constructor, i:term, o:prop.
+func main-constructor int, string, constructor, term -> prop.
 main-constructor Lno Prefix K Kty C :- do! [
   assert! (bcongr-db K _) "derive.eqK: run derive.bcongr first",
 
@@ -105,7 +105,7 @@ main-constructor Lno Prefix K Kty C :- do! [
   coq.elpi.accumulate _ "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
 ].
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Prefix Clauses :-
 
   coq.env.indt GR _ Lno _ _ Kns Ktys,

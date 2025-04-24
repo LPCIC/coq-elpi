@@ -8,13 +8,15 @@ namespace derive.cast {
 
 namespace aux {
 
-pred arity i:list term, i:list term, o:term.
+:index (1)
+func arity list term, list term -> term.
 arity [] _ (sort (typ U)) :- coq.univ.new U.
 arity [V|VS] Acc (prod `x` T R) :-
   coq.mk-app V {rev Acc} T,
   pi x\ arity VS [x|Acc] (R x).
 
-pred args i:list term, i:list term, o:term.
+:index (1)
+func args list term, list term -> term.
 args [] [X|_] X.
 args [V|VS] Acc (fun `c` S R) :-
   coq.mk-app V {rev Acc} S,

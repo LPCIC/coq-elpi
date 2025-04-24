@@ -136,7 +136,7 @@ for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
   allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Prefix Clauses :- do! [
   T = global (indt GR),
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,

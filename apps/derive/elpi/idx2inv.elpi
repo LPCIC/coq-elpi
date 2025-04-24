@@ -63,7 +63,7 @@ mk-branch K KTy Vars VarsTy R :- std.do! [
 pred mk-refl i:term, o:term.
 mk-refl E {{ @refl_equal _ lp:E }}.
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Infix [Clause] :- do! [
   T = global (indt GR),
   assert! (invert-db (indt GR) (indt GRinv)) "derive.idx2inv: No inverted inductive",

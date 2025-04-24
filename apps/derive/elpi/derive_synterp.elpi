@@ -8,12 +8,13 @@ pred dep o:string, o:string.
 dep X Y :- dep1 X Y.
 dep X Y :- dep1 X Z, dep Z Y.
 
-pred selected i:string.
+func selected string ->.
 selected Name :- get-option "only" Map, !,
-  Map ==> (get-option Name _; (get-option X _, dep X Name)).
+  Map ==> (get-option Name _; (get-option X _, dep X Name)), !.
 selected _.
 
-pred chain i:string, i:list derive.
+:index (_ 1)
+func chain string, list derive ->.
 chain _ [].
 chain T [derive Name _ _|FS] :- not(selected Name), !,
   chain T FS.
@@ -28,20 +29,21 @@ chain T [derive _ F _|FS] :- % all are selected, we can fail
 chain T [derive _ _ _|FS] :-
   chain T FS.
 
-pred toposort i:list derive, o:list derive.
+func toposort list derive -> list derive.
 toposort L SL :-
   std.findall (dep1 _ _) Deps,
   topo L Deps SL.
 
-pred not-a-src i:list prop, i:derive.
+func not-a-src list prop, derive ->.
 not-a-src Deps (derive A _ _) :- not(std.mem! Deps (dep1 A _)).
 
-pred tgt-is-not-in i:list derive, i:prop.
+:index (1)
+func tgt-is-not-in list derive, prop ->.
 tgt-is-not-in [] _.
 tgt-is-not-in [derive Tgt _ _|_] (dep1 _ Tgt) :- !, fail.
 tgt-is-not-in [_|L] D :- tgt-is-not-in L D.
 
-pred topo i:list derive, i:list prop, o:list derive.
+func topo list derive, list prop -> list derive.
 topo [] _ [] :- !.
 topo L Deps SL :-
   std.partition L (not-a-src Deps) LNoDeps Other,

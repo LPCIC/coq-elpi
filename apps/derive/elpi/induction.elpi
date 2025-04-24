@@ -116,7 +116,7 @@ params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Prefix [Clause] :- do! [
   T = global (indt GR),
 

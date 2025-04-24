@@ -18,11 +18,11 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
 
   Elpi Db derive.param1.trivial.db lp:{{
 
-  pred param1-trivial-done i:inductive.
+  func param1-trivial-done inductive ->.
   type param1-trivial-db term -> term -> prop.
   type param1-trivial-db-args list term -> list term -> prop.
 
-  pred param1-inhab-done i:inductive.
+  func param1-inhab-done inductive ->.
   type param1-inhab-db term -> term -> prop.
   type param1-inhab-db-args list term -> list term -> prop.
 

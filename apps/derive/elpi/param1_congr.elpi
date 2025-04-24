@@ -39,7 +39,7 @@ body-params N (prod X TX x\ prod P (PX x) (Ty x)) K1 K2 R RT :- N > 0,
     body-params M (Ty x p) {coq.mk-app K1 [x,p]} {coq.mk-app K2 [x,p]} (Bo x p) (BT x p).
   
 
-pred main-k i:string, i:int, i:constructor, i:term, o:prop.
+func main-k string, int, constructor, term -> prop.
 main-k Prefix Lno K KT Clause :- do! [
   Name is Prefix ^ {coq.gref->id (indc K)},
   body-params Lno KT (global (indc K)) (global (indc K)) R RT_,
@@ -49,7 +49,7 @@ main-k Prefix Lno K KT Clause :- do! [
   Clause = param1-congr-db K (global (const Cst))
 ].
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Prefix Clauses :-
   
   coq.env.indt GR _ Lno _ _ K KT,

@@ -123,7 +123,7 @@ Elpi Accumulate derive Db derive.param1.db.
 
 Elpi Accumulate derive lp:{{
   
-pred derive.on_param1 i:inductive, i:(pred i:inductive, i:string, o:list prop), i:string, o:list prop.
+func derive.on_param1 inductive, (func inductive, string -> list prop), string -> list prop.
 derive.on_param1 T F N C :- reali (global (indt T)) (global (indt P)), !, F P N C.
 
 derivation T N ff (derive "param1" (derive.param1.main T N ) (reali-done T)).

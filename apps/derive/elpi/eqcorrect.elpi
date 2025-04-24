@@ -114,7 +114,7 @@ params 0 Arity T K IndP A R :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Name [C] :- do! [
   T = global (indt GR),
   assert! (induction-db GR IndP) "derive.eqcorrect: use derive.induction first",

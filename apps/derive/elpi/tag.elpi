@@ -12,7 +12,7 @@ namespace derive.tag {
 
 % we return the clauses for the tag.db since we may need them right away
 % if we run other derivations immediately
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main I Prefix CL :- do! [
 
   % build   fun params (x : I params) => ... do-match ...

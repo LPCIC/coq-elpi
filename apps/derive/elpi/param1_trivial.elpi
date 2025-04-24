@@ -112,7 +112,7 @@ body-params _ T _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Suffix [Clause,param1-trivial-done GR] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
   body-params Lno (global (indt GR)) Arity R,
@@ -123,7 +123,7 @@ main GR Suffix [Clause,param1-trivial-done GR] :- do! [
   coq.env.add-const Name R RT @transparent! Cst,
   Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
-  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done GR)),
+  if (not (param1-trivial-done GR)) (coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done GR))) true,
 ].
 
 }

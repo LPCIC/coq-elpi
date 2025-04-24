@@ -3,7 +3,7 @@
 /* ------------------------------------------------------------------------- */
 
 
-pred feqb.trm->term i:eqb.trm, o:term.
+func feqb.trm->term eqb.trm -> term.
 
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
@@ -51,8 +51,7 @@ add-sumbool (eqb.value-param TY F) Reflect  {{ fun x : lp:Ty => lp:(R x) }} :-
     (R x).
 add-sumbool (eqb.inductive _ _) Reflect {{reflect_dec _ _ lp:Reflect}}.
 
-
-pred main i:gref, i:string, o:list prop.
+func main gref, string -> list prop.
 main (indt I) Prefix [CL] :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
   std.assert! (eqcorrect-for (indt I) Correct Refl) "run eqbcorrect before",

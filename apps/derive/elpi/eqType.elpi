@@ -133,7 +133,7 @@ validate-arguments (eqb.dependent T Args) D :- std.do-ok! D [
   (d\ pi x\ validate-arguments (Args x) d),
 ].
 
-pred main i:inductive, o:list prop.
+func main inductive -> list prop.
 main I [C] :-
   std.assert-ok! (translate-indt I EQT) "derive.eqType.ast: translate",
   std.assert-ok! (validate-eqType EQT) "derive.eqType.ast: validate",
@@ -144,7 +144,7 @@ main I [C] :-
 
 namespace feqb {
 
-pred trm->term i:eqb.trm, o:term.
+func trm->term eqb.trm -> term.
 trm->term (eqb.global GR) (global GR) :- !.
 trm->term (eqb.app GR A AS) (app[global GR,A1|AS1]) :- !,
   trm->term A A1,

@@ -7,7 +7,7 @@ From elpi.apps.derive.elpi Extra Dependency "cast.elpi" as cast.
    
 From elpi Require Export elpi.
 
-Elpi Db derive.cast.db lp:{{ type cast-db int -> term -> prop. }}.
+Elpi Db derive.cast.db lp:{{ func cast-db int -> term. }}.
 
 
 Elpi Command derive.cast.

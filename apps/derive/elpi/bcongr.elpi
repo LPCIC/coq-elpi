@@ -15,7 +15,7 @@ namespace derive.bcongr {
 kind arg type.
 type arg term -> term -> term -> term -> arg.
 
-pred bo-args i:term, i:term, i:term, i:list arg, o:term.
+func bo-args term, term, term, list arg -> term.
 
 bo-args (prod N S T) K1 K2 Hs (fun `x` S x\ fun `y` S y\ fun `b` {{bool}} b\ R x y b) :- !,
   @pi-decl `x` S x\
@@ -38,7 +38,7 @@ bo-args T K1 K2 HsRev Bo :- (T = global (indt _) ; T = app[global (indt _)|_]), 
 
 bo-args T K1 K2 HsRev Bo :- whd1 T T1, !, bo-args T1 K1 K2 HsRev Bo.
 
-pred mk-conj i:list arg, o:term.
+func mk-conj list arg -> term.
 mk-conj [] {{ lib:elpi.true }}.
 mk-conj [arg _ _ _ X] X :- !.
 mk-conj [arg _ _ _ X|XS] {{ lib:elpi.andb lp:X lp:C }} :-
@@ -47,7 +47,7 @@ mk-conj [arg _ _ _ X|XS] {{ lib:elpi.andb lp:X lp:C }} :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % we case split on each and every assumption (arg H _ _ _)
 
-pred elim-all i:int, i:list arg, o:term, o:term.
+func elim-all int, list arg -> term, term.
 elim-all _ [] {{ lib:elpi.reflect lp:P lp:_}}
               {{ lib:elpi.ReflectT lp:P (lib:@elpi.erefl lp:T lp:LHS) }} :-
   coq.safe-dest-app P _ [T,LHS,_].
@@ -57,7 +57,7 @@ elim-all N [arg H X Y B|Hs] P R :-
   (pi x b\ (copy Y x :- !) => (copy B b :- !) => copy P (Pxb x b)), !,
   coq.build-match H TH (otyR Pxb Y) (branchR Pxb X Y N Hs) R.
 
-pred otyR i:(term -> term -> term), i:term, i:term, i:list term,  i:list term, o:term.
+func otyR (term -> term -> term), term, term, list term,  list term -> term.
 otyR F X _ [Idx,_] _ R :-
   R = F X Idx.
 
@@ -65,7 +65,7 @@ otyR F X _ [Idx,_] _ R :-
 % Two branch per hyp: ReflectT or ReflectF
 
 % we continue
-pred  branchR i:(term -> term -> term), i:term, i:term, i:int, i:list arg, i:term ,i:term, i:list term, i:list term, o:term.
+func  branchR (term -> term -> term), term, term, int, list arg, term ,term, list term, list term -> term.
 
 branchR Pxb X _ N Hs K _ [E] [ET] R :-
   coq.safe-dest-app K {{ lib:elpi.ReflectT }} _, !,
@@ -81,17 +81,18 @@ branchR Pxb _ Y N _ K _ [NE] [_] R :-
      ltac.injection h P _ (PEs h),
      nth N (PEs h) (Inj h) ].
 
-pred branchE i:term, i:int, i:list arg, i:term ,i:term, i:list term, i:list term, o:term.
+func branchE term, int, list arg, term ,term, list term, list term -> term.
 branchE P N Hs _ _ [] [] R :- M is N + 1, elim-all M Hs P R.
 
-pred otyE i:(term -> term -> term), i:term, i:term, i:list term, i:list term, o:term.
+func otyE (term -> term -> term), term, term, list term, list term -> term.
 otyE F B _ [X,_] _ R :-
   R = F X B.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % we take in input all parameters
 
-pred bo-param i:int, i:term, i:term, o:term.
+:index (1)
+func bo-param int, term, term -> term.
 
 bo-param 0 K T R :- !, bo-args T K K [] R.
 bo-param N K (prod Name Src T) (fun Name Src T1) :- N > 0, !,
@@ -104,7 +105,7 @@ bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the congruence lemma
 
-pred main-constructor i:int, i:string, i:constructor, i:term, o:prop.
+func main-constructor int, string, constructor, term -> prop.
  
 main-constructor Lno Prefix K Kt Clause :- do! [
   Kn = global (indc K),
@@ -123,7 +124,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Prefix Clauses :- do! [
   coq.env.indt GR Ind Lno _ _ Kns Ktys,
   assert! (Ind = tt)   "derive.bcongr: Coinductive types are not supported",
