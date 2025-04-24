@@ -4262,15 +4262,16 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
     In(id, "DbName",
     In(B.list Rocq_elpi_builtins_synterp.clause, "Clauses",
     Full (global, {|
-Declare that, once the program is over, the given clauses has to be
-added to the given db (see Elpi Db).
+Declare that the given clauses have to be added to the given db (see Elpi Db).
 Clauses usually belong to Coq modules: the Scope argument lets one
 select which module:
-- execution site (default) is the module in which the pogram is
-  invoked
+- execution site (default) is the module in which the program is
+  invoked, the clauses will be accumulated when the execution of the program ends
 - current is the module currently being constructed (see
-  begin/end-module)
-- library is the current file (the module that is named after the file)
+  begin/end-module), the clauses will be accumulated when the execution of the program ends
+  or the start of another program (whichever comes first)
+- library is the current file (the module that is named after the file),
+  the clauses will be accumulated when the execution of the program ends
 The clauses are visible as soon as the enclosing module is Imported.
 A clause that mentions a section variable is automatically discarded
 at the end of the section.
