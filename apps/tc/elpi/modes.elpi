@@ -7,7 +7,7 @@ namespace tc {
   macro @pending-mode! :- "pending mode".
 
   pred string->coq-mode o:string, o:hint-mode.
-  string->coq-mode X Y :- (var X, var Y), !, fail.
+  string->coq-mode uvar uvar :- !, coq.error "[TC] string->coq-mode". 
   string->coq-mode "!" mode-input :- !.
   string->coq-mode "+" mode-ground :- !.
   string->coq-mode "-" mode-output :- !.

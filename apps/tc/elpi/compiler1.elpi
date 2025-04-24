@@ -64,13 +64,9 @@ namespace tc {
   add-inst->db _ _ Inst :- tc.instance _ Inst _ _, !. % the instance has already been added
   add-inst->db IgnoreClassDepL _ Inst :-
     get-class-dependencies Inst Dep,
-    std.exists Dep (my_mem IgnoreClassDepL), !,
+    std.exists Dep (std.mem IgnoreClassDepL), !,
     coq.warning "invalid-dependency-inst" "TC-warning" Inst "depneds on a tc.banned TC".
   add-inst->db _ _ Inst :- !, add-inst>db.aux Inst.
-
-  pred my_mem i:list A, i:A.
-  my_mem [X|_] X.
-  my_mem [_|XS] X :- my_mem XS X.
 
   % add all the instances of a TC
   pred add-inst-of-tc i:list gref, i:list gref, i:gref.
