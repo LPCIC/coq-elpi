@@ -17,7 +17,7 @@ Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
 Elpi Db derive.eq.db lp:{{
 
 % full resolution (composes with eq functions for parameters)
-type eq-db term -> term -> term -> prop.
+func eq-db term, term -> term.
 eq-db {{ lib:num.int63.type }} {{ lib:num.int63.type }} {{ lib:elpi.derive.eq_unit63 }} :- !.
 eq-db {{ lib:num.float.type }} {{ lib:num.float.type }} {{ lib:elpi.derive.eq_float64 }} :- !.
 eq-db {{ lib:elpi.pstring }} {{ lib:elpi.pstring }} {{ lib:elpi.pstring_eqb }} :- !.
