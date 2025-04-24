@@ -9,7 +9,7 @@ macro @pi-trm N T F :-
 
 namespace derive.eqbcorrect {
 
-pred has-params? i:eqb.eqType.
+func has-params? eqb.eqType ->.
 has-params? (eqb.type-param _).
 has-params? (eqb.value-param _ _).
 
@@ -122,18 +122,18 @@ search-eqcorrect-apply (eqb.inductive _ _) [] C R C R.
 
 %---------------------------------------------------------------------------
 
-pred run-solver i:sealed-goal, i:string.
+func run-solver sealed-goal, string ->.
 run-solver G Name :-
   if (coq.ltac.open (coq.ltac.call Name []) G []) true
      ((@holes! => coq.sealed-goal->string G SG),
       std.fatal-error {calc ( "solver " ^ Name ^ " fails on goal:\n" ^ SG )}).
 
-pred coq.sealed-goal->string i:sealed-goal, o:string.
+func coq.sealed-goal->string sealed-goal -> string.
 coq.sealed-goal->string (nabla G) R :- pi x\  coq.sealed-goal->string (G x) R.
 coq.sealed-goal->string (seal (goal Ctx _ Ty _ _)) R :-
   Ctx => (std.map {std.rev Ctx} coq.ctx->string L, coq.term->string Ty G, R is "Lemma foo " ^ {std.string.concat "\n" L} ^ "\n :\n" ^ G ^ ".").
 
-pred coq.ctx->string i:prop, o:string.
+func coq.ctx->string prop -> string.
 coq.ctx->string (decl X _ Ty) R :- R is "(" ^ {coq.term->string X} ^ " : " ^ {coq.term->string Ty} ^ ")".
 coq.ctx->string (def X _ Ty B) R :- R is "(" ^ {coq.term->string X} ^ " : " ^ {coq.term->string Ty} ^ " := " ^ {coq.term->string B} ^ ")".
 
@@ -141,7 +141,8 @@ pred common-body o:term.
 pred fields-t o:term, o:term, o:term, o:term.
 
 %---------------------------------------------------------------------------
-pred common i:eqb.eqType, i:list term, i:term, o:term.
+:index (1)
+func common eqb.eqType, list term, term -> term.
 common (eqb.type-param F) Params Ind O :- std.do! [
   config Pred Pred_on _Pred_body _Solver Db,
   O = {{ fun (a : lp:Type) (eqA : a -> a -> bool) (eqAc : lp:Pred a eqA) => lp:(R a eqA eqAc) }},
@@ -207,7 +208,8 @@ common (eqb.inductive I Ks) ParamsRev Ind O :- std.do! [
 
 %---------------------------------------------------------------------------
 
-pred common-aux i:eqb.eqType, i:list term, i:term, o:term.
+:index (1)
+func common-aux eqb.eqType, list term, term -> term.
 common-aux (eqb.type-param F) Params Ind O :- std.do! [
   config _Pred Pred_on _Pred_body _Solver Db,
   O = {{ fun (a : lp:Type) (eqA : a -> a -> bool) => lp:(R a eqA) }},
@@ -258,12 +260,13 @@ common-aux (eqb.inductive I Ks) ParamsRev Ind O :- std.do! [
 
 %---------------------------------------------------------------------------
 
-pred branch i:list term, i:eqb.constructor, o:term.
+func branch list term, eqb.constructor -> term.
 branch Params (eqb.constructor K Args) R :-
   coq.mk-app (global (indc K)) Params KParams,
   args Args KParams [] [] [] 0 R.
 
-pred args i:eqb.arguments, i:term, i:list term,i:list term, i:list term, i:int, o:term.
+:index (1)
+func args eqb.arguments, term, list term,list term, list term, int -> term.
 args (eqb.irrelevant TY Args) K As Hs Bs N O :- std.do! [
   O = {{ fun (x : lp:T) (px : lp:EqbOn x) => lp:(R x px) }},
   feqb.trm->term TY T,
@@ -325,21 +328,22 @@ args (eqb.stop TY) K _As _Hs _Bs _ {{ lp:B : lp:Pred_on lp:T lp:Cmp lp:K }} :-
   run-solver G Solver,
 ].
 
-pred correct-proof i:term, i:term, i:(term -> term), i:(term -> term) i:list term, i:list term, i:list term, o:term.
+func correct-proof term, term, (term -> term), (term -> term), list term, list term, list term -> term.
 correct-proof X TX H G As Bs Hs R :-
   coq.build-match X TX (cp.rty H G) (cp.bs As Bs Hs G) R.
 
-pred cp.rty i:(term -> term), i:(term -> term), i:term, i:list term, i:list term, o:term.
+func cp.rty (term -> term), (term -> term), term, list term, list term -> term.
 cp.rty H G _ Vs _ {{ lp:{{ H X }} -> lp:{{ G X }} }} :- std.last Vs X.
 
-pred cp.bs i:list term, i:list term, i:list term, i:(term -> term), i:term, i:term, i:list term, i:list term, o:term.
+func cp.bs list term, list term, list term, (term -> term), term, term, list term, list term -> term.
 cp.bs As Bs Hs G K _ Vs Ts {{ @impliesP lp:Bools lp:P lp:Next }} :-
   std.rev Vs VsRev,
   mkblistcorrect Bs VsRev {{ bnil }} Bools,
   P = G {coq.mk-app K Vs },
   cp.curry {std.rev Bs} As Vs Vs Ts Hs [] G K Next.
 
-pred cp.curry i:list term, i:list term, i:list term, i:list term, i:list term, i:list term, i:list term, i:(term -> term), i:term, o:term.
+:index (1)
+func cp.curry list term, list term, list term, list term, list term, list term, list term, (term -> term), term -> term.
 cp.curry [B|Bs] As [V|Vs] OVs Ts Hs Hs2 G K W :- std.do! [
   TyH = ({{ @eq bool (lp:B lp:V) true }} : term),
   (@pi-decl `h` TyH h\ cp.curry Bs As Vs OVs Ts Hs [h|Hs2] G K (R h)),
@@ -354,23 +358,27 @@ cp.curry [] As [] Vs Ts Hs Hs2 G K R :- std.do! [
   coq.mk-app {{ @eq_ind_r_nP lp:Types lp:P }} {std.append Eqns [End]} R,
 ].
 
-pred mkrewpred i:list term, i:term, i:(term -> term), o:term.
+:index (1)
+func mkrewpred list term, term, (term -> term) -> term.
 mkrewpred [] K G (G K).
 mkrewpred [T|Ts] K G {{ fun w : lp:T => lp:(R w) }} :-
   @pi-decl `w` T w\
     mkrewpred Ts {coq.mk-app K [w]} G (R w).
 
-pred mkeqns i:list term, i:list term, i:list term, i:list term, o:list term.
+:index (1)
+func mkeqns list term, list term, list term, list term -> list term.
 mkeqns [] [] [] [] [].
 mkeqns [A|As] [V|Vs] [H|Hs] [H2|H2s] [A,V,{{ lp:H lp:V lp:H2 }}|R] :-
   mkeqns As Vs Hs H2s R.
 
-pred mktlistcorrect i:list term, i:term, o:term.
+:index (1)
+func mktlistcorrect list term, term -> term.
 mktlistcorrect [] ACC ACC.
 mktlistcorrect [X|XS] ACC R :-
   mktlistcorrect XS {{ tcons lp:X lp:ACC }} R.
 
-pred mkblistcorrect i:list term, i:list term, i:term, o:term.
+:index (1)
+func mkblistcorrect list term, list term, term -> term.
 mkblistcorrect [] [] ACC ACC.
 mkblistcorrect [X|XS] [V|VS] ACC R :-
   coq.mk-app X [V] E,
@@ -386,7 +394,8 @@ args (eqb.stop TY) K _As Hs Bs _ {{ lp:B : lp:Pred_on lp:T lp:Cmp lp:K }} :-
   coq.mk-app Common [K,Proof] B,
 ].
 
-pred mkblistrefl i:list term, i:term, o:term.
+:index (1)
+func mkblistrefl list term, term -> term.
 mkblistrefl [] ACC ACC.
 mkblistrefl [X|XS] ACC R :-
   coq.safe-dest-app X _ Args,
@@ -402,7 +411,8 @@ pred prove i:(pred i:term, o:term), i:term, o:term.
 prove Lemma T R :- search Lemma (prove Lemma) T R.
 %prove T R :- whd1 T T', !, prove T' R.
 
-pred search i:(pred i:term, o:term), i:(pred i:term, o:term), i:term, o:term.
+:index (_ _ 3)
+func search (pred i:term, o:term), (pred i:term, o:term), term -> term.
 search What Rec (app [GR|L] as GRL) R :- !, std.do! [
   What GR Aux,
   mk-reali GR (global (indt ISGR)),
@@ -417,7 +427,7 @@ search What _Rec (global GR as GRL) {{ fun (x : lp:GRL) (_ : lp:IsGR x) => lp:R 
   mk-reali (global GR) IsGR, !.
 search What _ X _ :- coq.safe-dest-app X HD _, std.assert! (What HD _) "run eqbcorrect before".
 
-pred apply-aux i:term, i:list term, o:term.
+func apply-aux term, list term -> term.
 apply-aux Aux [] Aux.
 apply-aux Aux [T|L] Aux1 :- !, std.do![
   std.assert! (eqb-for T T EQB ; reali T EQB) "WTF",
@@ -431,13 +441,13 @@ apply-functor X [ff|Mask] [Y|YS] Rec R :- reali Y PY, apply-functor {coq.mk-app 
 
 %---------------------------------------------------------------------------
 
-pred mk-reali i:term, o:term.
+func mk-reali term -> term.
 mk-reali T R :- reali T R, !.
 mk-reali T _ :-
   Msg is "derive.eqbcorrect: no unary parametricity translation for " ^ {coq.term->string T} ^ ", use derive.param1 first",
   stop Msg.
 
-pred mk-eqb-for i:term, o:term.
+func mk-eqb-for term -> term.
 mk-eqb-for T R :- eqb-for T T R, !.
 mk-eqb-for T _ :- 
   Msg is "derive.eqbcorrect: missing boolean equality for " ^ {coq.term->string T} ^ ", maybe use derive.eqb first",

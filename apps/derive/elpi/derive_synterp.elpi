@@ -52,7 +52,7 @@ topo L Deps SL :-
   topo Other NewDeps SOther,
   std.append LNoDeps SOther SL.
 
-pred main i:string.
+func main string ->.
 main TypeName :- get-option "module" M, !,
   if (M = "") (Mod = TypeName) (Mod = M),
   coq.env.begin-module Mod none,
@@ -61,11 +61,8 @@ main TypeName :- get-option "module" M, !,
 main TypeName :-
   main-derive TypeName ff.
 
-pred main-derive i:string, i:bool.
-main-derive TypeName InModule :- main1 TypeName InModule.
-
-pred main1 i:string, i:bool.
-main1 TypeName InModule :-
+func main-derive string, bool ->.
+main-derive TypeName InModule :- 
   if (get-option "prefix" PFX)
      (Prefix = PFX)
      (if (InModule is ff) (Prefix is TypeName ^ "_") (Prefix = "")),

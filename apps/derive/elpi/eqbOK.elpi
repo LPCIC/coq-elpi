@@ -10,7 +10,8 @@ macro @pi-trm N T F :-
 
 namespace derive.eqbOK {
 
-pred add-reflect i:eqb.eqType, i:term, i:term, o:term.
+:index (1)
+func add-reflect eqb.eqType, term, term -> term.
 add-reflect (eqb.type-param F) Correct Refl {{
      fun (a : lp:Type) (eqA: a -> a -> bool) (heqA : lp:(HeqA a eqA)) => lp:(R a eqA heqA)
   }} :-

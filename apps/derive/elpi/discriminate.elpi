@@ -7,7 +7,7 @@ shorten std.{ do! }.
 namespace ltac {
 
 % Tests if the command can be applied
-pred discriminate? i:term, i:inductive, o:list term, o:constructor, o:term, o:term.
+func discriminate? term, inductive -> list term, constructor, term, term.
 discriminate? Ty GR Args GRA A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
   whd T [] (global (indt GR)) Args,
@@ -17,6 +17,8 @@ discriminate? Ty GR Args GRA A B :- do! [
 ].
 
 % Does the job
+:functional
+:index (1)
 pred discriminate! i:term, i:term, o:term, i:inductive, i:list term, i:constructor, i:term, i:term.
 discriminate! H G PG GR Args GRA A B :- do! [
   isK-db GRA IsKA,
@@ -25,7 +27,7 @@ discriminate! H G PG GR Args GRA A B :- do! [
   PG = app[{{lib:elpi.bool_discr}},Eq_isKA_isKB,G]
 ].
 
-pred discriminate i:term, i:term, i:term, o:term.
+func discriminate term, term, term -> term.
 discriminate H EqAB G PG :-
   if (discriminate? EqAB    GR Args GRA A B)
      (discriminate! H G PG  GR Args GRA A B)

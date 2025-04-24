@@ -17,9 +17,9 @@ pred dep o:string, o:string.
 dep X Y :- dep1 X Y.
 dep X Y :- dep1 X Z, dep Z Y.
 
-pred selected i:string.
+func selected string ->.
 selected Name :- get-option "only" Map, !,
-  Map => (get-option Name _; (get-option X _, dep X Name)).
+  Map => (get-option Name _; (get-option X _, dep X Name)), !.
 selected _.
 
 func validate-only gref, list derive ->.
@@ -131,7 +131,7 @@ main1 GR InModule CL :-
   toposort DL SortedDL,
   chain GR SortedDL CL.
 
-pred decl+main i:string, i:indt-decl.
+func decl+main string, indt-decl ->.
 decl+main TypeName DS :- std.do! [
   if (get-option "module" M)
      (if (M = "") (ModName = TypeName) (ModName = M), HasModule = tt)
@@ -152,12 +152,12 @@ decl+main TypeName DS :- std.do! [
      check-no-no-alias
 ].
 
-pred check-no-no-alias.
+func check-no-no-alias.
 check-no-no-alias :- get-option "no_alias" tt, !,
   coq.error "The no_alias attribute only has an effect when a wrapper module is generated.".
 check-no-no-alias.
 
-pred decl+main.post i:string, i:inductive, i:indt-decl, o:list prop.
+func decl+main.post string, inductive, indt-decl -> list prop.
 decl+main.post TypeName I DS CL :- std.do! [
   coq.env.indt I _ _ _ _ KS _,
   std.map KS (k\r\ r = indc k) KGRS,
@@ -179,8 +179,8 @@ decl+main.post TypeName I DS CL :- std.do! [
   std.do! P,
 ].
 
-pred short-alias i:id, i:term.
-short-alias _ _ :- get-option "no_alias" tt, !, true.
+func short-alias id, term ->.
+short-alias _ _ :- get-option "no_alias" tt, !.
 short-alias ID T :- @global! ==> coq.notation.add-abbreviation ID 0 T ff _.
 
 }

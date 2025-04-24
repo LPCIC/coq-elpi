@@ -8,10 +8,11 @@ namespace derive.eq {
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Fills in the matrix with the truth values
-pred body
- i:term, i:list term, i:list term, % constructor, arguments and their types
- i:term, i:list term, i:list term, % constructor, arguments and their types
- o:term. %result
+:index (_ 1 1)
+func body
+ term, list term, list term, % constructor, arguments and their types
+ term, list term, list term  % constructor, arguments and their types
+ -> term. %result
 
 :name "derive.eq.body:begin" % Extension point (e.g. to skip a subterm)
 body K [] _ K [] _ R :- !, % no arguments, same constructor
@@ -33,16 +34,17 @@ body _ _ _ _ _ _ R :- !, % outside the diagonal it is always false
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Build the body
 
-pred bo-idx
- i:prop, % eq-db clause for the current type (applied to params)
- i:term, % inductive type (applied to params) for the first argument
- i:term, % arity left for the first argument
- i:term, % inductive type (applied to params) for the second argument
- i:term, % arity left for the second argument
- i:int,  % accumulator to set Recno
- o:int,  % Recno
- o:term, % Type of the term being built
- o:term. % Term buing built
+:index (_ _ 1)
+func bo-idx
+ prop, % eq-db clause for the current type (applied to params)
+ term, % inductive type (applied to params) for the first argument
+ term, % arity left for the first argument
+ term, % inductive type (applied to params) for the second argument
+ term, % arity left for the second argument
+ int   % accumulator to set Recno
+ -> int,  % Recno
+ term,    % Type of the term being built
+ term.    % Term buing built
 
 bo-idx C Ity1 (prod _ Src1 Tgt1) Ity2 (prod _ Src2 Tgt2) N M Rty R :- !,
   coq.name-suffix `i` 1 I1,
@@ -68,21 +70,21 @@ bo-idx C Ity1 (sort _) Ity2 (sort _) N N Rty R :- !,
 bo-idx C Ity1 X Ity2 Y N M Rty R :- whd1 X X1, whd1 Y Y1, !,
   bo-idx C Ity1 X1 Ity2 Y1 N M Rty R.
 
-pred bo-matrix i:term, i:term, i:term, i:term, o:term.
+func bo-matrix term, term, term, term -> term.
 bo-matrix X1 TyX1 X2 TyX2 R :-
     coq.build-match X1 TyX1 bo-ty (k1\ _\ a1\ ty1\
     coq.build-match X2 TyX2 bo-ty (k2\ _\ a2\ ty2\
       body k1 a1 ty1 k2 a2 ty2)) R.
 
-pred bo-ty i:term, i:list term, i:list term, o:term.
+func bo-ty term, list term, list term -> term.
 bo-ty _ _ _ {{ bool }}.
  
 % Take in input all parameters and their comparison function %%%%%%%%%%%%%%
-pred bo-param
- i:int,  % Number of parameters, recursion fuel
- i:term, % Inductive type (applied to all parameters taken in input)
- i:term, % Inductive type arity (parameters + indexes)
- o:term. % Comparison function
+func bo-param
+ int,  % Number of parameters, recursion fuel
+ term, % Inductive type (applied to all parameters taken in input)
+ term % Inductive type arity (parameters + indexes)
+ -> term. % Comparison function
 
 bo-param 0 Ity Arity R :- coq.safe-dest-app Ity (global (indt GR)) _, coq.env.recursive? GR, !,
   Boidx = fix `f` Recno Rty Rbo,
@@ -99,7 +101,7 @@ bo-param N Ity (prod _ Sty Rty) R :- !, M is N - 1,
   R = {{ fun (A : lp:Sty) (eqA : A -> A -> bool) => lp:(Bo A eqA) }},
   pi a f\ sigma ItyA\
     coq.mk-app Ity [a] ItyA, 
-    eq-db a a f =>
+    (eq-db a a f :- !) =>
     decl a `a` Sty =>
     decl f `f` {{ lp:a -> lp:a -> bool }} =>
       bo-param M ItyA (Rty a) (Bo a f).
@@ -107,11 +109,11 @@ bo-param N Ity (prod _ Sty Rty) R :- !, M is N - 1,
 bo-param N Ity X R :- whd1 X X1, !,
   bo-param N Ity X1 R.
 
-pred apply-idx
-  i:term, % Ity applied to parameters
-  i:term, % Arity remaining after parameters
-  i:term, % Bo comparison with potentially different indexes as per bo-idx
-  o:term. % fun idx1 idx2 (x1 : Ity ixd1) (x2 : Ity idx2) => Bo idx1 x1 idx2 x2
+func apply-idx
+  term, % Ity applied to parameters
+  term, % Arity remaining after parameters
+  term % Bo comparison with potentially different indexes as per bo-idx
+  -> term. % fun idx1 idx2 (x1 : Ity ixd1) (x2 : Ity idx2) => Bo idx1 x1 idx2 x2
 apply-idx _ (sort _) Bo Bo :- !. % no indexes -> avoid eta expansion of Bo
 apply-idx Ity Arity Bo R :-
   apply-idx.aux Ity Arity Bo R.
@@ -120,6 +122,7 @@ apply-idx.aux Ity (prod N S T) Bo (fun N S x\ R x) :- !,
 apply-idx.aux Ity (sort _) Bo (fun `x1` Ity x1\ fun `x2` Ity x2\ Bo1 x1 x2) :- !,
   pi x1 x2\ coq.mk-app Bo [x1,x2] (Bo1 x1 x2).
 
+func apply-idx.aux term, term, term -> term.
 apply-idx.aux Ity X Bo R :- whd1 X X1, !,
   apply-idx.aux Ity X1 Bo R.
 
@@ -129,14 +132,15 @@ apply-idx.aux Ity X Bo R :- whd1 X X1, !,
 % - a simple argument for each index
 
 % Also used to load the context under the fix 
-pred quantify-eq-db-idx i:prop, o:prop.
+:index (1)
+func quantify-eq-db-idx prop -> prop.
 quantify-eq-db-idx (pi x y\ C x y) (pi x y\ C1 x y) :-
   pi x y\ quantify-eq-db-idx (C x y) (C1 x y).
 quantify-eq-db-idx (eq-db A B C :- L)
                          (pi x y\ eq-db (A1 x) (B1 y) (C1 x y) :- L) :-
   pi x y\ coq.mk-app A [x] (A1 x), coq.mk-app B [y] (B1 y), coq.mk-app C [x,y] (C1 x y).
 
-pred quantify-eq-db-param i:prop, o:prop.
+func quantify-eq-db-param prop -> prop.
 quantify-eq-db-param (pi x f\ C x f) (pi x f\ C1 x f) :-
   pi x f\ quantify-eq-db-param (C x f) (C1 x f).
 quantify-eq-db-param (eq-db A B C :- (L : list prop))
@@ -147,7 +151,7 @@ quantify-eq-db-param (eq-db A B C :- (L : list prop))
     coq.mk-app B [x] (B1 x),
     coq.mk-app C [x,f] (C1 x f).
 
-pred mk-clause i:int, i:term, i:prop, o:prop.
+func mk-clause int, term, prop -> prop.
 mk-clause Lno (prod _ _ Tx) C R :- Lno > 0, !,
   Lno1 is Lno - 1,
   quantify-eq-db-param C C1,

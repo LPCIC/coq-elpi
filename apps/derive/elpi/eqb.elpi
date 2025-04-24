@@ -100,7 +100,8 @@ do-branch X2 J F K KTY Vars _ {{ @eqb_core_defs.eqb_body _ _ _ _ lp:FLDP lp:F lp
 % -----------------------------------------------------------------------------
 % example: eqb-for {{ list lp:A }} {{ @list_eqb lp:A lp:F }} :- eqb-for A F.
 
-pred do-clause i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, i:list prop, o:prop.
+:index (1)
+func do-clause eqb.eqType, eqb.eqType, list term, list term, term, list prop -> prop.
 
 do-clause (eqb.type-param AI) (eqb.type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
   pi x a ea\
@@ -155,7 +156,7 @@ main (eqb.inductive Ind F) (eqb.inductive Ind G) PI PJ {{ fun (rec : lp:I -> lp:
        (fields ParamsI ParamsJ)
        (R rec x)),
 ].
-pred rty i:term, i:term, i:term, o:term.
+func rty term, term, term -> term.
 rty Fields_t_I Fields_t_J X {{ lp:Fields_t_I lp:X -> lp:Fields_t_J lp:X -> bool }}.
 
 % -----------------------------------------------------------------------------
@@ -176,28 +177,30 @@ fields ParamsI ParamsJ (pr (eqb.constructor K Args) (eqb.constructor K Args2)) {
     coq.build-match a BoxTy1 fields.rty1 (fields.branch1 b BoxTy2 Args Args2) (R a b)
 ].
 
-pred fields.rty1 i:term, i:list term, i:list term, o:term.
+func fields.rty1 term, list term, list term -> term.
 fields.rty1  _ _ _ {{ bool }}.
 
-pred fields.branch1 i:term, i:term, i:eqb.arguments, i:eqb.arguments, i:term, i:term, i:list term, i:list term, o:term.
+:index (1)
+func fields.branch1 term, term, eqb.arguments, eqb.arguments, term, term, list term, list term -> term.
 fields.branch1 B BoxTy2 Args Args2 _ _ VarsA _ R :-
     coq.build-match B BoxTy2 fields.rty2 (fields.branch2 Args Args2 VarsA) R.
 
-pred fields.rty2 i:term, i:list term, i:list term, o:term.
+func fields.rty2 term, list term, list term -> term.
 fields.rty2 _ _ _ {{ bool }}.
 
-pred fields.branch2 i:eqb.arguments, i:eqb.arguments, i:list term, i:term, i:term, i:list term, i:list term, o:term.
+:index (1)
+func fields.branch2 eqb.arguments, eqb.arguments, list term, term, term, list term, list term -> term.
 fields.branch2 Args Args2 VarsA _ _ VarsB _ R :-
 fields.aux Args Args2 VarsA VarsB R.
 
 
-pred mk-eqb-for i:term, i:term, o:term.
+func mk-eqb-for term, term -> term.
 mk-eqb-for T1 T2 R :- eqb-for T1 T2 R, !.
 mk-eqb-for T1 _ _ :- 
   Msg is "derive.eqb: missing boolean equality for " ^ {coq.term->string T1} ^ ", maybe use derive.eqb first",
   stop Msg.
 
-pred fields.aux i:eqb.arguments, i:eqb.arguments, i:list term, i:list term, o:term.
+func fields.aux eqb.arguments, eqb.arguments, list term, list term -> term.
 
 fields.aux (eqb.dependent TYX FX) (eqb.dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R1 }} :- 
   feqb.trm->term TYX TX,
@@ -222,7 +225,7 @@ fields.aux (eqb.stop _) (eqb.stop _) [] [] {{ true }}.
 % example:
 %   eqb-fields {{ list lp:A }} {{ @list_eqb_fields lp:A lp:EA lp:ELA }} :-
 %      eqb-for A EA, eqb-for {{ list lp:A }} ELA.
-pred do-clause i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, i:list prop, o:prop.
+func do-clause eqb.eqType, eqb.eqType, list term, list term, term, list prop -> prop.
 
 do-clause (eqb.type-param AI) (eqb.type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
   pi x a ea\

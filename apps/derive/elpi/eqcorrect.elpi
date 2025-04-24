@@ -7,7 +7,7 @@ shorten std.{map, rev, assert!, do!, appendR}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % link param1-functor-db and eqcorrect-db
 
-pred pointfree i:(pred i:term, i:term, o:term), i:term, i:term, o:term.
+func pointfree (func term, term -> term), term, term -> term.
 
 pointfree F A B R :-
   coq.safe-dest-app A HDA ARGSA,
@@ -41,7 +41,8 @@ param1-functor-db HypTy {{ lib:elpi.derive.eq_axiom_at lp:A lp:_ }}
 
 namespace derive.eqcorrect {
 
-pred mk-app-eqfun i:term, i:list term, o:term.
+:index (_ 1)
+func mk-app-eqfun term, list term -> term.
 mk-app-eqfun X [] X.
 mk-app-eqfun X [Y] R :- coq.mk-app X [Y] R.
 mk-app-eqfun X [Y,_|YS] R :-
