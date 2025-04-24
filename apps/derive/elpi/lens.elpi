@@ -75,7 +75,7 @@ declare-lens Prefix I FieldName RawBody (lens-db I FieldName C):-
     (@global! => coq.arguments.set-implicit (const C) [Implicits, []])
     true.
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main I Prefix Clauses :- std.do! [
   coq.env.indt-decl I Decl, % easy to recurse on
   params Decl (global (indt I)) Names Defs,

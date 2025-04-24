@@ -5,7 +5,7 @@
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
 
-pred derive.eqb.main i:gref, i:string, o:list prop.
+func derive.eqb.main gref, string -> list prop.
 derive.eqb.main (indt I) Prefix CL :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
 
@@ -44,7 +44,7 @@ derive.eqb.main (const C) Prefix CL :- std.do! [
 namespace derive.eqb.eqb {
 
 % -----------------------------------------------------------------------------
-pred main i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, o:term.
+func main eqb.eqType, eqb.eqType, list term, list term, term -> term.
 
 main (eqb.type-param FI) (eqb.type-param FJ) PI PJ EF {{ fun (x : Type) (eqx : x -> x -> bool) => lp:(R x eqx) }} :-
   @pi-trm `x` {{ Type }} y\x\
@@ -74,7 +74,7 @@ main (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ EF {{ fun (x1 : lp:I) (x2
     do-match x1 I x2 J {coq.mk-app EF [{{fun (_ : lp:I) (_ : lp:J) => true}}]} (R x1 x2).
 
 % -----------------------------------------------------------------------------
-pred do-match i:term, i:term, i:term, i:term, i:term, o:term.
+func do-match term, term, term, term, term -> term.
 do-match X1 I X2 J F R :-
   coq.build-match X1 I
     (_\_\_\r\ r = {{ bool }})
@@ -82,7 +82,7 @@ do-match X1 I X2 J F R :-
     R.
 
 % -----------------------------------------------------------------------------
-pred do-branch i:term, i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
+func do-branch term, term, term, term, term, list term, list term -> term.
 do-branch X2 J F K KTY Vars _ {{ @eqb_core_defs.eqb_body _ _ _ _ lp:FLDP lp:F lp:TAG lp:X lp:X2 }} :- std.do! [
   coq.safe-dest-app KTY (global (indt I)) ParamsI,
   std.assert! (fields-for I _ FLD _ _) "derive.eqb: run derive.fields before",
@@ -120,7 +120,8 @@ do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (eqb-for I J 
 namespace derive.eqb.eqbf {
 
 % -----------------------------------------------------------------------------
-pred main i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, o:term.
+:index (1 1)
+func main eqb.eqType, eqb.eqType, list term, list term -> term.
 
 main (eqb.type-param FI) (eqb.type-param FJ) PI PJ {{ fun (p : Type) (eqp : p -> p -> bool) => lp:(R p eqp) }} :-
   @pi-trm `P` {{ Type }} x\p\

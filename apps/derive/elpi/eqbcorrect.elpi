@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pred feqb.trm->term i:eqb.trm, o:term.
+func feqb.trm->term eqb.trm -> term.
 
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
@@ -20,7 +20,7 @@ has-params? (eqb.value-param _ _).
 % eg: config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for
 pred config  o:term,            o:term,               o:term,                 o:string,                o:(pred i:term, o:term).
 
-pred main i:gref, i:string, o:list prop.
+func main gref, string -> list prop.
 main (indt I) Prefix CLs :- std.do! [
 
   std.assert! (eqType (indt I) FI) "this inductive is not supported",

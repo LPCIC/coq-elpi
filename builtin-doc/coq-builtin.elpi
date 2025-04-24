@@ -33,35 +33,29 @@
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
-<<<<<<< HEAD
-pred main i:list argument.
+external pred main i:list argument.
 
 % Commands with a non-trivial parsing phase can thread data between
 % from the parsing phase to the interp one in an untyped way using the
 % following two entrypoints
-pred main-interp i:list argument, i:any.
-pred main-synterp i:list argument, o:any.
+external pred main-interp i:list argument, i:any.
+external pred main-synterp i:list argument, o:any.
 
 % Commands starting/closing proofs have to use the following entrypoints.
 % By convention with Coq's Lemma/Qed the data passed between these two
 % is an id (the name of the lemma). One is not expected to follow this
 % convention if he does not want to be compatible with standard proof commands.
-pred main-interp-proof
+external pred main-interp-proof
   i:list argument, % arguments passed to the command
   i:any,  % data from the parsing phase (defaults to _)
   o:term, % the statement to prove (not necessarily ground)
   o:any.  % data for the corresponding proof-closing command
-pred main-interp-qed
+external pred main-interp-qed
   i:list argument, % arguments passed to the command
   i:any,  % data from the parsing phase (defaults to _)
   i:term, % proof term
   i:any.  % data from the corresponding proof-opening command
 
-=======
-external pred main i:list argument.
-external pred main-interp i:list argument, i:any.
-external pred main-synterp i:list argument, o:any.
->>>>>>> dee20810 (port to elpi 3.0)
 pred usage.
 external pred attributes o:list attribute.
 
@@ -1406,6 +1400,13 @@ external func coq.arguments.simplification gref -> option simplification_strateg
 % - @global! (default: false)
 external func coq.arguments.set-simplification gref, 
                                               simplification_strategy.
+
+% [coq.arguments.reset-simplification GR] resets the behavior of the
+% simplification tactics.
+% Also resets the ! and / modifiers for the Arguments command.
+% Supported attributes:
+% - @global! (default: false)
+external func coq.arguments.reset-simplification gref.
 
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.

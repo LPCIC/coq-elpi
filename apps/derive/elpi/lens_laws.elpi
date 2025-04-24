@@ -85,7 +85,7 @@ law4-rty.aux L1 L2 _ Vs _ {{ lib:elpi.derive.lens.exchange_on lp:L1 lp:L2 lp:R }
 pred law4-bo.aux i:term, i:term, i:list term, i:list term, o:term.
 law4-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main I Prefix [lens-laws-done I] :- std.do! [
   std.findall (lens-db I F_ L_) Lenses,
   std.forall Lenses (declare-law1 Prefix),

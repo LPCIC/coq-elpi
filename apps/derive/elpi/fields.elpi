@@ -16,7 +16,7 @@ std.stop-do! [].
 std.stop-do! [P|PS] :- coq.say P, ((pi x\ stop x :- !, fail) ==> P), !, std.stop-do! PS.
 std.stop-do! [P|_] :- coq.say "STOP" P.
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main I Prefix AllCL :- std.do! [
   
   std.assert! (tag-for I Tag) "no tag for this inductive, run that derivation first",

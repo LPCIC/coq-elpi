@@ -4,12 +4,12 @@
 
 namespace derive {
 
-pred exists-indc i:inductive, i:(pred i:constructor).
+func exists-indc inductive, (func constructor ->).
 exists-indc I P :-
   coq.env.indt I _ _ _ _ KL _,
-  std.exists KL P.
+  std.exists! KL P.
 
-pred if-verbose i:prop.
+func if-verbose (func) ->.
 if-verbose P :- (get-option "verbose" tt ; get-option "recursive" tt), !, P.
 if-verbose _.
 
@@ -22,16 +22,17 @@ selected Name :- get-option "only" Map, !,
   Map => (get-option Name _; (get-option X _, dep X Name)).
 selected _.
 
-pred validate-only i:gref, i:list derive.
+func validate-only gref, list derive ->.
 validate-only T LD :- get-option "only" Map, !, std.forall Map (known-option T LD).
 validate-only _ _.
 
-pred known-option i:gref, i:list derive, i:prop.
+func known-option gref, list derive, prop ->.
 known-option T L (get-option X _) :-
   if (std.mem! L (derive X _ _)) true
      (coq.error "Derivation" X "unknown or not applicable to input" T).
 
-pred chain i:gref, i:list derive, o:list prop.
+:index (_ 1)
+func chain gref, list derive -> list prop.
 chain _ [] [].
 chain T [derive Name _ _|FS] CL :- not(selected Name), !,
   if-verbose (coq.say "Skipping derivation" Name "on" T "since the user did not select it"),
@@ -55,20 +56,21 @@ chain T [derive F _ _|FS] CL :-
   if-verbose (coq.say "Derivation" F "on" T "failed, continuing"),
   chain T FS CL.
 
-pred toposort i:list derive, o:list derive.
+func toposort list derive -> list derive.
 toposort L SL :-
   std.findall (dep1 _ _) Deps,
   topo L Deps SL.
 
-pred not-a-src i:list prop, i:derive.
+func not-a-src list prop, derive ->.
 not-a-src Deps (derive A _ _) :- not(std.mem! Deps (dep1 A _)).
 
-pred tgt-is-not-in i:list derive, i:prop.
+:index (1)
+func tgt-is-not-in list derive, prop ->.
 tgt-is-not-in [] _.
 tgt-is-not-in [derive Tgt _ _|_] (dep1 _ Tgt) :- !, fail.
 tgt-is-not-in [_|L] D :- tgt-is-not-in L D.
 
-pred topo i:list derive, i:list prop, o:list derive.
+func topo list derive, list prop -> list derive.
 topo [] _ [] :- !.
 topo L Deps SL :-
   std.partition L (not-a-src Deps) LNoDeps Other,
@@ -80,11 +82,11 @@ topo L Deps SL :-
 func export? prop -> prop.
 export? (export M) (coq.env.export-module M).
 
-pred indt-or-const i:gref.
+func indt-or-const gref ->.
 indt-or-const (indt _).
 indt-or-const (const _).
 
-pred main i:gref, o:list prop.
+func main gref -> list prop.
 main GR CL :- get-option "module" M, !,
   if (M = "") (coq.gref->id GR Mod) (Mod = M),
   if-verbose (coq.say "Starting module" Mod),
@@ -94,7 +96,7 @@ main GR CL :- get-option "module" M, !,
 main GR CL :-
   main-derive GR ff CL.
 
-pred main-derive i:gref, i:bool, o:list prop.
+func main-derive gref, bool -> list prop.
 main-derive GR InModule CL :- get-option "recursive" tt, !,
   coq.env.dependencies GR _ AllDeps,
   coq.gref.set.elements AllDeps AllDepsL,
@@ -104,17 +106,18 @@ main-derive GR InModule CL :- get-option "recursive" tt, !,
   std.append CL1 CL2 CL.
 main-derive GR InModule CL :- main1 GR InModule CL.
 
-pred main.aux i:bool, i:list gref, i:list prop, o:list prop.
+:index (_ 1)
+func main.aux bool, list gref, list prop -> list prop.
 main.aux _ [] X X.
 main.aux InModule [GR|GRS] Acc CL :-
   ((pi X\get-option "only" X :- !, fail) ==> Acc ==> main-derive GR InModule CL1),
   main.aux InModule GRS {std.append CL1 Acc} CL.
 
-pred validate-recursive i:prop, o:derive.
-validate-recursive (derivation _ _ tt _) _ :- get-option "recursive" tt,
+func validate-recursive prop -> derive.
+validate-recursive (derivation _ _ tt _) _ :- get-option "recursive" tt, !,
   coq.error "Synterp actions not supported in recursive derive.".
 validate-recursive (derivation _ _ _ R) R.
-pred main1 i:gref, i:bool, o:list prop.
+func main1 gref, bool -> list prop.
 main1 GR InModule CL :-
   if (get-option "prefix" PFX)
      (Prefix = PFX)

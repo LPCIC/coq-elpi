@@ -69,7 +69,7 @@ trivial-arity (arity T) _ (arity T).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR Suffix Clauses :- do! [
   coq.env.indt-decl GR Decl,
   the-suffix Suffix => invert Decl Decl1,
