@@ -14,7 +14,7 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive derive.param1.
 
 Elpi Db derive.param1.functor.db lp:{{
-  pred param1-functor-db i:term, i:term, o:term.
+  func param1-functor-db term, term -> term.
   func param1-functor-for inductive -> gref, list bool.
 }}.
 
@@ -32,8 +32,8 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File param1_functor.
 Elpi Accumulate derive Db derive.param1.functor.db.
+Elpi Accumulate derive File param1_functor.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "param1_functor" "param1".

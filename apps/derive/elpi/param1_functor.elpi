@@ -1,9 +1,6 @@
 /* map over a container                                                      */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
-pred param1-functor-db i:term, i:term, o:term.
-func param1-functor-for inductive -> gref, list bool.
-
 shorten std.{assert!, do!, length, split-at, drop-last, rev, append}.
 
 param1-functor-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
@@ -21,8 +18,9 @@ namespace derive.param1.functor {
 pred skip i:int. % position of a parameter that has to be skipped
 
 % Building the body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred self o:term.
+func self -> term.
 
+:functional
 pred bo-idx
   i:term, % inductive arity (input)
   i:term, % inductive type (input) applied to params & idx handled so far
@@ -47,21 +45,21 @@ bo-idx (sort _) Ity1 Ity2 N N Ps (fun `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
 bo-idx X Ity1 Ity2 N M Ps R1 R2 :- whd1 X X1, !,
   bo-idx X1 Ity1 Ity2 N M Ps R1 R2.
 
-pred bo-idx-rty i:list term, i:term, i:term, i:list term, i:list term, o:term.
+func bo-idx-rty list term, term, term, list term, list term -> term.
 bo-idx-rty Ps ItyArgs _ Vs _ R :-
   rev Vs [_|IdxsRev],
   rev IdxsRev Idxs,
   coq.safe-dest-app ItyArgs HD _,
   coq.mk-app HD {append {rev Ps} Idxs} R.
 
-pred bo-k-args i:list term, i:term, i:term, i:list term, i:list term, o:term.
+func bo-k-args list term, term, term, list term, list term -> term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   coq.safe-dest-app K (global (indc GR)) _,
   coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
   (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R).
 
-pred bo-k-args.aux i:term, i:list term, i:list term, i:term, o:term.
+func bo-k-args.aux term, list term, list term, term -> term.
 bo-k-args.aux K [A,PA|Args] [_,TPA|Types] {{ forall x (px : lp:(TPB x)), lp:(Ty x px) }} R :-
   not(same_term TPA (TPB A)), param1-functor-db TPA (TPB A) F, !,
   coq.mk-app K [A, {{ lp:F lp:PA }}] KAPFA,
@@ -76,23 +74,23 @@ bo-k-args.aux R [] [] _ R.
 % Take in input a mapping function for each parameter (not to be skipped)
 % and then do the fixpoint
 
-pred bo-params
-  i:int, % current parameter
-  i:int, % number of parameters
-  i:term, % inductive type (input) applied to parameters handled so far
-  i:term, % inductive type (output) applied to parameters handled so far
-  i:term, % inductive arity (input)
-  i:term, % inductive arity (output)
-  i:list term, % output parameters so far
-  o:term. % map function
+func bo-params
+  int, % current parameter
+  int, % number of parameters
+  term, % inductive type (input) applied to parameters handled so far
+  term, % inductive type (output) applied to parameters handled so far
+  term, % inductive arity (input)
+  term, % inductive arity (output)
+  list term % output parameters so far
+  -> term. % map function
 
-pred mk-rec-clause i:term, i:term, i:term, i:term, o:prop.
-mk-rec-clause (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px\C x px) :-
+func mk-rec-clause term, term, term, term -> prop.
+mk-rec-clause (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px\C x px) :- !,
   pi x px\ mk-rec-clause (P x px) {coq.mk-app T1 [x,px]} {coq.mk-app T2 [x,px]} {coq.mk-app F [x,px]} (C x px).
 mk-rec-clause (prod _ _ _\sort _) T1 T2 F (param1-functor-db T1 T2 F).
 
-pred mk-rec-clause-app i:term, i:term, i:term, i:term, o:prop.
-mk-rec-clause-app (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px py\C x px py) :-
+func mk-rec-clause-app term, term, term, term -> prop.
+mk-rec-clause-app (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px py\C x px py) :- !,
   pi x px py\ mk-rec-clause-app (P x px) {coq.mk-app T1 [x,px]} {coq.mk-app T2 [x,py]} {coq.mk-app F [x,px]} (C x px py).
 mk-rec-clause-app (prod _ _ _\sort S) T1 T2 F (pi x\C x) :-
   pi x \ mk-rec-clause-app (sort S) {coq.mk-app T1 [x]} {coq.mk-app T2 [x]} {coq.mk-app F [x]} (C x).
@@ -128,10 +126,11 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :-
     coq.mk-app Ity2 [a] Ity2A,
       decl a A Sty1 => bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) [a|Ps] (Bo a).
 
-pred map-pi i:any, o:list prop.
-map-pi (x\ []) [].
+func map-pi any -> list prop.
+map-pi (x\ []) [] :- !.
 map-pi (x\ [X x| XS x]) [pi x\ X x | YS] :- map-pi XS YS.
 
+:functional
 pred mk-map-ty
  i:term, % input variable
  i:term, % and its type
@@ -148,12 +147,12 @@ mk-map-ty A (prod _ SA T1) B (prod _ SB T2) (prod `x` SA x\ R x) F N C1 :-
     mk-map-ty Ax (T1 x) BFx (T2 BFx) (R x) {coq.mk-app F [x]} M (C x),
     N is M + 1),
   map-pi C C1.
-mk-map-ty A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) F N C1 :-
+mk-map-ty A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) F N C1 :- !,
   (pi x\ sigma Ax Bx \ coq.mk-app A [x] Ax, coq.mk-app B [x] Bx,
     mk-map-ty Ax (T1 x) Bx (T2 x) (R x) {coq.mk-app F [x]} M (C x),
     N is M + 1),
   map-pi C C1.
-mk-map-ty (app[X|XS] as A) _ (app[Y|YS] as B) _ (prod `x` A _\ B) (app [G|GS] as F) 0 [param1-functor-db PLA PLB PLF,param1-functor-db A B F] :-
+mk-map-ty (app[X|XS] as A) _ (app[Y|YS] as B) _ (prod `x` A _\ B) (app [G|GS] as F) 0 [param1-functor-db PLA PLB PLF,param1-functor-db A B F] :- !,
   drop-last 1 XS LA,
   drop-last 1 YS LB,
   drop-last 1 GS LF,
@@ -163,20 +162,20 @@ mk-map-ty (app[X|XS] as A) _ (app[Y|YS] as B) _ (prod `x` A _\ B) (app [G|GS] as
 mk-map-ty A _ B _ (prod `x` A _\ B) F 0 [param1-functor-db A B F].
 
 % Build a clause %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+:functional
 pred mk-clause
   i:int, % current parameter
   i:int, % number of parameters
   i:term, % inductive type (input)
   i:term, % inductive type (output)
   i:term, % arity of the inductive
-  i:list prop, % premises of the clause
+  i:list (func), % premises of the clause
   i:term, % map function
   o:prop,
   i:inductive,
   i:list bool,
   o:prop. % clause for param1-functor-db
-mk-clause N N Ity1 Ity2 _ Todo Map (param1-functor-db Ity1 Ity2 Map :- Todo) I Mask (param1-functor-for I F MaskRev) :- coq.safe-dest-app Map (global F) _, std.rev Mask MaskRev.
+mk-clause N N Ity1 Ity2 _ Todo Map (param1-functor-db Ity1 Ity2 Map :- [!|Todo]) I Mask (param1-functor-for I F MaskRev) :- !, coq.safe-dest-app Map (global F) _, std.rev Mask MaskRev.
 mk-clause N Lno Ity1 Ity2 {{ forall (a : lp:Ty) (pa : a -> Type), lp:(T a pa) }} Todo Map (pi x px py f\ C x px py f) I M CF :- whd Ty [] {{ Type }} [], !,
   N1 is N + 2,
   pi x px py f\ sigma Ity1x Ity2y Mapf\
