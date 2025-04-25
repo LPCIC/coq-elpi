@@ -20,7 +20,7 @@ pointfree F A B R :-
 
 param1-functor-db {{ lib:elpi.derive.eq_axiom_at lp:A lp:F }}
        {{ lib:elpi.derive.eq_axiom_at lp:_ lp:F }}
-       {{ fun (x : lp:A) (px : lib:elpi.derive.eq_axiom_at lp:A lp:F x) => px }}.
+       {{ fun (x : lp:A) (px : lib:elpi.derive.eq_axiom_at lp:A lp:F x) => px }} :- !.
 
 param1-functor-db HypTy {{ lib:elpi.derive.eq_axiom_at lp:A lp:_ }}
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
@@ -52,7 +52,7 @@ mk-app-eqfun X [Y,_|YS] R :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-pred branch i:term, i:term, i:term, o:term.
+func branch term, term, term -> term.
 branch (prod N T x\ prod M (P x) (B x)) (prod _ _ y\ prod _ (Q y) (Lty y)) L
        (fun N T x\ fun M (P x) (R x)) :- !,
   @pi-decl `x` T x\
@@ -64,7 +64,7 @@ branch (prod N T x\ prod M (P x) (B x)) (prod _ _ y\ prod _ (Q y) (Lty y)) L
 
 branch _ _ X X.
 
-pred branches i:list term, i:term, o:list term.
+func branches list term, term -> list term.
 branches [] _ [].
 branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
   coq.typecheck Lemma LemmaTy ok,
@@ -75,13 +75,13 @@ branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
 % apply the induction principle to the P and the fill in all branches
 % using eqK lemmas
 
-pred eqK-lem i:list term, i:term, o:term.
+func eqK-lem list term, term -> term.
 eqK-lem Args K Lemma :-
   coq.safe-dest-app K (global (indc Kname)) _,
   eqK-db Kname Lem,
   coq.mk-app Lem Args Lemma.
 
-pred idx i:term, i:term, i:list term, i:term, i:list term, o:term.
+func idx term, term, list term, term, list term -> term.
 idx (sort _) IT K IndP A R :- !,
   eq-db IT IT Cmp, !,
   coq.mk-app IndP [ {{ lib:elpi.derive.eq_axiom_at lp:IT lp:Cmp }} ] Induction,
