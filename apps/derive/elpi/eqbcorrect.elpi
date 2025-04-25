@@ -100,7 +100,7 @@ main (indc _) _ _ :- stop "derive.eqbcorrect does not work on a constructor".
 
 %---------------------------------------------------------------------------
 
-pred search-eqcorrect-for i:term, o:term, o:term.
+func search-eqcorrect-for term -> term, term.
 search-eqcorrect-for (global (indt I)) (global (const C)) (global (const R)) :-
   std.assert! (eqType (indt I) (eqb.inductive _ _)) "unknown or not applied enough type",
   eqcorrect-for (indt I) C R.
@@ -110,7 +110,7 @@ search-eqcorrect-for (app[global (indt I)|Args]) CArgs RArgs :-
   eqcorrect-for (indt I) C R,
   search-eqcorrect-apply F Args (global (const C)) (global (const R)) CArgs RArgs.
 
-pred search-eqcorrect-apply i:eqb.eqType, i:list term, i:term, i:term, o:term, o:term.
+func search-eqcorrect-apply eqb.eqType, list term, term, term -> term, term.
 search-eqcorrect-apply (eqb.type-param F) [T|Args] C R C1 R1 :-
   search-eqcorrect-for T CT RT,
   pi x\
@@ -407,7 +407,7 @@ mkblistrefl [X|XS] ACC R :-
 
 % prove {{ is_option (seq A) (is_seq A (eqb_correrct A eqA)) }} T
 % such that T has type {{ forall x (px : is_option ...), eqb_correrct (option (seq A)) x }}
-pred prove i:(pred i:term, o:term), i:term, o:term.
+func prove(pred i:term, o:term), term -> term.
 prove Lemma T R :- search Lemma (prove Lemma) T R.
 %prove T R :- whd1 T T', !, prove T' R.
 
@@ -434,9 +434,9 @@ apply-aux Aux [T|L] Aux1 :- !, std.do![
   apply-aux {coq.mk-app Aux [T, EQB]} L Aux1
 ].
 
-pred apply-functor i:term, i:list bool, i:list term, i:(pred i:term, o:term), o:term.
+func apply-functor term, list bool, list term, (pred i:term, o:term) -> term.
 apply-functor X _ [] _ X.
-apply-functor X [ff,tt|Mask] [Y|YS] Rec R :- Rec Y Y1, apply-functor {coq.mk-app X [_,_,_,Y1]} Mask YS Rec R.
+apply-functor X [ff,tt|Mask] [Y|YS] Rec R :- Rec Y Y1, !, apply-functor {coq.mk-app X [_,_,_,Y1]} Mask YS Rec R.
 apply-functor X [ff|Mask] [Y|YS] Rec R :- reali Y PY, apply-functor {coq.mk-app X [Y,PY]} Mask YS Rec R.
 
 %---------------------------------------------------------------------------
