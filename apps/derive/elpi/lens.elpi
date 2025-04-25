@@ -4,7 +4,8 @@
 
 namespace derive.lens {
 
-pred build-lens i:record-decl, i:int, i:term, o:list id, o:list term.
+:index (1)
+func build-lens record-decl, int, term -> list id, list term.
 build-lens end-record _ _ [] [].
 build-lens (field _ ID Ty Fields) N RTy [ID|IDL] [Lens|BOL] :-
   if (pi x\ occurs x (Fields x))
@@ -27,24 +28,25 @@ build-lens (field _ ID Ty Fields) N RTy [ID|IDL] [Lens|BOL] :-
   build-lens (Fields Dummy) M RTy IDL BOL.
 
 % builds the return type of the match
-pred constant-rty i:term,  i:term, i:list term, i:list term, o:term.
+func constant-rty term,  term, list term, list term -> term.
 constant-rty X _ _ _ X.
 
 % builds the match branch for view, L is the list of arguments to
 % the record constructor
-pred build-view i:int, i:term, i:term, i:list term, i:list term, o:term.
+func build-view int, term, term, list term, list term -> term.
 build-view N    _ _ L _ R :- std.nth N L R.
 
 % builds the match branch for over, K is the record constructor (already
 % applied) to the record parameters
-pred build-over i:int, i:term, i:term, i:term, i:list term, i:list term, o:term.
+func build-over int, term, term, term, list term, list term -> term.
 build-over N F  K _ L _ R :-
   std.split-at N L Before [X|After],
   coq.mk-app K {std.append Before [{{ lp:F lp:X }}|After]} R.
 
 % moves under the paramters of the inductive type type and binds them back
 % as a lambd abstraction over all the lenses that were built
-pred params i:indt-decl, i:term, o:list id, o:list term.
+:index (1)
+func params indt-decl, term -> list id, list term.
 params (parameter ID _ Ty Decl) RTy IL TL :-
   coq.id->name ID Name,
   (@pi-decl Name Ty x\ params (Decl x) {coq.mk-app RTy [x]} IL (BL x)),
@@ -55,13 +57,13 @@ params (inductive ID _ _ _) _ _ _ :-
   stop M.
 
 % distributes a lambda abstraction to all items in the list
-pred distribute-abstraction i:name, i:term, i:(term -> list term), o:list term.
-distribute-abstraction _ _ (_\[]) [].
+func distribute-abstraction name, term, (term -> list term) -> list term.
+distribute-abstraction _ _ (_\[]) [] :- !.
 distribute-abstraction Name Ty (x\[T x|L x]) [fun Name Ty T|L1] :-
   distribute-abstraction Name Ty L L1.
 
 % typechecks and declares the lens
-pred declare-lens i:string, i:inductive, i:id, i:term, o:prop.
+func declare-lens string, inductive, id, term -> prop.
 declare-lens Prefix I FieldName RawBody (lens-db I FieldName C):-
   Name is Prefix ^ FieldName,
   coq.env.indt I _ Nparams _ _ _ _,

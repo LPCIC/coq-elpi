@@ -22,7 +22,7 @@ stop S :- coq.error S. % halt S
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred coq.parse-attributes i:list attribute, i:list attribute-signature, o:list prop.
+func coq.parse-attributes list attribute, list attribute-signature -> list prop.
 
 % Coq attribute parser, eg [#[attribute=value] Command]
 %
@@ -75,13 +75,13 @@ type loc attribute-type.
 kind attribute-mapping type.
 type (`->) string -> any -> attribute-mapping.
 
-pred coq.valid-str-attribute i:string, i:string, o:option any, o:diagnostic.
+func coq.valid-str-attribute string, string -> option any, diagnostic.
 coq.valid-str-attribute Name Value V Diag :-
   if (supported-attribute (att Name Type))
      (coq.typecheck-attribute Name Type Value LPV Diag, V = some LPV)
      (if (supported-attribute att-ignore-unknown) (V = none, Diag = ok)
          (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
-pred coq.valid-loc-attribute i:string, i:loc, o:diagnostic.
+func coq.valid-loc-attribute string, loc -> diagnostic.
 coq.valid-loc-attribute Name Loc Diag :-
   if (supported-attribute (att Name loc))
      (if (primitive? Loc "loc") (Diag = ok) (Diag = error {calc ( "Attribute " ^ Name ^ " takes a loc, got " ^ {std.any->string Loc} ) } ))
@@ -89,7 +89,7 @@ coq.valid-loc-attribute Name Loc Diag :-
          (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
 
 :index (_ 1 1)
-pred coq.typecheck-attribute i:string, o:attribute-type, i:string, o:any, o:diagnostic.
+func coq.typecheck-attribute string, attribute-type, string ->  any, diagnostic.
 
 coq.typecheck-attribute _ int Value V ok :- V is string_to_int Value, !.
 coq.typecheck-attribute N int Value _ (error Msg) :-
@@ -111,6 +111,7 @@ coq.typecheck-attribute _ bool "no"    ff ok :- !.
 coq.typecheck-attribute N bool Value _ (error Msg) :-
   Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
 
+:functional
 pred coq.is-one-of i:string, o:any, i:attribute-mapping.
 coq.is-one-of K V (K `-> V).
 
@@ -120,18 +121,19 @@ coq.typecheck-attribute N (oneof L) K _ (error Msg) :-
   std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
   Msg is "Attribute " ^ N ^ " takes one of " ^  OneOf ^ ", got: " ^ K.
 
-pred append-string i:string, i:string, o:string.
+func append-string string, string -> string.
 append-string "" A A :- !.
 append-string A B R :- R is A ^ "." ^ B.
 
-pred keep-only-label i:attribute, o:attribute.
+func keep-only-label attribute -> attribute.
 keep-only-label (attribute L _) (attribute L (leaf-str "")).
 
 coq.parse-attributes L S O :-
   std.map S (x\r\ r = supported-attribute x) CS,
   CS => parse-attributes.aux L "" O, !.
 
-pred parse-attributes.aux i:list attribute, i:string, o:list prop.
+:index (1)
+func parse-attributes.aux list attribute, string -> list prop.
 parse-attributes.aux [] _ [].
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attlist), !,

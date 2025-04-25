@@ -63,12 +63,13 @@ translate-record-constructor (field _ ID _ _) _ (error S) :- S is "unsupported r
 
 func self -> eqb.trm.
 
-pred valid i:eqb.trm, o:diagnostic.
+func valid eqb.trm -> diagnostic.
 valid (eqb.global GR) ok :- eqType GR _, !.
 valid (eqb.app GR A Args) D :- eqType GR EQT, !, valid-eqType EQT [A|Args] D.
 valid T (error S) :- S is "not an eqType: " ^ {std.any->string T}.
 
-pred valid-eqType i:eqb.eqType, i:list eqb.trm, o:diagnostic.
+:index (1)
+func valid-eqType eqb.eqType, list eqb.trm -> diagnostic.
 valid-eqType (eqb.inductive _ _) [] ok.
 valid-eqType (eqb.type-param F) [T|TS] D :- std.do-ok! D [
   valid T,
@@ -108,21 +109,21 @@ pred map-ok! i:list A, i:(pred i:A, o:B, o:diagnostic), o:list B, o:diagnostic.
 map-ok! [] _ [] ok.
 map-ok! [X|XS] F [Y|YS] D :- F X Y D1, if (D1 = ok) (map-ok! XS F YS D) (D = D1).
 
-pred validate-eqType i:eqb.eqType, o:diagnostic.
-validate-eqType (eqb.type-param F) D :- pi x\ valid x ok => validate-eqType (F x) D.
+func validate-eqType eqb.eqType -> diagnostic.
+validate-eqType (eqb.type-param F) D :- pi x\ (valid x ok :- !) => validate-eqType (F x) D.
 validate-eqType (eqb.value-param _ F) D :-
   pi x\ validate-eqType (F x) D.
 validate-eqType (eqb.inductive _ F) D :-
-  pi x\ valid x ok => validate-constructors (F x) D.
+  pi x\ (valid x ok :- !) => validate-constructors (F x) D.
 
-pred validate-constructors i:list eqb.constructor, o:diagnostic.
+func validate-constructors list eqb.constructor -> diagnostic.
 validate-constructors [] ok.
 validate-constructors [eqb.constructor _ Args|Ks] D :- std.do-ok! D [
   validate-arguments Args,
   validate-constructors Ks
 ].
 
-pred validate-arguments i:eqb.arguments, o:diagnostic.
+func validate-arguments eqb.arguments -> diagnostic.
 validate-arguments (eqb.stop _) ok.
 validate-arguments (eqb.regular T Args) D :- std.do-ok! D [
   valid T,

@@ -21,7 +21,7 @@ shorten std.{append, nth, drop}.
 % indirection, to be used if we add to the stack "match" frames
 unwind T A R :- if (var T) (coq.mk-app-uvar T A R) (coq.mk-app T A R).
 
-pred  nth-stack i:int, i:stack, o:stack, o:term, o:stack.
+func  nth-stack int, stack -> stack, term, stack.
 nth-stack 0 [X|XS] [] X XS :- !.
 nth-stack N [X|XS] [X|Before] At After :-
   M is N - 1, nth-stack M XS Before At After.
@@ -80,12 +80,13 @@ fix-red F Fix LA GR KA RA X XC :-
   append LA [{coq.mk-app (global (indc GR)) KA}|RA] ArgsWRedRecNo,
   hd-beta {coq.mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
-pred unfold % delta (global constants) + hd-beta
-  i:constant,             % name
-  i:option univ-instance, % universe instance if the constant is universe polymorphic
-  i:stack,                % args
-  o:term,                 % body
-  o:stack.                % args after hd-beta
+:index (_ 2)
+func unfold % delta (global constants) + hd-beta
+  constant,             % name
+  option univ-instance, % universe instance if the constant is universe polymorphic
+  stack                 % args
+  -> term,              % body
+  stack.                % args after hd-beta
 unfold GR none A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
 unfold GR (some I) A BO BOC :- (@uinstance! I ==> coq.env.const GR (some B) _), hd-beta B A BO BOC.
 

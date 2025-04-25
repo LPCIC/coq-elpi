@@ -12,7 +12,8 @@ type induction-hyp-db term -> term -> prop.
 pred informative. % loaded in the context if we can elim to Type
 
 % create (paramX.prove (is_T params) P IH)
-pred mk-paramX.prove-clause i:list term, i:term, i:term, i:term, o:prop.
+:index (1)
+func mk-paramX.prove-clause list term, term, term, term -> prop.
 mk-paramX.prove-clause [_] T P IH (param1-functor-db T P IH).
 
 mk-paramX.prove-clause [_,_|Args] T P IH (pi x y\ C x y) :-

@@ -13,17 +13,17 @@ error [pr L M|MS] tt :- Msgs = [pr L M|MS], all-same-loc L Msgs, !, coq.error L 
 :before "default-typechecking-error"
 error Msgs tt :- !, coq.error "At least one of the following errors holds:" {error-concat Msgs}.
 
-pred error-concat i:list string, o:string.
+func error-concat list string -> string.
 error-concat L R :- std.string.concat "\n" {std.map L error-pp-wloc} R.
-pred error-concat-noloc i:list string, o:string.
+func error-concat-noloc list string -> string.
 error-concat-noloc L R :- std.string.concat "\n" {std.map L error-pp-noloc} R.
 
-pred error-pp-wloc i:pair loc string, o:string.
+func error-pp-wloc pair loc string -> string.
 error-pp-wloc (pr L S) R :- R is {std.any->string L} ^ " " ^ S.
-pred error-pp-noloc i:pair loc string, o:string.
+func error-pp-noloc pair loc string -> string.
 error-pp-noloc (pr _ S) R :- R is "- " ^ S.
 
-pred all-same-loc i:loc, i:list (pair loc string).
+func all-same-loc loc, list (pair loc string) ->.
 all-same-loc L XS :- std.forall XS (x\sigma s\x = pr L s).
 
 :before "default-typechecking-warning"
