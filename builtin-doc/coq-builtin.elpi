@@ -936,9 +936,11 @@ external pred coq.env.projection? i:constant, o:int.
 external pred coq.env.primitive-projections i:inductive, 
                                             o:list (option (pair projection int)).
 
-% [coq.env.primitive-projection? Projection Compatibility constant] relates
-% a projection to its compatibility constant.
-external pred coq.env.primitive-projection? i:projection, o:constant.
+% [coq.env.primitive-projection? Projection Compatibility constant Index]
+% Relates a primitive projection to its compatibility constant. Index is set
+% to the constructor argument extracted by the projection (starting from 0).
+external pred coq.env.primitive-projection? o:projection, o:constant, 
+                                            o:int.
 
 % -- Sorts (and their universe level, if applicable) ----------------
 
@@ -1004,6 +1006,10 @@ external pred coq.univ.new o:univ.
 % [coq.univ.alg-super U V] relates a univ U to its algebraic successor V,
 % that is U+1 and not any V s.t. U < V
 external pred coq.univ.alg-super i:univ, o:univ.
+
+% [coq.univ.alg-max U1 U2 UMax] relates univs U1 and U2 to their algebraic
+% maximum UMax, that is max(U1, U2)
+external pred coq.univ.alg-max i:univ, i:univ, o:univ.
 
 % [coq.univ Name U] Finds a named unvierse. Can fail.
 external pred coq.univ o:id, o:univ.
@@ -1182,6 +1188,10 @@ external pred coq.CS.db o:list cs-instance.
 % [coq.CS.db-for Proj Value Db] reads all instances for a given Projection
 % or canonical Value, or both
 external pred coq.CS.db-for i:gref, i:cs-pattern, o:list cs-instance.
+
+% [coq.CS.canonical-projection? Projection] Tells if the projection can be
+% used for CS inference.
+external pred coq.CS.canonical-projection? i:constant.
 
 % [coq.TC.declare-class GR] Declare GR as a type class
 external pred coq.TC.declare-class i:gref.
@@ -1376,13 +1386,6 @@ external pred coq.arguments.simplification i:gref,
 % - @global! (default: false)
 external pred coq.arguments.set-simplification i:gref, 
                                                i:simplification_strategy.
-
-% [coq.arguments.reset-simplification GR] resets the behavior of the
-% simplification tactics.
-% Also resets the ! and / modifiers for the Arguments command.
-% Supported attributes:
-% - @global! (default: false)
-external pred coq.arguments.reset-simplification i:gref.
 
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.

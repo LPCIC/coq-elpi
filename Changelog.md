@@ -1,3 +1,9 @@
+# UNRELEASED
+
+### API
+- New `coq.univ.alg-max` API that relates two universes to their algebraic
+  maximum.
+
 # [2.5.1] 22/4/2025
 
 Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0.
