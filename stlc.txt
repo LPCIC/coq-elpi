@@ -445,6 +445,7 @@ type coq.univ-instance.unify-eq gref ->
 type coq.univ-instance.unify-leq gref ->
                                    univ-instance ->
                                      univ-instance -> diagnostic -> prop.
+type coq.univ.alg-max univ -> univ -> univ -> prop.
 type coq.univ.alg-super univ -> univ -> prop.
 type coq.univ.constraints list univ-constraint -> prop.
 type coq.univ.global? univ -> prop.
@@ -1789,27 +1790,27 @@ coq.env.add-context (context-item A0 _ A2 (some A1) A5) :- coq.env.add-const
 coq.env.begin-module A0 A1 :- coq.env.begin-module-functor A0 A1 [].
 % File "coq-builtin.elpi", line 868, column 0, characters 35316-35393: [258] 
 coq.env.begin-module-type A0 :- coq.env.begin-module-type-functor A0 [].
-% File "coq-builtin.elpi", line 1256, column 0, characters 50537-50727: [259] 
+% File "coq-builtin.elpi", line 1260, column 0, characters 50704-50894: [259] 
 coq.CS.canonical-projections A0 A1 :- coq.warning elpi.deprecated 
                                        elpi.canonical-projections 
                                        use coq.env.projections in place of coq.CS.canonical-projections, 
  coq.env.projections A0 A1.
-% File "coq-builtin.elpi", line 1560, column 0, characters 63295-63475: [260] 
+% File "coq-builtin.elpi", line 1564, column 0, characters 63462-63642: [260] 
 coq.reduction.cbv.whd_all A0 A1 :- coq.warning elpi.deprecated 
                                     elpi.cbv-whd-all 
                                     use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all, 
  coq.reduction.cbv.norm A0 A1.
-% File "coq-builtin.elpi", line 1567, column 0, characters 63573-63754: [261] 
+% File "coq-builtin.elpi", line 1571, column 0, characters 63740-63921: [261] 
 coq.reduction.vm.whd_all A0 A1 A2 :- coq.warning elpi.deprecated 
                                       elpi.vm-whd-all 
                                       use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all, 
  coq.reduction.vm.norm A0 A1 A2.
-% File "coq-builtin.elpi", line 1574, column 0, characters 63807-63900: [262] 
+% File "coq-builtin.elpi", line 1578, column 0, characters 63974-64067: [262] 
 coq.reduction.lazy.whd_all A0 A1 :- get-option coq:redflags coq.redflags.all
                                      => coq.reduction.lazy.whd A0 A1.
-% File "coq-builtin.elpi", line 1696, column 0, characters 68524-68564: [263] 
+% File "coq-builtin.elpi", line 1700, column 0, characters 68691-68731: [263] 
 coq.id->name A0 A1 :- coq.string->name A0 A1.
-% File "coq-builtin.elpi", line 1839, column 0, characters 74361-74425: [264] 
+% File "coq-builtin.elpi", line 1843, column 0, characters 74528-74592: [264] 
 coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
 % File "./examples/tutorial_elpi_lang.v", line 491, column 2, characters 12652-12720: [265] 
 whd (app A0 A2) A3 :- whd A0 (fun A1), !, whd (A1 A2) A3.
