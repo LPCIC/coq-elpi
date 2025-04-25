@@ -119,7 +119,7 @@ main GR Suffix [ClauseW, param1-inhab-done GR] :- do! [
 
   ClauseW = (param1-inhab-db (global (indt GR)) (global (const Witness))),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ ClauseW),
-  if (not (param1-inhab-done GR)) (coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-inhab-done GR))) true,
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-inhab-done GR)),
 ].
 
 }
