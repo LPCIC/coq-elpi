@@ -27,6 +27,7 @@ induction-db T _ :-
 Elpi Command derive.induction.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.

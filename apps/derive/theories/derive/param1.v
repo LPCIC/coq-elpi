@@ -56,7 +56,7 @@ Register is_pstring as elpi.derive.is_pstring.
    its parametricity translation *)
 Elpi Db derive.param1.db lp:{{
 :index(3)
-pred reali i:term, o:term.
+func reali term -> term.
 type realiR term -> term -> prop.
 pred reali-done i:gref.
 }}.
@@ -87,6 +87,7 @@ realiR T TR :-
 Elpi Command derive.param1.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate lp:{{
@@ -114,6 +115,7 @@ Register is_is_true as elpi.derive.is_is_true.
 
 (* hook into derive *)
 Elpi Accumulate derive File paramX.
+Elpi Accumulate derive Db Header derive.param1.db.
 Elpi Accumulate derive File param1.
 Elpi Accumulate derive Db derive.param1.db.
 
