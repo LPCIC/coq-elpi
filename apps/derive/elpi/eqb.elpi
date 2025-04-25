@@ -160,9 +160,9 @@ func rty term, term, term -> term.
 rty Fields_t_I Fields_t_J X {{ lp:Fields_t_I lp:X -> lp:Fields_t_J lp:X -> bool }}.
 
 % -----------------------------------------------------------------------------
-pred fields i:list term, i:list term, i:pair eqb.constructor eqb.constructor, o:term.
+func fields list term, list term, pair eqb.constructor eqb.constructor -> term.
 
-fields ParamsI ParamsJ (pr (eqb.constructor K (eqb.stop _)) (eqb.constructor K (eqb.stop _))) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => true }} :- std.do! [
+fields ParamsI ParamsJ (pr (eqb.constructor K (eqb.stop _)) (eqb.constructor K (eqb.stop _))) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => true }} :- !, std.do! [
   std.assert! (box-for K IB _) "derive.eqb: run derive.fields before",
   coq.mk-app (global (indt IB)) ParamsI BoxTy1,
   coq.mk-app (global (indt IB)) ParamsJ BoxTy2,
