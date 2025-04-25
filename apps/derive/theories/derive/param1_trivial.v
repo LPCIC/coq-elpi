@@ -81,6 +81,7 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
 Elpi Command derive.param1.trivial.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.congr.db.
@@ -101,6 +102,7 @@ Elpi Accumulate lp:{{
 Elpi Command derive.param1.inhab.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.congr.db.
