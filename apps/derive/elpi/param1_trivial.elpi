@@ -93,7 +93,7 @@ body-params N T (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, coq.sort? TA, !,
     decl a A TA =>
     decl p P (TP a) =>
     decl pf `_` {{ lib:elpi.derive.trivial lp:a lp:p }} =>
-    reali a p =>
+    (reali a p :- !) =>
     param1-trivial-db p pf => % to prove (P x) use (H x)
     param1-inhab-db p {{ lib:elpi.derive.trivial_full lp:a lp:p lp:pf }} => % to prove (P x) use (H x)
       body-params M {coq.mk-app T [a,p]}
@@ -104,7 +104,7 @@ body-params N T (prod A TA a\ prod P (TP a) (F a)) R :- N > 0, !,
         fun P (TP a) p\ {
     decl a A TA =>
     decl p P (TP a) =>
-    reali a p =>
+    (reali a p :- !) =>
       body-params M {coq.mk-app T [a,p]} (F a p)}).
 
 body-params _ T _ _ :-

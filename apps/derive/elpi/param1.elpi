@@ -3,11 +3,6 @@
 /* ------------------------------------------------------------------------- */
 
 % Author: Cyril Cohen
-pred reali-done i:gref.
-
-:index(3)
-pred reali i:term, o:term.
-type realiR term -> term -> prop.
 
 shorten std.{forall, forall2, do!, rev, map2, map}.
 
@@ -193,7 +188,7 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
   coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
   C2 = (realiR Ind (global (indt GRR)) :- !),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
-  map2 Knames RealNamesR (a\ b\ r\ r = reali (global (indc a)) (global (indc b))) CK,
+  map2 Knames RealNamesR (a\ b\ r\ r = (reali (global (indc a)) (global (indc b)) :- !)) CK,
   forall CK (c\
     coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") c)),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ _ (reali-done (indt GR))),

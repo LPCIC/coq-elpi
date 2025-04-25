@@ -26,7 +26,7 @@ prove-args [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
   reali T TR, !,  % out of the type of x we get isX
   search T TR PT,   % PT is a proof that forall x, isX x
   PV = app[PT,V], % PV is the x_isX above
-  reali V PV => prove-args VS (F V PV) RS.
+  (reali V PV :- !) => prove-args VS (F V PV) RS.
 
 pred oty i:(term -> term), i:term, i:list term, i:list term, o:term.
 oty F _ V _ R :- rev V [X|_], R = F X.
@@ -83,7 +83,7 @@ body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, coq.sort? 
   sigma KAP KTAP\
     map K  (k\ coq.mk-app k [a,p]) KAP,
     map KT (coq.subst-prod [a,p]) KTAP,
-    reali a p =>
+    (reali a p :- !) =>
     param1-inhab-db p pf => % to prove (P x) use (H x)
       body-params M {coq.mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p pf).
 body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
@@ -96,7 +96,7 @@ body-params N IsT (prod A TA a\ prod P (TP a) (F a)) K KT R :- N > 0, !,
   sigma KAP KTAP\
     map K  (k\ coq.mk-app k [a,p]) KAP,
     map KT (coq.subst-prod [a,p]) KTAP,
-    reali a p =>
+    (reali a p :- !) =>
       body-params M {coq.mk-app IsT [a,p]} (F a p) KAP KTAP (Bo a p).
 
 body-params _ IsT _ _ _ _ :-
