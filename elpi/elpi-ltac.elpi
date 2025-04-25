@@ -114,13 +114,13 @@ move-term [decl X _ _|C1] C2 T T1 :- not(occurs X T), !, move-term C1 C2 T T1.
 move-term [def X _ _ _|C1] C2 T T1 :- not(occurs X T), !, move-term C1 C2 T T1.
 move-term C1 [_|C2] T T1 :- move-term C1 C2 T T1.
 
-pred distribute-nabla i:(term -> list sealed-goal), o:list sealed-goal.
-distribute-nabla (_\ []) [].
+func distribute-nabla (term -> list sealed-goal) -> list sealed-goal.
+distribute-nabla (_\ []) [] :- !.
 distribute-nabla (x\ [X x| XS x]) [nabla X|R] :- (pi x\ occurs x (X x)), !,
   distribute-nabla XS R.
 distribute-nabla (x\ [X| XS x]) [X|R] :- distribute-nabla XS R.
 
-pred not-already-assumed i:prop.
+func not-already-assumed prop.
 not-already-assumed (decl X _ _Ty) :- not(decl X _ _ ; def X _ _ _).
 not-already-assumed (def X _ _Ty _Bo) :- not(decl X _ _ ; def X _ _ _).
 

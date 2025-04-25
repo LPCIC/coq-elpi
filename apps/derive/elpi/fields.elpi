@@ -11,7 +11,7 @@ pred fields_t. % chose between fields_t and construct
 pred self o:term.
 
 
-pred std.stop-do! i:list prop.
+func std.stop-do! list prop ->.
 std.stop-do! [].
 std.stop-do! [P|PS] :- coq.say P, ((pi x\ stop x :- !, fail) ==> P), !, std.stop-do! PS.
 std.stop-do! [P|_] :- coq.say "STOP" P.
@@ -58,7 +58,8 @@ main I Prefix AllCL :- std.do! [
 
 % ----------------------------------------------------------------------
 
-pred fields_t.main i:eqb.eqType, i:term, o:term.
+:index (1)
+func fields_t.main eqb.eqType, term -> term.
 fields_t.main (eqb.type-param F) I {{ fun p : Type => lp:(R p) }} :- !,
   @pi-trm `p` {{ Type }} x\p\
     fields_t.main (F x) {coq.mk-app I [p]} (R p).
@@ -76,7 +77,7 @@ fields_t.main (eqb.inductive _ F) I {{ fun p : lib:elpi.derive.positive => lp:(R
       (fields_t.k Params)
       (R p).
   
-pred fields_t.rty i:term, o:term.
+func fields_t.rty term -> term.
 fields_t.rty _ {{ Type }}.
 
 pred fields_t.k i:list term, i:eqb.constructor, o:term.
@@ -101,7 +102,7 @@ fields.main (eqb.inductive _ _) I F_t Tag {{ fun i : lp:I => lp:(R i) }} :-
     fields.branch
     (R i).
 
-pred fields.rty i:term, i:term, i:term, i:list term, i:list term, o:term.
+func fields.rty term, term, term, list term, list term -> term.
 fields.rty F_t Tag _ Vars _ {{ lp:F_t (lp:Tag lp:X) }} :- std.last Vars X.
 
 pred fields.branch i:term, i:term, i:list term, i:list term, o:term.
@@ -111,7 +112,7 @@ fields.branch K _ Vars _ R :-
   coq.mk-app (global (indc B)) {std.append Params Vars} R.
 
 % ------------------------------------------------------------------------
-pred box i:term, i:list constructor, i:eqb.eqType, o:list prop.
+func box term, list constructor, eqb.eqType -> list prop.
 box I KL Decl CL :- std.do! [
   box.aux Decl I ILDr,
   box.declare KL ILDr CL,
@@ -169,9 +170,9 @@ box.box-argument S M (eqb.dependent T Args) (field [] N TY A) :- N is S ^ "_" ^ 
   feqb.trm->term T TY,
   pi x y\ (feqb.trm->term x y :- !) ==> box.box-argument S {calc (M + 1)} (Args x) (A y).
 
-pred distribute i:(A -> list box-spec), i:((A -> indt-decl) ->  indt-decl -> prop), o:list box-spec.
-distribute (_\ []) _ [].
-distribute (x\ [real-box (X x)| XS x]) F [real-box F_X|R] :- F X F_X, distribute XS F R.
+func distribute (A -> list box-spec), (func (A -> indt-decl) ->  indt-decl) -> list box-spec.
+distribute (_\ []) _ [] :- !.
+distribute (x\ [real-box (X x)| XS x]) F [real-box F_X|R] :- !, F X F_X, distribute XS F R.
 distribute (x\ [same-box K| XS x]) F [same-box K|R] :- distribute XS F R.
 
 % ----------------------------------------------------------------------
@@ -237,24 +238,25 @@ case-refl-rty Tag Fields Construct _ Vs _ {{ lp:Construct (lp:Tag lp:X) (lp:Fiel
 pred case-refl-branch i:term, i:term, i:list term,i:list term, o:term.
 case-refl-branch _ _ _ _ {{ refl_equal }}.
 
-pred splay-over-positive i:term, i:list A, i:(pred i:term, o:term), i:term, i:(pred i:A, o:term), o:term.
+func splay-over-positive term, list A, (func term -> term), term, (pred i:A, o:term) -> term.
 splay-over-positive X L DoRty Def DoBranch R :-
   splay-over-positive.aux X (x\x) L DoRty DoBranch Def R.
-pred splay-over-positive.aux i:term, i:(term -> term), i:list A, i:(pred i:term, o:term), i:(pred i:A, o:term), i:term, o:term.
+func splay-over-positive.aux term, (term -> term), list A, (func term -> term), (pred i:A, o:term), term -> term.
 splay-over-positive.aux _ _ [] _ _ Def Def :- !.
 splay-over-positive.aux _ _ [X] _ DoBranch _ R :-  DoBranch X R, !.
 splay-over-positive.aux X XCtx KL DoRty DoBranch Def R :-
   coq.build-match X {{ lib:elpi.derive.positive }} (do-rty XCtx DoRty) (do-branch XCtx DoRty DoBranch Def KL) R.
 
-pred do-rty i:(term -> term), i:(pred i:term, o:term), i:term, i:list term,i:list term, o:term.
+func do-rty (term -> term), (func term -> term), term, list term, list term -> term.
 do-rty Ctx DoRty _ Vs _ R :-  P = Ctx {std.last Vs}, DoRty P R.
 
-pred list-bitmask i:list A, o:list A, o:list A.
+:index (1)
+func list-bitmask list A -> list A, list A.
 list-bitmask [] [] [].
 list-bitmask [X] [X] [].
 list-bitmask [X,Y|L] [X|A] [Y|B] :- list-bitmask L A B.
 
-pred do-branch i:(term -> term), i:(pred i:term, o:term), i:(pred i:A, o:term), i:term, i:list A, i:term, i:term, i:list term, i:list term, o:term.
+func do-branch (term -> term), (func term -> term), (pred i:A, o:term), term, list A, term, term, list term, list term -> term.
 do-branch PCtx DoRty DoBranch Def [_|KS] {{ xO }} _ [P] _ R :- !,
   list-bitmask KS KODD _,
   splay-over-positive.aux P (x\ PCtx {{ xO lp:x }}) KODD DoRty DoBranch Def R.
@@ -272,18 +274,20 @@ prod->tuple (prod N Ty F) {{ (lp:Ty * lp:X)%type }} :- /*(F = x\prod _ _ _),*/ !
 prod->tuple (prod _ Ty _) Ty.
 prod->tuple _ {{ unit }}. % other branches
 
-pred repack-as-tuple i:constant, i:constant, i:term, i:list term, i:list term, o:term.
+func repack-as-tuple constant, constant, term, list term, list term -> term.
 repack-as-tuple C_t Tag _ Vars Tys R :-
-  std.appendR Params [X] Vars,
+  std.appendR Params [X] Vars, !,
   std.last Tys XTy,
   coq.mk-app (global (const C_t)) Params C_tp,
   coq.mk-app (global (const Tag)) Params Tagp,
   coq.build-match X XTy (do-rty_t C_tp Tagp) args->tuple R.
 
-pred do-rty_t i:term, i:term, i:term, i:list term,i:list term, o:term.
+:index (1)
+func do-rty_t term, term, term, list term, list term -> term.
 do-rty_t C_t Tag _ Vars _ {{ lp:C_t (lp:Tag lp:X) }} :- std.last Vars X.
 
-pred args->tuple i:term, i:term, i:list term, i:list term, o:term.
+:index (_ _ 1)
+func args->tuple term, term, list term, list term -> term.
 args->tuple _ _ [] _ {{ tt }}.
 /*args->tuple _ _ [X] _ X.*/
 args->tuple A B [X|XS] [T|TS] {{ @existT lp:T _ lp:X lp:R }} :-

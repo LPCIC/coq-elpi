@@ -10,7 +10,8 @@ shorten std.{append, any->string, zip, map, map2, nth, do!, assert!, flatten}.
 
 namespace derive.projK {
 
-pred exT-close i:list int, i:list (pair term term), i:list term, i:term, i:term, o:term, o:term.
+:index (1)
+func exT-close list int, list (pair term term), list term, term, term -> term, term.
 exT-close [] _ _ T Ty T Ty1 :- copy Ty Ty1.
 exT-close [N|Mask] Ctx Args T Ty {{ @existT lp:S lp:P lp:A lp:R1 }}
                                  {{ @sigT   lp:S lp:P }} :-
@@ -21,7 +22,8 @@ exT-close [N|Mask] Ctx Args T Ty {{ @existT lp:S lp:P lp:A lp:R1 }}
   (pi x\ (copy X x :- !) => exT-close Mask Ctx Args T Ty (R x) (B x)),
   R1 = R A.
 
-pred sigT-close i:list int, i:list (pair term term), i:term, o:term.
+:index (1)
+func sigT-close list int, list (pair term term), term -> term.
 sigT-close [] _ Ty Ty1 :- copy Ty Ty1.
 sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
   nth N Ctx (pr X TX),
@@ -29,27 +31,28 @@ sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
   P = fun {coq.name-suffix `i` N} S B,
   pi x\ (copy X x :- !) => sigT-close Mask Ctx Ty (B x).
 
-pred body-branch i:int, i:constructor, i:term, i:term, i:list term, i:list term, o:term.
+func body-branch int, constructor, term, term, list term, list term -> term.
 body-branch J K  K1 _ VS TS R :-
-  default-output J Mask DfltCtx Dflt DfltTy,
+  default-output J Mask DfltCtx Dflt DfltTy, !,
   if (coq.safe-dest-app K1 (global (indc K)) _)
      (nth J VS X, nth J TS XT, zip VS TS Ctx, Args = VS)
      (X = Dflt, XT = DfltTy, Ctx = DfltCtx, map DfltCtx fst Args),
   exT-close Mask Ctx Args X XT R _RT.
 
-pred body-ty i:int, i:term, i:list term, i:list term, o:term.
+func body-ty int, term, list term, list term -> term.
 body-ty J _ _ _ SigT :-
-  default-output J Mask Args _ T,
+  default-output J Mask Args _ T, !,
   sigT-close Mask Args T SigT.
 
-pred occurs-list i:list (pair term term), i:int, i:term, o:list int.
+:index (1)
+func occurs-list list (pair term term), int, term -> list int.
 occurs-list [] _ _ [].
 occurs-list [pr X _|XS] I T [I|IS] :- occurs X T, !,
   J is I + 1, occurs-list XS J T IS.
 occurs-list [_|XS] I T IS :-
   J is I + 1, occurs-list XS J T IS.
 
-pred mask-for i:term, i:list (pair term term), o:list int.
+func mask-for term, list (pair term term) -> list int.
 mask-for T Args Mask :- occurs-list Args 0 T Mask.
 
 
@@ -60,14 +63,14 @@ pred default-output i:int, % gather infos to generate the match
   o:term, % the default value for the projected argument
   o:term. % its type
 
-pred body-default % makes lambdas for all default arguments + the projected
-  i:term, % constructor type (begin processed)
-  i:int,  % current argument
-  i:int,  % argument to project
-  i:term, % inductive type applied to parameters and indexes
-  i:list (pair term term), % variables for default arguments
-  i:constructor, % constructor to project
-  o:term.
+func body-default % makes lambdas for all default arguments + the projected
+  term, % constructor type (begin processed)
+  int,  % current argument
+  int,  % argument to project
+  term, % inductive type applied to parameters and indexes
+  list (pair term term), % variables for default arguments
+  constructor % constructor to project
+  -> term.
 
 body-default (prod N T F) J OJ IT Args K (fun N T B) :- !,
   mask-for T Args Mask,
@@ -84,14 +87,14 @@ body-default X J OJ IT Args K F :- whd1 X X1, !,
 body-default _ _ J IT _ K (fun `i` IT B) :- !,
   pi i\ coq.build-match i IT (body-ty J) (body-branch J K) (B i).
 
-pred body-param % makes lambdas for all parameters and indexes
-  i:term, % arity of the inductive type
-  i:term, % type of the constructor to project
-  i:term, % inductive type applied to the arity processed so far
-  i:int, % number of Parameters left to process
-  i:int, % argument to project
-  i:constructor, % constructor to project
-  o:term.
+func body-param % makes lambdas for all parameters and indexes
+  term, % arity of the inductive type
+  term, % type of the constructor to project
+  term, % inductive type applied to the arity processed so far
+  int,  % number of Parameters left to process
+  int,  % argument to project
+  constructor % constructor to project
+  -> term.
 
 body-param (sort _) KTy IT 0 J K R :- !,
   body-default KTy 0 J IT [] K R.
@@ -112,7 +115,7 @@ body-param X KTy IT N J K R :- whd1 X X1, whd1 KTy KTy1, !,
 
 % ---------------------------------------------------------------------
 
-pred allK-projs i:string, i:int, i:int, i:int, i:term, i:term, i:constructor, i:term, o:list prop.
+func allK-projs string, int, int, int, term, term, constructor, term -> list prop.
 
 allK-projs _ J J _ _ _ _ _ [] :- !.
 
@@ -129,7 +132,7 @@ allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
   allK-projs Prefix J1 JN Paramsno Arity IT K KTy ClausesRest
 ].
 
-pred for-K i:string, i:int, i:term, i:term,  i:constructor, i:term, o:list prop.
+func for-K string, int, term, term,  constructor, term -> list prop.
 for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
   coq.count-prods KT N,
   Argsno is N - Paramsno,

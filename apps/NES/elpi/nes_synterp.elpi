@@ -1,12 +1,12 @@
 namespace nes {
 
-pred ns->modpath i:prop, o:modpath.
+func ns->modpath prop -> modpath.
 ns->modpath (ns _ M) M.
 
-pred open-ns->string i:prop, o:string.
+func open-ns->string prop -> string.
 open-ns->string (open-ns S _) S.
 
-pred begin-ns i:string, i:list string, i:list prop, o:list prop.
+func begin-ns string, list string, list prop -> list prop.
 begin-ns NS Path In Out :-
   if (Path = [])
      (Fresh is NS ^ "_aux_" ^ {std.any->string {new_int} }, coq.env.begin-module Fresh none)
@@ -19,22 +19,22 @@ begin-ns NS Path In Out :-
   coq.elpi.accumulate current "NES.db"
     (clause _ (after "open-ns:begin") Clause).
 
-pred subpath i:list string, i:prop.
-subpath Path (ns Sub _) :- std.appendR _Prefix Path Sub.
+func subpath list string, prop ->.
+subpath Path (ns Sub _) :- std.appendR _Prefix Path Sub, !.
 
-pred submod i:modpath, i:prop.
+func submod modpath, prop ->.
 submod Mod (ns _ SubMod) :-
   coq.modpath->path SubMod SubPath,
   coq.modpath->path Mod ModPath,
-  std.appendR ModPath _Suffix SubPath.
+  std.appendR ModPath _Suffix SubPath, !.
 
-pred undup i:list A, i:list A, o:list A.
+func undup list A, list A -> list A.
 undup [] _ [].
 undup [X|XS] Seen YS :- std.mem! Seen X, !, undup XS Seen YS.
 undup [X|XS] Seen [X|YS] :- undup XS [X|Seen] YS.
 
 % end-ns ID Stack ClauseIn ClauseOut
-pred end-ns i:string, i:list string, i:list prop, o:list prop.
+func end-ns string, list string, list prop -> list prop.
 end-ns NS Stack In Out :- In => std.do! [
   std.rev Stack Path,
   std.append Path [NS|END_] PathNoEnd,
@@ -57,18 +57,20 @@ end-ns NS Stack In Out :- In => std.do! [
   std.forall New (c\ Local => coq.elpi.accumulate current "NES.db" (clause _ _ c)),
 ].
 
-pred iter-> i:list A, i:list A, i:(pred i:A, i:list A, i:list prop, o:list prop), i:list prop, o:list prop.
+:index (_ 1)
+func iter-> list A, list A, (func A, list A, list prop -> list prop), list prop -> list prop.
 iter-> _ [] _ O O :- coq.error "No elements".
 iter-> INIT [X] F In Out :- !, F X INIT In Out.
 iter-> INIT [X|XS] F In Out :- F X {std.append XS INIT} In Mid, iter-> INIT XS F Mid Out.
 
-pred iter<- i:list A, i:list A, i:(pred i:A, i:list A, i:list prop, o:list prop), i:list prop, o:list prop.
+:index (_ 1)
+func iter<- list A, list A, (func A, list A, list prop -> list prop), list prop -> list prop.
 iter<- _ [] _ _ _ :- coq.error "No elements".
 iter<- INIT [X] F In Out :- !, F X INIT In Out.
 iter<- INIT [X|XS] F In Out :- iter<- INIT XS F In Mid, F X {std.append XS INIT} Mid Out.
 
 % Panics unless [S] well-formed.
-pred string->non-empty-ns i:string, o:list string.
+func string->non-empty-ns string -> list string.
 string->non-empty-ns S L :- std.do! [
   Ident = "[a-zA-Z_][a-zA-Z_0-9']*",	% non-unicode Coq identifiers
   Path is "^\\(" ^ Ident ^ "\\.\\)*" ^ Ident ^ "$",
@@ -76,19 +78,19 @@ string->non-empty-ns S L :- std.do! [
   rex.split "\\." S L,
   if (std.mem L "_") (string->ns.err S) true,
 ].
-pred string->ns.err i:string.
+func string->ns.err string ->.
 string->ns.err S :-
   coq.error {calc ("NES: Bad <DotSeparatedPath>: \"" ^ S ^ "\"")}.
 
 % Panics unless [S] empty, or well-formed.
-pred string->ns i:string, o:list string.
+func string->ns string -> list string.
 string->ns "" [] :- !.
 string->ns S L :- string->non-empty-ns S L.
 
-pred ns->string i:list string, o:string.
+func ns->string list string -> string.
 ns->string NS S :- std.string.concat "." NS S.
 
-pred begin-path i:list string, o:list prop.
+func begin-path list string -> list prop.
 begin-path [] [] :- std.do! [
   coq.begin-synterp-group "nes.begin-path" Group,
   coq.end-synterp-group Group,
@@ -114,14 +116,14 @@ begin-path ([_|_] as Path) Out :- std.do! [
   coq.end-synterp-group Group,
 ].
 
-pred std.time-do! i:list prop.
+func std.time-do! list prop ->.
 std.time-do! [].
 std.time-do! [P|PS] :-
   std.time P T, coq.say P "\ntakes" T "\n",
   !,
   std.time-do! PS.
 
-pred end-path i:list string, o:list prop.
+func end-path list string -> list prop.
 end-path [] [] :- std.do! [
   coq.begin-synterp-group "nes.end-path" Group,
   coq.end-synterp-group Group,
@@ -135,7 +137,7 @@ end-path ([_|_] as Path) Out :- std.do! [
 ].
 
 
-pred open-path i:list string.
+func open-path list string ->.
 open-path Path :- std.do! [
   coq.begin-synterp-group "nes.open-path" Group,
   std.map {std.findall (ns Path M_)} nes.ns->modpath Mods,
@@ -143,7 +145,8 @@ open-path Path :- std.do! [
   coq.end-synterp-group Group,
 ].
 
-pred open-super-path i:list string, i:list string.
+:index (1)
+func open-super-path list string, list string ->.
 open-super-path [] _.
 open-super-path [P|PS] ACC :-
   std.append ACC [P] Cur,
@@ -151,14 +154,14 @@ open-super-path [P|PS] ACC :-
   open-super-path PS Cur.
 
 % Currently open namespace, or [].
-pred current-path o:list string.
+func current-path -> list string.
 current-path NS :- std.do! [
   std.map {std.findall (open-ns X_ P_)} nes.open-ns->string Stack,
   std.rev Stack NS,
 ].
 
 % Find an existing namespace, or panic.
-pred resolve i:string, o:list string.
+func resolve string -> list string.
 resolve S Path :- std.do! [
   if (Top = "^_\\.", rex.match Top S) (std.do! [
     rex.replace Top "" S S',
@@ -168,14 +171,14 @@ resolve S Path :- std.do! [
     resolve.walk S {current-path} {string->non-empty-ns S} Path
   ),
 ].
-pred resolve.walk i:string, i:list string, i:list string, o:list string.
+func resolve.walk string, list string, list string -> list string.
 resolve.walk S Ctx SP Path :- std.do! [
   std.append Ctx SP Candidate,
   ( ns Candidate _, Path = Candidate
   ; Ctx = [], resolve.err S
   ; resolve.walk S {std.drop-last 1 Ctx} SP Path ),
 ].
-pred resolve.err i:string.
+func resolve.err string ->.
 resolve.err S :- coq.error "NES: Namespace not found:" S.
 
 

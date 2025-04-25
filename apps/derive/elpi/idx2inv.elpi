@@ -6,7 +6,8 @@ shorten std.{last, assert!, do!}.
 
 namespace derive.idx2inv {
 
-pred params i:indt-decl, i:term, i:term, o:term.
+:index (1)
+func params indt-decl, term, term -> term.
 params (parameter ID _ Ty In) T Ti (fun Name Ty Out) :-
   coq.id->name ID Name,
   @pi-decl Name Ty p\
@@ -21,28 +22,28 @@ params (inductive _ _ Arity _) T Ti Bo :-
   coq.arity->term Arity Ty,
   compute-fix-bo Ty T Ti Bo.
 
-pred compute-fix-ty i:term, i:term, i:term, o:int, o:term.
+func compute-fix-ty term, term, term -> int, term.
 compute-fix-ty (prod N S Tgt) T Ti M (prod N S T1) :- !,
   @pi-decl N S x\ compute-fix-ty (Tgt x) {coq.mk-app T [x]} {coq.mk-app Ti [x]} J (T1 x), M is J + 1.
 compute-fix-ty _ S T 0 {{ lp:S -> lp:T }}.
 
-pred compute-fix-clause i:term, i:term, i:term, i:int, o:(term -> prop).
-compute-fix-clause _ S T 1 (ih\ param1-functor-db S T ih).
+func compute-fix-clause term, term, term, int -> (term -> prop).
+compute-fix-clause _ S T 1 (ih\ param1-functor-db S T ih) :- !.
 compute-fix-clause (prod N S Tgt) T Ti M (ih\ pi x\ C ih x) :- !,
   J is M - 1,
   @pi-decl N S x\ compute-fix-clause (Tgt x) {coq.mk-app T [x]} {coq.mk-app Ti [x]} J (ih\ C ih x).
 
 
-pred compute-fix-bo i:term, i:term, i:term, o:term.
+func compute-fix-bo term, term, term -> term.
 compute-fix-bo (prod N S Tgt) T Ti (fun N S T1) :- !,
   @pi-decl N S x\ compute-fix-bo (Tgt x) {coq.mk-app T [x]} Ti (T1 x).
 compute-fix-bo _ T Ti (fun `x` T B) :-
   @pi-decl `x` T x\ coq.build-match x T (mk-rty Ti) (mk-branch) (B x).
 
-pred mk-rty i:term, i:term, i:list term, i:list term, o:term.
-mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, coq.mk-app Ti Idxs R.
+func mk-rty term, term, list term, list term -> term.
+mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, !, coq.mk-app Ti Idxs R.
 
-pred mk-branch i:term, i:term, i:list term, i:list term, o:term.
+func mk-branch term, term, list term, list term -> term.
 mk-branch K KTy Vars VarsTy R :- std.do! [
   coq.safe-dest-app K (global (indc GR)) _,
   coq.safe-dest-app KTy (global (indt I)) IArgs,
@@ -60,7 +61,7 @@ mk-branch K KTy Vars VarsTy R :- std.do! [
   coq.mk-app K2 ArgsEq R,
 ].
 
-pred mk-refl i:term, o:term.
+func mk-refl term -> term.
 mk-refl E {{ @refl_equal _ lp:E }}.
 
 func main inductive, string -> list prop.
