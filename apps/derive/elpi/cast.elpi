@@ -22,7 +22,7 @@ args [V|VS] Acc (fun `c` S R) :-
   coq.mk-app V {rev Acc} S,
   pi c\ args VS [c|Acc] (R c).
 
-pred arg i:int, i:term, i:term, i:term, i:list term, o:list term, i:list term, o:list term.
+func arg int, term, term, term, list term, list term, list term -> list term.
 arg _ _ _ _ _ [] _ [].
 arg I E X Y Ps [V|VS] Acc [R|RS] :-
   cast-db I T,
@@ -31,7 +31,8 @@ arg I E X Y Ps [V|VS] Acc [R|RS] :-
   J is I + 1,
   arg J E X Y Ps VS [V|Acc] RS.
 
-pred args-ty i:term, i:term, i:term, i:list term, o:list term, o:list term, o:term.
+:index(_ _ _ _ 1)
+func args-ty term, term, term, list term, list term, list term -> term.
 args-ty E X Y Ps [] [_|Acc] R :-
   last Ps V,
   rev Acc [_|Vars],
@@ -41,7 +42,7 @@ args-ty E X Y Ps [V|VS] Acc (prod `c` S R) :-
   coq.mk-app V {rev Acc} S,
   pi c\ args-ty E X Y Ps VS [c|Acc] (R c).
 
-pred body i:int, i:int, i:list term, o:term.
+func body int, int, list term -> term.
 body I J V (fun Name T R) :- I > 0, !,
   coq.name-suffix `A` {calc (J - I)} Name,
   I1 is I - 1,
@@ -56,15 +57,15 @@ body 0 _ V R :-
                (body-branch Rest x)
                (Bo x y e).
 
-pred rty i:term, i:list term, i:term, i:term, i:list term, i:list term, o:term.
+func rty term, list term, term, term, list term, list term -> term.
 rty  A Rest X _ [Y,E] _ R :-    args-ty E X Y [A|Rest] Rest [Y] R.
 
-pred body-branch i:list term, i:term, i:term, i:term, i:list term, i:list term, o:term.
+func body-branch list term, term, term, term, list term, list term -> term.
 body-branch Rest Y _ _ _ _ R :-      args             Rest [Y] R.
 
 }
 
-pred main i:int.
+func main int.
 main N :-
   Name is "cast" ^ {any->string N},
   aux.body N N [] Bo,
