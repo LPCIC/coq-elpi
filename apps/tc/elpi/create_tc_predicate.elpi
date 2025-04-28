@@ -29,7 +29,7 @@ add-class-str SearchMode ClassStr :-
   coq.locate ClassStr ClassGR,
   add-class-gr SearchMode ClassGR.
 
-func attr->search-mode search-mode ->. 
+func attr->search-mode -> search-mode. 
 attr->search-mode tc.deterministic :- get-option "deterministic" tt, !.
 attr->search-mode tc.classic.
 
@@ -37,11 +37,8 @@ func attr->modes -> list hint-mode.
 attr->modes CoqModes :- 
   get-option "mode" L,
   std.map L get-key-from-option RawModes, 
-  std.map RawModes string->coq-mode1 CoqModes, !.
+  std.map RawModes tc.string->coq-mode CoqModes, !.
 attr->modes [].
-
-func string->coq-mode1 string -> hint-mode.
-string->coq-mode1 X Y :- tc.string->coq-mode X Y.
 
 func get-key-from-option prop -> string. 
 get-key-from-option (get-option A tt) A :- !.
@@ -96,7 +93,7 @@ namespace eta-reduction-aux {
   % functional parameter through the std.findall in the main predicate below.
   func compile gref, term, bool, list term -> prop.
   compile ClassGR (prod _ T Bo) ff L (pi name ty body\ Cl body ty name) :-
-    is-functional T, pi name ty body x\ sigma Inp\
+    is-functional T, !, pi name ty body x\ sigma Inp\
       Inp = (fun name ty body),
       compile ClassGR (Bo x) tt [Inp|L] (Cl name ty body).
 
