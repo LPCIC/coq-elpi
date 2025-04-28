@@ -1,25 +1,25 @@
 namespace nes {
 
 % Print a namespace
-pred print-path i:list string, i:(pred i:gref, o:coq.pp).
+func print-path list string, (pred i:gref, o:coq.pp).
 print-path Path PP :- std.do! [
   std.map {std.findall (ns Path _)} (p\ mp\ p = ns _ mp) MPs,
   print.pp-list MPs (print.pp-module Path PP) Out,
   coq.say {coq.pp->string Out},
 ].
 
-pred begin-path.
+func begin-path.
 begin-path :- coq.replay-synterp-action-group "nes.begin-path".
 
-pred end-path.
+func end-path.
 end-path :- coq.replay-synterp-action-group "nes.end-path".
 
-pred open-path.
+func open-path.
 open-path :- coq.replay-synterp-action-group "nes.open-path".
 
 namespace print {
 
-  pred pp-list i:list A, i:(pred i:A, o:coq.pp), o:coq.pp.
+  func pp-list list A, (pred i:A, o:coq.pp) -> coq.pp.
   pp-list L F Out :- std.do! [
     std.map-filter L F PPs,
     Out = coq.pp.box (coq.pp.v 0) {std.intersperse (coq.pp.brk 0 0) PPs},
@@ -33,35 +33,35 @@ namespace print {
     context.
 
   % Hides `aux` modules
-  pred readable-path i:context, i:list string, o:list string.
+  func readable-path context, list string -> list string.
   readable-path (context Prefix N _) FullPath Path :- std.do! [
     std.drop N FullPath RelPath,
     std.append Prefix RelPath Path,
   ].
 
-  pred module-context i:list string, i:modpath, i:(pred i:gref, o:coq.pp), o:context.
+  func module-context list string, modpath, (pred i:gref, o:coq.pp) -> context.
   module-context Prefix MP PP Ctx :- std.do! [
     coq.modpath->path MP FullPath,
     Ctx = context Prefix {std.length FullPath} PP,
   ].
 
-  pred submodule-context i:context, i:modpath, o:context.
+  func submodule-context context, modpath -> context.
   submodule-context (context _ _ PP as Ctx) MP Ctx' :- std.do! [
     coq.modpath->path MP FullPath,
     readable-path Ctx FullPath Path,
     Ctx' = context Path {std.length FullPath} PP,
   ].
 
-  pred pp-module i:list string, i:(pred i:gref, o:coq.pp), i:modpath, o:coq.pp.
+  func pp-module list string, (pred i:gref, o:coq.pp), modpath -> coq.pp.
   pp-module Prefix PP MP Out :- std.do! [
     pp-module-items {module-context Prefix MP PP} {coq.env.module MP} Out,
   ].
 
-  pred pp-module-items i:context i:list module-item, o:coq.pp.
+  func pp-module-items context, list module-item -> coq.pp.
   pp-module-items Ctx Items Out :-
     pp-list Items (pp-module-item Ctx) Out.
 
-  pred pp-module-item i:context, i:module-item, o:coq.pp.
+  func pp-module-item context, module-item -> coq.pp.
   pp-module-item (context _ _ PP) (gref GR) Out :- PP GR Out, !.
   pp-module-item Ctx (submodule MP Items) Out :- std.do! [
     pp-module-items {submodule-context Ctx MP} Items Out,
@@ -70,7 +70,7 @@ namespace print {
   pp-module-item Ctx (module-type-functor MTP _) Out :- pp-modtypath Ctx MTP Out.
   pp-module-item Ctx (module-functor MP _) Out :- pp-modpath Ctx MP Out.
 
-  pred pp-path i:context, i:string, i:list string, o:coq.pp.
+  func pp-path context, string, list string -> coq.pp.
   pp-path Ctx What FullPath Out :- std.do! [
     readable-path Ctx FullPath Path,
     Out = coq.pp.box coq.pp.h [
@@ -79,12 +79,12 @@ namespace print {
     ],
   ].
 
-  pred pp-modtypath i:context, i:modtypath, o:coq.pp.
+  func pp-modtypath context, modtypath -> coq.pp.
   pp-modtypath Ctx MTP Out :- std.do! [
     pp-path Ctx "Module Type" {coq.modtypath->path MTP} Out,
   ].
 
-  pred pp-modpath i:context, i:modpath, o:coq.pp.
+  func pp-modpath context, modpath -> coq.pp.
   pp-modpath Ctx MP Out :- std.do! [
     pp-path Ctx "Module" {coq.modpath->path MP} Out,
   ].
