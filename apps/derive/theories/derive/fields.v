@@ -22,7 +22,7 @@ pred fields-for
   o:constant, % construct
   o:constant. % constructP
 
-pred box-for o:constructor, o:inductive, o:constructor.
+func box-for constructor -> inductive, constructor.
 
 }}.
 

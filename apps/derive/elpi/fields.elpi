@@ -80,12 +80,12 @@ fields_t.main (eqb.inductive _ F) I {{ fun p : lib:elpi.derive.positive => lp:(R
 func fields_t.rty term -> term.
 fields_t.rty _ {{ Type }}.
 
-pred fields_t.k i:list term, i:eqb.constructor, o:term.
+func fields_t.k list term, eqb.constructor -> term.
 fields_t.k Params (eqb.constructor K _) T :-
   box-for K I _, coq.mk-app (global (indt I)) Params T.
 
 % ----------------------------------------------------------------------
-pred fields.main i:eqb.eqType, i:term, i:term, i:term, o:term.
+func fields.main eqb.eqType, term, term, term -> term.
 fields.main (eqb.type-param F) I F_t Tag {{ fun p : Type => lp:(R p) }} :- !,
   @pi-trm `p` {{ Type }} x\p\
     fields.main (F x) {coq.mk-app I [p]} {coq.mk-app F_t [p]} {coq.mk-app Tag [p]} (R p).
@@ -105,7 +105,7 @@ fields.main (eqb.inductive _ _) I F_t Tag {{ fun i : lp:I => lp:(R i) }} :-
 func fields.rty term, term, term, list term, list term -> term.
 fields.rty F_t Tag _ Vars _ {{ lp:F_t (lp:Tag lp:X) }} :- std.last Vars X.
 
-pred fields.branch i:term, i:term, i:list term, i:list term, o:term.
+func fields.branch term, term, list term, list term -> term.
 fields.branch K _ Vars _ R :-
   coq.safe-dest-app K (global (indc C)) Params,
   box-for C _ B,
@@ -118,7 +118,7 @@ box I KL Decl CL :- std.do! [
   box.declare KL ILDr CL,
 ].
 
-pred box.declare i:list constructor, i:list box-spec, o:list prop.
+func box.declare list constructor, list box-spec -> list prop.
 box.declare [] [] [].
 box.declare [K|Ks] [real-box I|Bs] [C|Cs] :-
   std.assert-ok! (coq.elaborate-indt-decl-skeleton I D) "ILD",
@@ -134,7 +134,7 @@ kind box-spec type.
  type real-box indt-decl -> box-spec.
  type same-box constructor -> box-spec.
 
-pred box.aux i:eqb.eqType, i:term, o:list box-spec.
+func box.aux eqb.eqType, term -> list box-spec.
 box.aux (eqb.type-param F) I L :-
   (@pi-trm `p` {{ Type }} x\y\
     box.aux (F x) {coq.mk-app I [y]} (L1 y)),
@@ -149,7 +149,8 @@ box.aux (eqb.inductive Ind F) I L :- pi x\ box.aux2 I Ind x (F x) L.
 
 pred args-of o:constructor, o:eqb.arguments.
 
-pred box.aux2 i:term, i:inductive, i:eqb.trm, o:list eqb.constructor, o:list box-spec.
+:index(_ _ _ 2)
+func box.aux2 term, inductive, eqb.trm, list eqb.constructor -> list box-spec.
 box.aux2 _ _ _ [] [].
 box.aux2 I Ind X [eqb.constructor _ Args|MoreKs] [same-box K|MoreBoxes] :- args-of K Args, !,
   box.aux2 I Ind X MoreKs MoreBoxes.
@@ -160,7 +161,8 @@ box.aux2 I Ind X [eqb.constructor K Args|MoreKs] [real-box (record ID1 S ID2 Fie
   ((feqb.trm->term X I :- !) ==> box.box-argument ID2 0 Args Fields),
   args-of K Args ==> box.aux2 I Ind X MoreKs MoreBoxes.
 
-pred box.box-argument i:string, i:int, i:eqb.arguments, o:record-decl.
+:index(_ _ 1)
+func box.box-argument string, int, eqb.arguments -> record-decl.
 box.box-argument _ _ (eqb.stop _) end-record.
 box.box-argument S M (eqb.regular T Args) (field [] N TY _\A) :- N is S ^ "_" ^ {std.any->string M},
   feqb.trm->term T TY, box.box-argument S {calc (M + 1)} Args A.
@@ -176,7 +178,8 @@ distribute (x\ [real-box (X x)| XS x]) F [real-box F_X|R] :- !, F X F_X, distrib
 distribute (x\ [same-box K| XS x]) F [same-box K|R] :- distribute XS F R.
 
 % ----------------------------------------------------------------------
-pred construct.main i:eqb.eqType, i:term, i:constant, o:term.
+:index(1)
+func construct.main eqb.eqType, term, constant -> term.
 construct.main (eqb.type-param F) I F_t {{ fun p : Type => lp:(R p) }} :-
   @pi-trm `p` {{ Type }} x\p\
     construct.main (F x) {coq.mk-app I [p]} F_t (R p).
@@ -195,10 +198,10 @@ construct.main (eqb.inductive _ F) I F_t {{ fun p : lib:elpi.derive.positive => 
       (construct.k I Params)
       (R p).
 
-pred construct.rty1 i:term, i:term, i:term, o:term.
+func construct.rty1 term, term, term -> term.
 construct.rty1 Fields_t I X {{ lp:Fields_t lp:X -> option lp:I }}.
 
-pred construct.k i:term, i:list term, i:eqb.constructor, o:term.
+func construct.k term, list term, eqb.constructor -> term.
 construct.k _ Params (eqb.constructor K (eqb.stop _)) {{ fun b : lp:BoxTy => Some lp:B }} :- !,
   box-for K BT _,
   coq.mk-app (global (indt BT)) Params BoxTy,
@@ -212,17 +215,17 @@ construct.k I Params (eqb.constructor K _) {{ fun b : lp:BoxTy => lp:(R b) }} :-
     (construct.branch {coq.mk-app (global (indc K)) Params})
     (R b).
 
-pred construct.rty i:term, i:term, i:list term, i:list term, o:term.
+func construct.rty term, term, list term, list term -> term.
 construct.rty I _ _ _ {{ option lp:I }}.
-pred construct.branch i:term, i:term, i:term, i:list term, i:list term, o:term.
+func construct.branch term, term, term, list term, list term -> term.
 construct.branch B _ _ Vars _ {{ Some lp:BVars }} :- coq.mk-app B Vars BVars.
 
 % -------------------------------------------------------------------------
 
 % match x return construct (fields x) = Some x with _ => erefl
-pred case-refl i:constant, i:constant, i:constant, i:term, i:list term, i:list term, o:term.
+func case-refl constant, constant, constant, term, list term, list term -> term.
 case-refl Tag Fields Construct _ ParamsX Tys R :-
-  std.appendR Params [X] ParamsX,
+  std.appendR Params [X] ParamsX, !,
   coq.mk-app (global (const Tag)) Params TP,
   coq.mk-app (global (const Fields)) Params FP,
   coq.mk-app (global (const Construct)) Params CP,
@@ -231,11 +234,11 @@ case-refl Tag Fields Construct _ ParamsX Tys R :-
     case-refl-branch
     R.
 
-pred case-refl-rty i:term, i:term, i:term, i:term, i:list term,i:list term, o:term.
+func case-refl-rty term, term, term, term, list term,list term -> term.
 case-refl-rty Tag Fields Construct _ Vs _ {{ lp:Construct (lp:Tag lp:X) (lp:Fields lp:X) = Some lp:X }} :-
   std.last Vs X.
 
-pred case-refl-branch i:term, i:term, i:list term,i:list term, o:term.
+func case-refl-branch term, term, list term,list term -> term.
 case-refl-branch _ _ _ _ {{ refl_equal }}.
 
 func splay-over-positive term, list A, (func term -> term), term, (pred i:A, o:term) -> term.
@@ -265,13 +268,13 @@ do-branch PCtx DoRty DoBranch Def [_|KS] {{ xI }} _ [P] _ R :- !,
   splay-over-positive.aux P (x\ PCtx {{ xI lp:x }}) KEVEN DoRty DoBranch Def R.
 do-branch _ _ DoBranch _ [X|_] {{ xH }} _ _ _ R :- DoBranch X R, !.
 
-pred prod->tuple i:term, o:term.
+func prod->tuple term -> term.
 prod->tuple (prod N Ty F) {{ { x:lp:Ty & lp:(X x)}%type }} :- 
   /*(F = x\prod _ _ _),*/ (pi x\ occurs x (F x)), !, % not the last one and dependent
   @pi-decl N Ty x\ prod->tuple (F x) (X x).
 prod->tuple (prod N Ty F) {{ (lp:Ty * lp:X)%type }} :- /*(F = x\prod _ _ _),*/ !, % not the last one
   @pi-decl N Ty x\ prod->tuple (F x) X.
-prod->tuple (prod _ Ty _) Ty.
+prod->tuple (prod _ Ty _) Ty :- !.
 prod->tuple _ {{ unit }}. % other branches
 
 func repack-as-tuple constant, constant, term, list term, list term -> term.
