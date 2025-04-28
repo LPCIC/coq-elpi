@@ -4,7 +4,7 @@
 namespace tc {
   pred alias i:term, o:term.
 
-  pred replace-with-alias.aux i:list term, o:list term, o:bool.
+  func replace-with-alias.aux list term -> list term, bool.
   replace-with-alias.aux [] [] ff.
   replace-with-alias.aux [X | Xs] [Y | Ys] B :-
     replace-with-alias X Y B', 
@@ -12,7 +12,7 @@ namespace tc {
     or B' B'' B.
     
   %  [replace-with-alias T T1 Changed] T1 is T where aliases are replaced
-  pred replace-with-alias i:term, o:term, o:bool.
+  func replace-with-alias term -> term, bool.
   replace-with-alias A Sol tt :- alias A Sol', 
     replace-with-alias Sol' Sol _.
   replace-with-alias (app ToReplace) (app Sol) A :- 

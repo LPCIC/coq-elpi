@@ -14,7 +14,7 @@
 
 % takes the type of a class and build a list
 % of hint mode where the last element is mandatory
-pred make-last-hint-mode-input i:term, o:list hint-mode.
+func make-last-hint-mode-input term -> list hint-mode.
 make-last-hint-mode-input (prod _ _ (x\ (prod _ _ _) as T)) [mode-output | L] :-
   pi x\ make-last-hint-mode-input (T x) L. 
 make-last-hint-mode-input (prod _ _ _) [mode-input].
@@ -22,7 +22,7 @@ make-last-hint-mode-input (sort _) [].
 
 % build a list of the seme langht as the the passed one
 % where all the elements are []
-pred build-empty-list i:list B, o:list (list A).
+func build-empty-list list B -> list (list A).
 build-empty-list [] [].
 build-empty-list [_ | TL] [[] | L] :- 
   build-empty-list TL L.
@@ -30,7 +30,7 @@ build-empty-list [_ | TL] [[] | L] :-
 % add the hint modes of a Class to the database.
 % note that if the Class has not specified hint mode
 % then we assume the hint mode to be - - - ... !
-pred add-modes i:gref.
+func add-modes gref ->.
 :if "add-modes"
 add-modes GR :-
   % the hint mode is added only if not exists

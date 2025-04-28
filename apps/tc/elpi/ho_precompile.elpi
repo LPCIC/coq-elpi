@@ -13,9 +13,9 @@ namespace tc {
       pred may-contract-to i:list term, i:term, i:term.
       may-contract-to _ N N :- !.
       may-contract-to L N (app [V|S]) :- var V, !,
-        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
+        std.forall [N|L] (x\ std.exists! S (may-contract-to [] x)).
       may-contract-to L N (app [V|S]) :- is-uvar V, !,
-        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
+        std.forall [N|L] (x\ std.exists! S (may-contract-to [] x)).
       may-contract-to L N (app [N|A]) :-
         std.length A {std.length L},
         std.forall2 {std.rev L} A (may-contract-to []).
@@ -27,18 +27,18 @@ namespace tc {
       occurs-rigidly N N :- name N, !.
       occurs-rigidly _ (app [N|_]) :- is-uvar N, !, fail.
       occurs-rigidly _ (app [N|_]) :- var N, !, fail.
-      occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
+      occurs-rigidly N (app A) :- std.exists! A (occurs-rigidly N).
       occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
       pred maybe-eta-aux i:term, i:list term.
       maybe-eta-aux (app[V|S]) L :- is-uvar V, !,
-        std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
+        std.forall L (x\ std.exists! S (y\ may-contract-to [] x y)).
       maybe-eta-aux (app[V|S]) L :- var V, !,
-        std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
+        std.forall L (x\ std.exists! S (y\ may-contract-to [] x y)).
       maybe-eta-aux (app [_|A]) L :-
         SplitLen is {std.length A} - {std.length L},
         split-at-not-fatal SplitLen A HD TL,
-        std.forall L (x\ not (exists! HD (occurs-rigidly x))),
+        std.forall L (x\ not (std.exists! HD (occurs-rigidly x))),
         std.forall2 {std.rev L} TL (may-contract-to []). 
       maybe-eta-aux (fun _ _ B) L :-
         pi x\ maybe-eta-aux (B x) [x|L].
@@ -187,7 +187,7 @@ namespace tc {
       may-contract-to _ N N :- !.
       % TODO: here we should do var V _ Scope and use scope: N can be in Scope but not in S
       may-contract-to L N (app [V|S]) :- var V, !,
-        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
+        std.forall [N|L] (x\ std.exists! S (may-contract-to [] x)).
       may-contract-to L N (app [N|A]) :-
         std.length A {std.length L},
         std.forall2 {std.rev L} A (may-contract-to []).
@@ -198,17 +198,17 @@ namespace tc {
       pred occurs-rigidly i:term, i:term.
       occurs-rigidly N N :- name N, !.
       occurs-rigidly _ (app [N|_]) :- var N, !, fail.
-      occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
+      occurs-rigidly N (app A) :- std.exists! A (occurs-rigidly N).
       occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
 
       pred maybe-eta-aux i:term, i:list term.
       % TODO: here we should do var V _ Scope and use Scope: an elt in L can appear in Scope
       maybe-eta-aux (app[V|S]) L :- var V, !,
-        std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
+        std.forall L (x\ std.exists! S (y\ may-contract-to [] x y)).
       maybe-eta-aux (app [_|A]) L :-
         SplitLen is {std.length A} - {std.length L},
         split-at-not-fatal SplitLen A HD TL,
-        std.forall L (x\ not (exists! HD (occurs-rigidly x))),
+        std.forall L (x\ not (std.exists! HD (occurs-rigidly x))),
         std.forall2 {std.rev L} TL (may-contract-to []). 
       maybe-eta-aux (fun _ _ B) L :-
         pi x\ maybe-eta-aux (B x) [x|L].

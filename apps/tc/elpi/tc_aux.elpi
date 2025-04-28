@@ -57,7 +57,7 @@ namespace tc {
     coq.TC.class? TC.
 
   % adds a clause to the tc.db DB at the passed grafting
-  pred add-tc-db o:id, o:grafting, i:prop.  
+  func add-tc-db id, grafting, prop ->.
   add-tc-db ClauseName Graft PR :-
     if (not (ground_term PR)) (coq.error "[TC] anomaly: open rule:" PR) true,
     coq.elpi.accumulate _ "tc.db" 
@@ -163,7 +163,7 @@ namespace tc {
 
   pred dummy.
 
-  pred remove-clause i:string, i:prop, i:list prop.
+  func remove-clause string, prop, list prop ->.
   remove-clause ClauseName P Locality :-
     %Locality => add-tc-db _ (remove ClauseName) P.
     Locality => add-tc-db _ (replace ClauseName) (P :- fail).
