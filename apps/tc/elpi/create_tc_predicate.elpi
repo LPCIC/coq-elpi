@@ -6,13 +6,13 @@ shorten tc.{search-mode}.
 
 % The predicate of a class is local if inside a section and readded at section end.
 % This way, section variables are generalized
-pred get-class-locality o:list prop. 
+func get-class-locality -> list prop. 
 get-class-locality [@local!] :- coq.env.current-section-path [_ | _], !.
 get-class-locality [@global!].
 
 % [add-class-gr SearchMode ClassGR] adds the predicate for the class with its corresponing mode
 % NOTE: the mode inside TC.declare_mode has the priority over Coq mode or #[mode=(...)] TC.Declare
-pred add-class-gr i:search-mode, i:gref.
+func add-class-gr search-mode, gref ->.
 % the predicate for the class has alread been added
 add-class-gr _ ClassGR :- tc.class ClassGR _ _ _, !. 
 add-class-gr SearchMode ClassGR :-
@@ -24,32 +24,32 @@ add-class-gr SearchMode ClassGR :-
     coq.elpi.add-predicate "tc.db" _ PredName EM,
     tc.add-tc-db _ _ (tc.class ClassGR PredName SearchMode SM)).
 
-pred add-class-str i:search-mode, i:string.
+func add-class-str search-mode, string ->.
 add-class-str SearchMode ClassStr :-
   coq.locate ClassStr ClassGR,
   add-class-gr SearchMode ClassGR.
 
-pred attr->search-mode o:search-mode. 
+func attr->search-mode search-mode ->. 
 attr->search-mode tc.deterministic :- get-option "deterministic" tt, !.
 attr->search-mode tc.classic.
 
-pred attr->modes o:list hint-mode.
+func attr->modes -> list hint-mode.
 attr->modes CoqModes :- 
   get-option "mode" L,
   std.map L get-key-from-option RawModes, 
   std.map RawModes string->coq-mode1 CoqModes, !.
 attr->modes [].
 
-pred string->coq-mode1 i:string, o:hint-mode.
+func string->coq-mode1 string -> hint-mode.
 string->coq-mode1 X Y :- tc.string->coq-mode X Y.
 
-pred get-key-from-option i:prop, o:string. 
+func get-key-from-option prop -> string. 
 get-key-from-option (get-option A tt) A :- !.
 get-key-from-option (get-option "i" ff) "o" :- !.
 get-key-from-option (get-option "o" ff) "i" :- !.
 get-key-from-option A _ :- coq.error A "should be an option".
 
-pred declare-class-in-coq i:gref.
+func declare-class-in-coq gref ->.
 declare-class-in-coq ClassGR :- 
   attr->modes CoqModes,
   if (CoqModes = [])
@@ -71,7 +71,7 @@ declare-class-in-coq ClassGR :-
   
   Locality => tc.add-tc-db _ (after "0") (tc.class ClassGR PredName SearchMode SM :- !).
 
-pred declare-class i:indt-decl. 
+func declare-class indt-decl ->. 
 declare-class D :- !, 
   coq.env.add-indt D I,
   coq.parse-attributes {attributes} 
@@ -81,10 +81,10 @@ declare-class D :- !,
 % Contains some instruction that are executed just after the creation of
 % the predicate for the class
 namespace eta-reduction-aux {
-  pred is-functional i:term.
+  func is-functional term ->.
   is-functional (prod _ _ _).
 
-  pred replace i:list term, i:term, o:list term, o:term.
+  func replace list term, term -> list term, term.
   replace [] _ [] _ :- !.
   replace [(fun _ _ _ as T) | Xs] X' [X' | Xs] T :- !.
   replace [X | XS] NEW [X | YS] S :- replace XS NEW YS S.
@@ -94,7 +94,7 @@ namespace eta-reduction-aux {
   % premise where P is possibly eta-contructed at runtime. The absence of bang
   % in the first rule (after is-functional T) allows to get all rules for and
   % functional parameter through the std.findall in the main predicate below.
-  pred compile i:gref, i:term, i:bool, i:list term, o:prop.
+  func compile gref, term, bool, list term -> prop.
   compile ClassGR (prod _ T Bo) ff L (pi name ty body\ Cl body ty name) :-
     is-functional T, pi name ty body x\ sigma Inp\
       Inp = (fun name ty body),
@@ -117,9 +117,9 @@ namespace eta-reduction-aux {
       ].
 
   % A debug predicate to print the genereted clauses
-  pred generated-clauses.
+  func generated-clauses.
 
-  pred main i:string.
+  func main string ->.
   main S :-
     coq.locate S ClassGR,
     coq.env.typeof ClassGR ClassTy,

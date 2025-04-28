@@ -55,7 +55,7 @@ namespace tc {
   modes-of-class ClassGR Modes :- 
     coq.env.typeof ClassGR ClassTy,
     N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
-    list-init N (x\r\ r = (pr out "term")) Modes.
+    std.list.init N (x\r\ r = (pr out "term")) Modes.
 
   pred add-pending-mode i:list string.
   add-pending-mode _ :-
@@ -64,18 +64,18 @@ namespace tc {
   add-pending-mode M :-
     tc.add-tc-db @pending-mode! _ (pending-mode M).
 
-  pred remove-pending-mode.
+  func remove-pending-mode ->.
   remove-pending-mode :-
     tc.remove-clause @pending-mode! (pending-mode []) [].
 
-  pred check-pending-mode-arity i:gref, i:list A.
+  func check-pending-mode-arity gref, list A ->.
   check-pending-mode-arity GR L :-
     coq.env.typeof GR Ty,
     coq.count-prods Ty N,
     N' is N + 1,
     std.assert! (std.length L N') "Pending mode invalid for class GR".
 
-  pred get-elpi-mode i:gref, o:elpi-modeL, o:string-modeL.
+  func get-elpi-mode gref -> elpi-modeL, string-modeL.
   get-elpi-mode ClassGR EM SM :-
     pending-mode SM, !,
     check-pending-mode-arity ClassGR SM, 
