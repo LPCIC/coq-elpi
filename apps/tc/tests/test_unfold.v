@@ -8,7 +8,7 @@ Module NAT.
   Elpi Accumulate TC.Solver lp:{{
     % Just to print what is beeing normalized
     :after "firstHook"
-    tc.normalize-ty T _ :- coq.say "Normalizing" T, fail.
+    tc.normalize-ty T _ :- coq.say "Normalizing" T, fail, !.
   }}.
 
   (* The unfold is done in the goal *)
