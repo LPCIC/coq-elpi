@@ -22,12 +22,12 @@ From elpi.apps Require Export add_commands.
 Elpi Command TC.Print_instances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
-  pred tc.list-printer-aux i:prop.
+  func tc.list-printer-aux prop ->.
   tc.list-printer-aux (tc.instance _ InstGR _ Locality) :-
     coq.say InstGR "with locality" Locality.
 
-  pred tc.list-printer i:gref, i:list prop.
-  tc.list-printer _ [].
+  func tc.list-printer gref, list prop ->.
+  tc.list-printer _ [] :- !.
   tc.list-printer ClassGR Instances :- 
     coq.say "Instances list for" ClassGR "is:",
     std.forall Instances tc.list-printer-aux. 
@@ -170,8 +170,8 @@ Elpi Accumulate Db tc_options.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
-  pred tc.add-unfold i:gref.
-  tc.add-unfold (const C) :-
+  func tc.add-unfold gref ->.
+  tc.add-unfold (const C) :- !,
     if (tc.unfold-constant C) true
       (tc.add-tc-db _ _ (tc.unfold-constant C)).
   tc.add-unfold GR :-
