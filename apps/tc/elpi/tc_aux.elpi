@@ -58,10 +58,9 @@ namespace tc {
 
   % adds a clause to the tc.db DB at the passed grafting
   func add-tc-db id, grafting, prop ->.
-  add-tc-db ClauseName Graft PR :-
-    if (not (ground_term PR)) (coq.error "[TC] anomaly: open rule:" PR) true,
-    coq.elpi.accumulate _ "tc.db" 
-      (clause ClauseName Graft PR); coq.error "cannot add " PR " to tc.db".
+  add-tc-db _          _     Clause :- not (ground_term Clause), coq.error "[TC] anomaly: open rule:" Clause, !.
+  add-tc-db ClauseName Graft Clause :- coq.elpi.accumulate _ "tc.db" (clause ClauseName Graft Clause), !.
+  add-tc-db _          _     Clause :- coq.error "cannot add " PR " to tc.db".
 
   % takes a tc-instance and return the gref of the inst
   pred inst->gref i:tc-instance, o:gref.
@@ -88,7 +87,7 @@ namespace tc {
     std.last L R.
 
   % TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
-  pred gref->pred-name i:gref, o:string.
+  func gref->pred-name gref -> string.
   gref->pred-name Gr S :-
     if (tc.is-option-active tc.oTC-clauseNameShortName)
       (Path = "")

@@ -6,7 +6,7 @@ namespace tc {
   typeabbrev string-modeL (list string).
   macro @pending-mode! :- "pending mode".
 
-  pred string->coq-mode o:string, o:hint-mode.
+  func string->coq-mode -> string, hint-mode.
   string->coq-mode uvar uvar :- !, coq.error "[TC] string->coq-mode". 
   string->coq-mode "!" mode-input :- !.
   string->coq-mode "+" mode-ground :- !.
@@ -18,7 +18,7 @@ namespace tc {
   string->coq-mode "o" mode-output :- !.
   string->coq-mode A _ :- coq.error A "is not a valid mode".
 
-  pred coq->elpi-mode i:hint-mode, o:elpi-mode.
+  func coq->elpi-mode hint-mode -> elpi-mode.
   :name "coq->elpi-mode"
   coq->elpi-mode mode-ground (pr in "term"). % approximation
   /*
@@ -33,11 +33,11 @@ namespace tc {
   coq->elpi-mode mode-input (pr out "term").
   coq->elpi-mode mode-output (pr out "term").
 
-  pred string->elpi-mode i:string, o:elpi-mode.
+  func string->elpi-mode string -> elpi-mode.
   string->elpi-mode S R :- coq->elpi-mode {string->coq-mode S} R, !.
   string->elpi-mode _ (pr out "term").
 
-  pred elpi->string-mode i:elpi-mode, o:string.
+  func elpi->string-mode elpi-mode -> string.
   elpi->string-mode (pr in _) "i" :- !.
   elpi->string-mode (pr out _) "o".
 
@@ -45,13 +45,13 @@ namespace tc {
   % one mode, then we consider all its parameter to be in output mode. If the
   % class has exactly one mode, then it is considered for the signature of the
   % predicate for CL 
-  pred modes-of-class i:gref, o:list (elpi-mode).
+  func modes-of-class gref -> list (elpi-mode).
   modes-of-class ClassGR Modes :- 
     coq.hints.modes ClassGR "typeclass_instances" CoqModesList,
     not (CoqModesList = []),
     not (CoqModesList = [_,_|_], coq.warning "TC.Modes" "At the moment we only allow TC with at most 1 hint Mode (caused by class" {coq.gref->string ClassGR} ")"),
     CoqModesList = [HintModesFst],
-    std.append {std.map HintModesFst coq->elpi-mode} [pr out "term"] Modes.
+    std.append {std.map HintModesFst coq->elpi-mode} [pr out "term"] Modes, !.
   modes-of-class ClassGR Modes :- 
     coq.env.typeof ClassGR ClassTy,
     N is {coq.count-prods ClassTy} + 1, % + 1 for the solution

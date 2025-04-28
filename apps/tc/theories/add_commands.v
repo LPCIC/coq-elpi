@@ -123,7 +123,7 @@ Elpi Accumulate lp:{{
   main _ :- coq.warning "TC.Declare" {tc.warning-name} 
 "This command does not fully mirror the watned behavior if the class has methods
 with implicit arguments (those implicits will be neglected)", fail.
-  main [indt-decl D] :- tc.declare-class D.
+  main [indt-decl D] :- !, tc.declare-class D.
   main _ :- coq.error "Argument should be an inductive type".
 }}.
 

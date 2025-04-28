@@ -64,7 +64,7 @@ external pred main i:list argument.
 external pred main-interp i:list argument, i:any.
 external pred main-synterp i:list argument, o:any.
 pred usage.
-external pred attributes o:list attribute.
+external func attributes -> list attribute.
 
 % see coq-lib.elpi for coq.parse-attributes generating the options below
 external pred get-option o:string, o:A.
