@@ -57,9 +57,9 @@ namespace tc {
     N is {coq.count-prods ClassTy} + 1, % + 1 for the solution
     std.list.init N (x\r\ r = (pr out "term")) Modes.
 
-  pred add-pending-mode i:list string.
+  func add-pending-mode list string ->.
   add-pending-mode _ :-
-    pending-mode _, 
+    pending-mode _, !,
     coq.error "[TC] A pending mode already exists. Build a class with that mode to avoid this error".
   add-pending-mode M :-
     tc.add-tc-db @pending-mode! _ (pending-mode M).
@@ -85,18 +85,18 @@ namespace tc {
     modes-of-class ClassGR EM, 
     std.map EM elpi->string-mode SM.
 
-  pred get-evars i:term, o:list term.
+  func get-evars term -> list term.
   get-evars T L :-
     (pi hd T L\ fold-map T L _ [hd | L] :- var T hd _, !) =>
     fold-map T [] _ L.
 
   pred evars o:term.
 
-  pred action-to-accumulate i:string, i:term, o:list prop.
+  func action-to-accumulate string, term -> list prop.
   action-to-accumulate _ T [evars HD] :- var T HD _, !.
   action-to-accumulate _ _ [].
 
-  pred mode-check i:string, i:term.
+  func mode-check string, term ->.
   % heuristic: if we are in "+" mode, then all evars in T should only be 
   %            in that argument
   mode-check "+" T :- !, 
@@ -106,7 +106,7 @@ namespace tc {
   mode-check "!" uvar :- !, fail.
   mode-check _ _.
 
-  pred modes-check.aux i:list string, i:list term.
+  func modes-check.aux list string, list term ->.
   modes-check.aux [] [_|_] :- coq.error "[TC] modes-check invalid list length".
   modes-check.aux [_|_] [] :- coq.error "[TC] modes-check invalid list length".
   modes-check.aux [] [].
@@ -116,7 +116,7 @@ namespace tc {
       P => modes-check.aux XS YS            % accumulate P and iterate of XS YS 
     ].
 
-  pred modes-check i:term.
+  func modes-check term ->.
   modes-check (global _).
   modes-check (pglobal _ _).
   modes-check (app [ClassTerm | Args]) :-

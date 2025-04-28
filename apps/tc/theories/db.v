@@ -54,7 +54,7 @@ Elpi Db tc_options.db lp:{{
       oTC-time-compile-class
     ].
 
-    pred is-option-active i:(list string -> prop).
+    func is-option-active (func (list string) ->) ->.
     is-option-active uvar :- !, fail.
     is-option-active Opt :-
       Opt X, coq.option.get X (coq.option.bool tt).
@@ -96,11 +96,9 @@ Elpi Db tc.db lp:{{
 
     pred pending-mode o:list string.
 
-    pred dummy.
-
     pred ho-link o:term, i:term, o:A.
-    pred link.eta i:term, i:term.
-    pred link.llam i:term, i:term.
+    func link.eta term, term ->.
+    func link.llam term, term ->.
 
   }
 }}.

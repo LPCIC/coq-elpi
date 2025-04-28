@@ -4,19 +4,17 @@ namespace tc {
   namespace compile {
 
     namespace instance {
-      pred is-name i:term.
-      pred is-uvar i:term.
+      func is-name term ->.
+      func is-uvar term ->.
 
       % [name-pair H0 Hn Ar]
       % the variable H0 (applied 0 time) is associated to the variable Hn which is
       % applied Ar times.
       pred name-pair o:term, o:term, o:nat.
 
-      pred force-llam-mem i:term, o:term.
-
       namespace decompile {
 
-        pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
+        func decompile-term-aux term, pair (list term) (list prop) -> term, pair (list term) (list prop).
 
         decompile-term-aux X A Y A :- name X, !, X = Y, !. % avoid loading "decompile-term-aux x A x A" at binders
         decompile-term-aux (global _ as C) A C A :- !.
@@ -106,6 +104,7 @@ namespace tc {
 
         decompile-term-aux A B _ _ :- coq.error "[TC] cannot decompile-term-aux of" A B.
         
+        :functional
         pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
         decompile-term L L' T R Links :-
           decompile-term-aux T (pr L []) R (pr L' Links).
@@ -113,20 +112,20 @@ namespace tc {
       }
 
       % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
-      pred clean-term i:term, o:term.
+      func clean-term term -> term.
       clean-term A B :-
         (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
           std.assert!  (copy A B) "[TC] clean-term error".
 
-      pred main 
-        i:nat,                % the number of problematic terms
-        i:term,               % the type of the instance
-        i:term,               % the global gref of the instance
-        i:list univ,          % the list of univ variable to be replaced with elpi fresh vars
-        i:list univ-instance, % the list of univ-instance to be replaced with elpi fresh vars
-        o:prop.               % the compiled clause for the instance
+      func main 
+        nat,                % the number of problematic terms
+        term,               % the type of the instance
+        term,               % the global gref of the instance
+        list univ,          % the list of univ variable to be replaced with elpi fresh vars
+        list univ-instance  % the list of univ-instance to be replaced with elpi fresh vars
+        -> prop.               % the compiled clause for the instance
 
       main N Ty ProofHd [] [] Clause :-
         add-pi-problematic-terms N [] Ty ProofHd Clause.
@@ -140,12 +139,12 @@ namespace tc {
 
       % Start to charge the right number of pi for the resulting clause:
       % This number is equal to the number of problematic terms + number of subterms with shape `sort _` and `pglobal _ _` 
-      pred add-pi-problematic-terms
-        i:nat,              % the number of pi to quantify
-        i:list term,        % the list of quantified pi
-        i:term,             % the fuel of the compilation (the type of the instance)
-        i:term,             % the global gref of the current instance
-        o:prop.             % the compiled clause for the instance
+      func add-pi-problematic-terms
+        nat,              % the number of pi to quantify
+        list term,        % the list of quantified pi
+        term,             % the fuel of the compilation (the type of the instance)
+        term              % the global gref of the current instance
+        -> prop.             % the compiled clause for the instance
 
       add-pi-problematic-terms z L Ty ProofHd Clause :-
         compile-ty L _ ProofHd tt Ty [] [] Clause.
@@ -154,14 +153,14 @@ namespace tc {
 
       % Builds a eta link between the varibale A whose type _must_ be of type `prod`
       % A is linked with B : A =_eta (fun (x : Ty) => B_x)
-      pred make-eta-link-aux 
-        i:term,            % A            : The variable to eta-expand
-        i:term,            % prod _ Ty Bo : The type of A
-        i:pair term name,  % pr B Bn      : The eta-expanded version of B with its name (they are fresh names)
-        i:list term,       % L            : The list of name in the scope of A and B
-        o:prop,            % Link         : The new eta-link
-        o:term,            % Ty'          : The cleaned version of the binder in Ty
-        o:(term -> term).  % Bo           : the body of the type of A
+      func make-eta-link-aux 
+        term,            % A            : The variable to eta-expand
+        term,            % prod _ Ty Bo : The type of A
+        pair term name,  % pr B Bn      : The eta-expanded version of B with its name (they are fresh names)
+        list term        % L            : The list of name in the scope of A and B
+        -> prop,            % Link         : The new eta-link
+        term,            % Ty'          : The cleaned version of the binder in Ty
+        (term -> term).  % Bo           : the body of the type of A
       make-eta-link-aux A (prod _ Ty Bo) (pr B Name) L Link Ty' Bo :- !,
         clean-term Ty Ty',
         name A' A {std.rev L},
@@ -181,7 +180,8 @@ namespace tc {
       make-eta-link-aux _ T _ _ _ _ _ :- coq.error "[TC] make-eta-link-aux of" T.
 
       % Create spine of eta-links
-      pred make-eta-link i:term, i:term, i:list (pair term name), i:list term, i:list prop, o:prop.
+      :index (_ _ 1)
+      func make-eta-link term, term, list (pair term name), list term, list prop -> prop.
       make-eta-link P PTy [Hd] L Links (do [Link1|Links]) :- !,
         make-eta-link-aux P PTy Hd L Link1 _ _.
       make-eta-link P PTy [(pr B _ as Hd)|Tl] L Links (pi x\ decl x `x` PTy' => Res x) :- !,
@@ -190,9 +190,10 @@ namespace tc {
       make-eta-link P PTy _ _ _ _ :- coq.error "[TC] make-eta-link error : empty list of pairs" P PTy.
 
       % Accumulates pi for eta-links
-      pred add-link-eta-dedup 
-        i:(pred i:list prop, o:prop),
-        i:range-arity, i:term, i:term, i:(list (pair term name)), i:list prop, o:prop.
+      :index (_ 1)
+      func add-link-eta-dedup 
+        (func list prop -> prop),
+        range-arity, term, term, (list (pair term name)), list prop -> prop.
       % Base case when the variable is always used at same arity
       add-link-eta-dedup F (r-ar _ z) _ _ [] PremR Clause :- !, 
         F PremR Clause.
@@ -203,6 +204,7 @@ namespace tc {
         pi x y\ name-pair P x (s N) => is-uvar x => add-link-eta-dedup F (r-ar M N) P PTy [pr x y|Acc] PremR (Clause x y).
       add-link-eta-dedup _ Ar P PTy _ _ _ :- coq.error "[TC] add-link-eta-dedup error" Ar P PTy. 
 
+      :functional
       pred compile-premise
         i:list term,
         o:list term,
@@ -215,7 +217,7 @@ namespace tc {
         i:list prop,
         o:prop.
       compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
-        ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
+        ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- !, tc.get-TC-of-inst-type a b) => 
           tc.get-TC-of-inst-type PTy TC), !,
         compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
         if (tc.class TC _ tc.deterministic _)
@@ -225,15 +227,16 @@ namespace tc {
       compile-premise L L1 _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :-
         compile-ty L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
 
-      pred compile-ty 
-        i:list term,
-        i:list term,
-        i:term,
-        i:bool,
-        i:term,
-        i:list term,
-        i:list prop,
-        o:prop.
+      :index (_ _ _ _ 1)
+      func compile-ty 
+        list term,
+        list term,
+        term,
+        bool,
+        term,
+        list term,
+        list prop
+        -> prop.
       compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
         std.do![
           if (IsPositive = tt) 
@@ -252,14 +255,14 @@ namespace tc {
           compile-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
         ].
 
-      pred compile-conclusion 
-        i:bool,             % tt if the term is in positive position
-        i:term,             % the goal (invariant: it is a constant or a application)
-        i:term,             % the proof
-        i:list prop,        % the list of HOPremises in input mode
-        i:list prop,        % the list of HOPremises in output mode
-        i:list prop,        % the premises
-        o:prop.             % the compiled clause for the instance
+      func compile-conclusion 
+        bool,             % tt if the term is in positive position
+        term,             % the goal (invariant: it is a constant or a application)
+        term,             % the proof
+        list prop,        % the list of HOPremises in input mode
+        list prop,        % the list of HOPremises in output mode
+        list prop         % the premises
+        -> prop.             % the compiled clause for the instance
 
       compile-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :-
         std.append {std.append HOPremisesIn Premises} HOPremisesOut AllPremises,
@@ -268,7 +271,7 @@ namespace tc {
         tc.make-tc Goal Proof Premises ff Clause1, 
         Clause = (do HOPremisesIn, Clause1, do HOPremisesOut).
 
-      pred context i:goal-ctx, o:list prop.
+      func context goal-ctx -> list prop.
       context [] [].
       context [X | Xs] [Clause | ResTl] :-
         (decl Var _ Ty = X; def Var _ Ty _ = X),
@@ -280,20 +283,20 @@ namespace tc {
 
     % build a list of Clauses of type tc to be temporarly added to the 
     % database, used in theorems having assumptions.
-    pred context i:goal-ctx, o:list prop.
+    func context goal-ctx -> list prop.
     :name "tc-compile-context"
     context Ctx Clauses :-
       std.assert! (instance.context Ctx Clauses) "[TC] cannot compile context". 
 
-    pred instance i:term, i:term, o:prop.
+    func instance term, term -> prop.
     instance Ty ProofHd Clause :-
       tc.time-it tc.oTC-time-compile-instance (
         tc.normalize-ty Ty Ty',
         tc.precomp.instance Ty' Ty'' N UnivConst UnivInst,
         instance.main N Ty'' ProofHd UnivConst UnivInst Clause
-      ) "Compile Instance".
+      ) "Compile Instance", !.
 
-    pred instance-gr i:gref, o:prop.
+    func instance-gr gref -> prop.
     % If the instance is polymorphic, we wrap its gref into the pglobal constructor
     instance-gr InstGR (pi x\ Clause x) :- coq.env.univpoly? InstGR _, !,
       coq.env.typeof InstGR Ty,
@@ -309,12 +312,12 @@ namespace tc {
       pred uvar-pair i:term, o:term, o:term.
 
       %                    Type     Var    Cnt    uvar-pair-list
-      pred make-pairs-aux i:term, i:term, o:list prop.
+      func make-pairs-aux term, term -> list prop.
       make-pairs-aux (prod _ Ty Bo) V [pi x\ uvar-pair x Ty X' :- x == V, ! | L] :- !,
         pi x\ make-pairs-aux (Bo x) X' L.
       make-pairs-aux _ _ [].
 
-      pred make-pairs i:list term, o:list prop.
+      func make-pairs list term -> list prop.
       make-pairs [] [] :- !.
       make-pairs [X|Xs] L :- !,
         coq.typecheck X Ty ok,
@@ -322,16 +325,16 @@ namespace tc {
         make-pairs Xs L'',
         std.append L' L'' L.
 
-      pred get-uva-pair-arity i:term, i:list term, o:term.
+      func get-uva-pair-arity term, list term -> term.
       get-uva-pair-arity X [] X :- !.
       get-uva-pair-arity X [_|L] Z :- uvar-pair X _ Y, !, 
         get-uva-pair-arity Y L Z.
 
-      pred decompile-problematic-term i:term, i:list prop, o:term, o:list prop.
+      func decompile-problematic-term term, list prop -> term, list prop.
       decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
         prune V S, !, fold-map T L T' L2.
 
-      decompile-problematic-term (tc.prod-range T _) A T' A' :-
+      decompile-problematic-term (tc.prod-range T _) A T' A' :- !,
         fold-map T A T' A'.
 
       decompile-problematic-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
@@ -362,13 +365,13 @@ namespace tc {
         fold-map Ty L Ty' L2,
         std.append L2 L1 L3.
 
-      pred compile i:term, i:list prop, o:term, o:list prop.
+      func compile term, list prop -> term, list prop.
       compile T L T' L' :-
         (pi t l t' l'\ fold-map t l t' l' :- decompile-problematic-term t l t' l', !) =>
           fold-map T L T' L'.
 
       %                                  Uva      Binders      LinkEta 
-      pred build-eta-links-of-vars-aux i:term, i:list term, o:list prop.
+      func build-eta-links-of-vars-aux term, list term -> list prop.
       build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
         uvar-pair Old Ty Next, !,
         prune OldScope L,
@@ -384,7 +387,7 @@ namespace tc {
         Xs = Closed.
       build-eta-links-of-vars-aux _ _ [].
 
-      pred build-eta-links-of-vars i:list term, o:list prop.
+      func build-eta-links-of-vars list term -> list prop.
       build-eta-links-of-vars [] [].
       build-eta-links-of-vars [V|Vars] L :-
         var V Hd S,
@@ -394,7 +397,7 @@ namespace tc {
     }
     
     %          Goal    Goal'      Links
-    pred goal i:term, o:term, o:list prop.
+    func goal term -> term, list prop.
     :name "compile-goal"
     goal Goal Goal' Links :-
       tc.precomp.goal Goal GoalPrecomp Vars, !,

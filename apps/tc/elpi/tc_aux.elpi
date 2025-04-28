@@ -6,7 +6,7 @@ namespace tc {
   % return if a gref is an existsing instance
   % TODO: this could be replaced with an API
   % coq.TC.get-class-of-inst i:gref, o:gref
-  pred existing-instance i:gref.
+  func existing-instance gref ->.
   existing-instance InstGR :-
     coq.env.typeof InstGR InstTy,
     get-TC-of-inst-type InstTy ClassGR,
@@ -14,11 +14,11 @@ namespace tc {
     coq.TC.db-for ClassGR DB, 
     std.mem! DB (tc-instance InstGR _).
 
-  pred under-p-global i:term, o:gref.
+  func under-p-global term -> gref.
   under-p-global (global GR) GR.
   under-p-global (pglobal GR _) GR.
 
-  pred class-gref i:term, o:gref.
+  func class-gref term -> gref.
   class-gref T ClassGR :- 
     under-p-global T ClassGR, 
     coq.TC.class? ClassGR.
@@ -26,19 +26,14 @@ namespace tc {
   % returns the TC from the type of an instance
   % TODO: This could be replaced with an api 
   % coq.TC.get-class-of-inst i:gref, o:gref
-  pred get-TC-of-inst-type i:term, o:gref.
+  func get-TC-of-inst-type term -> gref.
   get-TC-of-inst-type (prod _ _ A) ClassGR:- !,
     pi x\ get-TC-of-inst-type (A x) ClassGR.
   get-TC-of-inst-type T ClassGR :-
     coq.safe-dest-app T HD _,
     not (var HD), class-gref HD ClassGR.
 
-  pred drop-last i:list A, i:list A, o:list A.
-  drop-last [X | XS] [Y | YS] L :-
-    same_term X Y, !, drop-last XS YS L.
-  drop-last L [] L' :- std.rev L L'.
-
-  pred instances-of-current-section o:list gref.
+  func instances-of-current-section list gref ->.
   :name "MySectionEndHook"
   instances-of-current-section InstsFiltered :-
     coq.env.current-section-path SectionPath,
@@ -46,12 +41,12 @@ namespace tc {
     coq.env.section SectionVars,
     std.map-filter Insts (x\r\ sigma X\ tc.instance _ r _ _ = x, const X = r, not(std.mem SectionVars X)) InstsFiltered.
 
-  pred is-instance-gr i:gref.
+  func is-instance-gr gref ->.
   is-instance-gr GR :-
     coq.env.typeof GR Ty,
     is-instance-term Ty.
 
-  pred is-instance-term i:term.
+  func is-instance-term term ->.
   is-instance-term T :-
     get-TC-of-inst-type T TC,
     coq.TC.class? TC.
@@ -63,28 +58,20 @@ namespace tc {
   add-tc-db _          _     Clause :- coq.error "cannot add " PR " to tc.db".
 
   % takes a tc-instance and return the gref of the inst
-  pred inst->gref i:tc-instance, o:gref.
+  func inst->gref tc-instance -> gref.
   inst->gref (tc-instance Res _) Res.
 
   % returns all the instances of the passed ClassName
-  pred get-inst-by-tc-name i:gref, o:list gref.
+  func get-inst-by-tc-name gref -> list gref.
   get-inst-by-tc-name TC GRL:-
     coq.TC.db-for TC Inst,
     std.map Inst inst->gref GRL',
     std.rev GRL' GRL. 
 
-  pred app-has-class i:term.
+  func app-has-class term ->.
   app-has-class T :- 
     get-TC-of-inst-type T Hd, 
     coq.TC.class? Hd. 
-
-  % input (∀ a, b, c ... => app [A, B, ..., Last])
-  % returns Last 
-  pred get-last i:term, o:term.
-  get-last (prod _ _ Bo) R :-
-    pi x\ get-last (Bo x) R.
-  get-last (app L) R :-
-    std.last L R.
 
   % TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
   func gref->pred-name gref -> string.
@@ -100,13 +87,7 @@ namespace tc {
     rex.replace "ö" "o" {coq.gref->id Gr} GrStr,
     S is "tc-" ^ Path ^ GrStr.
 
-  pred no-backtrack i:list prop, o:list prop. 
-  no-backtrack [] [].
-  no-backtrack [do X | XS] [std.do! [(std.do! X') | XS']] :- !, 
-    no-backtrack X X', no-backtrack XS XS'.
-  no-backtrack [X | XS] [std.do! [X | XS']] :- !, no-backtrack XS XS'.
-
-  pred get-mode i:gref, o:list string.
+  func get-mode gref -> list string.
   get-mode ClassGR M :- tc.class ClassGR _ _ M, !.
   get-mode ClassGR _ :- coq.error "[TC]" ClassGR "is an unknown class".
 
@@ -120,13 +101,14 @@ namespace tc {
         Here, for performance issues, we simply check that the solution is not a
         flexible term
   */
-  pred make-tc.aux i:bool, i:term, i:prop, i:list prop, o:prop.
+  :index (1 _ _ 1)
+  func make-tc.aux bool, term, prop, list prop -> prop.
   make-tc.aux tt _ Head [] Head :- !.
   make-tc.aux ff Sol Head [] P :- !, P = if (var Sol) Head true.
   make-tc.aux tt _ Head Body (Head :- Body) :- !.
   make-tc.aux ff Sol Head Body P :- !, P = if (var Sol) (Body => Head) true.
 
-  pred make-tc i:term, i:term, i:list prop, i:bool, o:prop.
+  func make-tc term, term, list prop, bool -> prop.
   make-tc Goal Sol RuleBody IsPositive Rule :-
     coq.safe-dest-app Goal Class Args,
     get-TC-of-inst-type Class ClassGR,
@@ -136,23 +118,23 @@ namespace tc {
     make-tc.aux IsPositive Sol RuleHead RuleBody Rule.
 
   % returns the priority of an instance from the gref of an instance
-  pred get-inst-prio i:gref, o:int.
+  func get-inst-prio gref -> int.
   get-inst-prio InstGR Prio :-
     coq.env.typeof InstGR InstTy,
     get-TC-of-inst-type InstTy ClassGR,
     coq.TC.get-inst-prio ClassGR InstGR Prio.
 
-  pred get-full-path i:gref, o:string.
+  func get-full-path gref -> string.
   get-full-path Gr Res' :-
     coq.gref->string Gr Path,
     coq.env.current-section-path SectionPath,
     std.fold SectionPath "" (e\acc\r\ r is acc ^ "." ^ e) Res,
     Res' is Res ^ Path.
 
-  pred constant->redflag i:prop, o:coq.redflag.
+  func constant->redflag prop -> coq.redflag.
   constant->redflag (tc.unfold-constant C) (coq.redflags.const C).
 
-  pred normalize-ty i:term, o:term.
+  func normalize-ty term -> term.
   :name "normalize-ty"
   normalize-ty G1 G2 :-
     std.findall (tc.unfold-constant _) UnfoldFindall,
@@ -160,33 +142,30 @@ namespace tc {
     coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.delta | UnfoldRF] RF,
     @redflags! RF => coq.reduction.lazy.norm G1 G2.
 
-  pred dummy.
-
   func remove-clause string, prop, list prop ->.
   remove-clause ClauseName P Locality :-
     %Locality => add-tc-db _ (remove ClauseName) P.
-    Locality => add-tc-db _ (replace ClauseName) (P :- fail).
+    Locality => add-tc-db _ (replace ClauseName) (P :- fail, !).
 
   % [section-var->decl.aux L R] auxiliary function for `section-var->decl`
-  pred section-var->decl.aux i:list constant, o:list prop.
+  func section-var->decl.aux list constant -> list prop.
   section-var->decl.aux [] [].
-  section-var->decl.aux [X|XS] [Y|YS] :-
+  section-var->decl.aux [X|XS] [(decl (global (const X)) _ Ty)|YS] :-
     coq.env.typeof (const X) Ty,
-    Y = (decl (global (const X)) _ Ty),
     section-var->decl.aux XS YS.
 
   % [section-var->decl L] decl representing seciton variables with their types
-  pred section-var->decl o:list prop.
+  func section-var->decl -> list prop.
   section-var->decl L :-
     section-var->decl.aux {coq.env.section} L.
 
-  pred time-is-active i:(list string -> prop).
+  func time-is-active (func (list string) ->) ->.
   :name "time-is-active"
   time-is-active _ :- coq.option.get ["Time", "TC", "Bench"] (coq.option.bool tt), !.
   time-is-active Opt :- tc.is-option-active Opt. 
 
-  pred time-aux i:string, i:float.
-  time-aux Msg Time :- !, coq.debug "[TC] - Time of" Msg "is" Time.
+  func time-pp string, float ->.
+  time-pp Msg Time :- !, coq.debug "[TC] - Time of" Msg "is" Time.
 
   pred give-res i:prop, o:prop.
   give-res P true :- P.
@@ -195,12 +174,12 @@ namespace tc {
   pred time-res i:prop, o:float, o:prop.
   time-res P T Res :- std.time (give-res P Res) T.
 
-  pred build-msg i:prop, i:string, o:string.
+  func build-msg prop, string -> string.
   build-msg true S S :- !.
   build-msg fail S S' :- S' is S ^ " fail".
 
   pred time-it i:(list string -> prop), i:prop, i:string.
-  time-it Opt P Msg :- time-is-active Opt, !, time-res P Time Res, build-msg Res Msg Msg', time-aux Msg' Time, Res.
+  time-it Opt P Msg :- time-is-active Opt, !, time-res P Time Res, build-msg Res Msg Msg', time-pp Msg' Time, Res.
   time-it _ P _ :- P.
 
   kind range-arity type.
