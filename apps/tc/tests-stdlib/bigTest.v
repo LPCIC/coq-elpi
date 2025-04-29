@@ -1,3 +1,5 @@
+Set Warnings "-elpi.TC.hints".
+
 From elpi.apps Require Import tc.
 Elpi TC Solver Override TC.Solver All.
 

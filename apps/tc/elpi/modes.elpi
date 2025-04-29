@@ -97,8 +97,10 @@ namespace tc {
   action-to-accumulate _ _ [].
 
   pred mode-check i:string, i:term.
+  mode-check "+" T :- !, ground_term T.
   % heuristic: if we are in "+" mode, then all evars in T should only be 
   %            in that argument
+  % note: this rule is never applied, the previous having a cut.
   mode-check "+" T :- !, 
     std.findall-unary evars L,
     get-evars T EV,

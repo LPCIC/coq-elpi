@@ -1,0 +1,479 @@
+namespace tc {
+  shorten tc.{r-ar, range-arity}.
+
+  % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
+  pred clean-term i:term, o:term.
+  clean-term A B :-
+    (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
+    (pi t s r \ copy (tc.canonical-projection t s _) r :- !, copy t r, !) =>
+    (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
+    (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
+    (pi t s r \ copy (tc.coercion t s) r :- !, copy t r, !) =>
+      std.assert!  (copy A B) "[TC] clean-term error".
+
+  namespace precomp {
+
+    namespace instance {
+      % Tells if the current name is a bound variables
+      pred is-name o:term.
+      % Tells if the current name stands for a uvar
+      pred is-uvar o:term.
+
+      :index (_ _ 1)
+      pred may-contract-to i:list term, i:term, i:term.
+      may-contract-to _ N N :- !.
+      may-contract-to L N (app [V|S]) :- var V, !,
+        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
+      may-contract-to L N (app [V|S]) :- is-uvar V, !,
+        std.forall [N|L] (x\ exists! S (may-contract-to [] x)).
+      may-contract-to L N (app [N|A]) :-
+        std.length A {std.length L},
+        std.forall2 {std.rev L} A (may-contract-to []).
+      may-contract-to L N (fun _ _ B) :-
+        pi x\ may-contract-to [x|L] N (B x).
+
+      :index (_ 1)
+      pred occurs-rigidly i:term, i:term.
+      occurs-rigidly N N :- name N, !.
+      occurs-rigidly _ (app [N|_]) :- is-uvar N, !, fail.
+      occurs-rigidly _ (app [N|_]) :- var N, !, fail.
+      occurs-rigidly N (app A) :- exists! A (occurs-rigidly N).
+      occurs-rigidly N (fun _ _ B) :- pi x\ occurs-rigidly N (B x).
+
+      pred maybe-eta-aux i:term, i:list term.
+      maybe-eta-aux (app[V|S]) L :- is-uvar V, !,
+        std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
+      maybe-eta-aux (app[V|S]) L :- var V, !,
+        std.forall L (x\ exists! S (y\ may-contract-to [] x y)).
+      maybe-eta-aux (app [_|A]) L :-
+        SplitLen is {std.length A} - {std.length L},
+        split-at-not-fatal SplitLen A HD TL,
+        std.forall L (x\ not (exists! HD (occurs-rigidly x))),
+        std.forall2 {std.rev L} TL (may-contract-to []). 
+      maybe-eta-aux (fun _ _ B) L :-
+        pi x\ maybe-eta-aux (B x) [x|L].
+
+      pred maybe-eta i:term.
+      maybe-eta (fun _ _ B) :- pi x\ maybe-eta-aux (B x) [x].
+
+      pred free-var o:list term.
+      free-var L :-
+        std.findall (is-name _) T,
+        std.map T (x\y\ x = is-name y) L.
+
+      pred split-pf i:list term, i:list term, o:list term, o:list term.
+      split-pf [] _ [] [] :- !.
+      split-pf [X|Xs] Old [X|Ys] L :- is-name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
+      split-pf Xs _ [] Xs.
+
+      kind positivity type.
+      type is_pos positivity.
+      type is_neg positivity.
+      type is_neg_fix positivity.
+
+      :index (1 _)
+      pred neg i:positivity, o:positivity.
+      neg is_pos is_neg :- !.
+      neg is_neg is_pos :- !.
+      neg is_neg_fix is_neg_fix :- !.
+
+      macro @max-min :- r-ar inf z.
+
+      pred min-max-nat i:range-arity, i:range-arity, o:range-arity.
+      min-max-nat (r-ar A B) (r-ar A' B') (r-ar A'' B'') :- !,
+        min-nat A A' A'', max-nat B B' B''.
+
+      % TODO: this is incomplete: it lacks of some term constructors
+      pred get-range-arity-aux i:term, i:term, o:range-arity.
+      get-range-arity-aux N N (r-ar z z) :- !.
+      get-range-arity-aux _ N @max-min :- name N, !.
+      get-range-arity-aux T (app [T|L]) R :- !,
+        length-nat L Len,
+        std.fold L (r-ar Len Len) (x\y\w\ sigma M\ get-range-arity-aux T x M, min-max-nat y M w) R.
+      get-range-arity-aux T (app [_|L]) R :- !,
+        std.fold L @max-min (x\y\w\ sigma M\ get-range-arity-aux T x M, min-max-nat y M w) R.
+      get-range-arity-aux T (fun _ Ty B) R2 :- !,
+        get-range-arity-aux T Ty R,
+        (pi x\ get-range-arity-aux T (B x) R1),
+        min-max-nat R R1 R2.
+      get-range-arity-aux T (prod _ Ty B) R2 :- !,
+        get-range-arity-aux T Ty R,
+        (pi x\ get-range-arity-aux T (B x) R1),
+        min-max-nat R R1 R2.
+      get-range-arity-aux _ (global _) @max-min :- !.
+      get-range-arity-aux _ uvar @max-min :- !.
+      get-range-arity-aux _ (sort _) @max-min :- !.
+      get-range-arity-aux _ (pglobal _ _) @max-min :- !.
+      get-range-arity-aux A B _ :- coq.error "Count maximal arity failure" A B.
+
+      pred get-range-arity i:term, i:term, i:term, o:range-arity.
+      get-range-arity _ Ty _ (r-ar z N) :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
+      get-range-arity B _ T N :- !, get-range-arity-aux B T N. 
+
+      pred precompile-aux 
+        i:positivity, % Positive or negaive position of the term being pre-compiled
+        i:term,       % Term being explored
+        i:nat,        % Number of pi to quantified accumulated
+        o:term,       % Precompiled term: problematic sub-terms are tagged with custom constructors
+        o:nat.        % Final number of pi to quantify
+      precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
+      precompile-aux _ (global _ as C) A C A :- !.
+      precompile-aux _ (pglobal _ _ as C) A C A :- !.
+      precompile-aux _ (sort _ as C) A C A :- !.
+      precompile-aux _ (primitive _ as C) A C A :- !.
+      precompile-aux _ T A (tc.coercion T Scope) (s A) :- coq.safe-dest-app T HD _, tc.coercion-unify HD, !, free-var Scope.
+      precompile-aux _ (app [global (const C) | _] as T) A (tc.canonical-projection T Scope N) (s A) :- coq.env.projection? C N, !, free-var Scope.
+      precompile-aux _ (app [primitive (proj P _) | _] as T) A (tc.canonical-projection T Scope 0) (s A) :- coq.env.primitive-projection? P _ _, !, free-var Scope.
+
+      % Detect maybe-eta term
+      % TODO: should I precompile also the type of the fun and put it in the output term
+      precompile-aux _ (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty B') Scope) (s M) :-
+        maybe-eta T, !,
+        free-var Scope,
+        precompile-aux is_neg_fix Ty N _ N',
+        (pi x\ is-name x => precompile-aux is_neg_fix (B x) N' (B' x) M).
+
+      precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
+        is-uvar X, split-pf XS [] PF NPF, 
+        not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
+        free-var Scope,
+        std.fold-map NPF N (precompile-aux is_neg_fix) NPF1 M. 
+
+      % Charge if we work with unification variable or local name
+      % And returns the subterms is a prod-range
+      precompile-aux IsP (prod Name Ty B) N (tc.prod-range (prod Name Ty' B') MaxAr) P :- !,
+        std.assert! (pi x\ get-range-arity x Ty (B x) MaxAr) "[TC] get-range-arity should not fail",
+        if (IsP = is_pos) (C = x\ is-uvar x) (C = x\ is-name x),
+        std.assert! (pi x\ C x => precompile-aux IsP (B x) N (B' x) M) "[TC] should not fail",
+        precompile-aux {neg IsP} Ty M Ty' P.
+
+      % Working with fun
+      precompile-aux _ (fun N T F) A (fun N T1 F1) A2 :- !,
+        precompile-aux _ T A T1 A1, pi x\ is-name x => precompile-aux is_neg_fix (F x) A1 (F1 x) A2.
+      
+      precompile-aux _ (app L) A (app L1) A1 :- !, std.fold-map L A (precompile-aux is_neg_fix) L1 A1.
+      precompile-aux _ X A X A :- var X, !.
+
+      % TODO: what about the following constructors?
+      % precompile-aux IsP (let N T B F) A (let N T1 B1 F1) A3 :- !,
+      %   precompile-aux IsP T A T1 A1, precompile-aux IsP B A1 B1 A2, pi x\ is-name x => precompile-aux IsP (F x) A2 (F1 x) A3.
+      % precompile-aux IsP (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+      %   precompile-aux IsP Ty A Ty1 A1, pi x\ is-name x => precompile-aux IsP (F x) A1 (F1 x) A2.
+      % precompile-aux IsP (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+      %   precompile-aux IsP T A T1 A1, precompile-aux IsP Rty A1 Rty1 A2, std.fold-map B A2 (precompile-aux IsP) B1 A3.
+      % precompile-aux IsP (uvar M L as X) A W A1 :- var X, !, std.fold-map L A (precompile-aux IsP) L1 A1, coq.mk-app-uvar M L1 W.
+      % % when used in CHR rules
+      % precompile-aux IsP (uvar X L) A (uvar X L1) A1 :- std.fold-map L A (precompile-aux IsP) L1 A1.
+
+      pred get-univ-instances i:term, o:list univ-instance.
+      get-univ-instances T L :-
+        (pi x L\ fold-map (pglobal _ x) L _ [x | L] :- !) => fold-map T [] _ L, !.
+
+      pred get-univ i:term, o:list univ.
+      get-univ T L :-
+        coq.univ.variable.set.elements {coq.univ.variable.of-term T} Vars,
+        std.map Vars (x\r\ coq.univ.variable r x) L.
+
+    }
+
+    /*
+      [tc.precomp.instance T T' N] 
+      Returns T' N from T, where: 
+        T' is obtained by the replacement of
+          - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
+              ==> This helps knowing if a subterm should be replaced with a `eta-link`
+          - all `prod _ Ty (x\ Bo x)` with (tc.prod-range (prod _ Ty (x\ Bo x)) N), 
+            where N is represent the "maximal" application of `x` in `Bo`
+              for example:
+                let Ty = {{Type -> Type -> Type -> Type -> Type}},
+                and Bo = x\ c1 (x nat bool) (x nat) (x nat nat bool)
+              the term `prod _ Ty Bo` is replaced with
+                (tc.prod-range (prod _ T Bo) 3)
+              since x is applied at most 3 times in Bo
+                ==> This helps charging the right number of `eta-link` for map-deduplication rule
+        N is the number of problematic terms in T + nb of projections
+    */
+    pred instance i:term, o:term, o:nat, o:list univ, o:list univ-instance.
+    instance T T' N UnivConstL UnivInstL :-
+      tc.precomp.instance.get-univ T UnivConstL,
+      tc.precomp.instance.get-univ-instances T UnivInstL,
+      std.assert!(instance.precompile-aux instance.is_pos T z T' N) "[TC] cannot precompile instance".
+  }
+
+  namespace compile {
+
+    namespace instance {
+      pred is-name o:term.
+      pred is-uvar o:term.
+
+      % [name-pair H0 Hn Ar]
+      % the variable H0 (applied 0 time) is associated to the variable Hn which is
+      % applied Ar times.
+      pred name-pair o:term, o:term, o:nat.
+
+      namespace decompile {
+
+        pred decompile-term-aux i:term, i:pair (list term) (list prop), o:term, o:pair (list term) (list prop).
+
+        decompile-term-aux X A Y A :- name X, !, X = Y, !. % avoid loading "decompile-term-aux x A x A" at binders
+        decompile-term-aux (global _ as C) A C A :- !.
+        decompile-term-aux (pglobal _ _ as T) L T' L :- !, copy T T', !.
+        decompile-term-aux (sort _ as T) L T' L :- !, copy T T', !.
+        decompile-term-aux (uvar as X) L X L :- !.
+        decompile-term-aux (primitive _ as X) L X L :- !.
+        decompile-term-aux (tc.coercion T S) (pr [X|Xs] L1) Y (pr Xs' L3) :- !,
+          name Y X S,
+          decompile-term-aux T (pr Xs L1) T' (pr Xs' L2),
+          P = tc.link.cs Y T',
+          L3 = [P | L2].
+        decompile-term-aux (tc.canonical-projection T S _) (pr [X|Xs] L1) Y (pr Xs' L3) :- !,
+          name Y X S,
+          decompile-term-aux T (pr Xs L1) T' (pr Xs' L2),
+          P = tc.link.cs Y T',
+          L3 = [P | L2].
+
+        decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
+          name Y X S,
+          decompile-term-aux T (pr XS L1) T' (pr XS' L2), 
+          NL = tc.link.eta Y T'.
+
+        decompile-term-aux (tc.prod-range T _) A T' A' :- !,
+          decompile-term-aux T A T' A'.
+
+        % Maybe-llam when H is a coq unif variable quantified in the instance type
+        % In the following instance, X is a HO variable applied to a constant (not a name)
+        %   Instance i : forall (X : T1 -> T2) (a : T1), c (X a). 
+        decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
+          not (var H), !, % is-uvar H, holds
+          name Y X S,
+          length-nat PF Len,
+          std.assert!(name-pair H V Len) "[TC] fail to find name-pair",
+          name Hd V PF,
+          std.fold-map NPF (pr XS L1) decompile-term-aux Tl (pr XS' L2), 
+          NL = tc.link.llam Y (app [Hd|Tl]).
+
+        % Here we have a coq evar applied to some terms. In this case, we build
+        % eta-llam links after the decompilation of S.
+        decompile-term-aux (app [(uvar _ _ as V)|S]) PR H (pr XS L') :- !,
+          std.fold-map S PR decompile-term-aux S' (pr XS L),
+          tc.link.build-eta-llam-links (app [V|S']) L H L'.
+
+        decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty' Bo') (pr XS2 L3) :- !,
+          (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
+          close-prop-no-prune-pi-decl L1x {clean-term Ty} L1,
+          decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
+          std.append L1 L2 L3.
+
+        decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty' Bo') (pr XS2 L3) :- !,
+          (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
+          close-prop-no-prune-pi-decl L1x {clean-term Ty} L1,
+          decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
+          std.append L1 L2 L3.
+
+        % HO var when H is a quantified variable in the instance type being in PF
+        % Example: Instance i: forall (X : T1 -> T2), (forall a, c1 (X a)) -> c2.
+        %   Note: X is the HO var taken into account which is applied to the list of 
+        %         distinct_names [a]
+        decompile-term-aux (app [H|L]) N R N :-
+          is-uvar H,
+          std.forall L is-name,     % Not needed, since precompile does this check
+          distinct_names L, !,      % Not needed, since precompile does this check
+          length-nat L Len,
+          std.assert! (name-pair H V Len) "[TC] name-pair not found",
+          name R V L.
+
+        decompile-term-aux (app L) PR (app L') PR' :- !,
+          std.fold-map L PR decompile-term-aux L' PR'.
+
+        decompile-term-aux A B _ _ :- coq.error "[TC] cannot decompile-term-aux of" A B.
+        
+        pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
+        decompile-term L L' T R Links :-
+          decompile-term-aux T (pr L []) R (pr L' Links).
+
+      }
+
+      pred main 
+        i:nat,                % the number of problematic terms
+        i:term,               % the type of the instance
+        i:term,               % the global gref of the instance
+        i:list univ,          % the list of univ variable to be replaced with elpi fresh vars
+        i:list univ-instance, % the list of univ-instance to be replaced with elpi fresh vars
+        o:prop.               % the compiled clause for the instance
+
+      main N Ty ProofHd [] [] Clause :-
+        add-pi-problematic-terms N [] Ty ProofHd Clause.
+      main N Ty ProofHd [Univ | UnivL] UnivInstL (pi x\ Clause x) :- !,
+        pi x\ (copy (sort (typ Univ)) (sort (typ x)) :- !) => 
+         main N Ty ProofHd UnivL UnivInstL (Clause x).
+      main N Ty ProofHd [] [UnivInst | UnivInstL] (pi x\ Clause x) :- !,
+        pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
+          main N Ty ProofHd [] UnivInstL (Clause x).
+
+
+      % Start to charge the right number of pi for the resulting clause:
+      % This number is equal to the number of problematic terms + number of subterms with shape `sort _` and `pglobal _ _` 
+      pred add-pi-problematic-terms
+        i:nat,              % the number of pi to quantify
+        i:list term,        % the list of quantified pi
+        i:term,             % the fuel of the compilation (the type of the instance)
+        i:term,             % the global gref of the current instance
+        o:prop.             % the compiled clause for the instance
+
+      add-pi-problematic-terms z L Ty ProofHd Clause :-
+        compile-ty L _ ProofHd tt Ty [] [] Clause.
+      add-pi-problematic-terms (s N) L Ty ProofHd (pi x\ Clause x) :-
+        pi x\ is-uvar x => add-pi-problematic-terms N [x|L] Ty ProofHd (Clause x).
+
+      % Builds a eta link between the varibale A whose type _must_ be of type `prod`
+      % A is linked with B : A =_eta (fun (x : Ty) => B_x)
+      pred make-eta-link-aux 
+        i:term,            % A            : The variable to eta-expand
+        i:term,            % prod _ Ty Bo : The type of A
+        i:pair term name,  % pr B Bn      : The eta-expanded version of B with its name (they are fresh names)
+        i:list term,       % L            : The list of name in the scope of A and B
+        o:prop,            % Link         : The new eta-link
+        o:term,            % Ty'          : The cleaned version of the binder in Ty
+        o:(term -> term).  % Bo           : the body of the type of A
+      make-eta-link-aux A (prod _ Ty Bo) (pr B Name_) L Link Ty' Bo :- !,
+        clean-term Ty Ty',
+        name A' A {std.rev L},
+        Link = tc.link.eta A' (fun `_` Ty' B'),
+        pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
+      % Going under prod-range
+      make-eta-link-aux A (tc.prod-range Prod _) BN L Link Ty' Bo :- !,
+        make-eta-link-aux A Prod BN L Link Ty' Bo.
+      % The type of a higher order variable can be hidden behind a definition
+      % In this case we unfold this definition to get the prod constructor
+      make-eta-link-aux A T BN L Link Ty' Bo :-
+        coq.safe-dest-app T Hd Ag,
+        (@redflags! coq.redflags.delta => coq.reduction.lazy.whd Hd Hd'),
+        not (Hd = Hd'), !,
+        coq.mk-app Hd' Ag TT',
+        make-eta-link-aux A TT' BN L Link Ty' Bo.
+      make-eta-link-aux _ T _ _ _ _ _ :- coq.error "[TC] make-eta-link-aux of" T.
+
+      % Create spine of eta-links
+      pred make-eta-link i:term, i:term, i:list (pair term name), i:list term, i:list prop, o:prop.
+      make-eta-link P PTy [Hd] L Links (do [Link1|Links]) :- !,
+        make-eta-link-aux P PTy Hd L Link1 _ _.
+      make-eta-link P PTy [(pr B _ as Hd)|Tl] L Links (pi x\ decl x `x` PTy' => Res x) :- !,
+        make-eta-link-aux P PTy Hd L Link1 PTy' Bo,
+        pi x\ make-eta-link B (Bo x) Tl [x|L] [Link1|Links] (Res x). 
+      make-eta-link P PTy _ _ _ _ :- coq.error "[TC] make-eta-link error : empty list of pairs" P PTy.
+
+      % Accumulates pi for eta-links
+      pred add-link-eta-dedup 
+        i:(list prop -> prop -> prop),
+        i:range-arity, i:term, i:term, i:(list (pair term name)), i:list prop, o:prop.
+      % Base case when the variable is always used at same arity
+      add-link-eta-dedup F (r-ar _ z) _ _ [] PremR Clause :- !, 
+        F PremR Clause.
+      add-link-eta-dedup F (r-ar _ z) P Pty Acc PremR Clause :- !, 
+        make-eta-link P Pty Acc [] [] LinkEtaDedup,
+        F [LinkEtaDedup|PremR] Clause.
+      add-link-eta-dedup F (r-ar M (s N)) P PTy Acc PremR (pi x y\ Clause x y) :- !,
+        pi x y\ name-pair P x (s N) => is-uvar x => add-link-eta-dedup F (r-ar M N) P PTy [pr x y|Acc] PremR (Clause x y).
+      add-link-eta-dedup _ Ar P PTy _ _ _ :- coq.error "[TC] add-link-eta-dedup error" Ar P PTy. 
+
+      pred deterministic-prem i:gref, i:prop, o:prop.
+      deterministic-prem TC P (do-once P) :- tc.class TC _ tc.deterministic _, !.
+      deterministic-prem _ P P.
+
+      pred compile-premise
+        i:list term,       % List of pi-quantified vars to consume
+        o:list term,       % List of remaining pi-quantified variables
+        i:term,            % (Local) Name of the proof of the premise
+        i:term,            % Type of the local premise being consumed by compile-ty
+        i:term,            % Name of the instance being compiled (global {{:gref InstName}})
+        i:bool,            % Positive or negative position of the term
+        i:term,            % Type of InstName to compile
+        i:list term,       % List of the name of all local proofs
+        i:list prop,       % List of premises to add to the fianal clause
+        o:prop.            % The final clause
+      compile-premise L L2 P PTy ProofHd IsPositive ITy ProofArgsR PremR Clause :-
+        ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- tc.get-TC-of-inst-type a b) => 
+          tc.get-TC-of-inst-type PTy TC), !,
+        compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
+        deterministic-prem TC NewPrem NewPrem',
+        compile-ty L1 L2 ProofHd IsPositive ITy ProofArgsR [NewPrem' | PremR] Clause.
+      compile-premise L L1 _ _ ProofHd IsPositive ITy ProofArgsR PremR Clause :-
+        compile-ty L L1 ProofHd IsPositive ITy ProofArgsR PremR Clause. 
+
+      pred compile-ty 
+        i:list term,       % List of pi-quantified vars to consume
+        o:list term,       % List of remaining pi-quantified variables
+        i:term,            % Name of the instance being compiled (global {{:gref InstName}}) 
+        i:bool,            % Positive or negative position of the term
+        i:term,            % Type of InstName to compile
+        i:list term,       % List of the name of all local proofs
+        i:list prop,       % List of premises to add to the fianal clause
+        o:prop.            % The final clause
+      compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofArgsR PremR Clause :- !,
+        std.do![
+          if (IsPositive = tt) 
+            (Clause = (pi x\ C x), E = is-uvar) 
+            (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
+          pi p\ sigma F\
+            F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofArgsR],
+            decl p N Ty' =>
+            name-pair p p z => E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
+        ].
+      compile-ty L L2 ProofHd IsPositive Goal ProofArgsR PremR Clause :-
+        std.do![    
+          coq.mk-app ProofHd {std.rev ProofArgsR} Proof,
+          decompile.decompile-term L L1 Proof Proof' EmptyLinks,
+          std.assert! (EmptyLinks = []) "[TC] should be empty", 
+          decompile.decompile-term L1 L2 Goal Goal' Links,
+          compile-conclusion IsPositive Goal' Proof' Links {std.rev PremR} Clause
+        ].
+
+      pred compile-conclusion 
+        i:bool,             % tt if the term is in positive position
+        i:term,             % the goal (invariant: it is a constant or a application)
+        i:term,             % the proof
+        i:list prop,        % the list of links
+        i:list prop,        % the premises
+        o:prop.             % the compiled clause for the instance
+
+      compile-conclusion tt Goal Proof Links Premises Clause :-
+        std.append Links Premises AllPremises,
+        tc.make-tc Goal Proof AllPremises tt Clause.
+      compile-conclusion ff Goal Proof Links Premises (do Links, Clause) :-
+        tc.make-tc Goal Proof Premises ff Clause.
+
+      pred context i:goal-ctx, o:list prop.
+      context [] [].
+      context [X | Xs] [Clause | ResTl] :-
+        (decl Var _ Ty = X; def Var _ Ty _ = X),
+        tc.is-instance-term Ty, !,
+        std.assert! (compile.instance Ty Var Clause) "[TC] cannot compile instance of context",
+        context Xs ResTl.
+      context [_ | Tl] L :- context Tl L.
+    }
+
+    % build a list of Clauses of type tc to be temporarly added to the 
+    % database, used in theorems having assumptions.
+    pred context i:goal-ctx, o:list prop.
+    :name "tc-compile-context"
+    context Ctx Clauses :-
+      std.assert! (instance.context Ctx Clauses) "[TC] cannot compile context". 
+
+    pred instance i:term, i:term, o:prop.
+    instance Ty ProofHd Clause :-
+      tc.time-it tc.oTC-time-compile-instance (
+        tc.normalize-ty Ty Ty',
+        tc.precomp.instance Ty' Ty'' N UnivConst UnivInst,
+        instance.main N Ty'' ProofHd UnivConst UnivInst Clause
+      ) "Compile Instance".
+
+    pred instance-gr i:gref, o:prop.
+    % If the instance is polymorphic, we wrap its gref into the pglobal constructor
+    instance-gr InstGR (pi x\ Clause x) :- coq.env.univpoly? InstGR _, !,
+      coq.env.typeof InstGR Ty,
+      pi x\ instance Ty (pglobal InstGR x) (Clause x).
+    instance-gr InstGR Clause :-
+      coq.env.typeof InstGR Ty,
+      instance Ty (global InstGR) Clause.
+  }
+}

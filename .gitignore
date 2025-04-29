@@ -57,5 +57,7 @@ rocq-elpi-tests.opam
 rocq-elpi-tests.install
 rocq-elpi.install
 coq-elpi.install
+_opam
+
 
 theories-stdlib/dune

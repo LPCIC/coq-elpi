@@ -16,7 +16,7 @@ The `cs` predicate lives in the database `cs.db`
 pred cs i:goal-ctx, o:term, o:term.
 ```
 
-By addings rules for this predicate one can recover from a CS instance search failure
+By adding rules for this predicate one can recover from a CS instance search failure
 error, that is when `Lhs` and `Rhs` are not unifiable using a canonical structure registered
 by Coq.
 
