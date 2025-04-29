@@ -105,7 +105,7 @@ term->trm (app [N|As]) (eqb.app {{:gref lib:elpi.derive.apply }} N1 As1) D :- na
 ].
 term->trm X _ (error S) :- S is "not an applicative term: " ^ {coq.term->string X}.
 
-pred map-ok! i:list A, i:(pred i:A, o:B, o:diagnostic), o:list B, o:diagnostic.
+func map-ok! list A, (func A -> B, diagnostic) -> list B, diagnostic.
 map-ok! [] _ [] ok.
 map-ok! [X|XS] F [Y|YS] D :- F X Y D1, if (D1 = ok) (map-ok! XS F YS D) (D = D1).
 
