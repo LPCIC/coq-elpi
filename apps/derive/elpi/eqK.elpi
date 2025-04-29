@@ -7,7 +7,7 @@ shorten std.{assert!, do!, last, map2}.
 namespace derive.eqK {
 
 % links a term x, a comparison cmp, and H : eq_axiom cmp x
-pred axiom-db i:term, o:term, o:term.
+func axiom-db term -> term, term.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,7 +30,7 @@ branch K1 K2 T V _ R :- coq.safe-dest-app K2 _ _, !,  do! [
   (pi abs\ ltac.discriminate abs Eq {{ lib:elpi.False }} (Bo abs)),
 ].
 
-pred call i:term, i:list term, i:list term, i:list term, o:term.
+func call term, list term, list term, list term -> term.
 call X [] [] [] X.
 call X [P|P1] [_|Q1] V R :-
   coq.mk-app X [P] XP, call XP P1 Q1 V R.
@@ -41,7 +41,7 @@ call X [A|AS] [] [B|BS] R :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % bind the arguments of the constructor
-pred args i:term, i:term, o:term.
+func args term, term -> term.
 args (prod _ S T) K R :- !,
   std.assert! (eq-db S S F) "derive.eqK: cannot find an eq test for constructor argument",
   R = (fun `x` S x\
@@ -62,7 +62,7 @@ args T _ _ :-
   M is "derive.eqK: cannot find an eq test for " ^ {coq.term->string T},
   stop M.
 
-pred oty i:term, i:term, i:term, i:list term, i:list term, o:term.
+func oty term, term, term, list term, list term -> term.
 oty Cmp K _ V VT R :-
   last V X,
   last VT T,
@@ -71,9 +71,9 @@ oty Cmp K _ V VT R :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % For each parameter take in input a comparison function
 
-pred param i:int, i:term, i:term, o:term.
+func param int, term, term -> term.
 
-param 0 T K R :- args T K R.
+param 0 T K R :- !, args T K R.
 
 param L (prod N S T) K R :- L > 0, !,
   R = (fun N S a\
