@@ -6,11 +6,11 @@ shorten std.{assert!, do!, map-i, map}.
 
 namespace derive.invert {
 
-pred the-inductive i:term, o:int.
-pred the-nup-for-idx i:int, o:term.
-pred the-suffix o:string.
+func the-inductive term -> int.
+func the-nup-for-idx int -> term.
+func the-suffix -> string.
 
-pred invert i:indt-decl, o:indt-decl.
+func invert indt-decl -> indt-decl.
 invert (parameter ID Imp Ty In) (parameter ID Imp Ty Out) :-
   @pi-parameter ID Ty p\ invert (In p) (Out p).
 invert (inductive ID IsInd Arity Ks) (inductive ID1 IsInd Arity1 Ks1) :-
@@ -20,30 +20,30 @@ invert (inductive ID IsInd Arity Ks) (inductive ID1 IsInd Arity1 Ks1) :-
   coq.arity->term Arity ITy,
   @pi-parameter ID ITy i\ the-inductive i Nup => std.map (Ks i) (invert-c Nup Arity1) (Ks1 i).
 
-pred invert-c i:int, i:arity, i:indc-decl, o:indc-decl.
+func invert-c int, arity, indc-decl -> indc-decl.
 invert-c Nup ArityI (constructor ID ArityK) (constructor ID1 ArityK1) :-
   ID1 is ID ^ {the-suffix},
   invert-c-params Nup ArityI ArityK ArityK1.
 
-pred invert-c-params i:int, i:arity, i:arity, o:arity.
-invert-c-params Nup (parameter ID Imp Ty In) (parameter _ _ _ In1) (parameter ID Imp Ty Out):- Nup > 0,
+func invert-c-params int, arity, arity -> arity.
+invert-c-params Nup (parameter ID Imp Ty In) (parameter _ _ _ In1) (parameter ID Imp Ty Out):- Nup > 0, !,
   Nup1 is Nup - 1,
   @pi-parameter ID Ty p\ invert-c-params Nup1 (In p) (In1 p) (Out p).
 invert-c-params 0 Arity KArity Out :- invert-c-params-idx 0 Arity KArity Out.
 
-pred invert-c-params-idx i:int, i:arity, i:arity, o:arity.
+func invert-c-params-idx int, arity, arity -> arity.
 invert-c-params-idx Idx (parameter ID Imp Ty In) KArity (parameter ID Imp Ty Out) :-
   Idx1 is Idx + 1,
-  @pi-parameter ID Ty p\ the-nup-for-idx Idx p => invert-c-params-idx Idx1 (In p) KArity (Out p).
+  @pi-parameter ID Ty p\ the-nup-for-idx Idx p =!=> invert-c-params-idx Idx1 (In p) KArity (Out p).
 invert-c-params-idx _ (arity _) KArity KArity1 :-
   invert-c-arity KArity KArity1.
 
-pred invert-c-arity i:arity, o:arity.
+func invert-c-arity arity -> arity.
 invert-c-arity (parameter ID Imp Ty In) (parameter ID Imp Ty Out) :-
   @pi-parameter ID Ty p\ invert-c-arity (In p) (Out p).
 invert-c-arity (arity T) (arity T1) :- invert-c-ty T T1.
 
-pred invert-c-ty i:term, o:term.
+func invert-c-ty term -> term.
 invert-c-ty (prod N S T) (prod N S T1) :- !,
   @pi-decl N S x\ invert-c-ty (T x) (T1 x).
 invert-c-ty I I :- the-inductive I _, !.
@@ -51,17 +51,17 @@ invert-c-ty (app[I|Args]) Out :- the-inductive I Nup, !,
   std.split-at Nup Args NUArgs Indexes,
   invert-c-ty-eq Indexes 0 (app[I|NUArgs]) Out.
 
-pred invert-c-ty-eq i:list term, i:int, i:term, o:term.
+func invert-c-ty-eq list term, int, term -> term.
 invert-c-ty-eq [] _ X X.
 invert-c-ty-eq [I|Idxs] N Acc {{ lp:V = lp:I -> lp:Out }} :-
   std.assert! (the-nup-for-idx N V) "no variable to equate to index expression",
   M is N + 1,
   invert-c-ty-eq Idxs M {coq.mk-app Acc [V]} Out.
 
-pred trivial-arity i:arity, i:int, o:arity.
+func trivial-arity arity, int -> arity.
 trivial-arity (parameter ID Imp Ty In) Ni (parameter ID Imp Ty Out) :-
   @pi-parameter ID Ty p\ trivial-arity (In p) Ni (Out p).
-trivial-arity (arity (prod Name Ty In)) Ni (parameter ID explicit Ty Out) :-
+trivial-arity (arity (prod Name Ty In)) Ni (parameter ID explicit Ty Out) :- !,
   ID is "idx" ^ {term_to_string Ni},
   Ni1 is Ni + 1,
   @pi-decl Name Ty p\ trivial-arity (arity (In p)) Ni1 (Out p).
@@ -82,7 +82,7 @@ main GR Suffix Clauses :- do! [
   std.forall Clauses (c\coq.elpi.accumulate _ "derive.invert.db" (clause _ _ c))
 ].
 
-pred mk-k-clause i:constructor, i:constructor, o:prop.
+func mk-k-clause constructor, constructor -> prop.
 mk-k-clause K1 K2 (invert-db (indc K1) (indc K2)).
 
 }
