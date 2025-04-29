@@ -3,10 +3,6 @@
 /* ------------------------------------------------------------------------- */
 
 % Author: Cyril Cohen
-pred param-done i:gref.
-:index(3)
-pred param i:term, o:term, o:term.
-type paramR term -> term -> term -> prop.
 
 shorten std.{forall, forall2, do!, rev, map2, map}.
 
@@ -78,23 +74,23 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !, do! [
 
 namespace derive.param2 {
 
-pred names12R i:name, o:name, o:name, o:name.
+func names12R name -> name, name, name.
 names12R N N1 N2 NR :- !,
   coq.name-suffix N 1 N1, coq.name-suffix N 2 N2, coq.name-suffix N "_R" NR.
 
-pred param-args o:list term, o:list term, o:list term.
+func param-args -> list term, list term, list term.
 param-args [] [] [] :- !.
 param-args [X|Xs] [X1|Xs1] [X,X1,XR|XsR] :- !,
   param X X1 XR, !, param-args Xs Xs1 XsR, !.
 
-pred map-param o:list term, o:list term, o:list term.
+func map-param -> list term, list term, list term.
 map-param [] [] [] :- !.
 map-param [X|Xs] [X1|Xs1] [XR|XsR]:- !,
   param X X1 XR, !, map-param Xs Xs1 XsR, !.
 
 
 % helpers for match return type
-pred param-match i:term, o:term, o:((term -> term) -> (term -> term) -> term).
+func param-match term -> term, ((term -> term) -> (term -> term) -> term).
 param-match (fun N T B) P1 PRM :- pi x\ not (B x = fun _ _ _), !,
   param T T1 TR, !,
   (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
@@ -117,8 +113,7 @@ param-match (fun N T B) P1 PRM :-
 % translation of inductive types %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred param-indt i:inductive, i:bool, i:int, i:int, i:term, i:list term, i:list term,
-     i:inductive, o:bool, o:int, o:int, o:term, o:list term.
+func param-indt inductive, bool, int, int, term, list term, list term, inductive -> bool, int, int, term, list term.
 param-indt GR IsInd Lno _ Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
   LnoR is 3 * Lno, LunoR = LnoR,
@@ -128,18 +123,18 @@ param-indt GR IsInd Lno _ Ty Knames Ktypes
   ]
 ].
 
-pred rename-indc i:string, i:constructor, o:pair constructor id.
+func rename-indc string, constructor -> pair constructor id.
 rename-indc Suffix GR (pr GR NameR) :-
   coq.gref->id (indc GR) Name,
   NameR is Name ^ Suffix.
 
-pred param-indc i:term, i:term, o:term.
+func param-indc term, term -> term.
 param-indc K T TRK :- !,
   coq.env.global N K, coq.arguments.name N LN, rename T LN Tn,
   param Tn _ TR, coq.subst-fun [K, K] TR TRK.
 
 % helper to improve name hints
-pred rename i:term, i:list (option id), o:term.
+func rename term, list (option id) -> term.
 rename (prod _ T P) [some Ni|LN] (prod Nn T P') :- !,
   pi x\ rename (P x) LN (P' x), coq.id->name Ni Nn.
 rename (prod N T P) [none|LN] (prod N T P') :- !,
@@ -150,7 +145,7 @@ rename T _ T :- !.
 % Class storage functions: %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred store-param i:string, i:term, i:term, i:term.
+func store-param string, term, term, term.
 store-param N X X1 XR :- !,
   Nparam is "param_" ^ N,
   Args = [_, _, _, X, X1, XR],
@@ -160,7 +155,7 @@ store-param N X X1 XR :- !,
   coq.env.add-const FNparam T1 T2 _ C,
   @global! => coq.TC.declare-instance (const C) 0.
 
-pred store-param-indc i:string, i:constructor, i:constructor.
+func store-param-indc string, constructor, constructor.
 store-param-indc Suffix K KR :-
   store-param {calc ({coq.gref->id (indc K)} ^ Suffix)}
     (global (indc K)) (global (indc K)) (global (indc KR)).
@@ -227,7 +222,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
   C2 = (paramR Ind Ind (global (indt GRR)) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C2),
-  map2 Knames RealNamesR (a\ b\ r\ r = param (global (indc a)) (global (indc a)) (global (indc b))) CK,
+  map2 Knames RealNamesR (a\ b\ r\ r = (param (global (indc a)) (global (indc a)) (global (indc b)) :- !)) CK,
   forall CK (c\
     coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") c)),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done GR)),
@@ -242,7 +237,7 @@ func main gref, string -> list prop.
 main T _ Clauses :-
   dispatch T "_R" Clauses.
 
-pred main_register i:gref, i:gref.
+func main_register gref, gref.
 main_register I R :-
   GI = global I, GR = global R,
   C1 = (param GI GI GR :- !),
