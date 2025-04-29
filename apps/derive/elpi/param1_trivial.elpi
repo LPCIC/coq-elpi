@@ -6,7 +6,7 @@ shorten std.{assert!, do!, drop-last}.
 
 namespace derive.param1.trivial {
 
-pred prove-args i:list term, i:list term, o:list term.
+func prove-args list term, list term -> list term.
 prove-args [] [] [].
 prove-args [X,PX|Rest] [TX,TPX_X|TRest] [X,P1,PX,P2|PRest] :-
   coq.safe-dest-app TPX_X HD ARGS,
@@ -17,11 +17,11 @@ prove-args [X,PX|Rest] [TX,TPX_X|TRest] [X,P1,PX,P2|PRest] :-
   P2 = {{ lib:elpi.derive.trivial_uniq lp:TX lp:TPX lp:P lp:X lp:PX }},
   prove-args Rest TRest PRest.
 
-pred oty i:term, i:term, i:term, i:list term, i:list term, o:term.
+func oty term, term, term, list term, list term -> term.
 oty IsT W _ [Idx,V] _ {{ lib:@elpi.eq lp:Ty lp:Wx lp:V }} :-
   Ty = app[IsT,Idx], Wx = app[W,Idx].
 
-pred body i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
+func body term, term, term, term, list term, list term -> term.
 body _ _ K (app _) V VT R :- std.do! [
   /*
   coq.safe-dest-app K (global (indc Kname)) Params,
@@ -34,7 +34,7 @@ body _ _ K (app _) V VT R :- std.do! [
   do-args {std.rev V} {std.rev VT} {std.rev Triv} [] K R,
 ].
 
-pred trivialize-param1 i:list term, i:list term, o:list term.
+func trivialize-param1 list term, list term -> list term.
 trivialize-param1 [] [] [].
 trivialize-param1 [_,_|XS] [_,TPX|PS] [TPX1,T|TS] :- std.do! [
   coq.safe-dest-app TPX HD ARGS,
@@ -44,7 +44,7 @@ trivialize-param1 [_,_|XS] [_,TPX|PS] [TPX1,T|TS] :- std.do! [
   trivialize-param1 XS PS TS,
 ].
 
-pred do-args i:list term, i:list term, i:list term, i:list term, i:term, o:term.
+func do-args list term, list term, list term, list term, term -> term.
 do-args [] [] [] _ _ {{ lib:@elpi.erefl _ _ }}.
 do-args [PX,X|XS] [_,TX|PS] [Triv,P|Trivs] Old K R :- std.do! [
   Q = {{ lib:elpi.derive.trivial_uniq lp:TX lp:P lp:Triv lp:X lp:PX }},
@@ -56,18 +56,18 @@ do-args [PX,X|XS] [_,TX|PS] [Triv,P|Trivs] Old K R :- std.do! [
   coq.build-match Q TQ (do-oty K1 PX) (do-body XS PS Trivs Old1 K) R,
 ].
 
-pred do-oty i:(term -> term), i:term, i:term, i:list term, i:list term, o:term.
+func do-oty (term -> term), term, term, list term, list term -> term.
 do-oty K E _ [V,_] _ {{ lib:@elpi.eq _ _ lp:KV }} :- (copy E V :- !) => copy (K V) KV.
 
-pred do-body i:list term, i:list term, i:list term, i:list term, i:term, i:term, i:term, i:list term, i:list term, o:term.
+func do-body list term, list term, list term, list term, term, term, term, list term, list term -> term.
 do-body XS PS Trivs Old K _ _ _ _ R :- do-args XS PS Trivs Old K R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred body-params
-  i:int,   % number of params left
-  i:term,  % inductive type applied to parameters treated so far
-  i:term,  % inductive type arity to process
-  o:term.
+func body-params
+  int,   % number of params left
+  term,  % inductive type applied to parameters treated so far
+  term   % inductive type arity to process
+  -> term.
 
 body-params 0 IsT (prod _ T _\ sort _) R :- !, std.do! [
   std.assert! (param1-inhab-db IsT W) "www",
