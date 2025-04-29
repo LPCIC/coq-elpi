@@ -20,7 +20,7 @@ Register store_param as param2.store_param.
    its parametricity translation *)
 Elpi Db derive.param2.db lp:{{
     :index(3)
-    pred param i:term, o:term, o:term.
+    func param term -> term, term.
     type paramR term -> term -> term -> prop.
     pred param-done i:gref.
 }}.
@@ -44,6 +44,7 @@ Elpi Db derive.param2.db lp:{{
 Elpi Command derive.param2.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param2.db.
 Elpi Accumulate File param2.
 Elpi Accumulate Db derive.param2.db.
 Elpi Accumulate lp:{{
@@ -54,6 +55,7 @@ Elpi Accumulate lp:{{
 }}. 
 
 Elpi Command derive.param2.register.
+Elpi Accumulate Db Header derive.param2.db.
 Elpi Accumulate File param2.
 Elpi Accumulate Db derive.param2.db.
 Elpi Accumulate lp:{{
@@ -66,6 +68,7 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
+Elpi Accumulate derive Db Header derive.param2.db.
 Elpi Accumulate derive File param2.
 Elpi Accumulate derive Db derive.param2.db.
 
