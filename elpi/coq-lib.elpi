@@ -450,7 +450,7 @@ coq.elaborate-arity-skeleton-nuparams (arity A) _ U (arity A1) Diag :-
 
 func coq.term->arity term, int -> arity.
 coq.term->arity T 0 (arity T) :- !.
-coq.term->arity (prod Name S T) N (parameter ID explicit S R) :-
+coq.term->arity (prod Name S T) N (parameter ID explicit S R) :- N > 0,
   M is N - 1,
   coq.name->id Name ID,
   @pi-decl Name S x\ coq.term->arity (T x) M (R x).

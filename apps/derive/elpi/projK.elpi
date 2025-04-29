@@ -79,7 +79,7 @@ body-default (prod N T F) J OJ IT Args K (fun N T B) :- !,
     if (J = OJ)
       (Def = [default-output J Mask Args x T])
       (Def = []),
-    Def ==> true, body-default (F x) J1 OJ IT {append Args [pr x T]} K (B x).
+    Def ==> body-default (F x) J1 OJ IT {append Args [pr x T]} K (B x).
 
 body-default X J OJ IT Args K F :- whd1 X X1, !,
   body-default X1 J OJ IT Args K F.
