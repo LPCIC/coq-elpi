@@ -33,7 +33,7 @@ main I Prefix CL :- do! [
 
 % We build the match with dummy branches (you get the lambdas for the
 % arguments of constructors, then Prop). Then we put the right number in place.
-pred do-match i:term, i:list term, i:list term, o:term.
+func do-match term, list term, list term -> term.
 do-match _ Vars Tys (match X Rty BL1) :- do! [
   last Vars X, % the last variable is the one for the inductive type
   last Tys XTy,
@@ -42,16 +42,16 @@ do-match _ Vars Tys (match X Rty BL1) :- do! [
 ].
 
 % builds the return clause of the match
-pred do-rty i:term, i:list term,i:list term, o:term.
+func do-rty term, list term,list term -> term.
 do-rty _ _ _ {{ lib:elpi.derive.positive }}.
 
 % build each branch
-pred do-dummy-branch i:term, i:term, i:list term, i:list term, o:term.
+func do-dummy-branch term, term, list term, list term -> term.
 do-dummy-branch _ _ _ _ {{ Prop }}. % dummy
 
 % [do-branch InTerm Acc NewTem NewAcc] descends into a branch and puts Acc
 % in place of the dummy
-pred do-branch i:term, i:term, o:term, o:term.
+func do-branch term, term -> term, term.
 do-branch {{ Prop }} X X Y :- coq.reduction.lazy.norm {{ Pos.add lp:X 1 }} Y.
 do-branch (fun N T F) X (fun N T R) Y :-
   @pi-decl N T x\ do-branch (F x) X (R x) Y.
