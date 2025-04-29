@@ -24,8 +24,8 @@ mk-paramX.prove-clause [_,_|Args] T P IH (pi x y\ C x y) :-
 pred branch i:term, i:term, i:list term, i:list term, o:term. 
 branch K _ V VT R :-
   induction-hyp-db K IH,
-  ((pi H G P\ paramX.prove H G P :- param1-functor-db H G P) ==>
-   (pi X\ paramX.cross X) ==>
+  ((pi H G P\ paramX.prove H G P :- param1-functor-db H G P) =!=>
+   (pi X\ paramX.cross X) =!=>
     paramX.prove-args V VT Args),
   coq.mk-app IH Args R.
 
