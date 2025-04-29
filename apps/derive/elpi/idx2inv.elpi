@@ -53,8 +53,8 @@ mk-branch K KTy Vars VarsTy R :- std.do! [
   VarsTy = RealArgsTy,
   assert! (invert-db (indc GR) InvK) "derive.idx2inv: No inverted constructor",
   coq.mk-app {coq.mk-app (global InvK) Params} IDX K1,
-  (pi H G P\ paramX.prove H G P :- param1-functor-db H G P) =>
-  (pi X T\ paramX.cross T :- (pi M\stop M :- !, fail) => realiR X T) =>
+  (pi H G P\ paramX.prove H G P :- param1-functor-db H G P) =!=>
+  (pi X T\ paramX.cross T :- (pi M\stop M :- !, fail) => realiR X T) =!=>
     paramX.prove-args RealArgs RealArgsTy Args,
   coq.mk-app K1 Args K2,
   std.map IDX mk-refl ArgsEq,
