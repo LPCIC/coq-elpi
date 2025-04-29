@@ -981,9 +981,9 @@ kind univ type.
 
 % Sorts (kinds of types)
 kind sort type.
-external symbol prop : sort = "1".  % impredicative sort of propositions
-external symbol sprop : sort = "1".  % impredicative sort of propositions with definitional proof irrelevance
-external symbol typ : univ -> sort = "1".  % predicative sort of data (carries a universe level)
+external symbol prop  : sort.         % impredicative sort of propositions
+external symbol sprop : sort.         % impredicative sort of propositions with definitional proof irrelevance
+external symbol typ   : univ -> sort. % predicative sort of data (carries a universe level)
 
 % [coq.sort.leq S1 S2] constrains S1 <= S2
 external func coq.sort.leq -> sort, sort.
@@ -1006,11 +1006,11 @@ external func coq.univ.new -> univ.
 
 % [coq.univ.alg-super U V] relates a univ U to its algebraic successor V,
 % that is U+1 and not any V s.t. U < V
-external pred coq.univ.alg-super i:univ, o:univ.
+external func coq.univ.alg-super univ -> univ.
 
 % [coq.univ.alg-max U1 U2 UMax] relates univs U1 and U2 to their algebraic
 % maximum UMax, that is max(U1, U2)
-external pred coq.univ.alg-max i:univ, i:univ, o:univ.
+external func coq.univ.alg-max univ, univ -> univ.
 
 % [coq.univ Name U] Finds a named unvierse. Can fail.
 external func coq.univ -> id, univ.
@@ -1187,10 +1187,6 @@ external func coq.CS.db-for gref, cs-pattern -> list cs-instance.
 % [coq.CS.canonical-projection? Projection] Tells if the projection can be
 % used for CS inference.
 external func coq.CS.canonical-projection? constant.
-
-% [coq.CS.canonical-projection? Projection] Tells if the projection can be
-% used for CS inference.
-external pred coq.CS.canonical-projection? i:constant.
 
 % [coq.TC.declare-class GR] Declare GR as a type class
 external func coq.TC.declare-class gref.
@@ -1380,13 +1376,6 @@ external func coq.arguments.simplification gref -> option simplification_strateg
 % - @global! (default: false)
 external func coq.arguments.set-simplification gref, 
                                               simplification_strategy.
-
-% [coq.arguments.reset-simplification GR] resets the behavior of the
-% simplification tactics.
-% Also resets the ! and / modifiers for the Arguments command.
-% Supported attributes:
-% - @global! (default: false)
-external func coq.arguments.reset-simplification gref.
 
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.
@@ -1762,42 +1751,44 @@ external func coq.goal->pp goal -> coq.pp.
 
 % Coq scheme kind (currently undocumented in Rocq)
 kind coq.register.scheme-kind type.
-type coq.register.scheme.rect_dep coq.register.scheme-kind.
-type coq.register.scheme.rec_dep coq.register.scheme-kind.
-type coq.register.scheme.ind_dep coq.register.scheme-kind.
-type coq.register.scheme.sind_dep coq.register.scheme-kind.
-type coq.register.scheme.rect_nodep coq.register.scheme-kind.
-type coq.register.scheme.rec_nodep coq.register.scheme-kind.
-type coq.register.scheme.ind_nodep coq.register.scheme-kind.
-type coq.register.scheme.sind_nodep coq.register.scheme-kind.
-type coq.register.scheme.case_dep coq.register.scheme-kind.
-type coq.register.scheme.case_nodep coq.register.scheme-kind.
-type coq.register.scheme.casep_dep coq.register.scheme-kind.
-type coq.register.scheme.casep_nodep coq.register.scheme-kind.
-type coq.register.scheme.sym_internal coq.register.scheme-kind.
-type coq.register.scheme.sym_involutive coq.register.scheme-kind.
-type coq.register.scheme.rew_r_dep coq.register.scheme-kind.
-type coq.register.scheme.rew_dep coq.register.scheme-kind.
-type coq.register.scheme.rew_fwd_dep coq.register.scheme-kind.
-type coq.register.scheme.rew_fwd_r_dep coq.register.scheme-kind.
-type coq.register.scheme.rew_r coq.register.scheme-kind.
-type coq.register.scheme.rew coq.register.scheme-kind.
-type coq.register.scheme.congr coq.register.scheme-kind.
-type coq.register.scheme.beq coq.register.scheme-kind.
-type coq.register.scheme.dec_bl coq.register.scheme-kind.
-type coq.register.scheme.dec_lb coq.register.scheme-kind.
-type coq.register.scheme.eq_dec coq.register.scheme-kind.
-type coq.register.scheme.other string -> coq.register.scheme-kind.
+external symbol coq.register.scheme.rect_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rec_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.ind_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.sind_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rect_nodep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rec_nodep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.ind_nodep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.sind_nodep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.case_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.case_nodep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.casep_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.casep_nodep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.sym_internal : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.sym_involutive : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rew_r_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rew_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rew_fwd_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rew_fwd_r_dep : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rew_r : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.rew : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.congr : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.beq : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.dec_bl : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.dec_lb : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.eq_dec : coq.register.scheme-kind = "1". 
+external symbol coq.register.scheme.other : string ->
+                                            coq.register.scheme-kind = "1". 
 
 % Coq register value
 kind coq.register type.
-type coq.register.inline coq.register.
-type coq.register.lib string -> coq.register.
-type coq.register.scheme gref -> coq.register.scheme-kind -> coq.register.
+external symbol coq.register.inline : coq.register = "1". 
+external symbol coq.register.lib : string -> coq.register = "1". 
+external symbol coq.register.scheme : gref -> coq.register.scheme-kind ->
+                                      coq.register = "1". 
 
 % [coq.register GR R] Registers GR as R (See Register Inline, Register
 % Scheme)
-external pred coq.register i:gref, i:coq.register.
+external func coq.register gref, coq.register.
 
 % -- Extra Dependencies -----------------------------------------------
 
@@ -1841,15 +1832,20 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 
 
 % [coq.elpi.accumulate-clauses Scope DbName Clauses] 
-% Declare that, once the program is over, the given clauses has to be
-% added to the given db (see Elpi Db).
+% Declare that the given clauses have to be added to the given db (see Elpi
+% Db).
 % Clauses usually belong to Coq modules: the Scope argument lets one
 % select which module:
-% - execution site (default) is the module in which the pogram is
-%   invoked
+% - execution site (default) is the module in which the program is
+%   invoked, the clauses will be accumulated when the execution of the
+% program ends
 % - current is the module currently being constructed (see
-%   begin/end-module)
-% - library is the current file (the module that is named after the file)
+%   begin/end-module), the clauses will be accumulated when the execution of
+% the program ends
+%   or the start of another program (whichever comes first)
+% - library is the current file (the module that is named after the file),
+%   the clauses will be accumulated when the execution of the program
+% ends
 % The clauses are visible as soon as the enclosing module is Imported.
 % A clause that mentions a section variable is automatically discarded
 % at the end of the section.
