@@ -383,9 +383,9 @@ let sort : (Sorts.t, _ coq_context, API.Data.constraints) API.ContextualConversi
   pp_doc = (fun fmt () ->
     Format.fprintf fmt "%% Sorts (kinds of types)\n";
     Format.fprintf fmt "kind sort type.\n";
-    Format.fprintf fmt "type prop sort. %% impredicative sort of propositions\n";
-    Format.fprintf fmt "type sprop sort. %% impredicative sort of propositions with definitional proof irrelevance\n";
-    Format.fprintf fmt "type typ univ -> sort. %% predicative sort of data (carries a universe level)\n";
+    Format.fprintf fmt "external symbol prop  : sort.         %% impredicative sort of propositions\n";
+    Format.fprintf fmt "external symbol sprop : sort.         %% impredicative sort of propositions with definitional proof irrelevance\n";
+    Format.fprintf fmt "external symbol typ   : univ -> sort. %% predicative sort of data (carries a universe level)\n";
   );
   pp = (fun fmt -> function
     | Sorts.Type _ -> Format.fprintf fmt "Type"
