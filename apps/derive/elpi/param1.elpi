@@ -204,28 +204,3 @@ main T _ Clauses :-
 
 }
 
-/*
-%%%%%%%%%%%%%%%%%%%%%
-% Tactic entrypoint %
-%%%%%%%%%%%%%%%%%%%%%
-
-% We disable coq-refiner
-:before "refiner-assign-evar"
-  evar _ _ _ :- !.
-
-pred ctx->TC i:(list prop), o:(list (pair term term)).
-ctx->TC [] [] :- !.
-ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
-ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
-
-solve _ [goal Ctx Ev (app[{{@reali}}, T, TR, X, XR]) _] _ :- !,
-  coq.sigma.print,
-  coq.say "goal->TC" {ctx->TC Ctx},
-  coq.say "searching reali for" X,
-  reali T TR,
-  reali X XR,
-  Ev = app [{{@Reali}}, T, TR, X, XR],
-  coq.typecheck Ev Ty ok,
-  coq.say "Ty=" Ty.
-
-*/
