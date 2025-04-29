@@ -8,19 +8,19 @@ namespace derive.param1.inhab {
 
 % local data base to map a constructor K of T (applied to params) to
 % the pair isK and its type, eg ({{Zero}} `-> pr {{isZero}} {{isNat Zero}}))
-type (`->) term -> pair term term -> prop.
+func (`->) term -> pair term term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred search i:term, i:term, o:term. % given T and isT it builds a proof forall x:T, isT x
+func search term, term -> term. % given T and isT it builds a proof forall x:T, isT x
 
 search _ Goal P :-
   std.assert! (param1-inhab-db Goal P) "derive.param1_inhab: cannot prove inhabitation".
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred prove-args % for each (K x ..) we must produce (isK x x_isX ..)
-  i:list term, % the variables (x in the example above)
-  i:term,      % the type of isK
-  o:list term. % x and x_isX
+func prove-args % for each (K x ..) we must produce (isK x x_isX ..)
+  list term, % the variables (x in the example above)
+  term       % the type of isK
+  -> list term. % x and x_isX
 prove-args [] _ [].
 prove-args [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
   reali T TR, !,  % out of the type of x we get isX
@@ -28,10 +28,10 @@ prove-args [V|VS] (prod _ T x\ prod _ _ (px\ F x px)) [V,PV | RS] :-
   PV = app[PT,V], % PV is the x_isX above
   (reali V PV :- !) => prove-args VS (F V PV) RS.
 
-pred oty i:(term -> term), i:term, i:list term, i:list term, o:term.
+func oty (term -> term), term, list term, list term -> term.
 oty F _ V _ R :- rev V [X|_], R = F X.
 
-pred body i:term, i:term, i:list term, i:list term, o:term.
+func body term, term, list term, list term -> term.
 body K _ V _ R :-
   coq.safe-dest-app K Kname _,
   Kname `-> (pr KR KRT),
@@ -39,13 +39,13 @@ body K _ V _ R :-
   coq.mk-app KR Args R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pred body-params
-  i:int,   % number of params left
-  i:term,  % inductive type applied to parameters treated so far
-  i:term,  % inductive type arity to process
-  i:list term, % construcors applied to parameters treated so far
-  i:list term, % construcor's types instantiated to parameters treated so far
-  o:term.
+func body-params
+  int,   % number of params left
+  term,  % inductive type applied to parameters treated so far
+  term,  % inductive type arity to process
+  list term, % construcors applied to parameters treated so far
+  list term  % construcor's types instantiated to parameters treated so far
+  -> term.
 
 body-params 0 IsT (prod _ T _\ sort _) K KT R :- coq.safe-dest-app T (global (indt GR)) _, coq.env.recursive? GR, !,
   RT = (x\ {coq.mk-app IsT [x]}),
