@@ -404,7 +404,6 @@ Elpi Accumulate lp:{{
 
 Goal forall x z y, x = 1 + y + z.
 intros x x0.
-Elpi Trace.
 elpi fresh1.
 Check x1.
 Abort.

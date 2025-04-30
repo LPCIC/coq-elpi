@@ -4,7 +4,7 @@
 
 namespace locker {
 
-pred key-lock i:id, i:term, i:arity, i:option upoly-decl.
+func key-lock id, term, arity, option upoly-decl ->.
 key-lock ID Bo Arity UnivDecl :- std.do! [
   make-key ID Key,
 
@@ -25,7 +25,7 @@ key-lock ID Bo Arity UnivDecl :- std.do! [
   make-key-unlockable ID Def Ty {coq.env.global (const C)} Key,
 ].
 
-pred make-key i:id, o:term.
+func make-key id -> term.
 make-key ID (global (const C)) :- std.do! [
   if (get-option "key" KID) true (KID is ID ^ "_key_subproof"),
   coq.env.add-const KID {{ tt }} {{ unit }} @opaque! C,
@@ -33,7 +33,7 @@ make-key ID (global (const C)) :- std.do! [
 
 % -------------------------------------------------------------------------
 
-pred module-lock i:id, i:term, i:arity, i:option upoly-decl.
+func module-lock id, term, arity, option upoly-decl ->.
 module-lock ID Bo Arity UnivDecl :- std.do! [
   coq.arity->term Arity Ty,
   std.assert-ok! (coq.typecheck-ty Ty _) "locker: definition type illtyped",
@@ -64,7 +64,7 @@ module-lock ID Bo Arity UnivDecl :- std.do! [
   make-module-unlockable ID Module,
 ].
 
-pred lock-module-type i:id, i:term, i:term, i:option upoly-decl, o:modtypath.
+func lock-module-type id, term, term, option upoly-decl -> modtypath.
 lock-module-type ID Ty Bo UnivDecl M :- std.do! [
   Module is ID ^ "_Locked",
   coq.env.begin-module-type Module,
@@ -77,6 +77,7 @@ lock-module-type ID Ty Bo UnivDecl M :- std.do! [
   coq.env.end-module-type M,
 ].
 
+:functional
 pred lock-module-body o:modtypath, i:id, i:term, i:term, i:option upoly-decl, o:term, o:modpath.
 lock-module-body Signature ID Ty Bo UnivDecl B M :- std.do! [
   coq.env.begin-module ID (some Signature),
@@ -95,7 +96,7 @@ lock-module-body Signature ID Ty Bo UnivDecl B M :- std.do! [
 % -------------------------------------------------------------------------
 % Unlocking via the ssreflect Unlockable interface (CS instance)
 
-pred make-key-unlockable i:string, i:term, i:term, i:term, i:term.
+func make-key-unlockable string, term, term, term, term.
 make-key-unlockable ID DefBo Ty LockedDef Key :- std.do! [
   % we extract the real body in order to be precise in the unlocking equation
   DefBo = {{ @locked_with _ _ lp:Bo }},
@@ -104,7 +105,7 @@ make-key-unlockable ID DefBo Ty LockedDef Key :- std.do! [
   make-unlockable ID Unlock,
 ].
 
-pred make-module-unlockable i:id, i:modpath.
+func make-module-unlockable id, modpath ->.
 make-module-unlockable ID Module :- std.do! [
   coq.env.module Module [_,gref UnlockEQ],
   coq.env.global UnlockEQ UnlockEQT,
@@ -112,7 +113,7 @@ make-module-unlockable ID Module :- std.do! [
   make-unlockable ID Unlock,
 ].
 
-pred make-unlockable i:id, i:term.
+func make-unlockable id, term ->.
 make-unlockable ID Unlock :- std.do! [
   std.assert-ok! (coq.typecheck Unlock UnlockTy) "locker: unlocking instance illtyped",
   UID is ID ^ "_unlock_subterm",

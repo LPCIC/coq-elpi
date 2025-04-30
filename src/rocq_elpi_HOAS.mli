@@ -135,7 +135,8 @@ val record_entry2lp :
   
 val in_elpi_id : Names.Name.t -> term
 val in_elpi_bool : State.t -> bool -> term
-val in_elpi_parameter : Names.Name.t -> imp:term -> term -> term -> term
+val in_elpi_arity_parameter : Names.Name.t -> imp:term -> term -> term -> term
+val in_elpi_inductive_parameter : Names.Name.t -> imp:term -> term -> term -> term
 val in_elpi_arity : term -> term
 val in_elpi_indtdecl_record : Names.Name.t -> term -> Names.Name.t -> term -> term
 val in_elpi_indtdecl_endrecord : unit -> term
@@ -217,8 +218,10 @@ val uinstance : UVars.Instance.t Conversion.t
 
 val universe_constraint : Univ.univ_constraint Conversion.t
 val universe_variance : (Univ.Level.t * UVars.Variance.t option) Conversion.t
-val universe_decl : universe_decl Conversion.t
-val universe_decl_cumul : universe_decl_cumul Conversion.t
+type any_universe_decl =
+  | NonCumul of universe_decl
+  | Cumul of universe_decl_cumul
+val universe_decl : any_universe_decl Conversion.t
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t

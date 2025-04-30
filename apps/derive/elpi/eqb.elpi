@@ -2,12 +2,10 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pred feqb.trm->term i:eqb.trm, o:term.
-
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
 
-pred derive.eqb.main i:gref, i:string, o:list prop.
+func derive.eqb.main gref, string -> list prop.
 derive.eqb.main (indt I) Prefix CL :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
 
@@ -46,7 +44,7 @@ derive.eqb.main (const C) Prefix CL :- std.do! [
 namespace derive.eqb.eqb {
 
 % -----------------------------------------------------------------------------
-pred main i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, o:term.
+func main eqb.eqType, eqb.eqType, list term, list term, term -> term.
 
 main (eqb.type-param FI) (eqb.type-param FJ) PI PJ EF {{ fun (x : Type) (eqx : x -> x -> bool) => lp:(R x eqx) }} :-
   @pi-trm `x` {{ Type }} y\x\
@@ -76,7 +74,7 @@ main (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ EF {{ fun (x1 : lp:I) (x2
     do-match x1 I x2 J {coq.mk-app EF [{{fun (_ : lp:I) (_ : lp:J) => true}}]} (R x1 x2).
 
 % -----------------------------------------------------------------------------
-pred do-match i:term, i:term, i:term, i:term, i:term, o:term.
+func do-match term, term, term, term, term -> term.
 do-match X1 I X2 J F R :-
   coq.build-match X1 I
     (_\_\_\r\ r = {{ bool }})
@@ -84,7 +82,7 @@ do-match X1 I X2 J F R :-
     R.
 
 % -----------------------------------------------------------------------------
-pred do-branch i:term, i:term, i:term, i:term, i:term, i:list term, i:list term, o:term.
+func do-branch term, term, term, term, term, list term, list term -> term.
 do-branch X2 J F K KTY Vars _ {{ @eqb_core_defs.eqb_body _ _ _ _ lp:FLDP lp:F lp:TAG lp:X lp:X2 }} :- std.do! [
   coq.safe-dest-app KTY (global (indt I)) ParamsI,
   std.assert! (fields-for I _ FLD _ _) "derive.eqb: run derive.fields before",
@@ -102,7 +100,8 @@ do-branch X2 J F K KTY Vars _ {{ @eqb_core_defs.eqb_body _ _ _ _ lp:FLDP lp:F lp
 % -----------------------------------------------------------------------------
 % example: eqb-for {{ list lp:A }} {{ @list_eqb lp:A lp:F }} :- eqb-for A F.
 
-pred do-clause i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, i:list prop, o:prop.
+:index (1)
+func do-clause eqb.eqType, eqb.eqType, list term, list term, term, list prop -> prop.
 
 do-clause (eqb.type-param AI) (eqb.type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
   pi x a ea\
@@ -122,7 +121,8 @@ do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (eqb-for I J 
 namespace derive.eqb.eqbf {
 
 % -----------------------------------------------------------------------------
-pred main i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, o:term.
+:index (1 1)
+func main eqb.eqType, eqb.eqType, list term, list term -> term.
 
 main (eqb.type-param FI) (eqb.type-param FJ) PI PJ {{ fun (p : Type) (eqp : p -> p -> bool) => lp:(R p eqp) }} :-
   @pi-trm `P` {{ Type }} x\p\
@@ -156,13 +156,13 @@ main (eqb.inductive Ind F) (eqb.inductive Ind G) PI PJ {{ fun (rec : lp:I -> lp:
        (fields ParamsI ParamsJ)
        (R rec x)),
 ].
-pred rty i:term, i:term, i:term, o:term.
+func rty term, term, term -> term.
 rty Fields_t_I Fields_t_J X {{ lp:Fields_t_I lp:X -> lp:Fields_t_J lp:X -> bool }}.
 
 % -----------------------------------------------------------------------------
-pred fields i:list term, i:list term, i:pair eqb.constructor eqb.constructor, o:term.
+func fields list term, list term, pair eqb.constructor eqb.constructor -> term.
 
-fields ParamsI ParamsJ (pr (eqb.constructor K (eqb.stop _)) (eqb.constructor K (eqb.stop _))) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => true }} :- std.do! [
+fields ParamsI ParamsJ (pr (eqb.constructor K (eqb.stop _)) (eqb.constructor K (eqb.stop _))) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => true }} :- !, std.do! [
   std.assert! (box-for K IB _) "derive.eqb: run derive.fields before",
   coq.mk-app (global (indt IB)) ParamsI BoxTy1,
   coq.mk-app (global (indt IB)) ParamsJ BoxTy2,
@@ -177,28 +177,30 @@ fields ParamsI ParamsJ (pr (eqb.constructor K Args) (eqb.constructor K Args2)) {
     coq.build-match a BoxTy1 fields.rty1 (fields.branch1 b BoxTy2 Args Args2) (R a b)
 ].
 
-pred fields.rty1 i:term, i:list term, i:list term, o:term.
+func fields.rty1 term, list term, list term -> term.
 fields.rty1  _ _ _ {{ bool }}.
 
-pred fields.branch1 i:term, i:term, i:eqb.arguments, i:eqb.arguments, i:term, i:term, i:list term, i:list term, o:term.
+:index (1)
+func fields.branch1 term, term, eqb.arguments, eqb.arguments, term, term, list term, list term -> term.
 fields.branch1 B BoxTy2 Args Args2 _ _ VarsA _ R :-
     coq.build-match B BoxTy2 fields.rty2 (fields.branch2 Args Args2 VarsA) R.
 
-pred fields.rty2 i:term, i:list term, i:list term, o:term.
+func fields.rty2 term, list term, list term -> term.
 fields.rty2 _ _ _ {{ bool }}.
 
-pred fields.branch2 i:eqb.arguments, i:eqb.arguments, i:list term, i:term, i:term, i:list term, i:list term, o:term.
+:index (1)
+func fields.branch2 eqb.arguments, eqb.arguments, list term, term, term, list term, list term -> term.
 fields.branch2 Args Args2 VarsA _ _ VarsB _ R :-
 fields.aux Args Args2 VarsA VarsB R.
 
 
-pred mk-eqb-for i:term, i:term, o:term.
+func mk-eqb-for term, term -> term.
 mk-eqb-for T1 T2 R :- eqb-for T1 T2 R, !.
 mk-eqb-for T1 _ _ :- 
   Msg is "derive.eqb: missing boolean equality for " ^ {coq.term->string T1} ^ ", maybe use derive.eqb first",
   stop Msg.
 
-pred fields.aux i:eqb.arguments, i:eqb.arguments, i:list term, i:list term, o:term.
+func fields.aux eqb.arguments, eqb.arguments, list term, list term -> term.
 
 fields.aux (eqb.dependent TYX FX) (eqb.dependent TYY FY) [X|XS] [Y|YS] {{ lib:elpi.andb (lp:EQB lp:X lp:Y) lp:R1 }} :- 
   feqb.trm->term TYX TX,
@@ -223,7 +225,7 @@ fields.aux (eqb.stop _) (eqb.stop _) [] [] {{ true }}.
 % example:
 %   eqb-fields {{ list lp:A }} {{ @list_eqb_fields lp:A lp:EA lp:ELA }} :-
 %      eqb-for A EA, eqb-for {{ list lp:A }} ELA.
-pred do-clause i:eqb.eqType, i:eqb.eqType, i:list term, i:list term, i:term, i:list prop, o:prop.
+func do-clause eqb.eqType, eqb.eqType, list term, list term, term, list prop -> prop.
 
 do-clause (eqb.type-param AI) (eqb.type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
   pi x a ea\

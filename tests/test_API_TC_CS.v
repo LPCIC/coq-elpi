@@ -69,7 +69,7 @@ Module hint_instance.
     coq.TC.db-for {{:gref Test}} L,
     std.length L 4,               % there are 4 instances for Test
     std.findall (expected _) Exp, % get the expected prio
-    Check = (x\ sigma Exp\ x = expected Exp, std.mem L Exp),
+    (Check: (pred i:prop)) = (x\ sigma Exp\ x = expected Exp, std.mem L Exp),
     std.forall Exp Check.         % check each instance has the expected priority
   }}.
 

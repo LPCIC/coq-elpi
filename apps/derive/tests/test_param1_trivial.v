@@ -34,7 +34,7 @@ Elpi derive.param1.trivial is_pa_record.
 Elpi derive.param1.trivial is_pr_record.
 Fail Elpi derive.param1.trivial is_dep_record.
 Elpi derive.param1.trivial is_enum.
-Elpi derive.param1.trivial is_bool.
+(* Elpi derive.param1.trivial is_bool. done in param1_trivial.v *)
 (*
 Elpi derive.param1.trivial is_eq. (* ad-hoc *)
 *)
@@ -44,10 +44,10 @@ Elpi derive.param1.trivial is_ord.
 Elpi derive.param1.trivial is_ord2.
 Elpi derive.param1.trivial is_val.
 
-
 End Coverage.
 
 Import Coverage.
+Export param1_trivial.exports. (* for is_bool, done in param1_trivial.v *)
 
 Redirect "tmp" Check is_empty_trivial : trivial empty is_empty.
 Redirect "tmp" Check is_unit_trivial : trivial unit is_unit.

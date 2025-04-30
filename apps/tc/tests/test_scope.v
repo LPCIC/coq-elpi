@@ -10,7 +10,7 @@ Goal C Q ->  exists (T : Type -> Type), forall R, C R -> C (T).
   intros.
   Set Printing Existential Instances.
   assert (C Q) by auto.
-  Elpi Trace Browser.
+  (* Elpi Trace Browser. *)
   apply _.
   Show Proof.
 Abort.

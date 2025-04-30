@@ -39,7 +39,6 @@ Register pstring_eq_correct as elpi.derive.pstring_eq_correct.
 Elpi Db derive.eqcorrect.db lp:{{
   type eqcorrect-db gref -> term -> prop.
 }}.
-#[superglobal] Elpi Accumulate derive.eqcorrect.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.eqcorrect.db lp:{{
   
 eqcorrect-db {{:gref lib:num.int63.type }} {{ lib:elpi.derive.uint63_eq_correct }} :- !.
