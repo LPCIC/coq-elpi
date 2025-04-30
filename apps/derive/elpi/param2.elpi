@@ -93,7 +93,7 @@ map-param [X|Xs] [X1|Xs1] [XR|XsR]:- !,
 func param-match term -> term, ((term -> term) -> (term -> term) -> term).
 param-match (fun N T B) P1 PRM :- pi x\ not (B x = fun _ _ _), !,
   param T T1 TR, !,
-  (pi x x1 xR\ param x x1 xR => param (B x) (B1 x1) (BR x x1 xR)), !,
+  (pi x x1 xR\ (param x x1 xR :- !) => param (B x) (B1 x1) (BR x x1 xR)), !,
   P1 = fun N T1 B1,
   derive.param2.names12R N N1 N2 NR,
   (pi z z1\ PRM z z1 = fun N1 T x\ fun N2 T1 x1\
@@ -102,7 +102,7 @@ param-match (fun N T B) P1 PRM :- pi x\ not (B x = fun _ _ _), !,
 
 param-match (fun N T B) P1 PRM :-
   param T T1 TR, !,
-  (pi x x1 xR\ param x x1 xR => param-match (B x) (B1 x1) (BR x x1 xR)), !,
+  (pi x x1 xR\ (param x x1 xR :- !) => param-match (B x) (B1 x1) (BR x x1 xR)), !,
   P1 = fun N T1 B1,
   derive.param2.names12R N N1 N2 NR,
   (pi z z1\ PRM z z1 = fun N1 T x\ fun N2 T1 x1\

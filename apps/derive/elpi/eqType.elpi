@@ -12,13 +12,13 @@ translate-indt I O D :-
 
 func translate-param indt-decl, inductive, list constructor -> eqb.eqType, diagnostic.
 translate-param (parameter ID _ Ty F) I KS (eqb.type-param F1) D :- whd Ty [] {{ Type }} _, !,
-  @pi-parameter ID Ty x\ pi y\ term->trm x y ok => translate-param (F x) I KS (F1 y) D.
+  @pi-parameter ID Ty x\ pi y\ (term->trm x y ok :- !) => translate-param (F x) I KS (F1 y) D.
 translate-param (parameter ID _ Ty F) I KS (eqb.value-param Ty1 F1) D :- term->trm Ty Ty1 ok, !,
-  @pi-parameter ID Ty x\ pi y\ term->trm x y ok => translate-param (F x) I KS (F1 y) D.
+  @pi-parameter ID Ty x\ pi y\ (term->trm x y ok :- !) => translate-param (F x) I KS (F1 y) D.
 translate-param (parameter ID _ _ _) _ _ _ (error S) :- !, S is "unsupported parameter " ^ ID.
 
 translate-param (inductive ID tt (arity (sort S)) F) I KS (eqb.inductive I F1) D :- !,
-  @pi-inductive ID (arity (sort S)) x\ pi y\ term->trm x y ok => translate-constructors (F x) KS (F1 y) D.
+  @pi-inductive ID (arity (sort S)) x\ pi y\ (term->trm x y ok :- !) => translate-constructors (F x) KS (F1 y) D.
 translate-param (record _ _ _ F) I [K] (eqb.inductive I (y\ [eqb.constructor K (F1 y)])) D :- !,
   pi y\ (self y :- !) => translate-record-constructor F (F1 y) D.
 translate-param _ _ _ _ (error S) :- S is "unsupported inductive arity".
