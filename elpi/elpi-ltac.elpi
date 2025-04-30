@@ -2,7 +2,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 typeabbrev tactic (pred i:sealed-goal, o:list sealed-goal).
+typeabbrev func-tactic (func sealed-goal -> list sealed-goal).
 typeabbrev open-tactic (pred i:goal, o:list sealed-goal).
+typeabbrev func-open-tactic (func goal -> list sealed-goal).
 
 % The one tactic ------------------------------------------------------------
 func refine term, goal -> list sealed-goal.
@@ -33,17 +35,18 @@ refine.no_check T (goal _ RawEv _ Ev _) GS :-
 
 % calling other tactics, with arguments ---------------------------------------
 
-pred coq.ltac i:string, i:sealed-goal, o:list sealed-goal.
+func coq.ltac string, sealed-goal -> list sealed-goal.
 coq.ltac Tac G GS :- coq.ltac.open (coq.ltac.call-ltac1 Tac) G GS.
 
 namespace coq.ltac {
 
-pred call i:string, i:list argument, i:goal, o:list sealed-goal.
+func call string, list argument, goal -> list sealed-goal.
 call Tac Args G GS :-
   set-goal-arguments Args G (seal G) (seal G1),
   coq.ltac.call-ltac1 Tac G1 GS.
 
-pred set-goal-arguments i:list argument, i:goal, i:sealed-goal, o:sealed-goal.
+:index(_ _ 1)
+func set-goal-arguments list argument, goal, sealed-goal -> sealed-goal.
 set-goal-arguments A G (nabla SG) (nabla R) :- pi x\ set-goal-arguments A G (SG x) (R x).
 set-goal-arguments A (goal Ctx1 _ _ _ _) (seal (goal Ctx2 REv2 Ty2 Ev2 _)) (seal (goal Ctx2 REv2 Ty2 Ev2 I)) :- same_term Ctx1 Ctx2, !,
   A = I.
@@ -78,8 +81,8 @@ pred or i:list tactic, i:sealed-goal, o:list sealed-goal.
 or TL G GS :- std.exists TL (t\ t G GS).
 
 % :index (_ 1) TODO
-:external
-pred open i:open-tactic, i:sealed-goal, o:list sealed-goal.
+:external :index(_ 1)
+func open func-open-tactic, sealed-goal -> list sealed-goal.
 open T (nabla G) O :- (pi x\ open T (G x) (NG x)), private.distribute-nabla NG O.
 open _ (seal (goal _ _ _ Solution _)) [] :- not (var Solution), !. % solved by side effect
 open T (seal (goal Ctx _ _ _ _ as G)) O :-
@@ -94,7 +97,7 @@ open T (seal (goal Ctx _ _ _ _ as G)) O :-
 namespace private {
 
 :index(_ _ 1)
-pred move-goal-argument i:list prop, i:list prop, i:argument, o:argument.
+func move-goal-argument list prop, list prop, argument -> argument.
 move-goal-argument _ _ (int _ as A) A.
 move-goal-argument _ _ (str _ as A) A.
 move-goal-argument _ _ (tac _) _ :-
@@ -104,8 +107,8 @@ move-goal-argument C D (trm T) (trm T1) :-
   std.assert! (move-term Cr Dr T T1) "cannot move goal argument to the right context", !.
 
 :index(2)
-pred move-term i:list prop, i:list prop, i:term, o:term.
-move-term [] _ T T1 :- copy T T1.
+func move-term list prop, list prop, term -> term.
+move-term [] _ T T1 :- copy T T1, !.
 move-term [decl X _ TX|C1] [decl Y _ TY|C2] T T1 :- std.do! [ copy TX TX1, same_term TX1 TY ], !,
   (copy X Y :- !) => move-term C1 C2 T T1.
 move-term [def X _ TX BX|C1] [def Y _ TY BY|C2] T T1 :- std.do! [ copy TX TX1, same_term TX1 TY, copy BX BX1, same_term BX1 BY ], !,
