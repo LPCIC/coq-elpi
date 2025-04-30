@@ -407,12 +407,12 @@ mkblistrefl [X|XS] ACC R :-
 
 % prove {{ is_option (seq A) (is_seq A (eqb_correrct A eqA)) }} T
 % such that T has type {{ forall x (px : is_option ...), eqb_correrct (option (seq A)) x }}
-func prove(pred i:term, o:term), term -> term.
+func prove (pred i:term, o:term), term -> term.
 prove Lemma T R :- search Lemma (prove Lemma) T R.
 %prove T R :- whd1 T T', !, prove T' R.
 
 :index (_ _ 3)
-func search (pred i:term, o:term), (pred i:term, o:term), term -> term.
+func search (pred i:term, o:term), (func term -> term), term -> term.
 search What Rec (app [GR|L] as GRL) R :- !, std.do! [
   What GR Aux,
   mk-reali GR (global (indt ISGR)),
