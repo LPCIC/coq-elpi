@@ -926,8 +926,13 @@ let resolve_file_path ~must_exist ~allow_absolute ~only_elpi file =
         CErrors.user_err (Pp.str msg)
   in
   (* Lookup the directory path in Coq's state. *)
+  let mk_file_path p = Filename.concat (Loadpath.physical p) relpath in
+  let loadpath = Loadpath.find_with_logical_path logpath in
   let loadpath =
-    match Loadpath.find_with_logical_path logpath with
+    if not must_exist then loadpath
+    else List.filter (fun p -> Sys.file_exists (mk_file_path p)) loadpath in
+  let loadpath =
+    match loadpath with
     | p :: [] -> p
     | []      ->
         let msg =
@@ -950,7 +955,7 @@ let resolve_file_path ~must_exist ~allow_absolute ~only_elpi file =
         CErrors.user_err (Pp.str msg)
   in
   (* Assemble the file path. *)
-  let resolved = Filename.concat (Loadpath.physical loadpath) relpath in
+  let resolved = mk_file_path loadpath in
   if not must_exist || Sys.file_exists resolved then resolved else
   let msg =
     "File reference " ^ file ^ " was resolved to " ^ resolved ^
