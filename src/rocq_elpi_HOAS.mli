@@ -121,6 +121,12 @@ val lp2inductive_entry :
   State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UState.named_universes_entry * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 [%%endif]
 
+[%%if coq = "8.20" || coq = "9.0"]
+val lp2record_field_spec : record_field_spec -> Name.t * Record.Internal.projection_flags
+[%%else]
+val lp2record_field_spec : record_field_spec -> Name.t * Record.Data.projection_flags
+[%%endif]
+
 val inductive_decl2lp :
   depth:int -> empty coq_context -> constraints -> State.t -> (Names.MutInd.t * UVars.Instance.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
     State.t * term * Conversion.extra_goals

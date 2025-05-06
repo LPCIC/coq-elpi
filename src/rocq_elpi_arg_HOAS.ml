@@ -73,6 +73,7 @@ type top_indt_decl = Geninterp.interp_sign * glob_indt_decl
 
 type univpoly = Mono | Poly | CumulPoly
 
+[%%if coq = "8.20" || coq = "9.0"]
 type raw_record_decl_elpi = {
   name : qualified_name;
   parameters : Constrexpr.local_binder_expr list;
@@ -80,7 +81,17 @@ type raw_record_decl_elpi = {
   constructor : Names.Id.t option;
   fields : (Vernacexpr.local_decl_expr * Vernacexpr.record_field_attr) list;
   univpoly : univpoly;
-} 
+}
+[%%else]
+type raw_record_decl_elpi = {
+  name : qualified_name;
+  parameters : Constrexpr.local_binder_expr list;
+  sort : Constrexpr.sort_expr option;
+  constructor : Names.Id.t option;
+  fields : (Vernacexpr.local_decl_expr * Record.Data.projection_flags * Vernacexpr.notation_declaration list) list;
+  univpoly : univpoly;
+}
+[%%endif]
 type glob_record_decl_elpi = {
   name : string list * Names.Id.t;
   constructorname : Names.Id.t option;
@@ -317,6 +328,9 @@ let intern_record_decl glob_sign (it : raw_record_decl) = glob_sign, it
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let dest_entry (_,_,_,_,x) = x
 
+let expr_Type_sort = Constrexpr_ops.expr_Type_sort
+
+[%%if coq = "8.20" || coq = "9.0"]
 let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
   let name, space = sep_last_qualid name in
   let params = intern_global_context_synterp parameters in
@@ -338,7 +352,6 @@ let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fiel
         [] fields in
   { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields; univpoly }
 
-let expr_Type_sort = Constrexpr_ops.expr_Type_sort
 
 let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
   let name, space = sep_last_qualid name in
@@ -365,6 +378,60 @@ let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fi
     | Vernacexpr.DefExpr _, _ -> Rocq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,intern_env,[]) fields in
   { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields; univpoly }
+[%%else]
+let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
+  let name, space = sep_last_qualid name in
+  let params = intern_global_context_synterp parameters in
+  let params = List.rev params in
+  let arity = mkGHole in
+  let fields =
+    List.fold_left (fun acc -> function
+    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Record.Data.pf_coercion = coe; pf_instance = tcinst; pf_canonical = canon }, nots ->
+        if nots <> [] then Rocq_elpi_utils.nYI "notation in record fields";
+        let () = match tcinst with
+          | Some { inst_priority = Some _ } -> Rocq_elpi_utils.nYI "priority in record fields"
+          | _ -> ()
+        in
+        let atts = { Rocq_elpi_HOAS.is_canonical = canon; is_coercion = if Option.has_some coe then Reversible else Off; name } in
+        let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
+        let entry = intern_global_context_synterp [mkCLocalAssum [fn] (Constrexpr.Default Glob_term.Explicit) x] in
+        let x = match entry with
+          | [x] -> dest_entry x
+          | _ -> assert false in
+        (x, atts) :: acc
+    | Vernacexpr.DefExpr _, _, _ -> Rocq_elpi_utils.nYI "DefExpr")
+        [] fields in
+  { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields; univpoly }
+
+let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
+  let name, space = sep_last_qualid name in
+  let sort = match sort with
+    | Some x -> Constrexpr.CSort x
+    | None -> Constrexpr.(CSort expr_Type_sort) in
+  let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
+  let glob_sign_params = push_glob_ctx params glob_sign in
+  let params = List.rev params in
+  let arity = intern_global_constr_ty ~intern_env glob_sign_params @@ CAst.make sort in
+  let _, _, fields =
+    List.fold_left (fun (gs,intern_env,acc) -> function
+    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Record.Data.pf_coercion = coe; pf_instance = tcinst; pf_canonical = canon }, nots ->
+        if nots <> [] then Rocq_elpi_utils.nYI "notation in record fields";
+        let () = match tcinst with
+          | Some { inst_priority = Some _ } -> Rocq_elpi_utils.nYI "priority in record fields"
+          | _ -> ()
+        in
+        let atts = { Rocq_elpi_HOAS.is_canonical = canon; is_coercion = if Option.has_some coe then Reversible else Off; name } in
+        let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
+        let intern_env, entry = intern_global_context ~intern_env gs [mkCLocalAssum [fn] (Constrexpr.Default Glob_term.Explicit) x] in
+        let x = match entry with
+          | [x] -> dest_entry x
+          | _ -> assert false in
+        let gs = push_glob_ctx entry gs in
+        gs, intern_env, (x, atts) :: acc
+    | Vernacexpr.DefExpr _, _, _ -> Rocq_elpi_utils.nYI "DefExpr")
+        (glob_sign_params,intern_env,[]) fields in
+  { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields; univpoly }
+[%%endif]
 
 let raw_indt_decl_to_glob_synterp ({ finiteness; name; parameters; non_uniform_parameters; arity; constructors; univpoly } : raw_indt_decl_elpi) : glob_indt_decl_elpi =
   let name, space = sep_last_qualid name in
