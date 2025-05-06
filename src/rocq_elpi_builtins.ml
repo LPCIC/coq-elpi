@@ -2267,14 +2267,8 @@ Supported attributes:
         List.iter (fun x -> Dumpglob.dump_definition (lid_of x) false "constr") cids
      | Some (primitive,field_specs) -> (* record: projection... *)
          let names, flags =
-           List.(split (map (fun { name; is_coercion; is_canonical } -> name,
-               { Record.Internal.pf_coercion = is_coercion <> Off ;
-                 pf_reversible = is_coercion = Reversible ;
-                 pf_canonical = is_canonical;
-                 pf_instance = false;
-                 pf_priority = None;
-                 pf_locality = OptDefault })
-             field_specs)) in
+           List.(split (map lp2record_field_spec field_specs))
+         in
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
