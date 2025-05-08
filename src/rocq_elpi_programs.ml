@@ -20,9 +20,11 @@ let eq_cunit x y =
 [%%if coq = "8.20" || coq = "9.0"]
 let my_filtered_open = Libobject.simple_open
 let my_simple_open ?cat f = my_filtered_open ?cat (fun i v -> if Int.equal i 1 then f v)
+let is_in_section = Lib.is_in_section
 [%%else]
 let my_filtered_open = Libobject.filtered_open
 let my_simple_open = Libobject.simple_open
+let is_in_section = Global.is_in_section
 [%%endif]
 
 
@@ -570,7 +572,7 @@ let get ?(fail_if_not_exists=false) p =
       subst_function = (fun (_,o) -> o);
       open_function = my_simple_open cache;
       discharge_function = (fun (({ scope; program; vars; } as o)) ->
-        if scope = Rocq_elpi_utils.Local || (List.exists (fun x -> Lib.is_in_section (Names.GlobRef.VarRef x)) vars) then None
+        if scope = Rocq_elpi_utils.Local || (List.exists (fun x -> is_in_section (Names.GlobRef.VarRef x)) vars) then None
         else Some o);
     }
   
