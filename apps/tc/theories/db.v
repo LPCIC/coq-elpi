@@ -99,6 +99,7 @@ Elpi Db tc.db lp:{{
     pred ho-link o:term, i:term, o:A.
     func link.eta term, term ->.
     func link.llam term, term ->.
+    func link.unif-eq term, term ->.
 
   }
 }}.
