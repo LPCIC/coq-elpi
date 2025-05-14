@@ -29,6 +29,8 @@ namespace tc {
   func get-TC-of-inst-type term -> gref.
   get-TC-of-inst-type (prod _ _ A) ClassGR:- !,
     pi x\ get-TC-of-inst-type (A x) ClassGR.
+  get-TC-of-inst-type (let _ _ _ A) ClassGR:- !,
+    pi x\ get-TC-of-inst-type (A x) ClassGR.
   get-TC-of-inst-type T ClassGR :-
     coq.safe-dest-app T HD _,
     not (var HD), class-gref HD ClassGR.
