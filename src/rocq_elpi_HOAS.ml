@@ -3623,6 +3623,15 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let ind = { params; decl = Record { id; kid; typ; fields } } in
   let state, i, gls = hoas_ind2lp ~depth coq_ctx state ind in
   state, upoly_decl_of i, gls @ upoly_decl_gls
+
+let lp2record_field_spec { name; is_coercion; is_canonical } =
+  name,
+  { Record.Internal.pf_coercion = is_coercion <> Off ;
+    pf_reversible = is_coercion = Reversible ;
+    pf_canonical = is_canonical;
+    pf_instance = false;
+    pf_priority = None;
+    pf_locality = OptDefault }
 [%%else]
 let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl (decl:Record.Record_decl.t) =
   let open Record.Record_decl in
@@ -3668,9 +3677,12 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl (decl:Record.R
   let kctx = EConstr.of_rel_context kctx in
   if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
 
-  let fields = List.map2 (fun { pf_coercion; pf_reversible; pf_canonical } ->
+  let fields = List.map2 (fun { pf_coercion; pf_canonical } ->
     let open Context.Rel.Declaration in
-    let coe_status = if pf_coercion then if pf_reversible then Reversible else Regular else Off in
+    let coe_status = match pf_coercion with
+      | None -> Off
+      | Some { coe_reversible } -> if coe_reversible then Reversible else Regular
+    in
     function
     | LocalAssum( { Context.binder_name = Anonymous },typ) ->
         { id = Id.of_string "_"; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
@@ -3682,6 +3694,18 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl (decl:Record.R
   let ind = { params; decl = Record { id; kid; typ; fields } } in
   let state, i, gls = hoas_ind2lp ~depth coq_ctx state ind in
   state, upoly_decl_of i, gls @ upoly_decl_gls
+
+let lp2record_field_spec { name; is_coercion; is_canonical } =
+  let pf_coercion = match is_coercion with
+    | Off -> None
+    | Reversible -> Some { Record.Data.coe_reversible = true; coe_local = false }
+    | _ -> Some { coe_reversible= false; coe_local = false }
+  in
+  name,
+  { Record.Data.pf_coercion;
+    pf_canonical = is_canonical;
+    pf_instance = None;
+  }
 [%%endif]
 
 let merge_universe_context state uctx =
