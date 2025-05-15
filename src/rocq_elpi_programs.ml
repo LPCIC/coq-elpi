@@ -222,7 +222,7 @@ module type Programs = sig
   val ast_of_file : qualified_name -> Digest.t * API.Compile.scoped_program
 
 
-  val accumulate : qualified_name -> src list -> unit
+  val accumulate : loc:Loc.t -> qualified_name -> src list -> unit
   val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
   val load_command : loc:Loc.t -> string -> unit
   val load_tactic : loc:Loc.t -> string -> unit
@@ -992,7 +992,11 @@ module Synterp : Programs = struct
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
       accumulate_to_db dbname units vs ~scope))
   
-  
+  let accumulate ~loc name sources =
+    accumulate name (sources:src list);
+    handle_elpi_compiler_errors ~loc (fun () -> 
+      get_and_compile ~even_if_empty:false ~loc:(Loc.make_loc (0,0)) name |> ignore)
+
 end
 module Interp : Programs = struct
   include SourcesStorage(struct
@@ -1020,9 +1024,10 @@ let () = Rocq_elpi_builtins.set_accumulate_text_to_db_interp (fun ~loc n txt sco
       let u = unit_from_string ~elpi ~base ~loc (of_coq_loc loc) txt in
   accumulate_to_db n [u] [] ~scope)
 
-let accumulate name sources =
+let accumulate ~loc name sources =
   accumulate name (sources:src list);
-  get_and_compile ~even_if_empty:false ~loc:(Loc.make_loc (0,0)) name |> ignore
+  handle_elpi_compiler_errors ~loc (fun () -> 
+    get_and_compile ~even_if_empty:false ~loc name |> ignore)
 
 end
 

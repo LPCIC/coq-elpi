@@ -247,7 +247,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
         | `Db base -> base, (fun _ fast -> P.accumulate_to_db program [fast] [] ~scope)
         | `Program base -> base, (fun fname fast ->
            warn_scope_not_regular ~loc scope;
-           P.accumulate program [File { fname; fast}]) in
+           P.accumulate ~loc program [File { fname; fast}]) in
       let cid = Names.Id.of_string_soft (String.concat "." id) in
       let s, u =
         try
@@ -294,7 +294,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
             fname;
             fast = funit;
           }) s new_src_ast in
-        P.accumulate program new_src_ast
+        P.accumulate ~loc program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
   let accumulate_files ~atts:((scope,only),ph) ~loc ?program s = skip ~only ~ph (accumulate_files ~loc ?program ~scope) s
   
@@ -307,14 +307,14 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     | `Program base ->
       warn_scope_not_regular ~loc scope;
       let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
-      P.accumulate program [EmbeddedString { sast = new_ast}]
+      P.accumulate ~loc program [EmbeddedString { sast = new_ast}]
   let accumulate_string ~atts:((scope,only),ph) ~loc ?program sloc = skip ~only ~ph (accumulate_string ~loc ?program ~scope) sloc
   
   
   let accumulate_db ~loc ?(program=current_program()) name =
     let _ = P.ensure_initialized () in
     let header = P.header_of_db name |> List.map (fun dast -> DatabaseHeader { dast }) in
-    if P.db_exists name then P.accumulate program (header @ [DatabaseBody name])
+    if P.db_exists name then P.accumulate ~loc program (header @ [DatabaseBody name])
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
   let accumulate_db ~atts:((scope,only),ph) ~loc ?program name =
     warn_scope_not_regular ~loc scope;
@@ -329,7 +329,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
       else
         let () = warn_scope_not_regular ~loc scope in
         let units = List.map (fun dast -> DatabaseHeader { dast }) units in
-        P.accumulate program units
+        P.accumulate ~loc program units
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
   let accumulate_db_header ~atts:((scope,only),ph) ~loc ?program name =
     skip ~only ~ph (accumulate_db_header ~loc ?program ~scope) name
