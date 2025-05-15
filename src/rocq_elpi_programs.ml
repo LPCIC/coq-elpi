@@ -1020,6 +1020,10 @@ let () = Rocq_elpi_builtins.set_accumulate_text_to_db_interp (fun ~loc n txt sco
       let u = unit_from_string ~elpi ~base ~loc (of_coq_loc loc) txt in
   accumulate_to_db n [u] [] ~scope)
 
+let accumulate name sources =
+  accumulate name (sources:src list);
+  get_and_compile ~even_if_empty:false ~loc:(Loc.make_loc (0,0)) name |> ignore
+
 end
 
 let document_builtins () =
