@@ -22,10 +22,9 @@ Register eq_f as elpi.derive.eq_f.
 
 Elpi Db derive.bcongr.db lp:{{
 
-type bcongr-db constructor -> term -> prop.
+func bcongr-db constructor -> term.
 
 }}.
-#[superglobal] Elpi Accumulate derive.bcongr.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.bcongr.db lp:{{
 
 :name "bcongr-db:fail"

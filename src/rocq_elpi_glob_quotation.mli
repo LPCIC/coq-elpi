@@ -21,7 +21,13 @@ val gterm2lp :
   base:Compile.program -> 
   Glob_term.glob_constr ->
   depth:int -> State.t -> State.t * term
-val gparams2lp :
+  val gindparams2lp :
+  loc:Loc.t ->
+  base:Compile.program -> 
+  Glob_term.glob_decl list ->
+  k:(depth:int -> State.t -> State.t * term) ->
+  depth:int -> State.t -> State.t * term
+val garityparams2lp :
   loc:Loc.t ->
   base:Compile.program -> 
   Glob_term.glob_decl list ->

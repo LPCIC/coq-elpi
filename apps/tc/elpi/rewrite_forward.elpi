@@ -1,80 +1,80 @@
-/* license: GNU Lesser General Public License Version 2.1 or later           */
-/* ------------------------------------------------------------------------- */
+% /* license: GNU Lesser General Public License Version 2.1 or later           */
+% /* ------------------------------------------------------------------------- */
 
-namespace tc {
+% namespace tc {
 
-  pred forward i:term, o:term, o:list (pair (list term) term).
+%   pred forward i:term, o:term, o:list (pair (list term) term).
 
-  % Auxiliary function for rewrite-forward
-  pred rewrite-forward->list i:term, i:name, i:prop, o:list prop.
-  rewrite-forward->list P N (forward _ Lemma RewL)  L :-
-    coq.mk-app Lemma [P] LemmaApp,
-    % coq.typecheck LemmaApp T ok, 
-    % coq.say T, 
-    std.map RewL (x\r\ sigma ProjL Ty Pr\
-      pr ProjL Ty = x,
-      make-proj-app ProjL  LemmaApp Pr,
-      r = decl Pr N Ty) L.
+%   % Auxiliary function for rewrite-forward
+%   pred rewrite-forward->list i:term, i:name, i:prop, o:list prop.
+%   rewrite-forward->list P N (forward _ Lemma RewL)  L :-
+%     coq.mk-app Lemma [P] LemmaApp,
+%     % coq.typecheck LemmaApp T ok, 
+%     % coq.say T, 
+%     std.map RewL (x\r\ sigma ProjL Ty Pr\
+%       pr ProjL Ty = x,
+%       make-proj-app ProjL  LemmaApp Pr,
+%       r = decl Pr N Ty) L.
 
-  % Takes a decl from the context and returns the list of its atomic 
-  % representations by looking in the forward clauses
-  pred rewrite-forward i:prop, o:list prop.
-  rewrite-forward (decl P N Ty) L :-
-    std.findall (forward Ty _ _) FwdL,
-    std.map FwdL (rewrite-forward->list P N) RewFdw,
-    std.flatten RewFdw L.
-  rewrite-forward _ [].
+%   % Takes a decl from the context and returns the list of its atomic 
+%   % representations by looking in the forward clauses
+%   pred rewrite-forward i:prop, o:list prop.
+%   rewrite-forward (decl P N Ty) L :-
+%     std.findall (forward Ty _ _) FwdL,
+%     std.map FwdL (rewrite-forward->list P N) RewFdw,
+%     std.flatten RewFdw L.
+%   rewrite-forward _ [].
 
-  % Takes a list of projections ([proj1|proj2]*) and a term T 
-  % and returns the coq's term (projX (projY (... (projZ T))))
-  % Note that app [Proj, _, _, Rest] has two holes for the types
-  % of the left and right side of Rest
-  pred make-proj-app i:list term, i:term, o:term.
-  make-proj-app [Proj | Projs] T (app [Proj, L, R, Rest]) :-
-    make-proj-app Projs T Rest,
-    % TODO: here we do a naive typecheck to get the types L and R of Rest,
-    % it can be done in a faster way
-    coq.typecheck Rest {{and lp:L lp:R}} ok.
-  make-proj-app [] T T.
+%   % Takes a list of projections ([proj1|proj2]*) and a term T 
+%   % and returns the coq's term (projX (projY (... (projZ T))))
+%   % Note that app [Proj, _, _, Rest] has two holes for the types
+%   % of the left and right side of Rest
+%   pred make-proj-app i:list term, i:term, o:term.
+%   make-proj-app [Proj | Projs] T (app [Proj, L, R, Rest]) :-
+%     make-proj-app Projs T Rest,
+%     % TODO: here we do a naive typecheck to get the types L and R of Rest,
+%     % it can be done in a faster way
+%     coq.typecheck Rest {{and lp:L lp:R}} ok.
+%   make-proj-app [] T T.
 
-  % Takes a conjunction C of terms and []. It returns a list of pair:
-  % The paths to the conjunct c in C and the path to reach it in C 
-  pred rec-split-and i:term, i:(list term), o:list (pair (list term) term).
-  rec-split-and {{lp:A /\ lp:B}} DL L :-
-    LEFT = [{{proj1}} | DL],
-    RIGHT = [{{proj2}} | DL],
-    rec-split-and A LEFT AL, 
-    rec-split-and B RIGHT BL,
-    std.append AL BL L. 
-  rec-split-and A P [pr P A].
+%   % Takes a conjunction C of terms and []. It returns a list of pair:
+%   % The paths to the conjunct c in C and the path to reach it in C 
+%   pred rec-split-and i:term, i:(list term), o:list (pair (list term) term).
+%   rec-split-and {{lp:A /\ lp:B}} DL L :-
+%     LEFT = [{{proj1}} | DL],
+%     RIGHT = [{{proj2}} | DL],
+%     rec-split-and A LEFT AL, 
+%     rec-split-and B RIGHT BL,
+%     std.append AL BL L. 
+%   rec-split-and A P [pr P A].
 
-  % It takes a rewriting-lemma and abstract it into elpi in a forward
-  % clause of type forward. The base case wants a ∀(x : T).f x, since 
-  % we want to keep trace of the type T of x.
-  pred compile-rewrite i:term, i:term, i:list term, o:prop.
-  compile-rewrite (prod _ Ty ((x\ app _) as Bo)) Lemma L (pi x\ forward Ty LemmaApp (TL x)) :-
-    pi x\ 
-      coq.mk-app Lemma {std.rev L} LemmaApp,
-      rec-split-and (Bo x) [] (TL x).
-  compile-rewrite (prod _ _ Bo) Lemma L (pi x\ C x) :-
-    pi x\ compile-rewrite (Bo x) Lemma [x | L] (C x).
+%   % It takes a rewriting-lemma and abstract it into elpi in a forward
+%   % clause of type forward. The base case wants a ∀(x : T).f x, since 
+%   % we want to keep trace of the type T of x.
+%   pred compile-rewrite i:term, i:term, i:list term, o:prop.
+%   compile-rewrite (prod _ Ty ((x\ app _) as Bo)) Lemma L (pi x\ forward Ty LemmaApp (TL x)) :-
+%     pi x\ 
+%       coq.mk-app Lemma {std.rev L} LemmaApp,
+%       rec-split-and (Bo x) [] (TL x).
+%   compile-rewrite (prod _ _ Bo) Lemma L (pi x\ C x) :-
+%     pi x\ compile-rewrite (Bo x) Lemma [x | L] (C x).
 
-  % Takes a string (the name of a rewriting-lemma),
-  % compiles and adds it as a forward clause in tc.db
-  pred add-lemma->forward i:string.
-  add-lemma->forward Lemma :-
-    coq.locate Lemma Gr,
-    coq.env.typeof Gr Type,
-    compile-rewrite Type (global Gr) [] Cl,
-    coq.elpi.accumulate _ "tc.db" (clause Lemma _ Cl).
+%   % Takes a string (the name of a rewriting-lemma),
+%   % compiles and adds it as a forward clause in tc.db
+%   pred add-lemma->forward i:string.
+%   add-lemma->forward Lemma :-
+%     coq.locate Lemma Gr,
+%     coq.env.typeof Gr Type,
+%     compile-rewrite Type (global Gr) [] Cl,
+%     coq.elpi.accumulate _ "tc.db" (clause Lemma _ Cl).
     
-  % TODO: @FissoreD @gares should make a set in output?
-  pred rewrite-dep i:list prop, o:list prop.
-  rewrite-dep [] [].
-  rewrite-dep [A | B] L :-
-    rewrite-forward A NewA, not (NewA = []),
-    std.append NewA B ToTreat,
-    rewrite-dep ToTreat L.
-  rewrite-dep [A | TL] [A | L] :- rewrite-dep TL L.
+%   % TODO: @FissoreD @gares should make a set in output?
+%   pred rewrite-dep i:list prop, o:list prop.
+%   rewrite-dep [] [].
+%   rewrite-dep [A | B] L :-
+%     rewrite-forward A NewA, not (NewA = []),
+%     std.append NewA B ToTreat,
+%     rewrite-dep ToTreat L.
+%   rewrite-dep [A | TL] [A | L] :- rewrite-dep TL L.
 
-}
+% }

@@ -16,7 +16,6 @@ Elpi Db derive.eqbOK.db lp:{{
   pred eqbok-for o:gref, o:constant.
 
 }}.
-#[superglobal] Elpi Accumulate derive.eqbOK.db File derive.lib.
 
 Lemma reflect_dec : forall a b, (forall x y : a, reflect (x=y) (b x y)) -> forall x y : a, {x=y}+{x<>y}.
 Proof.

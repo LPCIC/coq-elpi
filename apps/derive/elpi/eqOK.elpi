@@ -26,7 +26,7 @@ body 0 (prod N S x\ prod _ _ _) E TisT (fun N S R) :-
   @pi-decl N S x\
     R x = {{ lp:E lp:x (lp:TisT lp:x) }}.
 
-pred main i:inductive, i:string, o:list prop.
+func main inductive, string -> list prop.
 main GR O [eqOK-done GR] :- do! [
   T = global (indt GR),
   coq.env.indt GR _ Lno _ _ _ _,

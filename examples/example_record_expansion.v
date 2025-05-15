@@ -217,7 +217,6 @@ Definition f b (t : r) (q := negb b) := fix rec (l1 l2 : list t) :=
   | _, _ => q
   end.
 
-Elpi Trace.
 Elpi record.expand r f "expanded_". 
 Print f.
 Print expanded_f.

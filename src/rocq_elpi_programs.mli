@@ -102,7 +102,7 @@ module type Programs = sig
   val header_of_db : qualified_name -> cunit list
   val ast_of_file : qualified_name -> Digest.t * Compile.scoped_program
 
-  val accumulate : qualified_name -> src list -> unit
+  val accumulate : loc:Loc.t -> qualified_name -> src list -> unit
   val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
 
   val load_command : loc:Loc.t -> string -> unit

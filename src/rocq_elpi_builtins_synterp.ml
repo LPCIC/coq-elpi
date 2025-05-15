@@ -903,7 +903,7 @@ let module_ast_of_modtypath x =
   CAst.make @@ CMident (qualid_of_dirpath (DirPath.make (dirpath_of_modpath x))),
   Declaremods.DefaultInline
 
-  let attribute a = let open API.AlgebraicData in declare {
+let attribute_decl a = let open API.AlgebraicData in Decl {
   ty = Conv.TyName "attribute";
   doc = "Generic attribute";
   pp = (fun fmt a -> Format.fprintf fmt "TODO");
@@ -912,7 +912,11 @@ let module_ast_of_modtypath x =
       B (fun s a -> s,a),
       M (fun ~ok ~ko -> function (s,a) -> ok s a));
   ]
-} |> CConv.(!<)
+}
+let attribute_alloc = let open API.AlgebraicData in
+  allocate_constructors (Param (fun a -> attribute_decl a))
+
+let attribute a = let open API.AlgebraicData in declare_allocated attribute_alloc (attribute_decl a) |> CConv.(!<)
 
 type attribute_data =
   | AttributeString of string
@@ -965,17 +969,15 @@ let coq_synterp_builtins =
     LPCode Rocq_elpi_builtins_arg_HOAS.code;
     LPDoc "Coq terms are not visible at synterp time, they are always holes";
     LPCode "kind term type.";
+    LPCode "kind gref type.";
+    LPCode "kind abbreviation type.";
     LPDoc "-- Parsing time APIs ----------------------------------------------------";
     MLData id;
     MLData modpath;
     MLData modtypath;
     locate_module;
     locate_module_type;
-    LPCode {|
-kind located type.
-type loc-modpath modpath -> located.
-type loc-modtypath modtypath -> located.
-|};
+    MLData located;
   MLCode(Pred("coq.locate-all",
     In(id, "Name",
     Out(B.list located,  "Located",
@@ -1022,7 +1024,7 @@ type loc-modtypath modtypath -> located.
   DocNext);
 
   LPCode {|
-pred coq.env.begin-module i:id, i:option modtypath.
+func coq.env.begin-module id, option modtypath -> .
 coq.env.begin-module Name MP :-
   coq.env.begin-module-functor Name MP [].
 |};
@@ -1059,7 +1061,7 @@ coq.env.begin-module Name MP :-
   DocNext);
 
   LPCode {|
-pred coq.env.begin-module-type i:id.
+func coq.env.begin-module-type id ->.
 coq.env.begin-module-type Name :-
   coq.env.begin-module-type-functor Name [].
 |};
@@ -1193,7 +1195,7 @@ coq.env.begin-module-type Name :-
 
   LPCode {|
 % see coq.elpi.accumulate-clauses
-pred coq.elpi.accumulate i:scope, i:id, i:clause.
+func coq.elpi.accumulate scope, id, clause ->.
 coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 |};
 

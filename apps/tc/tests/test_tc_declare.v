@@ -50,6 +50,8 @@ Section S3.
   #[mode(i)] TC.Declare Class class3 (n : nat).
   Instance inst3 : class3 0. Proof. apply Build_class3. Qed.
 
+  (* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
+
   Goal exists x, class3 x. 
   Proof.
     eexists.

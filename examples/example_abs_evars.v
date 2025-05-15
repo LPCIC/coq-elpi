@@ -55,15 +55,15 @@ abs-evars T1 T3 M :- std.do! [
 
 % we query if the hole was seen before, and if so
 % we fetch its number
-pred seen? i:term, o:int.
+func seen? term, int ->.
 seen? X Y :- declare_constraint (seen? X Y) [X,_].  
 
 % we declare it is now seen and label it with a number
-pred seen! i:term, i:int.
+func seen! term, int ->.
 seen! X Y :- declare_constraint (seen! X Y) [X,_].
 
 % to empty the store
-pred purge-seen!.
+func purge-seen!.
 purge-seen! :- declare_constraint purge-seen! [_].
 
 constraint seen? seen! purge-seen!  {

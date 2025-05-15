@@ -4,7 +4,7 @@
 
 namespace paramX {
 
-pred mk-trivial-match i:int, i:term, i:list term, i:term, o:term.
+func mk-trivial-match int, term, list term, term -> term.
 mk-trivial-match Rno (prod N T P) Args F (fun N T B) :- Rno >= 0, !, std.do! [
   Rno' is Rno - 1,
   (pi x\ decl x N T => mk-trivial-match Rno' (P x) [x|Args] F (B x)),
@@ -24,13 +24,13 @@ mk-trivial-match -1 P RArgs F Match :- std.do! [
     (mk-trivial-match.branch Lno RIndArgs {std.rev ROtherArgs} F) Match,
 ].
 
-pred mk-trivial-match.rty i:list term, i:term,  i:term, i:list term, i:list term, o:term.
+func mk-trivial-match.rty list term, term,  term, list term, list term -> term.
 mk-trivial-match.rty Args P _ Vars _ R :- std.do! [
   std.map2 Args Vars (x\y\r\ r = copy x y) Subst,
   Subst => copy P R,
 ].
 
-pred mk-trivial-match.branch i:int, i:list term, i:list term, i:term,  i:term, i:term, i:list term, i:list term, o:term.
+func mk-trivial-match.branch int, list term, list term, term,  term, term, list term, list term -> term.
 mk-trivial-match.branch Lno Args OtherArgs F K KTy Vars _ R1 :- std.do! [
   coq.mk-app K Vars KArgs,
   coq.safe-dest-app KTy _ KTyArgs,
@@ -42,17 +42,17 @@ mk-trivial-match.branch Lno Args OtherArgs F K KTy Vars _ R1 :- std.do! [
 
 
 % prove H G P finds a P : H => G
-pred prove i:term, i:term, o:term.
-pred cross i:term.
+func prove term, term -> term.
+func cross term.
 
 % prove-arg AppliedHyp AppliedGoal Argument ProofAppliedHyp Proof.
-pred prove-arg i:term, i:term, i:term, i:term, o:term.
+func prove-arg term, term, term, term -> term.
 
 prove-arg X X _ P P :- !.
 
 prove-arg (app [H|Hs]) (app[G|Gs]) X PHX PGX :-
-  std.appendR HArgs [X] Hs, coq.mk-app H HArgs Hyp,
-  std.appendR GArgs [X] Gs, coq.mk-app G GArgs Goal,
+  std.appendR HArgs [X] Hs, !, coq.mk-app H HArgs Hyp,
+  std.appendR GArgs [X] Gs, !, coq.mk-app G GArgs Goal,
   prove Hyp Goal Proof,
   coq.mk-app Proof [X,PHX] PGX.
 
@@ -60,7 +60,7 @@ prove-arg (prod _ X x\ prod _ (PX x) (H x)) (prod _ _ y\ prod _ (PX y) (G y)) A 
   pi x px\
     prove-arg (H x px) (G x px) {coq.mk-app A [x]} {coq.mk-app PA [x,px]} (Proof x px).
  
-pred prove-args i:list term, i:list term, o:list term.
+func prove-args list term, list term -> list term.
 prove-args [] [] [].
 prove-args [X,Pr|Args] [_,PX|ArgsT] [X,Proof|QArgs] :-
   coq.safe-dest-app PX HD _, cross HD, !,

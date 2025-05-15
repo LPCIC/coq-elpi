@@ -13,9 +13,8 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 
 Elpi Db derive.projK.db lp:{{
-type projK-db constructor -> int -> term -> prop.
+func projK-db constructor -> int, term.
 }}.
-#[superglobal] Elpi Accumulate derive.projK.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.projK.db lp:{{
 
 :name "projK-db:fail"
