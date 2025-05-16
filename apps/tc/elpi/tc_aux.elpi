@@ -3,6 +3,29 @@
 
 namespace tc {
 
+  namespace lettify {
+    func replace-args term, list term, list term, (func term -> term) -> term.
+    replace-args Hd []     L K R :- std.rev L L1, K (app [Hd|L1]) R.
+    replace-args Hd [X|Xs] L K (let `_` Ty X T') :-
+      coq.typecheck X Ty ok,
+      pi x\ replace-args Hd Xs [x|L] K (T' x).
+
+    func replace-top-level list term, term, list term -> term.
+    replace-top-level []     Hd L (app [Hd | L']) :- std.rev L L'.
+    replace-top-level [app[X|Xs]|As] Hd L R :-
+      replace-args X Xs [] (x\ replace-top-level As Hd [x|L]) R.
+    replace-top-level [(fun _ _ _ as A)|As] Hd L (let `_` Ty A T') :-
+      coq.typecheck A Ty ok,
+      pi x\ replace-top-level As Hd [x|L] (T' x).
+
+    func main term -> term.
+    main (prod N Ty Bo) (prod N Ty Bo') :- !,
+      pi x\ main (Bo x) (Bo' x).
+    main (app [X|Xs]) T :- is-instance-term X, !,
+      replace-top-level Xs X [] T.
+    main T T.
+  }
+
   % return if a gref is an existsing instance
   % TODO: this could be replaced with an API
   % coq.TC.get-class-of-inst i:gref, o:gref
