@@ -102,6 +102,11 @@ namespace tc {
         decompile-term-aux (app L) PR (app L') PR' :- !,
           std.fold-map L PR decompile-term-aux L' PR'.
 
+        decompile-term-aux (let N T Ty Bo) PR (let N T' Ty' Bo') PR3 :- !,
+          decompile-term-aux T PR T' PR1,
+          decompile-term-aux Ty PR1 Ty' PR2,
+          (pi x\ is-name x => decompile-term-aux (Bo x) PR2 (Bo' x) PR3).
+
         decompile-term-aux A B _ _ :- coq.error "[TC] cannot decompile-term-aux of" A B.
         
         :functional
@@ -247,6 +252,16 @@ namespace tc {
             decl p N Ty' =>
             name-pair p p z => E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
         ].
+      compile-ty L L1 ProofHd IsPositive (let _ Ty T Bo) ProofTlR PremR Clause :- !,
+        if (IsPositive = tt) 
+          (Clause = (pi x\ C x), E = is-uvar) 
+          (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
+        pi p\ sigma F NewPrem\
+          decl p N Ty' =!=> E p =!=> (
+            NewPrem = tc.link.unif-eq T p,
+            compile-premise L L1 p Ty ProofHd IsPositive (Bo p) ProofTlR [NewPrem | PremR] (C p)
+          ).
+
       compile-ty L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
         std.do![    
           coq.mk-app ProofHd {std.rev ProofTlR} Proof,
