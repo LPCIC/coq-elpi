@@ -4,13 +4,15 @@
 Declare ML Module "rocq-elpi.tc".
 
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
-(* From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler. *)
-From elpi.apps.tc.elpi Extra Dependency "ho_precompile.elpi" as ho_precompile.
-From elpi.apps.tc.elpi Extra Dependency "ho_compile.elpi" as ho_compile.
-From elpi.apps.tc.elpi Extra Dependency "compiler1.elpi" as compiler1.
+
 From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
-From elpi.apps.tc.elpi Extra Dependency "ho_link.elpi" as ho_link.
+
+From elpi.apps.tc.elpi Extra Dependency "link.elpi" as link.
+From elpi.apps.tc.elpi Extra Dependency "compiler.elpi" as compiler.
+From elpi.apps.tc.elpi Extra Dependency "compile_goal.elpi" as compile_goal.
+From elpi.apps.tc.elpi Extra Dependency "compile_instance.elpi" as compile_instance.
+
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
@@ -48,14 +50,8 @@ Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate File unif.
-Elpi Accumulate File ho_link.
-(* Elpi Accumulate File compiler. *)
-Elpi Accumulate File ho_precompile.
-Elpi Accumulate File ho_compile.
-Elpi Accumulate File compiler1.
-Elpi Accumulate File create_tc_predicate.
-Elpi Accumulate File modes.
+Elpi Accumulate File unif modes link.
+Elpi Accumulate File compile_instance compile_goal.
 Elpi Accumulate File solver.
 Elpi Query lp:{{
   sigma Options\ 
@@ -79,13 +75,9 @@ Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File tc_aux.
+Elpi Accumulate File unif modes link.
+Elpi Accumulate File compile_instance compiler compile_goal.
 Elpi Accumulate File create_tc_predicate.
-Elpi Accumulate File ho_precompile.
-Elpi Accumulate File ho_compile.
-Elpi Accumulate File unif.
-Elpi Accumulate File ho_link.
-Elpi Accumulate File compiler1.
-Elpi Accumulate File modes.
 Elpi Accumulate lp:{{
 
   /* 
@@ -96,10 +88,11 @@ Elpi Accumulate lp:{{
       Class Bird := IsAnimal :> Animal.
     ```
     The instance IsAnimal of type Bird -> Animal, is compiled before the
-    predicate for Bird; hence, Bird is not recognize as a premise of IsAnimal.
+    predicate for Bird; hence, it is not possible to add the premise
+    tc-Bird for the IsAnimal instance...
     This problem is due to the order in which the registers for Instance and
     Class creation are run.
-    The solution is to do the following two jobs when a class C is created:
+    The solution is to do the following jobs when a class C is created:
       1: for every projection P of C, if P is a coercion, the wrongly 
         compiled instance is replaced with a `dummy` clause.
       2: the predicate for the class is created
@@ -120,11 +113,6 @@ Elpi Accumulate lp:{{
     tc.time-it tc.oTC-time-compile-class (
       coq.locate Cl GR, tc.add-class-gr tc.classic GR
     ) "Compiler for Class".
-
-  % used to build ad-hoc instance for eta-reduction on the argument of 
-  % Cl that have function type
-  main [str "default_instance", str Cl] :- !,
-    tc.eta-reduction-aux.main Cl.
 
   main A :- coq.error "Fail in TC.Compiler: not a valid input entry" A.
 }}.
@@ -183,6 +171,8 @@ Elpi Accumulate lp:{{
 }}.
 
 
+(* Registering, activating the new tactic TC.Solver for TC resolution
+   + overriding all TC resolution *)
 Elpi TC Solver Register TC.Solver.
 Elpi TC Solver Activate TC.Solver.
 Elpi TC Solver Override TC.Solver All.
