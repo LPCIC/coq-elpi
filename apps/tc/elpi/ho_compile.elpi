@@ -254,7 +254,7 @@ namespace tc {
           (Clause = (pi x\ C x), E = is-uvar) 
           (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
         pi p\ sigma F NewPrem\
-          decl p N Ty' =!=> E p =!=> (
+          (decl p N Ty' :- !) => (E p :- !) => (
             NewPrem = tc.link.unif-eq T p,
             compile-premise L L1 p Ty ProofHd IsPositive (Bo p) ProofTlR [NewPrem | PremR] (C p)
           ).
