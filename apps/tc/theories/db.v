@@ -101,6 +101,7 @@ Elpi Db tc.db lp:{{
     pred ho-link o:term, i:term, o:A.
     pred link.eta i:term, i:term.
     pred link.llam i:term, i:term.
+    pred link.unif-eq i:term, i:term.
 
   }
 }}.

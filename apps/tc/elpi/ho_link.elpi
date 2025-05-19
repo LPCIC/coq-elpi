@@ -130,6 +130,16 @@ namespace tc {
       }
     }
 
+    namespace unif-eq {
+      pred unif-eq i:term, i:term.
+      unif-eq T1 (uvar as T2) :- !, declare_constraint (unif-eq T1 T2) [_,T2].
+      unif-eq T1 T2 :- !, coq.unify-eq T1 T2 ok.
+    }
+
+    pred unif-eq i:term, i:term.
+    unif-eq T1 T2 :- unif-eq.unif-eq T1 T2.
+
+
     pred eta i:term, i:term.
     eta A B :- eta.eta A B.
 
