@@ -767,6 +767,17 @@ let detype_closed_glob env sigma closure =
   fix_detype gbody
 [%%endif]
 
+[%%if coq = "8.19" || coq = "8.20" || coq = "9.0"]
+let detype_to_pattern env sigma c =
+  let c = detype env sigma c in
+  Patternops.pattern_of_glob_constr env c
+[%%else]
+let detype_to_pattern env sigma c =
+  let c = detype env sigma c in
+  let ids, p = Patternops.pattern_of_glob_constr env c in
+  ids, Patternops.interp_pattern env sigma Glob_ops.empty_lvar p
+[%%endif]
+
 type qualified_name = string list
 
 let compare_qualified_name = Stdlib.compare
