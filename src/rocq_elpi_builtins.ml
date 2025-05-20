@@ -1078,7 +1078,7 @@ let declare_predicate func dbname indexing predname spec ~depth ctx _ state =
     mode ^ "(" ^ ty ^ ")") in
   let spec = String.concat ", " spec in
   let func = if func then "func" else "pred" in
-  let text = Format.asprintf "%s %s %s %s %s." indexing func predname spec in
+  let text = Format.asprintf "%s %s %s %s." indexing func predname spec in
   let scope = if local then Local else if super_global then SuperGlobal else Regular in
   let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
   f ~loc dbname text scope;
