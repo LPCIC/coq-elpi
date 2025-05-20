@@ -1377,6 +1377,13 @@ external func coq.arguments.simplification gref -> option simplification_strateg
 external func coq.arguments.set-simplification gref, 
                                               simplification_strategy.
 
+% [coq.arguments.reset-simplification GR] resets the behavior of the
+% simplification tactics.
+% Also resets the ! and / modifiers for the Arguments command.
+% Supported attributes:
+% - @global! (default: false)
+external func coq.arguments.reset-simplification gref.
+
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.
 external func coq.locate-abbreviation id -> abbreviation.
@@ -1871,6 +1878,11 @@ external symbol out : argument_mode = "1".
 % - @global! (default: false, always active
 external func coq.elpi.add-predicate string, string, string, 
                                     list (pair argument_mode string).
+
+% [coq.elpi.add-function Db Indexing PredName Spec] Same as
+% coq.elpi.add-predicate, but for deterministic predicates
+external func coq.elpi.add-function string, string, string, 
+                                   list (pair argument_mode string).
 
 % [coq.elpi.predicate PredName Args Pred] Pred is the application of
 % PredName to Args

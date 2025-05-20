@@ -16,9 +16,9 @@ func remove-pending-deterministic ->.
 remove-pending-deterministic :-
   tc.remove-clause @pending-deterministic! (pending-deterministic) [].
 
-func is-deterministic -> (func -> string, list (pair argument_mode string)).
+func is-deterministic -> (func string, list (pair argument_mode string) ->).
 is-deterministic (coq.elpi.add-function "tc.db" _) :- pending-deterministic, !, remove-pending-deterministic.
-is-deterministic (coq.elpi.add-predicate "tc.db" _) :- .
+is-deterministic (coq.elpi.add-predicate "tc.db" _).
 
 % The predicate of a class is local if inside a section and readded at section end.
 % This way, section variables are generalized
@@ -37,7 +37,8 @@ add-class-gr SearchMode ClassGR :-
   tc.gref->pred-name ClassGR PredName,
   get-class-locality Locality, 
   Locality => (
-    {is-deterministic} PredName EM,
+    F = {is-deterministic},
+    F PredName EM,
     tc.add-tc-db _ _ (tc.class ClassGR PredName SearchMode SM)).
 
 func add-class-str search-mode, string ->.
