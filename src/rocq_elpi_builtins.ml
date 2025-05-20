@@ -1060,6 +1060,30 @@ let mode = let open API.AlgebraicData in let open Hints in declare {
   ]
 } |> CConv.(!<)
 
+let declare_predicate func dbname indexing predname spec ~depth ctx _ state =
+  let dbname = Rocq_elpi_utils.string_split_on_char '.' dbname in
+  let f = get_accumulate_text_to_db_interp () in
+  let local = ctx.options.local = Some true in
+  let super_global = ctx.options.local = Some false in
+  if local && super_global then CErrors.user_err Pp.(str "coq.elpi.add-predicate: @global! incompatible with @local!");
+  let indexing =
+    match indexing with
+    | B.Given str -> ":index ("^str^") "
+    | B.Unspec -> "" in
+  let spec = spec |> List.map (fun (mode,ty) ->
+    let mode =
+      match mode with
+      | `Input -> "i:"
+      | `Output -> "o:" in
+    mode ^ "(" ^ ty ^ ")") in
+  let spec = String.concat ", " spec in
+  let func = if func then "func" else "pred" in
+  let text = Format.asprintf "%s %s %s %s %s." indexing func predname spec in
+  let scope = if local then Local else if super_global then SuperGlobal else Regular in
+  let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
+  f ~loc dbname text scope;
+  state, (), []
+
 module WMsg = Set.Make(struct
   type t = Loc.t option * string
   let compare = Stdlib.compare
@@ -4291,29 +4315,16 @@ instead of proper data types; beware parsing errors are fatal.
 Supported attributes:
 - @local! (default: false, discard at the end of section or module)
 - @global! (default: false, always active|}))))),
-    (fun dbname indexing predname spec ~depth ctx _ state ->
-      let dbname = Rocq_elpi_utils.string_split_on_char '.' dbname in
-      let f = get_accumulate_text_to_db_interp () in
-      let local = ctx.options.local = Some true in
-      let super_global = ctx.options.local = Some false in
-      if local && super_global then CErrors.user_err Pp.(str "coq.elpi.add-predicate: @global! incompatible with @local!");
-      let indexing =
-        match indexing with
-        | B.Given str -> ":index ("^str^") "
-        | B.Unspec -> "" in
-      let spec = spec |> List.map (fun (mode,ty) ->
-        let mode =
-          match mode with
-          | `Input -> "i:"
-          | `Output -> "o:" in
-        mode ^ "(" ^ ty ^ ")") in
-      let spec = String.concat ", " spec in
-      let text = indexing ^ "pred " ^ predname ^ " " ^ spec ^ "." in
-      let scope = if local then Local else if super_global then SuperGlobal else Regular in
-      let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
-      f ~loc dbname text scope;
-      state, (), []
-      )),
+    declare_predicate false),
+  DocAbove);
+
+  MLCode(Pred("coq.elpi.add-function",
+    In(B.string,"Db",
+    In(B.unspec B.string,"Indexing",
+    In(B.string,"PredName",
+    In(B.list (B.pair argument_mode B.string),"Spec",
+    Full(global,{|Same as coq.elpi.add-predicate, but for deterministic predicates|}))))),
+    declare_predicate true),
   DocAbove);
 
   MLCode(Pred("coq.elpi.predicate",
