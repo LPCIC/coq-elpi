@@ -152,7 +152,7 @@ namespace tc {
         -> prop.             % the compiled clause for the instance
 
       add-pi-problematic-terms z L Ty ProofHd Clause :-
-        compile-ty L _ ProofHd tt Ty [] [] Clause.
+        compile-ty L _ ProofHd tt Ty [] [] [] Clause.
       add-pi-problematic-terms (s N) L Ty ProofHd (pi x\ Clause x) :-
         pi x\ is-uvar x => add-pi-problematic-terms N [x|L] Ty ProofHd (Clause x).
 
@@ -218,19 +218,20 @@ namespace tc {
         i:term,
         i:bool,
         i:term,
+        i:list prop, % tc.link.unif-eq
         i:list term,
-        i:list prop,
+        i:list prop, % premises coming from hyps in the coq's instance
         o:prop.
-      compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
+      compile-premise L L2 P PTy ProofHd IsPositive ITy UnifLinks ProofTlR PremR Clause :-
         ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- !, tc.get-TC-of-inst-type a b) => 
           tc.get-TC-of-inst-type PTy TC), !,
-        compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
+        compile-ty L L1 P {neg IsPositive} PTy [] [] [] NewPrem,
         if (tc.class TC _ tc.deterministic _)
           (NewPrem' = std.once NewPrem)
           (NewPrem' = NewPrem),
-        compile-ty L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
-      compile-premise L L1 _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :-
-        compile-ty L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
+        compile-ty L1 L2 ProofHd IsPositive ITy UnifLinks ProofTlR [NewPrem' | PremR] Clause.
+      compile-premise L L1 _ _ ProofHd IsPositive ITy UnifLinks ProofTlR PremR Clause :-
+        compile-ty L L1 ProofHd IsPositive ITy UnifLinks ProofTlR PremR Clause. 
 
       :index (_ _ _ _ 1)
       func compile-ty 
@@ -239,35 +240,36 @@ namespace tc {
         term,
         bool,
         term,
+        list prop, % tc.link.unif-eq
         list term,
-        list prop
+        list prop  % premises coming from hyps in the coq's instance
         -> prop.
-      compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
+      compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) UnifLinks ProofTlR PremR Clause :- !,
         std.do![
           if (IsPositive = tt) 
             (Clause = (pi x\ C x), E = is-uvar) 
             (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
           pi p\ sigma F\
-            F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [p|ProofTlR],
+            F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) UnifLinks [p|ProofTlR],
             decl p N Ty' =>
             name-pair p p z => E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
         ].
-      compile-ty L L1 ProofHd IsPositive (let _ Ty T Bo) ProofTlR PremR Clause :- !,
+      compile-ty L L1 ProofHd IsPositive (let _ Ty T Bo) UnifLinks ProofTlR PremR Clause :- !,
         if (IsPositive = tt) 
           (Clause = (pi x\ C x), E = is-uvar) 
           (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
         pi p\ sigma F NewPrem\
           decl p N Ty' =!=> E p =!=> (
             NewPrem = tc.link.unif-eq T p,
-            compile-premise L L1 p Ty ProofHd IsPositive (Bo p) ProofTlR [NewPrem | PremR] (C p)
+            compile-premise L L1 p Ty ProofHd IsPositive (Bo p) [NewPrem | UnifLinks] ProofTlR PremR (C p)
           ).
 
-      compile-ty L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
+      compile-ty L L2 ProofHd IsPositive Goal UnifLinks ProofTlR PremR Clause :-
         std.do![    
           coq.mk-app ProofHd {std.rev ProofTlR} Proof,
           decompile.decompile-term L L1 Proof Proof' Prem1,
           decompile.decompile-term L1 L2 Goal Goal' Prem2,
-          compile-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
+          compile-conclusion IsPositive Goal' Proof' {std.append UnifLinks Prem2} Prem1 {std.rev PremR} Clause
         ].
 
       func compile-conclusion 
