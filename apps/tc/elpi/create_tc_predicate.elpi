@@ -7,17 +7,17 @@ macro @pending-deterministic! :- "pending deterministic".
 
 func add-pending-deterministic.
 add-pending-deterministic :-
-  pending-deterministic, !,
+  tc.pending-deterministic, !,
   coq.error "[TC] A pending deterministic already exists.".
 add-pending-deterministic :-
-  tc.add-tc-db @pending-deterministic! _ (pending-deterministic).
+  tc.add-tc-db @pending-deterministic! _ (tc.pending-deterministic).
 
 func remove-pending-deterministic ->.
 remove-pending-deterministic :-
-  tc.remove-clause @pending-deterministic! (pending-deterministic) [].
+  tc.remove-clause @pending-deterministic! (tc.pending-deterministic) [].
 
 func is-deterministic -> (func string, list (pair argument_mode string) ->).
-is-deterministic (coq.elpi.add-function "tc.db" _) :- pending-deterministic, !, remove-pending-deterministic.
+is-deterministic (coq.elpi.add-function "tc.db" _) :- tc.pending-deterministic, !, remove-pending-deterministic.
 is-deterministic (coq.elpi.add-predicate "tc.db" _).
 
 % The predicate of a class is local if inside a section and readded at section end.
