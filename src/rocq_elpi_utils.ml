@@ -287,8 +287,12 @@ let (projectionc, projection) : Names.Projection.t Elpi.API.RawOpaqueData.cdata 
       name = "projection";
       doc = "";
       pp = (fun fmt i -> Format.fprintf fmt "%s" (Names.Projection.to_string i));
-      compare = Names.Projection.CanOrd.compare;
-      hash = Names.Projection.CanOrd.hash;
+      compare =
+        (let open Names.Projection in
+         fun x y -> Repr.CanOrd.compare (repr x) (repr y));
+      hash =
+        (let open Names.Projection in
+         fun x -> Repr.CanOrd.hash (repr x));
       hconsed = false;
       constants = [];
     }
