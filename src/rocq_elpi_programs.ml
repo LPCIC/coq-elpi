@@ -995,7 +995,7 @@ module Synterp : Programs = struct
   let accumulate ~loc name sources =
     accumulate name (sources:src list);
     handle_elpi_compiler_errors ~loc (fun () -> 
-      get_and_compile ~even_if_empty:false ~loc:(Loc.make_loc (0,0)) name |> ignore)
+      get_and_compile ~even_if_empty:false ~loc name |> ignore)
 
 end
 module Interp : Programs = struct
