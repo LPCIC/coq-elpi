@@ -42,9 +42,9 @@ let in_elpi_name x = namein x
 let in_elpiast_name ~loc x = A.mkOpaque ~loc @@ naminc x
 let coq_language = ref API.Quotation.elpi_language
 let set_coq coq = coq_language := coq
-let name_of_name = function
+let name_of_name ~loc = function
   | Names.Name.Anonymous -> None
-  | Names.Name.Name id -> Some (API.Ast.Name.from_string @@ Names.Id.to_string id, !coq_language)
+  | Names.Name.Name id -> Some (API.Ast.Name.from_string @@ Names.Id.to_string id, loc, !coq_language)
 
 let is_coq_name ~depth t =
   match E.look ~depth t with
@@ -427,8 +427,8 @@ let sort : (Sorts.t, _ coq_context, API.Data.constraints) API.ContextualConversi
 let ast_sort ~loc = function
   | Sorts.Prop -> A.mkGlobal ~loc propc
   | Sorts.SProp -> A.mkGlobal ~loc spropc
-  | Sorts.Set -> A.mkAppGlobal ~loc typc (A.mkOpaque ~loc @@ univino Univ.Universe.type0) []
-  | Sorts.Type u -> A.mkAppGlobal ~loc typc (A.mkOpaque ~loc @@ univino u) []
+  | Sorts.Set -> A.mkAppGlobal ~loc ~hdloc:loc typc (A.mkOpaque ~loc @@ univino Univ.Universe.type0) []
+  | Sorts.Type u -> A.mkAppGlobal ~loc ~hdloc:loc typc (A.mkOpaque ~loc @@ univino u) []
   | _ -> assert false
 
 
@@ -653,14 +653,14 @@ let in_elpi_gr ~depth s r =
 
 let in_elpiast_gref ~loc r =
   match r with
-  | GlobRef.IndRef i -> A.mkAppGlobal ~loc indtc (inductiveina ~loc i) []
-  | GlobRef.ConstructRef c -> A.mkAppGlobal ~loc indcc (constructorina ~loc c) []
-  | GlobRef.VarRef v -> A.mkAppGlobal ~loc constc (constantina ~loc (Variable v)) []
-  | GlobRef.ConstRef c -> A.mkAppGlobal ~loc constc (constantina ~loc (Constant c)) []
+  | GlobRef.IndRef i -> A.mkAppGlobal ~loc ~hdloc:loc indtc (inductiveina ~loc i) []
+  | GlobRef.ConstructRef c -> A.mkAppGlobal ~loc ~hdloc:loc indcc (constructorina ~loc c) []
+  | GlobRef.VarRef v -> A.mkAppGlobal ~loc ~hdloc:loc constc (constantina ~loc (Variable v)) []
+  | GlobRef.ConstRef c -> A.mkAppGlobal ~loc ~hdloc:loc constc (constantina ~loc (Constant c)) []
 
 let in_elpiast_gr ~loc r =
   assert_in_elpi_gref_consistent ~poly:false r;
-  A.mkAppGlobal ~loc globalc (in_elpiast_gref ~loc r) []
+  A.mkAppGlobal ~loc  ~hdloc:loc globalc (in_elpiast_gref ~loc r) []
 
 let in_elpi_poly_gr ~depth s r i =
   assert_in_elpi_gref_consistent ~poly:true r;
@@ -672,7 +672,7 @@ let in_elpi_poly_gr ~depth s r i =
 let in_elpiast_poly_gr ~loc r i =
   assert_in_elpi_gref_consistent ~poly:true r;
   let t = in_elpiast_gref ~loc r in
-  A.mkAppGlobal ~loc pglobalc t [i]
+  A.mkAppGlobal ~loc ~hdloc:loc pglobalc t [i]
 
 let in_elpi_poly_gr_instance ~depth s r i =
   assert_in_elpi_gref_consistent ~poly:true r;
@@ -745,17 +745,17 @@ let lamc   = E.Constants.declare_global_symbol "fun"
 let in_elpi_lam n s t = E.mkApp lamc (in_elpi_name n) [s;E.mkLam t]
 
 let in_elpiast_lam ~loc n s t =
-  A.mkAppGlobal ~loc lamc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name n) t]
+  A.mkAppGlobal ~loc ~hdloc:loc lamc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name ~loc n) t]
 
 let prodc  = E.Constants.declare_global_symbol "prod"
 let in_elpi_prod n s t = E.mkApp prodc (in_elpi_name n) [s;E.mkLam t]
 let in_elpiast_prod ~loc n s t =
-  A.mkAppGlobal ~loc prodc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name n) t]
+  A.mkAppGlobal ~loc~hdloc:loc  prodc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name ~loc n) t]
 
 let letc   = E.Constants.declare_global_symbol "let"
 let in_elpi_let n b s t = E.mkApp letc (in_elpi_name n) [s;b;E.mkLam t]
 let in_elpiast_let ~loc n ~ty:s ~bo:b t =
-  A.mkAppGlobal ~loc letc (in_elpiast_name ~loc n) [s;b;A.mkLam ~loc (name_of_name n) t]
+  A.mkAppGlobal ~loc ~hdloc:loc letc (in_elpiast_name ~loc n) [s;b;A.mkLam ~loc (name_of_name ~loc n) t]
 
 (* other *)
 let appc   = E.Constants.declare_global_symbol "app"
@@ -778,9 +778,9 @@ let in_elpi_appl ~depth hd (args : E.term list) =
 
 let flatten_appc_ast ~loc hd args =
   match hd with
-  | { A.it = A.App(g,c,x,[]); loc } when API.Ast.Name.is_global c appc ->
-      A.mkAppGlobal ~loc appc (A.ne_list_to_lp_list (A.lp_list_to_list x @ args)) []
-  | { loc } -> A.mkAppGlobal ~loc appc (A.ne_list_to_lp_list (hd :: args)) []
+  | { A.it = A.App(g,c,_,x,[]); loc } when API.Ast.Name.is_global c appc ->
+      A.mkAppGlobal ~loc ~hdloc:loc appc (A.ne_list_to_lp_list (A.lp_list_to_list x @ args)) []
+  | { loc } -> A.mkAppGlobal ~loc ~hdloc:loc appc (A.ne_list_to_lp_list (hd :: args)) []
   
 let in_elpiast_appl ~loc hd args =
   if args = [] then hd
@@ -796,7 +796,7 @@ let in_elpi_match (*ci_ind ci_npar ci_cstr_ndecls ci_cstr_nargs*) t rt bs =
   E.mkApp matchc t [rt; U.list_to_lp_list bs]
 
 let in_elpiast_match ~loc t rt bs =
-  A.mkAppGlobal ~loc matchc t [rt;A.list_to_lp_list ~loc bs]
+  A.mkAppGlobal ~loc ~hdloc:loc matchc t [rt;A.list_to_lp_list ~loc bs]
 
 let fixc   = E.Constants.declare_global_symbol "fix"
 
@@ -804,7 +804,7 @@ let in_elpi_fix name rno ty bo =
   E.mkApp fixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam bo]
 
 let in_elpiast_fix ~loc n rno ty bo =
-  A.mkAppGlobal ~loc fixc (in_elpiast_name ~loc n) [A.mkOpaque ~loc @@ CD.int.cino rno; ty; A.mkLam ~loc (name_of_name n) bo]
+  A.mkAppGlobal ~loc ~hdloc:loc fixc (in_elpiast_name ~loc n) [A.mkOpaque ~loc @@ CD.int.cino rno; ty; A.mkLam ~loc (name_of_name ~loc n) bo]
   
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
@@ -824,13 +824,13 @@ let fl64c = E.Constants.declare_global_symbol "float64"
 let pstrc = E.Constants.declare_global_symbol "pstring"
 let projc = E.Constants.declare_global_symbol "proj"
 
-let uint63ina ~loc x =     A.mkAppGlobal ~loc primitivec (A.mkAppGlobal ~loc ui63c (A.mkOpaque ~loc (uint63c.cino x)) []) []
-let float64ina ~loc x =    A.mkAppGlobal ~loc primitivec (A.mkAppGlobal ~loc fl64c (A.mkOpaque ~loc (float64c.cino x)) []) []
+let uint63ina ~loc x =     A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc ui63c (A.mkOpaque ~loc (uint63c.cino x)) []) []
+let float64ina ~loc x =    A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc fl64c (A.mkOpaque ~loc (float64c.cino x)) []) []
 let projectionina ~loc p =
   let n = Names.Projection.(arg p + npars p) in
-  A.mkAppGlobal ~loc primitivec (A.mkAppGlobal ~loc projc
+  A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc projc
     (A.mkOpaque ~loc (projectionc.cino p)) [A.mkOpaque ~loc @@ CD.int.cino n]) []
-let pstringina ~loc x =    A.mkAppGlobal ~loc primitivec (A.mkAppGlobal ~loc pstrc (A.mkOpaque ~loc (pstringc.cino x)) []) []
+let pstringina ~loc x =    A.mkAppGlobal ~loc~hdloc:loc  primitivec (A.mkAppGlobal ~loc ~hdloc:loc pstrc (A.mkOpaque ~loc (pstringc.cino x)) []) []
 
 let primitive_value : primitive_value API.Conversion.t =
   let module B = Rocq_elpi_utils in
@@ -1077,7 +1077,7 @@ let purge_algebraic_univs_sort state s =
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
 let in_elpiast_flex_sort ~loc t =
-  A.mkAppGlobal ~loc sortc (A.mkAppGlobal ~loc typc t []) []
+  A.mkAppGlobal ~loc ~hdloc:loc sortc (A.mkAppGlobal ~loc ~hdloc:loc typc t []) []
 
 let sort = { sort with API.ContextualConversion.embed = (fun ~depth ctx csts state s ->
   let state, s =
@@ -1093,7 +1093,7 @@ let in_elpi_sort ~depth ctx csts state s =
   state, E.mkApp sortc s [], gl
 
 let in_elpiast_sort ~loc state s =
-  A.mkAppGlobal ~loc sortc (ast_sort ~loc s) []
+  A.mkAppGlobal ~loc ~hdloc:loc sortc (ast_sort ~loc s) []
  
 
 (* ********************************* }}} ********************************** *)
@@ -1433,13 +1433,13 @@ let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
 
 let in_elpiast_decl ~loc ~v name ~ty =
-  A.mkAppGlobal ~loc declc v [in_elpiast_name ~loc name;ty]
+  A.mkAppGlobal ~loc ~hdloc:loc declc v [in_elpiast_name ~loc name;ty]
 
 let mk_def ~depth name ~bo ~ty =
   E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo]
 
 let in_elpiast_def ~loc ~v name ~ty ~bo =
-  A.mkAppGlobal ~loc defc v [in_elpiast_name ~loc name;ty;bo]
+  A.mkAppGlobal ~loc ~hdloc:loc defc v [in_elpiast_name ~loc name;ty;bo]
   
 let rec constr2lp coq_ctx ~calldepth ~depth state t =
   assert(depth >= coq_ctx.proof_len);

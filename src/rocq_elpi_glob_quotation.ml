@@ -340,7 +340,7 @@ let gterm2lpast ~pattern ~language state glob =
   | GRef(gr, ul) when Global.is_polymorphic gr ->
     begin match ul with
     | None ->
-      let s = A.Term.mkVar ~loc (fresh_uv ()) [] in
+      let s = A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ()) [] in
       in_elpiast_poly_gr ~loc gr s
     | Some (ql,l) ->
       let () = if not (CList.is_empty ql) then nYI "sort poly" in
@@ -350,7 +350,7 @@ let gterm2lpast ~pattern ~language state glob =
   | GRef(gr,_ul) -> in_elpiast_gr ~loc gr
   | GVar(id) -> lookup_bound ~loc ~coqloc id state
   | GSort _ as t when rigid_anon_type t ->
-      let s = A.Term.mkVar ~loc (fresh_uv ()) [] in
+      let s = A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ()) [] in
       in_elpiast_flex_sort ~loc s
   | GSort _ as t when named_type t ->
       let u = name_of_type t in
@@ -375,7 +375,7 @@ let gterm2lpast ~pattern ~language state glob =
         match oty with
         | None ->
             let { bound_list = args } = get_glob_env state in
-            A.Term.mkVar ~loc (fresh_uv ())
+            A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ())
               (List.map (fun x -> A.Term.mkBound ~loc ~language (name_of_id x)) args)
         | Some ty -> gterm2lp state ty in
       under_binder ~loc name ty (Some bo) t state ~k:(fun name t state ->
@@ -414,7 +414,7 @@ let gterm2lpast ~pattern ~language state glob =
   | GHole (GQuestionMark _) ->
       let { bound_list = args } = get_glob_env state in
       let args = List.filter (fun n -> not(is_restricted_name n)) args in
-      A.Term.mkVar ~loc (fresh_uv ())
+      A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ())
         (List.map (fun x -> A.Term.mkBound ~loc ~language (name_of_id x)) (List.rev args))
 
   | GCast(t,_,c_ty) ->
