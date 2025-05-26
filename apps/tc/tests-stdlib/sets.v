@@ -205,19 +205,19 @@ Elpi Accumulate TC.Solver lp:{{
 % This rule should have priority over any other rule, so we put it before
 % hook 0.
 :before "0"
-tc-sets.tc-mem T S {{ lp:X.(MemType.elt) }} R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T S {{ lp:X.(MemType.elt) }} R :-
   coq.typecheck X {{ @MemType.type lp:T lp:S }} ok,
   R = {{ lp:X.(MemType.memP) }}.
 
 :before "0"
-tc-sets.tc-mem T S X C :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T S X C :-
   coq.typecheck C {{ @mem lp:T lp:S lp:X }} ok,
   coq.ltac.collect-goals C [G] [],
   coq.ltac.open (coq.ltac.call-ltac1 "trivial") G [].
 
 % :after "100"
 % % Default rule, we try to brutally prove the membership property
-% tc-sets.tc-mem T S X {{ @Mem lp:T lp:S lp:X lp:C }} :-
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T S X {{ @Mem lp:T lp:S lp:X lp:C }} :-
 %   coq.typecheck C {{ @set_to_pred lp:T lp:S lp:X }} ok,
 %   coq.ltac.collect-goals C [G] [],
 %   coq.say "oops",
@@ -430,7 +430,7 @@ Elpi TC.Pending_lettify.
 (* FIXME: Do I want to index on both the set and the element? *)
 Elpi Accumulate TC.Solver lp:{{
 % :after "1"
-% tc-sets.tc-mem RT {{ @imset lp:T lp:RT' lp:F lp:A }} Y R :-
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem RT {{ @imset lp:T lp:RT' lp:F lp:A }} Y R :-
 %   coq.unify-eq Y {{ lp:F (lp:X.(MemType.elt)) }} ok,
 %   coq.unify-eq RT RT' ok,
     
@@ -452,11 +452,11 @@ Proof. by rewrite setE; exists x, y. Qed.
 
 Elpi TC.Pending_lettify.
 #[pp="6 0 4,7 1 5"] Elpi TC.AddInstances 1 mem_imset2.
-Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
+(* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 Elpi Accumulate TC.Solver lp:{{
 % :after "1"
-% tc-sets.tc-mem RT {{ @imset2 lp:T lp:U lp:RT' lp:F lp:A lp:B }} Z R :-
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem RT {{ @imset2 lp:T lp:U lp:RT' lp:F lp:A lp:B }} Z R :-
 %   coq.unify-eq RT RT' ok,
 %   coq.unify-eq Z {{ lp:F (lp:X.(MemType.elt)) (lp:Y.(MemType.elt)) }} ok,
 
@@ -476,7 +476,7 @@ Proof. by exists. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 % :after "1"
-% tc-sets.tc-mem T {{ @set1 lp:T' lp:X }} X' R :-
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @set1 lp:T' lp:X }} X' R :-
 %   coq.unify-eq T T' ok,
 %   coq.unify-eq X X' ok,
 %   R = {{ @mem_set1 lp:T lp:X }}.
@@ -485,7 +485,7 @@ Elpi Accumulate TC.Solver lp:{{
 Elpi TC.Pending_lettify.
 Elpi TC.AddInstances 1 mem_set1.
 
-Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
+(* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 Check fun (x : nat) => x : [set x].
 
@@ -494,7 +494,7 @@ Proof. by rewrite setE; left. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 % :after "1"
-% tc-sets.tc-mem T {{ @setU lp:T' lp:A lp:B }} X R :-
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setU lp:T' lp:A lp:B }} X R :-
 %   coq.unify-eq T T' ok,
 %   coq.unify-eq X {{ lp:X'.(MemType.elt) }} ok,
 %   coq.typecheck X' {{ @MemType.type lp:T lp:A }} ok,
@@ -505,7 +505,7 @@ Elpi Accumulate TC.Solver lp:{{
 
 Elpi TC.Pending_lettify.
 #[pp="3 0 1"] Elpi TC.AddInstances 1 mem_setUl.
-Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
+(* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 Check fun (A : set nat) (x : A) => x : (A `|` (@set0 nat)).
 Check fun (A : set nat) x => x : (x |` A).
@@ -515,7 +515,7 @@ Proof. by rewrite setE; right. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 % :after "1"
-% tc-sets.tc-mem T {{ @setU lp:T' lp:A lp:B }} X R :-
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setU lp:T' lp:A lp:B }} X R :-
 %   coq.unify-eq T T' ok,
 %   coq.unify-eq X {{ lp:X'.(MemType.elt) }} ok,
 
@@ -527,7 +527,7 @@ Elpi Accumulate TC.Solver lp:{{
 }}.
 Elpi TC.Pending_lettify.
 #[pp="3 0 2"] Elpi TC.AddInstances 1 mem_setUr.
-Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
+(* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 
 Check fun (A : set nat) (x : A) => x : ((@set0 nat) `|` A).
@@ -557,10 +557,10 @@ Proof. by rewrite setE/=; split. Qed.
 
 Elpi TC.Pending_lettify.
 #[pp="4 0 2,5 1 3"] Elpi TC.AddInstances 1 mem_setM.
-Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
+(* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 Elpi Accumulate TC.Solver lp:{{
 % :after "1"
-% tc-sets.tc-mem T {{ @setM lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setM lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
 %   coq.unify-eq T {{ @prod lp:T1 lp:T2 }} ok,
 %   coq.unify-eq X {{ @pair lp:T1 lp:T2 (lp:X1.(MemType.elt)) (lp:X2.(MemType.elt)) }} ok,
   
@@ -581,7 +581,7 @@ stop.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-mem T1 {{ @fst_set lp:T1' lp:T2 lp:A }} X R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T1 {{ @fst_set lp:T1' lp:T2 lp:A }} X R :-
   coq.unify-eq T1 T1' ok,
   coq.unify-eq X {{ @fst lp:T1 lp:T2 (lp:X'.(MemType.elt)) }} ok,
   
@@ -595,7 +595,7 @@ tc-sets.tc-mem T1 {{ @fst_set lp:T1' lp:T2 lp:A }} X R :-
 % This is difficult: the arg is a composed term
 Elpi TC.Pending_lettify.
 #[pp="4 0 2,5 1 3"] Elpi TC.AddInstances 1 mem_setM.
-Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
+(* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 *)
 
 stop.
@@ -607,7 +607,7 @@ Proof. by rewrite setE; exists x.1; rewrite -surjective_pairing. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-mem T2 {{ @snd_set lp:T1 lp:T2' lp:A }} X R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T2 {{ @snd_set lp:T1 lp:T2' lp:A }} X R :-
   coq.unify-eq T2 T2' ok,
   coq.unify-eq X {{ @snd lp:T1 lp:T2 (lp:X'.(MemType.elt)) }} ok,
   
@@ -625,7 +625,7 @@ Proof. by rewrite setE/=; split. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-mem T {{ @setMR lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setMR lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
   coq.unify-eq T {{ @prod lp:T1 lp:T2 }} ok,
   coq.unify-eq X {{ @pair lp:T1 lp:T2 (lp:X1.(MemType.elt)) (lp:X2.(MemType.elt)) }} ok,
   
@@ -644,7 +644,7 @@ Proof. by rewrite setE/=; split. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-mem T {{ @setML lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setML lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
   coq.unify-eq T {{ @prod lp:T1 lp:T2 }} ok,
   coq.unify-eq X {{ @pair lp:T1 lp:T2 (lp:X1.(MemType.elt)) (lp:X2.(MemType.elt)) }} ok,
   
@@ -664,9 +664,9 @@ Proof. by rewrite setE. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-mem T {{ @bigcap lp:T' lp:I lp:F }} X R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @bigcap lp:T' lp:I lp:F }} X R :-
   coq.unify-eq T T' ok,
-  (@pi-decl `i` I i\ tc-sets.tc-mem T {coq.mk-app F [i]} X (XF i)),
+  (@pi-decl `i` I i\ tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {coq.mk-app F [i]} X (XF i)),
   R = {{ @mem_bigcap lp:T lp:I lp:F lp:X lp:{fun `i` I XF} }}.
 }}.
 
@@ -711,17 +711,17 @@ coercion _ X {{ PointedType.type }} E R :-
 
 Elpi Accumulate TC.Solver lp:{{
 :before "0"
-tc-sets.tc-isPointed {{ lp:T.(PointedType.sort) }} {{ lp:T.(PointedType.sortP) }}.
+tc-elpi_apps_tc_tests_stdlib.sets.tc-isPointed {{ lp:T.(PointedType.sort) }} {{ lp:T.(PointedType.sortP) }}.
 
 :before "0"
-tc-sets.tc-isPointed T C :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-isPointed T C :-
   coq.typecheck C {{ @isPointed lp:T }} ok,
   coq.ltac.collect-goals C [G] [],
   coq.ltac.open (coq.ltac.call-ltac1 "trivial") G [].
 
 :after "100"
 % Default rule, we try to brutally prove the injectivity property
-tc-sets.tc-isPointed T {{ @Pointed lp:T lp:C }} :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-isPointed T {{ @Pointed lp:T lp:C }} :-
   coq.typecheck C T ok,
   coq.ltac.collect-goals C [G] [],
   coq.ltac.open (coq.ltac.call-ltac1 "done_tc") G [],
@@ -801,17 +801,17 @@ coercion _ X {{ AddType.type }} E R :-
 
 Elpi Accumulate TC.Solver lp:{{
 :before "0"
-tc-sets.tc-hasAdd {{ lp:T.(AddType.sort) }} {{ lp:T.(AddType.sortP) }}.
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAdd {{ lp:T.(AddType.sort) }} {{ lp:T.(AddType.sortP) }}.
 
 :before "0"
-tc-sets.tc-hasAdd T C :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAdd T C :-
   coq.typecheck C {{ @hasAdd lp:T }} ok,
   coq.ltac.collect-goals C [G] [],
   coq.ltac.open (coq.ltac.call-ltac1 "trivial") G [].
 
 :after "100"
 % Default rule, we try to brutally prove the injectivity property
-tc-sets.tc-hasAdd T {{ @HasAdd lp:T lp:C }} :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAdd T {{ @HasAdd lp:T lp:C }} :-
   coq.typecheck C {{ lp:T -> lp:T -> lp:T }} ok,
   coq.ltac.collect-goals C [G] [],
   coq.ltac.open (coq.ltac.call-ltac1 "done_tc") G [],
@@ -857,18 +857,18 @@ coercion _ X {{ @AddSet.type _ }} E R :-
 
 Elpi Accumulate TC.Solver lp:{{
 :before "0"
-tc-sets.tc-isSubAdd _ {{ lp:X.(AddSet.carrier) }} {{ lp:X.(AddSet.carrierP) }}.
+tc-elpi_apps_tc_tests_stdlib.sets.tc-isSubAdd _ {{ lp:X.(AddSet.carrier) }} {{ lp:X.(AddSet.carrierP) }}.
   %coq.unify-eq U {{ @AddType.Pack lp:T lp:Tadd }} ok.
 
 :before "0"
-tc-sets.tc-isSubAdd T X C :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-isSubAdd T X C :-
   coq.typecheck C {{ @isSubAdd lp:T lp:X }} ok,
   coq.ltac.collect-goals C [G] [],
   coq.ltac.open (coq.ltac.call-ltac1 "trivial") G [].
 
 :after "100"
 % Default rule, we try to brutally prove the injectivity property
-tc-sets.tc-isSubAdd T X {{ @IsSubAdd lp:T lp:X lp:C }} :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-isSubAdd T X {{ @IsSubAdd lp:T lp:X lp:C }} :-
   coq.typecheck C {{ @subAdd_axiom lp:T lp:X }} ok,
   coq.ltac.collect-goals C [G] [],
   coq.ltac.open (coq.ltac.call-ltac1 "done_tc") G [],
@@ -881,7 +881,7 @@ Proof. exact: isSubAddP. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-mem T P {{ @add lp:T' lp:X lp:Y }} R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T P {{ @add lp:T' lp:X lp:Y }} R :-
   coq.unify-eq T {{ lp:T'.(AddType.sort) }} ok,
   coq.unify-eq P {{ lp:P'.(AddSet.carrier) }} ok,
   coq.unify-eq X {{ lp:X'.(MemType.elt) }} ok,
@@ -905,7 +905,7 @@ Definition addSet_hasAdd T (P : addSet T) : hasAdd P :=
   the instance is morally [P] and not [@MemType.type T P]? *)
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-hasAdd {{ @MemType.type lp:T lp:P }} R :- 
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAdd {{ @MemType.type lp:T lp:P }} R :- 
   coq.unify-eq T {{ lp:T'.(AddType.sort) }} ok,
   coq.unify-eq P {{ lp:P'.(AddSet.carrier) }} ok,
   coq.typecheck T' {{ addType }} ok,
@@ -926,7 +926,7 @@ Definition set_add (T : addType) : hasAdd (set T) :=
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-hasAdd {{ @set lp:T }} R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAdd {{ @set lp:T }} R :-
   coq.unify-eq T {{ lp:T'.(AddType.sort) }} ok,
   coq.typecheck T' {{ addType }} ok,
   coq.ltac.collect-goals T' Gs _,
@@ -973,17 +973,17 @@ coercion _ X {{ AcAddType.type }} E R :-
 
 Elpi Accumulate TC.Solver lp:{{
 :before "0"
-tc-sets.tc-hasAcAdd {{ lp:T.(AcAddType.sort) }} {{ lp:T.(AcAddType.sortP) }}.
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAcAdd {{ lp:T.(AcAddType.sort) }} {{ lp:T.(AcAddType.sortP) }}.
 
 :before "0"
-tc-sets.tc-hasAcAdd T C :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAcAdd T C :-
   coq.typecheck C {{ @hasAcAdd lp:T }} ok,
   coq.ltac.collect-goals C [G] [],
   coq.ltac.open (coq.ltac.call-ltac1 "trivial") G [].
 
 :after "100"
 % Default rule, we try to brutally prove the injectivity property
-tc-sets.tc-hasAcAdd T {{ @HasAcAdd lp:T lp:C lp:D }} :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAcAdd T {{ @HasAcAdd lp:T lp:C lp:D }} :-
   coq.typecheck C {{ @hasAdd lp:T }} ok,
   coq.typecheck D {{ @add_is_AC (@AddType.Pack lp:T (@HasAdd lp:T lp:C)) }} ok,
   coq.ltac.collect-goals {{ @HasAcAdd lp:T lp:C lp:D }} [GC, GD] [],
@@ -991,15 +991,15 @@ tc-sets.tc-hasAcAdd T {{ @HasAcAdd lp:T lp:C lp:D }} :-
   coq.ltac.open (coq.ltac.call-ltac1 "done_tc") GD [].
 
 :after "1"
-tc-sets.tc-hasAcAdd {{ lp:T.(AddType.sort) }} R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAcAdd {{ lp:T.(AddType.sort) }} R :-
   (@redflags! coq.redflags.all => coq.reduction.lazy.whd T {{ @AddType.Pack lp:T' _ }}),
-  tc-sets.tc-hasAcAdd T' R.
+  tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAcAdd T' R.
 
 }}.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-hasAdd {{ lp:T.(AcAddType.sort) }} {{ lp:T.(AcAddType.sortP).(has_add_of_addac) }}.
+tc-elpi_apps_tc_tests_stdlib.sets.tc-hasAdd {{ lp:T.(AcAddType.sort) }} {{ lp:T.(AcAddType.sortP).(has_add_of_addac) }}.
 }}.
 
 Check fun (T : acAddType) => T : addType.
@@ -1025,7 +1025,7 @@ Qed.
 Elpi Accumulate TC.Solver lp:{{
 
 :after "1"
-tc-sets.tc-isSubAdd T {{ @add lp:U lp:X lp:Y }} R :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-isSubAdd T {{ @add lp:U lp:X lp:Y }} R :-
   coq.unify-eq {{ lp:T.(AddType.sort) }} {{ lp:T'.(AcAddType.sort) }} ok,
   coq.ltac.collect-goals T' GT _,
   std.forall GT (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
@@ -1071,7 +1071,7 @@ Qed.
 Elpi Accumulate TC.Solver lp:{{
 
 :after "1"
-tc-sets.tc-isSubAdd T {{ even }} {{ even_subAdd }} :-
+tc-elpi_apps_tc_tests_stdlib.sets.tc-isSubAdd T {{ even }} {{ even_subAdd }} :-
   coq.unify-eq T {{ @AddType.Pack nat nat_add }} ok.
 
 }}.
@@ -1080,7 +1080,7 @@ Lemma even0 : 0 \in even. Proof. by exists; exists 0. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
-tc-sets.tc-mem _ {{ even }} {{ 0 }} {{ even0 }}.
+tc-elpi_apps_tc_tests_stdlib.sets.tc-mem _ {{ even }} {{ 0 }} {{ even0 }}.
 }}.
 
 (* Types additifs *)
