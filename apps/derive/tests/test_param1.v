@@ -186,4 +186,8 @@ Fixpoint nat_eq (n m : nat) {struct n} : bool :=
 
 Elpi derive.param1 nat_eq.
 
+Inductive Acc {A : Type} (R : A -> A -> Prop) | (x : A) : Prop :=
+    Acc_intro : (forall y : A, R y x -> Acc y) -> Acc x.
+Elpi derive.param1 Acc.
+
 End OtherTests.

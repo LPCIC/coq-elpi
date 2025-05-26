@@ -119,9 +119,9 @@ param-match (fun N T B) P1 PRM :-
 
 pred param-indt i:inductive, i:bool, i:int, i:int, i:term, i:list term, i:list term,
      i:inductive, o:bool, o:int, o:int, o:term, o:list term.
-param-indt GR IsInd Lno _ Ty Knames Ktypes
+param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
-  LnoR is 3 * Lno, LunoR = LnoR,
+  LnoR is 3 * Lno, LunoR is 3 * Luno,
   param (global (indt GR)) (global (indt GR)) (global (indt NameR)) => do! [
     param Ty _ TyR,
     map2 Knames Ktypes param-indc KtypesR

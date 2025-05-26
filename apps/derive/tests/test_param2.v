@@ -101,3 +101,7 @@ Fail Elpi derive.param2 fb.
 Definition fa_R := O_R.
 Elpi derive.param2.register fa fa_R.
 Elpi derive.param2 fb.
+
+Inductive Acc {A : Type} (R : A -> A -> Prop) | (x : A) : Prop :=
+    Acc_intro : (forall y : A, R y x -> Acc y) -> Acc x.
+Elpi derive.param2 Acc.
