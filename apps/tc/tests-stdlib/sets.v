@@ -373,38 +373,25 @@ Elpi Accumulate TC.AddInstances lp:{{
   % This is done compiling the rule under an informative
   % attribute list carrying the info about which arguments have
   % to be used for typechecking
-  func solve-proj-prem list int, list term, list term -> list prop. 
-  solve-proj-prem [] _ [] [] :- !.
-  solve-proj-prem [] _ L R :-
+  func is-memtype term ->.
+  is-memtype {{@MemType.type _ _}}.
+
+  func solve-proj-prem list term, list term -> list prop. 
+  solve-proj-prem [] [] [] :- !.
+  solve-proj-prem [] L R :-
     R = [sigma Gs O\ 
          coq.ltac.collect-goals (app L) Gs O,
          msolve Gs []].
-  solve-proj-prem [I1 | Ts] Args L [coq.typecheck K Ty ok|Xs] :-
-    std.nth I1 Args K,
-    decl K _ Ty,
+  solve-proj-prem [A|As] L [coq.typecheck A Ty ok|Xs] :-
+    decl A _ Ty, is-memtype Ty, !,
     std.assert!(ground_term Ty) "The type is not ground...",
-    solve-proj-prem Ts Args [K | L] Xs.
-
-  namespace parse_int {
-    func string->int string -> int.
-    string->int S R :- R is string_to_int S.
-
-    func parse-attr string -> list int.
-    parse-attr S R :-
-      rex.split "," S L,
-      std.map L string->int R.
-
-    func main -> list int.
-    main R :-
-      coq.parse-attributes {attributes} [att "pp" string] Opts,
-      (Opts =!=> get-option "pp" Att), !,
-      parse-attr Att R.
-    main [].
-  }
+    solve-proj-prem As [A | L] Xs.
+  solve-proj-prem [_|As] L Xs :-
+    solve-proj-prem As L Xs.
 
   :after "0"
   tc.compile.instance.compile-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- !,
-    solve-proj-prem {parse_int.main} {coq.safe-dest-app Proof _} [] R,
+    solve-proj-prem {coq.safe-dest-app Proof _} [] R,
     std.append {std.append HOPremisesIn Premises} {std.append HOPremisesOut R} AllPremises,
     tc.make-tc Goal Proof AllPremises tt Clause.
   :after "0"
@@ -421,7 +408,7 @@ These 2 lines tell
 3. the addInstance
 *)
 Elpi TC.Pending_lettify.
-#[pp="4"] Elpi TC.AddInstances 1 mem_imset.
+Elpi TC.AddInstances 1 mem_imset.
 
 Check fun (x : nat) => S x : [set S x | x in nat].
 
@@ -431,7 +418,7 @@ Lemma mem_imset2 {T U rT} (f : T -> U -> rT) (A : set T) (B : set U) (x : A) (y 
 Proof. by rewrite setE; exists x, y. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="6,7"] Elpi TC.AddInstances 1 mem_imset2.
+Elpi TC.AddInstances 1 mem_imset2.
 
 Check fun (x : nat) => x + x : [set x + y | x in nat & y in nat].
 
@@ -449,7 +436,7 @@ Lemma mem_setUl {T} (A B : set T) (x : A) : x \in A `|` B.
 Proof. by rewrite setE; left. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="3"] Elpi TC.AddInstances 1 mem_setUl.
+Elpi TC.AddInstances 1 mem_setUl.
 (* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 Check fun (A : set nat) (x : A) => x : (A `|` (@set0 nat)).
@@ -459,7 +446,7 @@ Lemma mem_setUr {T} (A B : set T) (x : B) : x \in A `|` B.
 Proof. by rewrite setE; right. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="3"] Elpi TC.AddInstances 1 mem_setUr.
+Elpi TC.AddInstances 1 mem_setUr.
 (* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 
@@ -489,7 +476,7 @@ Lemma mem_setM {T1 T2} (A1 : set T1) (A2 : set T2) (x1 : A1) (x2 : A2) : (x1, x2
 Proof. by rewrite setE/=; split. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="4,5"] Elpi TC.AddInstances 1 mem_setM.
+Elpi TC.AddInstances 1 mem_setM.
 
 Check fun T1 T2 (A1 : set T1) (A2 : set T2) (x1 : A1) (x2 : A2) => (x1, x2) : A1 `*` A2.
 
@@ -497,7 +484,7 @@ Lemma mem_fst {T1 T2} (A : set (T1 * T2)) (x : A) : x.1 \in A.`1.
 Proof. by rewrite setE; exists x.2; rewrite -surjective_pairing. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="3"] Elpi TC.AddInstances 1 mem_fst.
+Elpi TC.AddInstances 1 mem_fst.
 
 Check fun T1 T2 (A : set (T1 * T2)) (x : A) => x.1 : A.`1.
 
@@ -505,7 +492,7 @@ Lemma mem_snd {T1 T2} (A : set (T1 * T2)) (x : A) : x.2 \in A.`2.
 Proof. by rewrite setE; exists x.1; rewrite -surjective_pairing. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="3"] Elpi TC.AddInstances 1 mem_snd.
+Elpi TC.AddInstances 1 mem_snd.
 
 Check fun T1 T2 (A : set (T1 * T2)) (x : A) => x.2 : A.`2.
 
@@ -513,7 +500,7 @@ Lemma mem_setMR {T1 T2} (A1 : set T1) (A2 : T1 -> set T2) (x : A1) (y : A2 x) : 
 Proof. by rewrite setE/=; split. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="4,5"] Elpi TC.AddInstances 1 mem_setMR.
+Elpi TC.AddInstances 1 mem_setMR.
 
 Check fun T1 T2 (A1 : set T1) (A2 : T1 -> set T2) (x1 : A1) (x2 : A2 x1) => (x1, x2) : A1 `*`` A2.
 
@@ -521,7 +508,7 @@ Lemma mem_setML {T1 T2} (A1 : T2 -> set T1) (A2 : set T2) (y : A2) (x : A1 y) : 
 Proof. by rewrite setE/=; split. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="4,5"] Elpi TC.AddInstances 1 mem_setML.
+Elpi TC.AddInstances 1 mem_setML.
 
 Check fun T1 T2 (A1 : T2 -> set T1) (A2 : set T2) (x2 : A2) (x1 : A1 x2) => (x1, x2) : A1 ``*` A2.
 
