@@ -27,11 +27,13 @@ namespace tc {
 
     func replace-top-level list term, term, list term -> term.
     replace-top-level []     Hd L (app [Hd | L']) :- std.rev L L'.
-    replace-top-level [app[X|Xs]|As] Hd L R :-
+    replace-top-level [app[X|Xs]|As] Hd L R :- !,
       replace-args X Xs [] (x\ replace-top-level As Hd [x|L]) R.
-    replace-top-level [(fun _ _ _ as A)|As] Hd L (let `_` Ty A T') :-
+    replace-top-level [(fun _ _ _ as A)|As] Hd L (let `_` Ty A T') :- !,
       coq.typecheck A Ty ok,
       pi x\ replace-top-level As Hd [x|L] (T' x).
+    replace-top-level [A|As] Hd L R :-
+      replace-top-level As Hd [A|L] R.
 
     func main term -> term.
     main (prod N Ty Bo) (prod N Ty Bo') :- !,
