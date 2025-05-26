@@ -252,7 +252,6 @@ namespace tc {
             (Clause = (pi x\ decl x N Ty' => C x), E = is-name),
           pi p\ sigma F\
             F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) UnifLinks [p|ProofTlR],
-            coq.say "The type of" p "is" Ty',
             decl p N Ty' =>
             name-pair p p z => E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
         ].
