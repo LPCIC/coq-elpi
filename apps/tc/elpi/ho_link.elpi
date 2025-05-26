@@ -137,10 +137,18 @@ namespace tc {
       func unif-eq term, term ->.
       unif-eq T1 (uvar as T2) :- !, declare_constraint (unif-eq T1 T2) [_,T2].
       unif-eq T1 T2 :- !, coq.unify-eq T1 T2 ok.
+
+      constraint solve-unif-eq unif-eq {
+        rule solve-unif-eq \ (unif-eq A B) <=> (coq.unify-eq A B ok).
+        rule \ solve-unif-eq.
+      }
+
     }
 
     func unif-eq term, term ->.
     unif-eq T1 T2 :- unif-eq.unif-eq T1 T2.
+    func solve-unif-eq.
+    solve-unif-eq :- declare_constraint solve-unif-eq [_].
 
 
     func eta term, term ->.
