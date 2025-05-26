@@ -246,18 +246,21 @@ namespace tc {
         -> prop.
       compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) UnifLinks ProofTlR PremR Clause :- !,
         std.do![
+          clean-term Ty Ty',
           if (IsPositive = tt) 
             (Clause = (pi x\ C x), E = is-uvar) 
-            (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
+            (Clause = (pi x\ decl x N Ty' => C x), E = is-name),
           pi p\ sigma F\
             F = compile-premise L L1 p Ty ProofHd IsPositive (Bo p) UnifLinks [p|ProofTlR],
+            coq.say "The type of" p "is" Ty',
             decl p N Ty' =>
             name-pair p p z => E p => add-link-eta-dedup F Arity p Ty [] PremR (C p)
         ].
       compile-ty L L1 ProofHd IsPositive (let _ Ty T Bo) UnifLinks ProofTlR PremR Clause :- !,
+        clean-term Ty Ty',
         if (IsPositive = tt) 
           (Clause = (pi x\ C x), E = is-uvar) 
-          (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
+          (Clause = (pi x\ decl x N Ty' => C x), E = is-name),
         pi p\ sigma F NewPrem\
           decl p N Ty' =!=> E p =!=> (
             NewPrem = tc.link.unif-eq T p,
