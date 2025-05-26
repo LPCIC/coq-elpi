@@ -161,10 +161,9 @@ prefix-indc Prefix K (pr K NewName) :-
 
 dispatch (indt GR) Prefix Clauses :- !, do! [
   Ind = global (indt GR),
-  coq.env.indt GR _ Luno Lno Ty Knames Ktypes,
+  coq.env.indt GR _ _ Lno Ty Knames Ktypes,
 
   LnoR is 2 * Lno,
-  LunoR is 2 * Luno,
 
   pi new_name\ sigma KnamesR KtypesR TyR\ (
     (reali Ind (global (indt new_name)) ==>
@@ -178,7 +177,7 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
 
     coq.ensure-fresh-global-id NewName FNewName,
     coq.build-indt-decl
-      (pr new_name FNewName) tt LunoR LnoR {coq.subst-fun [Ind] TyR} KnamesR KtypesR DeclR
+      (pr new_name FNewName) tt LnoR LnoR {coq.subst-fun [Ind] TyR} KnamesR KtypesR DeclR
   ),
 
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped inductive",
