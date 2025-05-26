@@ -33,7 +33,7 @@ func coq.parse-attributes list attribute, list attribute-signature -> list prop.
 %     Opts => (mycode, get-option "foo" V, mycode).     % use
 %
 % where [Opts] is a list of clauses [get-option StringName Value], where value
-% can have any type and [Spec] is a list of [attribute-sigmature].
+% can have any type and [Spec] is a list of [attribute-signature].
 % Example of an attribute signature:
 %   [
 %    att "this" bool,
