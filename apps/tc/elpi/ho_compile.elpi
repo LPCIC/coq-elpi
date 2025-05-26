@@ -305,12 +305,18 @@ namespace tc {
     context Ctx Clauses :-
       std.assert! (instance.context Ctx Clauses) "[TC] cannot compile context". 
 
+    func lettify term -> term.
+    lettify T R :- tc.lettify?, !, tc.lettify.main T R.
+    lettify T T.
+
+    % ENTRY-POINT for instance compilation
     func instance term, term -> prop.
-    instance Ty ProofHd Clause :-
+    instance Ty0 ProofHd Clause :-
       tc.time-it tc.oTC-time-compile-instance (
-        tc.normalize-ty Ty Ty',
-        tc.precomp.instance Ty' Ty'' N UnivConst UnivInst,
-        instance.main N Ty'' ProofHd UnivConst UnivInst Clause
+        tc.normalize-ty Ty0 Ty1,
+        lettify Ty1 Ty2,
+        tc.precomp.instance Ty2 Ty3 N UnivConst UnivInst,
+        instance.main N Ty3 ProofHd UnivConst UnivInst Clause
       ) "Compile Instance", !.
 
     func instance-gr gref -> prop.

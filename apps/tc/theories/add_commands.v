@@ -141,7 +141,14 @@ Elpi Accumulate lp:{{
     tc.add-pending-mode {args->str-list M1}.
 }}.
 
-
+Elpi Command TC.Pending_lettify.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate lp:{{
+  main [] :- tc.lettify.add.
+  main [_|_] :- coq.error "TC.Pending_lettify has 0 arguments".
+}}.
 
 Elpi Export TC.AddAllClasses.
 Elpi Export TC.AddAllInstances.
