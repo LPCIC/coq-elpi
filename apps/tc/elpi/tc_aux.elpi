@@ -19,11 +19,20 @@ namespace tc {
     func is-lettify.
     is-lettify :- pending-lettify, !, remove.
 
+    func replace-hd term, list term, (func term -> term) -> term.
+    replace-hd (primitive _ as Hd) Args K (let `_` Ty Tm T') :- !,
+      coq.mk-app Hd Args Tm,
+      coq.typecheck Tm Ty ok,
+      @pi-decl `x` Ty x\ K x (T' x).
+    replace-hd Hd Args K R :-
+      coq.mk-app Hd Args Tm,
+      K Tm R.
+
     func replace-args term, list term, list term, (func term -> term) -> term.
-    replace-args Hd []     L K R :- std.rev L L1, K (app [Hd|L1]) R.
+    replace-args Hd []     L K R :- replace-hd Hd {std.rev L} K R.
     replace-args Hd [X|Xs] L K (let `_` Ty X T') :-
       coq.typecheck X Ty ok,
-      pi x\ replace-args Hd Xs [x|L] K (T' x).
+      @pi-decl `x` Ty x\ replace-args Hd Xs [x|L] K (T' x).
 
     func replace-top-level list term, term, list term -> term.
     replace-top-level []     Hd L (app [Hd | L']) :- std.rev L L'.
@@ -31,7 +40,7 @@ namespace tc {
       replace-args X Xs [] (x\ replace-top-level As Hd [x|L]) R.
     replace-top-level [(fun _ _ _ as A)|As] Hd L (let `_` Ty A T') :- !,
       coq.typecheck A Ty ok,
-      pi x\ replace-top-level As Hd [x|L] (T' x).
+      @pi-decl `x` Ty x\ replace-top-level As Hd [x|L] (T' x).
     replace-top-level [A|As] Hd L R :-
       replace-top-level As Hd [A|L] R.
 
