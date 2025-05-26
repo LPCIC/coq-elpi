@@ -143,10 +143,13 @@ namespace tc {
       precompile-aux _ (app L) A (app L1) A1 :- !, std.fold-map L A (precompile-aux is_neg_fix) L1 A1.
       precompile-aux _ X A X A :- var X, !.
 
+      % the `let` symbol is used with unify-eq links (rocq unification engine)
+      % therefore, no need to build links on T and Ty
       precompile-aux _ (let N T Ty Bo) A (let N T' Ty' Bo') A3 :- !,
-        precompile-aux is_neg_fix T A T' A1,
-        precompile-aux is_neg_fix Ty A1 Ty' A2,
-        pi x\ is-name x => precompile-aux is_neg_fix (Bo x) A2 (Bo' x) A3.
+        % precompile-aux is_neg_fix T A T' A1,
+        % precompile-aux is_neg_fix Ty A1 Ty' A2,
+        T' = T, Ty' = Ty,
+        pi x\ is-name x => precompile-aux is_neg_fix (Bo x) A (Bo' x) A3.
 
 
       % TODO: what about the following constructors?
