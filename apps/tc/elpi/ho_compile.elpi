@@ -269,7 +269,7 @@ namespace tc {
           coq.mk-app ProofHd {std.rev ProofTlR} Proof,
           decompile.decompile-term L L1 Proof Proof' Prem1,
           decompile.decompile-term L1 L2 Goal Goal' Prem2,
-          compile-conclusion IsPositive Goal' Proof' {std.append UnifLinks Prem2} Prem1 {std.rev PremR} Clause
+          compile-conclusion IsPositive Goal' Proof' {std.append {std.rev UnifLinks} Prem2} Prem1 {std.rev PremR} Clause
         ].
 
       func compile-conclusion 
