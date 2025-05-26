@@ -373,32 +373,28 @@ Elpi Accumulate TC.AddInstances lp:{{
   % This is done compiling the rule under an informative
   % attribute list carrying the info about which arguments have
   % to be used for typechecking
-  func solve-proj-prem list (triple int int int), list term, list term -> list prop. 
+  func solve-proj-prem list int, list term, list term -> list prop. 
   solve-proj-prem [] _ [] [] :- !.
   solve-proj-prem [] _ L R :-
     R = [sigma Gs O\ 
          coq.ltac.collect-goals (app L) Gs O,
          msolve Gs []].
-  solve-proj-prem [(triple I1 I2 I3) | Ts] Args L [X|Xs] :-
+  solve-proj-prem [I1 | Ts] Args L [coq.typecheck K Ty ok|Xs] :-
     std.nth I1 Args K,
-    std.nth I2 Args T,
-    std.nth I3 Args A,
-    X = coq.typecheck K {{ @MemType.type lp:T lp:A }} ok,
+    decl K _ Ty,
+    std.assert!(ground_term Ty) "The type is not ground...",
     solve-proj-prem Ts Args [K | L] Xs.
 
   namespace parse_int {
     func string->int string -> int.
     string->int S R :- R is string_to_int S.
 
-    func parse-int-list string -> triple int int int.
-    parse-int-list S (triple A B C) :- rex.split " " S L, std.map L string->int [A,B,C].
-
-    func parse-attr string -> list (triple int int int).
+    func parse-attr string -> list int.
     parse-attr S R :-
       rex.split "," S L,
-      std.map L parse-int-list R.
+      std.map L string->int R.
 
-    func main -> list (triple int int int).
+    func main -> list int.
     main R :-
       coq.parse-attributes {attributes} [att "pp" string] Opts,
       (Opts =!=> get-option "pp" Att), !,
@@ -425,7 +421,7 @@ These 2 lines tell
 3. the addInstance
 *)
 Elpi TC.Pending_lettify.
-#[pp="4 0 3"] Elpi TC.AddInstances 1 mem_imset.
+#[pp="4"] Elpi TC.AddInstances 1 mem_imset.
 
 (* FIXME: Do I want to index on both the set and the element? *)
 Elpi Accumulate TC.Solver lp:{{
@@ -451,7 +447,7 @@ Lemma mem_imset2 {T U rT} (f : T -> U -> rT) (A : set T) (B : set U) (x : A) (y 
 Proof. by rewrite setE; exists x, y. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="6 0 4,7 1 5"] Elpi TC.AddInstances 1 mem_imset2.
+#[pp="6,7"] Elpi TC.AddInstances 1 mem_imset2.
 (* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 Elpi Accumulate TC.Solver lp:{{
@@ -504,7 +500,7 @@ Elpi Accumulate TC.Solver lp:{{
 }}.
 
 Elpi TC.Pending_lettify.
-#[pp="3 0 1"] Elpi TC.AddInstances 1 mem_setUl.
+#[pp="3"] Elpi TC.AddInstances 1 mem_setUl.
 (* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 Check fun (A : set nat) (x : A) => x : (A `|` (@set0 nat)).
@@ -526,7 +522,7 @@ Elpi Accumulate TC.Solver lp:{{
 %   R = {{ @mem_setUr lp:T lp:A lp:B lp:X' }}.
 }}.
 Elpi TC.Pending_lettify.
-#[pp="3 0 2"] Elpi TC.AddInstances 1 mem_setUr.
+#[pp="3"] Elpi TC.AddInstances 1 mem_setUr.
 (* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 
 
@@ -556,7 +552,7 @@ Lemma mem_setM {T1 T2} (A1 : set T1) (A2 : set T2) (x1 : A1) (x2 : A2) : (x1, x2
 Proof. by rewrite setE/=; split. Qed.
 
 Elpi TC.Pending_lettify.
-#[pp="4 0 2,5 1 3"] Elpi TC.AddInstances 1 mem_setM.
+#[pp="4,5"] Elpi TC.AddInstances 1 mem_setM.
 (* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
 Elpi Accumulate TC.Solver lp:{{
 % :after "1"
@@ -577,28 +573,21 @@ Check fun T1 T2 (A1 : set T1) (A2 : set T2) (x1 : A1) (x2 : A2) => (x1, x2) : A1
 Lemma mem_fst {T1 T2} (A : set (T1 * T2)) (x : A) : x.1 \in A.`1.
 Proof. by rewrite setE; exists x.2; rewrite -surjective_pairing. Qed.
 
-stop.
-
 Elpi Accumulate TC.Solver lp:{{
-:after "1"
-tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T1 {{ @fst_set lp:T1' lp:T2 lp:A }} X R :-
-  coq.unify-eq T1 T1' ok,
-  coq.unify-eq X {{ @fst lp:T1 lp:T2 (lp:X'.(MemType.elt)) }} ok,
+% :after "1"
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T1 {{ @fst_set lp:T1' lp:T2 lp:A }} X R :-
+%   coq.unify-eq T1 T1' ok,
+%   coq.unify-eq X {{ @fst lp:T1 lp:T2 (lp:X'.(MemType.elt)) }} ok,
   
-  coq.typecheck X' {{ @MemType.type (@prod lp:T1 lp:T2) lp:A }} ok,
-  coq.ltac.collect-goals X' Gs _,
-  std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
+%   coq.typecheck X' {{ @MemType.type (@prod lp:T1 lp:T2) lp:A }} ok,
+%   coq.ltac.collect-goals X' Gs _,
+%   std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
   
-  R = {{ @mem_fst lp:T1 lp:T2 lp:A lp:X' }}.
+%   R = {{ @mem_fst lp:T1 lp:T2 lp:A lp:X' }}.
 }}.
-(*
-% This is difficult: the arg is a composed term
-Elpi TC.Pending_lettify.
-#[pp="4 0 2,5 1 3"] Elpi TC.AddInstances 1 mem_setM.
-(* Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver". *)
-*)
 
-stop.
+Elpi TC.Pending_lettify.
+#[pp="3"] Elpi TC.AddInstances 1 mem_fst.
 
 Check fun T1 T2 (A : set (T1 * T2)) (x : A) => x.1 : A.`1.
 
@@ -606,17 +595,20 @@ Lemma mem_snd {T1 T2} (A : set (T1 * T2)) (x : A) : x.2 \in A.`2.
 Proof. by rewrite setE; exists x.1; rewrite -surjective_pairing. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
-:after "1"
-tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T2 {{ @snd_set lp:T1 lp:T2' lp:A }} X R :-
-  coq.unify-eq T2 T2' ok,
-  coq.unify-eq X {{ @snd lp:T1 lp:T2 (lp:X'.(MemType.elt)) }} ok,
+% :after "1"
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T2 {{ @snd_set lp:T1 lp:T2' lp:A }} X R :-
+%   coq.unify-eq T2 T2' ok,
+%   coq.unify-eq X {{ @snd lp:T1 lp:T2 (lp:X'.(MemType.elt)) }} ok,
   
-  coq.typecheck X' {{ @MemType.type (@prod lp:T1 lp:T2) lp:A }} ok,
-  coq.ltac.collect-goals X' Gs _,
-  std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
+%   coq.typecheck X' {{ @MemType.type (@prod lp:T1 lp:T2) lp:A }} ok,
+%   coq.ltac.collect-goals X' Gs _,
+%   std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
   
-  R = {{ @mem_snd lp:T1 lp:T2 lp:A lp:X' }}.
+%   R = {{ @mem_snd lp:T1 lp:T2 lp:A lp:X' }}.
 }}.
+
+Elpi TC.Pending_lettify.
+#[pp="3"] Elpi TC.AddInstances 1 mem_snd.
 
 Check fun T1 T2 (A : set (T1 * T2)) (x : A) => x.2 : A.`2.
 
@@ -624,18 +616,21 @@ Lemma mem_setMR {T1 T2} (A1 : set T1) (A2 : T1 -> set T2) (x : A1) (y : A2 x) : 
 Proof. by rewrite setE/=; split. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
-:after "1"
-tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setMR lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
-  coq.unify-eq T {{ @prod lp:T1 lp:T2 }} ok,
-  coq.unify-eq X {{ @pair lp:T1 lp:T2 (lp:X1.(MemType.elt)) (lp:X2.(MemType.elt)) }} ok,
+% :after "1"
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setMR lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
+%   coq.unify-eq T {{ @prod lp:T1 lp:T2 }} ok,
+%   coq.unify-eq X {{ @pair lp:T1 lp:T2 (lp:X1.(MemType.elt)) (lp:X2.(MemType.elt)) }} ok,
   
-  coq.typecheck X1 {{ @MemType.type lp:T1 lp:A1 }} ok,
-  coq.typecheck X2 {{ @MemType.type lp:T2 (lp:A2 lp:X1.(MemType.elt)) }} ok,
-  coq.ltac.collect-goals (app [X1, X2]) Gs _,
-  std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
+%   coq.typecheck X1 {{ @MemType.type lp:T1 lp:A1 }} ok,
+%   coq.typecheck X2 {{ @MemType.type lp:T2 (lp:A2 lp:X1.(MemType.elt)) }} ok,
+%   coq.ltac.collect-goals (app [X1, X2]) Gs _,
+%   std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
   
-  R = {{ @mem_setMR lp:T1 lp:T2 lp:A1 lp:A2 lp:X1 lp:X2 }}.
+%   R = {{ @mem_setMR lp:T1 lp:T2 lp:A1 lp:A2 lp:X1 lp:X2 }}.
 }}.
+
+Elpi TC.Pending_lettify.
+#[pp="4,5"] Elpi TC.AddInstances 1 mem_setMR.
 
 Check fun T1 T2 (A1 : set T1) (A2 : T1 -> set T2) (x1 : A1) (x2 : A2 x1) => (x1, x2) : A1 `*`` A2.
 
@@ -643,18 +638,21 @@ Lemma mem_setML {T1 T2} (A1 : T2 -> set T1) (A2 : set T2) (y : A2) (x : A1 y) : 
 Proof. by rewrite setE/=; split. Qed.
 
 Elpi Accumulate TC.Solver lp:{{
-:after "1"
-tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setML lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
-  coq.unify-eq T {{ @prod lp:T1 lp:T2 }} ok,
-  coq.unify-eq X {{ @pair lp:T1 lp:T2 (lp:X1.(MemType.elt)) (lp:X2.(MemType.elt)) }} ok,
+% :after "1"
+% tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @setML lp:T1 lp:T2 lp:A1 lp:A2 }} X R :-
+%   coq.unify-eq T {{ @prod lp:T1 lp:T2 }} ok,
+%   coq.unify-eq X {{ @pair lp:T1 lp:T2 (lp:X1.(MemType.elt)) (lp:X2.(MemType.elt)) }} ok,
   
-  coq.typecheck X1 {{ @MemType.type lp:T1 (lp:A1 lp:X2.(MemType.elt)) }} ok,
-  coq.typecheck X2 {{ @MemType.type lp:T2 lp:A2 }} ok,
-  coq.ltac.collect-goals (app [X1, X2]) Gs _,
-  std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
+%   coq.typecheck X1 {{ @MemType.type lp:T1 (lp:A1 lp:X2.(MemType.elt)) }} ok,
+%   coq.typecheck X2 {{ @MemType.type lp:T2 lp:A2 }} ok,
+%   coq.ltac.collect-goals (app [X1, X2]) Gs _,
+%   std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
   
-  R = {{ @mem_setML lp:T1 lp:T2 lp:A1 lp:A2 lp:X2 lp:X1 }}.
+%   R = {{ @mem_setML lp:T1 lp:T2 lp:A1 lp:A2 lp:X2 lp:X1 }}.
 }}.
+
+Elpi TC.Pending_lettify.
+#[pp="4,5"] Elpi TC.AddInstances 1 mem_setML.
 
 Check fun T1 T2 (A1 : T2 -> set T1) (A2 : set T2) (x2 : A2) (x1 : A1 x2) => (x1, x2) : A1 ``*` A2.
 
@@ -675,6 +673,8 @@ Check fun T I (F : I -> set T) (x : T) (H : forall i, x \in F i) => x : \bigcap_
 (* TOTHINK: Do I want to do bigcup? *)
 End basic_membership.
 
+(*
+stop.
 
 (********* Function restriction ****************)
 
@@ -1138,3 +1138,4 @@ Check fun (A : Type) (B : Type)
 
 Check fun (A : Type) (B : pointedType) (S : set A)
   (f : S -> B) => f : A -> B.
+*)
