@@ -491,24 +491,22 @@ Check fun (x : nat) => x : [set x].
 
 Lemma mem_setUl {T} (A B : set T) (x : A) : x \in A `|` B.
 Proof. by rewrite setE; left. Qed.
-stop.
 
 Elpi Accumulate TC.Solver lp:{{
-:after "1"
-tc-sets.tc-mem T {{ @setU lp:T' lp:A lp:B }} X R :-
-  coq.unify-eq T T' ok,
-  coq.unify-eq X {{ lp:X'.(MemType.elt) }} ok,
-  coq.typecheck X' {{ @MemType.type lp:T lp:A }} ok,
-  coq.ltac.collect-goals X' Gs _,
-  std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
-  R = {{ @mem_setUl lp:T lp:A lp:B lp:X' }}.
+% :after "1"
+% tc-sets.tc-mem T {{ @setU lp:T' lp:A lp:B }} X R :-
+%   coq.unify-eq T T' ok,
+%   coq.unify-eq X {{ lp:X'.(MemType.elt) }} ok,
+%   coq.typecheck X' {{ @MemType.type lp:T lp:A }} ok,
+%   coq.ltac.collect-goals X' Gs _,
+%   std.forall Gs (g\ coq.ltac.open (coq.ltac.call-ltac1 "done_tc") g []),
+%   R = {{ @mem_setUl lp:T lp:A lp:B lp:X' }}.
 }}.
 
-(*
 Elpi TC.Pending_lettify.
 #[pp="3 0 1"] Elpi TC.AddInstances 1 mem_setUl.
 Elpi Print TC.Solver "elpi.apps.tc.examples/TC.Solver".
-*)
+
 Check fun (A : set nat) (x : A) => x : (A `|` (@set0 nat)).
 Check fun (A : set nat) x => x : (x |` A).
 
@@ -578,6 +576,8 @@ Check fun T1 T2 (A1 : set T1) (A2 : set T2) (x1 : A1) (x2 : A2) => (x1, x2) : A1
 
 Lemma mem_fst {T1 T2} (A : set (T1 * T2)) (x : A) : x.1 \in A.`1.
 Proof. by rewrite setE; exists x.2; rewrite -surjective_pairing. Qed.
+
+stop.
 
 Elpi Accumulate TC.Solver lp:{{
 :after "1"
