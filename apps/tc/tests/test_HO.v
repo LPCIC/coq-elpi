@@ -56,7 +56,7 @@ Module FO_app.
   Check eq_refl : ex2 = fun T p y => @partial_app T (p 0) y.
   (* Check eq_refl : ex2 = fun T p y => @partial_app T (fun _ => p 0 y) y. *)
 
-  Existing Instance partial_app.
+  (* Existing Instance partial_app. *)
   Elpi TC Solver Override TC.Solver None.
 
   Lemma ex3 (T : Type) (p : nat -> T -> T -> Prop) y : nice_predicate (fun x => p 0 x y).

@@ -555,6 +555,7 @@ module Interp = struct
       try begin
         try 
             let _, synterp_left = run_and_print ~loc ~print:false name program (Fun query) in
+            handle_elpi_compiler_errors ~loc (fun () -> get_and_compile ~loc name |> ignore);
             match Rocq_elpi_builtins_synterp.SynterpAction.RZipper.is_empty synterp_left with
             | `Empty -> Vernacstate.Synterp.unfreeze final_synterp_state
             | `Group g ->

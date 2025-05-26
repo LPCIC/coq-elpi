@@ -2,7 +2,23 @@
 /* ------------------------------------------------------------------------- */
 
 namespace tc {
-shorten tc.{search-mode}.
+shorten tc.{search-mode,pending-deterministic}.
+macro @pending-deterministic! :- "grafting-pending-deterministic".
+
+func add-pending-deterministic.
+add-pending-deterministic :-
+  pending-deterministic, !,
+  coq.error "[TC] A pending deterministic already exists.".
+add-pending-deterministic :-
+  tc.add-tc-db @pending-deterministic! _ pending-deterministic.
+
+func remove-pending-deterministic ->.
+remove-pending-deterministic :- 
+  tc.remove-clause @pending-deterministic! pending-deterministic [].
+
+func is-deterministic -> (func string, list (pair argument_mode string) ->).
+is-deterministic (coq.elpi.add-function "tc.db" _) :- pending-deterministic, !, remove-pending-deterministic.
+is-deterministic (coq.elpi.add-predicate "tc.db" _).
 
 % The predicate of a class is local if inside a section and readded at section end.
 % This way, section variables are generalized
@@ -20,8 +36,9 @@ add-class-gr SearchMode ClassGR :-
   tc.get-elpi-mode ClassGR EM SM, 
   tc.gref->pred-name ClassGR PredName,
   get-class-locality Locality, 
+  is-deterministic F,
   Locality => (
-    coq.elpi.add-predicate "tc.db" _ PredName EM,
+    F PredName EM,
     tc.add-tc-db _ _ (tc.class ClassGR PredName SearchMode SM)).
 
 func add-class-str search-mode, string ->.
@@ -46,6 +63,9 @@ get-key-from-option (get-option "i" ff) "o" :- !.
 get-key-from-option (get-option "o" ff) "i" :- !.
 get-key-from-option A _ :- coq.error A "should be an option".
 
+% This declares the class in coq. 
+% Note that this creation triggers the class listener
+% that calls the `tc.add-class-gr` predicate defined above
 func declare-class-in-coq gref ->.
 declare-class-in-coq ClassGR :- 
   attr->modes CoqModes,

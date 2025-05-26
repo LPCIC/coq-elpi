@@ -95,6 +95,7 @@ Elpi Db tc.db lp:{{
     pred banned o:gref.
 
     pred pending-mode o:list string.
+    pred pending-deterministic.
 
     pred ho-link o:term, i:term, o:A.
     func link.eta term, term ->.

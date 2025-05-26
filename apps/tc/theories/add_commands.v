@@ -141,6 +141,21 @@ Elpi Accumulate lp:{{
     tc.add-pending-mode {args->str-list M1}.
 }}.
 
+Elpi Command TC.deterministic.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate File modes.
+Elpi Accumulate File create_tc_predicate.
+Elpi Accumulate lp:{{
+  main [] :-
+    % the "o" added at the end of M stands for the solution of the goal 
+    tc.add-pending-deterministic.
+
+  main ([_|_] as L) :-
+    coq.error "TC.deterministic command expects no arguments".
+}}.
+
 
 
 Elpi Export TC.AddAllClasses.
