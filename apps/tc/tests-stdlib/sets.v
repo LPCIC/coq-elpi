@@ -7,6 +7,35 @@ From elpi.apps Require Import tc coercion.
 Set Printing All.
 Elpi TC.Solver Override All.
 
+Elpi Accumulate TC.AddInstances lp:{{
+  % The goal is to programmatically generate the rules for the
+  % schema: typechecking + collecting + solving if needed
+  % This is done compiling the rule under an informative
+  % attribute list carrying the info about which arguments have
+  % to be used for typechecking
+  func to-typecheck? term ->.
+
+  func solve-proj-prem list term, list term -> list prop. 
+  solve-proj-prem [] [] [] :- !.
+  solve-proj-prem [] L R :-
+    R = [sigma Gs O\ 
+         coq.ltac.collect-goals (app L) Gs O,
+         msolve Gs []].
+  solve-proj-prem [A|As] L [coq.typecheck A Ty ok|Xs] :-
+    decl A _ Ty, to-typecheck? Ty, !,
+    std.assert!(ground_term Ty) "The type is not ground...",
+    solve-proj-prem As [A | L] Xs.
+  solve-proj-prem [_|As] L Xs :-
+    solve-proj-prem As L Xs.
+
+  :after "0"
+  tc.compile.instance.compile-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- !,
+    solve-proj-prem {coq.safe-dest-app Proof _} [] R,
+    std.append {std.append HOPremisesIn Premises} {std.append HOPremisesOut R} AllPremises,
+    tc.make-tc Goal Proof AllPremises tt Clause.
+}}.
+
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -152,6 +181,9 @@ End MemType.
 Notation memType := MemType.type.
 Notation memP := MemType.memP.
 Canonical MemType.pack.
+Elpi Accumulate TC.AddInstances lp:{{
+  to-typecheck? {{@MemType.type _ _}}.
+}}.
 
 Elpi Accumulate coercion.db lp:{{
 
@@ -366,40 +398,6 @@ Check fun (x : nat) => x \in [set: nat].
 Lemma mem_imset {T rT} (f : T -> rT) (A : set T) (x : A) : f x \in [set f x | x in A].
 Proof. by rewrite setE; exists x. Qed.
 
-
-Elpi Accumulate TC.AddInstances lp:{{
-  % The goal is to programmatically generate the rules for the
-  % schema: typechecking + collecting + solving if needed
-  % This is done compiling the rule under an informative
-  % attribute list carrying the info about which arguments have
-  % to be used for typechecking
-  func is-memtype term ->.
-  is-memtype {{@MemType.type _ _}}.
-
-  func solve-proj-prem list term, list term -> list prop. 
-  solve-proj-prem [] [] [] :- !.
-  solve-proj-prem [] L R :-
-    R = [sigma Gs O\ 
-         coq.ltac.collect-goals (app L) Gs O,
-         msolve Gs []].
-  solve-proj-prem [A|As] L [coq.typecheck A Ty ok|Xs] :-
-    decl A _ Ty, is-memtype Ty, !,
-    std.assert!(ground_term Ty) "The type is not ground...",
-    solve-proj-prem As [A | L] Xs.
-  solve-proj-prem [_|As] L Xs :-
-    solve-proj-prem As L Xs.
-
-  :after "0"
-  tc.compile.instance.compile-conclusion tt Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- !,
-    solve-proj-prem {coq.safe-dest-app Proof _} [] R,
-    std.append {std.append HOPremisesIn Premises} {std.append HOPremisesOut R} AllPremises,
-    tc.make-tc Goal Proof AllPremises tt Clause.
-  :after "0"
-  tc.compile.instance.compile-conclusion ff Goal Proof HOPremisesIn HOPremisesOut Premises Clause :- !,
-    tc.make-tc Goal Proof Premises ff Clause1, 
-    Clause = (do HOPremisesIn, Clause1, do HOPremisesOut).
-
-}}.
 
 (*
 These 2 lines tell 
