@@ -33,7 +33,8 @@ namespace tc {
     tc.time-it tc.oTC-time-instance-search (
       do PostProcess, Q,
       tc.link.solve-eta, % Trigger eta links
-      tc.link.solve-llam % Trigger llam links
+      tc.link.solve-llam, % Trigger llam links
+      tc.link.solve-unif-eq
     ) "instance search".
 
   pred solve-aux i:goal, o:list sealed-goal.

@@ -2,6 +2,6 @@
  (package rocq-elpi-tests-stdlib)
  (name elpi_apps_tc_tests_stdlib)
  (flags :standard -async-proofs-cache force)
- (theories elpi elpi.apps.tc elpi.apps.tc.tests elpi_stdlib))
+ (theories elpi elpi.apps.tc elpi.apps.tc.tests elpi_stdlib elpi.apps.coercion))
 
 (include_subdirs qualified)
