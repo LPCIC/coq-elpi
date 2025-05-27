@@ -1387,6 +1387,13 @@ external pred coq.arguments.simplification i:gref,
 external pred coq.arguments.set-simplification i:gref, 
                                                i:simplification_strategy.
 
+% [coq.arguments.reset-simplification GR] resets the behavior of the
+% simplification tactics.
+% Also resets the ! and / modifiers for the Arguments command.
+% Supported attributes:
+% - @global! (default: false)
+external pred coq.arguments.reset-simplification i:gref.
+
 % [coq.locate-abbreviation Name Abbreviation] locates an abbreviation.  It's
 % a fatal error if Name cannot be located.
 external pred coq.locate-abbreviation i:id, o:abbreviation.
@@ -1499,6 +1506,8 @@ type coq.redflags.cofix coq.redflag.
 type coq.redflags.zeta coq.redflag.
 type coq.redflags.const constant ->
                         coq.redflag. % enable/disable unfolding
+type coq.redflags.proj projection ->
+                       coq.redflag. % enable/disable unfolding
 
 % Set of flags for lazy, cbv, ... reductions
 kind coq.redflags type.
@@ -1844,15 +1853,20 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 
 
 % [coq.elpi.accumulate-clauses Scope DbName Clauses] 
-% Declare that, once the program is over, the given clauses has to be
-% added to the given db (see Elpi Db).
+% Declare that the given clauses have to be added to the given db (see Elpi
+% Db).
 % Clauses usually belong to Coq modules: the Scope argument lets one
 % select which module:
-% - execution site (default) is the module in which the pogram is
-%   invoked
+% - execution site (default) is the module in which the program is
+%   invoked, the clauses will be accumulated when the execution of the
+% program ends
 % - current is the module currently being constructed (see
-%   begin/end-module)
-% - library is the current file (the module that is named after the file)
+%   begin/end-module), the clauses will be accumulated when the execution of
+% the program ends
+%   or the start of another program (whichever comes first)
+% - library is the current file (the module that is named after the file),
+%   the clauses will be accumulated when the execution of the program
+% ends
 % The clauses are visible as soon as the enclosing module is Imported.
 % A clause that mentions a section variable is automatically discarded
 % at the end of the section.

@@ -184,6 +184,32 @@ Elpi Query lp:{{
   std.assert! (T = T2) "normal form is not an opinion".
 }}.
 
+Module RP.
+  Set Primitive Projections.
+  Record r := mk_r { f : nat }.
+
+Elpi Query lp:{{ std.spy-do! [
+  app[primitive (proj P _)|_] = {{ (_).(f) }},
+  coq.redflags.add coq.redflags.nored [
+    coq.redflags.delta,
+    coq.redflags.beta,
+    coq.redflags.match,
+  ] F,
+  (@redflags! F => coq.reduction.cbv.norm {{ (mk_r 3).(f) }} R0),
+  std.assert! (R0 = {{ (mk_r 3).(f) }}) "nored expected",
+  coq.redflags.add coq.redflags.nored [
+    coq.redflags.proj P,
+    coq.redflags.delta,
+    coq.redflags.beta,
+    coq.redflags.match,
+  ] FP,
+  (@redflags! FP => coq.reduction.cbv.norm {{ (mk_r 3).(f) }} R1),
+  std.assert! (R1 = {{ 3 }}) "red expected",
+].
+}}.
+End RP.
+  
+
 (* ------------------------------------ *)
 
 Module P.

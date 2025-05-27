@@ -1,3 +1,8 @@
+# UNRELEASED
+
+### API
+- New `coq.redflags.proj` to control "unfolding" of primitive projections
+
 # [2.5.2] 29/4/2025
 
 Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0.
