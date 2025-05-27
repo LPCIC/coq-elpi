@@ -374,6 +374,7 @@ type coq.redflags.delta coq.redflags.
 type coq.redflags.fix coq.redflag.
 type coq.redflags.match coq.redflag.
 type coq.redflags.nored coq.redflags.
+type coq.redflags.proj projection -> coq.redflag.
 type coq.redflags.sub coq.redflags ->
                         list coq.redflag -> coq.redflags -> prop.
 type coq.redflags.zeta coq.redflag.
@@ -1795,22 +1796,22 @@ coq.CS.canonical-projections A0 A1 :- coq.warning elpi.deprecated
                                        elpi.canonical-projections 
                                        use coq.env.projections in place of coq.CS.canonical-projections, 
  coq.env.projections A0 A1.
-% File "coq-builtin.elpi", line 1564, column 0, characters 63462-63642: [260] 
+% File "coq-builtin.elpi", line 1566, column 0, characters 63562-63742: [260] 
 coq.reduction.cbv.whd_all A0 A1 :- coq.warning elpi.deprecated 
                                     elpi.cbv-whd-all 
                                     use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all, 
  coq.reduction.cbv.norm A0 A1.
-% File "coq-builtin.elpi", line 1571, column 0, characters 63740-63921: [261] 
+% File "coq-builtin.elpi", line 1573, column 0, characters 63840-64021: [261] 
 coq.reduction.vm.whd_all A0 A1 A2 :- coq.warning elpi.deprecated 
                                       elpi.vm-whd-all 
                                       use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all, 
  coq.reduction.vm.norm A0 A1 A2.
-% File "coq-builtin.elpi", line 1578, column 0, characters 63974-64067: [262] 
+% File "coq-builtin.elpi", line 1580, column 0, characters 64074-64167: [262] 
 coq.reduction.lazy.whd_all A0 A1 :- get-option coq:redflags coq.redflags.all
                                      => coq.reduction.lazy.whd A0 A1.
-% File "coq-builtin.elpi", line 1700, column 0, characters 68691-68731: [263] 
+% File "coq-builtin.elpi", line 1702, column 0, characters 68791-68831: [263] 
 coq.id->name A0 A1 :- coq.string->name A0 A1.
-% File "coq-builtin.elpi", line 1843, column 0, characters 74528-74592: [264] 
+% File "coq-builtin.elpi", line 1845, column 0, characters 74628-74692: [264] 
 coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
 % File "./examples/tutorial_elpi_lang.v", line 491, column 2, characters 12652-12720: [265] 
 whd (app A0 A2) A3 :- whd A0 (fun A1), !, whd (A1 A2) A3.
