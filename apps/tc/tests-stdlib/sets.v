@@ -15,12 +15,11 @@ Elpi Accumulate TC.AddInstances lp:{{
   % to be used for typechecking
   func to-typecheck? term ->.
 
+  macro @collect L :- [sigma Gs O\ coq.ltac.collect-goals (app L) Gs O, msolve Gs []].
+
   func solve-proj-prem list term, list term -> list prop. 
   solve-proj-prem [] [] [] :- !.
-  solve-proj-prem [] L R :-
-    R = [sigma Gs O\ 
-         coq.ltac.collect-goals (app L) Gs O,
-         msolve Gs []].
+  solve-proj-prem [] L (@collect L).
   solve-proj-prem [A|As] L [coq.typecheck A Ty ok|Xs] :-
     decl A _ Ty, to-typecheck? Ty, !,
     std.assert!(ground_term Ty) "The type is not ground...",
