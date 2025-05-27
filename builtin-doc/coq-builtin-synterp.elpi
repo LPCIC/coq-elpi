@@ -61,8 +61,28 @@ external pred coq.version o:string, o:int, o:int, o:int.
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
 pred main i:list argument.
+
+% Commands with a non-trivial parsing phase can thread data between
+% from the parsing phase to the interp one in an untyped way using the
+% following two entrypoints
 pred main-interp i:list argument, i:any.
 pred main-synterp i:list argument, o:any.
+
+% Commands starting/closing proofs have to use the following entrypoints.
+% By convention with Coq's Lemma/Qed the data passed between these two
+% is an id (the name of the lemma). One is not expected to follow this
+% convention if he does not want to be compatible with standard proof commands.
+pred main-interp-proof
+  i:list argument, % arguments passed to the command
+  i:any,  % data from the parsing phase (defaults to _)
+  o:term, % the statement to prove
+  o:any.  % data for the corresponding proof-closing command
+pred main-interp-qed
+  i:list argument, % arguments passed to the command
+  i:any,  % data from the parsing phase (defaults to _)
+  i:term, % proof term
+  i:any.  % data from the corresponding proof-opening command
+
 pred usage.
 pred attributes o:list attribute.
 

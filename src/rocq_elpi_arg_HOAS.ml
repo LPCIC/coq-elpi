@@ -11,6 +11,7 @@ open Rocq_elpi_HOAS
 open Names
 
 type phase = Interp | Synterp | Both
+type proof = Begin | End
 
 let push_name x = function
   | Names.Name.Name id ->
