@@ -513,13 +513,8 @@ Check fun T1 T2 (A1 : T2 -> set T1) (A2 : set T2) (x2 : A2) (x1 : A1 x2) => (x1,
 Lemma mem_bigcap {T I} (F : I -> set T) (x : T) : (forall i, x \in F i) -> x \in \bigcap_i F i.
 Proof. by rewrite setE. Qed.
 
-Elpi Accumulate TC.Solver lp:{{
-:after "1"
-tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {{ @bigcap lp:T' lp:I lp:F }} X R :-
-  coq.unify-eq T T' ok,
-  (@pi-decl `i` I i\ tc-elpi_apps_tc_tests_stdlib.sets.tc-mem T {coq.mk-app F [i]} X (XF i)),
-  R = {{ @mem_bigcap lp:T lp:I lp:F lp:X lp:{fun `i` I XF} }}.
-}}.
+Elpi TC.Pending_lettify.
+Elpi TC.AddInstances 1 mem_bigcap.
 
 Check fun T I (F : I -> set T) (x : T) (H : forall i, x \in F i) => x : \bigcap_i F i.
 
