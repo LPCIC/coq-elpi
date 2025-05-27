@@ -725,6 +725,9 @@ let reduction_kind = let open API.AlgebraicData in let open RedFlags in declare 
     K("coq.redflags.const","enable/disable unfolding",A(constant,N),
       B (function Constant x -> fCONST x | Variable x -> fVAR x),
       M (fun ~ok ~ko x -> nYI "readback for coq.redflags.const"));
+    K("coq.redflags.proj","enable/disable unfolding",A(projection,N),
+      B (function x -> fPROJ @@ Projection.repr x),
+      M (fun ~ok ~ko x -> nYI "readback for coq.redflags.proj"));
   ]
 } |> CConv.(!<)
 
