@@ -111,7 +111,7 @@ and `ocaml-lsp-server` (version 1.15).
   to define tactic notations. It assumes the reader is familiar with Elpi and
   the HOAS of Coq terms.
 - [Elpi: rule-based meta-language for Rocq](https://www.youtube.com/watch?v=XjkpA5rVxkM)
-  video recording of the keynote at CoqPL25.
+  video recording of the keynote at CoqPL25 ([slides & demo files](https://www-sop.inria.fr/members/Enrico.Tassi/coqpl2025/)).
 - [Coq-Elpi in 20 minutes](https://youtu.be/m60rHnvCJ2o)
   video recording of a talk given at the Coq Users and Developers Workshop 2020.
 
