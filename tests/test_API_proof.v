@@ -28,8 +28,8 @@ Print it.
 
 Lemma foo : True.
 trivial.
-qed. (* ugly, wrong name, "foo" is in the cinfo, not in the generic data *)
+qed.
 
-lemma foo : (True).
+lemma foo2 : (True).
 trivial.
-Qed. (* ugly, wrong name, the cinfo contains "elpi" *)
+Qed.

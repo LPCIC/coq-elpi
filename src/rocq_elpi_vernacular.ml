@@ -602,10 +602,12 @@ module Interp = struct
 
 let stash = Summary.ref ~local:true ~name:"elpi:proof_stash" None
 let set_stash x = stash := Some x
-let get_stash () =
+let get_stash def =
   match !stash with
-  | None -> (fun ~target ~depth -> Ok(ET.mkDiscard))
+  | None -> (fun ~target ~depth -> Ok(API.RawOpaqueData.of_string (Names.Id.to_string def)))
   | Some x -> stash := None; x
+
+let lemma_counter = ref 0
 
 let run_program_open_proof ~loc name ~atts ~syndata args : Declare.Proof.t =
   let syn, syndata =
@@ -636,7 +638,15 @@ let run_program_open_proof ~loc name ~atts ~syndata args : Declare.Proof.t =
       | None -> assert false (* only in synterp this is None *)
       | Some typ ->
           let info = Declare.Info.make () in
-          let cinfo = Declare.CInfo.make ~name:(Names.Id.of_string "elpi") ~typ () in        
+          let name =
+            try
+              let t = API.Setup.StrMap.find "Data" assignments in
+              let _, t, _ = API.BuiltInData.string.readback ~depth:0 state t in
+              Names.Id.of_string t
+            with Not_found | Elpi.API.Conversion.TypeErr _ ->
+              incr lemma_counter;
+              Names.Id.of_string (Format.asprintf "elpi_lemma_%d" !lemma_counter) in
+          let cinfo = Declare.CInfo.make ~name ~typ () in        
           Declare.Proof.start_definition ~info ~cinfo sigma)
 
 let run_program_close_proof ~loc name ~atts ~syndata args ~lemma =
@@ -648,7 +658,7 @@ let run_program_close_proof ~loc name ~atts ~syndata args ~lemma =
   let proof ~target:_ ~depth state =
     let state, p, _ = Rocq_elpi_builtins.closed_ground_term.embed Rocq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state) Elpi.API.RawData.no_constraints ~depth state p in
     Ok(state, p) in
-  let data ~target ~depth state = get_stash () ~target ~depth |> Result.map (fun x -> state,x) in
+  let data ~target ~depth state = get_stash (Declare.Proof.get_name lemma) ~target ~depth |> Result.map (fun x -> state,x) in
   (run_program ~loc name ~main:main_end_proof ~atts ~syndata args [syn;proof;data]) |> (function
   | None -> err Pp.(str"This program did not colse the proof")
   | Some _ -> ()
