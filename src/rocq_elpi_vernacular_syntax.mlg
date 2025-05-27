@@ -421,15 +421,15 @@ VERNAC COMMAND EXTEND ElpiRun CLASSIFIED BY { fun _ -> Vernacextend.(VtSideff ([
      let synterp, interp = match interp with None -> None, synterp | Some interp -> Some synterp, interp in
      EV.Interp.run_in_program ~loc:gloc ~program:(snd p) ~syndata interp }
 | #[ atts = any_attribute ] [ "Elpi" "Export" qualified_name(p) ] => { Vernacextend.(VtSideff ([],VtNow)) } SYNTERP AS _ {
-     EV.export_command (snd p)
+     let atts = validate_attributes proof_attribute atts in
+     EV.export_command ~atts (snd p)
   } -> {
-     let () = ignore_unknown_attributes atts in  
      ()
   }
 | #[ atts = any_attribute ] [ "Elpi" "Export" qualified_name(p) "As" qualified_name(q) ] => { Vernacextend.(VtSideff ([],VtNow)) } SYNTERP AS _ {
-     EV.export_command ~as_:(snd q) (snd p)
+     let atts = validate_attributes proof_attribute atts in
+     EV.export_command ~atts ~as_:(snd q) (snd p)
   } -> {
-     let () = ignore_unknown_attributes atts in  
      ()
   }
 | #[ atts = any_attribute ] [ "Elpi" qualified_name(p) elpi_cmd_arg_list(args) ] SYNTERP AS syndata

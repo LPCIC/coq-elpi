@@ -51,12 +51,12 @@ module type Common = sig
 end
 
 module Synterp : sig include Common
-val run_program : loc:Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Cmd.raw list -> (Vernacstate.Synterp.t * (target:Elpi.API.Compile.program -> depth:int -> (Elpi.API.Data.term,string) Stdlib.Result.t) * Rocq_elpi_builtins_synterp.SynterpAction.RZipper.zipper) option
+val run_program : loc:Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Cmd.raw list -> (Vernacstate.Synterp.t * Rocq_elpi_builtins_synterp.SynterpAction.RZipper.zipper * (target:Elpi.API.Compile.program -> depth:int -> (Elpi.API.Data.term,string) Stdlib.Result.t)) option
 val run_in_program : loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Rocq_elpi_builtins_synterp.SynterpAction.RZipper.zipper option
 
 end
 module Interp : sig include Common
-val run_program : loc:Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> syndata:(Vernacstate.Synterp.t * (target:Elpi.API.Compile.program -> depth:int -> (Elpi.API.Data.term,string) Stdlib.Result.t) * Rocq_elpi_builtins_synterp.SynterpAction.RZipper.zipper) option -> Cmd.raw list -> unit
+val run_program : loc:Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> syndata:(Vernacstate.Synterp.t * Rocq_elpi_builtins_synterp.SynterpAction.RZipper.zipper * (target:Elpi.API.Compile.program -> depth:int -> (Elpi.API.Data.term,string) Stdlib.Result.t)) option -> Cmd.raw list -> unit
 val run_in_program : loc:Loc.t -> ?program:qualified_name -> syndata:Rocq_elpi_builtins_synterp.SynterpAction.RZipper.zipper option -> Elpi.API.Ast.Loc.t * string -> unit
 end
 
@@ -68,4 +68,4 @@ val run_tactic : loc:Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> 
 val run_in_tactic : loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> unit Proofview.tactic
 
 (* move to synterp *)
-val export_command : ?as_:qualified_name -> qualified_name -> unit
+val export_command : atts:proof option -> ?as_:qualified_name -> qualified_name -> unit
