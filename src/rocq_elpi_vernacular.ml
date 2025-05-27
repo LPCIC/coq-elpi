@@ -735,7 +735,7 @@ let cache_program (proof,nature,p,q) =
           match proof with
           | None -> Vernacextend.VtSideff ([], VtNow)
           | Some Begin -> Vernacextend.(VtStartProof (Doesn'tGuaranteeOpacity,[]))
-          | Some End -> (Vernacextend.VtSideff ([], VtNow)))
+          | Some End -> Vernacextend.(VtQed (VtKeep VtKeepAxiom)))
 
         (Vernacextend.TyNonTerminal
            (Extend.TUentry
