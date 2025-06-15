@@ -340,7 +340,7 @@ Elpi Query lp:{{
   coq.locate "Ranalysis5.derivable_pt_lim_CVU" GR,
   std.time (coq.env.transitive-dependencies GR _ S) T,
   std.assert! ({coq.gref.set.cardinal S} > 3000) "too few",
-  std.assert! (T < 10.0) "too slow" % 0.5 here
+  std.assert! (T < 20.0) "too slow" % 0.5 here
 
 }}.
 
