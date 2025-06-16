@@ -1,7 +1,13 @@
 # UNRELEASED
 
+### Vernacular
+- New attribute `#[proof="begin"]` and `#[proof="end"]` to `Elpi Export` to
+  declare commands starting/ending proofs
+
 ### API
 - New `coq.redflags.proj` to control "unfolding" of primitive projections
+- New `main-interp-proof` and `main-interp-qed` for commands starting/ending
+  proofs
 
 # [2.5.2] 29/4/2025
 
