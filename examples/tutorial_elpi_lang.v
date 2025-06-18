@@ -1469,10 +1469,10 @@ Common pitfalls
 Well, no programming language is perfect.
 
 +++++++++++++++++++++++++++++++++++++++++++
-Precedence of :e:`,`, :e: `==>` and :e:`=>`
+Precedence of :e:`,`, :e:`==>` and :e:`=>`
 +++++++++++++++++++++++++++++++++++++++++++
 
-In this tutorial we only used :e: `==>` but Elpi also provides
+In this tutorial we only used :e:`==>` but Elpi also provides
 the standard λProlog implication :e:`=>`. They have the same meaning
 but different precedences w.r.t. :e:`,`.
 
