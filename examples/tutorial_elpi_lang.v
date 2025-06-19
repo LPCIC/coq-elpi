@@ -1094,7 +1094,7 @@ Elpi Query lp:{{ coq.say "result =" {calc (2 + 3)} }}.
 Allocation of variables
 -----------------------
 
-The language let's one use λ-abstraction also to write anonymous rules
+The language lets one use λ-abstraction also to write anonymous rules
 but one has to be wary of where variables are bound (allocated really).
 
 In our example we use the higher order predicate :stdlib:`std.map`:
