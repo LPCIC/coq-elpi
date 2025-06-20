@@ -1094,7 +1094,7 @@ Elpi Query lp:{{ coq.say "result =" {calc (2 + 3)} }}.
 Allocation of variables
 -----------------------
 
-The language let's one use λ-abstraction also to write anonymous rules
+The language lets one use λ-abstraction also to write anonymous rules
 but one has to be wary of where variables are bound (allocated really).
 
 In our example we use the higher order predicate :stdlib:`std.map`:
@@ -1469,10 +1469,10 @@ Common pitfalls
 Well, no programming language is perfect.
 
 +++++++++++++++++++++++++++++++++++++++++++
-Precedence of :e:`,`, :e: `==>` and :e:`=>`
+Precedence of :e:`,`, :e:`==>` and :e:`=>`
 +++++++++++++++++++++++++++++++++++++++++++
 
-In this tutorial we only used :e: `==>` but Elpi also provides
+In this tutorial we only used :e:`==>` but Elpi also provides
 the standard λProlog implication :e:`=>`. They have the same meaning
 but different precedences w.r.t. :e:`,`.
 
