@@ -377,6 +377,11 @@ let match_of_sort =
         | _ -> ko state)
 [%%endif]
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let hint_globref = Hints.hint_globref
+[%%else]
+let hint_globref gr = gr
+[%%endif]
 
 let cs_pattern =
   let open Conv in let open API.AlgebraicData in let open Structures.ValuePattern in declare {
