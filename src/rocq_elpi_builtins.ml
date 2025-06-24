@@ -3984,7 +3984,6 @@ Supported attributes:
                 rc
               with e when CErrors.noncritical e ->
                 Vernacstate.unfreeze_full_state vernac_state;
-                Feedback.msg_debug (CErrors.print e);
                 raise Pred.No_clause
             in
             let subgoals, sigma = proofview pv in
