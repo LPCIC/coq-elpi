@@ -630,6 +630,23 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let classifier _loc0 _args _loc1 =
+  Vernacextend.VtSideff ([], VtNow)
+let execution p loc0 args loc1 ?loc ~atts () =
+  let loc = Option.default (loc_merge loc0 loc1) loc in
+  let syndata = Synterp.run_program ~loc p ~atts args in
+  Vernactypes.vtdefault (fun () -> Interp.run_program ~loc p ~atts ~syndata args)
+[%%else]
+let classifier _loc0 _args _loc1 ~atts =
+   Vernacextend.VtSideff ([], VtNow)
+let execution p loc0 args loc1 ?loc ~atts () =
+  let loc = Option.default (loc_merge loc0 loc1) loc in
+  let syndata = Synterp.run_program ~loc p ~atts args in
+  Vernactypes.vtdefault (fun () -> Interp.run_program ~loc p ~atts ~syndata args)
+[%%endif]
+
+
 let cache_program (nature,p,q) =
   let p_str = String.concat "." q in
   match nature with
@@ -645,7 +662,7 @@ let cache_program (nature,p,q) =
         ?entry:None
         ~depr:false
 
-        (fun _loc0 _args _loc1 -> (Vernacextend.VtSideff ([], VtNow)))
+        (classifier)
 
         (Vernacextend.TyNonTerminal
            (Extend.TUentry
@@ -659,11 +676,7 @@ let cache_program (nature,p,q) =
                      (Extend.TUentry (Genarg.get_arg_tag Rocq_elpi_arg_syntax.wit_elpi_loc),
                       Vernacextend.TyNil)))))
 
-        (fun loc0 args loc1 ?loc ~atts () ->
-          let loc = Option.default (loc_merge loc0 loc1) loc in
-          let syndata = Synterp.run_program ~loc p ~atts args in
-          Vernactypes.vtdefault (fun () ->
-             Interp.run_program ~loc p ~atts ~syndata args))
+        (execution p)
     in
     Egramml.extend_vernac_command_grammar ~undoable:true ext
 
