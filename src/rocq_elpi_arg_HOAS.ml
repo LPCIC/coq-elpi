@@ -328,7 +328,11 @@ let intern_record_decl glob_sign (it : raw_record_decl) = glob_sign, it
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let dest_entry (_,_,_,_,x) = x
 
+[%%if coq = "9.1"]
+let expr_Type_sort = Constrexpr_ops.expr_Type_sort UState.univ_flexible
+[%%else]
 let expr_Type_sort = Constrexpr_ops.expr_Type_sort
+[%%endif]
 
 [%%if coq = "8.20" || coq = "9.0"]
 let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =

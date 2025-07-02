@@ -344,7 +344,7 @@ val force_level_of_universe : state -> Univ.Universe.t -> state * Univ.Level.t *
 val purge_algebraic_univs_sort : state -> EConstr.ESorts.t -> state * Sorts.t
 val ideclc : constant
 val uideclc : constant
-val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bool * UState.universe_decl * Entries.variance_entry
+val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bool * UState.universe_decl * UVars.Variance.t option array option
 val merge_universe_context : state -> UState.t -> state
 val restricted_sigma_of : Univ.Level.Set.t -> state -> Evd.evar_map
 val universes_of_term : state -> EConstr.t -> Univ.Level.Set.t

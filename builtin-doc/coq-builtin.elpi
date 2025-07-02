@@ -1040,11 +1040,9 @@ external pred coq.univ.variable.of-term i:term, o:coq.univ.variable.set.
 
 % -- Universe instance (for universe polymorphic global terms) ------
 
-% As of today a universe polymorphic constant can only be instantiated
-% with universe level variables. That is f@{Prop} is not valid, nor
-% is f@{u+1}. One can only write f@{u} for any u.
+% A universe polymorphic constant can be instantiated with universes.
 % 
-% A univ-instance is morally a list of universe level variables,
+% A univ-instance is morally a list of universes,
 % but its list syntax is hidden in the terms. If you really need to
 % craft or inspect one of these, the following APIs can help you.
 % 
@@ -1082,9 +1080,8 @@ external pred coq.univ-instance.unify-leq i:gref, i:univ-instance,
 
 % Constraint between two universes level variables
 kind univ-constraint type.
-type lt univ.variable -> univ.variable -> univ-constraint.
-type le univ.variable -> univ.variable -> univ-constraint.
-type eq univ.variable -> univ.variable -> univ-constraint.
+type le univ -> univ -> univ-constraint.
+type eq univ -> univ -> univ-constraint.
 
 % Variance of a universe level variable
 kind univ-variance type.
