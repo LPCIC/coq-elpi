@@ -24,12 +24,10 @@ type uinstanceoption =
   | VarInstance of (FlexibleData.Elpi.t * RawData.term list * inv_rel_key)
     (* a variable was provided, the command will compute the instance to unify with it *)
 
-type universe_decl = (Univ.Level.t list * bool) * (Univ.Constraints.t * bool)
-type universe_decl_cumul = ((Univ.Level.t * UVars.Variance.t option) list  * bool) * (Univ.Constraints.t * bool)
 type universe_decl_option =
   | NotUniversePolymorphic
-  | Cumulative of universe_decl_cumul
-  | NonCumulative of universe_decl
+  | Cumulative of UState.universe_decl
+  | NonCumulative of UState.universe_decl
 
 type options = {
   hoas_holes : hole_mapping option;
@@ -223,8 +221,7 @@ val uinstance : UVars.Instance.t Conversion.t
 
 val universe_constraint : Univ.univ_constraint Conversion.t
 val universe_variance : (Univ.Level.t * UVars.Variance.t option) Conversion.t
-val universe_decl : universe_decl Conversion.t
-val universe_decl_cumul : universe_decl_cumul Conversion.t
+val universe_decl : UState.universe_decl Conversion.t
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t
@@ -317,6 +314,7 @@ val mk_def :
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map
 val update_sigma : State.t -> (Evd.evar_map -> Evd.evar_map) -> State.t
+val update_return_sigma : State.t -> (Evd.evar_map -> Evd.evar_map * 'a) -> State.t * 'a
 
 type hyp = { ctx_entry : term; depth : int }
 

@@ -2149,7 +2149,7 @@ Supported attributes:
 |})))))),
   (fun id body types opaque _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-const" (fun state ->
     let local_bkind = if options.local = Some true then Some Glob_term.Explicit else None in
-    let state = minimize_universes state in
+    (* let state = minimize_universes state in *)
     (* Maybe: UState.nf_universes on body and type *)
      match body with
      | B.Unspec -> (* axiom *)
@@ -2823,7 +2823,6 @@ declared as cumulative.|};
   MLData universe_constraint;
   MLData universe_variance;
   MLData universe_decl;
-  MLData universe_decl_cumul;
 
   LPDoc "-- Primitive --------------------------------------------------------";
 

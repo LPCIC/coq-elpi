@@ -1078,7 +1078,7 @@ external pred coq.univ-instance.unify-leq i:gref, i:univ-instance,
 % @udecl-cumul! macros). Note that only inductive types can be
 % declared as cumulative.
 
-% Constraint between two universes level variables
+% Constraint between two universes
 kind univ-constraint type.
 type le univ -> univ -> univ-constraint.
 type eq univ -> univ -> univ-constraint.
@@ -1090,16 +1090,16 @@ type covariant univ.variable -> univ-variance.
 type invariant univ.variable -> univ-variance.
 type irrelevant univ.variable -> univ-variance.
 
-% Constraints for a non-cumulative declaration. Boolean tt means loose
+% Constraints for a polymorphic, non-cumulative declaration. Boolean tt means loose
 % (e.g. the '+' in f@{u v + | u < v +})
 kind upoly-decl type.
 type upoly-decl list univ.variable -> bool -> list univ-constraint ->
                 bool -> upoly-decl.
 
-% Constraints for a cumulative declaration. Boolean tt means loose (e.g.
+% Constraints for a polymorphic cumulative declaration. Boolean tt means loose (e.g.
 % the '+' in f@{u v + | u < v +})
 kind upoly-decl-cumul type.
-type upoly-decl-cumul list univ-variance -> bool ->
+type upoly-decl-cumul list univ.variable -> bool ->
                       list univ-constraint -> bool -> upoly-decl-cumul.
 
 % -- Primitive --------------------------------------------------------

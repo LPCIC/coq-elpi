@@ -199,16 +199,17 @@ coq.upoly-decl.complete-constraints (upoly-decl VS LV CS LC) (upoly-decl VS LV C
 ].
 pred coq.upoly-decl-cumul.complete-constraints i:upoly-decl-cumul, o:upoly-decl-cumul.
 coq.upoly-decl-cumul.complete-constraints (upoly-decl-cumul VS LV CS LC) (upoly-decl-cumul VS LV CS1 LC) :- std.do! [
-  std.map VS coq.upoly-decl-cumul.complete-constraints.aux ExtraL,
+  % std.map VS coq.upoly-decl-cumul.complete-constraints.aux ExtraL,
+  std.map VS coq.univ.variable.constraints ExtraL,
   std.flatten ExtraL Extra,
   std.filter Extra (c\not(std.mem CS c)) New,
   std.append CS New CS1,
 ].
-pred coq.upoly-decl-cumul.complete-constraints.aux i:univ-variance, o:list univ-constraint.
-coq.upoly-decl-cumul.complete-constraints.aux (auto V) CS :- coq.univ.variable.constraints V CS.
-coq.upoly-decl-cumul.complete-constraints.aux (covariant V) CS :- coq.univ.variable.constraints V CS.
-coq.upoly-decl-cumul.complete-constraints.aux (invariant V) CS :- coq.univ.variable.constraints V CS.
-coq.upoly-decl-cumul.complete-constraints.aux (irrelevant V) CS :- coq.univ.variable.constraints V CS.
+% pred coq.upoly-decl-cumul.complete-constraints.aux i:univ-variance, o:list univ-constraint.
+% coq.upoly-decl-cumul.complete-constraints.aux (auto V) CS :- coq.univ.variable.constraints V CS.
+% coq.upoly-decl-cumul.complete-constraints.aux (covariant V) CS :- coq.univ.variable.constraints V CS.
+% coq.upoly-decl-cumul.complete-constraints.aux (invariant V) CS :- coq.univ.variable.constraints V CS.
+% coq.upoly-decl-cumul.complete-constraints.aux (irrelevant V) CS :- coq.univ.variable.constraints V CS.
 
 
 pred coq.build-indt-decl
