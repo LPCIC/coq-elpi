@@ -2,8 +2,6 @@ From elpi Require Import elpi.
 Set Universe Polymorphism.
 Set Polymorphic Inductive Cumulativity.
 Set Printing Universes.
-Set Debug "comInductive".
-Set Debug "elpi".
 
 Module test_rocq.
 Record test : Type := mktest { foo : Type }.
@@ -19,19 +17,16 @@ Print test. (* Record test : Type@{test.u0} := mktest { foo : Type@{test.u1} }. 
 (* we get a monomorphic universe *)
 End test_elpi.
 
-Set Debug "ustate".
-Set Debug "univVariances".
-Set Debug "univMinim".
 Module test_explicit.
 Elpi Command test_explicit.
 Elpi Query lp:"
-   @keep-alg-univs! => @univpoly! => @cumulative! => coq.env.add-indt (record ""test"" {{Type}} ""mktest""
+   @keep-alg-univs! => @univpoly-cumul! => coq.env.add-indt (record ""test"" {{Type}} ""mktest""
      (field _ ""foo"" {{Type}}  _ \ end-record)) _C.
 ".
 Print test.
-(* Record test@{u u0} : Type@{u} := mktest { foo : Type@{u0} }. *)
-(* u(= (* for typing) in term, + in type) u0(= in term) |= u0 < u *) *)
-(* It's indeed polymorphic but we do not get the minimized version *)
+(* Record test@{u} : Type@{u+1} := mktest { foo : Type@{u} }. *)
+(* u(+ (= for typing) in term, + in type) |= *)
+(* It's indeed polymorphic and we do get the minimized version *)
 End test_explicit.
 
 Module test_minimization.
@@ -43,5 +38,5 @@ Elpi Query lp:"
      (field _ ""foo"" (sort (typ U))  _ \ end-record)) _C.
 ".
 Print test.
-(* It's indeed polymorphic but we do not get the minimized version *))
+(* It's indeed polymorphic and we do get the minimized version *)
 End test_minimization.
