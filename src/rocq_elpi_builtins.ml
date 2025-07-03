@@ -2823,6 +2823,7 @@ declared as cumulative.|};
   MLData universe_constraint;
   MLData universe_variance;
   MLData universe_decl;
+  MLData universe_decl_cumul;
 
   LPDoc "-- Primitive --------------------------------------------------------";
 

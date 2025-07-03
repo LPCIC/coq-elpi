@@ -222,6 +222,7 @@ val uinstance : UVars.Instance.t Conversion.t
 val universe_constraint : Univ.univ_constraint Conversion.t
 val universe_variance : (Univ.Level.t * UVars.Variance.t option) Conversion.t
 val universe_decl : UState.universe_decl Conversion.t
+val universe_decl_cumul : UState.universe_decl Conversion.t
 
 module GRMap : Elpi.API.Utils.Map.S with type key = Names.GlobRef.t
 module GRSet : Elpi.API.Utils.Set.S with type elt = Names.GlobRef.t

@@ -1090,16 +1090,16 @@ type covariant univ.variable -> univ-variance.
 type invariant univ.variable -> univ-variance.
 type irrelevant univ.variable -> univ-variance.
 
-% Constraints for a polymorphic, non-cumulative declaration. Boolean tt means loose
-% (e.g. the '+' in f@{u v + | u < v +})
+% Constraints for a polymorphic declaration. Boolean tt means loose (e.g.
+% the '+' in f@{u v + | u < v +})
 kind upoly-decl type.
 type upoly-decl list univ.variable -> bool -> list univ-constraint ->
                 bool -> upoly-decl.
 
-% Constraints for a polymorphic cumulative declaration. Boolean tt means loose (e.g.
+% Constraints for a cumulative declaration. Boolean tt means loose (e.g.
 % the '+' in f@{u v + | u < v +})
 kind upoly-decl-cumul type.
-type upoly-decl-cumul list univ.variable -> bool ->
+type upoly-decl-cumul list univ-variance -> bool ->
                       list univ-constraint -> bool -> upoly-decl-cumul.
 
 % -- Primitive --------------------------------------------------------

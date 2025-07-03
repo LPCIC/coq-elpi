@@ -261,18 +261,27 @@ let universe_decl : UState.universe_decl API.Conversion.t =
   ]
 } |> API.ContextualConversion.(!<)
 
-(* type universe_decl_cumul = ((Univ.Level.t * UVars.Variance.t option) list  * bool) * (Univ.Constraints.t * bool)
-let universe_decl_cumul : universe_decl_cumul API.Conversion.t =
-  let open API.Conversion in let open API.BuiltInData in let open API.AlgebraicData in let open Elpi.Builtin in declare {
+let universe_decl_cumul : UState.universe_decl API.Conversion.t =
+  let open API.Conversion in let open API.BuiltInData in let open API.AlgebraicData in let open Elpi.Builtin in 
+  let open UState in declare {
   ty = TyName "upoly-decl-cumul";
   doc = "Constraints for a cumulative declaration. Boolean tt means loose (e.g. the '+' in f@{u v + | u < v +})";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("upoly-decl-cumul","",A(list universe_variance,A(bool,A(list universe_constraint,A(bool,N)))),
-     B (fun x sx y sy -> ((x,sx),(Univ.Constraints.of_list y,sy))),
-     M (fun ~ok ~ko:_ ((x,sx),(y,sy)) -> ok x sx (Univ.Constraints.elements y) sy))
+     B (fun x sx y sy -> 
+      { univdecl_qualities = []; univdecl_extensible_qualities = false; 
+        univdecl_instance = List.map fst x; univdecl_extensible_instance = sx; 
+        univdecl_variances = Some (Array.of_list (List.map snd x)); 
+        univdecl_constraints = Univ.Constraints.of_list y;
+        univdecl_extensible_constraints = sy }),
+     M (fun ~ok ~ko:_ x ->       
+      ok (List.map2 (fun x y -> x, y) x.univdecl_instance (Array.to_list (Option.get x.univdecl_variances))) 
+      x.univdecl_extensible_instance
+        (Univ.Constraints.elements x.univdecl_constraints)
+        x.univdecl_extensible_constraints))
   ]
-} |> API.ContextualConversion.(!<) *)
+} |> API.ContextualConversion.(!<)
 
 let collapse_to_type_sigma sigma s =
   match s with
@@ -1310,7 +1319,7 @@ let get_options ~depth hyps state =
     | None, None -> NotUniversePolymorphic
     | Some _, Some _ -> err Pp.(str"Conflicting attributes: @udecl! and @udecl-cumul! (or @univpoly! and @univpoly-cumul!)")
     | Some (t,depth), None ->
-        let _, ud, gl = universe_decl.Elpi.API.Conversion.readback ~depth state t in
+        let _, ud, gl = universe_decl_cumul.Elpi.API.Conversion.readback ~depth state t in
         assert (gl = []);
         Cumulative ud
     | None, Some (t,depth) ->
@@ -2958,7 +2967,7 @@ let restricted_sigma_of s state =
   let sigma = get_sigma state in
   let ustate = Evd.evar_universe_context sigma in
   let ustate = UState.restrict_even_binders ustate s in
-  let ustate = UState.fix_undefined_variables ustate in
+  (* let ustate = UState.fix_undefined_variables ustate in *)
   let ustate = UState.collapse_sort_variables ustate in
   let sigma = Evd.set_universe_context sigma ustate in
   sigma
@@ -3560,7 +3569,7 @@ let upoly_decl_of ~depth state ~loose_udecl mie =
           state, (fun i -> E.mkApp uideclc i [up]), gls
       | Some (Check_variances variance) ->
         let udecl = udecl_of_entry (Array.to_list vars) csts (Some variance) loose_udecl in
-        let state, up, gls = universe_decl.API.Conversion.embed ~depth state udecl in
+        let state, up, gls = universe_decl_cumul.API.Conversion.embed ~depth state udecl in
         state, (fun i -> E.mkApp uideclc i [up]), gls
       end
   | Monomorphic_ind_entry -> state, (fun i -> E.mkApp ideclc i []), []
