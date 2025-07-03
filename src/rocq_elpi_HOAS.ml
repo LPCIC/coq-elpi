@@ -622,11 +622,7 @@ module GRSet = U.Set.Make(GROrd)
 let globalc  = E.Constants.declare_global_symbol "global"
 let pglobalc  = E.Constants.declare_global_symbol "pglobal"
 
-module GrefCache = Hashtbl.Make(struct
-  type t = GlobRef.t
-  let equal = GlobRef.SyntacticOrd.equal
-  let hash = GlobRef.SyntacticOrd.hash
-end)
+module GrefCache = Hashtbl.Make(GlobRef.UserOrd)
 let cache = GrefCache.create 13
 
 let assert_in_coq_gref_consistent ~poly gr =
