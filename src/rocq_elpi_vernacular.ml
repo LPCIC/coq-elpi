@@ -630,7 +630,7 @@ let loc_merge l1 l2 =
   try Loc.merge l1 l2
   with Failure _ -> l1
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "8.20" || coq = "9.0"]
 let classifier _loc0 _args _loc1 =
   Vernacextend.VtSideff ([], VtNow)
 let execution p loc0 args loc1 ?loc ~atts () =
