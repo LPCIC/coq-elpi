@@ -2180,7 +2180,6 @@ Supported attributes:
               err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
              Some ty in
        let state, poly, cumul, udecl, _ = poly_cumul_udecl_variance_of_options state options in
-       if cumul then err Pp.(str"coq.env.add-const: unsupported attribute @udecl-cumul! or @univpoly-cumul!");
        let kind = Decls.(IsDefinition Definition) in
        let scope = if Option.has_some local_bkind
         then Locality.Discharge

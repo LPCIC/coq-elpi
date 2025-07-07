@@ -54,3 +54,14 @@ Elpi Query lp:"
 Print test.
 (* It's indeed polymorphic and we do get the minimized version *)
 End test_minimization.
+
+Module test_cumul_def.
+Elpi Command test_cumul_def.
+
+Elpi Query lp:"
+   coq.univ.new U,
+   coq.univ.variable U V,
+   @keep-alg-univs! => @udecl-cumul! [(auto V)] tt [] tt => coq.env.add-const ""polydef"" (sort (typ U)) _ _ _C.
+".
+  Print polydef.
+Print test_cumul_def.
