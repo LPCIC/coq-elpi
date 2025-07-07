@@ -216,7 +216,27 @@ let universe_level_name evd ({CAst.v=id} as lid) =
     CErrors.user_err ?loc:lid.CAst.loc
       (Pp.(str "Undeclared universe: " ++ Id.print id ++ str "."))
 
-let sort_name env sigma l = match l with
+let glob_level loc state = function
+    | GSProp 
+    | GProp ->
+      CErrors.user_err ?loc
+        Pp.(str "Universe instances cannot contain non-Set small levels, polymorphic" ++
+            str " universe instances must be greater or equal to Set.");
+    | GSet -> Univ.Level.set
+    | GUniv u -> u
+    | GRawUniv u -> nYI "GRawUniv"
+    | GLocalUniv l -> universe_level_name (get_sigma state) l
+
+let glob_level_expr loc state (l, k) =
+  (glob_level loc state l, k)
+
+let glob_univ loc state = function
+  | UAnonymous _ -> nYI "UAnonymous"
+  | UNamed l ->
+    let us = List.map (glob_level_expr loc state) l in
+    Univ.Universe.of_list us
+
+let sort_name loc state l = match l with
 | [] -> assert false
 | [u, 0] ->
   begin match u with
@@ -225,30 +245,18 @@ let sort_name env sigma l = match l with
   | GProp -> Sorts.prop
   | GUniv u -> Sorts.sort_of_univ (Univ.Universe.make u)
   | GLocalUniv l ->
-    let u = universe_level_name sigma l in
+    let u = universe_level_name (get_sigma state) l in
     Sorts.sort_of_univ (Univ.Universe.make u)
   | GRawUniv _ -> nYI "GRawUniv"
   end
-| [_] | _ :: _ :: _ ->
-  nYI "(glob)HOAS for Type@{i j}"
+  | l -> 
+    let us = List.map (glob_level_expr loc state) l in
+    Sorts.sort_of_univ (Univ.Universe.of_list us)
 
-let glob_level loc state = function
-  | UAnonymous _ -> nYI "UAnonymous"
-  | UNamed s ->
-      match s with
-      | GSProp 
-      | GProp ->
-        CErrors.user_err ?loc
-          Pp.(str "Universe instances cannot contain non-Set small levels, polymorphic" ++
-              str " universe instances must be greater or equal to Set.");
-      | GSet -> Univ.Level.set
-      | GUniv u -> u
-      | GRawUniv u -> nYI "GRawUniv"
-      | GLocalUniv l -> universe_level_name (get_sigma state) l
 
 let nogls f ~depth state = let state, x = f ~depth state in state, x, ()
 
-let rigid_anon_type = function GSort(None, UAnonymous {rigid=UnivRigid}) -> true | _ -> false
+let rigid_anon_type = function GSort(None, UAnonymous {rigid=_}) -> true | _ -> false
 let named_type = function GSort(None, UNamed _) -> true | _ -> false
 let name_of_type = function GSort(None, UNamed u) -> u | _ -> assert false
 let dest_GProd = function GProd(n,_,_,s,t) -> n,s,t | _ -> assert false
@@ -344,7 +352,7 @@ let gterm2lpast ~pattern ~language state glob =
       in_elpiast_poly_gr ~loc gr s
     | Some (ql,l) ->
       let () = if not (CList.is_empty ql) then nYI "sort poly" in
-      let l' = List.map (glob_level x.CAst.loc state) l in
+      let l' = List.map (glob_univ x.CAst.loc state) l in
       in_elpiast_poly_gr_instance ~loc gr (UVars.Instance.of_array ([||], Array.of_list l'))
     end
   | GRef(gr,_ul) -> in_elpiast_gr ~loc gr
@@ -355,7 +363,7 @@ let gterm2lpast ~pattern ~language state glob =
   | GSort _ as t when named_type t ->
       let u = name_of_type t in
       let env = get_glob_env state in
-      in_elpiast_sort ~loc state (sort_name env (get_sigma state) u)
+      in_elpiast_sort ~loc state (sort_name x.CAst.loc state u)
   | GSort(_) -> nYI "(glob)HOAS for Type@{i j}"
 
   | GProd _ as t ->
