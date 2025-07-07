@@ -29,12 +29,26 @@ Print test.
 (* It's indeed polymorphic and we do get the minimized version *)
 End test_explicit.
 
+Module test_explicit2.
+Elpi Command test_explicit2.
+Elpi Query lp:"
+  coq.univ.new U,
+   @keep-alg-univs! => @univpoly-cumul! =>
+    coq.env.add-indt (record ""test"" (sort (typ U+1)) ""mktest""
+     (field _ ""foo"" (sort (typ U))  _ \ end-record)) _C.
+".
+Print test.
+(* Record test@{u} : Type@{u+1} := mktest { foo : Type@{u} }. *)
+(* u(+ (= for typing) in term, + in type) |= *)
+(* It's indeed polymorphic and we do get the minimized version *)
+End test_explicit2.
+
 Module test_minimization.
 Elpi Command test_minimization.
 Elpi Query lp:"
    coq.univ.new U,
    coq.univ.variable U V,
-   @keep-alg-univs! => @udecl! [V] ff [] tt => coq.env.add-indt (record ""test"" (sort (typ _)) ""mktest""
+   @keep-alg-univs! => @udecl-cumul! [(auto V)] ff [] tt => coq.env.add-indt (record ""test"" (sort (typ _)) ""mktest""
      (field _ ""foo"" (sort (typ U))  _ \ end-record)) _C.
 ".
 Print test.

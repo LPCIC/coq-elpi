@@ -2145,6 +2145,7 @@ Supported attributes:
 - @using! (default: section variables actually used)
 - @univpoly! (default unset)
 - @udecl! (default unset)
+- @udecl-cumul! (default unset)
 - @dropunivs! (default: false, drops all universe constraints from the store after the definition)
 |})))))),
   (fun id body types opaque _ ~depth {options} _ -> grab_global_env__drop_sigma_univs_if_option_is_set options "coq.env.add-const" (fun state ->
@@ -2191,7 +2192,7 @@ Supported attributes:
        let hook = Declare.Hook.make (fun { Declare.Hook.S.uctx = x } -> uctx := Some (UState.context_set x)) in
        (* End hack *)
 
-       let info = Declare.Info.make ~scope ~kind ~poly ~udecl ~hook () in
+       let info = Declare.Info.make ~scope ~kind ~poly ~cumulative:cumul ~udecl ~hook () in
 
        let used =
          Univ.Level.Set.union
