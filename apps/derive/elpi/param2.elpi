@@ -113,7 +113,7 @@ param-match (fun N T B) P1 PRM :-
 % translation of inductive types %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-func param-indt inductive, bool, int, int, term, list term, list term, inductive -> inductive, bool, int, int, term, list term.
+func param-indt inductive, bool, int, int, term, list term, list term -> inductive, bool, int, int, term, list term.
 param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
   LnoR is 3 * Lno, LunoR is 3 * Luno,

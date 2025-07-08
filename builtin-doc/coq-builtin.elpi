@@ -1504,7 +1504,7 @@ external symbol coq.redflags.fix : coq.redflag = "1".
 external symbol coq.redflags.cofix : coq.redflag = "1". 
 external symbol coq.redflags.zeta : coq.redflag = "2". 
 external symbol coq.redflags.const : constant -> coq.redflag = "1".  % enable/disable unfolding
-external symbol coq.redflags.proj : projection -> coq.redflag = "1". % enable/disable unfolding
+external symbol coq.redflags.proj : projection -> coq.redflag = "1".  % enable/disable unfolding
 
 % Set of flags for lazy, cbv, ... reductions
 kind coq.redflags type.
