@@ -75,7 +75,7 @@ pred main-synterp i:list argument, o:any.
 pred main-interp-proof
   i:list argument, % arguments passed to the command
   i:any,  % data from the parsing phase (defaults to _)
-  o:term, % the statement to prove
+  o:term, % the statement to prove (not necessarily ground)
   o:any.  % data for the corresponding proof-closing command
 pred main-interp-qed
   i:list argument, % arguments passed to the command
