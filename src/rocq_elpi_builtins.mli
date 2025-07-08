@@ -23,3 +23,4 @@ val base : Compile.program option State.component
 
 val cache_tac_abbrev : code:qualified_name -> name:qualified_name ->unit
 
+val closed_term : (EConstr.t, Rocq_elpi_HOAS.empty Rocq_elpi_HOAS.coq_context, Data.constraints) ContextualConversion.t

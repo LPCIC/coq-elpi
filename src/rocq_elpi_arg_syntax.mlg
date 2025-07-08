@@ -174,6 +174,21 @@ let synterp_attribute : EA.phase option Attributes.attribute =
 
     ]
 
+let proof_attribute : EA.proof option Attributes.attribute =
+  let open EA in
+  let open Attributes in
+  attribute_of_list
+    ["proof",
+      (fun ?loc old -> function
+      | VernacFlagLeaf (FlagString "begin") -> Begin None
+      | VernacFlagList [CAst.{ v = "begin_if",VernacFlagLeaf (FlagString s) }] -> Begin (Some s)
+      | VernacFlagLeaf (FlagString "end") -> End
+      | _ -> CErrors.user_err ?loc (Pp.str "Syntax error, use #[proof=\"begin\"] or #[proof=\"end\"]"))
+
+    ]
+
+
+
 let skip_and_synterp_attributes = Attributes.Notations.(skip_attribute ++ synterp_attribute)
 let scope_and_skip_and_synterp_attributes = Attributes.Notations.(scope_attribute ++ skip_attribute ++ synterp_attribute)
 

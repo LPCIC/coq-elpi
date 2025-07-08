@@ -6,6 +6,14 @@
 (include_subdirs qualified)
 
 (rule
+ (target test_API_proof.v)
+ (deps
+  (glob_files test_API_proof.v.in))
+ (action
+  (with-stdout-to %{target}
+   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+
+(rule
  (target dummy.v)
  (deps (glob_files_rec *.elpi))
  (action

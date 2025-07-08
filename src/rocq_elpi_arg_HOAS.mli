@@ -6,6 +6,9 @@ open Elpi.API.RawData
 open Rocq_elpi_utils
 
 type phase = Interp | Synterp | Both
+type proof =
+  | Begin of string option (* None = always, Some x only if #[x] present*)
+  | End
 
 module Cmd : sig
 

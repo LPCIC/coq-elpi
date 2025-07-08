@@ -368,6 +368,13 @@ in favour of using groups explicitly)
   the case of tactics, all arguments are considered to be terms.
   Moreover, remember that one can use `Tactic Notation` to give the tactic a
   better syntax and a shorter name when used in the middle of a proof script.
+  Commands can declare the behavior of starting/ending a proof by, respectively,
+  using `#[proof="begin"] Elpi Export ..` and `#[proof="end"] Elpi Export ..`.
+  Starting the proof can depend on the presence of an attribute, for example
+  `#[proof(begin_if="interactive")] Elpi Export foo` will make
+  `foo` not open a proof, while `#[interactive] foo` will open a proof.
+  See also the `main-interp-proof` and `main-interp-qed` entry points in
+  [coq-builtin](builtin-doc/coq-builtin.elpi).
 
 where `<argument>` can be:
 
