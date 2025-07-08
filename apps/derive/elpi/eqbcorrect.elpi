@@ -80,7 +80,7 @@ main (indt I) Prefix CLs :- std.do! [
   std.forall CLs (x\coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ x)),
 
 ].
-main (const C) Prefix [Clause] :- std.do! [
+main (const C) Prefix [Clause4, ClauseC, ClauseR] :- std.do! [
   std.assert! (eqb-for (global (const C)) (global (const C)) F) "run eqb first",
   coq.env.const C (some T) _,
   search-eqcorrect-for T Correct Refl,
@@ -93,8 +93,12 @@ main (const C) Prefix [Clause] :- std.do! [
   coq.ensure-fresh-global-id NameC FNameC,
   coq.env.add-const FNameC Correct {{ @eqb_correct  lp:X lp:F }} @transparent! CC,
   coq.env.add-const FNameR Refl   {{ @eqb_reflexive lp:X lp:F }} @transparent! CR,
-  Clause = (eqcorrect-for (const C) CC CR),
-  coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ Clause),
+  Clause4 = (eqcorrect-for (const C) CC CR),
+  ClauseC = (correct-lemma-for (global (const C)) (global (const CC))),
+  ClauseR = (refl-lemma-for    (global (const C)) (global (const CR))),
+  coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ Clause4),
+  coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ ClauseC),
+  coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ ClauseR),
 ].
 main (indc _) _ _ :- stop "derive.eqbcorrect does not work on a constructor".
 
@@ -413,7 +417,7 @@ search What Rec (app [GR|L] as GRL) R :- !, std.do! [
 ].
 % no params, no aux lemma (no reali argument)
 search What _Rec (global GR as GRL) {{ fun (x : lp:GRL) (_ : lp:IsGR x) => lp:R x }} :-
-  What (global GR) R,
+  std.spy(What (global GR) R),
   mk-reali (global GR) IsGR, !.
 search What _ X _ :- coq.safe-dest-app X HD _, std.assert! (What HD _) "run eqbcorrect before".
 

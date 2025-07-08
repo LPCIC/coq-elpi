@@ -50,12 +50,15 @@ main-k Prefix Lno K KT Clause :- do! [
 ].
 
 pred main i:gref, i:gref, i:string, o:list prop.
-main _ (indt GR) Prefix Clauses :-
+main _ (indt GR) Prefix Clauses2 :-
   
   coq.env.indt GR _ Lno _ _ K KT,
   map2-filter K KT (main-k Prefix Lno) Clauses,
-  forall Clauses
+  Clauses2 = [param1-congr-done (indt GR)|Clauses],
+  forall Clauses2
     (x\ coq.elpi.accumulate _ "derive.param1.congr.db" (clause _ _ x)).
+
+main _ (const IsGR) Prefix [param1-congr-done (const IsGR)].
 
 }
 

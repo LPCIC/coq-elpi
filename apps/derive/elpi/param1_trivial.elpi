@@ -125,7 +125,7 @@ main _ (indt GR) Suffix [Clause,param1-trivial-done (indt GR)] :- do! [
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done (indt GR))),
 ].
-main (const GR) (const IsGR) Suffix [Clause,param1-trivial-done (const IsGR)] :- spy-do! [
+main (const GR) (const IsGR) Suffix [Clause,param1-trivial-done (const IsGR)] :- do! [
   coq.env.const GR (some T) _,
   coq.env.const IsGR (some IsT) _,
   Name is {coq.gref->id (const IsGR)} ^ Suffix,

@@ -16,6 +16,7 @@ From elpi.apps Require Export  derive.param1.
 
 Elpi Db derive.param1.congr.db lp:{{
   type param1-congr-db constructor -> term -> prop. 
+  type param1-congr-done gref -> prop. 
 }}.
 
 Elpi Command derive.param1.congr.
@@ -55,6 +56,6 @@ dep1 "param1_congr" "param1".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) _ ff (derive "param1_congr" (derive.on_param1 (indt T) derive.param1.congr.main "congr_") (derive.on_param1 (indt T) (_\T\_\_\sigma I\T = indt I, derive.exists-indc I (K\ param1-congr-db K _)) _ _)).
+derivation T _ ff (derive "param1_congr" (derive.on_param1 T derive.param1.congr.main "congr_") (derive.on_param1 T (_\T\_\_\param1-congr-done T) _ _)).
 
 }}.
