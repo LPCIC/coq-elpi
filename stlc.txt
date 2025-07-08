@@ -1813,11 +1813,11 @@ coq.reduction.lazy.whd_all A0 A1 :- get-option coq:redflags coq.redflags.all
 coq.id->name A0 A1 :- coq.string->name A0 A1.
 % File "coq-builtin.elpi", line 1845, column 0, characters 74628-74692: [264] 
 coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
-% File "./examples/tutorial_elpi_lang.v", line 491, column 2, characters 12652-12720: [265] 
+% File "./examples/tutorial_elpi_lang.v", line 492, column 2, characters 12702-12770: [265] 
 whd (app A0 A2) A3 :- whd A0 (fun A1), !, whd (A1 A2) A3.
-% File "./examples/tutorial_elpi_lang.v", line 495, column 2, characters 12775-12801: [266] 
+% File "./examples/tutorial_elpi_lang.v", line 496, column 2, characters 12825-12851: [266] 
 whd A1 A0 :- A0 = A1.
-% File "./examples/tutorial_elpi_lang.v", line 591, column 2, characters 15200-15250: [267] 
+% File "./examples/tutorial_elpi_lang.v", line 592, column 2, characters 15250-15300: [267] 
 of (app A0 A3) A2 :- of A0 (arr A1 A2), of A3 A1.
-% File "./examples/tutorial_elpi_lang.v", line 596, column 2, characters 15366-15421: [268] 
+% File "./examples/tutorial_elpi_lang.v", line 597, column 2, characters 15416-15471: [268] 
 of (fun A0) (arr A2 A1) :- pi c0 \ of c0 A2 => of (A0 c0) A1.
