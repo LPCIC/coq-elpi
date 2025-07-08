@@ -87,6 +87,8 @@ main (const C) Prefix [CL] :- std.do! [
   coq.env.add-const Namerf Breflect {{ forall a b : lp:X, lib:elpi.reflect (@eq lp:X a b) (lp:F a b) }} @opaque! Reflect,
   CL = eqbok-for (const C) Reflect,
   coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
+  coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ (eqType (const C) eqb.axiom)),
+
 ].
 main (indc _) _ _ :- stop "cannot call eqbOK on a constructor".
 

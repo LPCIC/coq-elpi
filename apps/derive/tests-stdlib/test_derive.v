@@ -197,3 +197,18 @@ Definition nat' := nat.
 Check nat'_eqb.
 
 End TestAlias.
+
+Module TestAlias2.
+Definition P := nat.
+derive P.
+(* Elpi derive.eqbOK.register_axiom P is_P is_nat_inhab P_eqb P_eqb_correct P_eqb_refl. *)
+
+Definition V := nat.
+derive V.
+(* Elpi derive.eqbOK.register_axiom V is_V is_nat_inhab V_eqb V_eqb_correct V_eqb_refl. *)
+
+Inductive C := 
+  | p of P 
+  | v of V.
+#[verbose] derive C.     
+End TestAlias2.

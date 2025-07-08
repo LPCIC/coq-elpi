@@ -42,6 +42,7 @@ Elpi derive.param1 is_leq.
 Elpi derive.param1 ord.
 Elpi derive.param1 ord2.
 Elpi derive.param1 val.
+Elpi derive.param1 alias.
 
 End Coverage.
 
@@ -74,6 +75,7 @@ Redirect "tmp" Check is_enum : pred enum.
 Redirect "tmp" Check is_ord : forall (p : peano) (pa : is_peano p), pred (ord p).
 Redirect "tmp" Check is_ord2 : forall (p : peano) (pa : is_peano p), pred (ord2 p).
 Redirect "tmp" Check is_val : pred val.
+Redirect "tmp" Check is_alias : pred alias.
 
 End Test.
 
