@@ -49,8 +49,8 @@ main-k Prefix Lno K KT Clause :- do! [
   Clause = param1-congr-db K (global (const Cst))
 ].
 
-pred main i:inductive, i:string, o:list prop.
-main GR Prefix Clauses :-
+pred main i:gref, i:gref, i:string, o:list prop.
+main _ (indt GR) Prefix Clauses :-
   
   coq.env.indt GR _ Lno _ _ K KT,
   map2-filter K KT (main-k Prefix Lno) Clauses,

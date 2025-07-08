@@ -20,11 +20,20 @@ Elpi Db derive.param1.congr.db lp:{{
 
 Elpi Command derive.param1.congr.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate File param1_congr.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.congr.main GR O _.
-  main [str I] :- !, coq.locate I (indt GR), derive.param1.congr.main GR "congr_" _.
+  main [str I, str O] :- !,
+    coq.locate I (indt IsGR),
+    realiR T {coq.env.global (indt IsGR)},
+    coq.env.global (indt GR) T,
+    derive.param1.congr.main (indt GR) (indt IsGR) O _.
+  main [str I] :- !,
+    coq.locate I (indt IsGR),
+    realiR T {coq.env.global (indt IsGR)},
+    coq.env.global (indt GR) T,
+    derive.param1.congr.main (indt GR) (indt IsGR) "congr_" _.
   main _ :- usage.
 
   usage :-
@@ -46,6 +55,6 @@ dep1 "param1_congr" "param1".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) _ ff (derive "param1_congr" (derive.on_param1 T derive.param1.congr.main "congr_") (derive.on_param1 T (T\_\_\derive.exists-indc T (K\ param1-congr-db K _)) _ _)).
+derivation (indt T) _ ff (derive "param1_congr" (derive.on_param1 (indt T) derive.param1.congr.main "congr_") (derive.on_param1 (indt T) (_\T\_\_\sigma I\T = indt I, derive.exists-indc I (K\ param1-congr-db K _)) _ _)).
 
 }}.

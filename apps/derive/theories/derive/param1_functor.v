@@ -20,11 +20,20 @@ Elpi Db derive.param1.functor.db lp:{{
 
 Elpi Command derive.param1.functor.
 Elpi Accumulate File derive_hook.
+Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File param1_functor.
 Elpi Accumulate lp:{{ 
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.param1.functor.main GR O _.
-  main [str I] :- !, coq.locate I (indt GR), derive.param1.functor.main GR "_functor" _.
+  main [str I, str O] :- !,
+    coq.locate I (indt IsGR),
+    realiR T {coq.env.global (indt IsGR)},
+    coq.env.global (indt GR) T,
+    derive.param1.functor.main (indt GR) (indt IsGR) O _.
+  main [str I] :- !,
+    coq.locate I (indt IsGR),
+    realiR T {coq.env.global (indt IsGR)},
+    coq.env.global (indt GR) T,
+    derive.param1.functor.main (indt GR) (indt IsGR) "_functor" _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.param1.functor <inductive type name> [<output suffix>]".
@@ -45,6 +54,6 @@ dep1 "param1_functor" "param1".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) _ ff (derive "param1_functor" (derive.on_param1 T derive.param1.functor.main "_functor") (derive.on_param1 T (T\_\_\param1-functor-for T _ _) _ _)).
+derivation (indt T) _ ff (derive "param1_functor" (derive.on_param1 (indt T) derive.param1.functor.main "_functor") (derive.on_param1 (indt T) (_\T\_\_\sigma I\ T = indt I, param1-functor-for I _ _) _ _)).
 
 }}.

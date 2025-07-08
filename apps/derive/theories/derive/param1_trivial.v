@@ -18,11 +18,11 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
 
   Elpi Db derive.param1.trivial.db lp:{{
 
-  pred param1-trivial-done i:inductive.
+  pred param1-trivial-done i:gref.
   type param1-trivial-db term -> term -> prop.
   type param1-trivial-db-args list term -> list term -> prop.
 
-  pred param1-inhab-done i:inductive.
+  pred param1-inhab-done i:gref.
   type param1-inhab-db term -> term -> prop.
   type param1-inhab-db-args list term -> list term -> prop.
 
@@ -89,9 +89,11 @@ Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File param1_inhab.
 Elpi Accumulate File param1_trivial.
 Elpi Accumulate lp:{{
-  main [str I] :- !, coq.locate I (indt GR),
-    derive.param1.inhab.main GR "_inhab" CL,
-    CL => derive.param1.trivial.main GR "_trivial" _.
+  main [str I] :- coq.locate I IsGR, !,
+    realiR T {coq.env.global IsGR},
+    coq.env.global GR T,
+    derive.param1.inhab.main GR IsGR "_inhab" CL,
+    CL => derive.param1.trivial.main GR IsGR "_trivial" _.
   main _ :- usage.
 
   usage :-
@@ -108,8 +110,10 @@ Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File param1_inhab.
 Elpi Accumulate lp:{{
-  main [str I] :- !, coq.locate I (indt GR),
-    derive.param1.inhab.main GR "_inhab" _.
+  main [str I] :- coq.locate I IsGR, !,
+    realiR T {coq.env.global IsGR},
+    coq.env.global GR T,
+    derive.param1.inhab.main GR IsGR "_inhab" _.
   main _ :- usage.
 
   usage :-
@@ -261,7 +265,7 @@ dep1 "param1_inhab" "param1".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) _ ff (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_inhab") (derive.on_param1 T (T\_\_\param1-inhab-done T) _ _)).
-derivation (indt T) _ ff (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T (T\_\_\param1-trivial-done T) _ _)).
+derivation T  _ ff (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_inhab")   (derive.on_param1 T  (_\T\_\_\param1-inhab-done T) _ _)).
+derivation T  _ ff (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T  (_\T\_\_\param1-trivial-done T) _ _)).
 
 }}.

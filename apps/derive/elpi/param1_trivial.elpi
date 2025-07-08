@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{assert!, do!, drop-last}.
+shorten std.{assert!, spy-do!, do!, drop-last}.
 
 namespace derive.param1.trivial {
 
@@ -112,8 +112,8 @@ body-params _ T _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-pred main i:inductive, i:string, o:list prop.
-main GR Suffix [Clause,param1-trivial-done GR] :- do! [
+pred main i:gref, i:gref, i:string, o:list prop.
+main _ (indt GR) Suffix [Clause,param1-trivial-done (indt GR)] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
   body-params Lno (global (indt GR)) Arity R,
   % coq.say {coq.term->string R},
@@ -123,7 +123,21 @@ main GR Suffix [Clause,param1-trivial-done GR] :- do! [
   coq.env.add-const Name R RT @transparent! Cst,
   Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
-  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done GR)),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done (indt GR))),
+].
+main (const GR) (const IsGR) Suffix [Clause,param1-trivial-done (const IsGR)] :- spy-do! [
+  coq.env.const GR (some T) _,
+  coq.env.const IsGR (some IsT) _,
+  Name is {coq.gref->id (const IsGR)} ^ Suffix,
+
+  std.assert! (param1-trivial-db IsT R) "derive.param1_trivial not already generated",
+
+  std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
+  coq.env.add-const Name R RT @transparent! Cst,
+  Clause  = (param1-trivial-db (global (const IsGR)) (global (const Cst))),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done (const IsGR))),
+
 ].
 
 }

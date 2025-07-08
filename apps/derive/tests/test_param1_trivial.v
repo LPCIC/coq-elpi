@@ -43,6 +43,7 @@ Elpi derive.param1.trivial is_sigma_bool2.
 Elpi derive.param1.trivial is_ord.
 Elpi derive.param1.trivial is_ord2.
 Elpi derive.param1.trivial is_val.
+Elpi derive.param1.trivial is_alias.
 
 
 End Coverage.
@@ -75,9 +76,7 @@ Redirect "tmp" Check is_sigma_bool_trivial : trivial sigma_bool is_sigma_bool.
 Redirect "tmp" Check is_ord_trivial : forall p px, trivial (ord p) (is_ord p px).
 Redirect "tmp" Check is_ord2_trivial : forall p px, trivial (ord2 p) (is_ord2 p px).
 Redirect "tmp" Check is_val_trivial : trivial val is_val.
-
-
-
+Redirect "tmp" Check is_alias_trivial : trivial alias is_alias.
 
 Redirect "tmp" Check is_empty_inhab : full empty is_empty.
 Redirect "tmp" Check is_unit_inhab : full unit is_unit.
@@ -106,3 +105,5 @@ Redirect "tmp" Check is_sigma_bool_inhab : full sigma_bool is_sigma_bool.
 Redirect "tmp" Check is_ord_inhab : forall p px, full (ord p) (is_ord p px).
 Redirect "tmp" Check is_ord2_inhab : forall p px, full (ord2 p) (is_ord2 p px).
 Redirect "tmp" Check is_val_inhab : full val is_val.
+
+Redirect "tmp" Check is_alias_inhab : full alias is_alias.
