@@ -44,6 +44,7 @@ Let's create a simple command, called "hello", which prints :e:`"Hello"`
 followed by the arguments we pass to it:
 
 |*)
+Set Warnings "-elpi.linear-variable". (* .none *)
 From elpi Require Import elpi.
 
 Elpi Command hello.

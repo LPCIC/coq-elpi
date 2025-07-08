@@ -37,6 +37,7 @@ Elpi code, while the rest are Coq directives to drive the Elpi interpreter.
 
 |*)
 
+Set Warnings "-elpi.linear-variable". (* .none *)
 From elpi Require Import elpi. (* .none *)
 
 (*|

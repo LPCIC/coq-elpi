@@ -45,6 +45,7 @@ HOAS for Gallina
 
 |*)
 
+Set Warnings "-elpi.linear-variable". (* .none *)
 From elpi Require Import elpi.  (* .none *)
 
 Elpi Command tutorial_HOAS. (* .none *)
