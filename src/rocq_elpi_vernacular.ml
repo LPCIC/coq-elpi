@@ -730,7 +730,6 @@ let has_att s l =
 
 [%%if coq = "8.20" || coq = "9.0"]
 let classifier proof _loc0 _args _loc1 =
-  let open Vernac_classifier in
   match proof with
   | Some (Begin None) -> Vernacextend.(VtStartProof (Doesn'tGuaranteeOpacity,[]))
   | Some End -> Vernacextend.(VtQed (VtKeep VtKeepAxiom))
