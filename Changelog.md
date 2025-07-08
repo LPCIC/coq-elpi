@@ -1,4 +1,6 @@
-# UNRELEASED
+# [2.6.0] 8/7/2025
+
+Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
 
 ### Vernacular
 - New attributes `#[proof="begin"]`, `#[proof(begin_if="att")]`

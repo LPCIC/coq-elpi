@@ -19,7 +19,7 @@ depends: [
   "ocaml" {>= "4.10.0"}
   "elpi" {>= "2.0.7" & < "2.1.0~"}
   ("coq" {>= "8.20+rc1" & < "8.21~"}
-  | "rocq-core" {>= "9.0+rc1" & < "9.1~"})
+  | "rocq-core" {>= "9.0+rc1" & < "9.2~"})
   "ppx_optcomp"
   "ocaml-lsp-server" {with-dev-setup}
   "odoc" {with-doc}
