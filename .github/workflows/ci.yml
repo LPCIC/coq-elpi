@@ -18,6 +18,7 @@ jobs:
       matrix:
         image:
           - 'rocq/rocq-prover:dev'
+          - 'rocq/rocq-prover:9.1'
           - 'rocq/rocq-prover:9.0'
           - 'coqorg/coq:8.20'
         profile:
