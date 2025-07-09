@@ -421,7 +421,7 @@ In this case it is easy to detect that two rules would apply for a query like
 
 |*)
 
-Fail Elpi Program tutorial_functions2 lp:{{
+ Elpi Program tutorial_functions2 lp:{{
 
    func prime int -> . % code omitted
 
