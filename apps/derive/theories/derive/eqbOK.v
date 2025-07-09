@@ -17,11 +17,22 @@ Elpi Db derive.eqbOK.db lp:{{
 
 }}.
 
-Lemma reflect_dec : forall a b, (forall x y : a, reflect (x=y) (b x y)) -> forall x y : a, {x=y}+{x<>y}.
+Lemma reflectEq {A} {x y : A} : reflect (x = y) true -> x = y.
 Proof.
- intros A b H x y.
- destruct (H x y); auto.
-Defined.
+  by intro H; inversion H.
+Qed.
+
+Lemma reflectNEq {A} {x y : A} : reflect (x = y) false -> x <> y.
+Proof.
+  by intro H; inversion H.
+Qed.
+
+Definition reflect_dec a b (F : forall x y : a, reflect (x=y) (b x y)) x y : {x=y}+{x<>y} :=
+  match b x y with
+  | true => fun H => left (reflectEq H)
+  | false => fun H => right (reflectNEq H)
+  end
+  (F x y).
 
 Definition eqb_of_dec : forall a (H : forall x y : a, {x=y}+{x<>y}), a -> a -> bool :=
   fun a H x y => (match H x y with left _ => true | right _ => false end).
