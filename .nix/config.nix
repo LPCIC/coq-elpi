@@ -52,28 +52,6 @@ let master = [
     "rocq-9.1".coqPackages = common-bundles // {
       coq.override.version = "9.1";
       coq-elpi.override.elpi-version = "2.0.7";
-      hierarchy-builder.job = false;  # not yet available for 9.1
-      mathcomp.job = false;  # not yet available for 9.1
-      mathcomp-algebra.job = false;  # not yet available for 9.1
-      mathcomp-analysis.job = false;  # not yet available for 9.1
-      mathcomp-analysis-stdlib.job = false;  # not yet available for 9.1
-      mathcomp-bigenough.job = false;  # not yet available for 9.1
-      mathcomp-boot.job = false;  # not yet available for 9.1
-      mathcomp-character.job = false;  # not yet available for 9.1
-      mathcomp-classical.job = false;  # not yet available for 9.1
-      mathcomp-experimental-reals.job = false;  # not yet available for 9.1
-      mathcomp-field.job = false;  # not yet available for 9.1
-      mathcomp-fingroup.job = false;  # not yet available for 9.1
-      mathcomp-finmap.job = false;  # not yet available for 9.1
-      mathcomp-order.job = false;  # not yet available for 9.1
-      mathcomp-real-closed.job = false;  # not yet available for 9.1
-      mathcomp-reals.job = false;  # not yet available for 9.1
-      mathcomp-reals-stdlib.job = false;  # not yet available for 9.1
-      mathcomp-solvable.job = false;  # not yet available for 9.1
-      mathcomp-ssreflect.job = false;  # not yet available for 9.1
-      multinomials.job = false;  # not yet available for 9.1
-      odd-order.job = false;  # not yet available for 9.1
-      coqeal.job = false;  # not yet available for 9.1
     };
 
     "coq-master" = { rocqPackages = {
