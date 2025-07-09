@@ -393,17 +393,17 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let print ~atts ~loc ~name ~args output =
     skip ~ph:atts (print ~loc ~name ~args) output
 
-  let create_command ~atts:(raw_args) ~loc:_ n =
+  let create_command ~atts:(raw_args) ~loc n =
     let raw_args = Option.default false raw_args in
     let _ = P.ensure_initialized () in
     P.declare_program n (Command { raw_args });
-    P.init_program n [P.command_init()];
+    P.init_program n ~loc [P.command_init()];
     set_current_program (snd n)
 
-  let create_tactic ~loc:_ n =
+  let create_tactic ~loc n =
     let _ = P.ensure_initialized () in
     P.declare_program n Tactic;
-    if P.stage = Summary.Stage.Interp then P.init_program n [P.command_init();P.tactic_init ()];
+    if P.stage = Summary.Stage.Interp then P.init_program n ~loc [P.command_init();P.tactic_init ()];
     set_current_program (snd n)
 
   let create_program ~atts:(raw_args) ~loc n ~init:(sloc,s) =
@@ -413,7 +413,8 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     if P.stage = Summary.Stage.Interp then begin
       let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
       let init = EmbeddedString { sast = unit} in
-      P.init_program n [init];
+      P.init_program n ~loc [init];
+      Printf.eprintf "INIT OK %s\n" s;
     end;
     set_current_program (snd n)
 

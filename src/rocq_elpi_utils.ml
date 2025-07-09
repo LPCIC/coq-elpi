@@ -69,11 +69,11 @@ let feedback_error loc m = Feedback.(feedback (Message(Error,loc,[],m)))
 let patch_loc_source execution_loc error_loc msg =
   match execution_loc, error_loc with
   | _, None -> msg, execution_loc
-  | _, Some elpiloc when Loc.finer (Some execution_loc) (Some elpiloc) -> msg, elpiloc
+  | _, Some elpiloc when Loc.finer (Some elpiloc) (Some execution_loc) -> msg, elpiloc
   | { Loc.fname },Some ({ Loc.fname = elpiname } as elpiloc) when fname = elpiname ->
       (* same file, far location, we complementwith a feedback *)
       feedback_error (Some elpiloc) msg;
-      Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc    
+      Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ Loc.pr execution_loc ++ spc () ++ msg)), execution_loc    
   | _, Some elpiloc ->
       (* external file *)
       Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc

@@ -378,6 +378,183 @@ Elpi Query lp:{{
 }}.
 
 (*|
+---------------------------
+Predicates v.s. functions
+---------------------------
+
+It is often the case that predicates are intended to describe functions,
+i.e. associate only one "output" to a given "input".
+
+|*)
+
+Elpi Program tutorial_functions lp:{{
+
+  kind person  type.
+  type mallory, bob, alice  person.
+
+  func age person -> int.
+  age mallory 23.
+  age bob 23.
+  age alice 20.
+
+}}.
+
+(*|
+
+The function declaration for :e:`age` separates the domain of the function
+from the codomain with the :e:`->` symbol: the function associates to each
+person a single age (or fail if the person has no rule for it).
+
+After this declaration Elpi refuses to add rules that would break this property:
+
+|*)
+
+Fail Elpi Accumulate lp:{{
+  age mallory 24.
+
+}}. (* .fails *)
+
+(*|
+
+In this case it is easy to detect that two rules would apply for a query like
+:e:`age mallory A`, but in general this is not possible. 
+
+|*)
+
+Fail Elpi Program tutorial_functions2 lp:{{
+
+   func prime int -> . % code omitted
+
+   func f int -> int.
+   f X Y :- prime X, Y is 2 * X.
+   f 16 Y :- Y is 3 * X.
+
+}}. (* .fails *)
+
+(*|
+
+In order to accept this function Elpi would need to deduce that 16 is not
+a prime number, and also deduce that :e:`prime` is really implementing a
+primality test.
+
+In order to have the code accepted by Elpi, as a function, one has to use
+the cut operator :e:`!` to enforce an operational reading to the rules:
+when the cut opearot is reached the other rules are discarded.
+
+|*)
+
+Elpi Program tutorial_functions3 lp:{{
+
+   func prime int -> . % code omitted
+
+   func f int -> int.
+   f X Y :- prime X, !, Y is 2 * X.
+   f 16 Y :- Y is 3 * X.
+
+}}.
+
+(*|
+
+Elpi accepts the code because:
+- the two rules are mutually esclusive (thanks to cut)
+- because the code after the cut is itself a function call
+
+The following code is rejected because the second condition does not hold.
+
+|*)
+
+
+Fail Elpi Program tutorial_functions4 lp:{{
+
+   func prime int -> . % code omitted
+   pred many o:int.
+   many 1.
+   many 2.
+
+   func f int -> int.
+   f X Y :- prime X, !, many Y.
+   f 16 Y :- Y is 3 * X.
+
+}}. (* .fails *)
+
+(*|
+
+Since :e:`many` can produce many results, also :e:`f` can.
+
+At the same time the code below is accepted.
+
+|*)
+
+Elpi Program tutorial_functions5 lp:{{
+
+   func prime int -> .
+   pred many o:int.
+   many 1.
+   many 2.
+
+   func f int -> int.
+   f X Y :- many Y, !, prime X.
+   f 16 Y :- Y is 3 * X.
+
+}}.
+
+(*|
+
+The reson why it is accepted is because, operationally, the cut
+operator does not only discard the other rules for the current predicated,
+but also the (yet to be used) rules for all the predicates that preceeds it.
+In this case :e:`many`'s second rule would be discarded, turning the
+predicate call :e:`many Y` into a "function" call (committing to the
+first result given by the predicate :e:`many`).
+
+++++++++++++++++++
+Modes and matching
+++++++++++++++++++
+
+The syntax
+
+.. code:: elpi
+
+   func age person -> int. 
+
+desugars to
+
+.. code:: elpi
+
+   :functional                        % this is an attribute (a special comment)
+   pred age i:person, o:int.
+
+that asserts two things. First :e:`age` is expected to behave like a function.
+Second its first argument is flagged with the *input mode*.
+
+Query arguments in input mode are *matched* against the rule's corresponding
+argument that we call a *pattern*.
+The difference w.r.t. unification is that only variables occurring in the
+pattern can be assigned. Matching is not symmetric: the pattern and the
+query argument play different roles, in particular the query argument can
+only be inspected (destructed) by the patter, never assigned (constructed).
+
+|*)
+
+Fail Elpi Query tutorial_functions lp:{{
+
+  age P 23
+
+}}. (* .fails *)
+
+(*|
+
+The query fails because :e:`P` (occurring in the query)
+does not match :e:`bob` nor :e:`mallory`: there is no way to
+make :e:`P = bob` hold without assigning :e:`P` but that is forbidden by
+the :e:`i:` directive in the signature of :e:`age`.
+
+The only drawback of marking the first argument of :e:`age` as an imput
+is that it will prevent to use the predicate in the other direction, e.g. to
+find any person of age 23. For that one would need a different predicate,
+since Elpi does not support multiple signatures for the same symbol.
+We often use the `R` suffix to denote the non-function version of a predicate,
+for example see :stdlib:`std.append` and :stdlib:`std.appendR`.
 
 ==================
 Terms with binders
@@ -408,7 +585,7 @@ the β-reduction is performed, :e:`age alice 23`.
 
 |*)
 
-Elpi Query lp:{{
+Elpi Query tutorial lp:{{
 
   F = (x\ age alice x),
   coq.say "F =" F,
@@ -1024,15 +1201,6 @@ Elpi Query lp:{{
 
 (*|
 
-.. note:: variables (capital letters) can be used in
-   types in order to describe ML-like polymorphism.
-
-.. note:: :e:`list A` is a built-in data type
-
-   The empty list is written :e:`[]`, while the cons constructor
-   is written :e:`[Hd | Tail]`. Iterated cons can be written
-   :e:`[ E1, E2 | Tail ]` and :e:`| Tail` can be omitted if the list
-   is nil terminated.
 
 The :e:`make-palindrome` predicate has to use a temporary variable
 just to pass the output of a function as the input to another function.

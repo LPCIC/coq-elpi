@@ -217,7 +217,7 @@ module type Programs = sig
   val declare_file : program_name -> unit
   val get_nature : qualified_name -> nature
 
-  val init_program : program_name -> src list -> unit
+  val init_program : program_name -> loc:Loc.t -> src list -> unit
   val init_db : program_name -> loc:Loc.t -> (API.Ast.Loc.t * string) -> unit
   val init_file : program_name -> Digest.t * API.Compile.scoped_program -> unit
   val header_of_db : qualified_name -> cunit list
@@ -515,7 +515,7 @@ let get ?(fail_if_not_exists=false) p =
     ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
   
   
-  let init_program name ul =
+  let init_program name ~loc:_ ul =
     ul |> List.iter (fun u ->
       let obj = in_program (name, u, Initialization) in
       Lib.add_leaf obj)
@@ -665,11 +665,11 @@ let get ?(fail_if_not_exists=false) p =
     | None -> CErrors.user_err Pp.(str "Elpi TacticTemplate was not called")
     | Some ast -> ast
   
-  let init_program (loc,qualid) (init : src list) =
+  let init_program (loc,qualid) ~loc (init : src list) =
     if stage = Summary.Stage.Interp && Global.sections_are_opened () then
       CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
     else
-      init_program qualid init
+      init_program qualid ~loc init
   
   let init_db (_,qualid) ~loc header =
     if stage = Summary.Stage.Interp && Global.sections_are_opened () then
@@ -1035,6 +1035,11 @@ let accumulate ~loc name sources =
   accumulate name (sources:src list);
   handle_elpi_compiler_errors ~loc (fun () -> 
     get_and_compile ~even_if_empty:false ~loc name |> ignore)
+
+let init_program name ~loc sources =
+  init_program name ~loc (sources:src list);
+  handle_elpi_compiler_errors ~loc (fun () -> 
+    get_and_compile ~even_if_empty:true ~loc (snd name) |> ignore)
 
 end
 

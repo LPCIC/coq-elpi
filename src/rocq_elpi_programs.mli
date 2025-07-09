@@ -95,7 +95,7 @@ module type Programs = sig
   val declare_file : program_name -> unit
   val get_nature : qualified_name -> nature
 
-  val init_program : program_name -> src list -> unit
+  val init_program : program_name -> loc:Loc.t -> src list -> unit
   val init_db : program_name -> loc:Loc.t -> (Ast.Loc.t * string) -> unit
   val init_file : program_name -> Digest.t * Compile.scoped_program -> unit
 
