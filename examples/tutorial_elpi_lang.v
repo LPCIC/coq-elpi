@@ -416,8 +416,11 @@ Fail Elpi Accumulate lp:{{
 
 (*|
 
-In this case it is easy to detect that two rules would apply for a query like
-:e:`age mallory A`, but in general this is not possible. 
+In this case it is easy to tell that the two rules overlap: both
+apply to a query like :e:`age mallory A`.
+
+In general is not possible to decide if two rules really overlap. For example
+this legit function is rejected.
 
 |*)
 
@@ -435,11 +438,12 @@ In this case it is easy to detect that two rules would apply for a query like
 
 In order to accept this function Elpi would need to deduce that 16 is not
 a prime number, and also deduce that :e:`prime` is really implementing a
-primality test.
+primality test (like proving its code correct, or at least that it would fail
+on 16).
 
 In order to have the code accepted by Elpi, as a function, one has to use
-the cut operator :e:`!` to enforce an operational reading to the rules:
-when the cut opearot is reached the other rules are discarded.
+the cut operator :e:`!` to enforce the following operational reading to the
+rules: when the cut operator is reached the other rules are discarded.
 
 |*)
 
@@ -448,16 +452,17 @@ Elpi Program tutorial_functions3 lp:{{
    func prime int -> . % code omitted
 
    func f int -> int.
-   f X Y :- prime X, !, Y is 2 * X.
-   f 16 Y :- Y is 3 * X.
+   f X Y :- prime X, !, Y = 2.
+   f 16 Y :- Y = 4.
 
 }}.
 
 (*|
 
 Elpi accepts the code because:
-- the two rules are mutually esclusive (thanks to cut)
+- the two rules are mutually esclusive (thanks to the cut)
 - because the code after the cut is itself a function call
+  (:e:`Y = 2` is a call to unification that is a function)
 
 The following code is rejected because the second condition does not hold.
 
@@ -467,19 +472,19 @@ The following code is rejected because the second condition does not hold.
 Fail Elpi Program tutorial_functions4 lp:{{
 
    func prime int -> . % code omitted
-   pred many o:int.
-   many 1.
-   many 2.
+   pred one_or_two o:int.
+   one_or_two 1.
+   one_or_two 2.
 
    func f int -> int.
-   f X Y :- prime X, !, many Y.
-   f 16 Y :- Y is 3 * X.
+   f X Y :- prime X, !, one_or_two Y.
+   f 16 Y :- Y = 4.
 
 }}. (* .fails *)
 
 (*|
 
-Since :e:`many` can produce many results, also :e:`f` can.
+Since :e:`one_or_two` can produce many results, also :e:`f` can.
 
 At the same time the code below is accepted.
 
@@ -488,13 +493,13 @@ At the same time the code below is accepted.
 Elpi Program tutorial_functions5 lp:{{
 
    func prime int -> .
-   pred many o:int.
-   many 1.
-   many 2.
+   pred one_or_two o:int.
+   one_or_two 1.
+   one_or_two 2.
 
    func f int -> int.
-   f X Y :- many Y, !, prime X.
-   f 16 Y :- Y is 3 * X.
+   f X Y :- one_or_two Y, !, prime X.
+   f 16 Y :- Y = 4.
 
 }}.
 
@@ -503,9 +508,9 @@ Elpi Program tutorial_functions5 lp:{{
 The reson why it is accepted is because, operationally, the cut
 operator does not only discard the other rules for the current predicated,
 but also the (yet to be used) rules for all the predicates that preceeds it.
-In this case :e:`many`'s second rule would be discarded, turning the
-predicate call :e:`many Y` into a "function" call (committing to the
-first result given by the predicate :e:`many`).
+In this case :e:`one_or_two`'s second rule would be discarded, turning the
+predicate call :e:`one_or_two Y` into a "function" call (committing to the
+first result given by the predicate :e:`one_or_two`).
 
 ++++++++++++++++++
 Modes and matching
