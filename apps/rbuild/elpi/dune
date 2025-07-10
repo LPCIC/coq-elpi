@@ -1,0 +1,19 @@
+(coq.theory
+ (name elpi.apps.rbuild.elpi)
+ (package rocq-elpi)
+ (theories elpi elpi.apps.coercion))
+
+(rule
+ (target dummy.v)
+ (deps
+  (glob_files *.elpi))
+ (action
+  (with-stdout-to %{target}
+   (progn
+     (run rocq_elpi_shafile %{deps})))))
+
+(install
+ (files
+  (glob_files (*.elpi with_prefix coq/user-contrib/elpi/apps/rbuild/elpi/)))
+ (section lib_root)
+ (package rocq-elpi))

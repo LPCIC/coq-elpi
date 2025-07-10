@@ -79,6 +79,13 @@
 -Q _build/default/apps/tc/tests-stdlib elpi_apps_tc_tests_stdlib
 -Q apps/tc/tests-stdlib elpi_apps_tc_tests_stdlib
 
+-Q apps/rbuild/elpi elpi.apps.rbuild.elpi
+-Q _build/default/apps/rbuild/elpi elpi.apps.rbuild.elpi
+-Q apps/rbuild/examples elpi.apps.rbuild.examples
+-Q _build/default/apps/rbuild/examples elpi.apps.rbuild.examples
+-Q apps/rbuild/theories elpi.apps.rbuild
+-Q _build/default/apps/rbuild/theories elpi.apps.rbuild
+
 # Cram tests.
 
 -Q tests elpi.tests
