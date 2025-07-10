@@ -79,6 +79,12 @@ data types that are opaque to Elpi. Still the :type:`gref` data type lets you
 see what these names point to (a constant, and inductive type or a
 constructor).
 
+.. note:: keyword :e:`external symbol`
+
+   Starting with Elpi 3.0 symbols like :e:`const`, :e:`indt` and
+   :e:`indc` are declared using the keyword :e:`external symbol`,
+   rather than :e:`type`, since they are coming from Rocq.
+
 The :builtin:`coq.locate` API resolves a string to a :type:`gref`.
 
 |*)
@@ -496,8 +502,8 @@ for that purpose:
 
 .. code:: elpi
 
-      pred decl i:term, o:name, o:term.         % Var Name Ty
-      pred def  i:term, o:name, o:term, o:term. % Var Name Ty Bo
+      func decl term -> name, term.       % Var Name Ty
+      func def  term -> name, term, term. % Var Name Ty Bo
        
 where :e:`def` is used to cross a :e:`let`.
 
@@ -618,12 +624,12 @@ Elpi Query lp:{{
 (*|
 
 In the value of raw :e:`T` we can see that the hole in `x + _`, which occurs under the
-binder :e:`c0\ `, is represented by an Elpi unification variable :e:`X1 c0`, that
-means that :e:`X1` sees :e:`c0` (:e:`c0` is in the scope of :e:`X1`).
+binder :e:`c0\ `, is represented by an Elpi unification variable :e:`X0 c0`, that
+means that :e:`X0` sees :e:`c0` (:e:`c0` is in the scope of :e:`X0`).
  
 The constraint is this time a bit more complex. Let's dissect it:
  
-.. mquote:: .s(Elpi).msg(suspended on X1)
+.. mquote:: .s(Elpi).msg(suspended on X0)
    :language: elpi
 
 Here `{...}` is the set of names (not necessarily minimized) used in the
@@ -632,7 +638,7 @@ conclusion (the suspended goal).
  
 The mapping between Coq and Elpi is:
 
-.. mquote:: .s(Elpi).msg{Rocq-Elpi mapping:*[?]X13 <-> X1*}
+.. mquote:: .s(Elpi).msg{Rocq-Elpi mapping:*[?]X13 <-> X0*}
    :language: text
 
 where `?X13` can be found in Coq's sigma:

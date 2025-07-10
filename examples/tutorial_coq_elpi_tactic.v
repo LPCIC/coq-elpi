@@ -887,12 +887,12 @@ The two calls to show proof display, respectively:
 .. mquote:: .s(Show Proof).msg{*conj [?]Goal (conj [?]Goal0 [?]Goal1)*}
    :language: text
 
-.. mquote:: .s(Show  Proof).msg{*conj [?]Goal0 (conj [?]Goal [?]Goal0)*}
+.. mquote:: .s(Show  Proof).msg{*conj [?]Goal (conj [?]Goal0 [?]Goal)*}
    :language: text
 
 the proof term is the same but for the fact that after the tactic the first
 and last missing subterm (incomplete proof tree branch) are represented by
-the same hole `?Goal0`. Indeed by solving one, we can also solve the other.
+the same hole `?Goal`. Indeed by solving one, we can also solve the other.
 
 -------------
 LCF tacticals

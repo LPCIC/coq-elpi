@@ -102,6 +102,7 @@ class ElpiLexer(RegexLexer):
             (rf"({symbol_re}|!|=>|;)", Keyword.ElpiKeyword),
             (constant_re, Text),
             (r"\[|\]|\||=>", Keyword.ElpiKeyword),
+            (r":", Keyword.ElpiKeyword),
             (r'"', String.Double, 'elpi-string'),
             (r'`', String.Double, 'elpi-btick'),
             (r'\'', String.Double, 'elpi-tick'),

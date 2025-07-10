@@ -136,38 +136,48 @@ let classify_named_vernac (_,p) = Vernacextend.VtSideff([Names.Id.of_string_soft
 VERNAC COMMAND EXTEND ElpiNamed
 | #[ atts = any_attribute ] [ "Elpi" "Program" ghost(gloc0) qualified_name(p) elpi_string(s) ghost(gloc1) ] => { classify_named_vernac p } SYNTERP AS atts 
    { 
+     let gloc = Loc.merge gloc0 gloc1 in
      let atts = validate_attributes raw_args_attributes atts in
-     EV.Synterp.create_program ~atts ~loc:(Loc.merge gloc0 gloc1) ~init:s p;
+     EV.Synterp.create_program ~atts ~loc:gloc ~init:s p;
      atts
    } -> {
-     EV.Interp.create_program ~atts ~loc:(Loc.merge gloc0 gloc1) ~init:s p
+     let gloc = Loc.merge gloc0 gloc1 in
+     EV.Interp.create_program ~atts ~loc:gloc ~init:s p
    }
-| #[ atts = any_attribute ] [ "Elpi" "Command" ghost(gloc) qualified_name(p) ] => { classify_named_vernac p }  SYNTERP AS atts
+| #[ atts = any_attribute ] [ "Elpi" "Command" ghost(gloc0) qualified_name(p) ghost(gloc1) ] => { classify_named_vernac p }  SYNTERP AS atts
    { 
+     let gloc = Loc.merge gloc0 gloc1 in
      let atts = validate_attributes raw_args_attributes atts in
      EV.Synterp.create_command ~atts ~loc:gloc p;
      atts
    } -> {
+     let gloc = Loc.merge gloc0 gloc1 in
      EV.Interp.create_command ~atts ~loc:gloc p }
-| #[ atts = any_attribute ] [ "Elpi" "Tactic" ghost(gloc) qualified_name(p) ] => { classify_named_vernac p }  SYNTERP AS _ 
+| #[ atts = any_attribute ] [ "Elpi" "Tactic" ghost(gloc0) qualified_name(p) ghost(gloc1) ] => { classify_named_vernac p }  SYNTERP AS _ 
    { 
+     let gloc = Loc.merge gloc0 gloc1 in
      let () = ignore_unknown_attributes atts in
      EV.Synterp.create_tactic ~loc:gloc p
    } -> {
+     let gloc = Loc.merge gloc0 gloc1 in
      EV.Interp.create_tactic ~loc:gloc p }
-| #[ atts = any_attribute ] [ "Elpi" "Db" ghost(gloc) qualified_name(d) elpi_string(s) ] => { classify_named_vernac d }  SYNTERP AS atts
+| #[ atts = any_attribute ] [ "Elpi" "Db" ghost(gloc0) qualified_name(d) elpi_string(s) ghost(gloc1) ] => { classify_named_vernac d }  SYNTERP AS atts
    { 
+     let gloc = Loc.merge gloc0 gloc1 in
      let atts = validate_attributes synterp_attribute atts in
      EV.Synterp.create_db ~atts ~loc:gloc d ~init:s;
      atts
    } -> {
+     let gloc = Loc.merge gloc0 gloc1 in
      EV.Interp.create_db ~atts ~loc:gloc d ~init:s }
-| #[ atts = any_attribute ] [ "Elpi" "File" ghost(gloc) qualified_name(d) elpi_string(s) ] => { classify_named_vernac d }  SYNTERP AS atts
+| #[ atts = any_attribute ] [ "Elpi" "File" ghost(gloc0) qualified_name(d) elpi_string(s) ghost(gloc1) ] => { classify_named_vernac d }  SYNTERP AS atts
    { 
+     let gloc = Loc.merge gloc0 gloc1 in
      let atts = validate_attributes synterp_attribute atts in
      EV.Synterp.create_file ~atts ~loc:gloc d ~init:s;
      atts
    } -> {
+     let gloc = Loc.merge gloc0 gloc1 in
      EV.Interp.create_file ~atts ~loc:gloc d ~init:s }
 END
 
@@ -247,11 +257,13 @@ VERNAC COMMAND EXTEND ElpiAccumulate CLASSIFIED AS SIDEFF
      atts
    } -> {
      EV.Interp.accumulate_files ~atts ~loc:gloc (inlogpath g s) }
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) elpi_string(s) ] SYNTERP AS atts {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc0) elpi_string(s) ghost(gloc1) ] SYNTERP AS atts {
+     let gloc = Loc.merge gloc0 gloc1 in
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_string ~atts ~loc:gloc s;
      atts
    } -> {
+     let gloc = Loc.merge gloc0 gloc1 in
      EV.Interp.accumulate_string ~atts ~loc:gloc s }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "File" string_list(s) ] SYNTERP AS atts { warning_legacy_accumulate ();
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
@@ -280,11 +292,13 @@ VERNAC COMMAND EXTEND ElpiAccumulate CLASSIFIED AS SIDEFF
 
 (********************************** end legacy **************************************************)
 
-| #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) elpi_string(s) ] SYNTERP AS atts {
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc0) qualified_name(p) elpi_string(s) ghost(gloc1) ] SYNTERP AS atts {
+     let gloc = Loc.merge gloc0 gloc1 in
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_string ~atts ~loc:gloc ~program:(snd p) s;
      atts
    } -> {
+     let gloc = Loc.merge gloc0 gloc1 in
      EV.Interp.accumulate_string ~atts ~loc:gloc ~program:(snd p) s }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Db" qualified_name(d) ] SYNTERP AS atts {
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in

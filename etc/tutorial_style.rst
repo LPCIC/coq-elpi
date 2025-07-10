@@ -32,7 +32,7 @@
    :src: LPCIC coq-elpi master builtin-doc/elpi-builtin.elpi
 
 .. role:: elpi-type(ghref)
-   :pattern: ^(kind $name|typeabbrev $name)
+   :pattern: ^(kind $name|typeabbrev $name|(external )?symbol $name)
 
 .. role:: type(elpi-type)
    :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
@@ -48,7 +48,7 @@
 
 
 .. role:: elpi-constructor(ghref)
-   :pattern: ^type $name
+   :pattern: ^(type $name|(external )?symbol $name)
 
 .. role:: constructor(elpi-constructor)
    :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
@@ -170,6 +170,7 @@
          line-height: 1.5em;
          padding-bottom: 15px;
          position: relative;
+         font-family: "Gill Sans Extrabold", sans-serif;
       }
       h1:before {
          content: "";
@@ -187,7 +188,6 @@
          bottom: 2px;
          height: 1px;
          width: 95%;
-         max-width: 255px;
          background-color: #333;
       }
 
@@ -198,6 +198,7 @@
          line-height: 1.5em;
          padding-bottom: 15px;
          position: relative;
+         font-family: "Gill Sans Extrabold", sans-serif;
       }
       h2:before {
          content: "";
@@ -215,7 +216,6 @@
          bottom: 2px;
          height: 1px;
          width: 95%;
-         max-width: 255px;
          background-color: #333;
       }
 
@@ -226,6 +226,7 @@
          line-height: 1.5em;
          padding-bottom: 15px;
          position: relative;
+         font-family: "Gill Sans Extrabold", sans-serif;
       }
       h3:after {
          content: "";
@@ -234,7 +235,6 @@
          bottom: 2px;
          height: 1px;
          width: 95%;
-         max-width: 255px;
          background-color: #333;
       }
    `; 

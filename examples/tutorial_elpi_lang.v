@@ -421,7 +421,7 @@ In this case it is easy to detect that two rules would apply for a query like
 
 |*)
 
- Elpi Program tutorial_functions2 lp:{{
+ Fail Elpi Program tutorial_functions2 lp:{{
 
    func prime int -> . % code omitted
 
@@ -521,7 +521,7 @@ desugars to
 
 .. code:: elpi
 
-   :functional                        % this is an attribute (a special comment)
+   :functional                   % this is an attribute (a special comment)
    pred age i:person, o:int.
 
 that asserts two things. First :e:`age` is expected to behave like a function.
@@ -532,7 +532,8 @@ argument that we call a *pattern*.
 The difference w.r.t. unification is that only variables occurring in the
 pattern can be assigned. Matching is not symmetric: the pattern and the
 query argument play different roles, in particular the query argument can
-only be inspected (destructed) by the patter, never assigned (constructed).
+only be inspected (destructed) by the pattern, and never assigned (constructed).
+For example:
 
 |*)
 
@@ -548,6 +549,18 @@ The query fails because :e:`P` (occurring in the query)
 does not match :e:`bob` nor :e:`mallory`: there is no way to
 make :e:`P = bob` hold without assigning :e:`P` but that is forbidden by
 the :e:`i:` directive in the signature of :e:`age`.
+
+.. note:: Pattern matching API
+
+   As unification is available via the :stdlib:`(=)`, pattern matching
+   is available via :stdlib:`pattern_match`.
+
+   .. code:: elpi
+
+      f 1 = f X % ok
+      f X = f 1 % ok
+      pattern_match (f X) (f 1) % ok
+      pattern_match (f 1) (f X) % ko (the pattern is the first argument)
 
 The only drawback of marking the first argument of :e:`age` as an imput
 is that it will prevent to use the predicate in the other direction, e.g. to
@@ -736,16 +749,16 @@ Elpi Bound Steps 0.
 
 (*|
 
------------------------
-:e:`pi x\ ` and :e:`=>`
------------------------
+-------------------------
+:e:`pi x\ ` and :e:`==>`
+-------------------------
 
 We have seen how to implement substitution using the binders of λProlog.
 More often than not we need to move under binders rather than remove them by
 substituting some term in place of the bound variable. 
 
 In order to move under a binder and inspect the body of a function λProlog
-provides the :e:`pi` quantifier and the :e:`=>` connective.
+provides the :e:`pi` quantifier and the :e:`==>` connective.
 
 A good showcase for these features is to implement a type checker
 for the simply typed lambda calculus.
@@ -819,7 +832,7 @@ The rule for :e:`fun` is used:
 * :e:`arrow A1 B1` is assigned to :e:`Ty` by unification
 * the :e:`pi x\ ` quantifier creates a fresh constant :e:`c1` to play
   the role of :e:`x`
-* the :e:`=>` connective adds the rule :e:`of c1 A1` the program
+* the :e:`==>` connective adds the rule :e:`of c1 A1` the program
 * the new query :e:`of (fun y\ c1) B1` is run.
 
 Again, the rule for :e:`fun` is used (since its variables are
@@ -828,7 +841,7 @@ universally quantified, we use :e:`A2`, :e:`B2`... this time):
 * :e:`arrow A2 B2` is assigned to :e:`B1` by unification
 * the :e:`pi x\ ` quantifier creates a fresh constant :e:`c2` to play
   the role of :e:`x`
-* the :e:`=>` connective adds the rule :e:`of c2 A2` the program
+* the :e:`==>` connective adds the rule :e:`of c2 A2` the program
 * the new query :e:`of c1 B2` is run.
 
 The (hypothetical) rule :e:`of c1 A1` is used:
@@ -859,7 +872,7 @@ First, the rule for elpi:`fun` is selected:
 * :e:`arrow A1 B1` is assigned to :e:`Ty` by unification
 * the :e:`pi x\ ` quantifier creates a fresh constant :e:`c1` to play the
   role of :e:`x`
-* the :e:`=>` connective adds the rule :e:`of c1 A1` the program
+* the :e:`==>` connective adds the rule :e:`of c1 A1` the program
 * the new query :e:`of (app c1 c1) B1` is run.
 
 Then it's the turn of typing the application:
@@ -951,7 +964,7 @@ As we hinted before negation is a black hole, indeed the usual definition of
 (see also the `the Wikipedia page on the Curry-Howard correspondence <https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence#Natural_deduction_and_lambda_calculus>`_).
 
 =====================
-Modes and constraints
+Constraints
 =====================
 
 Elpi extends λProlog with *syntactic constraints*
@@ -1333,7 +1346,7 @@ We recommend to name the auxiliary predicate.
 .. tip:: predicates whose name ends in `.aux` don't trigger a missing type
    declaration warning
 
-One last way to skin the cat is to use :e:`=>` as follows. It gives us
+One last way to skin the cat is to use :e:`==>` as follows. It gives us
 the occasion to clarify further the scope of variables. 
 
 |*)
@@ -1372,7 +1385,7 @@ could be written :e:`pi X R\ aux X R :- sigma TMP\ TMP is X + 1, R = TMP`.
    That is, :e:`pi x y\ ...` is equivalent to :e:`pi x\ pi y\ ...` and
    :e:`sigma x y\ ...` is equivalent to :e:`sigma x\ sigma y\ ...`.
 
-.. tip:: :e:`=>` can load more than one clause at once
+.. tip:: :e:`==>` can load more than one clause at once
 
    It is sufficient to put a list on the left hand side, eg :e:`[ rule1, rule2 ] ==> code`.
    Moreover one can synthesize a rule before loading it, eg:
@@ -1619,6 +1632,11 @@ Elpi Print stlc "elpi_examples/stlc".
 (*|
 
 Look at the `generated page <https://lpcic.github.io/coq-elpi/stlc.txt>`_.
+
+-----------------------------
+Bounding the number of steps
+-----------------------------
+
 Finally, one can bound the number of backchaining steps
 performed by the interpreter:
 
@@ -1631,15 +1649,15 @@ Elpi Bound Steps 0. (* Go back to no bound *)
 
 (*|
 
----------------
-Common pitfalls
----------------
+===================
+Pitfalls and tricks
+===================
 
 Well, no programming language is perfect.
 
-+++++++++++++++++++++++++++++++++++++++++++
+---------------------------------------------
 Precedence of :e:`,`, :e:`==>` and :e:`=>`
-+++++++++++++++++++++++++++++++++++++++++++
+---------------------------------------------
 
 In this tutorial we only used :e:`==>` but Elpi also provides
 the standard λProlog implication :e:`=>`. They have the same meaning
@@ -1691,13 +1709,50 @@ Elpi Query stlc lp:{{
 
 (*|
 
-++++++++++++
-Backtracking
-++++++++++++
+-------------------------------------------------
+The :e:`=!=>` operator and functional predicates
+-------------------------------------------------
+
+When an hypothetical rule is added to a functional predicate the determinacy
+may fail to detect its mutual exclusiveness, especially if the rule is
+generated dynamically as below:
+
+.. code:: elpi
+
+   X = f P, X ==> q  % static error, X could be anything
+
+Elpi 3.0 provides the :e:`=!=>` connective that adds a tail cut to the
+hypothetical rule, be it explicitly given or computed at run time. For example:
+
+.. code:: elpi
+
+   (f P :- !) ==> q  % fine, new rule for f cuts all the others, f still a function
+   f P =!=> q        % desugars to the above
+
+   (f P :- h P, !) ==> q  % fine as before
+   (f P :- h P) =!=> q    % desugars to the above
+
+   X = f P, X =!=> q   % at run time it evaluates as below
+   X = f P, X' = (X :- !), X' ==> q
+
+   X = (f P :- h P), X =!=> q   % at run time it evaluates as below
+   X = f P, X' = (X :- h P, !), X' ==> q
+
+--------------------
+Taming backtracking
+--------------------
 
 
-Backtracking can lead to weird execution traces. The :stdlib:`std.do!` predicate
-should be used to write non-backtracking code.
+Backtracking can lead to weird execution traces and bad performances.
+The main tool to eliminate backtracking is the cut operator, but one
+may forget to use it. Elpi provides two mechanisms to help with that.
+
+The former one is functional predicates: by declaring a predicate as
+functional one is typically forced to use cut. This is the recommended
+way of writing code since Elpi 3.0.
+
+The latter mechanism is the e :stdlib:`std.do!` predicate that can
+be used as follows.
 
 .. code:: elpi
 
@@ -1711,12 +1766,13 @@ should be used to write non-backtracking code.
 In the example above once :e:`condition` holds we start a sequence of
 steps which we will not reconsider. Locally, backtracking is still
 available, e.g. between :e:`generate` and :e:`test`.
+
 See also the :stdlib:`std.spy-do!` predicate which prints each and every step,
 and the :stdlib:`std.spy` one which can be used to spy on a single one.
 
-+++++++++++++++++++++++++++++++++++++++++++++++
+-----------------------------------------------
 Unification variables v.s. Imperative variables
-+++++++++++++++++++++++++++++++++++++++++++++++
+-----------------------------------------------
 
 Unification variables sit in between variables in imperative programming and
 functional programming. In imperative programming a variable can hold a value,
