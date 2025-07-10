@@ -417,7 +417,7 @@ search What Rec (app [GR|L] as GRL) R :- !, std.do! [
 ].
 % no params, no aux lemma (no reali argument)
 search What _Rec (global GR as GRL) {{ fun (x : lp:GRL) (_ : lp:IsGR x) => lp:R x }} :-
-  std.spy(What (global GR) R),
+  What (global GR) R,
   mk-reali (global GR) IsGR, !.
 search What _ X _ :- coq.safe-dest-app X HD _, std.assert! (What HD _) "run eqbcorrect before".
 

@@ -2,7 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-shorten std.{assert!, spy-do!, do!, drop-last}.
+shorten std.{assert!, do!, drop-last}.
 
 namespace derive.param1.trivial {
 
