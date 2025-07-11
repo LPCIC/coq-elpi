@@ -40,13 +40,13 @@ let master = [
 
     "coq-8.20".coqPackages = common-bundles // {
       coq.override.version = "8.20";
-      coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi.override.elpi-version = "v3.0.0";
       coq-elpi-tests-stdlib.job = false;
     };
 
     "rocq-9.0".coqPackages = common-bundles // {
       coq.override.version = "9.0";
-      coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi.override.elpi-version = "v3.0.0";
     };
 
     "rocq-9.1".coqPackages = common-bundles // {
@@ -56,13 +56,13 @@ let master = [
 
     "coq-master" = { rocqPackages = {
       rocq-core.override.version = "master";
-      rocq-elpi.override.elpi-version = "2.0.7";
+      rocq-elpi.override.elpi-version = "v3.0.0";
       stdlib.override.version = "master";
       bignums.override.version = "master";
       hierarchy-builder.override.version = "master";
     }; coqPackages = common-bundles // {
       coq.override.version = "master";
-      coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi.override.elpi-version = "v3.0.0";
       stdlib.override.version = "master";
       bignums.override.version = "master";
     }; };
@@ -70,12 +70,12 @@ let master = [
     /* uncomment bundle below if min and max elpi version start to differ
     "coq-master-min-elpi" = { rocqPackages = {
       rocq-core.override.version = "master";
-      rocq-elpi.override.elpi-version = "2.0.7";
+      rocq-elpi.override.elpi-version = "v3.0.0";
       stdlib.override.version = "master";
       bignums.override.version = "master";
     }; coqPackages = common-bundles // {
       coq.override.version = "master";
-      coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi.override.elpi-version = "v3.0.0";
       stdlib.override.version = "master";
       bignums.override.version = "master";
     }; }; */

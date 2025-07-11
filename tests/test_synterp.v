@@ -2,7 +2,7 @@ From elpi Require Import elpi.
 
 Elpi Command foo.
 #[synterp] Elpi Accumulate lp:{{ main-synterp X X :- coq.say "synterp" X.  }}.
-Elpi Accumulate lp:{{ main-interp X Y :- coq.say "interp" X, std.assert! (X = Y) "bug". }}.
+Elpi Accumulate lp:{{ main-interp X Y :- _ = str "x", coq.say "interp" X, std.assert! (X = Y) "bug". }}.
 
 
 Elpi foo X.

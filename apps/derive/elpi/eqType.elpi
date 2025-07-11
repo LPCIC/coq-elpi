@@ -4,33 +4,34 @@
 
 namespace derive.eqType.ast {
 
-pred translate-indt i:inductive, o:eqb.eqType, o:diagnostic.
+func translate-indt inductive -> eqb.eqType, diagnostic.
 translate-indt I O D :-
   coq.env.indt-decl I Decl,
   coq.env.indt I _ _ _ _ KN _,
   translate-param Decl I KN O D.
 
-pred translate-param i:indt-decl, i:inductive, i:list constructor, o:eqb.eqType, o:diagnostic.
+func translate-param indt-decl, inductive, list constructor -> eqb.eqType, diagnostic.
 translate-param (parameter ID _ Ty F) I KS (eqb.type-param F1) D :- whd Ty [] {{ Type }} _, !,
-  @pi-parameter ID Ty x\ pi y\ term->trm x y ok => translate-param (F x) I KS (F1 y) D.
+  @pi-parameter ID Ty x\ pi y\ (term->trm x y ok :- !) => translate-param (F x) I KS (F1 y) D.
 translate-param (parameter ID _ Ty F) I KS (eqb.value-param Ty1 F1) D :- term->trm Ty Ty1 ok, !,
-  @pi-parameter ID Ty x\ pi y\ term->trm x y ok => translate-param (F x) I KS (F1 y) D.
-translate-param (parameter ID _ _ _) _ _ _ (error S) :- S is "unsupported parameter " ^ ID.
+  @pi-parameter ID Ty x\ pi y\ (term->trm x y ok :- !) => translate-param (F x) I KS (F1 y) D.
+translate-param (parameter ID _ _ _) _ _ _ (error S) :- !, S is "unsupported parameter " ^ ID.
 
-translate-param (inductive ID tt (arity (sort S)) F) I KS (eqb.inductive I F1) D :-
-  @pi-inductive ID (arity (sort S)) x\ pi y\ term->trm x y ok => translate-constructors (F x) KS (F1 y) D.
+translate-param (inductive ID tt (arity (sort S)) F) I KS (eqb.inductive I F1) D :- !,
+  @pi-inductive ID (arity (sort S)) x\ pi y\ (term->trm x y ok :- !) => translate-constructors (F x) KS (F1 y) D.
 translate-param (record _ _ _ F) I [K] (eqb.inductive I (y\ [eqb.constructor K (F1 y)])) D :- !,
-  pi y\ self y => translate-record-constructor F (F1 y) D.
+  pi y\ (self y :- !) => translate-record-constructor F (F1 y) D.
 translate-param _ _ _ _ (error S) :- S is "unsupported inductive arity".
 
-pred translate-constructors i:list indc-decl, i:list constructor, o:list eqb.constructor, o:diagnostic.
+:index (1)
+func translate-constructors list indc-decl, list constructor -> list eqb.constructor, diagnostic.
 translate-constructors [] [] [] ok.
 translate-constructors [constructor _ A|KS] [K|KK] [eqb.constructor K Args|KS1] D :- std.do-ok! D [
   translate-arguments {coq.arity->term A} Args,
   translate-constructors KS KK KS1,
 ].
 
-pred translate-arguments i:term, o:eqb.arguments, o:diagnostic.
+func translate-arguments term -> eqb.arguments, diagnostic.
 translate-arguments T T2 D :- whd1 T T1, !, translate-arguments T1 T2 D.
 translate-arguments (prod N Ty F) (eqb.irrelevant Ty1 F1) D :- not(pi x\ occurs x (F x)), irrelevant? Ty Ty1 ok, !,
   @pi-decl N Ty x\  translate-arguments (F x) F1 D.
@@ -42,11 +43,11 @@ translate-arguments (prod N Ty F) (eqb.dependent Ty1 F1) D :- !, std.do-ok! D [
   term->trm Ty Ty1,
   (d\ @pi-decl N Ty x\ pi y\ term->trm x y ok => translate-arguments (F x) (F1 y) d),
 ].
-translate-arguments Ty (eqb.stop Ty1) D :- name Ty, term->trm Ty Ty1 D.
-translate-arguments (app [N|_] as Ty) (eqb.stop Ty1) D :- name N, term->trm Ty Ty1 D.
+translate-arguments Ty (eqb.stop Ty1) D :- name Ty, term->trm Ty Ty1 D, !.
+translate-arguments (app [N|_] as Ty) (eqb.stop Ty1) D :- name N, term->trm Ty Ty1 D, !.
 translate-arguments T _ (error S) :- S is "unsupported argument " ^ {coq.term->string T}.
 
-pred translate-record-constructor i:record-decl, o:eqb.arguments, o:diagnostic.
+func translate-record-constructor record-decl -> eqb.arguments, diagnostic.
 translate-record-constructor end-record (eqb.stop X) ok :- self X.
 translate-record-constructor (field _ ID Ty F) (eqb.irrelevant Ty1 F1) D :- not(pi x\ occurs x (F x)), irrelevant? Ty Ty1 ok, !,
   @pi-parameter ID Ty x\ translate-record-constructor (F x) F1 D.
@@ -60,14 +61,15 @@ translate-record-constructor (field _ ID Ty F) (eqb.dependent Ty1 F1) D :- !, st
 ].
 translate-record-constructor (field _ ID _ _) _ (error S) :- S is "unsupported record field " ^ ID.
 
-pred self o:eqb.trm.
+func self -> eqb.trm.
 
-pred valid i:eqb.trm, o:diagnostic.
+func valid eqb.trm -> diagnostic.
 valid (eqb.global GR) ok :- eqType GR _, !.
 valid (eqb.app GR A Args) D :- eqType GR EQT, !, valid-eqType EQT [A|Args] D.
 valid T (error S) :- S is "not an eqType: " ^ {std.any->string T}.
 
-pred valid-eqType i:eqb.eqType, i:list eqb.trm, o:diagnostic.
+:index (1)
+func valid-eqType eqb.eqType, list eqb.trm -> diagnostic.
 valid-eqType (eqb.inductive _ _) [] ok.
 valid-eqType (eqb.type-param F) [T|TS] D :- std.do-ok! D [
   valid T,
@@ -87,13 +89,13 @@ irrelevant? (app [{{ @eq }}, global EqType, A, B]) (eqb.app EQ EQTYPE [A1,B1]) D
 ].
 irrelevant? T R D :- whd1 T T1, irrelevant? T1 R D.
 
-pred term->trm i:term, o:eqb.trm, o:diagnostic.
+func term->trm term -> eqb.trm, diagnostic.
 term->trm (global GR) (eqb.global GR) ok :- !.
 term->trm (app [global GRF,A|As]) (eqb.app GRF A1 As1) D :- !, std.do-ok! D [
   term->trm A A1,
   map-ok! As term->trm As1,
 ].
-term->trm {{ lp:A -> lp:B }} (eqb.app {{:gref lib:elpi.derive.arrow }} A1 [B1]) D :- std.do-ok! D [
+term->trm {{ lp:A -> lp:B }} (eqb.app {{:gref lib:elpi.derive.arrow }} A1 [B1]) D :- !, std.do-ok! D [
   term->trm A A1,
   term->trm B B1,
 ].
@@ -103,25 +105,25 @@ term->trm (app [N|As]) (eqb.app {{:gref lib:elpi.derive.apply }} N1 As1) D :- na
 ].
 term->trm X _ (error S) :- S is "not an applicative term: " ^ {coq.term->string X}.
 
-pred map-ok! i:list A, i:(A -> B -> diagnostic -> prop), o:list B, o:diagnostic.
+func map-ok! list A, (func A -> B, diagnostic) -> list B, diagnostic.
 map-ok! [] _ [] ok.
 map-ok! [X|XS] F [Y|YS] D :- F X Y D1, if (D1 = ok) (map-ok! XS F YS D) (D = D1).
 
-pred validate-eqType i:eqb.eqType, o:diagnostic.
-validate-eqType (eqb.type-param F) D :- pi x\ valid x ok => validate-eqType (F x) D.
+func validate-eqType eqb.eqType -> diagnostic.
+validate-eqType (eqb.type-param F) D :- pi x\ (valid x ok :- !) => validate-eqType (F x) D.
 validate-eqType (eqb.value-param _ F) D :-
   pi x\ validate-eqType (F x) D.
 validate-eqType (eqb.inductive _ F) D :-
-  pi x\ valid x ok => validate-constructors (F x) D.
+  pi x\ (valid x ok :- !) => validate-constructors (F x) D.
 
-pred validate-constructors i:list eqb.constructor, o:diagnostic.
+func validate-constructors list eqb.constructor -> diagnostic.
 validate-constructors [] ok.
 validate-constructors [eqb.constructor _ Args|Ks] D :- std.do-ok! D [
   validate-arguments Args,
   validate-constructors Ks
 ].
 
-pred validate-arguments i:eqb.arguments, o:diagnostic.
+func validate-arguments eqb.arguments -> diagnostic.
 validate-arguments (eqb.stop _) ok.
 validate-arguments (eqb.regular T Args) D :- std.do-ok! D [
   valid T,
@@ -133,7 +135,7 @@ validate-arguments (eqb.dependent T Args) D :- std.do-ok! D [
   (d\ pi x\ validate-arguments (Args x) d),
 ].
 
-pred main i:inductive, o:list prop.
+func main inductive -> list prop.
 main I [C] :-
   std.assert-ok! (translate-indt I EQT) "derive.eqType.ast: translate",
   std.assert-ok! (validate-eqType EQT) "derive.eqType.ast: validate",
@@ -144,7 +146,7 @@ main I [C] :-
 
 namespace feqb {
 
-pred trm->term i:eqb.trm, o:term.
+func trm->term eqb.trm -> term.
 trm->term (eqb.global GR) (global GR) :- !.
 trm->term (eqb.app GR A AS) (app[global GR,A1|AS1]) :- !,
   trm->term A A1,

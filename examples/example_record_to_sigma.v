@@ -27,6 +27,7 @@ wrap-fields-bo (field _ Proj Ty Fields) Acc SigTy Sig (fun Name Ty Bo) (prod Nam
   coq.string->name Proj Name,
   pi x\ decl x Name Ty ==> wrap-fields-bo (Fields x) [x|Acc] SigTy Sig (Bo x) (Tgt x).
 
+pred wrap-fields-bo.aux i:list term, i:term, o:term.
 wrap-fields-bo.aux [Last] _ Last.
 wrap-fields-bo.aux [X|XS] {{ sigT lp:F }} {{ existT lp:F lp:X lp:Rest }} :-
   F = fun _ _ G,

@@ -6,4 +6,4 @@ pred derivation i:string, i:string, o:derive.
 pred export i:modpath.
 pred dep1 o:string, o:string.
 kind derive type.
-type derive string -> (list prop -> prop) -> prop -> derive.
+type derive string -> (func -> list (pred)) -> prop -> derive.

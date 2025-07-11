@@ -7,7 +7,7 @@ Elpi Accumulate coercion lp:{{
 
 coercion _ X Ty {{ @sig lp:Ty lp:P }} Solution :- std.do! [
   % we unfold letins since the solve is dumb
-  (pi a b b1\ copy a b :- def a _ _ b, copy b b1) => copy X X1,
+  (pi a b b1\ copy a b :- def a _ _ b, !, copy b b1) => copy X X1,
   % we build the solution
   Solution = {{ @exist lp:Ty lp:P lp:X1 _ }},
   % we call the solver

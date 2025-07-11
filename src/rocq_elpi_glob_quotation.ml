@@ -340,7 +340,7 @@ let gterm2lpast ~pattern ~language state glob =
   | GRef(gr, ul) when Global.is_polymorphic gr ->
     begin match ul with
     | None ->
-      let s = A.Term.mkVar ~loc (fresh_uv ()) [] in
+      let s = A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ()) [] in
       in_elpiast_poly_gr ~loc gr s
     | Some (ql,l) ->
       let () = if not (CList.is_empty ql) then nYI "sort poly" in
@@ -350,7 +350,7 @@ let gterm2lpast ~pattern ~language state glob =
   | GRef(gr,_ul) -> in_elpiast_gr ~loc gr
   | GVar(id) -> lookup_bound ~loc ~coqloc id state
   | GSort _ as t when rigid_anon_type t ->
-      let s = A.Term.mkVar ~loc (fresh_uv ()) [] in
+      let s = A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ()) [] in
       in_elpiast_flex_sort ~loc s
   | GSort _ as t when named_type t ->
       let u = name_of_type t in
@@ -375,7 +375,7 @@ let gterm2lpast ~pattern ~language state glob =
         match oty with
         | None ->
             let { bound_list = args } = get_glob_env state in
-            A.Term.mkVar ~loc (fresh_uv ())
+            A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ())
               (List.map (fun x -> A.Term.mkBound ~loc ~language (name_of_id x)) args)
         | Some ty -> gterm2lp state ty in
       under_binder ~loc name ty (Some bo) t state ~k:(fun name t state ->
@@ -414,7 +414,7 @@ let gterm2lpast ~pattern ~language state glob =
   | GHole (GQuestionMark _) ->
       let { bound_list = args } = get_glob_env state in
       let args = List.filter (fun n -> not(is_restricted_name n)) args in
-      A.Term.mkVar ~loc (fresh_uv ())
+      A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ())
         (List.map (fun x -> A.Term.mkBound ~loc ~language (name_of_id x)) (List.rev args))
 
   | GCast(t,_,c_ty) ->
@@ -612,22 +612,24 @@ let runtime_gterm2lp ~loc ~base glob ~depth state =
   handle_elpi_compiler_errors ~loc (fun () ->
     API.Utils.term_to_raw_term ~ctx state base ~depth t)
 
-let rec gparams2lp ~loc ~base params (kont : depth:int -> S.t -> S.t * _) ~depth state =
+let rec gparams2lp ~loc ~base inp params (kont : depth:int -> S.t -> S.t * _) ~depth state =
   match params with
   | [] -> kont ~depth state
   | (name,imp,ob,src) :: params ->
       if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let state, src = gterm2lp ~loc ~depth ~base src state in
-      let k = nogls (gparams2lp ~loc ~base params kont) in
+      let k = nogls (gparams2lp ~loc ~base inp params kont) in
       let state, tgt, () = under_ctx name src None ~k ~depth state in
       let state, imp = in_elpi_imp ~depth state imp in
-      state, in_elpi_parameter name ~imp src tgt
+      state, inp name ~imp src tgt
 
 let drop_relevance (a,_,c,d,e) = (a,c,d,e)
     
-let gparams2lp ~loc ~base params ~k ~depth s =
-  gparams2lp ~loc ~base (List.map drop_relevance params) k ~depth s
-
+let gindparams2lp ~loc ~base params ~k ~depth s =
+  gparams2lp ~loc ~base in_elpi_inductive_parameter (List.map drop_relevance params) k ~depth s
+let garityparams2lp ~loc ~base params ~k ~depth s =
+  gparams2lp ~loc ~base in_elpi_arity_parameter(List.map drop_relevance params) k ~depth s
+  
 let garity2lp ~loc ~base t ~depth state =
   let state, t = gterm2lp ~loc t ~depth ~base state in
   state, in_elpi_arity t

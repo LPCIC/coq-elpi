@@ -38,7 +38,7 @@
 -Q _build/default/apps/derive/theories elpi.apps.derive
 -Q apps/derive/theories/derive elpi.apps.derive.derive
 -Q _build/default/apps/derive/theories/derive elpi.apps.derive.derive
--Q apps/derive/tests elpi.apps.derive.tests
+
 -Q _build/default/apps/derive/tests elpi.apps.derive.tests
 -Q apps/derive/tests-stdlib elpi_apps_derive_tests_stdlib
 -Q _build/default/apps/derive/tests-stdlib elpi_apps_derive_tests_stdlib
@@ -78,6 +78,13 @@
 -Q apps/tc/tests elpi.apps.tc.tests
 -Q _build/default/apps/tc/tests-stdlib elpi_apps_tc_tests_stdlib
 -Q apps/tc/tests-stdlib elpi_apps_tc_tests_stdlib
+
+-Q apps/rbuild/elpi elpi.apps.rbuild.elpi
+-Q _build/default/apps/rbuild/elpi elpi.apps.rbuild.elpi
+-Q apps/rbuild/examples elpi.apps.rbuild.examples
+-Q _build/default/apps/rbuild/examples elpi.apps.rbuild.examples
+-Q apps/rbuild/theories elpi.apps.rbuild
+-Q _build/default/apps/rbuild/theories elpi.apps.rbuild
 
 # Cram tests.
 

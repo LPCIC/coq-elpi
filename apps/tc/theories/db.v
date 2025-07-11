@@ -9,43 +9,43 @@ From elpi Require Import elpi.
 *)
 Elpi Db tc_options.db lp:{{
   namespace tc {
-    pred oTC-eta-reduce-proof o:list string. 
+    func oTC-eta-reduce-proof -> list string. 
     oTC-eta-reduce-proof ["TC", "Eta", "Reduce", "Proof"].
   
     % Time taken by only instance search (we time tc-recursive-search) 
-    pred oTC-time-instance-search o:list string. 
+    func oTC-time-instance-search -> list string. 
     oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
     
-    pred oTC-time-compile-goal o:list string. 
+    func oTC-time-compile-goal -> list string. 
     oTC-time-compile-goal ["TC", "Time", "Compile", "Query"].
     
-    pred oTC-time-mode-check o:list string. 
+    func oTC-time-mode-check -> list string. 
     oTC-time-mode-check ["TC", "Time", "Mode", "Check"].
 
     % Time taken by the whole search in tc
-    pred oTC-time-msolve o:list string.
+    func oTC-time-msolve -> list string.
     oTC-time-msolve ["TC", "Time"].
 
     % Time taken to refine the solution
-    pred oTC-time-refine o:list string. 
+    func oTC-time-refine -> list string. 
     oTC-time-refine ["TC", "Time", "Refine"].
 
-    pred oTC-time-compile-instance o:list string. 
+    func oTC-time-compile-instance -> list string. 
     oTC-time-compile-instance ["TC", "Time", "Compile", "Instance"].
 
-    pred oTC-time-compile-class o:list string. 
+    func oTC-time-compile-class -> list string. 
     oTC-time-compile-class ["TC", "Time", "Compile", "Class"].
 
-    pred oTC-clauseNameShortName o:list string. 
+    func oTC-clauseNameShortName -> list string. 
     oTC-clauseNameShortName ["TC", "NameShortPath"].
 
-    pred oTC-debug o:list string.
+    func oTC-debug -> list string.
     oTC-debug ["TC", "Debug"].
 
-    pred oTC-use-pattern-fragment-compiler o:list string. 
+    func oTC-use-pattern-fragment-compiler -> list string. 
     oTC-use-pattern-fragment-compiler ["TC", "CompilerWithPatternFragment"].
 
-    pred all-options o:list ((list string) -> prop).
+    func all-options -> list (func -> (list string)).
     all-options [
       oTC-eta-reduce-proof, oTC-time-refine, oTC-time-msolve,
       oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
@@ -54,12 +54,12 @@ Elpi Db tc_options.db lp:{{
       oTC-time-compile-class
     ].
 
-    pred is-option-active i:(list string -> prop).
+    func is-option-active (func (list string) ->) ->.
     is-option-active uvar :- !, fail.
     is-option-active Opt :-
       Opt X, coq.option.get X (coq.option.bool tt).
 
-    pred warning-name o:string.
+    func warning-name -> string.
     warning-name "[TC] Warning".
   }
 }}.
@@ -96,12 +96,10 @@ Elpi Db tc.db lp:{{
 
     pred pending-mode o:list string.
 
-    pred dummy.
-
     pred ho-link o:term, i:term, o:A.
-    pred link.eta i:term, i:term.
-    pred link.llam i:term, i:term.
-    pred link.unif-eq i:term, i:term.
+    func link.eta term, term ->.
+    func link.llam term, term ->.
+    func link.unif-eq term, term ->.
 
   }
 }}.

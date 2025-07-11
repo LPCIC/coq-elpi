@@ -56,11 +56,10 @@ Register is_pstring as elpi.derive.is_pstring.
    its parametricity translation *)
 Elpi Db derive.param1.db lp:{{
 :index(3)
-pred reali i:term, o:term.
+func reali term -> term.
 type realiR term -> term -> prop.
 pred reali-done i:gref.
 }}.
-#[superglobal] Elpi Accumulate derive.param1.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.param1.db lp:{{
 
 reali {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
@@ -88,6 +87,7 @@ realiR T TR :-
 Elpi Command derive.param1.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate lp:{{
@@ -115,6 +115,7 @@ Register is_is_true as elpi.derive.is_is_true.
 
 (* hook into derive *)
 Elpi Accumulate derive File paramX.
+Elpi Accumulate derive Db Header derive.param1.db.
 Elpi Accumulate derive File param1.
 Elpi Accumulate derive Db derive.param1.db.
 
@@ -124,7 +125,7 @@ Elpi Accumulate derive Db derive.param1.db.
 
 Elpi Accumulate derive lp:{{
   
-pred derive.on_param1 i:gref, i:(gref -> gref -> string -> list prop -> prop), i:string, o:list prop.
+func derive.on_param1 gref, (func gref, gref, string -> list prop), string -> list prop.
 derive.on_param1 GR F N C :- reali (global GR) (global P), !, F GR P N C.
 
 derivation T N ff (derive "param1" (derive.param1.main T N ) (reali-done T)).

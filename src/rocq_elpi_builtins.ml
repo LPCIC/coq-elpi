@@ -437,7 +437,8 @@ let tc_instance = let open Conv in let open API.AlgebraicData in declare {
     K("tc-instance","",A(gref,A(int,N)),
       B (fun implementation priority -> { implementation; priority }),
       M (fun ~ok ~ko { implementation; priority } -> ok implementation priority));
-]} |> CConv.(!<)
+  ]
+} |> CConv.(!<)
 
 let get_instance_prio env class_gr inst_gr =
   let exception STOP in
@@ -574,8 +575,8 @@ let preprocess_clause ~depth clause =
          subst ~depth:d map
            (API.Utils.move ~from:depth ~to_:(depth + levels_to_abstract_no) clause)
      | l :: ls ->
-       E.mkApp E.Constants.pic (E.mkLam (*   pi x\  *)
-           (bind (d+1) (Univ.Universe.Map.add l d map) ls)) []
+       E.mkBuiltin E.Pi [E.mkLam (*   pi x\  *)
+           (bind (d+1) (Univ.Universe.Map.add l d map) ls)]
      in
        bind depth Univ.Universe.Map.empty
          (Univ.Universe.Set.elements levels_to_abstract)
@@ -644,25 +645,6 @@ let coercion = let open Conv in let open API.AlgebraicData in declare {
   ]
 } |> CConv.(!<)
 
-let implicit_kind : Glob_term.binding_kind Conv.t = let open Conv in let open API.AlgebraicData in let open Glob_term in declare {
-  ty = TyName "implicit_kind";
-  doc = "Implicit status of an argument";
-  pp = (fun fmt -> function
-    | NonMaxImplicit -> Format.fprintf fmt "implicit"
-    | Explicit -> Format.fprintf fmt "explicit"
-    | MaxImplicit -> Format.fprintf fmt "maximal");
-  constructors = [
-    K("implicit","regular implicit argument, eg Arguments foo [x]",N,
-      B NonMaxImplicit,
-      M (fun ~ok ~ko -> function NonMaxImplicit -> ok | _ -> ko ()));
-    K("maximal","maximally inserted implicit argument, eg Arguments foo {x}",N,
-      B MaxImplicit,
-      M (fun ~ok ~ko -> function MaxImplicit -> ok | _ -> ko ()));
-    K("explicit","explicit argument, eg Arguments foo x",N,
-      B Explicit,
-      M (fun ~ok ~ko -> function Explicit -> ok | _ -> ko ()));
-  ]
-} |> CConv.(!<)
 
 let implicit_kind_of_status = function
   | None -> Glob_term.Explicit
@@ -2334,7 +2316,7 @@ with a number, starting from 1.
   DocNext);
 
   LPCode {|
-pred coq.env.begin-module i:id, i:option modtypath.
+func coq.env.begin-module id, option modtypath -> .
 coq.env.begin-module Name MP :- coq.env.begin-module-functor Name MP [].
 |};
 
@@ -2358,7 +2340,7 @@ coq.env.begin-module Name MP :- coq.env.begin-module-functor Name MP [].
   DocNext);
 
   LPCode {|
-pred coq.env.begin-module-type i:id.
+func coq.env.begin-module-type id ->.
 coq.env.begin-module-type Name :-
   coq.env.begin-module-type-functor Name [].
 |};
@@ -2808,7 +2790,6 @@ declared as cumulative.|};
   MLData universe_constraint;
   MLData universe_variance;
   MLData universe_decl;
-  MLData universe_decl_cumul;
 
   LPDoc "-- Primitive --------------------------------------------------------";
 
@@ -3813,7 +3794,7 @@ coq.reduction.vm.whd_all T TY R :-
 |};
 
   LPCode {|
-pred coq.reduction.lazy.whd_all i:term, o:term.
+func coq.reduction.lazy.whd_all term -> term.
 coq.reduction.lazy.whd_all X Y :-
   @redflags! coq.redflags.all => coq.reduction.lazy.whd X Y.
 |};
@@ -4106,7 +4087,7 @@ and for all in a .v file which your clients will load. Eg.
   DocAbove);
 
   LPCode {|
-pred coq.id->name i:id, o:name.
+func coq.id->name id -> name.
 coq.id->name S N :- coq.string->name S N.
   |};
 
@@ -4261,7 +4242,8 @@ Supported attributes:
 
   LPCode {|
 % see coq.elpi.accumulate-clauses
-pred coq.elpi.accumulate i:scope, i:id, i:clause.
+:index (1)
+func coq.elpi.accumulate scope, id, clause.
 coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 |};
 

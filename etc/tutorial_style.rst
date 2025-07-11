@@ -3,7 +3,7 @@
 :alectryon/pygments/coq/tacn: elpi
 
 .. role:: elpi-api(ghref)
-   :pattern: ^(% \[$name|(external )?pred $name)
+   :pattern: ^(% \[$name|(external )?(pred|func) $name)
 
 .. role:: lib(elpi-api)
    :src: LPCIC coq-elpi master elpi/coq-lib.elpi
@@ -32,7 +32,7 @@
    :src: LPCIC coq-elpi master builtin-doc/elpi-builtin.elpi
 
 .. role:: elpi-type(ghref)
-   :pattern: ^(kind $name|typeabbrev $name)
+   :pattern: ^(kind $name|typeabbrev $name|(external )?symbol $name)
 
 .. role:: type(elpi-type)
    :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
@@ -48,7 +48,7 @@
 
 
 .. role:: elpi-constructor(ghref)
-   :pattern: ^type $name
+   :pattern: ^(type $name|(external )?symbol $name)
 
 .. role:: constructor(elpi-constructor)
    :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
@@ -163,7 +163,80 @@
      .note .admonition-title { color: rgb(42, 134, 57) }
      .note { background-color: rgb(222, 247, 222); }
 
+      h1 {
+         font-size: 28px;
+         font-weight: 500;
+         letter-spacing: 0;
+         line-height: 1.5em;
+         padding-bottom: 15px;
+         position: relative;
+         font-family: "Gill Sans Extrabold", sans-serif;
+      }
+      h1:before {
+         content: "";
+         position: absolute;
+         left: 0;
+         bottom: 0;
+         height: 5px;
+         width: 55px;
+         background-color: #111;
+      }
+      h1:after {
+         content: "";
+         position: absolute;
+         left: 0;
+         bottom: 2px;
+         height: 1px;
+         width: 95%;
+         background-color: #333;
+      }
 
+      h2 {
+         font-size: 24px;
+         font-weight: 500;
+         letter-spacing: 0;
+         line-height: 1.5em;
+         padding-bottom: 15px;
+         position: relative;
+         font-family: "Gill Sans Extrabold", sans-serif;
+      }
+      h2:before {
+         content: "";
+         position: absolute;
+         left: 0;
+         bottom: 0;
+         height: 3px;
+         width: 55px;
+         background-color: #111;
+      }
+      h2:after {
+         content: "";
+         position: absolute;
+         left: 0;
+         bottom: 2px;
+         height: 1px;
+         width: 95%;
+         background-color: #333;
+      }
+
+      h3 {
+         font-size: 20px;
+         font-weight: 500;
+         letter-spacing: 0;
+         line-height: 1.5em;
+         padding-bottom: 15px;
+         position: relative;
+         font-family: "Gill Sans Extrabold", sans-serif;
+      }
+      h3:after {
+         content: "";
+         position: absolute;
+         left: 0;
+         bottom: 2px;
+         height: 1px;
+         width: 95%;
+         background-color: #333;
+      }
    `; 
    document.getElementsByTagName('head')[0].appendChild(style); 
 

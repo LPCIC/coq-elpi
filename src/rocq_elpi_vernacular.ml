@@ -56,7 +56,7 @@ let atts2impl ~depth loc phase
             CErrors.user_err Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
   let state, atts, _ = EU.map_acc (Rocq_elpi_builtins_synterp.attribute.API.Conversion.embed ~depth) state atts in
   let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
-  state, ET.mkApp ET.Constants.implc atts [q] 
+  state, ET.mkBuiltin ET.Impl [atts;q] 
 
 let same_phase y x =
   match x, y with
@@ -254,7 +254,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
         | `Db base -> base, (fun _ fast -> P.accumulate_to_db program [fast] [] ~scope)
         | `Program base -> base, (fun fname fast ->
            warn_scope_not_regular ~loc scope;
-           P.accumulate program [File { fname; fast}]) in
+           P.accumulate ~loc program [File { fname; fast}]) in
       let cid = Names.Id.of_string_soft (String.concat "." id) in
       let s, u =
         try
@@ -301,7 +301,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
             fname;
             fast = funit;
           }) s new_src_ast in
-        P.accumulate program new_src_ast
+        P.accumulate ~loc program new_src_ast
     with Failure s ->  CErrors.user_err Pp.(str s)
   let accumulate_files ~atts:((scope,only),ph) ~loc ?program s = skip ~only ~ph (accumulate_files ~loc ?program ~scope) s
   
@@ -314,14 +314,14 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     | `Program base ->
       warn_scope_not_regular ~loc scope;
       let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
-      P.accumulate program [EmbeddedString { sast = new_ast}]
+      P.accumulate ~loc program [EmbeddedString { sast = new_ast}]
   let accumulate_string ~atts:((scope,only),ph) ~loc ?program sloc = skip ~only ~ph (accumulate_string ~loc ?program ~scope) sloc
   
   
   let accumulate_db ~loc ?(program=current_program()) name =
     let _ = P.ensure_initialized () in
     let header = P.header_of_db name |> List.map (fun dast -> DatabaseHeader { dast }) in
-    if P.db_exists name then P.accumulate program (header @ [DatabaseBody name])
+    if P.db_exists name then P.accumulate ~loc program (header @ [DatabaseBody name])
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
   let accumulate_db ~atts:((scope,only),ph) ~loc ?program name =
     warn_scope_not_regular ~loc scope;
@@ -336,7 +336,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
       else
         let () = warn_scope_not_regular ~loc scope in
         let units = List.map (fun dast -> DatabaseHeader { dast }) units in
-        P.accumulate program units
+        P.accumulate ~loc program units
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
   let accumulate_db_header ~atts:((scope,only),ph) ~loc ?program name =
     skip ~only ~ph (accumulate_db_header ~loc ?program ~scope) name
@@ -393,17 +393,17 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let print ~atts ~loc ~name ~args output =
     skip ~ph:atts (print ~loc ~name ~args) output
 
-  let create_command ~atts:(raw_args) ~loc:_ n =
+  let create_command ~atts:(raw_args) ~loc n =
     let raw_args = Option.default false raw_args in
     let _ = P.ensure_initialized () in
     P.declare_program n (Command { raw_args });
-    P.init_program n [P.command_init()];
+    P.init_program n ~loc [P.command_init()];
     set_current_program (snd n)
 
-  let create_tactic ~loc:_ n =
+  let create_tactic ~loc n =
     let _ = P.ensure_initialized () in
     P.declare_program n Tactic;
-    if P.stage = Summary.Stage.Interp then P.init_program n [P.command_init();P.tactic_init ()];
+    if P.stage = Summary.Stage.Interp then P.init_program n ~loc [P.command_init();P.tactic_init ()];
     set_current_program (snd n)
 
   let create_program ~atts:(raw_args) ~loc n ~init:(sloc,s) =
@@ -413,7 +413,8 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     if P.stage = Summary.Stage.Interp then begin
       let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
       let init = EmbeddedString { sast = unit} in
-      P.init_program n [init];
+      P.init_program n ~loc [init];
+      Printf.eprintf "INIT OK %s\n" s;
     end;
     set_current_program (snd n)
 

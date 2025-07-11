@@ -46,25 +46,25 @@ pred preserve_bound_variables i:term o:term.
 
 preserve_bound_variables I O :-
   (((pi N T F N1 T1 F1 \
-    copy (fun N T F) (fun N1 T1 F1) :-
+    copy (fun N T F) (fun N1 T1 F1) :- !,
     copy T T1,
     fresh-name N T N1,
     (@pi-decl N1 T1 x\ 
       copy (F x) (F1 x))),
-    (pi B B1 N T F N1 T1 F1 \
-      copy (let N T B F)(let N1 T1 B1 F1) :-
-        copy T T1,
-        copy B B1,
-        fresh-name N T N1,
-        (@pi-decl N1 T1 x\ copy (F x) (F1 x))),
-    (pi N T F N1 T1 F1 \
-      copy (prod N T F) (prod N1 T1 F1) :-
-        copy T T1,
-        fresh-name N T N1,
-        (@pi-decl N1 T1 x\
-          copy (F x) (F1 x)))) => copy I O).
+  (pi B B1 N T F N1 T1 F1 \
+    copy (let N T B F)(let N1 T1 B1 F1) :- !,
+      copy T T1,
+      copy B B1,
+      fresh-name N T N1,
+      (@pi-decl N1 T1 x\ copy (F x) (F1 x))),
+  (pi N T F N1 T1 F1 \
+    copy (prod N T F) (prod N1 T1 F1) :- !,
+      copy T T1,
+      fresh-name N T N1,
+      (@pi-decl N1 T1 x\
+        copy (F x) (F1 x)))) => copy I O).
 
-pred fresh-name i:name, i:term, o:name.
+func fresh-name name, term -> name.
 
 fresh-name N T M :-
   coq.ltac.fresh-id {coq.name->id N} T Mi,
@@ -106,7 +106,7 @@ mk-app-prf [F1, A | Args1] [F2, B | Args2] [Pf, Pa | Ps] P :-
   mk-app-prf [app [F1, A] | Args1] [app [F2, B] | Args2]
     [{{app_prf lp:F1 lp:F2 lp:A lp:B lp:Pf lp:Pa}} | Ps] P.
 
-pred fold-map2 i:list term i:A i:(term -> A -> term -> term -> A -> prop)
+pred fold-map2 i:list term i:A i:(pred i:term, i:A, o:term, o:term, o:A)
   o:list term o:list term o:A.
 
 fold-map2 [] A _ [] [] A.

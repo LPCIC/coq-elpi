@@ -22,6 +22,7 @@ Elpi Db derive.eqOK.db lp:{{
 Elpi Command derive.eqOK.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.trivial.db.

@@ -6,13 +6,13 @@
 
 typeabbrev stack (list term).
 
-pred hd-beta i:term, i:stack, o:term, o:stack.
-pred hd-beta-zeta i:term, i:stack, o:term, o:stack.
-pred hd-beta-zeta-reduce i:term, o:term.
-pred whd i:term, i:stack, o:term, o:stack.
-pred whd-indc i:term, o:constructor, o:stack.
-pred unwind i:term, i:stack, o:term.
-pred whd1 i:term, o:term.
+func hd-beta term, stack -> term, stack.
+func hd-beta-zeta term, stack -> term, stack.
+func hd-beta-zeta-reduce term -> term.
+func whd term, stack -> term, stack.
+func whd-indc term -> constructor, stack.
+func unwind term, stack -> term.
+func whd1 term -> term.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -21,7 +21,7 @@ shorten std.{append, nth, drop}.
 % indirection, to be used if we add to the stack "match" frames
 unwind T A R :- if (var T) (coq.mk-app-uvar T A R) (coq.mk-app T A R).
 
-pred  nth-stack i:int, i:stack, o:stack, o:term, o:stack.
+func  nth-stack int, stack -> stack, term, stack.
 nth-stack 0 [X|XS] [] X XS :- !.
 nth-stack N [X|XS] [X|Before] At After :-
   M is N - 1, nth-stack M XS Before At After.
@@ -58,36 +58,41 @@ whd1 T R :-
   not(same_term T R).
 
 % iota step
-pred match-red i:constructor, i:list term, i:list term, i:stack, o:term, o:stack.
+:index (1)
+func match-red constructor, list term, list term, stack -> term, stack.
 match-red GR KArgs BL C X XC :-
   coq.env.indc GR Lno _ Ki _,
   drop Lno KArgs Args,
   nth Ki BL Bi,
   hd-beta {coq.mk-app Bi Args} C X XC.
-pred proj-red i:list term, i:int, i:stack, o:term, o:stack.
+
+:index (1)
+func proj-red list term, int, stack -> term, stack.
 proj-red Args FieldNo C V C :-
   nth FieldNo Args V.
 
 % iota step
-pred fix-red
-  i:(term -> term), i:term,
-  i:list term, i:constructor, i:list term, i:list term, o:term, o:stack. 
+:index (1)
+func fix-red
+  (term -> term), term,
+  list term, constructor, list term, list term -> term, stack. 
 fix-red F Fix LA GR KA RA X XC :-
   append LA [{coq.mk-app (global (indc GR)) KA}|RA] ArgsWRedRecNo,
   hd-beta {coq.mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
-pred unfold % delta (global constants) + hd-beta
-  i:constant,             % name
-  i:option univ-instance, % universe instance if the constant is universe polymorphic
-  i:stack,                % args
-  o:term,                 % body
-  o:stack.                % args after hd-beta
+:index (_ 2)
+func unfold % delta (global constants) + hd-beta
+  constant,             % name
+  option univ-instance, % universe instance if the constant is universe polymorphic
+  stack                 % args
+  -> term,              % body
+  stack.                % args after hd-beta
 unfold GR none A BO BOC :- coq.env.const GR (some B) _, hd-beta B A BO BOC.
 unfold GR (some I) A BO BOC :- (@uinstance! I ==> coq.env.const GR (some B) _), hd-beta B A BO BOC.
 
 % ensures its first argument is the whd of the second
-pred cache i:term, o:term.
-pred cache-whd i:term, i:term, i:term.
+:index (1)
+func cache-whd term, term, term ->.
 cache-whd N K V :- cache N VN, var VN, !, whd V [] X XC, unwind X XC VN, K = VN.
 cache-whd N K _ :- cache N K, !.
 cache-whd N _ _ :- coq.error "anomaly: def with no cache:" {coq.term->string N}.

@@ -85,7 +85,7 @@ doc: build
 	@echo "########################## generating doc ##########################"
 	@mkdir -p doc
 	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
-		echo ALECTRYON $(tut) && OCAMLPATH=$(shell pwd)/_build/install/default/lib ./etc/alectryon_elpi.py \
+		echo ALECTRYON $(tut) && OCAMLPATH=$(shell pwd)/_build/install/default/lib /home/tassi/snap/code/197/.local/share/pipx/venvs/alectryon/bin/python3 ./etc/alectryon_elpi.py \
 		    --frontend coq+rst \
 			--output-directory doc \
 		    --pygments-style vs \

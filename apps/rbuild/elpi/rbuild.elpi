@@ -1,0 +1,18 @@
+namespace rbuild {
+
+func nulist->list term -> list term.
+nulist->list {{ Stop }} [].
+nulist->list {{ More _ lp:X lp:XS }} [X|Rest] :- nulist->list XS Rest.
+
+func find constant, list term -> term, list term.
+find C [ {{ Label _ _ lp:P lp:T }}  |TS] T TS :- coq.safe-dest-app P (global (const C)) _, !.
+find C [X|XS] T [X|YS] :- find C XS T YS.
+
+
+func reorder list (option constant), list term -> list term.
+reorder [some P|PL] L [X|XS] :- find P L X L', !, reorder PL L' XS.
+reorder [_|PL] [X|L] [X|XS] :- !, reorder PL L XS.
+reorder _ L L.
+
+}
+

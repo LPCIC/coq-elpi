@@ -18,16 +18,15 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
 
   Elpi Db derive.param1.trivial.db lp:{{
 
-  pred param1-trivial-done i:gref.
+  func param1-trivial-done gref ->.
   type param1-trivial-db term -> term -> prop.
   type param1-trivial-db-args list term -> list term -> prop.
 
-  pred param1-inhab-done i:gref.
+  func param1-inhab-done gref ->.
   type param1-inhab-db term -> term -> prop.
   type param1-inhab-db-args list term -> list term -> prop.
 
 }}.
-#[superglobal] Elpi Accumulate derive.param1.trivial.db File derive.lib.
 #[superglobal] Elpi Accumulate derive.param1.trivial.db Db Header derive.param1.db.
 #[superglobal] Elpi Accumulate derive.param1.trivial.db lp:{{
 
@@ -82,6 +81,7 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
 Elpi Command derive.param1.trivial.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.congr.db.
@@ -104,6 +104,7 @@ Elpi Accumulate lp:{{
 Elpi Command derive.param1.inhab.
 Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
+Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.congr.db.

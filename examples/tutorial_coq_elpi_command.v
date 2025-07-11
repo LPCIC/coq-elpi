@@ -340,6 +340,9 @@ Elpi Accumulate lp:{{
   pred prime i:id, o:id.
   prime S S1 :- S1 is S ^ "'".
 
+  pred id i:id, o:id.
+  id X X.
+
   main [str Ind, trm Param] :-
     
     % the term to be abstracted out, P of type PTy
@@ -357,11 +360,11 @@ Elpi Accumulate lp:{{
 
     % let's make a copy, capturing all occurrences of P with a
     % (which stands for the parameter)
-    (pi a\ copy P a ==> copy-indt-decl Decl (Decl' a)),
+    (pi a\ (copy P a :- !) ==> copy-indt-decl Decl (Decl' a)),
 
     % to avoid name clashes, we rename the type and its constructors
     % (we don't need to rename the parameters)
-    coq.rename-indt-decl (=) prime prime NewDecl DeclRenamed,
+    coq.rename-indt-decl id prime prime NewDecl DeclRenamed,
 
     % we type check the inductive declaration, since abstracting
     % random terms may lead to illtyped declarations (type theory
@@ -640,7 +643,6 @@ Elpi Accumulate lp:{{
     Opts ==> some-code.
 
 }}.
-
 #[this, more(stuff="33")] Elpi parse_attr.
 Fail #[unknown] Elpi parse_attr.  (* .fails *)
 

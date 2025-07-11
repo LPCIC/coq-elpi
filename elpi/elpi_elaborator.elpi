@@ -17,13 +17,13 @@ pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
 :before "hd-beta:end"
 hd-beta (uvar as K) [A|AS] X C :- !, % auto-intro
   assert! (of A TA _) "already typed",
-  unify-eq K (fun `hd_beta_auto` TA F),
+  unify-eq K (fun `hd_beta_auto` TA F), !,
   hd-beta (F A) AS X C.
 
 :before "hd-beta-zeta:end"
 hd-beta-zeta (uvar as K) [A|AS] X C :- !, % auto-intro
   assert! (of A TA _) "already typed",
-  unify-eq K (fun `hd_beta_zeta_auto` TA F),
+  unify-eq K (fun `hd_beta_zeta_auto` TA F), !,
   hd-beta-zeta (F A) AS X C.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -291,9 +291,13 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   of ResRtyRaw _ ResRty, unify-eq Rty ResRty,
   % Rty must type each branch
   map2 KsLArgs Kn (mk-bty Rty Lno) BsTy,
-  map2 Bs BsTy of ResBs,
+  map2R Bs BsTy of ResBs,
   % Outside type
   unify-leq {coq.mk-app ResRty {append RArgs [ResT]}} ResRtyInst.
+
+pred map2R i:list A, o:list B, i:(pred i:A, o:B, o:C), o:list C.
+map2R [] [] _ [].
+map2R [X|XS] [Y|YS] F [Z|ZS] :- F X Y Z, map2R XS YS F ZS.
 
 of (let N Ty Bo F) TyFx (let N ResTy ResBo ResF) :-
   of Ty (sort _) ResTy, of Bo ResTy ResBo,
@@ -336,7 +340,7 @@ pred utc % Uniqueness of typing
   i:term,      % type living in values
   o:prop.      % goal checking compatibility of the two types
 utc [] T1 [] T2 (unify-eq T1V T2) :- !, copy T1 T1V.
-utc [N|NS] T1 [V|VS] T2 C :- !, copy N V => utc NS T1 VS T2 C.
+utc [N|NS] T1 [V|VS] T2 C :- !, (copy N V :- !) => utc NS T1 VS T2 C.
 utc [] T1 VS T2 C :- !, utc [] {coq.subst-prod VS T1} [] T2 C. % FIXME: reduction
 utc [_|NS] (prod _ _ F) [] T2 C :- !,                      % FIXME: reduction
   assert! (pi x\ F x = F1) "restriction bug", utc NS F1 [] T2 C.
@@ -366,7 +370,7 @@ mk-rty ARGS HD (prod N S T) (fun N S F) :- !,
 mk-rty ARGS HD _ (fun _ IndApp _FRESH) :-
   coq.mk-app HD {rev ARGS} IndApp.
 
-type mk-bty term -> int -> term -> constructor -> term -> prop.
+pred mk-bty i:term, i:int, i:term, i:constructor, o:term.
 mk-bty Rty Lno (prod N S T) Ki (prod N S B) :- !,
   pi x\ mk-bty Rty Lno (T x) Ki (B x).
 mk-bty Rty Lno T Ki AppRtyNorm :-

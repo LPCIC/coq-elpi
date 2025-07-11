@@ -8,16 +8,16 @@ namespace tc {
   type tcOrInst list string -> enum.
   type ignoreInstances, ignoreClasses  string -> list string -> enum.
 
-  pred parse i:list argument, o:enum.
-  parse [str ClassName, str "path", str Path] (path ClassName Path).
-  parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassName Res) :-
+  func parse list argument -> enum.
+  parse [int N, str Instance] (addInstPrio N Instance) :- !.
+  parse [str ClassName, str "path", str Path] (path ClassName Path) :- !.
+  parse [str ClassName, str "ignoreInstances" | InstNames] (ignoreInstances ClassName Res) :- !,
     args->str-list InstNames Res.
-  parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :-
+  parse [str ClassName, str "ignoreClasses" | ClassNames] (ignoreClasses ClassName Res) :- !,
     args->str-list ClassNames Res.
-  parse ClassNames (tcOrInst Res) :- args->str-list ClassNames Res.
-  parse [int N, str Instance] (addInstPrio N Instance).
+  parse ClassNames (tcOrInst Res) :- !, args->str-list ClassNames Res.
 
-  pred run-command i:enum.
+  func run-command enum ->.
   :if "debug"
   run-command A :- coq.say A, fail.
   run-command (ignoreClasses ClassName IgnoreClasses) :-

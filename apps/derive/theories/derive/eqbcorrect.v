@@ -59,10 +59,10 @@ Qed.
 
 Elpi Db derive.eqbcorrect.db lp:{{
 
-  pred eqcorrect-for
-    o:gref,
-    o:constant, % correct
-    o:constant. % reflexive
+  func eqcorrect-for
+    gref ->
+    constant, % correct
+    constant. % reflexive
   
   eqcorrect-for {{:gref PrimInt63.int }} C R :-
     {{:gref uint63_eqb_correct}} = const C,
