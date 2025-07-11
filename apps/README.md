@@ -1,4 +1,4 @@
-## Applications written in Coq-Elpi
+## Applications written in Rocq-Elpi
 
 ### Derive
 
@@ -16,3 +16,19 @@ A Namespace Emulation System.
 ### Locker
 
 A kit to lock definitions hard.
+
+### Coercion
+
+A hook to insert coercions using Elpi.
+
+### RBuild
+
+A handy syntax to build records.
+
+### CS
+
+A hook to solve Canonical Structure problems in Elpi.
+
+### TC
+
+An alternative Type Class solver written in Elpi.
