@@ -51,7 +51,7 @@ let master = [
 
     "rocq-9.1".coqPackages = common-bundles // {
       coq.override.version = "9.1";
-      coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi.override.elpi-version = "v3.0.0";
     };
 
     "coq-master" = { rocqPackages = {
