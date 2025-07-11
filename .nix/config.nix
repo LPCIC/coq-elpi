@@ -41,17 +41,20 @@ let master = [
     "coq-8.20".coqPackages = common-bundles // {
       coq.override.version = "8.20";
       coq-elpi.override.elpi-version = "v3.0.0";
+      hierarchy-builder.override.version = "master";
       coq-elpi-tests-stdlib.job = false;
     };
 
     "rocq-9.0".coqPackages = common-bundles // {
       coq.override.version = "9.0";
       coq-elpi.override.elpi-version = "v3.0.0";
+      hierarchy-builder.override.version = "master";
     };
 
     "rocq-9.1".coqPackages = common-bundles // {
       coq.override.version = "9.1";
-      coq-elpi.override.elpi-version = "2.0.7";
+      coq-elpi.override.elpi-version = "v3.0.0";
+      hierarchy-builder.override.version = "master";
     };
 
     "coq-master" = { rocqPackages = {
