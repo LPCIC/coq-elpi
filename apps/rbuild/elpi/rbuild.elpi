@@ -1,18 +1,49 @@
 namespace rbuild {
 
-func nulist->list term -> list term.
-nulist->list {{ Stop }} [].
-nulist->list {{ More _ lp:X lp:XS }} [X|Rest] :- nulist->list XS Rest.
+func unresolved_record->list term -> list term.
+unresolved_record->list {{ Stop }} [].
+unresolved_record->list {{ More _ lp:X lp:XS }} [X|Rest] :- unresolved_record->list XS Rest.
 
 func find constant, list term -> term, list term.
-find C [ {{ Label _ _ lp:P lp:T }}  |TS] T TS :- coq.safe-dest-app P (global (const C)) _, !.
+find C [ {{ Label _ _ lp:P lp:T }}  |TS] T TS :-
+  coq.safe-dest-app P (global (const C)) _, !.
 find C [X|XS] T [X|YS] :- find C XS T YS.
 
+func check-no-label list term.
+check-no-label [].
+check-no-label [ {{ Label _ _ lp:P _ }} | _] :- !, coq.error "Unknown label" P.
+check-no-label [_|XS] :- check-no-label XS.
 
-func reorder list (option constant), list term -> list term.
-reorder [some P|PL] L [X|XS] :- find P L X L', !, reorder PL L' XS.
-reorder [_|PL] [X|L] [X|XS] :- !, reorder PL L XS.
-reorder _ L L.
+func pad-with-holes int, list A -> list A.
+pad-with-holes N L L1 :-
+  std.length L M,
+  Diff is N - M,
+  if2 (Diff = 0) (L = L1)
+      (Diff > 0, not(L = []), var {std.last L}) (std.append L {coq.mk-n-holes Diff} L1)
+      (if (Diff < 0) (coq.error "too many fields") (coq.error "not enough fields, maybe use « ... ; _ »")).
+
+% we the projection names to build a list of arguments of the right lenght
+% and we place in there the named ones, the others are placed in their order
+% in the remaining slots (carries by ACC)
+func reorder list (option constant), list term, list term -> list term.
+reorder [some P|PL] L ACC [X|XS] :- find P L X L', !, reorder PL L' ACC XS.
+reorder [_|PL] L ACC [X|XS] :- reorder PL L [X|ACC] XS.
+reorder [] L ACC [] :- check-no-label L,
+  {std.rev ACC} = {pad-with-holes {std.length ACC} L}.
+
+func find-constructor term -> term, list (option constant).
+find-constructor Ty KParams PL :- not(var Ty), !,
+  coq.safe-dest-app Ty Hd _,
+  coq.env.global (indt I) Hd,
+  coq.env.indt I _ N _ _ [K] _,
+  coq.mk-n-holes N Params,
+  coq.mk-app {coq.env.global (indc K)} Params KParams,
+  coq.env.projections I PL.
+
+func find-inductive list term -> term.
+find-inductive [ {{ Label lp:S _ _ _ }} | _] S :- !.
+find-inductive [_|XS] S :- find-inductive XS S.
+  
 
 }
 

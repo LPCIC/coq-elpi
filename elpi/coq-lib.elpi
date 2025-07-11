@@ -68,7 +68,7 @@ coq.safe-dest-app X X [].
 :index (_ 1)
 func coq.mk-app term, list term -> term.
 coq.mk-app HD [] HD :- !.
-coq.mk-app (app L) Args (app LArgs) :- !, append L Args LArgs.
+coq.mk-app (app L) Args R :- !, append L Args LArgs, R = app LArgs.
 coq.mk-app (fun _ _ F) [A|Args] R :- !, coq.mk-app (F A) Args R.
 coq.mk-app (let _ _ A F) Args R :- !, coq.mk-app (F A) Args R.
 coq.mk-app HD Args (app [HD|Args]).
