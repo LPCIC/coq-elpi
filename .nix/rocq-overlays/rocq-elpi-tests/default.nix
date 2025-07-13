@@ -1,8 +1,8 @@
-{ lib, coq-elpi, coqPackages }:
+{ lib, rocq-elpi, rocqPackages }:
 
-coqPackages.lib.overrideCoqDerivation {
+rocqPackages.lib.overrideRocqDerivation {
 
-  pname = "coq-elpi-tests";
+  pname = "rocq-elpi-tests";
 
   buildPhase = ''
     make test-core
@@ -12,4 +12,4 @@ coqPackages.lib.overrideCoqDerivation {
   installPhase = ''
     echo "nothing to install"
   '';
-} coq-elpi
+} rocq-elpi

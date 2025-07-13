@@ -766,7 +766,7 @@ let detype_closed_glob env sigma closure =
   fix_detype gbody
 [%%endif]
 
-[%%if coq = "8.19" || coq = "8.20" || coq = "9.0"]
+[%%if coq = "8.19" || coq = "8.20" || coq = "9.0" || coq = "9.1"]
 let detype_to_pattern env sigma c =
   let c = detype env sigma c in
   Patternops.pattern_of_glob_constr env c
