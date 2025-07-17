@@ -1,6 +1,7 @@
-From elpi.apps Require Import rbuild.
+From elpi.apps Require Import derive.std rbuild.
 
 Record foo {A} := { a : nat; b : bool; c : A }.
+#[only(lens)] derive foo.
 
 (* Build a record without mentioning its constructor name *)
 Check « 3 ; false; tt » : foo.
@@ -14,6 +15,10 @@ Check « c := tt ; _ » : foo.
 
 (* No type annotation but label *)
 Check « c := tt; _ ».
+
+(* Update with a lens *)
+Check fun x : foo =>
+  « x with a := 3 ».
 
 (* Errors: *)
 Fail Check « c := tt ». (* Error: not enough fields, maybe use « ... ; _ » *)

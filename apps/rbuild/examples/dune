@@ -1,5 +1,5 @@
 (coq.theory
  (name elpi.apps.rbuild.examples)
- (theories elpi elpi.apps.rbuild))
+ (theories elpi elpi.apps.rbuild elpi.apps.derive))
 
 (include_subdirs qualified)

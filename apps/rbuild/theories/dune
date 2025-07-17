@@ -1,6 +1,6 @@
 (coq.theory
  (name elpi.apps.rbuild)
  (package rocq-elpi)
- (theories elpi elpi.apps.rbuild.elpi))
+ (theories elpi elpi.apps.rbuild.elpi elpi.apps.derive))
 
 (include_subdirs qualified)
