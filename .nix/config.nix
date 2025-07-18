@@ -5,19 +5,39 @@ let master = [
     "mathcomp"
     "mathcomp-analysis"
     "mathcomp-bigenough"
-    "mathcomp-classical"
     "mathcomp-finmap"
     "mathcomp-real-closed"
     "multinomials"
     "odd-order"
+    "trakt"
   ];
-  common-bundles = listToAttrs (forEach master (p:
+  rocq-common-bundles = {
+    rocq-elpi.override.elpi-version = "v3.0.0";
+    hierarchy-builder.override.version = "master";
+    rocq-elpi-tests.job = true;
+  };
+  coq-common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
-    coq-elpi-tests.job = true;
-    stdlib.job = true;
+    coq-elpi.override.elpi-version = "v3.0.0";
     coq-elpi-tests-stdlib.job = true;
-    rocq-elpi.job = false;
+
+    mathcomp-boot.job = true;
+    mathcomp-fingroup.job = true;
+    mathcomp-order.job = true;
+    mathcomp-ssreflect.job = true;
+    mathcomp-algebra.job = true;
+    mathcomp-solvable.job = true;
+    mathcomp-field.job = true;
+    mathcomp-character.job = true;
+    mathcomp-classical.job = true;
+    mathcomp-reals.job = true;
+    mathcomp-experimental-reals.job = true;
+    mathcomp-reals-stdlib.job = true;
+    mathcomp-analysis-stdlib.job = true;
+
+    bignums.job = true;
+    stdlib.job = true;
 
     mathcomp-single-planB-src.job = false;
     mathcomp-single-planB.job = false;
@@ -38,42 +58,43 @@ let master = [
   default-bundle = "coq-8.20";
   bundles = {
 
-    "coq-8.20".coqPackages = common-bundles // {
+    "coq-8.20".coqPackages = coq-common-bundles // {
       coq.override.version = "8.20";
       coq-elpi.override.elpi-version = "v3.0.0";
-      coq-elpi-tests-stdlib.job = false;
     };
 
-    "rocq-9.0".coqPackages = common-bundles // {
+    "rocq-9.0" = { rocqPackages = rocq-common-bundles // {
+      rocq-core.override.version = "9.0";
+    }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.0";
-      coq-elpi.override.elpi-version = "v3.0.0";
-    };
-
-    "rocq-9.1".coqPackages = common-bundles // {
-      coq.override.version = "9.1";
-      coq-elpi.override.elpi-version = "2.0.7";
-    };
-
-    "coq-master" = { rocqPackages = {
-      rocq-core.override.version = "master";
-      rocq-elpi.override.elpi-version = "v3.0.0";
-      stdlib.override.version = "master";
-      bignums.override.version = "master";
       hierarchy-builder.override.version = "master";
-    }; coqPackages = common-bundles // {
-      coq.override.version = "master";
-      coq-elpi.override.elpi-version = "v3.0.0";
-      stdlib.override.version = "master";
+    }; };
+
+    "rocq-9.1" = { rocqPackages = rocq-common-bundles // {
+      rocq-core.override.version = "9.1";
+    }; coqPackages = coq-common-bundles // {
+      coq.override.version = "9.1";
+      hierarchy-builder.override.version = "master";
+    }; };
+
+    "coq-master" = { rocqPackages = rocq-common-bundles // {
+      rocq-core.override.version = "master";
       bignums.override.version = "master";
+      stdlib.override.version = "master";
+    }; coqPackages = coq-common-bundles // {
+      coq.override.version = "master";
+      bignums.override.version = "master";
+      stdlib.override.version = "master";
+      hierarchy-builder.override.version = "master";
     }; };
 
     /* uncomment bundle below if min and max elpi version start to differ
-    "coq-master-min-elpi" = { rocqPackages = {
+    "coq-master-min-elpi" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "master";
       rocq-elpi.override.elpi-version = "v3.0.0";
       stdlib.override.version = "master";
       bignums.override.version = "master";
-    }; coqPackages = common-bundles // {
+    }; coqPackages = coq-common-bundles // {
       coq.override.version = "master";
       coq-elpi.override.elpi-version = "v3.0.0";
       stdlib.override.version = "master";
