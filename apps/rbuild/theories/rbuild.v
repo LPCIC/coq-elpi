@@ -1,6 +1,7 @@
 From elpi.apps.rbuild.elpi Extra Dependency "rbuild.elpi" as rbuild.
 
 From elpi Require Import elpi.
+From elpi.apps.derive Require Export lens.
 From elpi.apps Require Export coercion.
 
 Inductive unresolved_record :=
@@ -21,7 +22,17 @@ Notation "« x ; .. ; y »" :=
 
 Notation "« 'unresolved record' »" := (More _ _ _) (at level 0, only printing).
 
-Elpi Accumulate coercion.db File rbuild.
+Inductive update := With (T : Type) : T -> named_field -> update.
+
+Notation "« x 'with' l := v »" := (With _ x (Label _ _ l v) : With _ x (Label _ _ l v))
+  (at level 0, x at level 100, l at level 0, v at level 98, only parsing).
+
+
+Elpi Accumulate coercion Db derive.lens.db.
+
+Elpi Accumulate coercion.db File rbuild. (* TODO: maybe split signature *)
+
+Elpi Accumulate coercion.db Db Header derive.lens.db. (* TODO: move to rbuild along with the update code *)
 
 Elpi Accumulate coercion.db lp:{{
 
@@ -45,5 +56,23 @@ coercion _ L {{ unresolved_record }} Ty R :- rbuild.find-constructor Ty K PL, !,
   std.assert-ok! (coq.typecheck Candidate Ty) "Illtyped record",
   R = Candidate.
   % this type checks R again, maybe we can do as in refine to avoid that
+
+% stage 0, we schedule the update for stage 1
+coercion _ {{ With lp:R _ _}} {{ update }} (sort _) R.
+
+% stage 1, we update X via a lens on L
+coercion _ {{ With lp:R lp:X (Label _ _ lp:L lp:V )}} {{ update }} R O :- std.do! [
+  coq.safe-dest-app R HD TyArgs,
+  coq.env.global (indt I) HD,
+  coq.safe-dest-app L P _,
+  coq.env.global (const PC) P,
+  coq.gref->id (const PC) S,
+  std.assert! (lens-db I S C) "no Lens, did you derive the record?",
+  coq.env.global (const C) Focus,
+  coq.mk-app Focus TyArgs FocusArgs,
+  Candidate = {{ over lp:FocusArgs (fun _ => lp:V) lp:X }},
+  std.assert-ok! (coq.typecheck Candidate R) "illtyped update",
+  O = Candidate,
+].
 
 }}.

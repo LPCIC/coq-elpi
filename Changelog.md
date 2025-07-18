@@ -1,3 +1,17 @@
+# [3.0.0] 11/7/2025
+
+Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
+
+### Workflow
+- Deprecate `Elpi Typecheck` since code is typechecked upfront when accumulated
+
+### Documentation
+- Update elpi_lang tutorial w.r.t. Elpi 3.0 new determinacy checker, in
+  particular the `func` declaration and the `=!=>` oeprator
+
+### APPS:
+- New experimental app `rbuild`: build any record with « ... »
+
 # [2.6.0] 8/7/2025
 
 Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
