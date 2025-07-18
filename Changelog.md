@@ -1,4 +1,4 @@
-# [3.0.0] 11/7/2025
+# [3.0.0] 18/7/2025
 
 Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
 
