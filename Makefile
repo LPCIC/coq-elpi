@@ -1,5 +1,5 @@
 dune_wrap = $(shell command -v coqc > /dev/null || echo "etc/with-rocq-wrap.sh")
-dune = $(dune_wrap) dune $(1) $(DUNE_$(1)_FLAGS --stop-on-first-error
+dune = $(dune_wrap) dune $(1) $(DUNE_$(1)_FLAGS) --stop-on-first-error
 DUNE_IN_FILES = $(shell find . -name "dune.in" | sed -e 's/.in$$//')
 
 # This makefile is mostly calling dune and dune doesn't like
@@ -56,6 +56,13 @@ all-tests: test-core test-stdlib test-apps test-apps-stdlib
 test-core: $(DUNE_IN_FILES)
 	$(call dune,runtest) tests
 	$(call dune,build) tests
+	# Check for build reproducibility
+	md5sum _build/default/tests/accumulate1.vo > md5sum_accumulate1vo_1
+	rm -f _build/default/tests/accumulate1.vo
+	$(call dune,build) --cache=disabled tests
+	md5sum _build/default/tests/accumulate1.vo > md5sum_accumulate1vo_2
+	diff md5sum_accumulate1vo_1 md5sum_accumulate1vo_2
+	rm md5sum_accumulate1vo_1 md5sum_accumulate1vo_2
 .PHONY: test-core
 
 test-apps: $(DUNE_IN_FILES)
