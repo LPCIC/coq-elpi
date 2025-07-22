@@ -171,6 +171,8 @@ and `ocaml-lsp-server` (version 1.15).
   C.
 - [Coercion](apps/coercion) enable to program coercions in Elpi.
   It comes bundled with Coq-Elpi.
+- [Record builder](apps/rbuild) implements fancy record build/update syntax.
+  It comes bundled with Coq-Elpi.
 
 ### Quick Reference
 
