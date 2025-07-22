@@ -5,9 +5,10 @@
 namespace derive.lens-laws {
 
 func declare-law1 string, prop.
-declare-law1 Prefix (lens-db I F C) :- std.do! [
+declare-law1 Prefix (lens-db I FC C) :- std.do! [
   coq.env.indt-decl I Decl,
   law1 Decl (global (const C)) (global (indt I)) Bo,
+  coq.gref->id (const FC) F,
   Name is Prefix ^ F ^ "_view_set",
   coq.env.add-const Name Bo _ @opaque! _,
 ].
@@ -25,9 +26,10 @@ func law1-bo.aux term, term, list term, list term -> term.
 law1-bo.aux _ _ _ _ {{ fun x => lib:@elpi.erefl _ _ }}.
 
 func declare-law2 string, prop.
-declare-law2 Prefix (lens-db I F C) :- std.do! [
+declare-law2 Prefix (lens-db I FC C) :- std.do! [
   coq.env.indt-decl I Decl,
   law2 Decl (global (const C)) (global (indt I)) Bo,
+  coq.gref->id (const FC) F,
   Name is Prefix ^ F ^ "_set_set",
   coq.env.add-const Name Bo _ @opaque! _,
 ].
@@ -45,9 +47,10 @@ func law2-bo.aux term, term, list term, list term -> term.
 law2-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 
 func declare-law3 string, prop.
-declare-law3 Prefix (lens-db I F C) :- std.do! [
+declare-law3 Prefix (lens-db I FC C) :- std.do! [
   coq.env.indt-decl I Decl,
   law3 Decl (global (const C)) (global (indt I)) Bo,
+  coq.gref->id (const FC) F,
   Name is Prefix ^ F ^ "_set_view",
   coq.env.add-const Name Bo _ @opaque! _,
 ].
@@ -66,9 +69,11 @@ law3-bo.aux _ _ _ _ {{ lib:@elpi.erefl _ _ }}.
 
 func declare-law4 string, prop, prop.
 declare-law4 _ (lens-db I F C) (lens-db I F C) :- !.
-declare-law4 Prefix (lens-db I F1 C1) (lens-db I F2 C2) :- std.do! [
+declare-law4 Prefix (lens-db I FC1 C1) (lens-db I FC2 C2) :- std.do! [
   coq.env.indt-decl I Decl,
   law4 Decl (global (const C1)) (global (const C2)) (global (indt I)) Bo,
+  coq.gref->id (const FC1) F1,
+  coq.gref->id (const FC2) F2,
   Name is Prefix ^ F1 ^ "_" ^ F2 ^ "_exchange",
   coq.env.add-const Name Bo _ @opaque! _,
 ].

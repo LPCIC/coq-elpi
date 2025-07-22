@@ -25,9 +25,13 @@ Definition set {a b c d} (l : Lens a b c d) new := over l (fun _ => new).
 Register set as elpi.derive.lens.set.
 Register view as elpi.derive.lens.view.
 
-(* Links the record, a field name and the lens focusing on that field *)
+Definition compose {a b c d e f} (l1 : Lens a b c d) (l2 : Lens c d e f) : Lens a b e f :=
+  mkLens a b e f (fun x => view l2 (view l1 x)) (fun u => over l1 (over l2 u)).
+Register compose as elpi.derive.lens.compose.
+
+(* Links the record, a field name (projection) and the lens focusing on that field *)
 Elpi Db derive.lens.db lp:{{
-  pred lens-db o:inductive, o:string, o:constant.
+  pred lens-db o:inductive, o:constant, o:constant.
 }}.
 
 (* standalone command *)

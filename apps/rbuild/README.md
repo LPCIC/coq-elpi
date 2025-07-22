@@ -18,6 +18,5 @@ This app is experimental.
 - when a record is dependent, eg `Record r := { t : Type; op : t -> t -> t }`
   one could accept `« r with op := f »` and expand it to
   `« r with t := _ ; op := f »`
-- deep fields `« a.b := v »` (assuming we can parse `a.b`)
 - liquid fields, eg `« .b := v »` to mean any field called `b` (possibly deep)
 

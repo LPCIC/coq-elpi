@@ -33,3 +33,20 @@ Fail Check « c := tt; 1; 2 ». (* Error:
     "2" : "nat"
     "tt" : "unit"
     The 3rd term has type "nat" which should be a subtype of "bool". *)
+
+Record bar := { f : @foo nat; d : nat }.
+#[only(lens)] derive bar.
+Record baz := { w : bar }.
+#[only(lens)] derive baz.
+
+(* Update with a composed lens *)
+Check fun x : baz =>
+  « x with w#f#c := 3 ».
+
+(* # is just catcomp from ssrfun *)
+Import ssrfun.
+Check fun x : baz =>
+  « x with (w \; f \; c) := 3 ».
+
+
+
