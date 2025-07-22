@@ -1080,81 +1080,81 @@ typeabbrv id (string).
 typeabbrv opaque? (bool).
 % File "elpi-builtin.elpi", line 11, column 0, characters 147-151: [1] 
 true :- .
-% File "elpi-builtin.elpi", line 36, column 0, characters 431-443: [2] 
+% File "elpi-builtin.elpi", line 36, column 0, characters 454-466: [2] 
 A0 ; _ :- A0.
-% File "elpi-builtin.elpi", line 38, column 0, characters 446-458: [3] 
+% File "elpi-builtin.elpi", line 38, column 0, characters 469-481: [3] 
 _ ; A0 :- A0.
-% File "elpi-builtin.elpi", line 64, column 0, characters 1009-1028: [4] 
+% File "elpi-builtin.elpi", line 64, column 0, characters 1032-1051: [4] 
 not A0 :- A0, !, fail.
-% File "elpi-builtin.elpi", line 66, column 0, characters 1031-1036: [5] 
+% File "elpi-builtin.elpi", line 66, column 0, characters 1054-1059: [5] 
 not _ :- .
-% File "elpi-builtin.elpi", line 80, column 0, characters 1396-1408: [6] 
+% File "elpi-builtin.elpi", line 80, column 0, characters 1419-1431: [6] 
 stop :- halt.
-% File "elpi-builtin.elpi", line 86, column 0, characters 1465-1483: [7] 
+% File "elpi-builtin.elpi", line 86, column 0, characters 1488-1506: [7] 
 A1 is A0 :- calc A0 A1.
-% File "elpi-builtin.elpi", line 191, column 0, characters 4057-4073: [8] 
+% File "elpi-builtin.elpi", line 191, column 0, characters 4080-4096: [8] 
 A0 > A1 :- gt_ A0 A1.
-% File "elpi-builtin.elpi", line 194, column 0, characters 4091-4107: [9] 
+% File "elpi-builtin.elpi", line 194, column 0, characters 4114-4130: [9] 
 A0 < A1 :- lt_ A0 A1.
-% File "elpi-builtin.elpi", line 197, column 0, characters 4126-4143: [10] 
+% File "elpi-builtin.elpi", line 197, column 0, characters 4149-4166: [10] 
 A0 =< A1 :- le_ A0 A1.
-% File "elpi-builtin.elpi", line 200, column 0, characters 4162-4179: [11] 
+% File "elpi-builtin.elpi", line 200, column 0, characters 4185-4202: [11] 
 A0 >= A1 :- ge_ A0 A1.
-% File "elpi-builtin.elpi", line 203, column 0, characters 4202-4219: [12] 
+% File "elpi-builtin.elpi", line 203, column 0, characters 4225-4242: [12] 
 A0 i> A1 :- gt_ A0 A1.
-% File "elpi-builtin.elpi", line 206, column 0, characters 4242-4259: [13] 
+% File "elpi-builtin.elpi", line 206, column 0, characters 4265-4282: [13] 
 A0 i< A1 :- lt_ A0 A1.
-% File "elpi-builtin.elpi", line 209, column 0, characters 4283-4301: [14] 
+% File "elpi-builtin.elpi", line 209, column 0, characters 4306-4324: [14] 
 A0 i=< A1 :- le_ A0 A1.
-% File "elpi-builtin.elpi", line 212, column 0, characters 4325-4343: [15] 
+% File "elpi-builtin.elpi", line 212, column 0, characters 4348-4366: [15] 
 A0 i>= A1 :- ge_ A0 A1.
-% File "elpi-builtin.elpi", line 215, column 0, characters 4370-4387: [16] 
+% File "elpi-builtin.elpi", line 215, column 0, characters 4393-4410: [16] 
 A0 r> A1 :- gt_ A0 A1.
-% File "elpi-builtin.elpi", line 218, column 0, characters 4414-4431: [17] 
+% File "elpi-builtin.elpi", line 218, column 0, characters 4437-4454: [17] 
 A0 r< A1 :- lt_ A0 A1.
-% File "elpi-builtin.elpi", line 221, column 0, characters 4459-4477: [18] 
+% File "elpi-builtin.elpi", line 221, column 0, characters 4482-4500: [18] 
 A0 r=< A1 :- le_ A0 A1.
-% File "elpi-builtin.elpi", line 224, column 0, characters 4505-4523: [19] 
+% File "elpi-builtin.elpi", line 224, column 0, characters 4528-4546: [19] 
 A0 r>= A1 :- ge_ A0 A1.
-% File "elpi-builtin.elpi", line 227, column 0, characters 4552-4569: [20] 
+% File "elpi-builtin.elpi", line 227, column 0, characters 4575-4592: [20] 
 A0 s> A1 :- gt_ A0 A1.
-% File "elpi-builtin.elpi", line 230, column 0, characters 4598-4615: [21] 
+% File "elpi-builtin.elpi", line 230, column 0, characters 4621-4638: [21] 
 A0 s< A1 :- lt_ A0 A1.
-% File "elpi-builtin.elpi", line 233, column 0, characters 4645-4663: [22] 
+% File "elpi-builtin.elpi", line 233, column 0, characters 4668-4686: [22] 
 A0 s=< A1 :- le_ A0 A1.
-% File "elpi-builtin.elpi", line 236, column 0, characters 4693-4711: [23] 
+% File "elpi-builtin.elpi", line 236, column 0, characters 4716-4734: [23] 
 A0 s>= A1 :- ge_ A0 A1.
-% File "elpi-builtin.elpi", line 257, column 0, characters 5205-5219: [24] 
+% File "elpi-builtin.elpi", line 257, column 0, characters 5228-5242: [24] 
 fst (pr A0 _) A0 :- .
-% File "elpi-builtin.elpi", line 261, column 0, characters 5248-5262: [25] 
+% File "elpi-builtin.elpi", line 261, column 0, characters 5271-5285: [25] 
 snd (pr _ A0) A0 :- .
-% File "elpi-builtin.elpi", line 268, column 0, characters 5383-5408: [26] 
+% File "elpi-builtin.elpi", line 268, column 0, characters 5406-5431: [26] 
 triple_1 (triple A0 _ _) A0 :- .
-% File "elpi-builtin.elpi", line 271, column 0, characters 5444-5469: [27] 
+% File "elpi-builtin.elpi", line 271, column 0, characters 5467-5492: [27] 
 triple_2 (triple _ A0 _) A0 :- .
-% File "elpi-builtin.elpi", line 274, column 0, characters 5505-5530: [28] 
+% File "elpi-builtin.elpi", line 274, column 0, characters 5528-5553: [28] 
 triple_3 (triple _ _ A0) A0 :- .
-% File "elpi-builtin.elpi", line 304, column 0, characters 6297-6329: [29] 
+% File "elpi-builtin.elpi", line 304, column 0, characters 6320-6352: [29] 
 counter A0 A1 :- trace.counter A0 A1.
-% File "elpi-builtin.elpi", line 330, column 0, characters 7179-7211: [30] 
+% File "elpi-builtin.elpi", line 330, column 0, characters 7202-7234: [30] 
 rex_match A0 A1 :- rex.match A0 A1.
-% File "elpi-builtin.elpi", line 334, column 0, characters 7295-7339: [31] 
+% File "elpi-builtin.elpi", line 334, column 0, characters 7318-7362: [31] 
 rex_replace A0 A1 A2 A3 :- rex.replace A0 A1 A2 A3.
-% File "elpi-builtin.elpi", line 338, column 0, characters 7416-7452: [32] 
+% File "elpi-builtin.elpi", line 338, column 0, characters 7439-7475: [32] 
 rex_split A0 A1 A2 :- rex.split A0 A1 A2.
-% File "elpi-builtin.elpi", line 369, column 0, characters 8578-8601: [33] 
+% File "elpi-builtin.elpi", line 369, column 0, characters 8601-8624: [33] 
 A0 == A1 :- same_term A0 A1.
-% File "elpi-builtin.elpi", line 402, column 0, characters 9748-9778: [34] 
+% File "elpi-builtin.elpi", line 402, column 0, characters 9771-9801: [34] 
 primitive? A0 A1 :- A0 is_cdata A1.
-% File "elpi-builtin.elpi", line 432, column 0, characters 10743-10762: [35] 
+% File "elpi-builtin.elpi", line 432, column 0, characters 10766-10785: [35] 
 if A0 A1 _ :- A0, !, A1.
-% File "elpi-builtin.elpi", line 433, column 0, characters 10764-10777: [36] 
+% File "elpi-builtin.elpi", line 433, column 0, characters 10787-10800: [36] 
 if _ _ A0 :- A0.
-% File "elpi-builtin.elpi", line 437, column 0, characters 10900-10930: [37] 
+% File "elpi-builtin.elpi", line 437, column 0, characters 10923-10953: [37] 
 if2 A0 A1 _ _ _ :- A0, !, A1.
-% File "elpi-builtin.elpi", line 438, column 0, characters 10932-10962: [38] 
+% File "elpi-builtin.elpi", line 438, column 0, characters 10955-10985: [38] 
 if2 _ _ A0 A1 _ :- A0, !, A1.
-% File "elpi-builtin.elpi", line 439, column 0, characters 10964-10989: [39] 
+% File "elpi-builtin.elpi", line 439, column 0, characters 10987-11012: [39] 
 if2 _ _ _ _ A0 :- !, A0.
 % File "builtin_stdlib.elpi", line 17, column 0, characters 657-712: [40] default-fatal-error
 std.fatal-error A0 :- halt A0.
@@ -1453,126 +1453,126 @@ std.max A0 A1 A0 :- A0 >= A1, !.
 std.max _ A0 A0 :- .
 % File "builtin_stdlib.elpi", line 319, column 0, characters 10167-10203: [173] 
 std.findall A0 A1 :- findall_solutions A0 A1.
-% File "builtin_map.elpi", line 8, column 0, characters 11603-11639: [174] 
+% File "builtin_map.elpi", line 8, column 0, characters 11626-11662: [174] 
 std.map.make A0 (std.map std.map.private.empty A0) :- .
-% File "builtin_map.elpi", line 12, column 0, characters 11735-11785: [175] 
+% File "builtin_map.elpi", line 12, column 0, characters 11758-11808: [175] 
 std.map.find A2 (std.map A0 A1) A3 :- std.map.private.find A0 A1 A2 A3.
-% File "builtin_map.elpi", line 16, column 0, characters 11884-11952: [176] 
+% File "builtin_map.elpi", line 16, column 0, characters 11907-11975: [176] 
 std.map.add A2 A3 (std.map A0 A1) (std.map A4 A1) :- std.map.private.add A0 
                                                       A1 A2 A3 A4.
-% File "builtin_map.elpi", line 20, column 0, characters 12047-12117: [177] 
+% File "builtin_map.elpi", line 20, column 0, characters 12070-12140: [177] 
 std.map.remove A2 (std.map A0 A1) (std.map A3 A1) :- std.map.private.remove
                                                       A0 A1 A2 A3.
-% File "builtin_map.elpi", line 24, column 0, characters 12230-12281: [178] 
+% File "builtin_map.elpi", line 24, column 0, characters 12253-12304: [178] 
 std.map.bindings (std.map A0 _) A1 :- std.map.private.bindings A0 [] A1.
-% File "builtin_map.elpi", line 34, column 0, characters 12473-12487: [179] 
+% File "builtin_map.elpi", line 34, column 0, characters 12496-12510: [179] 
 std.map.private.height std.map.private.empty 0 :- .
-% File "builtin_map.elpi", line 35, column 0, characters 12489-12514: [180] 
+% File "builtin_map.elpi", line 35, column 0, characters 12512-12537: [180] 
 std.map.private.height (std.map.private.node _ _ _ _ A0) A0 :- .
-% File "builtin_map.elpi", line 38, column 0, characters 12572-12647: [181] 
+% File "builtin_map.elpi", line 38, column 0, characters 12595-12670: [181] 
 std.map.private.create A0 A6 A7 A2 (std.map.private.node A0 A6 A7 A2 A5) :- 
  std.map.private.height A0 A1, std.map.private.height A2 A3, 
  std.max A1 A3 A4, A5 is A4 + 1.
-% File "builtin_map.elpi", line 41, column 0, characters 12702-12816: [182] 
+% File "builtin_map.elpi", line 41, column 0, characters 12725-12839: [182] 
 std.map.private.bal A0 A6 A7 A2 A8 :- std.map.private.height A0 A1, 
  std.map.private.height A2 A3, A4 is A1 + 2, A5 is A3 + 2, 
  std.map.private.bal.aux A1 A3 A4 A5 A0 A6 A7 A2 A8.
-% File "builtin_map.elpi", line 49, column 0, characters 12903-13034: [183] 
+% File "builtin_map.elpi", line 49, column 0, characters 12926-13057: [183] 
 std.map.private.bal.aux A0 _ _ A1 (std.map.private.node A2 A10 A11 A4 _) A6 
  A7 A8 A12 :- A0 > A1, std.map.private.height A2 A3, 
  std.map.private.height A4 A5, A3 >= A5, !, 
  std.map.private.create A4 A6 A7 A8 A9, 
  std.map.private.create A2 A10 A11 A9 A12.
-% File "builtin_map.elpi", line 52, column 0, characters 13036-13183: [184] 
+% File "builtin_map.elpi", line 52, column 0, characters 13059-13206: [184] 
 std.map.private.bal.aux A0 _ _ A1 
  (std.map.private.node A2 A3 A4 (std.map.private.node A5 A12 A13 A7 _) _) A8 
  A9 A10 A14 :- A0 > A1, !, std.map.private.create A2 A3 A4 A5 A6, 
  std.map.private.create A7 A8 A9 A10 A11, 
  std.map.private.create A6 A12 A13 A11 A14.
-% File "builtin_map.elpi", line 55, column 0, characters 13185-13316: [185] 
+% File "builtin_map.elpi", line 55, column 0, characters 13208-13339: [185] 
 std.map.private.bal.aux _ A0 A1 _ A6 A7 A8 
  (std.map.private.node A4 A10 A11 A2 _) A12 :- A0 > A1, 
  std.map.private.height A2 A3, std.map.private.height A4 A5, A3 >= A5, !, 
  std.map.private.create A6 A7 A8 A4 A9, 
  std.map.private.create A9 A10 A11 A2 A12.
-% File "builtin_map.elpi", line 58, column 0, characters 13318-13465: [186] 
+% File "builtin_map.elpi", line 58, column 0, characters 13341-13488: [186] 
 std.map.private.bal.aux _ A0 A1 _ A2 A3 A4 
  (std.map.private.node (std.map.private.node A5 A12 A13 A7 _) A8 A9 A10 _) 
  A14 :- A0 > A1, !, std.map.private.create A2 A3 A4 A5 A6, 
  std.map.private.create A7 A8 A9 A10 A11, 
  std.map.private.create A6 A12 A13 A11 A14.
-% File "builtin_map.elpi", line 61, column 0, characters 13467-13512: [187] 
+% File "builtin_map.elpi", line 61, column 0, characters 13490-13535: [187] 
 std.map.private.bal.aux _ _ _ _ A0 A1 A2 A3 A4 :- std.map.private.create A0 
                                                    A1 A2 A3 A4.
-% File "builtin_map.elpi", line 64, column 0, characters 13582-13627: [188] 
+% File "builtin_map.elpi", line 64, column 0, characters 13605-13650: [188] 
 std.map.private.add std.map.private.empty _ A0 A1 A2 :- std.map.private.create
                                                          std.map.private.empty 
                                                          A0 A1 
                                                          std.map.private.empty 
                                                          A2.
-% File "builtin_map.elpi", line 65, column 0, characters 13629-13707: [189] 
+% File "builtin_map.elpi", line 65, column 0, characters 13652-13730: [189] 
 std.map.private.add (as (std.map.private.node _ A1 _ _ _) A4) A3 A0 A5 A6 :- 
  A3 A0 A1 A2, std.map.private.add.aux A2 A4 A3 A0 A5 A6.
-% File "builtin_map.elpi", line 68, column 0, characters 13788-13849: [190] 
+% File "builtin_map.elpi", line 68, column 0, characters 13811-13872: [190] 
 std.map.private.add.aux eq (std.map.private.node A1 _ _ A4 A5) _ A2 A3 A0 :- 
  A0 = std.map.private.node A1 A2 A3 A4 A5.
-% File "builtin_map.elpi", line 69, column 0, characters 13852-13922: [191] 
+% File "builtin_map.elpi", line 69, column 0, characters 13875-13945: [191] 
 std.map.private.add.aux lt (std.map.private.node A0 A5 A6 A7 _) A1 A2 A3 A8 :- 
  std.map.private.add A0 A1 A2 A3 A4, std.map.private.bal A4 A5 A6 A7 A8.
-% File "builtin_map.elpi", line 70, column 0, characters 13924-13994: [192] 
+% File "builtin_map.elpi", line 70, column 0, characters 13947-14017: [192] 
 std.map.private.add.aux gt (std.map.private.node A5 A6 A7 A0 _) A1 A2 A3 A8 :- 
  std.map.private.add A0 A1 A2 A3 A4, std.map.private.bal A5 A6 A7 A4 A8.
-% File "builtin_map.elpi", line 73, column 0, characters 14054-14126: [193] 
+% File "builtin_map.elpi", line 73, column 0, characters 14077-14149: [193] 
 std.map.private.find (std.map.private.node A4 A1 A6 A5 _) A3 A0 A7 :- 
  A3 A0 A1 A2, std.map.private.find.aux A2 A3 A4 A5 A6 A0 A7.
-% File "builtin_map.elpi", line 76, column 0, characters 14213-14238: [194] 
+% File "builtin_map.elpi", line 76, column 0, characters 14236-14261: [194] 
 std.map.private.find.aux eq _ _ _ A0 _ A0 :- .
-% File "builtin_map.elpi", line 77, column 0, characters 14240-14283: [195] 
+% File "builtin_map.elpi", line 77, column 0, characters 14263-14306: [195] 
 std.map.private.find.aux lt A1 A0 _ _ A2 A3 :- std.map.private.find A0 A1 A2 
                                                 A3.
-% File "builtin_map.elpi", line 78, column 0, characters 14285-14328: [196] 
+% File "builtin_map.elpi", line 78, column 0, characters 14308-14351: [196] 
 std.map.private.find.aux gt A1 _ A0 _ A2 A3 :- std.map.private.find A0 A1 A2 
                                                 A3.
-% File "builtin_map.elpi", line 81, column 0, characters 14377-14423: [197] 
+% File "builtin_map.elpi", line 81, column 0, characters 14400-14446: [197] 
 std.map.private.remove-min-binding
  (std.map.private.node std.map.private.empty _ _ A0 _) A0 :- !.
-% File "builtin_map.elpi", line 82, column 0, characters 14425-14500: [198] 
+% File "builtin_map.elpi", line 82, column 0, characters 14448-14523: [198] 
 std.map.private.remove-min-binding (std.map.private.node A0 A2 A3 A4 _) A5 :- 
  std.map.private.remove-min-binding A0 A1, 
  std.map.private.bal A1 A2 A3 A4 A5.
-% File "builtin_map.elpi", line 85, column 0, characters 14541-14582: [199] 
+% File "builtin_map.elpi", line 85, column 0, characters 14564-14605: [199] 
 std.map.private.min-binding
  (std.map.private.node std.map.private.empty A0 A1 _ _) A0 A1 :- !.
-% File "builtin_map.elpi", line 86, column 0, characters 14584-14637: [200] 
+% File "builtin_map.elpi", line 86, column 0, characters 14607-14660: [200] 
 std.map.private.min-binding (std.map.private.node A0 _ _ _ _) A1 A2 :- 
  std.map.private.min-binding A0 A1 A2.
-% File "builtin_map.elpi", line 89, column 0, characters 14684-14704: [201] 
+% File "builtin_map.elpi", line 89, column 0, characters 14707-14727: [201] 
 std.map.private.merge std.map.private.empty A0 A0 :- !.
-% File "builtin_map.elpi", line 90, column 0, characters 14706-14726: [202] 
+% File "builtin_map.elpi", line 90, column 0, characters 14729-14749: [202] 
 std.map.private.merge A0 std.map.private.empty A0 :- !.
-% File "builtin_map.elpi", line 91, column 0, characters 14728-14805: [203] 
+% File "builtin_map.elpi", line 91, column 0, characters 14751-14828: [203] 
 std.map.private.merge A4 A0 A5 :- std.map.private.min-binding A0 A1 A2, 
  std.map.private.remove-min-binding A0 A3, 
  std.map.private.bal A4 A1 A2 A3 A5.
-% File "builtin_map.elpi", line 96, column 0, characters 14873-14900: [204] 
+% File "builtin_map.elpi", line 96, column 0, characters 14896-14923: [204] 
 std.map.private.remove std.map.private.empty _ _ std.map.private.empty :- !.
-% File "builtin_map.elpi", line 97, column 0, characters 14902-14976: [205] 
+% File "builtin_map.elpi", line 97, column 0, characters 14925-14999: [205] 
 std.map.private.remove (std.map.private.node A4 A1 A6 A5 _) A3 A0 A7 :- 
  A3 A0 A1 A2, std.map.private.remove.aux A2 A3 A4 A5 A1 A6 A0 A7.
-% File "builtin_map.elpi", line 100, column 0, characters 15076-15120: [206] 
+% File "builtin_map.elpi", line 100, column 0, characters 15099-15143: [206] 
 std.map.private.remove.aux eq _ A0 A1 _ _ _ A2 :- std.map.private.merge A0 
                                                    A1 A2.
-% File "builtin_map.elpi", line 101, column 0, characters 15122-15183: [207] 
+% File "builtin_map.elpi", line 101, column 0, characters 15145-15206: [207] 
 std.map.private.remove.aux lt A1 A0 A6 A4 A5 A2 A7 :- std.map.private.remove
                                                        A0 A1 A2 A3, 
  std.map.private.bal A3 A4 A5 A6 A7.
-% File "builtin_map.elpi", line 102, column 0, characters 15185-15246: [208] 
+% File "builtin_map.elpi", line 102, column 0, characters 15208-15269: [208] 
 std.map.private.remove.aux gt A1 A4 A0 A5 A6 A2 A7 :- std.map.private.remove
                                                        A0 A1 A2 A3, 
  std.map.private.bal A4 A5 A6 A3 A7.
-% File "builtin_map.elpi", line 105, column 0, characters 15312-15330: [209] 
+% File "builtin_map.elpi", line 105, column 0, characters 15335-15353: [209] 
 std.map.private.bindings std.map.private.empty A0 A0 :- .
-% File "builtin_map.elpi", line 106, column 0, characters 15332-15405: [210] 
+% File "builtin_map.elpi", line 106, column 0, characters 15355-15428: [210] 
 std.map.private.bindings (std.map.private.node A3 A4 A5 A0 _) A1 A6 :- 
  std.map.private.bindings A0 A1 A2, 
  std.map.private.bindings A3 [pr A4 A5 | A2] A6.
