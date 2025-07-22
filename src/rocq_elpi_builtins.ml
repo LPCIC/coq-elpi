@@ -2451,7 +2451,7 @@ denote the same x as before.|};
     Out(list (option constant), "Projections",
     Easy "given a record StructureName lists all projections")),
   (fun i _ ~depth ->
-    !: (Structures.Structure.find_projections i |>
+    !: ((try Structures.Structure.find_projections i with Not_found -> []) |>
       CList.map (Option.map (fun x -> Constant x))))),
   DocAbove);
 

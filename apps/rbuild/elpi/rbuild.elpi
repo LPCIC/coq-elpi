@@ -44,6 +44,31 @@ func find-inductive list term -> term.
 find-inductive [ {{ Label lp:S _ _ _ }} | _] S :- !.
 find-inductive [_|XS] S :- find-inductive XS S.
   
+func focus term, list constant -> term.
+focus {{ ssrfun.catcomp lp:G lp:F }} Acc R :- !,
+  coq.safe-dest-app G P _,
+  coq.env.global (const PC) P,
+  coq.env.projection? PC _,
+  focus F [PC|Acc] R.
+focus G Acc R :-
+  coq.safe-dest-app G P _,
+  coq.env.global (const PC) P,
+  coq.env.projection? PC _,
+  compose-lens [PC|Acc] R.
+
+func compose-lens list constant -> term.
+compose-lens [] _ :- coq.error "not a (composed) projection".
+compose-lens [PC] L :- !, find-lens PC L.
+compose-lens [PC|Rest] {{ lib:elpi.derive.lens.compose lp:L2 lp:L1 }} :-
+  find-lens PC L1,
+  compose-lens Rest L2.
+
+func find-lens constant -> term.
+find-lens PC TArgs :-
+  std.assert! (lens-db _ PC C) "no Lens, did you derive the record?",
+  coq.env.global (const C) T,
+  coq.env.typeof (const C) Ty,
+  coq.saturate Ty T TArgs.
 
 }
 
