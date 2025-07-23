@@ -78,19 +78,41 @@ let lib_ref id =
           ++ str " (you may need to require some .v file with \
                   `Register ... as " ++ str id ++ str ".`).")
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
 let lookahead_lib_colon kwstate strm =
   match Gramlib.LStream.peek_nth kwstate 0 strm with
   | Tok.IDENT "lib" ->
       (match Gramlib.LStream.peek_nth kwstate 1 strm with
       | Tok.KEYWORD ":" -> ()
-      | _ -> raise Gramlib.Stream.Failure)
-  | _ -> raise Gramlib.Stream.Failure
+      | _ -> raise streamFail)
+  | _ -> raise streamFail
+[%%else]
+let lookahead_lib_colon kwstate strm =
+  match Gramlib.LStream.peek_nth kwstate 0 strm with
+  | Some (Tok.IDENT "lib") ->
+      (match Gramlib.LStream.peek_nth kwstate 1 strm with
+      | Some (Tok.KEYWORD ":") -> ()
+      | _ -> raise streamFail)
+  | _ -> raise streamFail
+[%%endif]
 
 [%%if coq = "8.18" || coq = "8.19" || coq = "8.20"]
 let lookahead_lib_colon = Pcoq.Entry.(of_parser "lookahead_lib_colon" { parser_fun = lookahead_lib_colon })
 [%%else]
 let lookahead_lib_colon = Procq.Entry.(of_parser "lookahead_lib_colon" { parser_fun = lookahead_lib_colon })
 [%%endif]
+
+let idents_of loc s =
+  let s = String.sub s 1 (String.length s - 2) in
+  let l = Str.(split (regexp "[\t \n]+") s) in
+  List.iter (fun x ->
+      if not (CLexer.is_ident x) then
+        CErrors.user_err
+          Pp.(str "Expected ident list after \"lp:(\" but " ++
+              quote (str x) ++ str " is not an ident."))
+    l;
+  Rocq_elpi_utils.of_coq_loc (trim_loc loc), l
+
 }
 GRAMMAR EXTEND Gram
   GLOBAL: term;
