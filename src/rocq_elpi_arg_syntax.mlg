@@ -203,10 +203,9 @@ let coq_kwd_or_symbol = Pcoq.Entry.make "elpi:kwd_or_symbol"
 
 let opt2list = function None -> [] | Some l -> l
 
-let the_kwd = ref ""
 let any_kwd kwstate strm =
   match LStream.peek kwstate strm with
-  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk kwstate strm; the_kwd := sym
+  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk kwstate strm; sym
   | _ -> raise streamFail
 let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
 
@@ -251,7 +250,7 @@ GRAMMAR EXTEND Gram
     [ [ ":"; s = lconstr -> { s } ] ];
 
   coq_kwd_or_symbol:
-    [ [ any_kwd -> { !the_kwd }] ];
+    [ [ the_kwd = any_kwd -> { the_kwd }] ];
 END
 
 {
