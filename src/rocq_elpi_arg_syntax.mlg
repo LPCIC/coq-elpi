@@ -24,12 +24,6 @@ let trim_loc loc =
   let open Loc in
   { loc with bp = loc.bp + 1; ep = loc.ep - 1 }
 
-let idents_of loc s =
-  let s = String.sub s 1 (String.length s - 2) in
-  let l = Str.(split (regexp "[\t \n]+") s) in
-  List.iter (fun x -> if not (CLexer.is_ident x) then raise Stream.Failure) l;
-  Rocq_elpi_utils.of_coq_loc (trim_loc loc), l
-
 let rec strip_curly loc s =
   if s.[0] = '\123' then strip_curly (trim_loc loc) String.(sub s 1 (length s - 2))
   else Rocq_elpi_utils.of_coq_loc loc, s
@@ -40,6 +34,11 @@ let rec strip_square loc s =
   if s.[0] = '[' then strip_square (trim_loc loc) String.(sub s 1 (length s - 2))
   else Rocq_elpi_utils.of_coq_loc loc, s
 
+[%%if coq = "8.18" || coq = "8.19" || coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let streamFail = Gramlib.Stream.Failure
+[%%else]
+let streamFail = Procq.StreamFail
+[%%endif]
 }
 
 ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
@@ -80,7 +79,7 @@ let any_qname kwstate strm =
             the_qname := sym
       | _ -> the_qname := sym
       end
-  | _ -> raise Stream.Failure
+  | _ -> raise streamFail
 let any_qname = Pcoq.Entry.(of_parser "any_qname" { parser_fun = any_qname })
 
 }
@@ -208,7 +207,7 @@ let the_kwd = ref ""
 let any_kwd kwstate strm =
   match LStream.peek kwstate strm with
   | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk kwstate strm; the_kwd := sym
-  | _ -> raise Stream.Failure
+  | _ -> raise streamFail
 let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
 
 let pr_attributes _ _ _ atts =
