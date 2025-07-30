@@ -105,7 +105,7 @@ external func decl term -> name, term. % Var Name Ty
 external func def  term -> name, term, term. % Var Name Ty Bo
 external func cache term -> term.
 
-external pred declare-evar i:list prop, i:term, i:term, i:term. % Ctx RawEvar Ty Evar
+external func declare-evar list prop, term, term, term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-
@@ -115,7 +115,7 @@ declare-evar Ctx RawEv Ty Ev :-
 % to only contain decl, def, pp.  For now no handling rules for this set of
 % constraints other than one to remove a constraint
 
-external func rm-evar term, term ->.
+external func rm-evar term, term.
 rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
 rm-evar _ _.
 
@@ -137,7 +137,7 @@ constraint declare-evar evar def decl cache rm-evar {
 % elaborates to a term of type Ty that gets assigned to E.
 % In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
-external pred evar i:term, i:term, o:term. % Evar Ty RefinedSolution
+external func evar term, term -> term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- var S _ VL, !,
   prune T VL, prune X VL, declare_constraint (evar X T S) [X, S].
 

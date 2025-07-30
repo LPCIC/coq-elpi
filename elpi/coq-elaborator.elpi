@@ -18,5 +18,5 @@ unify-eq A B :- coq.unify-eq A B ok.
 pred unify-leq i:term, i:term.
 unify-leq A B :- coq.unify-leq A B ok.
 
-pred of i:term, o:term, o:term.
+func of term -> term, term.
 of T Ty TR :- !, coq.elaborate-skeleton T Ty TR ok.
