@@ -513,7 +513,7 @@ let detype_primitive_string = function
   | Constr.String s -> DAst.make @@ Glob_term.GString s
   | _ -> assert false
 
-[%%if coq = "8.19" || coq = "8.20" ]
+[%%if coq = "8.20" ]
 let fresh (names, e) sigma name ty =
   let open EConstr in
   let open Names.Name in
@@ -756,7 +756,7 @@ let detype ?(keepunivs = false) env sigma t =
   let x = aux (names_of_env env, env) t in
   x
 
-[%%if coq = "8.19" || coq = "8.20" ]
+[%%if coq = "8.20" ]
 let detype_closed_glob env sigma closure =
   let gbody = Detyping.detype_closed_glob Names.Id.Set.empty env sigma closure in
   fix_detype gbody
@@ -766,7 +766,7 @@ let detype_closed_glob env sigma closure =
   fix_detype gbody
 [%%endif]
 
-[%%if coq = "8.19" || coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
 let detype_to_pattern env sigma c =
   let c = detype env sigma c in
   Patternops.pattern_of_glob_constr env c
