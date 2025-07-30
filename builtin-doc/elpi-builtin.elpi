@@ -14,9 +14,9 @@ func fail.
 
 func false.
 
-external func (=) -> A, A. % unification
+external func (=) -> A, A. % unification term term
 
-external func pattern_match A -> A. % matching
+external func pattern_match A -> A. % matching pattern term
 
 external func (pi) (func A).
 
@@ -67,7 +67,7 @@ not _.
 
 % [declare_constraint C Key1 Key2...] declares C blocked
 % on Key1 Key2 ... (variables, or lists thereof).
-external type declare_constraint any -> any -> variadic any fprop.
+external func declare_constraint (func) -> any .. .
 
 % [print_constraints] prints all constraints
 external func print_constraints.

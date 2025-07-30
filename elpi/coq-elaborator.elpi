@@ -11,7 +11,7 @@ evar X Ty R :- var R, !, of X Ty R.
 :name "coq-assign-evar-refined-hack-8-17-Prop"
 :before "default-assign-evar"
 evar X Ty R :- not(var R), same_term Ty {{ Prop }}, coq.version _ 8 17 _, !,
-  hack-8-17.propagate-Prop-constraint-inward R, coq.typecheck R Ty ok, X = R.
+  hack-8-17.propagate-Prop-constraint-inward R, !, coq.typecheck R Ty ok, X = R.
 
 :name "coq-assign-evar-refined"
 :before "default-assign-evar"
@@ -23,7 +23,7 @@ unify-eq A B :- coq.unify-eq A B ok.
 pred unify-leq i:term, i:term.
 unify-leq A B :- coq.unify-leq A B ok.
 
-pred of i:term, o:term, o:term.
+func of term -> term, term.
 of T Ty TR :- !, coq.elaborate-skeleton T Ty TR ok.
 
 namespace hack-8-17 {
