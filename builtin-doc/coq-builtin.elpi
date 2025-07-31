@@ -294,7 +294,7 @@ rm-evar _ _.
 constraint declare-evar evar def decl cache rm-evar {
 
    % Override the actual context
-   rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx => evar RawEv Ty Ev).
+   rule \ (declare-evar Ctx RawEv Ty Ev) <=> (Ctx =!=> evar RawEv Ty Ev).
 
    rule \ (rm-evar (uvar X _) (uvar Y _)) (evar (uvar X _) _ (uvar Y _)).
    rule \ (rm-evar (uvar X _) (uvar Y _)).
