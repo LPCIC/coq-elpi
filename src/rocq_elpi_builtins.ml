@@ -3864,16 +3864,21 @@ The order of Goals is given by the traversal order of EConstr.fold (a
 fold_left over the terms, letin body comes before the type).
 |})))),
     (fun proof _ shelved ~depth proof_context constraints state ->
+      let env = proof_context.env in
       let sigma = get_sigma state in
       let evars_of_term evd c =
         let rec evrec (acc_set,acc_rev_l as acc) c =
           let c = EConstr.whd_evar evd c in
           match EConstr.kind sigma c with
           | Constr.Evar (n, l) ->
-              if Evar.Set.mem n acc_set then SList.Skip.fold evrec acc l
-              else
-                let acc = Evar.Set.add n acc_set, n :: acc_rev_l in
-                SList.Skip.fold evrec acc l
+            if Evar.Set.mem n acc_set then acc
+            else
+              let acc = Evar.Set.add n acc_set, n :: acc_rev_l in
+              SList.Skip.fold evrec acc l
+          | Constr.Proj (_, _, c) ->
+            let t = Retyping.get_type_of env sigma c in
+            let acc = evrec acc t in
+            evrec acc c
           | _ -> EConstr.fold sigma evrec acc c
         in
         let _, rev_l = evrec (Evar.Set.empty, []) c in

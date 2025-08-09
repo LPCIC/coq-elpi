@@ -12,6 +12,9 @@ Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
 ### APPS:
 - New experimental app `rbuild`: build any record with « ... »
 
+### API
+- `coq.ltac.collect-goals` now takes the parameters of primitive projections into account
+
 # [2.6.0] 8/7/2025
 
 Requires Elpi 2.0.7 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
