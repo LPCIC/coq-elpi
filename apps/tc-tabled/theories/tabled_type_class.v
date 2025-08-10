@@ -67,6 +67,7 @@ Elpi Accumulate lp:{{
       not (Cmp = eq).
   type_equal_list [] [] eq.
 
+
   pred assertion_equal i:assertion i:assertion o:cmp.
   assertion_equal (assertion A _) (assertion B _) Cmp :-
   /* coq.say "Assertions equal?" A B, */
@@ -81,6 +82,7 @@ Elpi Accumulate lp:{{
   pred assertion_typeclass i:assertion o:gref.
   assertion_typeclass (assertion G _) Name :- term_typeclass G Name.
 }}.
+
 
 Elpi Accumulate lp:{{
   pred new_subgoal i:synth i:assertion i:waiter o:synth.
@@ -101,7 +103,6 @@ Elpi Accumulate lp:{{
 (* Apply answer to goal and update meta variable context if it succeeds *)
 Elpi Accumulate lp:{{
   pred replace_var_term i:ty o:ty i:ty o:ty.
-  replace_var_term X Y Z W :- coq.say "Replace" X Y Z W, fail.
   replace_var_term X Y (app L) (app G) :-
     std.map L (replace_var_term X Y) G.
   replace_var_term X Y Z W :-
@@ -113,38 +114,40 @@ Elpi Accumulate lp:{{
 
   pred replace_var_in_list i:ty o:ty i:list assertion o:list assertion.
   replace_var_in_list X Y [ assertion TA VA | AS ] [ assertion TB VB | BS ] :-
-      coq.say "Try" X Y TA,
       replace_var_term X Y TA TB,
-      coq.say "Replaced" TB AS,
-      /* replace_var_term X Y VA VB, */
+      replace_var_term X Y VA VB,
       replace_var_in_list X Y AS BS.
   replace_var_in_list _ _ [] [].
 
-
-  pred try_answer_type i:ty o:ty i:list assertion o:list assertion.
-  try_answer_type X Y Lin Lout :-
-    var X, var Y, replace_var_in_list X Y Lin Lout.
-  try_answer_type (app L) (app G) Lin Lout :-
-    try_answer_type_list L G Lin Lout.
-  try_answer_type X Y Lin Lout :-
-    var X, ground_term Y, replace_var_in_list X Y Lin Lout.
-  try_answer_type X Y L L :-
+  pred try_answer_type i:ty o:ty i:ty o:ty i:list assertion o:list assertion.
+  try_answer_type X Y IX IY Lin Lout :-
+    var X, var Y,
+    replace_var_term X Y IX IY,
+    replace_var_in_list X Y Lin Lout.
+  try_answer_type (app L) (app G) IX IY Lin Lout :-
+    try_answer_type_list L G IX IY Lin Lout.
+  try_answer_type X Y IX IY Lin Lout :-
+    var X, ground_term Y, replace_var_term X Y IX IY, replace_var_in_list X Y Lin Lout.
+  try_answer_type X Y I I L L :-
     ground_term X,
     ground_term Y,
     cmp_term X Y eq.
 
-  pred try_answer_type_list i:list ty o:list ty i:list assertion o:list assertion.
-  try_answer_type_list [ X | XS ] [ Y | YS ] Lin Lout :-
-      try_answer_type X Y Lin Ltemp,
-      try_answer_type_list XS YS Ltemp Lout.
-  try_answer_type_list [] [] L L.
+  pred try_answer_type_list i:list ty o:list ty i:ty o:ty i:list assertion o:list assertion.
+  try_answer_type_list [ X | XS ] [ Y | YS ] IX IY Lin Lout :-
+      try_answer_type X Y IX Itemp Lin Ltemp,
+      try_answer_type_list XS YS Itemp IY Ltemp Lout.
+  try_answer_type_list [] [] I I L L.
 
-  pred try_answer i:assertion o:assertion i:list assertion o:list assertion.
-  try_answer (assertion A _) (assertion B _) Lin Lout :-
+  pred try_answer i:assertion o:assertion i:assertion o:assertion i:list assertion o:list assertion.
+  try_answer (assertion A VA) (assertion B VB) (assertion G IA) (assertion G IB) Lin Lout :-
     coq.say "Try answer",
-    coq.say "A" A,
-    coq.say "B" B,
-    try_answer_type A B Lin Lout.
+    coq.say "A" A VA,
+    coq.say "B" B VB,
+    try_answer_type A B IA ITemp Lin Lout,
+    replace_var_term VA VB ITemp IB,
+    coq.say "IAB" IA IB,
+    coq.sigma.print.
 }}.
 
 Elpi Accumulate lp:{{
@@ -225,13 +228,13 @@ Elpi Accumulate lp:{{
     ground_term X,
     X = Y.
 
-  pred try_resolve_types i:term i:term o:list term o:list term.
+  pred try_resolve_types i:term i:term o:list term o:list assertion.
   try_resolve_types A (prod X T F) OL L :-
     !,
     coq.typecheck V T ok,
     try_resolve_types A (F V) OLS LS,
     (OL = [ V | OLS]),
-    ((ground_term T, L = LS) ; L = [ T | LS ])
+    ((ground_term T, L = LS) ; L = [ assertion T V | LS ])
     .
   try_resolve_types A B [] [] :-
     /* @holes! ==> coq.unify-leq B A ok */
@@ -253,10 +256,10 @@ Elpi Accumulate lp:{{
   simpl (app [ A ]) A.
   simpl A A.
 
-  pred filter_metavariables i:list term o:list term.
-  filter_metavariables [ (app L) | XS ] [ app L | YS ] :-
+  pred filter_metavariables i:list assertion o:list assertion.
+  filter_metavariables [ assertion (app L) V | XS ] [ assertion (app L) V | YS ] :-
       !, filter_metavariables XS YS.
-  filter_metavariables [ X | XS ] YS :-
+  filter_metavariables [ assertion X _ | XS ] YS :-
       filter_metavariables XS YS.
   filter_metavariables [] [].
 
@@ -273,9 +276,8 @@ Elpi Accumulate lp:{{
     /* coq.say "regeneralize" OL L, */
     /* re_generalize L LR, */
     /* coq.say "generalized" LR, */
-    filter_metavariables L LR,
+    filter_metavariables L RL,
     !,
-    (std.map LR helper_fn RL),
     coq.say "RL" RL,
     RT = A, /* app [ B | OL ], */
     ((OL = [], RV = BITm) ; RV = app [ BITm | OL ]),
@@ -288,12 +290,16 @@ Elpi Accumulate lp:{{
 
 Elpi Accumulate lp:{{
   pred temp_fun i:consumer_node i:assertion o:(pair consumer_node assertion).
-  temp_fun A B (pr A B).
+  temp_fun A B (pr A B) :-
+    coq.say "Update - Try" A "with answer" B.
 
   pred waiter_fun i:assertion i:assertion i:waiter i:(pair (resume_stack) (option assertion)) o:(pair (resume_stack) (option assertion)).
-  waiter_fun Answer _ root (pr A _) (pr A (some Answer)) :-
-    coq.say "Found answer" Answer.
-waiter_fun Answer _ (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R) :- coq.say "Run Waiter".
+  waiter_fun Answer Guess root (pr A _) (pr A (some Answer)) :-
+    coq.say "Found root answer" Answer,
+    coq.say "Stack" A Guess.
+  waiter_fun Answer Goal (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R) :-
+      coq.say "Found an answer" C Goal Answer,
+      coq.say "Run Waiter".
 
   pred new_consumer_node i:synth i:assertion i:consumer_node o:synth.
   new_consumer_node
@@ -306,10 +312,12 @@ waiter_fun Answer _ (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R) :-
     /* add new cnode to g's dependents */
     /* TODO: Add answer here! */
     NewAnswers = [ Answer | Answers ],
+    coq.say "NewAnswers" NewAnswers,
     /* for each solution to g, push new cnode onto resume stack with it */
     std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
     /* add new cnode to g's dependents */
-    std.map.add Goal (entry Waiters NewAnswers) AssertionTable NewAssertionTable /* TODO: [] or Waiters? */.
+    std.map.remove Goal AssertionTable TempAssertionTable,
+    std.map.add Goal (entry Waiters NewAnswers) TempAssertionTable NewAssertionTable /* TODO: [] or Waiters? */.
 
   new_consumer_node
       (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
@@ -320,11 +328,15 @@ waiter_fun Answer _ (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R) :-
       /* TODO: Consumer node is general instead of variable or hole */
       if (std.map.find Subgoal AssertionTable (entry Waiters Answers))
          (
+          /* Map answers with consumer node */
+          coq.say "Found subgoal map" Answers,
+          /* Add cnode onto G's dependents? */
           std.map Answers (temp_fun CN) TempResumeStack,
           std.append TempResumeStack ResumeStack NewResumeStack,
 
           NewWaiters = [ callback CN | Waiters ],
-          std.map.add Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
+          std.map.remove Subgoal AssertionTable TempAssertionTable,
+          std.map.add Subgoal (entry NewWaiters Answers) TempAssertionTable NewAssertionTable,
           NewGeneratorStack = GeneratorStack
          )
          (
@@ -345,20 +357,21 @@ Elpi Accumulate lp:{{
   tabled_typeclass_resolution_body
     (synth GeneratorStack [ (pr (consumer_node Goal [ Subgoal | Remaining ]) Answer) | ResumeStack ]
        AssertionTable RootAnswer) Query MySynth FinalAnswer :-
-    coq.say "ResumeStack" Subgoal Answer,
+    coq.say "ResumeStack" Goal Subgoal Answer,
     Answer = assertion AnswerT AnswerV,
     coq.typecheck AnswerV AnswerNT ok,
     NewAnswer = assertion AnswerNT AnswerV,
     (ground_term Answer; coq.say "Not ground answer"), /* TODO: Should answer be ground? */
-    if (try_answer Subgoal NewAnswer Remaining UpdatedRemaining)
-       (coq.say "Suceed try" Remaining,
+    if (try_answer Subgoal NewAnswer Goal UpdatedGoal Remaining UpdatedRemaining)
+       (coq.say "Suceed try" Remaining UpdatedRemaining,
        /* TODO: Update Remaining with unification from try_answer ! */
        /* keep goal? clone? */
-        coq.say "Actual" Subgoal,
+        coq.say "Actual" Subgoal NewAnswer,
+        coq.say "Goal" Goal UpdatedGoal,
         new_consumer_node
          (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-         NewAnswer
-         (consumer_node Goal UpdatedRemaining) /* TODO: Was Goal in code, but should add new solution? */
+         UpdatedGoal /* TODO: final answer here! */
+         (consumer_node UpdatedGoal UpdatedRemaining) /* TODO: Was Goal in code, but should add new solution? */
          MySynth
       )
       (
@@ -378,12 +391,12 @@ Elpi Accumulate lp:{{
     if (try_resolve Goal Instance Resolved Subgoals)
         (
         /* else (l. 14) */
-        coq.say "Resolved" Resolved "Subgoals" Subgoals,
+        coq.say "Resolved" Goal Resolved "Subgoals" Subgoals,
         (ground_term Resolved ; coq.say "Resolved not ground"),
         (new_consumer_node
           (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
           Resolved /* TODO: does not follow protocol! dummy value? */
-          (consumer_node Goal Subgoals) NewSynth), /* TODO: Should not be goal but answer? */
+          (consumer_node Resolved Subgoals) NewSynth), /* TODO: Should not be goal but answer? */
         coq.say "No fall trhough"
         )
         (
@@ -440,33 +453,22 @@ Elpi Query lp:{{
   coq.typecheck FinalAnswer MyGoal ok.
 }}.
 
+(* Instance TestRAB : R1 A1 B1 := _. *)
+
 (* Example from Paper *)
 Elpi Query lp:{{
   MyGoal = {{ R1 A1 D1 }},
   coq.say "MyGoal" (assertion MyGoal {{ lib:elpi.hole }}),
   tabled_typeclass_resolution (assertion MyGoal {{ lib:elpi.hole }}) (assertion FinalType FinalAnswer),
   !,
-  coq.say "FinalAnswer" FinalType FinalAnswer "vs" {{ @I4 A1 D1 C1 I2 I3 }} {{ I4 _ _ }},
-  FinalAnswer = MyGoal,
+  coq.say "FinalAnswer" FinalType FinalAnswer "vs" {{ @I4 A1 C1 D1 I2 I3 }} {{ I4 I2 I3 }},
+  FinalType = MyGoal,
+  coq.say "Typechecks?",
   coq.typecheck FinalAnswer MyGoal ok,
-  /* TODO: Currently fails here, recreation of terms is incorrect */
+  coq.say "Final Ground?",
   ground_term FinalAnswer.
 }}.
 
-(* Example that should fail *)
-Axiom E : Type.
-(*,
-Elpi Query lp:{{
-  MyGoal = assertion {{ R A E }},
-  (tabled_typeclass_resolution MyGoal FinalAnswer),
-  coq.say "Finished" FinalAnswer.
-  not (tabled_typeclass_resolution MyGoal FinalAnswer),
-  coq.say "Finished" FinalAnswer.
-}}.
- *)
-
-(* https://github.com/leanprover/lean4/blob/cade21/src/Lean/Meta/SynthInstance.lean *)
-(* https://github.com/leanprover/lean4/blob/master/tests/lean/run/typeclass_diamond.lean *)
 (* https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi *)
 Elpi Accumulate lp:{{
   pred proof_search i:list gref i:list tc-instance i:term o:term.
@@ -527,6 +529,7 @@ Elpi Accumulate lp:{{
     (search_context Ctx Type PRoof ; tabled_proof_search Typeclasses Type PRoof),
     coq.say "SUCCESS FINDING INSTANCE".
 
+
   solve _ _ :- coq.ltac.fail _ "No auto".
 }}.
 
@@ -546,3 +549,31 @@ Elpi Query lp:{{
   coq.say "Elaborates to" V.
 }}.
 Instance TestConstant : Constant := _.
+
+(* Test instance dependency *)
+Class Dependency := {}.
+
+Instance Dep `{Constant} : Dependency := {}.
+
+Elpi Query lp:{{
+  /* {{ Instance TestConstant : Constant := _ }} */
+  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Constant }} V ok,
+  coq.say "Elaborates to" V.
+}}.
+
+Elpi Query lp:{{
+  coq.say "Dep" {{ Constant }},
+  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Constant }} _ ok, !,
+  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Dependency }} V ok,
+  coq.say "Elaborates to" V.
+}}.
+
+Instance TestDependency : Dependency := _.
+
+(* Trivial test *)
+Class Argument (alpha : Type) := {}.
+Instance Arg : Argument unit := {}.
+Instance TestArgument : Argument unit := _.
+
+Instance AArg (alpha : Type) : Argument alpha := {}.
+(* Instance TestArgumentArg : Argument nat := _. *)
