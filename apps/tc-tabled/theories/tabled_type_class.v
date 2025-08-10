@@ -7,7 +7,8 @@ Elpi TC Solver Register TC.TabledSolver.
 (* Tabled type class : https://github.com/purefunctor/tabled-typeclass-resolution?tab=readme-ov-file *)
 (* https://github.com/purefunctor/tabled-typeclass-resolution/blob/main/src/lib.rs *)
 (* ty = https://github.com/leanprover/lean4/blob/cade21/src/Lean/Expr.lean#L152-L165 *)
-(* Coq-Stlc: https://lpcic.github.io/coq-elpi/stlc.txt *) 
+(* Coq-Stlc: https://lpcic.github.io/coq-elpi/stlc.txt *)
+(* https://github.com/leanprover/lean4/blob/master/src/Lean/Expr.lean#L302-L512 *)
 Elpi Accumulate lp:{{
   typeabbrev ty term.
 
@@ -47,20 +48,35 @@ Elpi Accumulate lp:{{
 
 Elpi Accumulate lp:{{
   pred type_equal i:ty i:ty o:cmp.
-  type_equal X Y eq :- 
-    coq.unify-eq X Y ok, !.
-  type_equal X Y lt :-
-    coq.unify-leq X Y ok, !.
-  type_equal _ _ gt.
+  type_equal X Y eq :- var X, var Y.
+  type_equal (app L) (app G) Cmp :- type_equal_list L G Cmp.
+  type_equal X Y lt :- var X, ground_term Y.
+  type_equal X Y gt :- ground_term X, var Y.
+  type_equal X Y Cmp :-
+    ground_term X,
+    ground_term Y,
+    cmp_term X Y Cmp.
+
+  pred type_equal_list i:list ty i:list ty o:cmp.
+/* std.map L (x\ y\ type_equal x y eq) G. */
+  type_equal_list [ X | XS ] [ Y | YS ] Cmp :-
+      type_equal X Y eq,
+      type_equal_list XS YS Cmp.
+  type_equal_list [ X | _ ] [ Y | _ ] Cmp :-
+      type_equal X Y Cmp,
+      not (Cmp = eq).
+  type_equal_list [] [] eq.
 
   pred assertion_equal i:assertion i:assertion o:cmp.
   assertion_equal (assertion A _) (assertion B _) Cmp :-
-    coq.say "Assertions equal?" A B,
+  /* coq.say "Assertions equal?" A B, */
     type_equal A B Cmp.
 
   pred term_typeclass i:term o:gref.
   term_typeclass (global Name) Name.
   term_typeclass (app [X | _]) N :- term_typeclass X N.
+  term_typeclass (prod X T F) N :-
+    pi x\ term_typeclass (F x) N.
 
   pred assertion_typeclass i:assertion o:gref.
   assertion_typeclass (assertion G _) Name :- term_typeclass G Name.
@@ -77,8 +93,196 @@ Elpi Accumulate lp:{{
     coq.say "AssertionTable" NewAssertionTable,
     assertion_typeclass Subgoal Name,
     coq.TC.db-for Name Instances,
-    coq.say "New Subgoal" Name Instances,
+    /* coq.say "New Subgoal" Name Instances, */
     NewGeneratorStack = [(generator_node Subgoal Instances) | GeneratorStack]
+    .
+}}.
+
+(* Apply answer to goal and update meta variable context if it succeeds *)
+Elpi Accumulate lp:{{
+  pred replace_var_term i:ty o:ty i:ty o:ty.
+  replace_var_term X Y Z W :- coq.say "Replace" X Y Z W, fail.
+  replace_var_term X Y (app L) (app G) :-
+    std.map L (replace_var_term X Y) G.
+  replace_var_term X Y Z W :-
+    var Z,
+    X == Z,
+    W = Y
+    .
+  replace_var_term X Y Z Z.
+
+  pred replace_var_in_list i:ty o:ty i:list assertion o:list assertion.
+  replace_var_in_list X Y [ assertion TA VA | AS ] [ assertion TB VB | BS ] :-
+      coq.say "Try" X Y TA,
+      replace_var_term X Y TA TB,
+      coq.say "Replaced" TB AS,
+      /* replace_var_term X Y VA VB, */
+      replace_var_in_list X Y AS BS.
+  replace_var_in_list _ _ [] [].
+
+
+  pred try_answer_type i:ty o:ty i:list assertion o:list assertion.
+  try_answer_type X Y Lin Lout :-
+    var X, var Y, replace_var_in_list X Y Lin Lout.
+  try_answer_type (app L) (app G) Lin Lout :-
+    try_answer_type_list L G Lin Lout.
+  try_answer_type X Y Lin Lout :-
+    var X, ground_term Y, replace_var_in_list X Y Lin Lout.
+  try_answer_type X Y L L :-
+    ground_term X,
+    ground_term Y,
+    cmp_term X Y eq.
+
+  pred try_answer_type_list i:list ty o:list ty i:list assertion o:list assertion.
+  try_answer_type_list [ X | XS ] [ Y | YS ] Lin Lout :-
+      try_answer_type X Y Lin Ltemp,
+      try_answer_type_list XS YS Ltemp Lout.
+  try_answer_type_list [] [] L L.
+
+  pred try_answer i:assertion o:assertion i:list assertion o:list assertion.
+  try_answer (assertion A _) (assertion B _) Lin Lout :-
+    coq.say "Try answer",
+    coq.say "A" A,
+    coq.say "B" B,
+    try_answer_type A B Lin Lout.
+}}.
+
+Elpi Accumulate lp:{{
+  pred replace_list i:list term i:term i:term o:list term.
+  replace_list [ A | XS ] A B [ B | YS ] :-
+      !,
+      replace_list XS A B YS.
+  replace_list [ C | XS ] A B [ C | YS ] :-
+      replace_list XS A B YS.
+  replace_list [] _ _ [].
+
+  pred extract_helper i:term i:int i:term o:term.
+  extract_helper X Index (prod N T F) (prod N T G) :-
+    !,
+    pi x\
+      extract_helper X Index (F x) (G x).
+  extract_helper X Index (app L) (app NewL) :-
+    !,
+    std.split-at Index L Lfront [ V | Ltail ],
+    replace_list L V X NewL.
+
+  pred is_var_at_index i:term i:int.
+  is_var_at_index (prod N T F) I :-
+    pi x\
+      is_var_at_index (F x) I.
+  is_var_at_index (app L) I :-
+    std.split-at I L Lfront [ T | Ltail],
+    var T.
+
+  pred extract_variables i:list term i:int o:term.
+    extract_variables L -1 (app L).
+  extract_variables L Index Tm :-
+    PrevIndex is Index - 1,
+    extract_variables L PrevIndex PrevTm,
+    !,
+    ((is_var_at_index PrevTm Index,
+     Tm = prod TmX TmT TmF,
+     pi x\
+       extract_helper x Index PrevTm (TmF x)
+    );
+    (Tm = PrevTm))
+    .
+
+  pred re_generalize i:list term o:list term.
+  re_generalize [ X | Tl ] R :-
+    coq.typecheck X T ok,
+    (
+      (T = (app Tlist),
+       std.length Tlist Len,
+       Index is Len - 1,
+       extract_variables Tlist Index NewR,
+       R = [ NewR | RTl ],
+       coq.say "NewR" NewR
+       );
+      (R = RTl)
+    ),
+    re_generalize Tl RTl
+    .
+  re_generalize [ X | Tl ] [] :-
+    re_generalize Tl R.
+  re_generalize [ ] [].
+}}.
+
+
+Elpi Accumulate lp:{{
+  pred tc_instance_to_term i:tc-instance o:term.
+  tc_instance_to_term (tc-instance (const C) _) T :-
+    coq.env.const C _ /* Body */ Type,
+    coq.gref->string (const C) _ /* Name */,
+    T = Type.
+
+  pred does_type_resolve i:term o:term.
+  does_type_resolve X Y :-
+    var X.
+  does_type_resolve (app L) (app G) :-
+    std.map L does_type_resolve G.
+  does_type_resolve X Y :-
+    ground_term X,
+    X = Y.
+
+  pred try_resolve_types i:term i:term o:list term o:list term.
+  try_resolve_types A (prod X T F) OL L :-
+    !,
+    coq.typecheck V T ok,
+    try_resolve_types A (F V) OLS LS,
+    (OL = [ V | OLS]),
+    ((ground_term T, L = LS) ; L = [ T | LS ])
+    .
+  try_resolve_types A B [] [] :-
+    /* @holes! ==> coq.unify-leq B A ok */
+    does_type_resolve A B
+    /* type_equal A B lt */
+    /* cmp_term A B eq */
+    /* @holes! ==> pattern_match A B */
+    /* @holes! ==> coq.unify-leq B A ok */
+    .
+}}.
+
+Elpi Accumulate lp:{{
+  pred helper_fn i:term o:assertion.
+  helper_fn A (assertion A V).
+
+  pred simpl i:term o:term.
+  simpl (app [ prod X T F , Arg | Tl ]) R :-
+    simpl (app [ (F Arg) | Tl ]) R.
+  simpl (app [ A ]) A.
+  simpl A A.
+
+  pred filter_metavariables i:list term o:list term.
+  filter_metavariables [ (app L) | XS ] [ app L | YS ] :-
+      !, filter_metavariables XS YS.
+  filter_metavariables [ X | XS ] YS :-
+      filter_metavariables XS YS.
+  filter_metavariables [] [].
+
+
+  pred try_resolve i:assertion i:instance o:assertion o:list assertion.
+  try_resolve (assertion A _) (tc-instance BI _) (assertion RT RV) RL :-
+    tc_instance_to_term (tc-instance BI _) B,
+    coq.env.global BI BITm,
+    coq.gref->string BI BIName,
+    BI = const (BIConst),
+    coq.env.const BIConst (some BIBody) BITy,
+    coq.say "Try resolve types" A B,
+    try_resolve_types A B OL L,
+    /* coq.say "regeneralize" OL L, */
+    /* re_generalize L LR, */
+    /* coq.say "generalized" LR, */
+    filter_metavariables L LR,
+    !,
+    (std.map LR helper_fn RL),
+    coq.say "RL" RL,
+    RT = A, /* app [ B | OL ], */
+    ((OL = [], RV = BITm) ; RV = app [ BITm | OL ]),
+    coq.say "Result" RT RV "for" A
+
+    /* ATm = app [ B | OL ],
+        simpl ATm ATmRed */
     .
 }}.
 
@@ -87,8 +291,9 @@ Elpi Accumulate lp:{{
   temp_fun A B (pr A B).
 
   pred waiter_fun i:assertion i:assertion i:waiter i:(pair (resume_stack) (option assertion)) o:(pair (resume_stack) (option assertion)).
-  waiter_fun Answer _ root (pr A _) (pr A (some Answer)) :- coq.say "Found answer" Answer.
-  waiter_fun _ Goal (callback C) (pr A R) (pr [pr C Goal | A] R) :- coq.say "Run Waiter".
+  waiter_fun Answer _ root (pr A _) (pr A (some Answer)) :-
+    coq.say "Found answer" Answer.
+waiter_fun Answer _ (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R) :- coq.say "Run Waiter".
 
   pred new_consumer_node i:synth i:assertion i:consumer_node o:synth.
   new_consumer_node
@@ -96,118 +301,41 @@ Elpi Accumulate lp:{{
       Answer
       (consumer_node Goal [])
       (synth GeneratorStack NewResumeStack NewAssertionTable NewRootAnswer) :-
-    coq.say "Empty node, keep waiters?" Goal "Table" AssertionTable,
     /* for each solution to g, push new cnode onto resume stack with it */
     std.map.find Goal AssertionTable (entry Waiters Answers),
-    coq.say "Found Goal",
     /* add new cnode to g's dependents */
     /* TODO: Add answer here! */
     NewAnswers = [ Answer | Answers ],
-    coq.say "Fold and readd?",
     /* for each solution to g, push new cnode onto resume stack with it */
     std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
     /* add new cnode to g's dependents */
-    std.map.add Goal (entry Waiters NewAnswers) AssertionTable NewAssertionTable, /* TODO: [] or Waiters? */
-    coq.say "Success" NewAssertionTable.
+    std.map.add Goal (entry Waiters NewAnswers) AssertionTable NewAssertionTable /* TODO: [] or Waiters? */.
 
   new_consumer_node
       (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
       _
       CN
       (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer) :-
-      CN = consumer_node _ [Subgoal | _ ],
-      coq.say "Consumer node" CN, /* TODO: Consumer node is general instead of variable or hole */
-      (((std.map.find Subgoal AssertionTable (entry Waiters Answers)),!,
-        (
-        coq.say "In map" Subgoal AssertionTable (entry Waiters Answers),
-        std.map Answers (temp_fun CN) TempResumeStack,
-        std.append TempResumeStack ResumeStack NewResumeStack,
+      CN = consumer_node _ [ Subgoal | _ ],
+      /* TODO: Consumer node is general instead of variable or hole */
+      if (std.map.find Subgoal AssertionTable (entry Waiters Answers))
+         (
+          std.map Answers (temp_fun CN) TempResumeStack,
+          std.append TempResumeStack ResumeStack NewResumeStack,
 
-        NewWaiters = [ callback CN | Waiters ],
-        std.map.add Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
-        NewGeneratorStack = GeneratorStack
-        ));
-       (
-        coq.say "Not in map" Subgoal AssertionTable,
-        new_subgoal
-           (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-           Subgoal
-           (callback CN)
-           (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer)
-        )
-      ),
-      coq.say "<- Success".
+          NewWaiters = [ callback CN | Waiters ],
+          std.map.add Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
+          NewGeneratorStack = GeneratorStack
+         )
+         (
+          new_subgoal
+            (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+            Subgoal
+            (callback CN)
+            (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer)
+        ).
 
     new_consumer_node _ _ _ _ :- coq.error "Failed new consumer node!" , fail.
-}}.
-
-Elpi Accumulate lp:{{
-  pred try_answer_type i:ty o:ty.
-  try_answer_type X Y :- coq.unify-eq X Y ok.
-
-  pred try_answer i:assertion o:assertion.
-  try_answer (assertion A _) (assertion B _) :-
-    coq.say "Try answer A" A "and B" B,
-    coq.unify-eq X Y ok.
-}}.
-
-Elpi Accumulate lp:{{
-  pred tc_instance_to_term i:tc-instance o:term.
-  tc_instance_to_term (tc-instance (const C) _) T :-
-    coq.env.const C Body Type,
-    coq.gref->string (const C) Name,
-    T = Type.
-
-  pred try_resolve_types i:term i:term i:term o:list assertion.
-  try_resolve_types A ATm (prod X T F) L :-
-    !,
-    ((T = app [ _ | _ ], !, L = [ assertion T NewV | LS ]) ; (L = LS)),
-    try_resolve_types A ATm (F V) LS,
-    coq.say "V" V,
-    coq.elaborate-skeleton V T NewV ok,
-    coq.say "NewV" NewV,
-    (ground_term V; coq.say "NOT GROUNHD" V)
-    .
-  try_resolve_types A ATm B [] :-
-    !,
-    @holes! ==> coq.unify-leq A B ok
-    .
-
-  pred try_resolve i:assertion i:instance o:list assertion.
-  try_resolve (assertion A ATm) (tc-instance BI _) RL :-
-    tc_instance_to_term (tc-instance BI _) B,
-    coq.env.global BI ATm,
-    coq.say "ATm" ATm,
-    try_resolve_types A ATm B RL
-    .
-}}.
-
-Elpi Query lp:{{
-  coq.unify-leq V {{ nat }} ok. 
-}}.
-
-Class R1 (X : Type) (Y : Type).
-Axiom A1 B1 C1 D1 : Type.
-Instance I1 : R1 A1 B1 := {}. 
-Instance I2 : R1 A1 C1 := {}. 
-Instance I3 : R1 C1 D1 := {}. 
-Instance I4 {X Y Z} `{R1 X Y} `{R1 Y Z} : R1 X Z := {}. 
-
-Elpi Query lp:{{
-  coq.TC.db-tc [ R | _ ],
-  coq.TC.db-for R [ _ , _ , _ , I4 ],
-  try_resolve (assertion {{ R1 A1 D1 }} {{ _ }}) I4 L,
-  coq.say {{ I4 }}, 
-  coq.say "L" L "vs" [ assertion {{ R1 A1 lp:{{X}} }} _ , assertion {{ R1 lp:{{X}} D1 }} {{ _ }} ],
-  L = [ assertion {{ R1 A1 _ }} _ , assertion {{ R1 _ D1 }} _ ],
-  coq.say "Subgoals" L.
-}}.
-
-Elpi Query lp:{{
-  coq.TC.db-tc [ R | _ ],
-  coq.TC.db-for R [ _ , _ , I1 , _ ],
-  try_resolve (assertion {{ R1 A1 B1 }} {{ _ }}) I1 L,
-  coq.say "Subgoals" L.
 }}.
 
 Elpi Accumulate lp:{{
@@ -218,20 +346,25 @@ Elpi Accumulate lp:{{
     (synth GeneratorStack [ (pr (consumer_node Goal [ Subgoal | Remaining ]) Answer) | ResumeStack ]
        AssertionTable RootAnswer) Query MySynth FinalAnswer :-
     coq.say "ResumeStack" Subgoal Answer,
-    (
-      (try_answer Subgoal Answer, !,
-       coq.say "Suceed try",
-       new_consumer_node
+    Answer = assertion AnswerT AnswerV,
+    coq.typecheck AnswerV AnswerNT ok,
+    NewAnswer = assertion AnswerNT AnswerV,
+    (ground_term Answer; coq.say "Not ground answer"), /* TODO: Should answer be ground? */
+    if (try_answer Subgoal NewAnswer Remaining UpdatedRemaining)
+       (coq.say "Suceed try" Remaining,
+       /* TODO: Update Remaining with unification from try_answer ! */
+       /* keep goal? clone? */
+        coq.say "Actual" Subgoal,
+        new_consumer_node
          (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-         Answer
-         (consumer_node Goal Remaining) /* TODO: Was Goal in code, but should add new solution? */
+         NewAnswer
+         (consumer_node Goal UpdatedRemaining) /* TODO: Was Goal in code, but should add new solution? */
          MySynth
-      );
+      )
       (
         coq.say "Continues",
         MySynth = (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-      )
-    ).
+      ).
 
   tabled_typeclass_resolution_body
     (synth GeneratorStack [ (pr (consumer_node Goal []) Answer) | ResumeStack ]
@@ -242,25 +375,22 @@ Elpi Accumulate lp:{{
   tabled_typeclass_resolution_body
     (synth [ generator_node Goal [Instance | Instances ] | GeneratorStack ]
       ResumeStack AssertionTable RootAnswer) Query NewSynth FinalAnswer :-
-    (
-      (
+    if (try_resolve Goal Instance Resolved Subgoals)
+        (
         /* else (l. 14) */
-        coq.say "Try to resolve" Goal Instance,
-        try_resolve Goal Instance Subgoals, !,
-        coq.say "Resolved" Subgoals,
-        /* Instance = instance Answer, */
+        coq.say "Resolved" Resolved "Subgoals" Subgoals,
+        (ground_term Resolved ; coq.say "Resolved not ground"),
         (new_consumer_node
           (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
-          Goal /* TODO: does not follow protocol! dummy value? */
+          Resolved /* TODO: does not follow protocol! dummy value? */
           (consumer_node Goal Subgoals) NewSynth), /* TODO: Should not be goal but answer? */
         coq.say "No fall trhough"
-      );
-      (
+        )
+        (
         /* If first subgoal of cnode does not resolve with solution then Continue */
         coq.say "Fall through",
         NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
-      )
-    ).
+      ).
 
   tabled_typeclass_resolution_body
     (synth [ generator_node _ [] | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
@@ -276,7 +406,8 @@ Elpi Accumulate lp:{{
   pred synth_loop i:synth i:assertion i:int o:assertion.
   synth_loop (synth _ _ _ (some Answer)) _ Fuel Answer.
   synth_loop MySynth Query Fuel FinalAnswer :-
-    coq.say Fuel MySynth,
+    MySynth = synth Stack1 Stack2 _ _,
+    coq.say Fuel Stack2 Stack1,
     Fuel > 0,
     tabled_typeclass_resolution_body MySynth Query NextSynth FinalAnswer,
     !,
@@ -289,30 +420,37 @@ Elpi Accumulate lp:{{
     std.map.make assertion_equal AssertionTableEmpty,
     new_subgoal (synth [] [] AssertionTableEmpty none) Query root MySynth,
     /* while true do */
-    synth_loop MySynth Query 2000 FinalAnswer.
+    synth_loop MySynth Query 2000 FinalAnswer,
+    !.
 }}.
 
-(*
-Class R (X : Type) (Y : Type).
-Axiom A B C D : Type.
-Instance I1 : R A B := {}. 
-Instance I2 : R A C := {}. 
-Instance I3 : R C D := {}. 
-Instance I4 {X Y Z} `{R X Y} `{R Y Z} : R X Z := {}. 
- *)
+Class R1 (X : Type) (Y : Type).
+Axiom A1 B1 C1 D1 : Type.
+Instance I3 : R1 C1 D1 := {}.
+Instance I2 : R1 A1 C1 := {}.
+Instance I1 : R1 A1 B1 := {}.
+Instance I4 {X Y Z} `(R1 X Y) `(R1 Y Z) : R1 X Z := { }.
 
 (* Trivial Example *)
-Elpi Query lp:{{ 
+Elpi Query lp:{{
   MyGoal = {{ R1 A1 B1 }},
-  tabled_typeclass_resolution (assertion MyGoal {{ _ }}) FinalAnswer,
-  coq.say "FinalAnswer" FinalAnswer.
+  tabled_typeclass_resolution (assertion MyGoal {{ lib:elpi.hole }}) (assertion FinalType FinalAnswer),
+  FinalType = MyGoal,
+  coq.say "FinalAnswer" FinalType FinalAnswer,
+  coq.typecheck FinalAnswer MyGoal ok.
 }}.
 
 (* Example from Paper *)
-Elpi Query lp:{{ 
+Elpi Query lp:{{
   MyGoal = {{ R1 A1 D1 }},
-  tabled_typeclass_resolution (assertion MyGoal {{ _ }}) FinalAnswer,
-  coq.say "FinalAnswer" FinalAnswer.
+  coq.say "MyGoal" (assertion MyGoal {{ lib:elpi.hole }}),
+  tabled_typeclass_resolution (assertion MyGoal {{ lib:elpi.hole }}) (assertion FinalType FinalAnswer),
+  !,
+  coq.say "FinalAnswer" FinalType FinalAnswer "vs" {{ @I4 A1 D1 C1 I2 I3 }} {{ I4 _ _ }},
+  FinalAnswer = MyGoal,
+  coq.typecheck FinalAnswer MyGoal ok,
+  /* TODO: Currently fails here, recreation of terms is incorrect */
+  ground_term FinalAnswer.
 }}.
 
 (* Example that should fail *)
@@ -329,62 +467,6 @@ Elpi Query lp:{{
 
 (* https://github.com/leanprover/lean4/blob/cade21/src/Lean/Meta/SynthInstance.lean *)
 (* https://github.com/leanprover/lean4/blob/master/tests/lean/run/typeclass_diamond.lean *)
-(* Diamond *)
-
-(*
-Elpi Query lp:{{
-  MyLInstances = [
-    instance (assertion "L" [ty_variable "alpha", ty_variable "n"] none) [assertion "B" [ty_variable "alpha", ty_variable "n"] none] ],
-
-  MyRInstances = [
-    instance (assertion "R" [ty_variable "alpha", ty_variable "n"] none) [assertion "B" [ty_variable "alpha", ty_variable "n"] none] ],
-
-  MyTInstances = [
-    instance (assertion "T" [ty_variable "alpha", ty_variable "n"] none) [assertion "L" [ty_variable "alpha", ty_variable "n"] none],
-    instance (assertion "T" [ty_variable "alpha", ty_variable "n"] none) [assertion "R" [ty_variable "alpha", ty_variable "n"] none] ],
-
-  MyBInstances = [
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "0"] none) [],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "1"] none) [assertion "T" [ty_variable "alpha", ty_constructor "0"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "2"] none) [assertion "T" [ty_variable "alpha", ty_constructor "1"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "3"] none) [assertion "T" [ty_variable "alpha", ty_constructor "2"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "4"] none) [assertion "T" [ty_variable "alpha", ty_constructor "3"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "5"] none) [assertion "T" [ty_variable "alpha", ty_constructor "4"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "6"] none) [assertion "T" [ty_variable "alpha", ty_constructor "5"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "7"] none) [assertion "T" [ty_variable "alpha", ty_constructor "6"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "8"] none) [assertion "T" [ty_variable "alpha", ty_constructor "7"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "9"] none) [assertion "T" [ty_variable "alpha", ty_constructor "8"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "10"] none) [assertion "T" [ty_variable "alpha", ty_constructor "9"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "11"] none) [assertion "T" [ty_variable "alpha", ty_constructor "10"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "12"] none) [assertion "T" [ty_variable "alpha", ty_constructor "11"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "13"] none) [assertion "T" [ty_variable "alpha", ty_constructor "12"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "14"] none) [assertion "T" [ty_variable "alpha", ty_constructor "13"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "15"] none) [assertion "T" [ty_variable "alpha", ty_constructor "14"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "16"] none) [assertion "T" [ty_variable "alpha", ty_constructor "15"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "17"] none) [assertion "T" [ty_variable "alpha", ty_constructor "16"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "18"] none) [assertion "T" [ty_variable "alpha", ty_constructor "17"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "19"] none) [assertion "T" [ty_variable "alpha", ty_constructor "18"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "20"] none) [assertion "T" [ty_variable "alpha", ty_constructor "19"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "21"] none) [assertion "T" [ty_variable "alpha", ty_constructor "20"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "22"] none) [assertion "T" [ty_variable "alpha", ty_constructor "21"] none],
-    instance (assertion "B" [ty_variable "alpha", ty_constructor "23"] none) [assertion "T" [ty_variable "alpha", ty_constructor "22"] none],
-  ],
-
-  std.map.make cmp_term ClassInstancesTemp1,
-  std.map.add "L" MyLInstances ClassInstancesTemp1 ClassInstancesTemp2,
-  std.map.add "R" MyRInstances ClassInstancesTemp2 ClassInstancesTemp3,
-  std.map.add "T" MyTInstances ClassInstancesTemp3 ClassInstancesTemp4,
-  std.map.add "B" MyBInstances ClassInstancesTemp4 ClassInstancesTemp5,
-  ClassInstances = ClassInstancesTemp5,
-
-  MyGoal = (assertion "T" [ty_constructor "Unit", ty_constructor "23"] none),
-
-  coq.say "Almost" MyGoal ClassInstances,
-  tabled_typeclass_resolution MyGoal ClassInstances FinalAnswer,
-  coq.say "Finished" FinalAnswer.
-}}.
-*)
-
 (* https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi *)
 Elpi Accumulate lp:{{
   pred proof_search i:list gref i:list tc-instance i:term o:term.
@@ -409,7 +491,7 @@ Elpi Accumulate lp:{{
     coq.say "TYPE" Type,
     /*
     std.map.make cmp_term ClassInstancesTemp,
-    std.fold Typeclasses ClassInstancesTemp fold_class_instances ClassInstances, 
+    std.fold Typeclasses ClassInstancesTemp fold_class_instances ClassInstances,
     */
     MyGoal = assertion Type {{ _ }},
     /* term_to_assertion Type none MyGoal, /* MyGoal is Assertion */ */
@@ -444,7 +526,6 @@ Elpi Accumulate lp:{{
     coq.say "V" V,
     (search_context Ctx Type PRoof ; tabled_proof_search Typeclasses Type PRoof),
     coq.say "SUCCESS FINDING INSTANCE".
-    
 
   solve _ _ :- coq.ltac.fail _ "No auto".
 }}.
@@ -457,7 +538,6 @@ Elpi Export TC.TabledSolver.
 (* Trivial test *)
 Class Constant := {}.
 Instance Con : Constant := {}.
-(* Instance TestConstant : Constant := _. *)
 
 (* Check holes *)
 Elpi Query lp:{{
@@ -465,76 +545,4 @@ Elpi Query lp:{{
   coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Constant }} V ok,
   coq.say "Elaborates to" V.
 }}.
-
-(* Test instance dependency *)
-Class Dependency := {}.
-
-Instance Dep `{Constant} : Dependency := {}.
-
-Elpi Query lp:{{
-  /* {{ Instance TestConstant : Constant := _ }} */
-  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Constant }} V ok,
-  coq.say "Elaborates to" V.
-}}.
-
-(*
-Elpi Query lp:{{ 
-  coq.say "Dep" {{ Constant }},
-  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Constant }} _ ok, !,
-  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Dependency }} _ ok. 
-}}.
-*)
-
-(* Instance TestDependency : Dependency := _. *)
-
-(* Trivial test *)
-Class Argument (alpha : Type) := {}.
-Instance Arg : Argument unit := {}.
-Instance TestArgument : Argument unit := _.
-
-Instance AArg (alpha : Type) : Argument alpha := {}.
-(* Instance TestArgumentArg : Argument nat := _. *)
-
-(* Partial Simple Diamond example *)
-Class T (n : nat).
-Class R (n : nat).
-Class L (n : nat).
-Class B (n : nat).
-Instance BtL n `{B n} : L n := {}.
-Instance BtR n `{B n} : R n := {}.
-Instance LtR n `{L n} : T n := {}.
-Instance RtR n `{R n} : T n := {}.
-
-Instance B0 : B 0 := {}.
-
-Instance Test0 : B 0 := _.
-Instance Test100 : B 10 := _.
-
-(* Partial Diamond example *)
-Class T (alpha : Type) (n : nat).
-Class R (alpha : Type) (n : nat).
-Class L (alpha : Type) (n : nat).
-Class B (alpha : Type) (n : nat).
-Instance BtL alpha n `{B alpha n} : L alpha n := {}.
-Instance BtR alpha n `{B alpha n} : R alpha n := {}.
-Instance LtR alpha n `{L alpha n} : T alpha n := {}.
-Instance RtR alpha n `{R alpha n} : T alpha n := {}.
-
-Instance B0 alpha : B alpha 0 := {}.
-
-Instance Test0 : B unit 0 := _.
-
-(* Diamond example in Rocq *)
-Class T (alpha : Type) (n : nat).
-Class R (alpha : Type) (n : nat).
-Class L (alpha : Type) (n : nat).
-Class B (alpha : Type) (n : nat).
-Instance BtL alpha n `{B alpha n} : L alpha n := {}.
-Instance BtR alpha n `{B alpha n} : R alpha n := {}.
-Instance LtR alpha n `{L alpha n} : T alpha n := {}.
-Instance RtR alpha n `{R alpha n} : T alpha n := {}.
-Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}.
-
-Instance B0 alpha : B alpha 0 := {}.
-
-Fail Instance TtR20 : B unit 20 := _.
+Instance TestConstant : Constant := _.
