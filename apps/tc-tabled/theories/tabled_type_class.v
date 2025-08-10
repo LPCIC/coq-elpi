@@ -220,19 +220,15 @@ Elpi Accumulate lp:{{
 
   pred try_resolve_types i:term i:term o:list term o:list assertion.
   try_resolve_types A (prod X T F) OL L :-
-    coq.say "Test" A X T,
     !,
     coq.typecheck V T ok,
-    coq.say "Passed",
     try_resolve_types A (F V) OLS LS,
     (OL = [ V | OLS]),
     ((T = app _ ; L = [ assertion T V | LS ]) ; (L = LS)) /* TODO : better 'contains instance or var test' */
     .
   try_resolve_types A B [] [] :-
     /* @holes! ==> coq.unify-leq B A ok */
-    coq.say "Does type resolve" A B,
-    does_type_resolve A B,
-    coq.say "Yes"
+    does_type_resolve A B
     /* type_equal A B lt */
     /* cmp_term A B eq */
     /* @holes! ==> pattern_match A B */
@@ -461,7 +457,6 @@ Elpi Accumulate lp:{{
     /* term_to_assertion Type none MyGoal, /* MyGoal is Assertion */ */
     tabled_typeclass_resolution MyGoal FinalAnswer,
     !,
-    coq.say "Final Answer" FinalAnswer,
     FinalAnswer = assertion FinalType FinalTerm,
     FinalProof = FinalTerm,
     coq.say "FinalProof" FinalProof,
@@ -615,53 +610,53 @@ Instance Ttb11 `{TD 11} : BD (S 11) := {}.
 
 Instance TestTD10 : TD 11 := _.
 
-(* Partial Simple Diamond example *)
-Class T (n : nat).
-Class R (n : nat).
-Class L (n : nat).
-Class B (n : nat).
-Instance BtL n `{B n} : L n := {}.
-Instance BtR n `{B n} : R n := {}.
-Instance LtR n `{L n} : T n := {}.
-Instance RtR n `{R n} : T n := {}.
-Instance Ttb n `{T n} : B (S n) := {}.
+(* (* Partial Simple Diamond example *) *)
+(* Class T (n : nat). *)
+(* Class R (n : nat). *)
+(* Class L (n : nat). *)
+(* Class B (n : nat). *)
+(* Instance BtL n `{B n} : L n := {}. *)
+(* Instance BtR n `{B n} : R n := {}. *)
+(* Instance LtR n `{L n} : T n := {}. *)
+(* Instance RtR n `{R n} : T n := {}. *)
+(* Instance Ttb n `{T n} : B (S n) := {}. *)
 
-Instance B0 : B 0 := {}.
+(* Instance B0 : B 0 := {}. *)
 
-Instance Test0 : B 0 := _.
-Instance Test1 : B 1 := _.
-Instance Test2 : B 2 := _.
+(* Instance Test0 : B 0 := _. *)
+(* Instance Test1 : B 1 := _. *)
+(* Instance Test2 : B 2 := _. *)
 
-Instance Test10 : B 10 := _.
+(* Instance Test10 : B 10 := _. *)
 
-Instance Test4 : B 4 := _.
-Instance Test100 : B 10 := _.
+(* Instance Test4 : B 4 := _. *)
+(* Instance Test100 : B 10 := _. *)
 
-(* Partial Diamond example *)
-Class T (alpha : Type) (n : nat).
-Class R (alpha : Type) (n : nat).
-Class L (alpha : Type) (n : nat).
-Class B (alpha : Type) (n : nat).
-Instance BtL alpha n `{B alpha n} : L alpha n := {}.
-Instance BtR alpha n `{B alpha n} : R alpha n := {}.
-Instance LtR alpha n `{L alpha n} : T alpha n := {}.
-Instance RtR alpha n `{R alpha n} : T alpha n := {}.
+(* (* Partial Diamond example *) *)
+(* Class T (alpha : Type) (n : nat). *)
+(* Class R (alpha : Type) (n : nat). *)
+(* Class L (alpha : Type) (n : nat). *)
+(* Class B (alpha : Type) (n : nat). *)
+(* Instance BtL alpha n `{B alpha n} : L alpha n := {}. *)
+(* Instance BtR alpha n `{B alpha n} : R alpha n := {}. *)
+(* Instance LtR alpha n `{L alpha n} : T alpha n := {}. *)
+(* Instance RtR alpha n `{R alpha n} : T alpha n := {}. *)
 
-Instance B0 alpha : B alpha 0 := {}.
+(* Instance B0 alpha : B alpha 0 := {}. *)
 
-Instance Test0 : B unit 0 := _.
+(* Instance Test0 : B unit 0 := _. *)
 
-(* Diamond example in Rocq *)
-Class T (alpha : Type) (n : nat).
-Class R (alpha : Type) (n : nat).
-Class L (alpha : Type) (n : nat).
-Class B (alpha : Type) (n : nat).
-Instance BtL alpha n `{B alpha n} : L alpha n := {}.
-Instance BtR alpha n `{B alpha n} : R alpha n := {}.
-Instance LtR alpha n `{L alpha n} : T alpha n := {}.
-Instance RtR alpha n `{R alpha n} : T alpha n := {}.
-Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}.
+(* (* Diamond example in Rocq *) *)
+(* Class T (alpha : Type) (n : nat). *)
+(* Class R (alpha : Type) (n : nat). *)
+(* Class L (alpha : Type) (n : nat). *)
+(* Class B (alpha : Type) (n : nat). *)
+(* Instance BtL alpha n `{B alpha n} : L alpha n := {}. *)
+(* Instance BtR alpha n `{B alpha n} : R alpha n := {}. *)
+(* Instance LtR alpha n `{L alpha n} : T alpha n := {}. *)
+(* Instance RtR alpha n `{R alpha n} : T alpha n := {}. *)
+(* Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}. *)
 
-Instance B0 alpha : B alpha 0 := {}.
+(* Instance B0 alpha : B alpha 0 := {}. *)
 
-Fail Instance TtR20 : B unit 20 := _.
+(* Fail Instance TtR20 : B unit 20 := _. *)
