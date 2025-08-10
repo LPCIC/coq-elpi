@@ -70,7 +70,6 @@ Elpi Accumulate lp:{{
 
   pred assertion_equal i:assertion i:assertion o:cmp.
   assertion_equal (assertion A _) (assertion B _) Cmp :-
-  /* coq.say "Assertions equal?" A B, */
     type_equal A B Cmp.
 
   pred term_typeclass i:term o:gref.
@@ -90,12 +89,9 @@ Elpi Accumulate lp:{{
     (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
     Subgoal Waiter
     (synth NewGeneratorStack ResumeStack NewAssertionTable RootAnswer) :-
-    coq.say "Enter" Subgoal Waiter,
     std.map.add Subgoal (entry [Waiter] []) AssertionTable NewAssertionTable,
-    coq.say "AssertionTable" NewAssertionTable,
     assertion_typeclass Subgoal Name,
     coq.TC.db-for Name Instances,
-    /* coq.say "New Subgoal" Name Instances, */
     NewGeneratorStack = [(generator_node Subgoal Instances) | GeneratorStack]
     .
 }}.
@@ -141,13 +137,8 @@ Elpi Accumulate lp:{{
 
   pred try_answer i:assertion o:assertion i:assertion o:assertion i:list assertion o:list assertion.
   try_answer (assertion A VA) (assertion B VB) (assertion G IA) (assertion G IB) Lin Lout :-
-    coq.say "Try answer",
-    coq.say "A" A VA,
-    coq.say "B" B VB,
     try_answer_type A B IA ITemp Lin Lout,
-    replace_var_term VA VB ITemp IB,
-    coq.say "IAB" IA IB,
-    coq.sigma.print.
+    replace_var_term VA VB ITemp IB.
 }}.
 
 Elpi Accumulate lp:{{
@@ -199,8 +190,7 @@ Elpi Accumulate lp:{{
        std.length Tlist Len,
        Index is Len - 1,
        extract_variables Tlist Index NewR,
-       R = [ NewR | RTl ],
-       coq.say "NewR" NewR
+       R = [ NewR | RTl ]
        );
       (R = RTl)
     ),
@@ -271,35 +261,21 @@ Elpi Accumulate lp:{{
     coq.gref->string BI BIName,
     BI = const (BIConst),
     coq.env.const BIConst (some BIBody) BITy,
-    coq.say "Try resolve types" A B,
     try_resolve_types A B OL L,
-    /* coq.say "regeneralize" OL L, */
-    /* re_generalize L LR, */
-    /* coq.say "generalized" LR, */
     filter_metavariables L RL,
     !,
-    coq.say "RL" RL,
     RT = A, /* app [ B | OL ], */
-    ((OL = [], RV = BITm) ; RV = app [ BITm | OL ]),
-    coq.say "Result" RT RV "for" A
-
-    /* ATm = app [ B | OL ],
-        simpl ATm ATmRed */
+    ((OL = [], RV = BITm) ; RV = app [ BITm | OL ])
     .
 }}.
 
 Elpi Accumulate lp:{{
   pred temp_fun i:consumer_node i:assertion o:(pair consumer_node assertion).
-  temp_fun A B (pr A B) :-
-    coq.say "Update - Try" A "with answer" B.
+  temp_fun A B (pr A B).
 
   pred waiter_fun i:assertion i:assertion i:waiter i:(pair (resume_stack) (option assertion)) o:(pair (resume_stack) (option assertion)).
-  waiter_fun Answer Guess root (pr A _) (pr A (some Answer)) :-
-    coq.say "Found root answer" Answer,
-    coq.say "Stack" A Guess.
-  waiter_fun Answer Goal (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R) :-
-      coq.say "Found an answer" C Goal Answer,
-      coq.say "Run Waiter".
+  waiter_fun Answer Guess root (pr A _) (pr A (some Answer)).
+  waiter_fun Answer Goal (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R).
 
   pred new_consumer_node i:synth i:assertion i:consumer_node o:synth.
   new_consumer_node
@@ -312,7 +288,6 @@ Elpi Accumulate lp:{{
     /* add new cnode to g's dependents */
     /* TODO: Add answer here! */
     NewAnswers = [ Answer | Answers ],
-    coq.say "NewAnswers" NewAnswers,
     /* for each solution to g, push new cnode onto resume stack with it */
     std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
     /* add new cnode to g's dependents */
@@ -329,7 +304,6 @@ Elpi Accumulate lp:{{
       if (std.map.find Subgoal AssertionTable (entry Waiters Answers))
          (
           /* Map answers with consumer node */
-          coq.say "Found subgoal map" Answers,
           /* Add cnode onto G's dependents? */
           std.map Answers (temp_fun CN) TempResumeStack,
           std.append TempResumeStack ResumeStack NewResumeStack,
@@ -357,17 +331,13 @@ Elpi Accumulate lp:{{
   tabled_typeclass_resolution_body
     (synth GeneratorStack [ (pr (consumer_node Goal [ Subgoal | Remaining ]) Answer) | ResumeStack ]
        AssertionTable RootAnswer) Query MySynth FinalAnswer :-
-    coq.say "ResumeStack" Goal Subgoal Answer,
     Answer = assertion AnswerT AnswerV,
     coq.typecheck AnswerV AnswerNT ok,
     NewAnswer = assertion AnswerNT AnswerV,
-    (ground_term Answer; coq.say "Not ground answer"), /* TODO: Should answer be ground? */
     if (try_answer Subgoal NewAnswer Goal UpdatedGoal Remaining UpdatedRemaining)
-       (coq.say "Suceed try" Remaining UpdatedRemaining,
+       (
        /* TODO: Update Remaining with unification from try_answer ! */
        /* keep goal? clone? */
-        coq.say "Actual" Subgoal NewAnswer,
-        coq.say "Goal" Goal UpdatedGoal,
         new_consumer_node
          (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
          UpdatedGoal /* TODO: final answer here! */
@@ -375,14 +345,13 @@ Elpi Accumulate lp:{{
          MySynth
       )
       (
-        coq.say "Continues",
         MySynth = (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
       ).
 
   tabled_typeclass_resolution_body
     (synth GeneratorStack [ (pr (consumer_node Goal []) Answer) | ResumeStack ]
        AssertionTable RootAnswer) Query MySynth FinalAnswer :-
-   coq.say "Cannot resume with empty subgoals!",
+   coq.warn "Cannot resume with empty subgoals!",
    fail.
 
   tabled_typeclass_resolution_body
@@ -391,17 +360,13 @@ Elpi Accumulate lp:{{
     if (try_resolve Goal Instance Resolved Subgoals)
         (
         /* else (l. 14) */
-        coq.say "Resolved" Goal Resolved "Subgoals" Subgoals,
-        (ground_term Resolved ; coq.say "Resolved not ground"),
         (new_consumer_node
           (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
           Resolved /* TODO: does not follow protocol! dummy value? */
-          (consumer_node Resolved Subgoals) NewSynth), /* TODO: Should not be goal but answer? */
-        coq.say "No fall trhough"
+          (consumer_node Resolved Subgoals) NewSynth)
         )
         (
         /* If first subgoal of cnode does not resolve with solution then Continue */
-        coq.say "Fall through",
         NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
       ).
 
@@ -429,7 +394,6 @@ Elpi Accumulate lp:{{
 
   pred tabled_typeclass_resolution i:assertion o:assertion.
   tabled_typeclass_resolution Query FinalAnswer :-
-    coq.say "Query?" Query,
     std.map.make assertion_equal AssertionTableEmpty,
     new_subgoal (synth [] [] AssertionTableEmpty none) Query root MySynth,
     /* while true do */
@@ -489,29 +453,16 @@ Elpi Accumulate lp:{{
 Elpi Accumulate lp:{{
   pred tabled_proof_search i:list gref i:term o:term.
   tabled_proof_search Typeclasses Type PRoof :-
-    coq.say "TYPECLASSES" Typeclasses,
-    coq.say "TYPE" Type,
-    /*
-    std.map.make cmp_term ClassInstancesTemp,
-    std.fold Typeclasses ClassInstancesTemp fold_class_instances ClassInstances,
-    */
     MyGoal = assertion Type {{ _ }},
     /* term_to_assertion Type none MyGoal, /* MyGoal is Assertion */ */
-    coq.say "Goal" MyGoal,
-    coq.say "Attemp" MyGoal ClassInstances,
     tabled_typeclass_resolution MyGoal FinalAnswer,
     !,
     coq.say "Final Answer" FinalAnswer,
-
-    /* TODO: Convert from result to proof term! */
-
     FinalAnswer = assertion FinalType FinalTerm,
     FinalProof = FinalTerm,
     coq.say "FinalProof" FinalProof,
     PRoof = FinalProof,
-    coq.say "Proof" PRoof,
-
-    coq.say "Done".
+    coq.say "Proof" PRoof "Done".
 
 
   pred search_context i:list prop i:term o:term.
