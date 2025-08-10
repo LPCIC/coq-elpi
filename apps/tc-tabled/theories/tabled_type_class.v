@@ -519,12 +519,12 @@ Elpi Query lp:{{
   coq.say "Elaborates to" V.
 }}.
 
-Instance TestDependency : Dependency := _.
+(* Instance TestDependency : Dependency := _. *)
 
-(* Trivial test *)
-Class Argument (alpha : Type) := {}.
-Instance Arg : Argument unit := {}.
-Instance TestArgument : Argument unit := _.
+(* (* Trivial test *) *)
+(* Class Argument (alpha : Type) := {}. *)
+(* Instance Arg : Argument unit := {}. *)
+(* Instance TestArgument : Argument unit := _. *)
 
-Instance AArg (alpha : Type) : Argument alpha := {}.
+(* Instance AArg (alpha : Type) : Argument alpha := {}. *)
 (* Instance TestArgumentArg : Argument nat := _. *)
