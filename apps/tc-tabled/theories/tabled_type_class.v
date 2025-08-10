@@ -220,15 +220,19 @@ Elpi Accumulate lp:{{
 
   pred try_resolve_types i:term i:term o:list term o:list assertion.
   try_resolve_types A (prod X T F) OL L :-
+    coq.say "Test" A X T,
     !,
     coq.typecheck V T ok,
+    coq.say "Passed",
     try_resolve_types A (F V) OLS LS,
     (OL = [ V | OLS]),
-    ((ground_term T, L = LS) ; L = [ assertion T V | LS ])
+    ((T = app _ ; L = [ assertion T V | LS ]) ; (L = LS)) /* TODO : better 'contains instance or var test' */
     .
   try_resolve_types A B [] [] :-
     /* @holes! ==> coq.unify-leq B A ok */
-    does_type_resolve A B
+    coq.say "Does type resolve" A B,
+    does_type_resolve A B,
+    coq.say "Yes"
     /* type_equal A B lt */
     /* cmp_term A B eq */
     /* @holes! ==> pattern_match A B */
@@ -385,7 +389,7 @@ Elpi Accumulate lp:{{
   synth_loop (synth _ _ _ (some Answer)) _ Fuel Answer.
   synth_loop MySynth Query Fuel FinalAnswer :-
     MySynth = synth Stack1 Stack2 _ _,
-    coq.say Fuel Stack2 Stack1,
+    coq.say "synth round" Fuel Stack2 Stack1,
     Fuel > 0,
     tabled_typeclass_resolution_body MySynth Query NextSynth FinalAnswer,
     !,
@@ -521,10 +525,143 @@ Elpi Query lp:{{
 
 (* Instance TestDependency : Dependency := _. *)
 
-(* (* Trivial test *) *)
-(* Class Argument (alpha : Type) := {}. *)
-(* Instance Arg : Argument unit := {}. *)
-(* Instance TestArgument : Argument unit := _. *)
+(* Trivial test *)
+Class Argument (alpha : Type) := {}.
+Instance Arg : Argument unit := {}.
+Instance TestArgument : Argument unit := _.
 
-(* Instance AArg (alpha : Type) : Argument alpha := {}. *)
-(* Instance TestArgumentArg : Argument nat := _. *)
+Instance AArg (alpha : Type) : Argument alpha := {}.
+Instance TestArgumentArg : Argument nat := _.
+
+(* Direct Simple Diamond example *)
+Class TD (n : nat).
+Class RD (n : nat).
+Class LD (n : nat).
+Class BD (n : nat).
+
+Instance BD0 : BD 0 := {}.
+
+Instance BtL0 `{BD 0} : LD 0 := {}.
+Instance BtR0 `{BD 0} : RD 0 := {}.
+Instance LtR0 `{LD 0} : TD 0 := {}.
+Instance RtR0 `{RD 0} : TD 0 := {}.
+Instance Ttb0 `{TD 0} : BD (S 0) := {}.
+
+Instance BtL1 `{BD 1} : LD 1 := {}.
+Instance BtR1 `{BD 1} : RD 1 := {}.
+Instance LtR1 `{LD 1} : TD 1 := {}.
+Instance RtR1 `{RD 1} : TD 1 := {}.
+Instance Ttb1 `{TD 1} : BD (S 1) := {}.
+
+Instance BtL2 `{BD 2} : LD 2 := {}.
+Instance BtR2 `{BD 2} : RD 2 := {}.
+Instance LtR2 `{LD 2} : TD 2 := {}.
+Instance RtR2 `{RD 2} : TD 2 := {}.
+Instance Ttb2 `{TD 2} : BD (S 2) := {}.
+
+Instance BtL3 `{BD 3} : LD 3 := {}.
+Instance BtR3 `{BD 3} : RD 3 := {}.
+Instance LtR3 `{LD 3} : TD 3 := {}.
+Instance RtR3 `{RD 3} : TD 3 := {}.
+Instance Ttb3 `{TD 3} : BD (S 3) := {}.
+
+Instance BtL4 `{BD 4} : LD 4 := {}.
+Instance BtR4 `{BD 4} : RD 4 := {}.
+Instance LtR4 `{LD 4} : TD 4 := {}.
+Instance RtR4 `{RD 4} : TD 4 := {}.
+Instance Ttb4 `{TD 4} : BD (S 4) := {}.
+
+Instance BtL5 `{BD 5} : LD 5 := {}.
+Instance BtR5 `{BD 5} : RD 5 := {}.
+Instance LtR5 `{LD 5} : TD 5 := {}.
+Instance RtR5 `{RD 5} : TD 5 := {}.
+Instance Ttb5 `{TD 5} : BD (S 5) := {}.
+
+Instance BtL6 `{BD 6} : LD 6 := {}.
+Instance BtR6 `{BD 6} : RD 6 := {}.
+Instance LtR6 `{LD 6} : TD 6 := {}.
+Instance RtR6 `{RD 6} : TD 6 := {}.
+Instance Ttb6 `{TD 6} : BD (S 6) := {}.
+
+Instance BtL7 `{BD 7} : LD 7 := {}.
+Instance BtR7 `{BD 7} : RD 7 := {}.
+Instance LtR7 `{LD 7} : TD 7 := {}.
+Instance RtR7 `{RD 7} : TD 7 := {}.
+Instance Ttb7 `{TD 7} : BD (S 7) := {}.
+
+Instance BtL8 `{BD 8} : LD 8 := {}.
+Instance BtR8 `{BD 8} : RD 8 := {}.
+Instance LtR8 `{LD 8} : TD 8 := {}.
+Instance RtR8 `{RD 8} : TD 8 := {}.
+Instance Ttb8 `{TD 8} : BD (S 8) := {}.
+
+Instance BtL9 `{BD 9} : LD 9 := {}.
+Instance BtR9 `{BD 9} : RD 9 := {}.
+Instance LtR9 `{LD 9} : TD 9 := {}.
+Instance RtR9 `{RD 9} : TD 9 := {}.
+Instance Ttb9 `{TD 9} : BD (S 9) := {}.
+
+Instance BtL10 `{BD 10} : LD 10 := {}.
+Instance BtR10 `{BD 10} : RD 10 := {}.
+Instance LtR10 `{LD 10} : TD 10 := {}.
+Instance RtR10 `{RD 10} : TD 10 := {}.
+Instance Ttb10 `{TD 10} : BD (S 10) := {}.
+
+Instance BtL11 `{BD 11} : LD 11 := {}.
+Instance BtR11 `{BD 11} : RD 11 := {}.
+Instance LtR11 `{LD 11} : TD 11 := {}.
+Instance RtR11 `{RD 11} : TD 11 := {}.
+Instance Ttb11 `{TD 11} : BD (S 11) := {}.
+
+Instance TestTD10 : TD 11 := _.
+
+(* Partial Simple Diamond example *)
+Class T (n : nat).
+Class R (n : nat).
+Class L (n : nat).
+Class B (n : nat).
+Instance BtL n `{B n} : L n := {}.
+Instance BtR n `{B n} : R n := {}.
+Instance LtR n `{L n} : T n := {}.
+Instance RtR n `{R n} : T n := {}.
+Instance Ttb n `{T n} : B (S n) := {}.
+
+Instance B0 : B 0 := {}.
+
+Instance Test0 : B 0 := _.
+Instance Test1 : B 1 := _.
+Instance Test2 : B 2 := _.
+
+Instance Test10 : B 10 := _.
+
+Instance Test4 : B 4 := _.
+Instance Test100 : B 10 := _.
+
+(* Partial Diamond example *)
+Class T (alpha : Type) (n : nat).
+Class R (alpha : Type) (n : nat).
+Class L (alpha : Type) (n : nat).
+Class B (alpha : Type) (n : nat).
+Instance BtL alpha n `{B alpha n} : L alpha n := {}.
+Instance BtR alpha n `{B alpha n} : R alpha n := {}.
+Instance LtR alpha n `{L alpha n} : T alpha n := {}.
+Instance RtR alpha n `{R alpha n} : T alpha n := {}.
+
+Instance B0 alpha : B alpha 0 := {}.
+
+Instance Test0 : B unit 0 := _.
+
+(* Diamond example in Rocq *)
+Class T (alpha : Type) (n : nat).
+Class R (alpha : Type) (n : nat).
+Class L (alpha : Type) (n : nat).
+Class B (alpha : Type) (n : nat).
+Instance BtL alpha n `{B alpha n} : L alpha n := {}.
+Instance BtR alpha n `{B alpha n} : R alpha n := {}.
+Instance LtR alpha n `{L alpha n} : T alpha n := {}.
+Instance RtR alpha n `{R alpha n} : T alpha n := {}.
+Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}.
+
+Instance B0 alpha : B alpha 0 := {}.
+
+Fail Instance TtR20 : B unit 20 := _.
