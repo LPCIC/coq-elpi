@@ -630,7 +630,7 @@ coq.bind-ind-parameters.aux I T Vs Ts K O :- I > 0, whd1 T T', !,
 
 % coq.with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
-func coq.with-TC term, (func tc-instance -> prop), fprop ->.
+func coq.with-TC term, (func tc-instance -> prop), (func) ->.
 coq.with-TC Class Instance->Clause Code :-
   coq.TC.db-for {coq.term->gref Class} Instances,
   map Instances Instance->Clause Hyps, !,

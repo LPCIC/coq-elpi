@@ -71,7 +71,7 @@ namespace tc {
         (copy Y X :- !) => relocate Xs Ys T T'.
 
       pred collect-store o:list prop.
-      pred collect-store-aux i:list prop, o:list prop.
+      func collect-store-aux list prop -> list prop.
 
       collect-store L :- collect-store-aux [] L.
       collect-store-aux X L :- declare_constraint (collect-store-aux X L) [_].

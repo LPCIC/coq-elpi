@@ -546,29 +546,29 @@ external symbol off : coercion-status = "1".
 % -- Misc ---------------------------------------------------------
 
 % [coq.info ...] Prints an info message
-external type coq.info variadic any fprop.
+external type coq.info variadic any (func).
 
 % [coq.notice ...] Prints a notice message
-external type coq.notice variadic any fprop.
+external type coq.notice variadic any (func).
 
 % [coq.say ...] Prints a notice message
-external type coq.say variadic any fprop.
+external type coq.say variadic any (func).
 
 % [coq.debug ...] Prints a debug message
-external type coq.debug variadic any fprop.
+external type coq.debug variadic any (func).
 
 % [coq.warn ...] Prints a generic warning message
-external type coq.warn variadic any fprop.
+external type coq.warn variadic any (func).
 
 % [coq.warning Category Name ...] 
 % Prints a warning message with a Name and Category which can be used
 % to silence this warning or turn it into an error. See coqc -w command
 % line option
-external type coq.warning string -> string -> variadic any fprop.
+external type coq.warning string -> string -> variadic any (func).
 
 % [coq.error ...] Prints and *aborts* the program. It is a fatal error for
 % Elpi and Ltac
-external type coq.error variadic any fprop.
+external type coq.error variadic any (func).
 
 % [coq.version VersionString Major Minor Patch] Fetches the version of Coq,
 % as a string and as 3 numbers
@@ -1613,7 +1613,7 @@ kind ltac1-tactic type.
 % [coq.ltac.fail Level ...] Interrupts the Elpi program and calls Ltac's
 % fail Level Msg, where Msg is the printing of the remaining arguments.
 % Level can be left unspecified and defaults to 0
-external type coq.ltac.fail int -> variadic any fprop.
+external type coq.ltac.fail int -> variadic any (func).
 
 % [coq.ltac.collect-goals T Goals ShelvedGoals] 
 % Turns the holes in T into Goals.
@@ -1989,7 +1989,7 @@ external func coq.gref.set.cardinal coq.gref.set -> int.
 
 % [coq.gref.set.filter M F M1] Filter M w.r.t. the predicate F
 external func coq.gref.set.filter coq.gref.set, 
-                                 (gref -> prop) -> coq.gref.set.
+                                 (gref -> (func)) -> coq.gref.set.
 
 % [coq.gref.set.map M F M1] Map M w.r.t. the predicate F
 external func coq.gref.set.map coq.gref.set, 
@@ -2002,7 +2002,7 @@ external func coq.gref.set.fold coq.gref.set, A,
 % [coq.gref.set.partition M F M1 M2] Partitions M w.r.t. the predicate F, M1
 % is where F holds
 external func coq.gref.set.partition coq.gref.set, 
-                                    (gref -> prop) -> coq.gref.set, 
+                                    (gref -> (func)) -> coq.gref.set, 
                                     coq.gref.set.
 
 % CAVEAT: the type parameter of coq.gref.map must be a closed term
@@ -2088,7 +2088,7 @@ external func coq.univ.set.cardinal coq.univ.set -> int.
 
 % [coq.univ.set.filter M F M1] Filter M w.r.t. the predicate F
 external func coq.univ.set.filter coq.univ.set, 
-                                 (univ -> prop) -> coq.univ.set.
+                                 (univ -> (func)) -> coq.univ.set.
 
 % [coq.univ.set.map M F M1] Map M w.r.t. the predicate F
 external func coq.univ.set.map coq.univ.set, 
@@ -2101,7 +2101,7 @@ external func coq.univ.set.fold coq.univ.set, A,
 % [coq.univ.set.partition M F M1 M2] Partitions M w.r.t. the predicate F, M1
 % is where F holds
 external func coq.univ.set.partition coq.univ.set, 
-                                    (univ -> prop) -> coq.univ.set, 
+                                    (univ -> (func)) -> coq.univ.set, 
                                     coq.univ.set.
 
 % CAVEAT: the type parameter of coq.univ.map must be a closed term
@@ -2192,7 +2192,7 @@ external func coq.univ.variable.set.cardinal coq.univ.variable.set -> int.
 
 % [coq.univ.variable.set.filter M F M1] Filter M w.r.t. the predicate F
 external func coq.univ.variable.set.filter coq.univ.variable.set, 
-                                          (univ.variable -> prop) -> coq.univ.variable.set.
+                                          (univ.variable -> (func)) -> coq.univ.variable.set.
 
 % [coq.univ.variable.set.map M F M1] Map M w.r.t. the predicate F
 external func coq.univ.variable.set.map coq.univ.variable.set, 
@@ -2205,7 +2205,7 @@ external func coq.univ.variable.set.fold coq.univ.variable.set, A,
 % [coq.univ.variable.set.partition M F M1 M2] Partitions M w.r.t. the
 % predicate F, M1 is where F holds
 external func coq.univ.variable.set.partition coq.univ.variable.set, 
-                                             (univ.variable -> prop) -> coq.univ.variable.set, 
+                                             (univ.variable -> (func)) -> coq.univ.variable.set, 
                                              coq.univ.variable.set.
 
 % CAVEAT: the type parameter of coq.univ.variable.map must be a closed
