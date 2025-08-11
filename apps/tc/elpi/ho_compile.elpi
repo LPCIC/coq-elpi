@@ -227,7 +227,7 @@ namespace tc {
         compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
         if (tc.class TC _ tc.deterministic _)
           (NewPrem' = std.once NewPrem)
-          (NewPrem' = NewPrem),
+          (NewPrem' = NewPrem), !,
         compile-ty L1 L2 ProofHd IsPositive ITy ProofTlR [NewPrem' | PremR] Clause.
       compile-premise L L1 _ _ ProofHd IsPositive ITy ProofTlR PremR Clause :-
         compile-ty L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
@@ -255,7 +255,7 @@ namespace tc {
       compile-ty L L1 ProofHd IsPositive (let _ Ty T Bo) ProofTlR PremR Clause :- !,
         if (IsPositive = tt) 
           (Clause = (pi x\ C x), E = is-uvar) 
-          (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
+          (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name), !,
         pi p\ sigma F NewPrem\
           (decl p N Ty' :- !) => (E p :- !) => (
             NewPrem = tc.link.unif-eq T p,

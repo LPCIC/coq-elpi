@@ -1067,10 +1067,10 @@ kind nat type.
 type z nat.
 type s nat -> nat.
 
-pred sum i:nat, i:nat, o:nat.
+func sum nat, nat -> nat.
 
-sum (s X) Y (s Z) :- sum X Y Z.
-sum z X X.
+sum (s X) Y (s Z) :- !, sum X Y Z.
+sum z X X :- !.
 sum X Y Z :-
   % the head of the rule always unifies with the query, so
   % we double check X is a variable (we could also be
@@ -1137,12 +1137,12 @@ and we would like to be able to fail early.
 
 Elpi Accumulate lp:{{
 
-pred even i:nat.
-pred odd  i:nat.
+func even nat.
+func odd  nat.
 
-even z.
-even (s X) :- odd X.
-odd (s X) :- even X.
+even z :- !.
+even (s X) :- !, odd X.
+odd (s X) :- !, even X.
 
 odd X :- var X, declare_constraint (odd X) [X].
 even X :- var X, declare_constraint (even X) [X].
