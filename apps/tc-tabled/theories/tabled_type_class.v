@@ -48,17 +48,16 @@ Elpi Accumulate lp:{{
 
 Elpi Accumulate lp:{{
   pred type_equal i:ty i:ty o:cmp.
-  type_equal X Y eq :- var X, var Y.
-  type_equal (app L) (app G) Cmp :- type_equal_list L G Cmp.
-  type_equal X Y lt :- var X, ground_term Y.
-  type_equal X Y gt :- ground_term X, var Y.
   type_equal X Y Cmp :-
     ground_term X,
     ground_term Y,
     cmp_term X Y Cmp.
+  type_equal X Y eq :- var X, var Y.
+  type_equal (app L) (app G) Cmp :- type_equal_list L G Cmp.
+  type_equal X Y lt :- var X, ground_term Y.
+  type_equal X Y gt :- ground_term X, var Y.
 
   pred type_equal_list i:list ty i:list ty o:cmp.
-/* std.map L (x\ y\ type_equal x y eq) G. */
   type_equal_list [ X | XS ] [ Y | YS ] Cmp :-
       type_equal X Y eq,
       type_equal_list XS YS Cmp.
@@ -70,7 +69,10 @@ Elpi Accumulate lp:{{
 
   pred assertion_equal i:assertion i:assertion o:cmp.
   assertion_equal (assertion A _) (assertion B _) Cmp :-
-    type_equal A B Cmp.
+    type_equal A B Cmp,
+    !
+    /* Deterministic ! */
+    .
 
   pred term_typeclass i:term o:gref.
   term_typeclass (global Name) Name.
@@ -81,7 +83,6 @@ Elpi Accumulate lp:{{
   pred assertion_typeclass i:assertion o:gref.
   assertion_typeclass (assertion G _) Name :- term_typeclass G Name.
 }}.
-
 
 Elpi Accumulate lp:{{
   pred new_subgoal i:synth i:assertion i:waiter o:synth.
@@ -140,6 +141,7 @@ Elpi Accumulate lp:{{
     try_answer_type A B IA ITemp Lin Lout,
     replace_var_term VA VB ITemp IB.
 }}.
+
 
 Elpi Accumulate lp:{{
   pred replace_list i:list term i:term i:term o:list term.
@@ -201,7 +203,6 @@ Elpi Accumulate lp:{{
   re_generalize [ ] [].
 }}.
 
-
 Elpi Accumulate lp:{{
   pred tc_instance_to_term i:tc-instance o:term.
   tc_instance_to_term (tc-instance (const C) _) T :-
@@ -210,6 +211,9 @@ Elpi Accumulate lp:{{
     T = Type.
 
   pred does_type_resolve i:term o:term.
+  does_type_resolve X Y :-
+    var Y,
+    X = Y.
   does_type_resolve X Y :-
     var X.
   does_type_resolve (app L) (app G) :-
@@ -220,19 +224,13 @@ Elpi Accumulate lp:{{
 
   pred try_resolve_types i:term i:term o:list term o:list assertion.
   try_resolve_types A (prod X T F) OL L :-
-    !,
     coq.typecheck V T ok,
     try_resolve_types A (F V) OLS LS,
     (OL = [ V | OLS]),
     ((T = app _ ; L = [ assertion T V | LS ]) ; (L = LS)) /* TODO : better 'contains instance or var test' */
     .
   try_resolve_types A B [] [] :-
-    /* @holes! ==> coq.unify-leq B A ok */
     does_type_resolve A B
-    /* type_equal A B lt */
-    /* cmp_term A B eq */
-    /* @holes! ==> pattern_match A B */
-    /* @holes! ==> coq.unify-leq B A ok */
     .
 }}.
 
@@ -264,7 +262,7 @@ Elpi Accumulate lp:{{
     try_resolve_types A B OL L,
     filter_metavariables L RL,
     !,
-    RT = A, /* app [ B | OL ], */
+    RT = A,
     ((OL = [], RV = BITm) ; RV = app [ BITm | OL ])
     .
 }}.
@@ -286,20 +284,19 @@ Elpi Accumulate lp:{{
     /* for each solution to g, push new cnode onto resume stack with it */
     std.map.find Goal AssertionTable (entry Waiters Answers),
     /* add new cnode to g's dependents */
-    /* TODO: Add answer here! */
     NewAnswers = [ Answer | Answers ],
     /* for each solution to g, push new cnode onto resume stack with it */
     std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
     /* add new cnode to g's dependents */
-    std.map.remove Goal AssertionTable TempAssertionTable,
-    std.map.add Goal (entry Waiters NewAnswers) TempAssertionTable NewAssertionTable /* TODO: [] or Waiters? */.
+    /* std.map.remove Goal AssertionTable TempAssertionTable, */
+    std.map.add Goal (entry Waiters NewAnswers) AssertionTable NewAssertionTable,
+    !.
 
   new_consumer_node
       (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
       _
-      CN
+      (consumer_node _ [ Subgoal | _ ] as CN)
       (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer) :-
-      CN = consumer_node _ [ Subgoal | _ ],
       /* TODO: Consumer node is general instead of variable or hole */
       if (std.map.find Subgoal AssertionTable (entry Waiters Answers))
          (
@@ -319,7 +316,8 @@ Elpi Accumulate lp:{{
             Subgoal
             (callback CN)
             (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer)
-        ).
+        ),
+        !.
 
     new_consumer_node _ _ _ _ :- coq.error "Failed new consumer node!" , fail.
 }}.
@@ -336,8 +334,7 @@ Elpi Accumulate lp:{{
     NewAnswer = assertion AnswerNT AnswerV,
     if (try_answer Subgoal NewAnswer Goal UpdatedGoal Remaining UpdatedRemaining)
        (
-       /* TODO: Update Remaining with unification from try_answer ! */
-       /* keep goal? clone? */
+        /* TODO: Update Remaining with unification from try_answer ! */
         new_consumer_node
          (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
          UpdatedGoal /* TODO: final answer here! */
@@ -358,17 +355,18 @@ Elpi Accumulate lp:{{
     (synth [ generator_node Goal [Instance | Instances ] | GeneratorStack ]
       ResumeStack AssertionTable RootAnswer) Query NewSynth FinalAnswer :-
     if (try_resolve Goal Instance Resolved Subgoals)
-        (
-        /* else (l. 14) */
-        (new_consumer_node
+       (
+         /* else (l. 14) */
+         new_consumer_node
           (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
-          Resolved /* TODO: does not follow protocol! dummy value? */
-          (consumer_node Resolved Subgoals) NewSynth)
-        )
-        (
-        /* If first subgoal of cnode does not resolve with solution then Continue */
-        NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
-      ).
+          Resolved
+          (consumer_node Resolved Subgoals) NewSynth
+       )
+       (
+         /* If first subgoal of cnode does not resolve with solution then Continue */
+         /* coq.say "Fall through", */
+         NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
+       ).
 
   tabled_typeclass_resolution_body
     (synth [ generator_node _ [] | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
@@ -385,7 +383,11 @@ Elpi Accumulate lp:{{
   synth_loop (synth _ _ _ (some Answer)) _ Fuel Answer.
   synth_loop MySynth Query Fuel FinalAnswer :-
     MySynth = synth Stack1 Stack2 _ _,
-    coq.say "synth round" Fuel Stack2 Stack1,
+    coq.say "synth round" Fuel,
+    ((Stack1 = [ generator_node (assertion (StkHd1T) (StkHd1V)) L1 | _ ] , coq.say "topG:" {coq.term->string StkHd1T} {coq.term->string StkHd1V} L1); true),
+    ((Stack2 = [ pr (consumer_node (assertion StkHd2T StkHd2V) _) (assertion AnsT AnsV) | _ ] , coq.say "topR:" {coq.term->string StkHd2T} {coq.term->string StkHd2V}, coq.say "answer:" {coq.term->string AnsT} {coq.term->string AnsV}); true),
+    coq.say "",
+    /* coq.say "synth round" Fuel Stack2 Stack1, */
     Fuel > 0,
     tabled_typeclass_resolution_body MySynth Query NextSynth FinalAnswer,
     !,
@@ -397,7 +399,7 @@ Elpi Accumulate lp:{{
     std.map.make assertion_equal AssertionTableEmpty,
     new_subgoal (synth [] [] AssertionTableEmpty none) Query root MySynth,
     /* while true do */
-    synth_loop MySynth Query 2000 FinalAnswer,
+    synth_loop MySynth Query 20000 FinalAnswer,
     !.
 }}.
 
@@ -433,6 +435,10 @@ Elpi Query lp:{{
   ground_term FinalAnswer.
 }}.
 
+(* https://github.com/leanprover/lean4/blob/cade21/src/Lean/Meta/SynthInstance.lean *)
+(* https://github.com/leanprover/lean4/blob/master/tests/lean/run/typeclass_diamond.lean *)
+(* Diamond *)
+
 (* https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi *)
 Elpi Accumulate lp:{{
   pred proof_search i:list gref i:list tc-instance i:term o:term.
@@ -453,15 +459,19 @@ Elpi Accumulate lp:{{
 Elpi Accumulate lp:{{
   pred tabled_proof_search i:list gref i:term o:term.
   tabled_proof_search Typeclasses Type PRoof :-
+    coq.say "TYPECLASSES" Typeclasses,
     MyGoal = assertion Type {{ _ }},
-    /* term_to_assertion Type none MyGoal, /* MyGoal is Assertion */ */
     tabled_typeclass_resolution MyGoal FinalAnswer,
     !,
+
+    /* Convert from result to proof term! */
+
     FinalAnswer = assertion FinalType FinalTerm,
     FinalProof = FinalTerm,
-    coq.say "FinalProof" FinalProof,
+    coq.say "FinalProof" {coq.term->string FinalProof},
     PRoof = FinalProof,
-    coq.say "Proof" PRoof "Done".
+    coq.say "Proof" {coq.term->string PRoof} "Done"
+    .
 
 
   pred search_context i:list prop i:term o:term.
@@ -474,7 +484,7 @@ Elpi Accumulate lp:{{
   solve (goal Ctx Trigger Type PRoof Args as G) V :-
     coq.TC.db-tc Typeclasses,
     coq.say "AGRS" Args Ctx,
-    coq.say "SEARCHING ..." Type, !,
+    coq.say "SEARCHING ..." {coq.term->string Type}, !,
     coq.say "V" V,
     (search_context Ctx Type PRoof ; tabled_proof_search Typeclasses Type PRoof),
     coq.say "SUCCESS FINDING INSTANCE".
@@ -528,135 +538,54 @@ Instance TestArgument : Argument unit := _.
 Instance AArg (alpha : Type) : Argument alpha := {}.
 Instance TestArgumentArg : Argument nat := _.
 
-(* Direct Simple Diamond example *)
-Class TD (n : nat).
-Class RD (n : nat).
-Class LD (n : nat).
-Class BD (n : nat).
+(* Partial Simple Diamond example *)
+Class T (n : nat).
+Class R (n : nat).
+Class L (n : nat).
+Class B (n : nat).
+Instance BtL n `{B n} : L n := {}.
+Instance BtR n `{B n} : R n := {}.
+Instance LtR n `{L n} : T n := {}.
+Instance RtR n `{R n} : T n := {}.
+Instance Ttb n `{T n} : B (S n) := {}.
 
-Instance BD0 : BD 0 := {}.
+Instance B0 : B 0 := {}.
 
-Instance BtL0 `{BD 0} : LD 0 := {}.
-Instance BtR0 `{BD 0} : RD 0 := {}.
-Instance LtR0 `{LD 0} : TD 0 := {}.
-Instance RtR0 `{RD 0} : TD 0 := {}.
-Instance Ttb0 `{TD 0} : BD (S 0) := {}.
+(* Instance Test0 : B 0 := _.
+Instance Test1 : B 1 := _.
+Instance Test2 : B 2 := _.
+   Instance Test5 : B 5 := _. *)
 
-Instance BtL1 `{BD 1} : LD 1 := {}.
-Instance BtR1 `{BD 1} : RD 1 := {}.
-Instance LtR1 `{LD 1} : TD 1 := {}.
-Instance RtR1 `{RD 1} : TD 1 := {}.
-Instance Ttb1 `{TD 1} : BD (S 1) := {}.
+(* Set Printing Implicit. *)
 
-Instance BtL2 `{BD 2} : LD 2 := {}.
-Instance BtR2 `{BD 2} : RD 2 := {}.
-Instance LtR2 `{LD 2} : TD 2 := {}.
-Instance RtR2 `{RD 2} : TD 2 := {}.
-Instance Ttb2 `{TD 2} : BD (S 2) := {}.
+(* 0.096 secs *)
+(* Time Instance Test10 : B 10 := _. *)
 
-Instance BtL3 `{BD 3} : LD 3 := {}.
-Instance BtR3 `{BD 3} : RD 3 := {}.
-Instance LtR3 `{LD 3} : TD 3 := {}.
-Instance RtR3 `{RD 3} : TD 3 := {}.
-Instance Ttb3 `{TD 3} : BD (S 3) := {}.
+(* 0.413 secs *)
+(* Time Instance Test20 : B 20 := _. *)
 
-Instance BtL4 `{BD 4} : LD 4 := {}.
-Instance BtR4 `{BD 4} : RD 4 := {}.
-Instance LtR4 `{LD 4} : TD 4 := {}.
-Instance RtR4 `{RD 4} : TD 4 := {}.
-Instance Ttb4 `{TD 4} : BD (S 4) := {}.
+(* 88.014 secs *)
+(* Time Instance Test100 : B 100 := _. *)
 
-Instance BtL5 `{BD 5} : LD 5 := {}.
-Instance BtR5 `{BD 5} : RD 5 := {}.
-Instance LtR5 `{LD 5} : TD 5 := {}.
-Instance RtR5 `{RD 5} : TD 5 := {}.
-Instance Ttb5 `{TD 5} : BD (S 5) := {}.
+(* 1176.986 secs *)
+Time Instance Test200 : B 200 := _.
 
-Instance BtL6 `{BD 6} : LD 6 := {}.
-Instance BtR6 `{BD 6} : RD 6 := {}.
-Instance LtR6 `{LD 6} : TD 6 := {}.
-Instance RtR6 `{RD 6} : TD 6 := {}.
-Instance Ttb6 `{TD 6} : BD (S 6) := {}.
+(* Time Instance Test500 : B 500 := _. *)
+(* Time Instance Test1000 : B 1000 := _. *)
 
-Instance BtL7 `{BD 7} : LD 7 := {}.
-Instance BtR7 `{BD 7} : RD 7 := {}.
-Instance LtR7 `{LD 7} : TD 7 := {}.
-Instance RtR7 `{RD 7} : TD 7 := {}.
-Instance Ttb7 `{TD 7} : BD (S 7) := {}.
+(*
+(* Diamond example in Rocq *)
+Class T (alpha : Type) (n : nat).
+Class R (alpha : Type) (n : nat).
+Class L (alpha : Type) (n : nat).
+Class B (alpha : Type) (n : nat).
+Instance BtL alpha n `{B alpha n} : L alpha n := {}.
+Instance BtR alpha n `{B alpha n} : R alpha n := {}.
+Instance LtR alpha n `{L alpha n} : T alpha n := {}.
+Instance RtR alpha n `{R alpha n} : T alpha n := {}.
+Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}.
 
-Instance BtL8 `{BD 8} : LD 8 := {}.
-Instance BtR8 `{BD 8} : RD 8 := {}.
-Instance LtR8 `{LD 8} : TD 8 := {}.
-Instance RtR8 `{RD 8} : TD 8 := {}.
-Instance Ttb8 `{TD 8} : BD (S 8) := {}.
+Instance B0 alpha : B alpha 0 := {}.
 
-Instance BtL9 `{BD 9} : LD 9 := {}.
-Instance BtR9 `{BD 9} : RD 9 := {}.
-Instance LtR9 `{LD 9} : TD 9 := {}.
-Instance RtR9 `{RD 9} : TD 9 := {}.
-Instance Ttb9 `{TD 9} : BD (S 9) := {}.
-
-Instance BtL10 `{BD 10} : LD 10 := {}.
-Instance BtR10 `{BD 10} : RD 10 := {}.
-Instance LtR10 `{LD 10} : TD 10 := {}.
-Instance RtR10 `{RD 10} : TD 10 := {}.
-Instance Ttb10 `{TD 10} : BD (S 10) := {}.
-
-Instance BtL11 `{BD 11} : LD 11 := {}.
-Instance BtR11 `{BD 11} : RD 11 := {}.
-Instance LtR11 `{LD 11} : TD 11 := {}.
-Instance RtR11 `{RD 11} : TD 11 := {}.
-Instance Ttb11 `{TD 11} : BD (S 11) := {}.
-
-Instance TestTD10 : TD 11 := _.
-
-(* (* Partial Simple Diamond example *) *)
-(* Class T (n : nat). *)
-(* Class R (n : nat). *)
-(* Class L (n : nat). *)
-(* Class B (n : nat). *)
-(* Instance BtL n `{B n} : L n := {}. *)
-(* Instance BtR n `{B n} : R n := {}. *)
-(* Instance LtR n `{L n} : T n := {}. *)
-(* Instance RtR n `{R n} : T n := {}. *)
-(* Instance Ttb n `{T n} : B (S n) := {}. *)
-
-(* Instance B0 : B 0 := {}. *)
-
-(* Instance Test0 : B 0 := _. *)
-(* Instance Test1 : B 1 := _. *)
-(* Instance Test2 : B 2 := _. *)
-
-(* Instance Test10 : B 10 := _. *)
-
-(* Instance Test4 : B 4 := _. *)
-(* Instance Test100 : B 10 := _. *)
-
-(* (* Partial Diamond example *) *)
-(* Class T (alpha : Type) (n : nat). *)
-(* Class R (alpha : Type) (n : nat). *)
-(* Class L (alpha : Type) (n : nat). *)
-(* Class B (alpha : Type) (n : nat). *)
-(* Instance BtL alpha n `{B alpha n} : L alpha n := {}. *)
-(* Instance BtR alpha n `{B alpha n} : R alpha n := {}. *)
-(* Instance LtR alpha n `{L alpha n} : T alpha n := {}. *)
-(* Instance RtR alpha n `{R alpha n} : T alpha n := {}. *)
-
-(* Instance B0 alpha : B alpha 0 := {}. *)
-
-(* Instance Test0 : B unit 0 := _. *)
-
-(* (* Diamond example in Rocq *) *)
-(* Class T (alpha : Type) (n : nat). *)
-(* Class R (alpha : Type) (n : nat). *)
-(* Class L (alpha : Type) (n : nat). *)
-(* Class B (alpha : Type) (n : nat). *)
-(* Instance BtL alpha n `{B alpha n} : L alpha n := {}. *)
-(* Instance BtR alpha n `{B alpha n} : R alpha n := {}. *)
-(* Instance LtR alpha n `{L alpha n} : T alpha n := {}. *)
-(* Instance RtR alpha n `{R alpha n} : T alpha n := {}. *)
-(* Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}. *)
-
-(* Instance B0 alpha : B alpha 0 := {}. *)
-
-(* Fail Instance TtR20 : B unit 20 := _. *)
+Fail Instance TtR20 : B unit 20 := _.
+*)
