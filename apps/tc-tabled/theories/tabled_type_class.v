@@ -364,7 +364,6 @@ Elpi Accumulate lp:{{
        )
        (
          /* If first subgoal of cnode does not resolve with solution then Continue */
-         /* coq.say "Fall through", */
          NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
        ).
 
@@ -498,46 +497,6 @@ Elpi TC Solver Override TC.TabledSolver All.
 
 Elpi Export TC.TabledSolver.
 
-(* Trivial test *)
-Class Constant := {}.
-Instance Con : Constant := {}.
-
-(* Check holes *)
-Elpi Query lp:{{
-  /* {{ Instance TestConstant : Constant := _ }} */
-  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Constant }} V ok,
-  coq.say "Elaborates to" V.
-}}.
-Instance TestConstant : Constant := _.
-
-(* Test instance dependency *)
-Class Dependency := {}.
-
-Instance Dep `{Constant} : Dependency := {}.
-
-Elpi Query lp:{{
-  /* {{ Instance TestConstant : Constant := _ }} */
-  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Constant }} V ok,
-  coq.say "Elaborates to" V.
-}}.
-
-Elpi Query lp:{{
-  coq.say "Dep" {{ Constant }},
-  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Constant }} _ ok, !,
-  coq.elaborate-skeleton {{ lib:elpi.hole }} {{ Dependency }} V ok,
-  coq.say "Elaborates to" V.
-}}.
-
-(* Instance TestDependency : Dependency := _. *)
-
-(* Trivial test *)
-Class Argument (alpha : Type) := {}.
-Instance Arg : Argument unit := {}.
-Instance TestArgument : Argument unit := _.
-
-Instance AArg (alpha : Type) : Argument alpha := {}.
-Instance TestArgumentArg : Argument nat := _.
-
 (* Partial Simple Diamond example *)
 Class T (n : nat).
 Class R (n : nat).
@@ -551,12 +510,10 @@ Instance Ttb n `{T n} : B (S n) := {}.
 
 Instance B0 : B 0 := {}.
 
-(* Instance Test0 : B 0 := _.
-Instance Test1 : B 1 := _.
-Instance Test2 : B 2 := _.
-   Instance Test5 : B 5 := _. *)
-
-(* Set Printing Implicit. *)
+(* Instance Test0 : B 0 := _. *)
+(* Instance Test1 : B 1 := _. *)
+(* Instance Test2 : B 2 := _. *)
+(* Instance Test5 : B 5 := _. *)
 
 (* 0.096 secs *)
 (* Time Instance Test10 : B 10 := _. *)
@@ -568,24 +525,7 @@ Instance Test2 : B 2 := _.
 (* Time Instance Test100 : B 100 := _. *)
 
 (* 1176.986 secs *)
-Time Instance Test200 : B 200 := _.
+(* Time Instance Test200 : B 200 := _. *)
 
 (* Time Instance Test500 : B 500 := _. *)
 (* Time Instance Test1000 : B 1000 := _. *)
-
-(*
-(* Diamond example in Rocq *)
-Class T (alpha : Type) (n : nat).
-Class R (alpha : Type) (n : nat).
-Class L (alpha : Type) (n : nat).
-Class B (alpha : Type) (n : nat).
-Instance BtL alpha n `{B alpha n} : L alpha n := {}.
-Instance BtR alpha n `{B alpha n} : R alpha n := {}.
-Instance LtR alpha n `{L alpha n} : T alpha n := {}.
-Instance RtR alpha n `{R alpha n} : T alpha n := {}.
-Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}.
-
-Instance B0 alpha : B alpha 0 := {}.
-
-Fail Instance TtR20 : B unit 20 := _.
-*)
