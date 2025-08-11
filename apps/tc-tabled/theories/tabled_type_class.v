@@ -283,13 +283,11 @@ Elpi Accumulate lp:{{
       (synth GeneratorStack NewResumeStack NewAssertionTable NewRootAnswer) :-
     /* for each solution to g, push new cnode onto resume stack with it */
     std.map.find Goal AssertionTable (entry Waiters Answers),
-    /* add new cnode to g's dependents */
-    NewAnswers = [ Answer | Answers ],
     /* for each solution to g, push new cnode onto resume stack with it */
     std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
     /* add new cnode to g's dependents */
     /* std.map.remove Goal AssertionTable TempAssertionTable, */
-    std.map.add Goal (entry Waiters NewAnswers) AssertionTable NewAssertionTable,
+    std.map.add Goal (entry Waiters [ Answer | Answers ]) AssertionTable NewAssertionTable,
     !.
 
   new_consumer_node

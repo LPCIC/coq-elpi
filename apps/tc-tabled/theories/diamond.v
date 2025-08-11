@@ -1,4 +1,11 @@
+From elpi.apps.tc_tabled Require Import tabled_type_class.
+
 (* Diamond example in Rocq *)
+Elpi TC Solver Activate TC.TabledSolver.
+Elpi TC Solver Override TC.TabledSolver All.
+
+Elpi Export TC.TabledSolver.
+
 Class T (alpha : Type) (n : nat).
 Class R (alpha : Type) (n : nat).
 Class L (alpha : Type) (n : nat).
