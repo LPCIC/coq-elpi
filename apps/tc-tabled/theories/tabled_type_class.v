@@ -6,20 +6,179 @@ Elpi TC Solver Register TC.TabledSolver.
 
 Elpi Accumulate lp:{{
 pred binary_search i:K i:(pred i:K i:K o:cmp) i:int i:int i:list K o:int o:bool.
+/* binary_search A Cmp L R [ X | XS ] Out Approx :-
+  /* Linear search .. */
+  if (Cmp X A lt)
+     (binary_search A Cmp (L + 1) R XS Out Approx)
+     (Out is L,
+      if (Cmp X A eq)
+         (Approx = ff)
+         (Approx = tt))
+  , !.
+binary_search A Cmp L _ [] Out Approx :-
+!, Approx = tt, Out is L. */
 binary_search A Cmp L R XS Out Approx :-
   if (le_ L R)
    	(M is L + ((R - L) div 2),
    	std.nth M XS X,
    	Cmp X A C,
+    !,
    	if (C = lt)
- 	     (binary_search A Cmp (M + 1) R XS Out Approx)
+ 	     (!, binary_search A Cmp (M + 1) R XS Out Approx)
  	     (if (C = gt)
- 	         (binary_search A Cmp L (M - 1) XS Out Approx)
- 	         (Out is M, Approx = ff)))
+ 	         (!, binary_search A Cmp L (M - 1) XS Out Approx)
+ 	         (!, Out is M, Approx = ff)))
  	  (Out is L, Approx = tt)
-  , !.
+    , !.
 }}.
 
+Elpi Accumulate lp:{{
+kind std.map2 type -> type -> type.
+type std.map2 std.map2.private.map K V -> (pred i:K, i:K, o:cmp) -> std.map2 K V.
+
+namespace std.map2 {
+
+% [make Eq Ltn M] builds an empty map M where keys are compared using Eq and Ltn
+pred make i:(pred i:K, i:K, o:cmp), o:std.map2 K V.
+make Cmp (std.map2 private.empty Cmp).
+
+
+% [find K M V] looks in M for the value V associated to K
+pred find i:K, i:std.map2 K V, o:V.
+find K (std.map2 M Cmp) V :- 
+  coq.say "Find",
+  private.find M Cmp K V,
+  coq.say "FY".
+find _ _ _ :- coq.say "FN", fail.
+
+% [add K V M M1] M1 is M where K is bound to V
+pred add i:K, i:V, i:std.map2 K V, o:std.map2 K V.
+add K V (std.map2 M Cmp) (std.map2 M1 Cmp) :- 
+  private.add M Cmp K V M1.
+
+% [update K V M M1] M1 is M where K is bound to V
+pred update i:K, i:V, i:std.map2 K V, o:std.map2 K V.
+update K V (std.map2 M Cmp) (std.map2 M1 Cmp) :- 
+  private.update M Cmp K V M1.
+
+% [remove K M M1] M1 is M where K is unbound
+pred remove i:K, i:std.map2 K V, o:std.map2 K V.
+remove K (std.map2 M Cmp) (std.map2 M1 Cmp) :- private.remove M Cmp K M1.
+
+% [bindings M L] L is the key-value pairs in increasing order
+pred bindings i:std.map2 K V, o:list (pair K V).
+bindings (std.map2 M _) L :- private.bindings M [] L.
+
+namespace private {
+
+% Taken from OCaml's map.ml
+kind map type -> type -> type.
+type empty map K V.
+type node map K V -> K -> V -> map K V -> int -> map K V.
+
+pred height i:map K V, o:int.
+height empty 0.
+height (node _ _ _ _ H) H.
+
+pred create i:map K V, i:K, i:V, i:map K V, o:map K V.
+create L K V R (node L K V R H) :- H is {std.max {height L} {height R} } + 1.
+
+pred print_m i:(map K V) o:string.
+print_m (empty) "emtpy". 
+print_m (node L _ _ R I) S :-
+  print_m L SL,
+  print_m R SR,
+  S is "(" ^ SL ^ "," ^ "," ^ SR ^ ")"
+  .
+
+pred bal i:map K V, i:K, i:V, i:map K V, o:map K V.
+bal L K V R T :-
+  height L HL,
+  height R HR,
+  HL2 is HL + 2,
+  HR2 is HR + 2,
+  bal.aux HL HR HL2 HR2 L K V R T.
+
+pred bal.aux i:int, i:int, i:int, i:int, i:map K V, i:K, i:V, i:map K V, o:map K V.
+bal.aux HL _ _ HR2 (node LL LV LD LR _) X D R T :-
+  HL > HR2, {height LL} >= {height LR}, !,
+  create LL LV LD {create LR X D R} T.
+bal.aux HL _ _ HR2 (node LL LV LD (node LRL LRV LRD LRR _) _) X D R T :-
+  HL > HR2, !,
+  create {create LL LV LD LRL} LRV LRD {create LRR X D R} T.
+bal.aux _ HR HL2 _ L X D (node RL RV RD RR _) T :-
+  HR > HL2, {height RR} >= {height RL}, !,
+  create {create L X D RL} RV RD RR T.
+bal.aux _ HR HL2 _ L X D (node (node RLL RLV RLD RLR _) RV RD RR _) T :-
+  HR > HL2, !,
+  create {create L X D RLL} RLV RLD {create RLR RV RD RR} T.
+bal.aux _ _ _ _ L K V R T :- create L K V R T.
+
+pred add i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
+add empty _ K V T :- create empty K V empty T.
+add (node _ X _ _ _ as M) Cmp X1 XD M1 :- Cmp X1 X E, !, add.aux E M Cmp X1 XD M1.
+
+pred add.aux i:cmp, i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
+add.aux eq (node L _ _ R H) _   X XD T :- T = node L X XD R H, !. 
+add.aux lt (node L V D R _) Cmp X XD T :- bal {add L Cmp X XD} V D R T, !.
+add.aux gt (node L V D R _) Cmp X XD T :- bal L V D {add R Cmp X XD} T, !.
+
+pred update i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
+update (node _ X _ _ _ as M) Cmp X1 XD M1 :- 
+  !, Cmp X1 X E, !, update.aux E M Cmp X1 XD M1, !.
+
+pred update.aux i:cmp, i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
+update.aux eq (node L _ _ R H) _   X XD T :- 
+  T = node L X XD R H, !. 
+update.aux lt (node L V D R H) Cmp X XD T :- 
+  T = node {update L Cmp X XD} V D R H, !.
+update.aux gt (node L V D R H) Cmp X XD T :- 
+  T = node L V D {update R Cmp X XD} H, !.
+
+pred find i:map K V, i:(pred i:K, i:K, o:cmp), i:K, o:V.
+find ((node L K1 V1 R _) as M) Cmp K V :- 
+  Cmp K K1 E, find.aux E Cmp L R V1 K V.
+
+pred find.aux i:cmp, i:(pred i:K, i:K, o:cmp), i:map K V, i:map K V, i:V, i:K, o:V.
+find.aux eq _   _ _ V _ V.
+find.aux lt Cmp L _ _ K V :- find L Cmp K V.
+find.aux gt Cmp _ R _ K V :- find R Cmp K V.
+
+pred remove-min-binding i:map K V, o:map K V.
+remove-min-binding (node empty _ _ R _) R :- !.
+remove-min-binding (node L V D R _) X :- bal {remove-min-binding L} V D R X.
+
+pred min-binding i:map K V, o:K, o:V.
+min-binding (node empty V D _ _) V D :- !.
+min-binding (node L _ _ _ _) V D :- min-binding L V D.
+
+pred merge i:map K V, i:map K V, o:map K V.
+merge empty X X :- !.
+merge X empty X :- !.
+merge M1 M2 R :-
+  min-binding M2 X D,
+  bal M1 X D {remove-min-binding M2} R.
+
+pred remove i:map K V, i:(pred i:K, i:K, o:cmp), i:K, o:map K V.
+remove empty _ _ empty :- !.
+remove (node L V D R _) Cmp X M :- Cmp X V E, remove.aux E Cmp L R V D X M.
+
+pred remove.aux i:cmp, i:(pred i:K, i:K, o:cmp), i:map K V, i:map K V, i:K, i:V, i:K, o:map K V.
+remove.aux eq _   L R _ _ _ M :- merge L R M.
+remove.aux lt Cmp L R V D X M :- bal {remove L Cmp X} V D R M.
+remove.aux gt Cmp L R V D X M :- bal L V D {remove R Cmp X} M.
+
+pred bindings i:map K V, i:list (pair K V), o:list (pair K V).
+bindings empty X X.
+bindings (node L V D R _) X X1 :-
+  bindings L [pr V D|{bindings R X}] X1.
+
+
+} % std.map2.private
+} % std.map2
+}}.
+
+(*
 Elpi Accumulate lp:{{
 kind mymap type -> type -> type.
 type mymap list (pair K V) -> (pred i:K i:K o:cmp) -> mymap K V.
@@ -34,22 +193,49 @@ cmp_fst_pair Cmp (pr K1 _) (pr K2 _) C :- Cmp K1 K2 C.
 % [find K M V] looks in M for the value V associated to K
 pred find i:K, i:mymap K V, o:V.
 find K (mymap M Cmp) V :-
+  coq.say "Find",
   std.length M Len,
-  binary_search (pr K V) (cmp_fst_pair Cmp) 0 (Len - 1) M I ff,
+  binary_search (pr K (_ /* dummy value */)) (cmp_fst_pair Cmp) 0 (Len - 1) M I ff,
+  !,
   std.nth I M (pr KK V),
   Cmp KK K eq,
-  !.
+  !,
+  coq.say "FY".
+find _ _ _ :- coq.say "FN", fail.
+
+pred insert_index i:int i:V i:list V o:list V.
+insert_index I V L O :- /* std.append F [ (pr K VI) | T  ] M1 */
+  std.split-at I L F T,
+  !,
+  std.append F [ V | T ] O.
+/* insert_index 0 V L [ V | L ].
+insert_index N V [ X | L ] [ X | O ] :-
+  NN is N - 1,
+  insert_index NN V L O. */
+
+pred update_index i:int i:V i:list V o:list V.
+update_index I V L O :- /* T = [ pr KK _ | VS ] , Cmp KK K eq , std.append F [ (pr K VI) | VS ] M1 */
+  coq.say "split",
+  std.split-at I L F [ _ | T ],
+  !,
+  coq.say "append",
+  std.append F [ V | T ] O.
+/* update_index 0 V [ _ | L ] [ V | L ] :- !.
+update_index N V [ X | L ] [ X | O ] :-
+  NN is N - 1,
+  !,
+  update_index NN V L O,
+  !. */
 
 % [add K V M M1] M1 is M where K is bound to V
 pred add i:K, i:V, i:mymap K V, o:mymap K V.
 add K V (mymap M Cmp) (mymap M1 Cmp) :-
   std.length M Len,
   coq.say "Search",
-  binary_search (pr K V) (cmp_fst_pair Cmp) 0 (Len - 1) M I Approx,
-  std.split-at I M F T,
+  binary_search (pr K (_ /* dummy value */)) (cmp_fst_pair Cmp) 0 (Len - 1) M I Approx,
   if (Approx = tt)
-     (coq.say "Insert", std.append F [ (pr K V) | T  ] M1) /* insert */
-     (coq.say "Update", T = [ pr KK _ | VS ] , Cmp KK K eq , std.append F [ (pr K V) | VS ] M1) /* update */
+  (coq.say "Insert", insert_index I (pr K V) M M1) /* insert */
+  (coq.say "Update", update_index I (pr K V) M M1 ) /* update */
   , coq.say "Done"
   , !.
 }}.
@@ -62,6 +248,7 @@ Elpi Query lp:{{
   add "hello2" "28" UpdatedMap MoreUpdatedMap,
   find "hello" MoreUpdatedMap Result.
 }}.
+ *)
 
 (* https://github.com/leanprover/lean4/blob/cade21/src/Lean/Meta/SynthInstance.lean *)
 (* https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi *)
@@ -94,7 +281,7 @@ Elpi Accumulate lp:{{
   typeabbrev instance tc-instance.
 
   kind class_instances type.
-  type class_instances mymap assertion (list instance) -> class_instances.
+  type class_instances std.map2 assertion (list instance) -> class_instances.
 
   kind generator_node type.
   type generator_node assertion -> list instance -> generator_node.
@@ -102,7 +289,7 @@ Elpi Accumulate lp:{{
   kind synth type.
   type synth list generator_node ->
     resume_stack ->
-    mymap assertion entry ->
+    std.map2 assertion entry ->
     option assertion ->
     synth.
 }}.
@@ -130,6 +317,7 @@ Elpi Accumulate lp:{{
 
   pred assertion_equal i:assertion i:assertion o:cmp.
   assertion_equal (assertion A _) (assertion B _) Cmp :-
+  /* coq.say {coq.term->string A} "VS" {coq.term->string B}, */
     type_equal A B Cmp,
     !
     /* Deterministic ! */
@@ -151,7 +339,7 @@ Elpi Accumulate lp:{{
     (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
     Subgoal Waiter
     (synth NewGeneratorStack ResumeStack NewAssertionTable RootAnswer) :-
-    add Subgoal (entry [Waiter] []) AssertionTable NewAssertionTable,
+    std.map2.add Subgoal (entry [Waiter] []) AssertionTable NewAssertionTable,
     assertion_typeclass Subgoal Name,
     coq.TC.db-for Name Instances,
     NewGeneratorStack = [(generator_node Subgoal Instances) | GeneratorStack]
@@ -343,13 +531,12 @@ Elpi Accumulate lp:{{
       (consumer_node Goal [])
       (synth GeneratorStack NewResumeStack NewAssertionTable NewRootAnswer) :-
     /* for each solution to g, push new cnode onto resume stack with it */
-    find Goal AssertionTable (entry Waiters Answers),
+    std.map2.find Goal AssertionTable (entry Waiters Answers),
     /* for each solution to g, push new cnode onto resume stack with it */
     std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
     /* add new cnode to g's dependents */
-    /* std.map.remove Goal AssertionTable TempAssertionTable, */
-    coq.say "Add",
-    add Goal (entry Waiters [ Answer | Answers ]) AssertionTable NewAssertionTable,
+    coq.say "Update",
+    std.map2.update Goal (entry Waiters [ Answer | Answers ]) AssertionTable NewAssertionTable,
     coq.say "Done",
     !.
 
@@ -359,7 +546,7 @@ Elpi Accumulate lp:{{
       (consumer_node _ [ Subgoal | _ ] as CN)
       (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer) :-
       /* TODO: Consumer node is general instead of variable or hole */
-      if (find Subgoal AssertionTable (entry Waiters Answers))
+      if (std.map2.find Subgoal AssertionTable (entry Waiters Answers))
          (
           /* Map answers with consumer node */
           /* Add cnode onto G's dependents? */
@@ -367,8 +554,8 @@ Elpi Accumulate lp:{{
           std.append TempResumeStack ResumeStack NewResumeStack,
 
           NewWaiters = [ callback CN | Waiters ],
-              /* std.map.remove Subgoal AssertionTable TempAssertionTable, */
-          add Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
+              /* std.map2.remove Subgoal AssertionTable TempAssertionTable, */
+          std.map2.update Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
           NewGeneratorStack = GeneratorStack
          )
          (
@@ -388,7 +575,7 @@ Elpi Accumulate lp:{{
   tabled_typeclass_resolution_body (synth _ _ _ (some Answer)) _ _ Answer.
 
   tabled_typeclass_resolution_body
-    (synth GeneratorStack [ (pr (consumer_node Goal [ Subgoal | Remaining ]) Answer) | ResumeStack ]
+      (synth GeneratorStack [ (pr (consumer_node Goal [ Subgoal | Remaining ]) Answer) | ResumeStack ]
        AssertionTable RootAnswer) Query MySynth FinalAnswer :-
     Answer = assertion AnswerT AnswerV,
     coq.typecheck AnswerV AnswerNT ok,
@@ -415,8 +602,10 @@ Elpi Accumulate lp:{{
   tabled_typeclass_resolution_body
     (synth [ generator_node Goal [Instance | Instances ] | GeneratorStack ]
       ResumeStack AssertionTable RootAnswer) Query NewSynth FinalAnswer :-
+    coq.say "Try",
     if (try_resolve Goal Instance Resolved Subgoals)
        (
+         coq.say "YES",
          /* else (l. 14) */
          new_consumer_node
           (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
@@ -424,6 +613,7 @@ Elpi Accumulate lp:{{
           (consumer_node Resolved Subgoals) NewSynth
        )
        (
+         coq.say "NO",
          /* If first subgoal of cnode does not resolve with solution then Continue */
          NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
        ).
@@ -452,11 +642,12 @@ Elpi Accumulate lp:{{
     tabled_typeclass_resolution_body MySynth Query NextSynth FinalAnswer,
     !,
     NextFuel is Fuel - 1,
+    coq.say "Copy synth?",
     synth_loop NextSynth Query NextFuel FinalAnswer.
 
   pred tabled_typeclass_resolution i:assertion o:assertion.
   tabled_typeclass_resolution Query FinalAnswer :-
-    make assertion_equal AssertionTableEmpty,
+    std.map2.make assertion_equal AssertionTableEmpty,
     new_subgoal (synth [] [] AssertionTableEmpty none) Query root MySynth,
     /* while true do */
     synth_loop MySynth Query 20000 FinalAnswer,
