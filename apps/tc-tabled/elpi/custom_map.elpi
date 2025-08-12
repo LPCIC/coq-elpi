@@ -56,10 +56,8 @@ update_index N V [ X | L ] [ X | O ] :-
 pred custom_add i:K, i:V, i:custom_map K V, o:custom_map K V.
 custom_add K V (custom_map M Cmp) (custom_map M1 Cmp) :-
   std.length M Len,
-  coq.say "Search",
   binary_search (pr K (_ /* dummy value */)) (cmp_fst_pair Cmp) 0 (Len - 1) M I Approx,
   if (Approx = tt)
-  (coq.say "Insert", insert_index I (pr K V) M M1) /* insert */
-  (coq.say "Update", update_index I (pr K V) M M1 ) /* update */
-  , coq.say "Done"
+     (insert_index I (pr K V) M M1) /* insert */
+     (update_index I (pr K V) M M1 ) /* update */
   , !.

@@ -9,11 +9,7 @@ namespace std.map2 {
 
   % [find K M V] looks in M for the value V associated to K
   pred find i:K, i:std.map2 K V, o:V.
-  find K (std.map2 M Cmp) V :-
-    coq.say "Find",
-    private.find M Cmp K V,
-    coq.say "FY".
-  find _ _ _ :- coq.say "FN", fail.
+  find K (std.map2 M Cmp) V :- private.find M Cmp K V.
 
   % [add K V M M1] M1 is M where K is bound to V
   pred add i:K, i:V, i:std.map2 K V, o:std.map2 K V.
