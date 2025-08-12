@@ -490,40 +490,9 @@ Elpi Accumulate lp:{{
   solve _ _ :- coq.ltac.fail _ "No auto".
 }}.
 
+(*
 Elpi TC Solver Activate TC.TabledSolver.
 Elpi TC Solver Override TC.TabledSolver All.
+ *)
 
 Elpi Export TC.TabledSolver.
-
-(* Partial Simple Diamond example *)
-Class T (n : nat).
-Class R (n : nat).
-Class L (n : nat).
-Class B (n : nat).
-Instance BtL n `{B n} : L n := {}.
-Instance BtR n `{B n} : R n := {}.
-Instance LtR n `{L n} : T n := {}.
-Instance RtR n `{R n} : T n := {}.
-Instance Ttb n `{T n} : B (S n) := {}.
-
-Instance B0 : B 0 := {}.
-
-(* Instance Test0 : B 0 := _. *)
-(* Instance Test1 : B 1 := _. *)
-(* Instance Test2 : B 2 := _. *)
-(* Instance Test5 : B 5 := _. *)
-
-(* 0.096 secs *)
-(* Time Instance Test10 : B 10 := _. *)
-
-(* 0.413 secs *)
-(* Time Instance Test20 : B 20 := _. *)
-
-(* 88.014 secs *)
-(* Time Instance Test100 : B 100 := _. *)
-
-(* 1176.986 secs *)
-(* Time Instance Test200 : B 200 := _. *)
-
-(* Time Instance Test500 : B 500 := _. *)
-(* Time Instance Test1000 : B 1000 := _. *)

@@ -1,11 +1,3 @@
-From elpi.apps.tc_tabled Require Import tabled_type_class.
-
-(* Diamond example in Rocq *)
-Elpi TC Solver Activate TC.TabledSolver.
-Elpi TC Solver Override TC.TabledSolver All.
-
-Elpi Export TC.TabledSolver.
-
 Class T (alpha : Type) (n : nat).
 Class R (alpha : Type) (n : nat).
 Class L (alpha : Type) (n : nat).
@@ -18,6 +10,7 @@ Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}.
 
 Instance B0 alpha : B alpha 0 := {}.
 
+(* Tabled: Finished transaction in 49.593 secs (49.415u,0.117s) (successful) *)
 (* Rocq: Finished transaction in 0.151 secs (0.151u,0.s) (successful) *)
 Module Test100. Time Instance TtR100 : B unit 100 := _. End Test100.
 
@@ -30,25 +23,66 @@ Module Test300. Time Instance TtR300 : B unit 300 := _. End Test300.
 (* Rocq: Finished transaction in 12.245 secs (11.568u,0.091s) (successful) *)
 Module Test400. Time Instance TtR400 : B unit 400 := _. End Test400.
 
-(* Rocq: Finished transaction in 23.508 secs (22.228u,0.258s) (successful) *)
-Module Test500. Time Instance TtR500 : B unit 500 := _. End Test500.
+(* (* (* Rocq: Finished transaction in 23.508 secs (22.228u,0.258s) (successful) *) *) *)
+(* (* Module Test500. Time Instance TtR500 : B unit 500 := _. End Test500. *) *)
 
-(* Rocq: Finished transaction in 37.784 secs (37.582u,0.059s) (successful) *)
-Module Test600. Time Instance TtR600 : B unit 600 := _. End Test600.
+(* (* (* Rocq: Finished transaction in 37.784 secs (37.582u,0.059s) (successful) *) *) *)
+(* (* Module Test600. Time Instance TtR600 : B unit 600 := _. End Test600. *) *)
 
-(* Rocq: Finished transaction in 66.476 secs (66.261u,0.106s) (successful) *)
-Module Test700. Time Instance TtR700 : B unit 700 := _. End Test700.
+(* (* (* Rocq: Finished transaction in 66.476 secs (66.261u,0.106s) (successful) *) *) *)
+(* (* Module Test700. Time Instance TtR700 : B unit 700 := _. End Test700. *) *)
 
-(* Rocq: Finished transaction in 77.99 secs (77.174u,0.11s) (successful) *)
-Module Test800. Time Instance TtR800 : B unit 800 := _. End Test800.
+(* (* (* Rocq: Finished transaction in 77.99 secs (77.174u,0.11s) (successful) *) *) *)
+(* (* Module Test800. Time Instance TtR800 : B unit 800 := _. End Test800. *) *)
 
-(* Rocq: Finished transaction in 106.952 secs (106.779u,0.025s) (successful) *)
-Module Test900. Time Instance TtR900 : B unit 900 := _. End Test900.
+(* (* (* Rocq: Finished transaction in 106.952 secs (106.779u,0.025s) (successful) *) *) *)
+(* (* Module Test900. Time Instance TtR900 : B unit 900 := _. End Test900. *) *)
 
-(* Rocq: Finished transaction in 184.144 secs (183.71u,0.117s) (successful) *)
-Module Test1000. Time Instance TtR1000 : B unit 1000 := _. End Test1000.
+(* (* (* Rocq: Finished transaction in 184.144 secs (183.71u,0.117s) (successful) *) *) *)
+(* (* Module Test1000. Time Instance TtR1000 : B unit 1000 := _. End Test1000. *) *)
 
-(* Ratio: ~ time: 2^(x/100) secs *)
+(* (* (* Ratio: ~ time: 2^(x/100) secs *) *) *)
 
-(* Rocq: Finished transaction in 1476.371 secs (1463.871u,3.989s) (successful) *)
-Module Test2000. Time Instance TtR2000 : B unit 2000 := _. End Test2000.
+(* (* (* Rocq: Finished transaction in 1476.371 secs (1463.871u,3.989s) (successful) *) *) *)
+(* (* Module Test2000. Time Instance TtR2000 : B unit 2000 := _. End Test2000. *) *)
+
+From elpi Require Import elpi.
+From elpi.apps Require Import tc.
+
+(* Elpi TC Solver Activate TC.Solver. *)
+Elpi TC Solver Override TC.Solver All.
+
+TC.AddAllClasses.
+TC.AddAllInstances.
+
+(* TC: Finished transaction in 0.124 secs (0.122u,0.001s) (successful) *)
+Module Test100TC. Time Instance TtR100 : B unit 100 := _. End Test100TC.
+
+(* TC: Finished transaction in 0.313 secs (0.309u,0.003s) (successful) *)
+Module Test200TC. Time Instance TtR200 : B unit 200 := _. End Test200TC.
+
+(* TC: Finished transaction in 0.636 secs (0.629u,0.006s) (successful) *)
+Module Test300TC. Time Instance TtR300 : B unit 300 := _. End Test300TC.
+
+(* TC: Finished transaction in 1.082 secs (1.061u,0.02s) (successful) *)
+Module Test400TC. Time Instance TtR400 : B unit 400 := _. End Test400TC.
+
+Elpi TC Solver Override TC.Solver None.
+
+From elpi.apps.tc_tabled Require Import tabled_type_class.
+
+(* Diamond example in Rocq *)
+Elpi TC Solver Activate TC.TabledSolver.
+Elpi TC Solver Override TC.TabledSolver All.
+
+(* Tabled: Finished transaction in 49.593 secs (49.415u,0.117s) (successful) *)
+Module Test100Tabled. Time Instance TtR100 : B unit 100 := _. End Test100Tabled.
+
+
+(* Module Test200Tabled. Time Instance TtR200 : B unit 200 := _. End Test200Tabled. *)
+
+
+(* Module Test300Tabled. Time Instance TtR300 : B unit 300 := _. End Test300Tabled. *)
+
+
+(* Module Test400Tabled. Time Instance TtR400 : B unit 400 := _. End Test400Tabled. *)
