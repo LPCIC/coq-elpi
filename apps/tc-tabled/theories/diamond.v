@@ -1,3 +1,6 @@
+(* https://github.com/leanprover/lean4/blob/master/tests/lean/run/typeclass_diamond.lean *)
+
+(* Diamond *)
 Class T (alpha : Type) (n : nat).
 Class R (alpha : Type) (n : nat).
 Class L (alpha : Type) (n : nat).
@@ -17,11 +20,11 @@ Module Test100. Time Instance TtR100 : B unit 100 := _. End Test100.
 (* Rocq: Finished transaction in 1.372 secs (1.195u,0.03s) (successful) *)
 Module Test200. Time Instance TtR200 : B unit 200 := _. End Test200.
 
-(* Rocq: Finished transaction in 4.842 secs (4.084u,0.147s) (successful) *)
-Module Test300. Time Instance TtR300 : B unit 300 := _. End Test300.
+(* (* Rocq: Finished transaction in 4.842 secs (4.084u,0.147s) (successful) *) *)
+(* Module Test300. Time Instance TtR300 : B unit 300 := _. End Test300. *)
 
-(* Rocq: Finished transaction in 12.245 secs (11.568u,0.091s) (successful) *)
-Module Test400. Time Instance TtR400 : B unit 400 := _. End Test400.
+(* (* Rocq: Finished transaction in 12.245 secs (11.568u,0.091s) (successful) *) *)
+(* Module Test400. Time Instance TtR400 : B unit 400 := _. End Test400. *)
 
 (* (* (* Rocq: Finished transaction in 23.508 secs (22.228u,0.258s) (successful) *) *) *)
 (* (* Module Test500. Time Instance TtR500 : B unit 500 := _. End Test500. *) *)
@@ -75,14 +78,14 @@ From elpi.apps.tc_tabled Require Import tabled_type_class.
 Elpi TC Solver Activate TC.TabledSolver.
 Elpi TC Solver Override TC.TabledSolver All.
 
-(* Tabled: Finished transaction in 49.593 secs (49.415u,0.117s) (successful) *)
-Module Test100Tabled. Time Instance TtR100 : B unit 100 := _. End Test100Tabled.
+Module Test20Tabled. Time Instance TtR20 : B unit 20 := _. End Test20Tabled.
 
+(* (* Finished transaction in 55.794 secs (55.684u,0.097s) (successful) *) *)
+(* Module Test100Tabled. Time Instance TtR100 : B unit 100 := _. End Test100Tabled. *)
 
+(* (* Finished transaction in 737.925 secs (736.366u,0.837s) (successful) *) *)
 (* Module Test200Tabled. Time Instance TtR200 : B unit 200 := _. End Test200Tabled. *)
 
-
 (* Module Test300Tabled. Time Instance TtR300 : B unit 300 := _. End Test300Tabled. *)
-
 
 (* Module Test400Tabled. Time Instance TtR400 : B unit 400 := _. End Test400Tabled. *)

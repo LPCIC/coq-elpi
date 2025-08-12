@@ -1,9 +1,70 @@
 From elpi Require Import elpi.
 From elpi.apps Require Import tc.
 
-#[arguments(raw)] Elpi Tactic TC.TabledSolver.
+Elpi Tactic TC.TabledSolver.
 Elpi TC Solver Register TC.TabledSolver.
 
+Elpi Accumulate lp:{{
+pred binary_search i:K i:(pred i:K i:K o:cmp) i:int i:int i:list K o:int o:bool.
+binary_search A Cmp L R XS Out Approx :-
+  if (le_ L R)
+   	(M is L + ((R - L) div 2),
+   	std.nth M XS X,
+   	Cmp X A C,
+   	if (C = lt)
+ 	     (binary_search A Cmp (M + 1) R XS Out Approx)
+ 	     (if (C = gt)
+ 	         (binary_search A Cmp L (M - 1) XS Out Approx)
+ 	         (Out is M, Approx = ff)))
+ 	  (Out is L, Approx = tt)
+  , !.
+}}.
+
+Elpi Accumulate lp:{{
+kind mymap type -> type -> type.
+type mymap list (pair K V) -> (pred i:K i:K o:cmp) -> mymap K V.
+
+% [make Eq Ltn M] builds an empty map M where keys are compared using Eq and Ltn
+pred make i:(pred i:K, i:K, o:cmp), o:mymap K V.
+make Cmp (mymap [] Cmp).
+
+pred cmp_fst_pair i:(pred i:K i:K o:cmp) i:pair K V i:pair K V o:cmp.
+cmp_fst_pair Cmp (pr K1 _) (pr K2 _) C :- Cmp K1 K2 C.
+
+% [find K M V] looks in M for the value V associated to K
+pred find i:K, i:mymap K V, o:V.
+find K (mymap M Cmp) V :-
+  std.length M Len,
+  binary_search (pr K V) (cmp_fst_pair Cmp) 0 (Len - 1) M I ff,
+  std.nth I M (pr KK V),
+  Cmp KK K eq,
+  !.
+
+% [add K V M M1] M1 is M where K is bound to V
+pred add i:K, i:V, i:mymap K V, o:mymap K V.
+add K V (mymap M Cmp) (mymap M1 Cmp) :-
+  std.length M Len,
+  coq.say "Search",
+  binary_search (pr K V) (cmp_fst_pair Cmp) 0 (Len - 1) M I Approx,
+  std.split-at I M F T,
+  if (Approx = tt)
+     (coq.say "Insert", std.append F [ (pr K V) | T  ] M1) /* insert */
+     (coq.say "Update", T = [ pr KK _ | VS ] , Cmp KK K eq , std.append F [ (pr K V) | VS ] M1) /* update */
+  , coq.say "Done"
+  , !.
+}}.
+
+Elpi Query lp:{{
+  make cmp_term MyMap,
+  coq.say "Empty:" MyMap,
+  add "hello" "24" MyMap UpdatedMap,
+  coq.say "updated map" UpdatedMap,
+  add "hello2" "28" UpdatedMap MoreUpdatedMap,
+  find "hello" MoreUpdatedMap Result.
+}}.
+
+(* https://github.com/leanprover/lean4/blob/cade21/src/Lean/Meta/SynthInstance.lean *)
+(* https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi *)
 (* Tabled type class : https://github.com/purefunctor/tabled-typeclass-resolution?tab=readme-ov-file *)
 (* https://github.com/purefunctor/tabled-typeclass-resolution/blob/main/src/lib.rs *)
 (* ty = https://github.com/leanprover/lean4/blob/cade21/src/Lean/Expr.lean#L152-L165 *)
@@ -33,7 +94,7 @@ Elpi Accumulate lp:{{
   typeabbrev instance tc-instance.
 
   kind class_instances type.
-  type class_instances std.map assertion (list instance) -> class_instances.
+  type class_instances mymap assertion (list instance) -> class_instances.
 
   kind generator_node type.
   type generator_node assertion -> list instance -> generator_node.
@@ -41,7 +102,7 @@ Elpi Accumulate lp:{{
   kind synth type.
   type synth list generator_node ->
     resume_stack ->
-    std.map assertion entry ->
+    mymap assertion entry ->
     option assertion ->
     synth.
 }}.
@@ -90,7 +151,7 @@ Elpi Accumulate lp:{{
     (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
     Subgoal Waiter
     (synth NewGeneratorStack ResumeStack NewAssertionTable RootAnswer) :-
-    std.map.add Subgoal (entry [Waiter] []) AssertionTable NewAssertionTable,
+    add Subgoal (entry [Waiter] []) AssertionTable NewAssertionTable,
     assertion_typeclass Subgoal Name,
     coq.TC.db-for Name Instances,
     NewGeneratorStack = [(generator_node Subgoal Instances) | GeneratorStack]
@@ -282,12 +343,14 @@ Elpi Accumulate lp:{{
       (consumer_node Goal [])
       (synth GeneratorStack NewResumeStack NewAssertionTable NewRootAnswer) :-
     /* for each solution to g, push new cnode onto resume stack with it */
-    std.map.find Goal AssertionTable (entry Waiters Answers),
+    find Goal AssertionTable (entry Waiters Answers),
     /* for each solution to g, push new cnode onto resume stack with it */
     std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
     /* add new cnode to g's dependents */
     /* std.map.remove Goal AssertionTable TempAssertionTable, */
-    std.map.add Goal (entry Waiters [ Answer | Answers ]) AssertionTable NewAssertionTable,
+    coq.say "Add",
+    add Goal (entry Waiters [ Answer | Answers ]) AssertionTable NewAssertionTable,
+    coq.say "Done",
     !.
 
   new_consumer_node
@@ -296,7 +359,7 @@ Elpi Accumulate lp:{{
       (consumer_node _ [ Subgoal | _ ] as CN)
       (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer) :-
       /* TODO: Consumer node is general instead of variable or hole */
-      if (std.map.find Subgoal AssertionTable (entry Waiters Answers))
+      if (find Subgoal AssertionTable (entry Waiters Answers))
          (
           /* Map answers with consumer node */
           /* Add cnode onto G's dependents? */
@@ -304,8 +367,8 @@ Elpi Accumulate lp:{{
           std.append TempResumeStack ResumeStack NewResumeStack,
 
           NewWaiters = [ callback CN | Waiters ],
-          std.map.remove Subgoal AssertionTable TempAssertionTable,
-          std.map.add Subgoal (entry NewWaiters Answers) TempAssertionTable NewAssertionTable,
+              /* std.map.remove Subgoal AssertionTable TempAssertionTable, */
+          add Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
           NewGeneratorStack = GeneratorStack
          )
          (
@@ -393,7 +456,7 @@ Elpi Accumulate lp:{{
 
   pred tabled_typeclass_resolution i:assertion o:assertion.
   tabled_typeclass_resolution Query FinalAnswer :-
-    std.map.make assertion_equal AssertionTableEmpty,
+    make assertion_equal AssertionTableEmpty,
     new_subgoal (synth [] [] AssertionTableEmpty none) Query root MySynth,
     /* while true do */
     synth_loop MySynth Query 20000 FinalAnswer,
@@ -418,7 +481,7 @@ Elpi Query lp:{{
 
 (* Instance TestRAB : R1 A1 B1 := _. *)
 
-(* Example from Paper *)
+(* Example from Paper: Tabled Typeclass Resolution *)
 Elpi Query lp:{{
   MyGoal = {{ R1 A1 D1 }},
   coq.say "MyGoal" (assertion MyGoal {{ lib:elpi.hole }}),
@@ -432,11 +495,6 @@ Elpi Query lp:{{
   ground_term FinalAnswer.
 }}.
 
-(* https://github.com/leanprover/lean4/blob/cade21/src/Lean/Meta/SynthInstance.lean *)
-(* https://github.com/leanprover/lean4/blob/master/tests/lean/run/typeclass_diamond.lean *)
-(* Diamond *)
-
-(* https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi *)
 Elpi Accumulate lp:{{
   pred proof_search i:list gref i:list tc-instance i:term o:term.
   proof_search Typeclasses [tc-instance Hd _ | _ ] Type PRoof :-
