@@ -78,10 +78,10 @@ From elpi.apps.tc_tabled Require Import tabled_type_class.
 Elpi TC Solver Activate TC.TabledSolver.
 Elpi TC Solver Override TC.TabledSolver All.
 
-(* Module Test20Tabled. Time Instance TtR20 : B unit 20 := _. End Test20Tabled. *)
+Module Test20Tabled. Time Instance TtR20 : B unit 20 := _. End Test20Tabled.
 
-(* (* Finished transaction in 55.794 secs (55.684u,0.097s) (successful) *) *)
-(* Module Test100Tabled. Time Instance TtR100 : B unit 100 := _. End Test100Tabled. *)
+(* Finished transaction in 55.794 secs (55.684u,0.097s) (successful) *)
+Module Test100Tabled. Time Instance TtR100 : B unit 100 := _. End Test100Tabled.
 
 (* (* Finished transaction in 737.925 secs (736.366u,0.837s) (successful) *) *)
 (* Module Test200Tabled. Time Instance TtR200 : B unit 200 := _. End Test200Tabled. *)

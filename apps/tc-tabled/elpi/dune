@@ -1,7 +1,7 @@
 (coq.theory
  (name elpi.apps.tc_tabled.elpi)
  (package rocq-elpi)
- (theories elpi elpi.apps.tc elpi.apps.tc.elpi))
+ (theories elpi))
 
 (rule
  (target dummy.v)
@@ -14,7 +14,6 @@
 
 (install
  (files
-  (glob_files (*.elpi with_prefix coq/user-contrib/elpi/apps/tc/elpi/))
   (glob_files (*.elpi with_prefix coq/user-contrib/elpi/apps/tc-tabled/elpi/)))
  (section lib_root)
  (package rocq-elpi))

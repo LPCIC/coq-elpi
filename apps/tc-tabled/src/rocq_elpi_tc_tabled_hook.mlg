@@ -1,0 +1,12 @@
+(* license: GNU Lesser General Public License Version 2.1 or later           *)
+(* ------------------------------------------------------------------------- *)
+
+DECLARE PLUGIN "rocq-elpi.tc-tabled"
+
+{
+open Stdarg
+open Elpi_plugin
+(* open Rocq_elpi_arg_syntax *)
+(* open Rocq_elpi_tc_register *)
+(* open Rocq_elpi_class_tactics_takeover *)
+}
