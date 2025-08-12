@@ -22,10 +22,9 @@ namespace std.map2 {
 pred make i:(pred i:K, i:K, o:cmp), o:std.map2 K V.
 make Cmp (std.map2 private.empty Cmp).
 
-
 % [find K M V] looks in M for the value V associated to K
 pred find i:K, i:std.map2 K V, o:V.
-find K (std.map2 M Cmp) V :- 
+find K (std.map2 M Cmp) V :-
   coq.say "Find",
   private.find M Cmp K V,
   coq.say "FY".
@@ -33,12 +32,12 @@ find _ _ _ :- coq.say "FN", fail.
 
 % [add K V M M1] M1 is M where K is bound to V
 pred add i:K, i:V, i:std.map2 K V, o:std.map2 K V.
-add K V (std.map2 M Cmp) (std.map2 M1 Cmp) :- 
+add K V (std.map2 M Cmp) (std.map2 M1 Cmp) :-
   private.add M Cmp K V M1.
 
 % [update K V M M1] M1 is M where K is bound to V
 pred update i:K, i:V, i:std.map2 K V, o:std.map2 K V.
-update K V (std.map2 M Cmp) (std.map2 M1 Cmp) :- 
+update K V (std.map2 M Cmp) (std.map2 M1 Cmp) :-
   private.update M Cmp K V M1.
 
 % [remove K M M1] M1 is M where K is unbound
@@ -64,7 +63,7 @@ pred create i:map K V, i:K, i:V, i:map K V, o:map K V.
 create L K V R (node L K V R H) :- H is {std.max {height L} {height R} } + 1.
 
 pred print_m i:(map K V) o:string.
-print_m (empty) "emtpy". 
+print_m (empty) "emtpy".
 print_m (node L _ _ R I) S :-
   print_m L SL,
   print_m R SR,
@@ -99,24 +98,24 @@ add empty _ K V T :- create empty K V empty T.
 add (node _ X _ _ _ as M) Cmp X1 XD M1 :- Cmp X1 X E, !, add.aux E M Cmp X1 XD M1.
 
 pred add.aux i:cmp, i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
-add.aux eq (node L _ _ R H) _   X XD T :- T = node L X XD R H, !. 
+add.aux eq (node L _ _ R H) _   X XD T :- T = node L X XD R H, !.
 add.aux lt (node L V D R _) Cmp X XD T :- bal {add L Cmp X XD} V D R T, !.
 add.aux gt (node L V D R _) Cmp X XD T :- bal L V D {add R Cmp X XD} T, !.
 
 pred update i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
-update (node _ X _ _ _ as M) Cmp X1 XD M1 :- 
+update (node _ X _ _ _ as M) Cmp X1 XD M1 :-
   !, Cmp X1 X E, !, update.aux E M Cmp X1 XD M1, !.
 
 pred update.aux i:cmp, i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
-update.aux eq (node L _ _ R H) _   X XD T :- 
-  T = node L X XD R H, !. 
-update.aux lt (node L V D R H) Cmp X XD T :- 
+update.aux eq (node L _ _ R H) _   X XD T :-
+  T = node L X XD R H, !.
+update.aux lt (node L V D R H) Cmp X XD T :-
   T = node {update L Cmp X XD} V D R H, !.
-update.aux gt (node L V D R H) Cmp X XD T :- 
+update.aux gt (node L V D R H) Cmp X XD T :-
   T = node L V D {update R Cmp X XD} H, !.
 
 pred find i:map K V, i:(pred i:K, i:K, o:cmp), i:K, o:V.
-find ((node L K1 V1 R _) as M) Cmp K V :- 
+find ((node L K1 V1 R _) as M) Cmp K V :-
   Cmp K K1 E, find.aux E Cmp L R V1 K V.
 
 pred find.aux i:cmp, i:(pred i:K, i:K, o:cmp), i:map K V, i:map K V, i:V, i:K, o:V.
@@ -157,58 +156,48 @@ bindings (node L V D R _) X X1 :-
 } % std.map2.private
 } % std.map2
 
+kind custom_map type -> type -> type.
+type custom_map list (pair K V) -> (pred i:K i:K o:cmp) -> custom_map K V.
 
-
-kind mymap type -> type -> type.
-type mymap list (pair K V) -> (pred i:K i:K o:cmp) -> mymap K V.
-
-% [make Eq Ltn M] builds an empty map M where keys are compared using Eq and Ltn
-pred make i:(pred i:K, i:K, o:cmp), o:mymap K V.
-make Cmp (mymap [] Cmp).
+pred custom_make i:(pred i:K, i:K, o:cmp), o:custom_map K V.
+custom_make Cmp (custom_map [] Cmp).
 
 pred cmp_fst_pair i:(pred i:K i:K o:cmp) i:pair K V i:pair K V o:cmp.
 cmp_fst_pair Cmp (pr K1 _) (pr K2 _) C :- Cmp K1 K2 C.
 
-% [find K M V] looks in M for the value V associated to K
-pred find i:K, i:mymap K V, o:V.
-find K (mymap M Cmp) V :-
-  coq.say "Find",
+pred custom_find i:K, i:custom_map K V, o:V.
+custom_find K (custom_map M Cmp) V :-
   std.length M Len,
   binary_search (pr K (_ /* dummy value */)) (cmp_fst_pair Cmp) 0 (Len - 1) M I ff,
   !,
   std.nth I M (pr KK V),
   Cmp KK K eq,
-  !,
-  coq.say "FY".
-find _ _ _ :- coq.say "FN", fail.
+  !.
 
 pred insert_index i:int i:V i:list V o:list V.
-insert_index I V L O :- /* std.append F [ (pr K VI) | T  ] M1 */
-  std.split-at I L F T,
-  !,
-  std.append F [ V | T ] O.
-/* insert_index 0 V L [ V | L ].
+%% insert_index I V L O :- /* std.append F [ (pr K VI) | T  ] M1 */
+%%   std.split-at I L F T,
+%%   !,
+%%   std.append F [ V | T ] O.
+insert_index 0 V L [ V | L ].
 insert_index N V [ X | L ] [ X | O ] :-
   NN is N - 1,
-  insert_index NN V L O. */
+  insert_index NN V L O.
 
 pred update_index i:int i:V i:list V o:list V.
-update_index I V L O :- /* T = [ pr KK _ | VS ] , Cmp KK K eq , std.append F [ (pr K VI) | VS ] M1 */
-  coq.say "split",
-  std.split-at I L F [ _ | T ],
-  !,
-  coq.say "append",
-  std.append F [ V | T ] O.
-/* update_index 0 V [ _ | L ] [ V | L ] :- !.
+%% update_index I V L O :- /* T = [ pr KK _ | VS ] , Cmp KK K eq , std.append F [ (pr K VI) | VS ] M1 */
+%%   std.split-at I L F [ _ | T ],
+%%   !,
+%%   std.append F [ V | T ] O.
+update_index 0 V [ _ | L ] [ V | L ] :- !.
 update_index N V [ X | L ] [ X | O ] :-
   NN is N - 1,
   !,
   update_index NN V L O,
-  !. */
+  !.
 
-% [add K V M M1] M1 is M where K is bound to V
-pred add i:K, i:V, i:mymap K V, o:mymap K V.
-add K V (mymap M Cmp) (mymap M1 Cmp) :-
+pred custom_add i:K, i:V, i:custom_map K V, o:custom_map K V.
+custom_add K V (custom_map M Cmp) (custom_map M1 Cmp) :-
   std.length M Len,
   coq.say "Search",
   binary_search (pr K (_ /* dummy value */)) (cmp_fst_pair Cmp) 0 (Len - 1) M I Approx,
@@ -217,6 +206,25 @@ add K V (mymap M Cmp) (mymap M1 Cmp) :-
   (coq.say "Update", update_index I (pr K V) M M1 ) /* update */
   , coq.say "Done"
   , !.
+
+pred mymap_make i:(pred i:K, i:K, o:cmp), o:mymap K V.
+pred mymap_find i:K i:(mymap K V) o:V.
+pred mymap_add i:K i:V i:(mymap K V) o:(mymap K V).
+pred mymap_update i:K i:V i:(mymap K V) o:(mymap K V).
+
+%% typeabbrev (mymap K V) (custom_map K V).
+
+%% mymap_make Cmp M :- custom_make Cmp M.
+%% mymap_find K M V :- custom_find K M V.
+%% mymap_add K V M M1 :- custom_add K V M M1.
+%% mymap_update K V M M1 :- custom_add K V M M1.
+
+typeabbrev (mymap K V) (std.map2 K V).
+
+mymap_make Cmp M :- std.map2.make Cmp M.
+mymap_find K M V :- std.map2.find K M V.
+mymap_add K V M M1 :- std.map2.add K V M M1.
+mymap_update K V M M1 :- std.map2.update K V M M1.
 
 /*
 (* https://github.com/leanprover/lean4/blob/cade21/src/Lean/Meta/SynthInstance.lean *)
@@ -228,428 +236,427 @@ add K V (mymap M Cmp) (mymap M1 Cmp) :-
 (* https://github.com/leanprover/lean4/blob/master/src/Lean/Expr.lean#L302-L512 *)
 */
 
-  typeabbrev ty term.
+typeabbrev ty term.
 
-  kind data type.
-  type data ty -> list data -> data.
+kind data type.
+type data ty -> list data -> data.
 
-  kind assertion type.
-  type assertion term -> term -> assertion.
+kind assertion type.
+type assertion term -> term -> assertion.
 
-  kind consumer_node type.
-  type consumer_node assertion -> list assertion -> consumer_node.
+kind consumer_node type.
+type consumer_node assertion -> list assertion -> consumer_node.
 
-  kind waiter type.
-  type root waiter.
-  type callback consumer_node -> waiter.
+kind waiter type.
+type root waiter.
+type callback consumer_node -> waiter.
 
-  kind entry type.
-  type entry list waiter -> list assertion -> entry.
+kind entry type.
+type entry list waiter -> list assertion -> entry.
 
-  typeabbrev resume_stack (list (pair consumer_node assertion)).
+typeabbrev resume_stack (list (pair consumer_node assertion)).
 
-  typeabbrev instance tc-instance.
+typeabbrev instance tc-instance.
 
-  kind class_instances type.
-  type class_instances std.map2 assertion (list instance) -> class_instances.
+kind class_instances type.
+type class_instances mymap assertion (list instance) -> class_instances.
 
-  kind generator_node type.
-  type generator_node assertion -> list instance -> generator_node.
+kind generator_node type.
+type generator_node assertion -> list instance -> generator_node.
 
-  kind synth type.
-  type synth list generator_node ->
-    resume_stack ->
-    std.map2 assertion entry ->
-    option assertion ->
-    synth.
+kind synth type.
+type synth list generator_node ->
+  resume_stack ->
+  mymap assertion entry ->
+  option assertion ->
+  synth.
 
-  pred type_equal i:ty i:ty o:cmp.
-  type_equal X Y Cmp :-
-    ground_term X,
-    ground_term Y,
-    cmp_term X Y Cmp.
-  type_equal X Y eq :- var X, var Y.
-  type_equal (app L) (app G) Cmp :- type_equal_list L G Cmp.
-  type_equal X Y lt :- var X, ground_term Y.
-  type_equal X Y gt :- ground_term X, var Y.
+pred type_equal i:ty i:ty o:cmp.
+type_equal X Y Cmp :-
+  ground_term X,
+  ground_term Y,
+  cmp_term X Y Cmp.
+type_equal X Y eq :- var X, var Y.
+type_equal (app L) (app G) Cmp :- type_equal_list L G Cmp.
+type_equal X Y lt :- var X, ground_term Y.
+type_equal X Y gt :- ground_term X, var Y.
 
-  pred type_equal_list i:list ty i:list ty o:cmp.
-  type_equal_list [ X | XS ] [ Y | YS ] Cmp :-
-      type_equal X Y eq,
-      type_equal_list XS YS Cmp.
-  type_equal_list [ X | _ ] [ Y | _ ] Cmp :-
-      type_equal X Y Cmp,
-      not (Cmp = eq).
-  type_equal_list [] [] eq.
+pred type_equal_list i:list ty i:list ty o:cmp.
+type_equal_list [ X | XS ] [ Y | YS ] Cmp :-
+    type_equal X Y eq,
+    type_equal_list XS YS Cmp.
+type_equal_list [ X | _ ] [ Y | _ ] Cmp :-
+    type_equal X Y Cmp,
+    not (Cmp = eq).
+type_equal_list [] [] eq.
 
 
-  pred assertion_equal i:assertion i:assertion o:cmp.
-  assertion_equal (assertion A _) (assertion B _) Cmp :-
-  /* coq.say {coq.term->string A} "VS" {coq.term->string B}, */
-    type_equal A B Cmp,
-    !
-    /* Deterministic ! */
-    .
+pred assertion_equal i:assertion i:assertion o:cmp.
+assertion_equal (assertion A _) (assertion B _) Cmp :-
+/* coq.say {coq.term->string A} "VS" {coq.term->string B}, */
+  type_equal A B Cmp,
+  !
+  /* Deterministic ! */
+  .
 
-  pred term_typeclass i:term o:gref.
-  term_typeclass (global Name) Name.
-  term_typeclass (app [X | _]) N :- term_typeclass X N.
-  term_typeclass (prod X T F) N :-
-    pi x\ term_typeclass (F x) N.
+pred term_typeclass i:term o:gref.
+term_typeclass (global Name) Name.
+term_typeclass (app [X | _]) N :- term_typeclass X N.
+term_typeclass (prod X T F) N :-
+  pi x\ term_typeclass (F x) N.
 
-  pred assertion_typeclass i:assertion o:gref.
-  assertion_typeclass (assertion G _) Name :- term_typeclass G Name.
+pred assertion_typeclass i:assertion o:gref.
+assertion_typeclass (assertion G _) Name :- term_typeclass G Name.
 
-  pred new_subgoal i:synth i:assertion i:waiter o:synth.
-  new_subgoal
-    (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-    Subgoal Waiter
-    (synth NewGeneratorStack ResumeStack NewAssertionTable RootAnswer) :-
-    std.map2.add Subgoal (entry [Waiter] []) AssertionTable NewAssertionTable,
-    assertion_typeclass Subgoal Name,
-    coq.TC.db-for Name Instances,
-    NewGeneratorStack = [(generator_node Subgoal Instances) | GeneratorStack]
-    .
+pred new_subgoal i:synth i:assertion i:waiter o:synth.
+new_subgoal
+  (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+  Subgoal Waiter
+  (synth NewGeneratorStack ResumeStack NewAssertionTable RootAnswer) :-
+  mymap_add Subgoal (entry [Waiter] []) AssertionTable NewAssertionTable,
+  assertion_typeclass Subgoal Name,
+  coq.TC.db-for Name Instances,
+  NewGeneratorStack = [(generator_node Subgoal Instances) | GeneratorStack]
+  .
 
 /* Apply answer to goal and update meta variable context if it succeeds */
 
-  pred replace_var_term i:ty o:ty i:ty o:ty.
-  replace_var_term X Y (app L) (app G) :-
-    std.map L (replace_var_term X Y) G.
-  replace_var_term X Y Z W :-
-    var Z,
-    X == Z,
-    W = Y
-    .
-  replace_var_term X Y Z Z.
+pred replace_var_term i:ty o:ty i:ty o:ty.
+replace_var_term X Y (app L) (app G) :-
+  std.map L (replace_var_term X Y) G.
+replace_var_term X Y Z W :-
+  var Z,
+  X == Z,
+  W = Y
+  .
+replace_var_term X Y Z Z.
 
-  pred replace_var_in_list i:ty o:ty i:list assertion o:list assertion.
-  replace_var_in_list X Y [ assertion TA VA | AS ] [ assertion TB VB | BS ] :-
-      replace_var_term X Y TA TB,
-      replace_var_term X Y VA VB,
-      replace_var_in_list X Y AS BS.
-  replace_var_in_list _ _ [] [].
+pred replace_var_in_list i:ty o:ty i:list assertion o:list assertion.
+replace_var_in_list X Y [ assertion TA VA | AS ] [ assertion TB VB | BS ] :-
+    replace_var_term X Y TA TB,
+    replace_var_term X Y VA VB,
+    replace_var_in_list X Y AS BS.
+replace_var_in_list _ _ [] [].
 
-  pred try_answer_type i:ty o:ty i:ty o:ty i:list assertion o:list assertion.
-  try_answer_type X Y IX IY Lin Lout :-
-    var X, var Y,
-    replace_var_term X Y IX IY,
-    replace_var_in_list X Y Lin Lout.
-  try_answer_type (app L) (app G) IX IY Lin Lout :-
-    try_answer_type_list L G IX IY Lin Lout.
-  try_answer_type X Y IX IY Lin Lout :-
-    var X, ground_term Y, replace_var_term X Y IX IY, replace_var_in_list X Y Lin Lout.
-  try_answer_type X Y I I L L :-
-    ground_term X,
-    ground_term Y,
-    cmp_term X Y eq.
+pred try_answer_type i:ty o:ty i:ty o:ty i:list assertion o:list assertion.
+try_answer_type X Y IX IY Lin Lout :-
+  var X, var Y,
+  replace_var_term X Y IX IY,
+  replace_var_in_list X Y Lin Lout.
+try_answer_type (app L) (app G) IX IY Lin Lout :-
+  try_answer_type_list L G IX IY Lin Lout.
+try_answer_type X Y IX IY Lin Lout :-
+  var X, ground_term Y, replace_var_term X Y IX IY, replace_var_in_list X Y Lin Lout.
+try_answer_type X Y I I L L :-
+  ground_term X,
+  ground_term Y,
+  cmp_term X Y eq.
 
-  pred try_answer_type_list i:list ty o:list ty i:ty o:ty i:list assertion o:list assertion.
-  try_answer_type_list [ X | XS ] [ Y | YS ] IX IY Lin Lout :-
-      try_answer_type X Y IX Itemp Lin Ltemp,
-      try_answer_type_list XS YS Itemp IY Ltemp Lout.
-  try_answer_type_list [] [] I I L L.
+pred try_answer_type_list i:list ty o:list ty i:ty o:ty i:list assertion o:list assertion.
+try_answer_type_list [ X | XS ] [ Y | YS ] IX IY Lin Lout :-
+    try_answer_type X Y IX Itemp Lin Ltemp,
+    try_answer_type_list XS YS Itemp IY Ltemp Lout.
+try_answer_type_list [] [] I I L L.
 
-  pred try_answer i:assertion o:assertion i:assertion o:assertion i:list assertion o:list assertion.
-  try_answer (assertion A VA) (assertion B VB) (assertion G IA) (assertion G IB) Lin Lout :-
-    try_answer_type A B IA ITemp Lin Lout,
-    replace_var_term VA VB ITemp IB.
+pred try_answer i:assertion o:assertion i:assertion o:assertion i:list assertion o:list assertion.
+try_answer (assertion A VA) (assertion B VB) (assertion G IA) (assertion G IB) Lin Lout :-
+  try_answer_type A B IA ITemp Lin Lout,
+  replace_var_term VA VB ITemp IB.
 
-  pred replace_list i:list term i:term i:term o:list term.
-  replace_list [ A | XS ] A B [ B | YS ] :-
-      !,
-      replace_list XS A B YS.
-  replace_list [ C | XS ] A B [ C | YS ] :-
-      replace_list XS A B YS.
-  replace_list [] _ _ [].
-
-  pred extract_helper i:term i:int i:term o:term.
-  extract_helper X Index (prod N T F) (prod N T G) :-
+pred replace_list i:list term i:term i:term o:list term.
+replace_list [ A | XS ] A B [ B | YS ] :-
     !,
-    pi x\
-      extract_helper X Index (F x) (G x).
-  extract_helper X Index (app L) (app NewL) :-
+    replace_list XS A B YS.
+replace_list [ C | XS ] A B [ C | YS ] :-
+    replace_list XS A B YS.
+replace_list [] _ _ [].
+
+pred extract_helper i:term i:int i:term o:term.
+extract_helper X Index (prod N T F) (prod N T G) :-
+  !,
+  pi x\
+    extract_helper X Index (F x) (G x).
+extract_helper X Index (app L) (app NewL) :-
+  !,
+  std.split-at Index L Lfront [ V | Ltail ],
+  replace_list L V X NewL.
+
+pred is_var_at_index i:term i:int.
+is_var_at_index (prod N T F) I :-
+  pi x\
+    is_var_at_index (F x) I.
+is_var_at_index (app L) I :-
+  std.split-at I L Lfront [ T | Ltail],
+  var T.
+
+pred extract_variables i:list term i:int o:term.
+  extract_variables L -1 (app L).
+extract_variables L Index Tm :-
+  PrevIndex is Index - 1,
+  extract_variables L PrevIndex PrevTm,
+  !,
+  ((is_var_at_index PrevTm Index,
+   Tm = prod TmX TmT TmF,
+   pi x\
+     extract_helper x Index PrevTm (TmF x)
+  );
+  (Tm = PrevTm))
+  .
+
+pred re_generalize i:list term o:list term.
+re_generalize [ X | Tl ] R :-
+  coq.typecheck X T ok,
+  (
+    (T = (app Tlist),
+     std.length Tlist Len,
+     Index is Len - 1,
+     extract_variables Tlist Index NewR,
+     R = [ NewR | RTl ]
+     );
+    (R = RTl)
+  ),
+  re_generalize Tl RTl
+  .
+re_generalize [ X | Tl ] [] :-
+  re_generalize Tl R.
+re_generalize [ ] [].
+
+pred tc_instance_to_term i:tc-instance o:term.
+tc_instance_to_term (tc-instance (const C) _) T :-
+  coq.env.const C _ /* Body */ Type,
+  coq.gref->string (const C) _ /* Name */,
+  T = Type.
+
+pred does_type_resolve i:term o:term.
+does_type_resolve X Y :-
+  var Y,
+  X = Y.
+does_type_resolve X Y :-
+  var X.
+does_type_resolve (app L) (app G) :-
+  std.map L does_type_resolve G.
+does_type_resolve X Y :-
+  ground_term X,
+  X = Y.
+
+pred try_resolve_types i:term i:term o:list term o:list assertion.
+try_resolve_types A (prod X T F) OL L :-
+  coq.typecheck V T ok,
+  try_resolve_types A (F V) OLS LS,
+  (OL = [ V | OLS]),
+  ((T = app _ ; L = [ assertion T V | LS ]) ; (L = LS)) /* TODO : better 'contains instance or var test' */
+    .
+try_resolve_types A B [] [] :-
+  does_type_resolve A B
+    .
+
+pred helper_fn i:term o:assertion.
+helper_fn A (assertion A V).
+
+pred simpl i:term o:term.
+simpl (app [ prod X T F , Arg | Tl ]) R :-
+  simpl (app [ (F Arg) | Tl ]) R.
+simpl (app [ A ]) A.
+simpl A A.
+
+pred filter_metavariables i:list assertion o:list assertion.
+filter_metavariables [ assertion (app L) V | XS ] [ assertion (app L) V | YS ] :-
+    !, filter_metavariables XS YS.
+filter_metavariables [ assertion X _ | XS ] YS :-
+    filter_metavariables XS YS.
+filter_metavariables [] [].
+
+
+pred try_resolve i:assertion i:instance o:assertion o:list assertion.
+try_resolve (assertion A _) (tc-instance BI _) (assertion RT RV) RL :-
+  tc_instance_to_term (tc-instance BI _) B,
+  coq.env.global BI BITm,
+  coq.gref->string BI BIName,
+  BI = const (BIConst),
+  coq.env.const BIConst (some BIBody) BITy,
+  try_resolve_types A B OL L,
+  filter_metavariables L RL,
     !,
-    std.split-at Index L Lfront [ V | Ltail ],
-    replace_list L V X NewL.
-
-  pred is_var_at_index i:term i:int.
-  is_var_at_index (prod N T F) I :-
-    pi x\
-      is_var_at_index (F x) I.
-  is_var_at_index (app L) I :-
-    std.split-at I L Lfront [ T | Ltail],
-    var T.
-
-  pred extract_variables i:list term i:int o:term.
-    extract_variables L -1 (app L).
-  extract_variables L Index Tm :-
-    PrevIndex is Index - 1,
-    extract_variables L PrevIndex PrevTm,
-    !,
-    ((is_var_at_index PrevTm Index,
-     Tm = prod TmX TmT TmF,
-     pi x\
-       extract_helper x Index PrevTm (TmF x)
-    );
-    (Tm = PrevTm))
+  RT = A,
+  ((OL = [], RV = BITm) ; RV = app [ BITm | OL ])
     .
 
-  pred re_generalize i:list term o:list term.
-  re_generalize [ X | Tl ] R :-
-    coq.typecheck X T ok,
-    (
-      (T = (app Tlist),
-       std.length Tlist Len,
-       Index is Len - 1,
-       extract_variables Tlist Index NewR,
-       R = [ NewR | RTl ]
-       );
-      (R = RTl)
-    ),
-    re_generalize Tl RTl
-    .
-  re_generalize [ X | Tl ] [] :-
-    re_generalize Tl R.
-  re_generalize [ ] [].
+pred temp_fun i:consumer_node i:assertion o:(pair consumer_node assertion).
+temp_fun A B (pr A B).
 
-  pred tc_instance_to_term i:tc-instance o:term.
-  tc_instance_to_term (tc-instance (const C) _) T :-
-    coq.env.const C _ /* Body */ Type,
-    coq.gref->string (const C) _ /* Name */,
-    T = Type.
+pred waiter_fun i:assertion i:assertion i:waiter i:(pair (resume_stack) (option assertion)) o:(pair (resume_stack) (option assertion)).
+waiter_fun Answer Guess root (pr A _) (pr A (some Answer)).
+waiter_fun Answer Goal (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R).
 
-  pred does_type_resolve i:term o:term.
-  does_type_resolve X Y :-
-    var Y,
-    X = Y.
-  does_type_resolve X Y :-
-    var X.
-  does_type_resolve (app L) (app G) :-
-    std.map L does_type_resolve G.
-  does_type_resolve X Y :-
-    ground_term X,
-    X = Y.
-
-  pred try_resolve_types i:term i:term o:list term o:list assertion.
-  try_resolve_types A (prod X T F) OL L :-
-    coq.typecheck V T ok,
-    try_resolve_types A (F V) OLS LS,
-    (OL = [ V | OLS]),
-    ((T = app _ ; L = [ assertion T V | LS ]) ; (L = LS)) /* TODO : better 'contains instance or var test' */
-    .
-  try_resolve_types A B [] [] :-
-    does_type_resolve A B
-    .
-
-  pred helper_fn i:term o:assertion.
-  helper_fn A (assertion A V).
-
-  pred simpl i:term o:term.
-  simpl (app [ prod X T F , Arg | Tl ]) R :-
-    simpl (app [ (F Arg) | Tl ]) R.
-  simpl (app [ A ]) A.
-  simpl A A.
-
-  pred filter_metavariables i:list assertion o:list assertion.
-  filter_metavariables [ assertion (app L) V | XS ] [ assertion (app L) V | YS ] :-
-      !, filter_metavariables XS YS.
-  filter_metavariables [ assertion X _ | XS ] YS :-
-      filter_metavariables XS YS.
-  filter_metavariables [] [].
-
-
-  pred try_resolve i:assertion i:instance o:assertion o:list assertion.
-  try_resolve (assertion A _) (tc-instance BI _) (assertion RT RV) RL :-
-    tc_instance_to_term (tc-instance BI _) B,
-    coq.env.global BI BITm,
-    coq.gref->string BI BIName,
-    BI = const (BIConst),
-    coq.env.const BIConst (some BIBody) BITy,
-    try_resolve_types A B OL L,
-    filter_metavariables L RL,
-    !,
-    RT = A,
-    ((OL = [], RV = BITm) ; RV = app [ BITm | OL ])
-    .
-
-  pred temp_fun i:consumer_node i:assertion o:(pair consumer_node assertion).
-  temp_fun A B (pr A B).
-
-  pred waiter_fun i:assertion i:assertion i:waiter i:(pair (resume_stack) (option assertion)) o:(pair (resume_stack) (option assertion)).
-  waiter_fun Answer Guess root (pr A _) (pr A (some Answer)).
-  waiter_fun Answer Goal (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R).
-
-  pred new_consumer_node i:synth i:assertion i:consumer_node o:synth.
-  new_consumer_node
-      (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-      Answer
-      (consumer_node Goal [])
-      (synth GeneratorStack NewResumeStack NewAssertionTable NewRootAnswer) :-
-    /* for each solution to g, push new cnode onto resume stack with it */
-    std.map2.find Goal AssertionTable (entry Waiters Answers),
-    /* for each solution to g, push new cnode onto resume stack with it */
-    std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
-    /* add new cnode to g's dependents */
-    coq.say "Update",
-    std.map2.update Goal (entry Waiters [ Answer | Answers ]) AssertionTable NewAssertionTable,
-    coq.say "Done",
+pred new_consumer_node i:synth i:assertion i:consumer_node o:synth.
+new_consumer_node
+    (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+    Answer
+    (consumer_node Goal [])
+    (synth GeneratorStack NewResumeStack NewAssertionTable NewRootAnswer) :-
+  /* for each solution to g, push new cnode onto resume stack with it */
+  mymap_find Goal AssertionTable (entry Waiters Answers),
+  /* for each solution to g, push new cnode onto resume stack with it */
+  std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Answer Goal) (pr NewResumeStack NewRootAnswer),
+  /* add new cnode to g's dependents */
+  coq.say "Update",
+  mymap_update Goal (entry Waiters [ Answer | Answers ]) AssertionTable NewAssertionTable,
+  coq.say "Done",
     !.
 
-  new_consumer_node
-      (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+new_consumer_node
+    (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
       _
-      (consumer_node _ [ Subgoal | _ ] as CN)
-      (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer) :-
-      /* TODO: Consumer node is general instead of variable or hole */
-      if (std.map2.find Subgoal AssertionTable (entry Waiters Answers))
+    (consumer_node _ [ Subgoal | _ ] as CN)
+    (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer) :-
+    /* TODO: Consumer node is general instead of variable or hole */
+    if (mymap_find Subgoal AssertionTable (entry Waiters Answers))
          (
-          /* Map answers with consumer node */
-          /* Add cnode onto G's dependents? */
-          std.map Answers (temp_fun CN) TempResumeStack,
-          std.append TempResumeStack ResumeStack NewResumeStack,
+        /* Map answers with consumer node */
+        /* Add cnode onto G's dependents? */
+        std.map Answers (temp_fun CN) TempResumeStack,
+        std.append TempResumeStack ResumeStack NewResumeStack,
 
-          NewWaiters = [ callback CN | Waiters ],
-              /* std.map2.remove Subgoal AssertionTable TempAssertionTable, */
-          std.map2.update Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
-          NewGeneratorStack = GeneratorStack
+        NewWaiters = [ callback CN | Waiters ],
+        mymap_update Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
+        NewGeneratorStack = GeneratorStack
          )
          (
-          new_subgoal
-            (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-            Subgoal
-            (callback CN)
-            (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer)
+        new_subgoal
+          (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+          Subgoal
+          (callback CN)
+          (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer)
         ),
         !.
 
-    new_consumer_node _ _ _ _ :- coq.error "Failed new consumer node!" , fail.
+  new_consumer_node _ _ _ _ :- coq.error "Failed new consumer node!" , fail.
 
-  pred tabled_typeclass_resolution_body i:synth i:assertion o:synth o:assertion.
-  tabled_typeclass_resolution_body (synth _ _ _ (some Answer)) _ _ Answer.
+pred tabled_typeclass_resolution_body i:synth i:assertion o:synth o:assertion.
+tabled_typeclass_resolution_body (synth _ _ _ (some Answer)) _ _ Answer.
 
-  tabled_typeclass_resolution_body
-      (synth GeneratorStack [ (pr (consumer_node Goal [ Subgoal | Remaining ]) Answer) | ResumeStack ]
-       AssertionTable RootAnswer) Query MySynth FinalAnswer :-
-    Answer = assertion AnswerT AnswerV,
-    coq.typecheck AnswerV AnswerNT ok,
-    NewAnswer = assertion AnswerNT AnswerV,
-    if (try_answer Subgoal NewAnswer Goal UpdatedGoal Remaining UpdatedRemaining)
+tabled_typeclass_resolution_body
+    (synth GeneratorStack [ (pr (consumer_node Goal [ Subgoal | Remaining ]) Answer) | ResumeStack ]
+     AssertionTable RootAnswer) Query MySynth FinalAnswer :-
+  Answer = assertion AnswerT AnswerV,
+  coq.typecheck AnswerV AnswerNT ok,
+  NewAnswer = assertion AnswerNT AnswerV,
+  if (try_answer Subgoal NewAnswer Goal UpdatedGoal Remaining UpdatedRemaining)
        (
-        /* TODO: Update Remaining with unification from try_answer ! */
-        new_consumer_node
-         (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-         UpdatedGoal /* TODO: final answer here! */
-         (consumer_node UpdatedGoal UpdatedRemaining) /* TODO: Was Goal in code, but should add new solution? */
-         MySynth
+      /* TODO: Update Remaining with unification from try_answer ! */
+      new_consumer_node
+       (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+       UpdatedGoal /* TODO: final answer here! */
+       (consumer_node UpdatedGoal UpdatedRemaining) /* TODO: Was Goal in code, but should add new solution? */
+       MySynth
       )
       (
-        MySynth = (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+      MySynth = (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
       ).
 
-  tabled_typeclass_resolution_body
-    (synth GeneratorStack [ (pr (consumer_node Goal []) Answer) | ResumeStack ]
-       AssertionTable RootAnswer) Query MySynth FinalAnswer :-
-   coq.warn "Cannot resume with empty subgoals!",
-   fail.
+tabled_typeclass_resolution_body
+  (synth GeneratorStack [ (pr (consumer_node Goal []) Answer) | ResumeStack ]
+     AssertionTable RootAnswer) Query MySynth FinalAnswer :-
+ coq.warn "Cannot resume with empty subgoals!",
+ fail.
 
-  tabled_typeclass_resolution_body
-    (synth [ generator_node Goal [Instance | Instances ] | GeneratorStack ]
-      ResumeStack AssertionTable RootAnswer) Query NewSynth FinalAnswer :-
-    coq.say "Try",
-    if (try_resolve Goal Instance Resolved Subgoals)
+tabled_typeclass_resolution_body
+  (synth [ generator_node Goal [Instance | Instances ] | GeneratorStack ]
+    ResumeStack AssertionTable RootAnswer) Query NewSynth FinalAnswer :-
+  coq.say "Try",
+  if (try_resolve Goal Instance Resolved Subgoals)
        (
-         coq.say "YES",
-         /* else (l. 14) */
-         new_consumer_node
-          (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
-          Resolved
-          (consumer_node Resolved Subgoals) NewSynth
+       coq.say "YES",
+       /* else (l. 14) */
+       new_consumer_node
+        (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
+        Resolved
+        (consumer_node Resolved Subgoals) NewSynth
        )
        (
-         coq.say "NO",
-         /* If first subgoal of cnode does not resolve with solution then Continue */
-         NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
+       coq.say "NO",
+       /* If first subgoal of cnode does not resolve with solution then Continue */
+       NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
        ).
 
-  tabled_typeclass_resolution_body
-    (synth [ generator_node _ [] | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
-      Query
-      (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
-      FinalAnswer.
-  /* If cnode has no remaining subgoals then (ll.7-13) .. */
+tabled_typeclass_resolution_body
+  (synth [ generator_node _ [] | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
+    Query
+    (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+    FinalAnswer.
+/* If cnode has no remaining subgoals then (ll.7-13) .. */
 
-  tabled_typeclass_resolution_body (synth [] [] _ _) _ _ _ :- fail.
+tabled_typeclass_resolution_body (synth [] [] _ _) _ _ _ :- fail.
 
-  pred synth_loop i:synth i:assertion i:int o:assertion.
-  synth_loop (synth _ _ _ (some Answer)) _ Fuel Answer.
-  synth_loop MySynth Query Fuel FinalAnswer :-
-    MySynth = synth Stack1 Stack2 _ _,
-    coq.say "synth round" Fuel,
-    ((Stack1 = [ generator_node (assertion (StkHd1T) (StkHd1V)) L1 | _ ] , coq.say "topG:" {coq.term->string StkHd1T} {coq.term->string StkHd1V} L1); true),
-    ((Stack2 = [ pr (consumer_node (assertion StkHd2T StkHd2V) _) (assertion AnsT AnsV) | _ ] , coq.say "topR:" {coq.term->string StkHd2T} {coq.term->string StkHd2V}, coq.say "answer:" {coq.term->string AnsT} {coq.term->string AnsV}); true),
-    coq.say "",
-    /* coq.say "synth round" Fuel Stack2 Stack1, */
-    Fuel > 0,
-    tabled_typeclass_resolution_body MySynth Query NextSynth FinalAnswer,
+pred synth_loop i:synth i:assertion i:int o:assertion.
+synth_loop (synth _ _ _ (some Answer)) _ Fuel Answer.
+synth_loop MySynth Query Fuel FinalAnswer :-
+  MySynth = synth Stack1 Stack2 _ _,
+  coq.say "synth round" Fuel,
+  ((Stack1 = [ generator_node (assertion (StkHd1T) (StkHd1V)) L1 | _ ] , coq.say "topG:" {coq.term->string StkHd1T} {coq.term->string StkHd1V} L1); true),
+  ((Stack2 = [ pr (consumer_node (assertion StkHd2T StkHd2V) _) (assertion AnsT AnsV) | _ ] , coq.say "topR:" {coq.term->string StkHd2T} {coq.term->string StkHd2V}, coq.say "answer:" {coq.term->string AnsT} {coq.term->string AnsV}); true),
+  coq.say "",
+  /* coq.say "synth round" Fuel Stack2 Stack1, */
+  Fuel > 0,
+  tabled_typeclass_resolution_body MySynth Query NextSynth FinalAnswer,
     !,
-    NextFuel is Fuel - 1,
-    coq.say "Copy synth?",
-    synth_loop NextSynth Query NextFuel FinalAnswer.
+  NextFuel is Fuel - 1,
+  coq.say "Copy synth?",
+  synth_loop NextSynth Query NextFuel FinalAnswer.
 
-  pred tabled_typeclass_resolution i:assertion o:assertion.
-  tabled_typeclass_resolution Query FinalAnswer :-
-    std.map2.make assertion_equal AssertionTableEmpty,
-    new_subgoal (synth [] [] AssertionTableEmpty none) Query root MySynth,
-    /* while true do */
-    synth_loop MySynth Query 20000 FinalAnswer,
+pred tabled_typeclass_resolution i:assertion o:assertion.
+tabled_typeclass_resolution Query FinalAnswer :-
+  mymap_make assertion_equal AssertionTableEmpty,
+  new_subgoal (synth [] [] AssertionTableEmpty none) Query root MySynth,
+  /* while true do */
+  synth_loop MySynth Query 20000 FinalAnswer,
     !.
 
-  pred proof_search i:list gref i:list tc-instance i:term o:term.
-  proof_search Typeclasses [tc-instance Hd _ | _ ] Type PRoof :-
-    coq.env.typeof Hd TypeRes,
-    coq.env.global Hd ProofRes,
-    coq.say "CHECKING" TypeRes,
-    coq.unify-eq TypeRes Type D,
-    coq.say D,
-    D = ok,
-    % TypeRes = Type,
-    coq.say "SUCCESS",
-    PRoof = ProofRes.
-  proof_search Typeclasses [_|Tl] Type PRoof :-
-    proof_search Typeclasses Tl Type PRoof.
+pred proof_search i:list gref i:list tc-instance i:term o:term.
+proof_search Typeclasses [tc-instance Hd _ | _ ] Type PRoof :-
+  coq.env.typeof Hd TypeRes,
+  coq.env.global Hd ProofRes,
+  coq.say "CHECKING" TypeRes,
+  coq.unify-eq TypeRes Type D,
+  coq.say D,
+  D = ok,
+  % TypeRes = Type,
+  coq.say "SUCCESS",
+  PRoof = ProofRes.
+proof_search Typeclasses [_|Tl] Type PRoof :-
+  proof_search Typeclasses Tl Type PRoof.
 
-  pred tabled_proof_search i:list gref i:term o:term.
-  tabled_proof_search Typeclasses Type PRoof :-
-    coq.say "TYPECLASSES" Typeclasses,
-    MyGoal = assertion Type {{ _ }},
-    tabled_typeclass_resolution MyGoal FinalAnswer,
+pred tabled_proof_search i:list gref i:term o:term.
+tabled_proof_search Typeclasses Type PRoof :-
+  coq.say "TYPECLASSES" Typeclasses,
+  MyGoal = assertion Type {{ _ }},
+  tabled_typeclass_resolution MyGoal FinalAnswer,
     !,
 
-    /* Convert from result to proof term! */
+  /* Convert from result to proof term! */
 
-    FinalAnswer = assertion FinalType FinalTerm,
-    FinalProof = FinalTerm,
-    coq.say "FinalProof" {coq.term->string FinalProof},
-    PRoof = FinalProof,
-    coq.say "Proof" {coq.term->string PRoof} "Done"
+  FinalAnswer = assertion FinalType FinalTerm,
+  FinalProof = FinalTerm,
+  coq.say "FinalProof" {coq.term->string FinalProof},
+  PRoof = FinalProof,
+  coq.say "Proof" {coq.term->string PRoof} "Done"
     .
 
 
-  pred search_context i:list prop i:term o:term.
-  search_context [decl Te N Ty | _] Type PRoof :-
-    Ty = Type,
-    Te = PRoof,
-    coq.say "CHECK SUCC" N PRoof.
-  search_context [_|Tl] Type PRoof :- search_context Tl Type PRoof.
+pred search_context i:list prop i:term o:term.
+search_context [decl Te N Ty | _] Type PRoof :-
+  Ty = Type,
+  Te = PRoof,
+  coq.say "CHECK SUCC" N PRoof.
+search_context [_|Tl] Type PRoof :- search_context Tl Type PRoof.
 
-  solve (goal Ctx Trigger Type PRoof Args as G) V :-
-    coq.TC.db-tc Typeclasses,
-    coq.say "AGRS" Args Ctx,
-    coq.say "SEARCHING ..." {coq.term->string Type}, !,
-    coq.say "V" V,
-    (search_context Ctx Type PRoof ; tabled_proof_search Typeclasses Type PRoof),
-    coq.say "SUCCESS FINDING INSTANCE".
+solve (goal Ctx Trigger Type PRoof Args as G) V :-
+  coq.TC.db-tc Typeclasses,
+  coq.say "AGRS" Args Ctx,
+  coq.say "SEARCHING ..." {coq.term->string Type}, !,
+  coq.say "V" V,
+  (search_context Ctx Type PRoof ; tabled_proof_search Typeclasses Type PRoof),
+  coq.say "SUCCESS FINDING INSTANCE".
 
 
-  solve _ _ :- coq.ltac.fail _ "No auto".
+solve _ _ :- coq.ltac.fail _ "No auto".
