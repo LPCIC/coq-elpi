@@ -30,9 +30,6 @@ typeabbrev resume_stack (list (pair consumer_node assertion)).
 
 typeabbrev instance tc-instance.
 
-kind class_instances type.
-type class_instances mymap assertion (list instance) -> class_instances.
-
 kind generator_node type.
 type generator_node assertion -> list instance -> generator_node.
 
@@ -83,7 +80,8 @@ new_subgoal
   (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
   Subgoal Waiter
   (synth NewGeneratorStack ResumeStack NewAssertionTable RootAnswer) :-
-  mymap_add Subgoal (entry [Waiter] []) AssertionTable NewAssertionTable,
+  mymap_add Subgoal Entry AssertionTable NewAssertionTable,
+  Entry = (entry [Waiter] []),
   assertion_typeclass Subgoal Name,
   coq.TC.db-for Name Instances,
   NewGeneratorStack = [(generator_node Subgoal Instances) | GeneratorStack]
@@ -268,7 +266,8 @@ new_consumer_node
   /* for each solution to g, push new cnode onto resume stack with it */
   std.fold Waiters (pr ResumeStack RootAnswer) (waiter_fun Goal) (pr NewResumeStack NewRootAnswer),
   /* add new cnode to g's dependents */
-  mymap_update Goal (entry Waiters [ Goal | Answers ]) AssertionTable NewAssertionTable,
+  mymap_update Goal NewEntry AssertionTable NewAssertionTable,
+  NewEntry = (entry Waiters [ Goal | Answers ]),
   !.
 
 new_consumer_node
@@ -283,7 +282,8 @@ new_consumer_node
        std.append TempResumeStack ResumeStack NewResumeStack,
 
        NewWaiters = [ callback CN | Waiters ],
-       mymap_update Subgoal (entry NewWaiters Answers) AssertionTable NewAssertionTable,
+       mymap_update Subgoal NewEntry AssertionTable NewAssertionTable,
+       NewEntry = (entry NewWaiters Answers),
        NewGeneratorStack = GeneratorStack
      )
      (
@@ -350,18 +350,8 @@ tabled_typeclass_resolution_body (synth
 tabled_typeclass_resolution_body (synth [] [] _ _) _ _ _ :- fail.
 
 pred synth_loop i:synth i:assertion i:int o:assertion.
-synth_loop (synth _ _ _ (some Answer)) _ Fuel Answer.
+synth_loop (synth _ _ _ (some Answer)) _ Fuel Answer :- coq.say "synth round" Fuel.
 synth_loop MySynth Query Fuel FinalAnswer :-
-  /* Print debug info */
-  MySynth = synth Stack1 Stack2 _ _,
-  std.length Stack1 Stack1Len,
-  std.length Stack2 Stack2Len,
-  coq.say "synth round" Fuel,
-  ((Stack1 = [ generator_node (assertion (StkHd1T) (StkHd1V)) L1 | _ ] , coq.say Stack1Len "topG:" {coq.term->string StkHd1T} {coq.term->string StkHd1V} L1); true),
-  ((Stack2 = [ pr (consumer_node (assertion StkHd2T StkHd2V) _) (assertion AnsT AnsV) | _ ] , coq.say Stack2Len "topR:" {coq.term->string StkHd2T} {coq.term->string StkHd2V}, coq.say "answer:" {coq.term->string AnsT} {coq.term->string AnsV}); true),
-  coq.say "",
-  /* coq.say "synth round" Fuel Stack2 Stack1, */
-  /* endof - Print debug info */
   Fuel > 0,
   tabled_typeclass_resolution_body MySynth Query NextSynth FinalAnswer,
   !,

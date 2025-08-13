@@ -14,7 +14,8 @@ namespace std.map2 {
   % [add K V M M1] M1 is M where K is bound to V
   pred add i:K, i:V, i:std.map2 K V, o:std.map2 K V.
   add K V (std.map2 M Cmp) (std.map2 M1 Cmp) :-
-    private.add M Cmp K V M1.
+    private.add M Cmp K VV M1,
+    VV = V.
 
   % [update K V M M1] M1 is M where K is bound to V
   pred update i:K, i:V, i:std.map2 K V, o:std.map2 K V.
@@ -45,10 +46,10 @@ namespace std.map2 {
 
     pred print_m i:(map K V) o:string.
     print_m (empty) "emtpy".
-    print_m (node L _ _ R I) S :-
+    print_m (node L _ _ R H) S :-
       print_m L SL,
       print_m R SR,
-      S is "(" ^ SL ^ "," ^ "," ^ SR ^ ")"
+      S is "(" ^ SL ^ "," ^ (int_to_string H) ^ "," ^ SR ^ ")"
       .
 
     pred bal i:map K V, i:K, i:V, i:map K V, o:map K V.
@@ -85,15 +86,12 @@ namespace std.map2 {
 
     pred update i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
     update (node _ X _ _ _ as M) Cmp X1 XD M1 :-
-      !, Cmp X1 X E, !, update.aux E M Cmp X1 XD M1, !.
+      Cmp X1 X E, update.aux E M Cmp X1 XD M1.
 
     pred update.aux i:cmp, i:map K V, i:(pred i:K, i:K, o:cmp), i:K, i:V, o:map K V.
-    update.aux eq (node L _ _ R H) _   X XD T :-
-      T = node L X XD R H, !.
-    update.aux lt (node L V D R H) Cmp X XD T :-
-      T = node {update L Cmp X XD} V D R H, !.
-    update.aux gt (node L V D R H) Cmp X XD T :-
-      T = node L V D {update R Cmp X XD} H, !.
+    update.aux eq (node L V _ R H) _   X XD (node L V XD R H).
+    update.aux lt (node L V D R H) Cmp X XD (node LT V D R H) :- update L Cmp X XD LT, !.
+    update.aux gt (node L V D R H) Cmp X XD (node L V D RT H) :- update R Cmp X XD RT, !.
 
     pred find i:map K V, i:(pred i:K, i:K, o:cmp), i:K, o:V.
     find ((node L K1 V1 R _) as M) Cmp K V :-
