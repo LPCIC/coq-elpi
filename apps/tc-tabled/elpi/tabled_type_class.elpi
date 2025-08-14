@@ -39,7 +39,7 @@ type synth list generator_node ->
   resume_stack ->
   mymap assertion entry ->
   option assertion ->
-  list goal-ctx ->
+  list (pair term term) ->
   synth.
 
 pred type_equal i:ty i:ty o:cmp.
@@ -77,9 +77,9 @@ term_typeclass (prod X T F) N :-
 pred assertion_typeclass i:assertion o:gref.
 assertion_typeclass (assertion G _) Name :- term_typeclass G Name.
 
-pred context_instances i:list goal-ctx i:gref o:list instance.
+pred context_instances i:list (pair term term) i:gref o:list instance.
 context_instances [] _ [].
-context_instances [decl V _ T | XS] Name O :-
+context_instances [pr T V | XS] Name O :-
   (if (term_typeclass T Name) (O = [ (pr T V) | OS ]) (O = OS)),
   context_instances XS Name OS.
 
@@ -363,7 +363,7 @@ tabled_typeclass_resolution_body (synth
     (synth GeneratorStack ResumeStack AssertionTable RootAnswer Ctx) FinalAnswer.
 /* If cnode has no remaining subgoals then (ll.7-13) .. */
 
-tabled_typeclass_resolution_body (synth [] [] _ _ _) _ _ _ :-
+tabled_typeclass_resolution_body (synth [] [] _ _ Ctx) _ _ _ :-
   coq.warn "Failed to find instance: Nothing left to test",
   fail.
 
@@ -376,7 +376,7 @@ synth_loop MySynth Query Fuel FinalAnswer :-
   NextFuel is Fuel - 1,
   synth_loop NextSynth Query NextFuel FinalAnswer.
 
-pred tabled_typeclass_resolution i:list goal-ctx i:assertion o:assertion.
+pred tabled_typeclass_resolution i:list (pair term term) i:assertion o:assertion.
 tabled_typeclass_resolution Ctx Query FinalAnswer :-
   mymap_make assertion_equal AssertionTableEmpty,
   new_subgoal (synth [] [] AssertionTableEmpty none Ctx) Query root MySynth,
@@ -384,10 +384,28 @@ tabled_typeclass_resolution Ctx Query FinalAnswer :-
   synth_loop MySynth Query 20000 FinalAnswer,
   !.
 
-pred tabled_proof_search i:list goal-ctx i:term o:term.
-tabled_proof_search Ctx Type PRoof :-
+pred context_to_arg_pairs i:list goal-ctx o:list (pair term term).
+context_to_arg_pairs [] [].
+context_to_arg_pairs [ decl V _ T | XS ] [ pr T V | YS ] :-
+  !, context_to_arg_pairs XS YS.
+context_to_arg_pairs [ _ | XS ] YS :-
+  context_to_arg_pairs XS YS.
+
+pred args_to_arg_pairs i:list argument o:list (pair term term).
+args_to_arg_pairs [] [].
+args_to_arg_pairs [ ctx-decl (context-item _ _ _ _ _ as CtxI) | XS ] [ pr T V | YS ] :-
+  !,
+  args_to_arg_pairs XS YS.
+args_to_arg_pairs [ _ | XS ] YS :-
+  args_to_arg_pairs XS YS.
+
+pred tabled_proof_search i:list goal-ctx i:list argument i:term o:term.
+tabled_proof_search Ctx Args Type PRoof :-
   MyGoal = assertion Type {{ _ }},
-  tabled_typeclass_resolution Ctx MyGoal FinalAnswer,
+  context_to_arg_pairs Ctx CtxPairs,
+  args_to_arg_pairs Args ArgsPairs,
+  std.append CtxPairs ArgsPairs CtxInstances,
+  tabled_typeclass_resolution CtxInstances MyGoal FinalAnswer,
   !,
   /* Convert from result to proof term! */
   FinalAnswer = assertion FinalType FinalTerm,
@@ -403,6 +421,6 @@ search_context [_|Tl] Type PRoof :-
   search_context Tl Type PRoof.
 
 solve (goal Ctx Trigger Type PRoof Args as G) V :-
-  (search_context Ctx Type PRoof ; tabled_proof_search Ctx Type PRoof).
+  (search_context Ctx Type PRoof ; tabled_proof_search Ctx Args Type PRoof).
 
 solve _ _ :- coq.ltac.fail _ "No auto".
