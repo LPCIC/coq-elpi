@@ -28,7 +28,8 @@ type entry list waiter -> list assertion -> entry.
 
 typeabbrev resume_stack (list (pair consumer_node assertion)).
 
-typeabbrev instance tc-instance.
+% typeabbrev instance tc-instance.
+typeabbrev instance pair term term.
 
 kind generator_node type.
 type generator_node assertion -> list instance -> generator_node.
@@ -38,6 +39,7 @@ type synth list generator_node ->
   resume_stack ->
   mymap assertion entry ->
   option assertion ->
+  list goal-ctx ->
   synth.
 
 pred type_equal i:ty i:ty o:cmp.
@@ -75,16 +77,30 @@ term_typeclass (prod X T F) N :-
 pred assertion_typeclass i:assertion o:gref.
 assertion_typeclass (assertion G _) Name :- term_typeclass G Name.
 
+pred context_instances i:list goal-ctx i:gref o:list instance.
+context_instances [] _ [].
+context_instances [decl V _ T | XS] Name O :-
+  (if (term_typeclass T Name) (O = [ (pr T V) | OS ]) (O = OS)),
+  context_instances XS Name OS.
+
+pred tc_to_inst i:tc-instance o:instance.
+tc_to_inst (tc-instance BI _ as TcInst) (pr B BITm) :-
+  tc_instance_to_term TcInst B,
+  coq.env.global BI BITm.
+
 pred new_subgoal i:synth i:assertion i:waiter o:synth.
 new_subgoal
-  (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+  (synth GeneratorStack ResumeStack AssertionTable RootAnswer Ctx)
   Subgoal Waiter
-  (synth NewGeneratorStack ResumeStack NewAssertionTable RootAnswer) :-
+  (synth NewGeneratorStack ResumeStack NewAssertionTable RootAnswer Ctx) :-
   mymap_add Subgoal Entry AssertionTable NewAssertionTable,
   Entry = (entry [Waiter] []),
   assertion_typeclass Subgoal Name,
-  coq.TC.db-for Name Instances,
-  NewGeneratorStack = [(generator_node Subgoal Instances) | GeneratorStack]
+  coq.TC.db-for Name TcInstances,
+  std.map TcInstances tc_to_inst Instances,
+  context_instances Ctx Name CtxInstances,
+  std.append CtxInstances Instances AllInstances,
+  NewGeneratorStack = [(generator_node Subgoal AllInstances) | GeneratorStack]
   .
 
 /* Apply answer to goal and update meta variable context if it succeeds */
@@ -236,12 +252,12 @@ filter_metavariables [] [].
 
 
 pred try_resolve i:assertion i:instance o:assertion o:list assertion.
-try_resolve (assertion A _) (tc-instance BI _) (assertion RT RV) RL :-
-  tc_instance_to_term (tc-instance BI _) B,
-  coq.env.global BI BITm,
-  coq.gref->string BI BIName,
-  BI = const (BIConst),
-  coq.env.const BIConst (some BIBody) BITy,
+try_resolve (assertion A _) (pr B BITm) (assertion RT RV) RL :-
+  % tc_instance_to_term (tc-instance BI _) B,
+  % coq.env.global BI BITm,
+  % coq.gref->string BI BIName,
+  % BI = const (BIConst),
+  % coq.env.const BIConst (some BIBody) BITy,
   try_resolve_types A B OL L,
   filter_metavariables L RL,
     !,
@@ -254,13 +270,13 @@ temp_fun A B (pr A B).
 
 pred waiter_fun i:assertion i:waiter i:(pair (resume_stack) (option assertion)) o:(pair (resume_stack) (option assertion)).
 waiter_fun Answer root (pr A _) (pr A (some Answer)).
-waiter_fun Answer (callback C) (pr A R) (pr [pr C Answer /* Goal */ | A] R).
+waiter_fun Answer (callback C) (pr A R) (pr [pr C Answer | A] R).
 
 pred new_consumer_node i:synth i:consumer_node o:synth.
 new_consumer_node
-    (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+    (synth GeneratorStack ResumeStack AssertionTable RootAnswer Ctx)
     (consumer_node Goal [])
-    (synth GeneratorStack NewResumeStack NewAssertionTable NewRootAnswer) :-
+    (synth GeneratorStack NewResumeStack NewAssertionTable NewRootAnswer Ctx) :-
   /* for each solution to g, push new cnode onto resume stack with it */
   mymap_find Goal AssertionTable (entry Waiters Answers),
   /* for each solution to g, push new cnode onto resume stack with it */
@@ -271,9 +287,9 @@ new_consumer_node
   !.
 
 new_consumer_node
-    (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+    (synth GeneratorStack ResumeStack AssertionTable RootAnswer Ctx)
     (consumer_node _ [ Subgoal | _ ] as CN)
-    (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer) :-
+    (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer Ctx) :-
   if (mymap_find Subgoal AssertionTable (entry Waiters Answers))
      (
        /* Map answers with consumer node */
@@ -288,21 +304,21 @@ new_consumer_node
      )
      (
        new_subgoal
-         (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+         (synth GeneratorStack ResumeStack AssertionTable RootAnswer Ctx)
          Subgoal
          (callback CN)
-         (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer)
+         (synth NewGeneratorStack NewResumeStack NewAssertionTable RootAnswer Ctx)
      ),
      !.
 
 new_consumer_node _ _ _ :- coq.error "Failed new consumer node!" , fail.
 
 pred tabled_typeclass_resolution_body i:synth i:assertion o:synth o:assertion.
-tabled_typeclass_resolution_body (synth _ _ _ (some Answer)) _ _ Answer.
+tabled_typeclass_resolution_body (synth _ _ _ (some Answer) _) _ _ Answer.
 
 tabled_typeclass_resolution_body (synth GeneratorStack
 				  [ (pr (consumer_node Goal [ Subgoal | Remaining ]) Answer) | ResumeStack ]
-				  AssertionTable RootAnswer)
+				  AssertionTable RootAnswer Ctx)
     Query MySynth FinalAnswer :-
   Answer = assertion AnswerT AnswerV,
   coq.typecheck AnswerV AnswerNT ok,
@@ -310,47 +326,49 @@ tabled_typeclass_resolution_body (synth GeneratorStack
   if (try_answer Subgoal NewAnswer Goal UpdatedGoal Remaining UpdatedRemaining)
      (
        new_consumer_node
-         (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+         (synth GeneratorStack ResumeStack AssertionTable RootAnswer Ctx)
          (consumer_node UpdatedGoal UpdatedRemaining) /* TODO: Was Goal in code, but should add new solution? */
          MySynth
       )
       (
-        MySynth = (synth GeneratorStack ResumeStack AssertionTable RootAnswer)
+        MySynth = (synth GeneratorStack ResumeStack AssertionTable RootAnswer Ctx)
       ).
 
 tabled_typeclass_resolution_body (synth GeneratorStack
 				  [ (pr (consumer_node Goal []) Answer) | ResumeStack ]
-				  AssertionTable RootAnswer)
+				  AssertionTable RootAnswer Ctx)
     Query MySynth FinalAnswer :-
   coq.warn "Cannot resume with empty subgoals!",
   fail.
 
 tabled_typeclass_resolution_body
   (synth [ generator_node Goal [Instance | Instances ] | GeneratorStack ]
-    ResumeStack AssertionTable RootAnswer) Query NewSynth FinalAnswer :-
+    ResumeStack AssertionTable RootAnswer Ctx) Query NewSynth FinalAnswer :-
   if (try_resolve Goal Instance Resolved Subgoals)
      (
        /* else (l. 14) */
        new_consumer_node
-         (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
+         (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer Ctx)
          (consumer_node Resolved Subgoals) NewSynth
      )
      (
        /* If first subgoal of cnode does not resolve with solution then Continue */
-       NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer)
+       NewSynth = (synth [ generator_node Goal Instances | GeneratorStack ] ResumeStack AssertionTable RootAnswer Ctx)
      ).
 
 tabled_typeclass_resolution_body (synth
 				  [ generator_node _ [] | GeneratorStack ]
-				  ResumeStack AssertionTable RootAnswer)
+				  ResumeStack AssertionTable RootAnswer Ctx)
     Query
-    (synth GeneratorStack ResumeStack AssertionTable RootAnswer) FinalAnswer.
+    (synth GeneratorStack ResumeStack AssertionTable RootAnswer Ctx) FinalAnswer.
 /* If cnode has no remaining subgoals then (ll.7-13) .. */
 
-tabled_typeclass_resolution_body (synth [] [] _ _) _ _ _ :- fail.
+tabled_typeclass_resolution_body (synth [] [] _ _ _) _ _ _ :-
+  coq.warn "Failed to find instance: Nothing left to test",
+  fail.
 
 pred synth_loop i:synth i:assertion i:int o:assertion.
-synth_loop (synth _ _ _ (some Answer)) _ Fuel Answer :- coq.say "synth round" Fuel.
+synth_loop (synth _ _ _ (some Answer) _) _ Fuel Answer :- coq.say "synth round" Fuel.
 synth_loop MySynth Query Fuel FinalAnswer :-
   Fuel > 0,
   tabled_typeclass_resolution_body MySynth Query NextSynth FinalAnswer,
@@ -358,25 +376,23 @@ synth_loop MySynth Query Fuel FinalAnswer :-
   NextFuel is Fuel - 1,
   synth_loop NextSynth Query NextFuel FinalAnswer.
 
-pred tabled_typeclass_resolution i:assertion o:assertion.
-tabled_typeclass_resolution Query FinalAnswer :-
+pred tabled_typeclass_resolution i:list goal-ctx i:assertion o:assertion.
+tabled_typeclass_resolution Ctx Query FinalAnswer :-
   mymap_make assertion_equal AssertionTableEmpty,
-  new_subgoal (synth [] [] AssertionTableEmpty none) Query root MySynth,
+  new_subgoal (synth [] [] AssertionTableEmpty none Ctx) Query root MySynth,
   /* while true do */
   synth_loop MySynth Query 20000 FinalAnswer,
   !.
 
-pred tabled_proof_search i:term o:term.
-tabled_proof_search Type PRoof :-
+pred tabled_proof_search i:list goal-ctx i:term o:term.
+tabled_proof_search Ctx Type PRoof :-
   MyGoal = assertion Type {{ _ }},
-  tabled_typeclass_resolution MyGoal FinalAnswer,
+  tabled_typeclass_resolution Ctx MyGoal FinalAnswer,
   !,
   /* Convert from result to proof term! */
   FinalAnswer = assertion FinalType FinalTerm,
   FinalProof = FinalTerm,
-  coq.say "FinalProof" {coq.term->string FinalProof},
-  PRoof = FinalProof,
-  coq.say "Proof" {coq.term->string PRoof} "Done"
+  PRoof = FinalProof
   .
 
 pred search_context i:list prop i:term o:term.
@@ -387,6 +403,6 @@ search_context [_|Tl] Type PRoof :-
   search_context Tl Type PRoof.
 
 solve (goal Ctx Trigger Type PRoof Args as G) V :-
-  (search_context Ctx Type PRoof ; tabled_proof_search Type PRoof).
+  (search_context Ctx Type PRoof ; tabled_proof_search Ctx Type PRoof).
 
 solve _ _ :- coq.ltac.fail _ "No auto".

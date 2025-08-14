@@ -1,17 +1,17 @@
 (* https://github.com/leanprover/lean4/blob/master/tests/lean/run/typeclass_diamond.lean *)
 
 (* Diamond *)
-Class T (alpha : Type) (n : nat).
-Class R (alpha : Type) (n : nat).
-Class L (alpha : Type) (n : nat).
-Class B (alpha : Type) (n : nat).
-Instance BtL alpha n `{B alpha n} : L alpha n := {}.
-Instance BtR alpha n `{B alpha n} : R alpha n := {}.
-Instance LtR alpha n `{L alpha n} : T alpha n := {}.
-Instance RtR alpha n `{R alpha n} : T alpha n := {}.
-Instance TtR alpha n `{T alpha n} : B alpha (S n) := {}.
+Class T (α : Type) (n : nat).
+Class R (α : Type) (n : nat).
+Class L (α : Type) (n : nat).
+Class B (α : Type) (n : nat).
+Instance BtL α n `{B α n} : L α n := {}.
+Instance BtR α n `{B α n} : R α n := {}.
+Instance LtR α n `{L α n} : T α n := {}.
+Instance RtR α n `{R α n} : T α n := {}.
+Instance TtR α n `{T α n} : B α (S n) := {}.
 
-Instance B0 alpha : B alpha 0 := {}.
+Instance B0 α : B α 0 := {}.
 
 (* (* Finished transaction in 0. secs (0.u,0.s) (successful) *) *)
 (* Module Test0. Time Instance B_0 : B unit 0 := _. End Test0. *)
@@ -75,16 +75,25 @@ TC.AddAllInstances.
 (* (* Finished transaction in 84.556 secs (82.008u,2.295s) (successful) *) *)
 (* Module Test3500TC. Time Instance B3500 : B unit 3500 := _. End Test3500TC. *)
 
-(*  *)
-Module Test4200TC. Time Instance B4200 : B unit 4200 := _. End Test4200TC.
+(* (* Finished transaction in 132.134 secs (125.754u,3.332s) (successful) *) *)
+(* Module Test4200TC. Time Instance B4200 : B unit 4200 := _. End Test4200TC. *)
+
+(* Finished transaction in 198.935 secs (162.925u,7.034s) (successful) *)
+(* Module Test4900TC. Time Instance B4900 : B unit 4900 := _. End Test4900TC. *)
+
+(* (* Stack overflow *) *)
+(* (* Module Test5600TC. Time Instance B5600 : B unit 5600 := _. End Test5600TC. *) *)
 
 Elpi TC Solver Override TC.Solver None.
 
-(* From elpi.apps.tc_tabled Require Import tabled_typelass. *)
+From elpi.apps.tc_tabled Require Import tabled_type_class.
 
-(* (* Diamond example in Rocq *) *)
-(* Elpi TC Solver Activate TC.TabledSolver. *)
-(* Elpi TC Solver Override TC.TabledSolver All. *)
+(* Diamond example in Rocq *)
+Elpi TC Solver Activate TC.TabledSolver.
+Elpi TC Solver Override TC.TabledSolver All.
+
+(* Finished transaction in 1.911 secs (1.901u,0.007s) (successful) *)
+Module Test50Tabled. Time Instance B50 : B unit 50 := _. End Test50Tabled. (* Takes: 20000 - 19650 steps *)
 
 (* (* Finished transaction in 1.911 secs (1.901u,0.007s) (successful) *) *)
 (* Module Test50Tabled. Time Instance B50 : B unit 50 := _. End Test50Tabled. (* Takes: 20000 - 19650 steps *) *)
@@ -113,5 +122,5 @@ Elpi TC Solver Override TC.Solver None.
 (* (* Finished transaction in 3465.9 secs (3306.596u,16.99s) (successful) *) *)
 (* Module Test450Tabled. Time Instance B450 : B unit 450 := _. End Test450Tabled. (* Takes: 20000 - 16850 steps *) *)
 
-(* (*  *) *)
+(* (* Finished transaction in 4962.323 secs (4843.782u,17.345s) (successful) *) *)
 (* Module Test500Tabled. Time Instance B500 : B unit 500 := _. End Test500Tabled. (* Takes: 20000 - 16500 steps *) *)
