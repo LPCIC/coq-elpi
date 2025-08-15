@@ -1,88 +1,114 @@
 (* https://github.com/leanprover/lean4/blob/master/tests/lean/run/typeclass_diamond.lean *)
 
 (* Diamond *)
-Class T (α : Type) (n : nat).
-Class R (α : Type) (n : nat).
-Class L (α : Type) (n : nat).
-Class B (α : Type) (n : nat).
-Instance BtL α n `{B α n} : L α n := {}.
-Instance BtR α n `{B α n} : R α n := {}.
-Instance LtR α n `{L α n} : T α n := {}.
-Instance RtR α n `{R α n} : T α n := {}.
-Instance TtR α n `{T α n} : B α (S n) := {}.
+Class Top1   (n : nat) : Type.
+Class Bot1   (n : nat) : Type.
+Class Left1  (n : nat) : Type.
+Class Right1 (n : nat) : Type.
 
-Instance B0 α : B α 0 := {}.
+Instance Bot1Inst : Bot1 0 := {}.
+Instance Left1ToBot1   (n : nat) `{Left1 n}  : Bot1 n := {}.
 
-(* (* Finished transaction in 0. secs (0.u,0.s) (successful) *) *)
-(* Module Test0. Time Instance B_0 : B unit 0 := _. End Test0. *)
+Instance Right1ToBot1  (n : nat) `{Right1 n} : Bot1 n := {}.
+Instance Top1ToLeft1   (n : nat) `{Top1 n}   : Left1 n := {}.
+Instance Top1ToRight1  (n : nat) `{Top1 n}   : Right1 n := {}.
+Instance Bot1ToTopSucc (n : nat) `{Bot1 n}   : Top1 (S n) := {}.
 
-(* (* Finished transaction in 1.389 secs (1.387u,0.s) (successful) *) *)
-(* Module Test225. Time Instance TtR225 : B unit 225 := _. End Test225. *)
+Class Top2 (n : nat) : Type.
+Class Bot2   (n : nat) : Type.
+Class Left2  (n : nat) : Type.
+Class Right2 (n : nat) : Type.
 
-(* (* Finished transaction in 12.928 secs (12.913u,0.011s) (successful) *) *)
-(* Module Test450. Time Instance TtR450 : B unit 450 := _. End Test450. *)
+Instance Left2ToBot2   (n : nat) `{Left2 n}  : Bot2 n := {}.
+Instance Right2ToBot2  (n : nat) `{Right2 n} : Bot2 n := {}.
+Instance Top2ToLeft2   (n : nat) `{Top2 n}   : Left2 n := {}.
+Instance Top2ToRight2  (n : nat) `{Top2 n}   : Right2 n := {}.
+Instance Bot2ToTopSucc (n : nat) `{Bot2 n}   : Top2 (S n) := {}.
 
-(* (* Finished transaction in 38.213 secs (38.175u,0.001s) (successful) *) *)
-(* Module Test675. Time Instance TtR675 : B unit 675 := _. End Test675. *)
+Class Top (n : nat) : Type.
 
-(* (* Finished transaction in 104.095 secs (103.999u,0.074s) (successful) *) *)
-(* Module Test900. Time Instance TtR900 : B unit 900 := _. End Test900. *)
+Instance Top1ToTop (n : nat) `{Top1 n} : Top n := {}.
+Instance Top2ToTop (n : nat) `{Top2 n} : Top n := {}.
 
-(* (* Finished transaction in 175.868 secs (175.7u,0.026s) (successful) *) *)
-(* Module Test1125. Time Instance TtR1125 : B unit 1125 := _. End Test1125. *)
+(* (* Finished transaction in 0.001 secs (0.001u,0.s) (successful) *) *)
+(* Module Top4Rocq. Time Instance Top4 : Top 4 := _. End Top4Rocq. *)
 
-(* (* Finished transaction in 355.404 secs (355.286u,0.021s) (successful) *) *)
-(* Module Test1350. Time Instance B1350 : B unit 1350 := _. End Test1350. *)
+(* (* Finished transaction in 0.021 secs (0.021u,0.s) (successful) *) *)
+(* Module Top8Rocq. Time Instance Top8 : Top 8 := _. End Top8Rocq. *)
 
-(* (* Finished transaction in 534.246 secs (533.92u,0.079s) (successful) *) *)
-(* Module Test1575. Time Instance TtR1575 : B unit 1575 := _. End Test1575. *)
+(* (* Finished transaction in 4.661 secs (4.661u,0.s) (successful) *) *)
+(* Module Top16Rocq. Time Instance Top16 : Top 16 := _. End Top16Rocq. *)
 
-(* (* Finished transaction in 849.83 secs (849.087u,0.431s) (successful) *) *)
-(* Module Test1800. Time Instance B1800 : B unit 1800 := _. End Test1800. *)
+(* (* Finished transaction in 0.719 secs (0.717u,0.s) (successful) *) *)
+(* Module Top17Rocq. Time Instance Top17 : Top 17 := _. End Top17Rocq. *)
 
-(* (* Finished transaction in 1098.921 secs (1098.166u,0.083s) (successful) *) *)
-(* Module Test2025. Time Instance TtR2025 : B unit 2025 := _. End Test2025. *)
+(* (* Finished transaction in 1.409 secs (1.407u,0.s) (successful) *) *)
+(* Module Top18Rocq. Time Instance Top18 : Top 18 := _. End Top18Rocq. *)
 
-(* (* Finished transaction in 1441.027 secs (1439.305u,0.752s) (successful) *) *)
-(* Module Test2250. Time Instance B2250 : B unit 2250 := _. End Test2250. *)
+(* (* Finished transaction in 2.789 secs (2.785u,0.002s) (successful) *) *)
+(* Module Top19Rocq. Time Instance Top19 : Top 19 := _. End Top19Rocq. *)
+
+(* (* Finished transaction in 5.602 secs (5.597u,0.001s) (successful) *) *)
+(* Module Top20Rocq. Time Instance Top20 : Top 20 := _. End Top20Rocq. *)
+
+(* (* Finished transaction in 170.346 secs (170.255u,0.004s) (successful) *) *)
+(* Module Top21Rocq. Time Instance Top21 : Top 21 := _. End Top21Rocq. *)
+
+(* (* Finished transaction in 351.702 secs (351.432u,0.033s) (successful) *) *)
+(* Module Top22Rocq. Time Instance Top22 : Top 22 := _. End Top22Rocq. *)
+
+(* (* Finished transaction in 699.508 secs (699.034u,0.059s) (successful) *) *)
+(* Module Top23Rocq. Time Instance Top23 : Top 23 := _. End Top23Rocq. *)
 
 From elpi Require Import elpi.
 From elpi.apps Require Import tc.
 
-(* Elpi TC Solver Activate TC.Solver. *)
+Elpi TC Solver Activate TC.Solver.
 Elpi TC Solver Override TC.Solver All.
 
 TC.AddAllClasses.
 TC.AddAllInstances.
 
-(* (* Finished transaction in 3.082 secs (3.052u,0.026s) (successful) *) *)
-(* (* Finished transaction in 5.362 secs (3.159u,0.319s) (successful) *) *)
-(* (* Finished transaction in 7.973 secs (3.183u,0.686s) (successful) *) *)
-(* Module Test700TC. Time Instance B700 : B unit 700 := _. End Test700TC. *)
+(* ELPI TC solver *)
 
-(* (* Finished transaction in 13.83 secs (13.794u,0.003s) (successful) *) *)
-(* (* Finished transaction in 12.364 secs (12.353u,0.s) (successful) *) *)
-(* (* Finished transaction in 12.292 secs (12.195u,0.019s) (successful) *) *)
-(* Module Test1400TC. Time Instance B1400 : B unit 1400 := _. End Test1400TC. *)
+(* (* Finished transaction in 0.029 secs (0.029u,0.s) (successful) *) *)
+(* Module Top4ELPI_TC. Time Instance Top4 : Top 4 := _. End Top4ELPI_TC. *)
 
-(* (* Finished transaction in 29.792 secs (28.346u,0.261s) (successful) *) *)
-(* (* Finished transaction in 29.792 secs (28.346u,0.261s) (successful) *) *)
-(* Module Test2100TC. Time Instance B2100 : B unit 2100 := _. End Test2100TC. *)
+(* (* Finished transaction in 0.035 secs (0.035u,0.s) (successful) *) *)
+(* Module Top8ELPI_TC. Time Instance Top8 : Top 8 := _. End Top8ELPI_TC. *)
 
-(* (* Finished transaction in 56.321 secs (54.822u,1.44s) (successful) *) *)
-(* Module Test2800TC. Time Instance B2800 : B unit 2800 := _. End Test2800TC. *)
+(* (* Finished transaction in 0.368 secs (0.367u,0.s) (successful) *) *)
+(* Module Top16ELPI_TC. Time Instance Top16 : Top 16 := _. End Top16ELPI_TC. *)
 
-(* (* Finished transaction in 84.556 secs (82.008u,2.295s) (successful) *) *)
-(* Module Test3500TC. Time Instance B3500 : B unit 3500 := _. End Test3500TC. *)
+(* (* Finished transaction in 0.719 secs (0.717u,0.s) (successful) *) *)
+(* Module Top17ELPI_TC. Time Instance Top17 : Top 17 := _. End Top17ELPI_TC. *)
 
-(* (* Finished transaction in 132.134 secs (125.754u,3.332s) (successful) *) *)
-(* Module Test4200TC. Time Instance B4200 : B unit 4200 := _. End Test4200TC. *)
+(* (* Finished transaction in 1.409 secs (1.407u,0.s) (successful) *) *)
+(* Module Top18ELPI_TC. Time Instance Top18 : Top 18 := _. End Top18ELPI_TC. *)
 
-(* Finished transaction in 198.935 secs (162.925u,7.034s) (successful) *)
-(* Module Test4900TC. Time Instance B4900 : B unit 4900 := _. End Test4900TC. *)
+(* (* Finished transaction in 2.789 secs (2.785u,0.002s) (successful) *) *)
+(* Module Top19ELPI_TC. Time Instance Top19 : Top 19 := _. End Top19ELPI_TC. *)
 
-(* (* Stack overflow *) *)
-(* (* Module Test5600TC. Time Instance B5600 : B unit 5600 := _. End Test5600TC. *) *)
+(* (* Finished transaction in 5.602 secs (5.597u,0.001s) (successful) *) *)
+(* Module Top20ELPI_TC. Time Instance Top20 : Top 20 := _. End Top20ELPI_TC. *)
+
+(* (* Finished transaction in 12.295 secs (12.281u,0.002s) (successful) *) *)
+(* Module Top21ELPI_TC. Time Instance Top21 : Top 21 := _. End Top21ELPI_TC. *)
+
+(* (* Finished transaction in 27.964 secs (27.951u,0.003s) (successful) *) *)
+(* Module Top22ELPI_TC. Time Instance Top22 : Top 22 := _. End Top22ELPI_TC. *)
+
+(* (* Finished transaction in 49.262 secs (49.231u,0.008s) (successful) *) *)
+(* Module Top23ELPI_TC. Time Instance Top23 : Top 23 := _. End Top23ELPI_TC. *)
+
+(* (* Finished transaction in 101.836 secs (101.792u,0.017s) (successful) *) *)
+(* Module Top24ELPI_TC. Time Instance Top24 : Top 24 := _. End Top24ELPI_TC. *)
+
+(* (* Finished transaction in 205.469 secs (205.309u,0.032s) (successful) *) *)
+(* Module Top25ELPI_TC. Time Instance Top25 : Top 25 := _. End Top25ELPI_TC. *)
+
+
+(* / ELPI TC solver *)
 
 Elpi TC Solver Override TC.Solver None.
 
@@ -92,35 +118,64 @@ From elpi.apps.tc_tabled Require Import tabled_type_class.
 Elpi TC Solver Activate TC.TabledSolver.
 Elpi TC Solver Override TC.TabledSolver All.
 
-(* Finished transaction in 1.911 secs (1.901u,0.007s) (successful) *)
-Module Test50Tabled. Time Instance B50 : B unit 50 := _. End Test50Tabled. (* Takes: 20000 - 19650 steps *)
+(* Tabled solver *)
 
-(* (* Finished transaction in 1.911 secs (1.901u,0.007s) (successful) *) *)
-(* Module Test50Tabled. Time Instance B50 : B unit 50 := _. End Test50Tabled. (* Takes: 20000 - 19650 steps *) *)
+(* Finished transaction in 0.023 secs (0.023u,0.s) (successful) *)
+Module Top4Tabled. Time Instance Top4 : Top 4 := _. End Top4Tabled.
 
-(* (* Finished transaction in 12.3 secs (12.253u,0.032s) (successful) *) *)
-(* Module Test100Tabled. Time Instance B100 : B unit 100 := _. End Test100Tabled. (* Takes: 20000 - 19300 steps *) *)
+(* Finished transaction in 0.054 secs (0.054u,0.s) (successful) *)
+Module Top8Tabled. Time Instance Top8 : Top 8 := _. End Top8Tabled.
 
-(* (* Finished transaction in 50.408 secs (50.147u,0.152s) (successful) *) *)
-(* Module Test150Tabled. Time Instance B150 : B unit 150 := _. End Test150Tabled. (* Takes: 20000 - 18950 steps *) *)
+(* Finished transaction in 0.201 secs (0.197u,0.003s) (successful) *)
+Module Top16Tabled. Time Instance Top16 : Top 16 := _. End Top16Tabled.
 
-(* (* Finished transaction in 154.541 secs (153.917u,0.547s) (successful) *) *)
-(* Module Test200Tabled. Time Instance B200 : B unit 200 := _. End Test200Tabled. (* Takes: 20000 - 18600 steps *) *)
+(* Finished transaction in 0.273 secs (0.267u,0.005s) (successful) *)
+Module Top17Tabled. Time Instance Top17 : Top 17 := _. End Top17Tabled.
 
-(* (* Finished transaction in 435.689 secs (434.456u,0.983s) (successful) *) *)
-(* Module Test250Tabled. Time Instance B250 : B unit 250 := _. End Test250Tabled. (* Takes: 20000 - 18250 steps *) *)
+(* Finished transaction in 0.255 secs (0.253u,0.s) (successful) *)
+Module Top18Tabled. Time Instance Top18 : Top 18 := _. End Top18Tabled.
 
-(* (* Finished transaction in 694.726 secs (693.17u,1.298s) (successful) *) *)
-(* Module Test300Tabled. Time Instance B300 : B unit 300 := _. End Test300Tabled. (* Takes: 20000 - 17900 steps *) *)
+(* Finished transaction in 0.289 secs (0.286u,0.001s) (successful) *)
+Module Top19Tabled. Time Instance Top19 : Top 19 := _. End Top19Tabled.
 
-(* (* Finished transaction in 1473.093 secs (1437.954u,6.426s) (successful) *) *)
-(* Module Test350Tabled. Time Instance B350 : B unit 350 := _. End Test350Tabled. (* Takes: 20000 - 17550 steps *) *)
+(* Finished transaction in 0.369 secs (0.36u,0.007s) (successful) *)
+Module Top20Tabled. Time Instance Top20 : Top 20 := _. End Top20Tabled.
 
-(* (* Finished transaction in 2457.3 secs (2447.5u,3.536s) (successful) *) *)
-(* Module Test400Tabled. Time Instance B400 : B unit 400 := _. End Test400Tabled. (* Takes: 20000 - 17200 steps *) *)
+(* Finished transaction in 0.363 secs (0.351u,0.011s) (successful) *)
+Module Top21Tabled. Time Instance Top21 : Top 21 := _. End Top21Tabled.
 
-(* (* Finished transaction in 3465.9 secs (3306.596u,16.99s) (successful) *) *)
-(* Module Test450Tabled. Time Instance B450 : B unit 450 := _. End Test450Tabled. (* Takes: 20000 - 16850 steps *) *)
+(* Finished transaction in 0.372 secs (0.372u,0.s) (successful) *)
+Module Top22Tabled. Time Instance Top22 : Top 22 := _. End Top22Tabled.
 
-(* (* Finished transaction in 4962.323 secs (4843.782u,17.345s) (successful) *) *)
-(* Module Test500Tabled. Time Instance B500 : B unit 500 := _. End Test500Tabled. (* Takes: 20000 - 16500 steps *) *)
+(* Finished transaction in 0.419 secs (0.415u,0.003s) (successful) *)
+Module Top23Tabled. Time Instance Top23 : Top 23 := _. End Top23Tabled.
+
+(* Finished transaction in 0.507 secs (0.506u,0.s) (successful) *)
+Module Top24Tabled. Time Instance Top24 : Top 24 := _. End Top24Tabled.
+
+(* Finished transaction in 0.525 secs (0.519u,0.005s) (successful) *)
+Module Top25Tabled. Time Instance Top25 : Top 25 := _. End Top25Tabled.
+
+(* Finished transaction in 3.148 secs (3.147u,0.s) (successful) *)
+Module Top50Tabled. Time Instance Top50 : Top 50 := _. End Top50Tabled.
+
+(* Finished transaction in 10.138 secs (10.041u,0.092s) (successful) *)
+Module Top75Tabled. Time Instance Top75 : Top 75 := _. End Top75Tabled.
+
+(* Finished transaction in 26.328 secs (26.289u,0.006s) (successful) *)
+Module Top100Tabled. Time Instance Top100 : Top 100 := _. End Top100Tabled.
+
+(* Finished transaction in 48.959 secs (48.772u,0.174s) (successful) *)
+Module Top125Tabled. Time Instance Top125 : Top 125 := _. End Top125Tabled.
+
+(* Finished transaction in 87.289 secs (87.152u,0.13s) (successful) *)
+Module Top150Tabled. Time Instance Top150 : Top 150 := _. End Top150Tabled.
+
+(* Finished transaction in 152.848 secs (152.537u,0.223s) (successful) *)
+Module Top175Tabled. Time Instance Top175 : Top 175 := _. End Top175Tabled.
+
+(* Finished transaction in 247.147 secs (246.117u,0.948s) (successful) *)
+Module Top200Tabled. Time Instance Top200 : Top 200 := _. End Top200Tabled.
+
+(* / Tabled solver *)
+(* Finished transaction in 726.238 secs (725.633u,0.254s) (successful) *)
