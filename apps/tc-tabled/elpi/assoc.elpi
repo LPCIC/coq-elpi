@@ -1,0 +1,184 @@
+namespace avl {
+% -----------------------------------------
+% Types
+% -----------------------------------------
+
+kind tree type -> type -> type.
+type nil tree K V.
+type node tree K V -> K -> V -> int -> tree K V -> tree K V.
+
+kind cmp type.
+type lt cmp.
+type eq cmp.
+type gt cmp.
+
+% -----------------------------------------
+% Utilities
+% -----------------------------------------
+
+pred max i:int, i:int, o:int.
+max X Y X :- X >= Y.
+max X Y Y :- X < Y.
+
+pred height i:tree K V, o:int.
+height (nil) 0.
+height (node _ _ _ H _) H.
+
+pred balanceFactor i:tree K V, o:int.
+balanceFactor (nil) 0.
+balanceFactor (node L _ _ _ R) BF :-
+  height L HL,
+  height R HR,
+  BF is HL - HR.
+
+% -----------------------------------------
+% Rotations
+% -----------------------------------------
+
+pred rotateLeft i:tree K V, o:tree K V.
+rotateLeft (node L K V _ (node RL RK RV _ RR)) TOut :-
+  height L HL,
+  height RL HRL,
+  max HL HRL LMax,
+  HL1 is LMax + 1,
+  height RR HRR,
+  max HRL HRR RMax,
+  HR1 is RMax + 1,
+  TOut = node (node L K V HL1 RL) RK RV HR1 RR.
+
+pred rotateRight i:tree K V, o:tree K V.
+rotateRight (node (node LL LK LV _ LR) K V _ R) TOut :-
+  height LL HLL,
+  height LR HLR,
+  max HLL HLR LMax,
+  HL1 is LMax + 1,
+  height R HR,
+  max HLR HR RMax,
+  HR1 is RMax + 1,
+  TOut = node LL LK LV HL1 (node LR K V HR1 R).
+
+% -----------------------------------------
+% Balancing
+% -----------------------------------------
+
+pred balance i:tree K V, o:tree K V.
+balance (nil) (nil).
+balance (node L K V _ R) TOut :-
+  height L HL,
+  height R HR,
+  BF is HL - HR,
+  if (BF > 1)
+    (
+      balanceFactor L BFL,
+      if (BFL >= 0)
+        ( rotateRight (node L K V 0 R) TOut )
+        ( rotateLeft L L1, rotateRight (node L1 K V 0 R) TOut )
+    )
+    ( if (BF < -1)
+        (
+          balanceFactor R BFR,
+          if (BFR =< 0)
+            ( rotateLeft (node L K V 0 R) TOut )
+            ( rotateRight R R1, rotateLeft (node L K V 0 R1) TOut )
+        )
+        (
+          max HL HR M,
+          H is M + 1,
+          TOut = node L K V H R
+        )
+    ).
+
+% -----------------------------------------
+% Insertion
+% -----------------------------------------
+
+pred insert
+  i:(pred i:K, i:K, o:cmp),
+  i:K, i:V, i:tree K V, o:tree K V.
+
+insert _ K V (nil) (node (nil) K V 1 (nil)).
+insert Cmp K V (node L K0 V0 H R) TOut :-
+  Cmp K K0 Ord,
+  if (Ord = lt)
+    (
+      insert Cmp K V L L1,
+      height L1 HL,
+      height R HR,
+      max HL HR M,
+      H1 is M + 1,
+      balance (node L1 K0 V0 H1 R) TOut
+    )
+    ( if (Ord = gt)
+        (
+          insert Cmp K V R R1,
+          height L HL,
+          height R1 HR,
+          max HL HR M,
+          H1 is M + 1,
+          balance (node L K0 V0 H1 R1) TOut
+        )
+        ( % eq = update value
+          height L HL,
+          height R HR,
+          max HL HR M,
+          H1 is M + 1,
+          balance (node L K V H1 R) TOut
+        )
+    ).
+
+% -----------------------------------------
+% Update
+% -----------------------------------------
+
+pred update
+  i:(pred i:K, i:K, o:cmp),
+  i:K, i:V, i:tree K V, o:tree K V.
+
+update _ K V (nil) (node (nil) K V 1 (nil)).
+update Cmp K V (node L K0 V0 H R) TOut :-
+  Cmp K K0 Ord,
+  if (Ord = lt)
+    (
+      update Cmp K V L L1,
+      height L1 HL,
+      height R HR,
+      max HL HR M,
+      H1 is M + 1,
+      balance (node L1 K0 V0 H1 R) TOut
+    )
+    ( if (Ord = gt)
+        (
+          update Cmp K V R R1,
+          height L HL,
+          height R1 HR,
+          max HL HR M,
+          H1 is M + 1,
+          balance (node L K0 V0 H1 R1) TOut
+        )
+        ( % eq = update value
+          height L HL,
+          height R HR,
+          max HL HR M,
+          H1 is M + 1,
+          balance (node L K V H1 R) TOut
+        )
+    ).
+
+pred lookup
+  i:(pred i:K, i:K, o:cmp),
+  i:K,
+  i:tree K V,
+  o:V.
+
+lookup _ _ (nil) _ :- fail. % key not found
+
+lookup Cmp K (node L K0 V0 _ R) V :-
+  Cmp K K0 Ord,
+  if (Ord = lt)
+    ( lookup Cmp K L V )
+    ( if (Ord = gt)
+        ( lookup Cmp K R V )
+        ( V = V0 ) % eq
+    ).
+
+}
