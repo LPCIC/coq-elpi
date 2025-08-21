@@ -424,10 +424,38 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Struct
 }
 
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let cs_entries_for_proj env p =
+  Structures.CSTable.entries_for ~projection:p
+
+let arguments_names env c =
+  Arguments_renaming.arguments_names c
+
+let find_arguments_scope env c =
+  CNotation.find_arguments_scope c
+[%%else]
+let cs_entries_for_proj env p =
+  Structures.CSTable.entries_for env ~projection:p
+
+let arguments_names env c =
+  Arguments_renaming.arguments_names env c
+
+let find_arguments_scope env c =
+  CNotation.find_arguments_scope env c
+[%%endif]
+
 type type_class_instance = {
   implementation : GlobRef.t;
   priority : int;
 }
+
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let tc_is_class env gr =
+  Typeclasses.is_class gr
+[%%else]
+let tc_is_class env gr =
+  Typeclasses.is_class env gr
+[%%endif]
 
 let tc_instance = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "tc-instance";
@@ -2911,7 +2939,7 @@ Supported attributes:
      match proj, value with
      | B.Unspec, B.Unspec -> !: (CSTable.entries ())
      | B.Given p, B.Unspec ->
-         !: (CSTable.entries_for ~projection:p)
+         !: (cs_entries_for_proj env p)
      | B.Unspec, B.Given v ->
          !: (CSTable.entries () |> List.filter (fun { CSTable.value = v1 } -> ValuePattern.equal env v v1))
      | B.Given p, B.Given v ->
@@ -3005,9 +3033,9 @@ Supported attributes:
 
   MLCode(Pred("coq.TC.class?",
     In(gref, "GR",
-    Easy "checks if GR is a class"),
-  (fun gr ~depth ->
-     if Typeclasses.is_class gr then () else raise Pred.No_clause)),
+    Read (global, "checks if GR is a class")),
+  (fun gr ~depth { env } _ _ ->
+     if tc_is_class env gr then () else raise Pred.No_clause)),
   DocAbove);
 
   MLData class_;
@@ -3206,10 +3234,10 @@ Supported attributes:
   MLCode(Pred("coq.arguments.name",
     In(gref,"GR",
     Out(list (option id),"Names",
-    Easy "reads the Names of the arguments of a global reference. See also the (f (A := v)) syntax.")),
-  (fun gref _ ~depth ->
+    Read (global, "reads the Names of the arguments of a global reference. See also the (f (A := v)) syntax."))),
+  (fun gref _ ~depth { env } _ _ ->
     let open Name in
-    !: (try Arguments_renaming.arguments_names gref
+    !: (try arguments_names env gref
             |> List.map (function Name x -> Some (Id.to_string x) | _ -> None)
         with Not_found -> []))),
   DocAbove);
@@ -3234,8 +3262,8 @@ Supported attributes:
   MLCode(Pred("coq.arguments.scope",
     In(gref,"GR",
     Out(list (list id),"Scopes",
-    Easy "reads the notation scope of the arguments of a global reference. See also the %scope modifier for the Arguments command")),
-  (fun gref _ ~depth -> !: (CNotation.find_arguments_scope gref))),
+    Read (global, "reads the notation scope of the arguments of a global reference. See also the %scope modifier for the Arguments command"))),
+  (fun gref _ ~depth { env } _ _ -> !: (find_arguments_scope env gref))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-scope",
