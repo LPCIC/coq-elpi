@@ -3896,24 +3896,25 @@ fold_left over the terms, letin body comes before the type).
     (fun proof _ shelved ~depth proof_context constraints state ->
       let env = proof_context.env in
       let sigma = get_sigma state in
-      let evars_of_term evd c =
-        let rec evrec (acc_set,acc_rev_l as acc) c =
-          let c = EConstr.whd_evar evd c in
+      let evars_of_term c =
+        let rec evrec env (acc_set,acc_rev_l as acc) c =
+          let c = EConstr.whd_evar sigma c in
           match EConstr.kind sigma c with
           | Constr.Evar (n, l) ->
-            if Evar.Set.mem n acc_set then acc
+            if Evar.Set.mem n acc_set then
+              acc
             else
               let acc = Evar.Set.add n acc_set, n :: acc_rev_l in
-              SList.Skip.fold evrec acc l
+              SList.Skip.fold (evrec env) acc l
           | Constr.Proj (_, _, c) ->
             let t = Retyping.get_type_of env sigma c in
-            let acc = evrec acc t in
-            evrec acc c
-          | _ -> EConstr.fold sigma evrec acc c
+            let acc = evrec env acc t in
+            evrec env acc c
+          | _ -> Termops.fold_constr_with_full_binders env sigma EConstr.push_rel evrec env acc c
         in
-        let _, rev_l = evrec (Evar.Set.empty, []) c in
+        let _, rev_l = evrec env (Evar.Set.empty, []) c in
         List.rev rev_l in
-      let subgoals = evars_of_term sigma proof in
+      let subgoals = evars_of_term proof in
       let free_evars =
         let cache = Evarutil.create_undefined_evars_cache () in
         let map ev =
