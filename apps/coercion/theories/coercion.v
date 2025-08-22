@@ -10,6 +10,7 @@ Elpi Db coercion.db lp:{{
 % - [Expected] is the type [V] should be coerced to
 % - [Res] is the result (of type [Expected])
 % Be careful not to trigger coercion as this may loop.
+:index(_ _ 10 10)
 pred coercion i:goal-ctx, i:term, i:term, i:term, o:term.
 
 }}.
