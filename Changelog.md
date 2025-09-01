@@ -1,3 +1,9 @@
+# [3.1.0] 01/09/2025
+
+Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
+
+Port to Elpi 3.1
+
 # [3.0.0] 18/7/2025
 
 Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
