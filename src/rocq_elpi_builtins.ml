@@ -3387,6 +3387,8 @@ Supported attributes:
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
      let warns = warns_of_options options in
      Abbreviation.declare_abbreviation ~local ~onlyparsing warns name (vars,pat);
+     let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
+     Dumpglob.dump_definition (CAst.make ~loc name) false "abbrev";
      let qname = Libnames.qualid_of_string (Id.to_string name) in
      match Nametab.locate_extended qname with
      | Globnames.TrueGlobal _ -> assert false
