@@ -578,16 +578,16 @@ Before the call to :builtin:`coq.typecheck`, :builtin:`coq.sigma.print`
 prints nothing interesting, while after the call it also prints the following
 syntactic constraint:
 
-.. mquote:: .s(Elpi).msg(suspended on X1)
+.. mquote:: .s(Elpi).msg(suspended on X0)
    :language: elpi
 
-which indicates that the hole :e:`X1` is linked to a Coq evar
+which indicates that the hole :e:`X0` is linked to a Coq evar
 and is expected to have type `nat`.
 
 Now the bijective mapping from Coq evars to Elpi's unification variables
 is not empty anymore:
 
-.. mquote:: .s(Elpi).msg{Rocq-Elpi mapping:*[?]X11 <-> X1*}
+.. mquote:: .s(Elpi).msg{Rocq-Elpi mapping:*[?]X11 <-> X0*}
    :language: text
 
 Note that Coq's evar identifiers are of the form `?X<n>`, while the Elpi ones
@@ -603,7 +603,7 @@ the same piece of info.
 Naked Elpi unification variables, when passed to Coq's API, are
 automatically linked to a Coq evar. We postpone the explanation of the
 difference "raw" and "elab" unification variables to the chapter about
-tactics, here the second copy of :e:`X1` in the evar constraint plays
+tactics, here the second copy of :e:`X0` in the evar constraint plays
 no role.
 
 Now, what about the typing context?

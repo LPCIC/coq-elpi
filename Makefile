@@ -90,9 +90,11 @@ examples-stdlib: theories-stdlib/dune
 
 doc: build
 	@echo "########################## generating doc ##########################"
+	@python3 -m venv alectryon
+	@alectryon/bin/pip3 install git+https://github.com/cpitclaudel/alectryon.git@c8ab1ec
 	@mkdir -p doc
 	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
-		echo ALECTRYON $(tut) && OCAMLPATH=$(shell pwd)/_build/install/default/lib ./etc/alectryon_elpi.py \
+		echo ALECTRYON $(tut) && OCAMLPATH=$(shell pwd)/_build/install/default/lib alectryon/bin/python3 etc/alectryon_elpi.py \
 		    --frontend coq+rst \
 			--output-directory doc \
 		    --pygments-style vs \

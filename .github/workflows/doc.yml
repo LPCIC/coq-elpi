@@ -37,7 +37,6 @@ jobs:
         opam install coq-serapi.8.20.0+0.20.0 ./rocq-elpi.opam coq-core.8.20.0
         sudo apt-get update
         sudo apt-get install python3-pip -y
-        pip3 install git+https://github.com/cpitclaudel/alectryon.git@c8ab1ec
 
     - name: build doc
       run: |
