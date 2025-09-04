@@ -3898,7 +3898,6 @@ fold_left over the terms, letin body comes before the type).
       let sigma = get_sigma state in
       let evars_of_term c =
         let rec evrec env (acc_set,acc_rev_l as acc) c =
-          let c = EConstr.whd_evar sigma c in
           match EConstr.kind sigma c with
           | Constr.Evar (n, l) ->
             if Evar.Set.mem n acc_set then
