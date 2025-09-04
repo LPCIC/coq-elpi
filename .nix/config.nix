@@ -61,6 +61,7 @@ let master = [
     "coq-8.20".coqPackages = coq-common-bundles // {
       coq.override.version = "8.20";
       coq-elpi.override.elpi-version = "v3.1.0";
+      odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
     };
 
     "rocq-9.0" = { rocqPackages = rocq-common-bundles // {
@@ -68,6 +69,7 @@ let master = [
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.0";
       hierarchy-builder.override.version = "master";
+      odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
     }; };
 
     "rocq-9.1" = { rocqPackages = rocq-common-bundles // {
