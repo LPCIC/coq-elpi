@@ -26,6 +26,12 @@ let main_interp_qedc = ET.Constants.declare_global_symbol "main-interp-qed"
 let main_synterpc = ET.Constants.declare_global_symbol "main-synterp"
 let attributesc = ET.Constants.declare_global_symbol "attributes"
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+exception ParseError = Gramlib.Grammar.Error
+[%%else]
+exception ParseError = Gramlib.Grammar.ParseError
+[%%endif]
+
 let atts2impl ~depth loc phase
  state atts q =
   let open Rocq_elpi_builtins_synterp in
@@ -52,7 +58,7 @@ let atts2impl ~depth loc phase
         match Pcoq.parse_string (Pvernac.main_entry None) (Printf.sprintf "#[%s] Qed." txt) |> Option.map (fun x -> x.CAst.v) with
         | None -> atts
         | Some { Vernacexpr.attrs ; _ } -> List.map (fun {CAst.v=(name,v)} -> convert_att_r ("elpi."^name,v)) attrs @ atts
-        | exception Gramlib.Grammar.Error msg ->
+        | exception ParseError msg ->
             CErrors.user_err Pp.(str"Environment variable COQ_ELPI_ATTRIBUTES contains ill formed value:" ++ spc () ++ str txt ++ cut () ++ str msg) in
   let state, atts, _ = EU.map_acc (Rocq_elpi_builtins_synterp.attribute.API.Conversion.embed ~depth) state atts in
   let atts = ET.mkApp attributesc (EU.list_to_lp_list atts) [] in
