@@ -7,7 +7,7 @@
 (* since non-uniform inductive parameters are rarely used and the inference
    code from the kernel is not easily accessible, we require the user to
    be explicit about them, eg Inductive foo U1 U2 | NU1 NU2 := ... *)
-#[global] Set Uniform Inductive Parameters.
+#[export] Set Uniform Inductive Parameters.
 
 (** The derive command
    The derive command can be invoked in two ways.

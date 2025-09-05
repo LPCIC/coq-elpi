@@ -1,6 +1,6 @@
 From elpi Require Import elpi.
 From elpi.core Require Import PrimInt63 PrimFloat PrimString.
-From elpi.apps Require Import derive.
+From elpi.apps Require Export derive.
 
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
