@@ -91,9 +91,9 @@ let lookahead_lib_colon kwstate strm =
   match Gramlib.LStream.peek_nth kwstate 0 strm with
   | Some (Tok.IDENT "lib") ->
       (match Gramlib.LStream.peek_nth kwstate 1 strm with
-      | Some (Tok.KEYWORD ":") -> ()
-      | _ -> raise streamFail)
-  | _ -> raise streamFail
+      | Some (Tok.KEYWORD ":") -> streamOk ()
+      | _ -> streamFail ())
+  | _ -> streamFail ()
 [%%endif]
 
 [%%if coq = "8.20"]

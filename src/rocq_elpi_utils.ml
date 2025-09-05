@@ -78,6 +78,12 @@ let patch_loc_source execution_loc error_loc msg =
       (* external file *)
       Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+exception ParseError = Gramlib.Grammar.Error
+[%%else]
+exception ParseError = Gramlib.Grammar.ParseError
+[%%endif]
+
 let handle_elpi_compiler_errors ~loc ?error_header f =
   let w_header m =
     match error_header with
@@ -95,7 +101,7 @@ let handle_elpi_compiler_errors ~loc ?error_header f =
     let _,info = Exninfo.capture e in
     let msg, loc = patch_loc_source loc (Some (to_coq_loc oloc)) (Pp.str msg) in
     CErrors.user_err ~info ~loc (w_header msg)
-  | Gramlib.Grammar.Error _ as e ->
+  | ParseError _ as e ->
     let _,info = Exninfo.capture e in
     let cloc = Loc.get_loc info in
     let msg = CErrors.print_no_report e in

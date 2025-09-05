@@ -35,9 +35,11 @@ let rec strip_square loc s =
   else Rocq_elpi_utils.of_coq_loc loc, s
 
 [%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
-let streamFail = Gramlib.Stream.Failure
+let streamOk x = x
+let streamFail () = raise Gramlib.Stream.Failure
 [%%else]
-let streamFail = Procq.StreamFail
+let streamOk x = Ok x
+let streamFail () = Error ()
 [%%endif]
 }
 
@@ -78,8 +80,9 @@ let any_qname kwstate strm =
           else
             the_qname := sym
       | _ -> the_qname := sym
-      end
-  | _ -> raise streamFail
+      end;
+      streamOk ()
+  | _ -> streamFail ()
 let any_qname = Pcoq.Entry.(of_parser "any_qname" { parser_fun = any_qname })
 
 }
@@ -205,8 +208,8 @@ let opt2list = function None -> [] | Some l -> l
 
 let any_kwd kwstate strm =
   match LStream.peek kwstate strm with
-  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk kwstate strm; sym
-  | _ -> raise streamFail
+  | Some (Tok.KEYWORD sym) when sym <> "." -> LStream.junk kwstate strm; streamOk sym
+  | _ -> streamFail ()
 let any_kwd = Pcoq.Entry.(of_parser "any_symbols_or_kwd" { parser_fun = any_kwd })
 
 let pr_attributes _ _ _ atts =
