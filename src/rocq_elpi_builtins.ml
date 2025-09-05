@@ -990,6 +990,13 @@ let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_tactic
 let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_ltac_in_term
 [%%endif]
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let with_hack_synterp f () = f ()
+[%%else]
+let with_hack_synterp f () =
+  Flags.with_modified_ref Flags.in_synterp_phase (fun _ -> None) f ()
+[%%endif]
+
 let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
   let action args loc =
   let open Ltac_plugin in
@@ -1018,12 +1025,15 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
   CAst.make @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit wit_ltac_in_term) (CAst.make tac)) in
   let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
+  (* HACK!!! changes the grammar but is called in interp phase *)
+  with_hack_synterp (fun () ->
   Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
     (Gramlib.Gramext.Before "10",
      [ (None, None, [ Pcoq.Production.make
       (Pcoq.Rule.next rule (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
       action
-    ])]))
+    ])])))
+    ()
 
 let subst_abbrev_for_tac (subst, { abbrev_name; tac_name; tac_fixed_args }) = {
   abbrev_name;
