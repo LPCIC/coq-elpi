@@ -64,6 +64,8 @@ let master = [
       coq.override.version = "8.20";
       coq-elpi.override.elpi-version = "v3.1.0";
       odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
+      mathcomp-real-closed.job = false;  # real-closed dropped support for 8.20
+      coqeal.job = false;  # real-closed dropped support for 8.20
     };
 
     "rocq-9.0" = { rocqPackages = rocq-common-bundles // {
