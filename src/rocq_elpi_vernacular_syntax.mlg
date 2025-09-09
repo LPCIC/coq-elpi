@@ -84,8 +84,8 @@ let lookahead_lib_colon kwstate strm =
   | Tok.IDENT "lib" ->
       (match Gramlib.LStream.peek_nth kwstate 1 strm with
       | Tok.KEYWORD ":" -> ()
-      | _ -> raise streamFail)
-  | _ -> raise streamFail
+      | _ -> streamFail ())
+  | _ -> streamFail ()
 [%%else]
 let lookahead_lib_colon kwstate strm =
   match Gramlib.LStream.peek_nth kwstate 0 strm with
