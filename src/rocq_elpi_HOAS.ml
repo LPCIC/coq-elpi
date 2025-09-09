@@ -3423,8 +3423,8 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
         mind_finite = kind;
         mind_nparams = allparamsno;
         mind_nparams_rec = paramsno;
-        mind_ntypes = ntyps;
         mind_record } = mind in
+  let ntyps = Array.length mind.mind_packets in
   let mind_params_ctxt = Vars.subst_instance_context uinst mind_params_ctxt in
   let allparams = List.map EConstr.of_rel_decl mind_params_ctxt in
   let allparams = safe_combine2_impls allparams i_impls ~default2:Glob_term.Explicit |> param2ctx in
