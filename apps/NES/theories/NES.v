@@ -10,10 +10,6 @@ typeabbrev path (list string).
 :index (2)
 pred ns o:list string, o:modpath.
 
-}}.
-
-#[synterp] Elpi Accumulate NES.db lp:{{
-
 pred open-ns o:string, o:list string.
 :name "open-ns:begin"
 open-ns _ _ :- fail.
