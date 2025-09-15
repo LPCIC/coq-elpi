@@ -7,7 +7,7 @@ From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
 From elpi Require Import elpi.
-From elpi.apps Require Import derive.
+From elpi.apps Require Export derive.
 
 (* Coq stdlib has no lens data type so we declare one here. To override with
   your own "copy", use Register as below *)
