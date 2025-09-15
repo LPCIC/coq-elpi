@@ -1686,6 +1686,15 @@ let univ_binder_compat_820 a b = a
 let univ_binder_compat_820 a b = b
 [%%endif]
 
+[%%if coq = "8.20" || coq = "9.0" || coq= "9.1"]
+let locality_of_options (o : options) = o.local <> Some false
+[%%else]
+let locality_of_options (o : options) = match o.local with
+  | Some true -> Libobject.Local
+  | Some false -> Libobject.SuperGlobal
+  | None -> Libobject.Export
+[%%endif]
+
 let coq_rest_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -3389,7 +3398,7 @@ Supported attributes:
            } in
          aux vars nenv env nargs term
      in
-     let local = options.local <> Some false in
+     let local = locality_of_options options in
      let onlyparsing = (onlyparsing = B.Given true) in
      let name = Id.of_string name in
      let vars, nenv, env, body = strip_n_lambas nargs env term in
