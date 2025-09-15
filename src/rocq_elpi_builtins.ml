@@ -1890,8 +1890,8 @@ regarded as not non-informative).|})),
     Out(bool,"PrimProjs",
     Read(global, "checks if Ind is a record (PrimProjs = tt if Ind has primitive projections)"))),
   (fun i _ ~depth {env} _ state ->
-      let mind, indbo = Inductive.lookup_mind_specif env i in
-      match mind.Declarations.mind_record with
+      let specif = Inductive.lookup_mind_specif env i in
+      match Rocq_elpi_HOAS.mind_record specif with
       | Declarations.PrimRecord _ -> !: true
       | Declarations.FakeRecord -> !: false
       | _ -> raise No_clause
