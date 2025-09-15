@@ -3418,12 +3418,19 @@ let drop_nparams_from_ctx n ctx =
 let ideclc = E.Constants.declare_global_symbol "indt-decl"
 let uideclc = E.Constants.declare_global_symbol "upoly-indt-decl"
 
+
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let mind_record (mib,_) = mib.Declarations.mind_record
+[%%else]
+let mind_record (_,mip) = mip.Declarations.mind_record
+[%%endif]
+
 let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),(i_impls,k_impls)) =
   let { Declarations.mind_params_ctxt;
         mind_finite = kind;
         mind_nparams = allparamsno;
         mind_nparams_rec = paramsno;
-        mind_record } = mind in
+      } = mind in
   let ntyps = Array.length mind.mind_packets in
   let mind_params_ctxt = Vars.subst_instance_context uinst mind_params_ctxt in
   let allparams = List.map EConstr.of_rel_decl mind_params_ctxt in
@@ -3432,7 +3439,9 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
   let nuparams, params = CList.chop nuparamsno allparams in
   let { Declarations.mind_consnames = constructor_names;
         mind_typename = id;
-        mind_nf_lc = constructor_types } = ind in
+        mind_nf_lc = constructor_types;
+      } = ind in
+  let mind_record = mind_record (mind,ind) in
   let constructor_types = constructor_types |> Array.map (fun (ctx,ty) -> Vars.subst_instance_context uinst ctx, Vars.subst_instance_constr uinst ty) in
   let arity_w_params = Inductive.type_of_inductive ((mind,ind),uinst) in
   let sigma = get_sigma state in
