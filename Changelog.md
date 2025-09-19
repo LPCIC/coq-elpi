@@ -1,3 +1,15 @@
+# [3.2.0] 19/09/2025
+
+Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
+
+### Apps:
+- Derive:
+  - Change `Set Uniform Inductive Parameters` is `#[export]` and not `#[global]`
+  
+### API
+- Fix `.glob` generation for `coq.notation.*`
+- Fix binder handling in `coq.ltac.collect-goals`
+
 # [3.1.0] 01/09/2025
 
 Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
