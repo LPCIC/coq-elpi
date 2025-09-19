@@ -89,26 +89,26 @@ kind univ-variance type.
 kind univ.variable type.
 kind unix.process type.
 kind upoly-decl type.
-type ! func.
+type ! (func).
 type (*) float -> float -> float.
 type (*) int -> int -> int.
 type (+) float -> float -> float.
 type (+) int -> int -> int.
-type (,) func ..-> func.
+type (,) variadic (func) (func).
 type (-) A -> A -> A.
 type (/) float -> float -> float.
-type (:-) pred o:func, o:func.
-type (:-) pred o:func, o:list pred.
+type (:-) (func -> (func), (func)).
+type (:-) (func -> (func), list (pred)).
 type (::) X -> list X -> list X.
-type (;) pred o:pred, o:pred.
-type (<) func i:A, i:A.
-type (=) func o:A, o:A.
-type (=<) func i:A, i:A.
-type (==) func i:A, i:A.
-type (=>) pred o:pred, o:func.
-type (=>) pred o:list pred, o:func.
-type (>) func i:A, i:A.
-type (>=) func i:A, i:A.
+type (;) (pred o:(pred), o:(pred)).
+type (<) (func A, A).
+type (=) (func -> A, A).
+type (=<) (func A, A).
+type (==) (func A, A).
+type (=>) (func -> (pred), (func)).
+type (=>) (func -> list (pred), (func)).
+type (>) (func A, A).
+type (>=) (func A, A).
 type [] list X.
 type (^) string -> string -> string.
 type abs float -> float.
@@ -123,215 +123,242 @@ type arity term -> arity.
 type arr ty -> ty -> ty.
 type as A -> A -> A.
 type attribute string -> attribute-value -> attribute.
-type attributes func o:list attribute.
+type attributes (func -> list attribute).
 type auto univ.variable -> univ-variance.
 type bar term.
 type before id -> grafting.
 type begin-module id -> synterp-action.
 type begin-module-type id -> synterp-action.
 type begin-section id -> synterp-action.
-type cache func i:term, o:term.
-type calc func i:A, o:A.
+type cache (func term -> term).
+type calc (func A -> A).
 type canonical bool -> field-attribute.
 type ceil float -> int.
 type chr int -> string.
-type clause id -> grafting -> pred -> clause.
-type close_in func i:in_stream.
-type close_out func i:out_stream.
-type closed_term func o:any.
-type cmp_term func i:any, i:any, o:cmp.
+type clause id -> grafting -> (pred) -> clause.
+type close_in (func in_stream).
+type close_out (func out_stream).
+type closed_term (func -> any).
+type cmp_term (func any, any -> cmp).
 type coercion coercion-status -> field-attribute.
 type coercion gref -> int -> gref -> class -> coercion.
 type const constant -> gref.
 type const-decl id -> option term -> arity -> argument.
-type constant func o:any, variadic o:any.
+type constant (func -> any, any).
 type constructor id -> arity -> indc-decl.
 type context-end context-decl.
 type context-item id ->
                     implicit_kind ->
                       term ->
                         option term -> (term -> context-decl) -> context-decl.
-type coq.CS.canonical-projection? func i:constant.
-type coq.CS.canonical-projections pred i:inductive, o:list (option constant).
-type coq.CS.db func o:list cs-instance.
-type coq.CS.db-for func i:gref, i:cs-pattern, o:list cs-instance.
-type coq.CS.declare-instance func i:gref.
-type coq.TC.class? func i:gref.
-type coq.TC.db func o:list tc-instance.
-type coq.TC.db-for func i:gref, o:list tc-instance.
-type coq.TC.db-tc func o:list gref.
-type coq.TC.declare-class func i:gref.
-type coq.TC.declare-instance func i:gref, i:int.
-type coq.TC.get-inst-prio func i:gref, i:gref, o:int.
-type coq.arguments.implicit func i:gref, o:list (list implicit_kind).
-type coq.arguments.name func i:gref, o:list (option id).
-type coq.arguments.scope func i:gref, o:list (list id).
-type coq.arguments.set-default-implicit func i:gref.
-type coq.arguments.set-implicit func i:gref, i:list (list implicit_kind).
-type coq.arguments.set-name func i:gref, i:list (option id).
-type coq.arguments.set-scope func i:gref, i:list (list id).
-type coq.arguments.set-simplification func i:gref, i:simplification_strategy.
-type coq.arguments.simplification func i:gref, o:option
-                                                   simplification_strategy.
-type coq.arity->term func i:arity, o:term.
-type coq.begin-synterp-group func i:id, o:group.
-type coq.coercion.db func o:list coercion.
-type coq.coercion.db-for func i:class, i:class, o:list (pair gref int).
-type coq.coercion.declare func i:coercion.
-type coq.debug any ..-> func.
-type coq.elaborate-skeleton func i:term, o:term, o:term, o:diagnostic.
-type coq.elaborate-ty-skeleton func i:term, o:sort, o:term, o:diagnostic.
-type coq.elpi.accumulate func i:scope, i:id, i:clause.
-type coq.elpi.accumulate-clauses func i:scope, i:id, i:list clause.
-type coq.elpi.add-predicate func i:string, i:string, i:string, i:list
-                                                                   (pair
-                                                                    argument_mode 
-                                                                    string).
-type coq.elpi.predicate func i:string, i:list any, o:pred.
-type coq.elpi.toposort func i:list (pair A (list A)), o:list A.
-type coq.end-synterp-group func i:group.
-type coq.env.add-axiom func i:id, i:term, o:constant.
-type coq.env.add-const func i:id, i:term, i:term, i:opaque?, o:constant.
-type coq.env.add-context pred i:context-decl.
-type coq.env.add-indt func i:indt-decl, o:inductive.
-type coq.env.add-section-variable func i:id, i:implicit_kind, i:term, 
-                                    o:constant.
-type coq.env.apply-module-functor func i:id, i:option modtypath, i:modpath, 
-                                    i:list modpath, i:coq.inline, o:modpath.
-type coq.env.apply-module-type-functor func i:id, i:modtypath, i:list modpath, 
-                                         i:coq.inline, o:modtypath.
-type coq.env.begin-module func i:id, i:option modtypath.
-type coq.env.begin-module-functor func i:id, i:option modtypath, i:list
-                                                                    (pair id 
-                                                                    modtypath).
-type coq.env.begin-module-type func i:id.
-type coq.env.begin-module-type-functor func i:id, i:list (pair id modtypath).
-type coq.env.begin-section func i:id.
-type coq.env.const func i:constant, o:option term, o:term.
-type coq.env.const-body func i:constant, o:option term.
-type coq.env.const-opaque? pred i:constant.
-type coq.env.const-primitive? pred i:constant.
-type coq.env.current-path func o:list string.
-type coq.env.current-section-path func o:list string.
-type coq.env.dependencies func i:gref, i:modpath, o:coq.gref.set.
-type coq.env.end-module func o:modpath.
-type coq.env.end-module-type func o:modtypath.
-type coq.env.end-section func.
-type coq.env.export-module func i:modpath.
-type coq.env.fresh-global-id func i:id, o:id.
-type coq.env.global func o:gref, o:term.
-type coq.env.import-module func i:modpath.
-type coq.env.include-module func i:modpath, i:coq.inline.
-type coq.env.include-module-type func i:modtypath, i:coq.inline.
-type coq.env.indc func i:constructor, o:int, o:int, o:int, o:term.
-type coq.env.indc->indt func i:constructor, o:inductive, o:int.
-type coq.env.indt func i:inductive, o:bool, o:int, o:int, o:term, o:list
-                                                                    constructor, 
-                    o:list term.
-type coq.env.indt-decl func i:inductive, o:indt-decl.
-type coq.env.informative? func i:inductive.
-type coq.env.module func i:modpath, o:list module-item.
-type coq.env.module-type func i:modtypath, o:list id.
-type coq.env.opaque? func i:constant.
-type coq.env.primitive-projection? func o:projection, o:constant, o:int.
-type coq.env.primitive-projections func i:inductive, o:list
-                                                         (option
-                                                            (pair projection 
-                                                               int)).
-type coq.env.primitive? func i:constant.
-type coq.env.projection? func i:constant, o:int.
-type coq.env.projections func i:inductive, o:list (option constant).
-type coq.env.record? func i:inductive, o:bool.
-type coq.env.recursive? func i:inductive.
-type coq.env.section func o:list constant.
-type coq.env.term-dependencies func i:term, o:coq.gref.set.
-type coq.env.transitive-dependencies func i:gref, i:modpath, o:coq.gref.set.
-type coq.env.typeof func i:gref, o:term.
-type coq.env.univpoly? func i:gref, o:int.
-type coq.error any ..-> func.
-type coq.extra-dep func i:id, o:option id.
-type coq.float->float64 func i:float, o:float64.
-type coq.float64->float func i:float64, o:float.
-type coq.goal->pp func i:goal, o:coq.pp.
-type coq.gref->id func i:gref, o:id.
-type coq.gref->path func i:gref, o:list string.
-type coq.gref->string func i:gref, o:string.
-type coq.gref.map.add func i:gref, i:A, i:coq.gref.map A, o:coq.gref.map A.
-type coq.gref.map.bindings func i:coq.gref.map A, o:list (pair gref A).
-type coq.gref.map.empty func o:coq.gref.map A.
-type coq.gref.map.filter func i:coq.gref.map A, i:(pred o:gref, o:A), 
-                           o:coq.gref.map A.
-type coq.gref.map.find func i:gref, i:coq.gref.map A, o:A.
-type coq.gref.map.fold func i:coq.gref.map A, i:C, i:(pred o:gref, o:A, 
-                                                        o:C, o:C), o:C.
-type coq.gref.map.map func i:coq.gref.map A, i:(pred o:gref, o:A, o:B), 
-                        o:coq.gref.map B.
-type coq.gref.map.mem func i:gref, i:coq.gref.map A.
-type coq.gref.map.remove func i:gref, i:coq.gref.map A, o:coq.gref.map A.
-type coq.gref.set.add func i:gref, i:coq.gref.set, o:coq.gref.set.
-type coq.gref.set.cardinal func i:coq.gref.set, o:int.
-type coq.gref.set.choose func i:coq.gref.set, o:gref.
-type coq.gref.set.diff func i:coq.gref.set, i:coq.gref.set, o:coq.gref.set.
-type coq.gref.set.elements func i:coq.gref.set, o:list gref.
-type coq.gref.set.empty func o:coq.gref.set.
-type coq.gref.set.equal func i:coq.gref.set, i:coq.gref.set.
-type coq.gref.set.filter func i:coq.gref.set, i:(pred o:gref), o:coq.gref.set.
-type coq.gref.set.fold func i:coq.gref.set, i:A, i:(pred o:gref, o:A, o:A), 
-                         o:A.
-type coq.gref.set.inter func i:coq.gref.set, i:coq.gref.set, o:coq.gref.set.
-type coq.gref.set.map func i:coq.gref.set, i:(pred o:gref, o:gref), o:coq.gref.set.
-type coq.gref.set.max func i:coq.gref.set, o:gref.
-type coq.gref.set.mem func i:gref, i:coq.gref.set.
-type coq.gref.set.min func i:coq.gref.set, o:gref.
-type coq.gref.set.partition func i:coq.gref.set, i:(pred o:gref), o:coq.gref.set, 
-                              o:coq.gref.set.
-type coq.gref.set.remove func i:gref, i:coq.gref.set, o:coq.gref.set.
-type coq.gref.set.subset func i:coq.gref.set, i:coq.gref.set.
-type coq.gref.set.union func i:coq.gref.set, i:coq.gref.set, o:coq.gref.set.
-type coq.hints.add-mode func i:gref, i:string, i:list hint-mode.
-type coq.hints.add-resolve func i:gref, i:string, i:int, i:term.
-type coq.hints.modes func i:gref, i:string, o:list (list hint-mode).
-type coq.hints.opaque func i:constant, i:string, o:bool.
-type coq.hints.set-opaque func i:constant, i:string, i:bool.
-type coq.id->name func i:id, o:name.
-type coq.info any ..-> func.
+type coq.CS.canonical-projection? (func constant).
+type coq.CS.canonical-projections (pred i:inductive, o:list (option constant)).
+type coq.CS.db (func -> list cs-instance).
+type coq.CS.db-for (func gref, cs-pattern -> list cs-instance).
+type coq.CS.declare-instance (func gref).
+type coq.TC.class? (func gref).
+type coq.TC.db (func -> list tc-instance).
+type coq.TC.db-for (func gref -> list tc-instance).
+type coq.TC.db-tc (func -> list gref).
+type coq.TC.declare-class (func gref).
+type coq.TC.declare-instance (func gref, int).
+type coq.TC.get-inst-prio (func gref, gref -> int).
+type coq.arguments.implicit (func gref -> list (list implicit_kind)).
+type coq.arguments.name (func gref -> list (option id)).
+type coq.arguments.scope (func gref -> list (list id)).
+type coq.arguments.set-default-implicit (func gref).
+type coq.arguments.set-implicit (func gref, list (list implicit_kind)).
+type coq.arguments.set-name (func gref, list (option id)).
+type coq.arguments.set-scope (func gref, list (list id)).
+type coq.arguments.set-simplification (func gref, simplification_strategy).
+type coq.arguments.simplification (func gref
+                                         -> option simplification_strategy).
+type coq.arity->term (func arity -> term).
+type coq.begin-synterp-group (func id -> group).
+type coq.coercion.db (func -> list coercion).
+type coq.coercion.db-for (func class, class -> list (pair gref int)).
+type coq.coercion.declare (func coercion).
+type coq.debug variadic any (func).
+type coq.elaborate-skeleton (func term -> term, term, diagnostic).
+type coq.elaborate-ty-skeleton (func term -> sort, term, diagnostic).
+type coq.elpi.accumulate (func scope, id, clause).
+type coq.elpi.accumulate-clauses (func scope, id, list clause).
+type coq.elpi.add-predicate (func
+                                   string,
+                                            string,
+                                                     string,
+                                                              list
+                                                                (pair
+                                                                   argument_mode 
+                                                                   string)).
+type coq.elpi.predicate (func string, list any -> (pred)).
+type coq.elpi.toposort (func list (pair A (list A)) -> list A).
+type coq.end-synterp-group (func group).
+type coq.env.add-axiom (func id, term -> constant).
+type coq.env.add-const (func id, term, term, opaque? -> constant).
+type coq.env.add-context (pred i:context-decl).
+type coq.env.add-indt (func indt-decl -> inductive).
+type coq.env.add-section-variable (func id, implicit_kind, term -> constant).
+type coq.env.apply-module-functor (func
+                                         id,
+                                              option modtypath,
+                                                                 modpath,
+                                                                 
+                                                                   list
+                                                                    modpath,
+                                                                   
+                                                                    coq.inline
+                                                                    ->
+                                                                     modpath).
+type coq.env.apply-module-type-functor (func
+                                              id,
+                                                   modtypath,
+                                                               list modpath,
+                                                                coq.inline
+                                                                 -> modtypath).
+type coq.env.begin-module (func id, option modtypath).
+type coq.env.begin-module-functor (func
+                                         id,
+                                              option modtypath,
+                                                                 list
+                                                                   (pair id 
+                                                                    modtypath)).
+type coq.env.begin-module-type (func id).
+type coq.env.begin-module-type-functor (func id, list (pair id modtypath)).
+type coq.env.begin-section (func id).
+type coq.env.const (func constant -> option term, term).
+type coq.env.const-body (func constant -> option term).
+type coq.env.const-opaque? (pred i:constant).
+type coq.env.const-primitive? (pred i:constant).
+type coq.env.current-path (func -> list string).
+type coq.env.current-section-path (func -> list string).
+type coq.env.dependencies (func gref, modpath -> coq.gref.set).
+type coq.env.end-module (func -> modpath).
+type coq.env.end-module-type (func -> modtypath).
+type coq.env.end-section (func).
+type coq.env.export-module (func modpath).
+type coq.env.fresh-global-id (func id -> id).
+type coq.env.global (func -> gref, term).
+type coq.env.import-module (func modpath).
+type coq.env.include-module (func modpath, coq.inline).
+type coq.env.include-module-type (func modtypath, coq.inline).
+type coq.env.indc (func constructor -> int, int, int, term).
+type coq.env.indc->indt (func constructor -> inductive, int).
+type coq.env.indt (func inductive
+                         -> bool, int, int, term, list constructor, list term).
+type coq.env.indt-decl (func inductive -> indt-decl).
+type coq.env.informative? (func inductive).
+type coq.env.module (func modpath -> list module-item).
+type coq.env.module-type (func modtypath -> list id).
+type coq.env.opaque? (func constant).
+type coq.env.primitive-projection? (func -> projection, constant, int).
+type coq.env.primitive-projections (func inductive
+                                          ->
+                                              list
+                                                (option (pair projection int))).
+type coq.env.primitive? (func constant).
+type coq.env.projection? (func constant -> int).
+type coq.env.projections (func inductive -> list (option constant)).
+type coq.env.record? (func inductive -> bool).
+type coq.env.recursive? (func inductive).
+type coq.env.section (func -> list constant).
+type coq.env.term-dependencies (func term -> coq.gref.set).
+type coq.env.transitive-dependencies (func gref, modpath -> coq.gref.set).
+type coq.env.typeof (func gref -> term).
+type coq.env.univpoly? (func gref -> int).
+type coq.error variadic any (func).
+type coq.extra-dep (func id -> option id).
+type coq.float->float64 (func float -> float64).
+type coq.float64->float (func float64 -> float).
+type coq.goal->pp (func goal -> coq.pp).
+type coq.gref->id (func gref -> id).
+type coq.gref->path (func gref -> list string).
+type coq.gref->string (func gref -> string).
+type coq.gref.map.add (func gref, A, coq.gref.map A -> coq.gref.map A).
+type coq.gref.map.bindings (func coq.gref.map A -> list (pair gref A)).
+type coq.gref.map.empty (func -> coq.gref.map A).
+type coq.gref.map.filter (func
+                                coq.gref.map A, ((pred o:gref, o:A))
+                                                 -> coq.gref.map A).
+type coq.gref.map.find (func gref, coq.gref.map A -> A).
+type coq.gref.map.fold (func
+                              coq.gref.map A,
+                                               C,
+                                                   ((pred o:gref, o:A, 
+                                                      o:C, o:C)) -> C).
+type coq.gref.map.map (func
+                             coq.gref.map A, ((pred o:gref, o:A, o:B))
+                                              -> coq.gref.map B).
+type coq.gref.map.mem (func gref, coq.gref.map A).
+type coq.gref.map.remove (func gref, coq.gref.map A -> coq.gref.map A).
+type coq.gref.set.add (func gref, coq.gref.set -> coq.gref.set).
+type coq.gref.set.cardinal (func coq.gref.set -> int).
+type coq.gref.set.choose (func coq.gref.set -> gref).
+type coq.gref.set.diff (func coq.gref.set, coq.gref.set -> coq.gref.set).
+type coq.gref.set.elements (func coq.gref.set -> list gref).
+type coq.gref.set.empty (func -> coq.gref.set).
+type coq.gref.set.equal (func coq.gref.set, coq.gref.set).
+type coq.gref.set.filter (func coq.gref.set, ((func -> gref)) -> coq.gref.set).
+type coq.gref.set.fold (func coq.gref.set, A, ((pred o:gref, o:A, o:A)) -> A).
+type coq.gref.set.inter (func coq.gref.set, coq.gref.set -> coq.gref.set).
+type coq.gref.set.map (func
+                             coq.gref.set, ((pred o:gref, o:gref))
+                                            -> coq.gref.set).
+type coq.gref.set.max (func coq.gref.set -> gref).
+type coq.gref.set.mem (func gref, coq.gref.set).
+type coq.gref.set.min (func coq.gref.set -> gref).
+type coq.gref.set.partition (func
+                                   coq.gref.set, ((func -> gref))
+                                                  ->
+                                                      coq.gref.set,
+                                                                    coq.gref.set).
+type coq.gref.set.remove (func gref, coq.gref.set -> coq.gref.set).
+type coq.gref.set.subset (func coq.gref.set, coq.gref.set).
+type coq.gref.set.union (func coq.gref.set, coq.gref.set -> coq.gref.set).
+type coq.hints.add-mode (func gref, string, list hint-mode).
+type coq.hints.add-resolve (func gref, string, int, term).
+type coq.hints.modes (func gref, string -> list (list hint-mode)).
+type coq.hints.opaque (func constant, string -> bool).
+type coq.hints.set-opaque (func constant, string, bool).
+type coq.id->name (func id -> name).
+type coq.info variadic any (func).
 type coq.inline.at int -> coq.inline.
 type coq.inline.default coq.inline.
 type coq.inline.no coq.inline.
-type coq.int->uint63 func i:int, o:uint63.
-type coq.locate func i:id, o:gref.
-type coq.locate-abbreviation func i:id, o:abbreviation.
-type coq.locate-all func i:id, o:list located.
-type coq.locate-module func i:id, o:modpath.
-type coq.locate-module-type func i:id, o:modtypath.
-type coq.ltac.call-ltac1 func i:any, i:goal, o:list sealed-goal.
-type coq.ltac.collect-goals func i:term, o:list sealed-goal, o:list
-                                                                 sealed-goal.
-type coq.ltac.fail func o:int, variadic i:any.
-type coq.ltac.fresh-id func i:id, i:term, o:id.
-type coq.ltac.id-free? func i:id, i:goal.
-type coq.modpath->library func i:modpath, o:modpath.
-type coq.modpath->path func i:modpath, o:list string.
-type coq.modtypath->library func i:modtypath, o:modpath.
-type coq.modtypath->path func i:modtypath, o:list string.
-type coq.name->id func i:name, o:id.
-type coq.name-suffix func i:name, i:any, o:name.
-type coq.next-synterp-action func o:synterp-action.
-type coq.notation.abbreviation func i:abbreviation, i:list term, o:term.
-type coq.notation.abbreviation-body func i:abbreviation, o:int, o:term.
-type coq.notation.add-abbreviation func i:id, i:int, i:term, i:bool, 
-                                     o:abbreviation.
-type coq.notation.add-abbreviation-for-tactic func i:string, i:string, 
-                                                i:list argument.
-type coq.notice any ..-> func.
-type coq.option.add func i:list string, i:coq.option, i:bool.
-type coq.option.available? func i:list string, o:bool.
+type coq.int->uint63 (func int -> uint63).
+type coq.locate (func id -> gref).
+type coq.locate-abbreviation (func id -> abbreviation).
+type coq.locate-all (func id -> list located).
+type coq.locate-module (func id -> modpath).
+type coq.locate-module-type (func id -> modtypath).
+type coq.ltac.call-ltac1 (func any, goal -> list sealed-goal).
+type coq.ltac.collect-goals (func term -> list sealed-goal, list sealed-goal).
+type coq.ltac.fail (pred o:int, variadic i:any).
+type coq.ltac.fresh-id (func id, term -> id).
+type coq.ltac.id-free? (func id, goal).
+type coq.modpath->library (func modpath -> modpath).
+type coq.modpath->path (func modpath -> list string).
+type coq.modtypath->library (func modtypath -> modpath).
+type coq.modtypath->path (func modtypath -> list string).
+type coq.name->id (func name -> id).
+type coq.name-suffix (func name, any -> name).
+type coq.next-synterp-action (func -> synterp-action).
+type coq.notation.abbreviation (func abbreviation, list term -> term).
+type coq.notation.abbreviation-body (func abbreviation -> int, term).
+type coq.notation.add-abbreviation (func id, int, term, bool -> abbreviation).
+type coq.notation.add-abbreviation-for-tactic (func
+                                                     string,
+                                                              string,
+                                                               list argument).
+type coq.notice variadic any (func).
+type coq.option.add (func list string, coq.option, bool).
+type coq.option.available? (func list string -> bool).
 type coq.option.bool bool -> coq.option.
-type coq.option.get func i:list string, o:coq.option.
+type coq.option.get (func list string -> coq.option).
 type coq.option.int option int -> coq.option.
-type coq.option.set func i:list string, i:coq.option.
+type coq.option.set (func list string, coq.option).
 type coq.option.string option string -> coq.option.
-type coq.pp->string func i:coq.pp, o:string.
+type coq.pp->string (func coq.pp -> string).
 type coq.pp.box coq.pp.box -> list coq.pp -> coq.pp.
 type coq.pp.brk int -> int -> coq.pp.
 type coq.pp.comment list string -> coq.pp.
@@ -345,9 +372,9 @@ type coq.pp.spc coq.pp.
 type coq.pp.str string -> coq.pp.
 type coq.pp.tag string -> coq.pp -> coq.pp.
 type coq.pp.v int -> coq.pp.box.
-type coq.primitive.projection-unfolded func o:projection, o:projection.
-type coq.pstring->string func i:pstring, o:string.
-type coq.redflags.add func i:coq.redflags, i:list coq.redflag, o:coq.redflags.
+type coq.primitive.projection-unfolded (func -> projection, projection).
+type coq.pstring->string (func pstring -> string).
+type coq.redflags.add (func coq.redflags, list coq.redflag -> coq.redflags).
 type coq.redflags.all coq.redflags.
 type coq.redflags.allnolet coq.redflags.
 type coq.redflags.beta coq.redflag.
@@ -364,21 +391,21 @@ type coq.redflags.fix coq.redflag.
 type coq.redflags.match coq.redflag.
 type coq.redflags.nored coq.redflags.
 type coq.redflags.proj projection -> coq.redflag.
-type coq.redflags.sub func i:coq.redflags, i:list coq.redflag, o:coq.redflags.
+type coq.redflags.sub (func coq.redflags, list coq.redflag -> coq.redflags).
 type coq.redflags.zeta coq.redflag.
 type coq.redflags.zeta coq.redflags.
-type coq.reduction.cbv.norm func i:term, o:term.
-type coq.reduction.cbv.whd_all pred i:term, o:term.
-type coq.reduction.eta-contract func i:term, o:term.
-type coq.reduction.lazy.bi-norm func i:term, o:term.
-type coq.reduction.lazy.norm func i:term, o:term.
-type coq.reduction.lazy.whd func i:term, o:term.
-type coq.reduction.lazy.whd_all func i:term, o:term.
-type coq.reduction.native.available? func.
-type coq.reduction.native.norm func i:term, i:term, o:term.
-type coq.reduction.vm.norm func i:term, i:term, o:term.
-type coq.reduction.vm.whd_all pred i:term, i:term, o:term.
-type coq.register func i:gref, i:coq.register.
+type coq.reduction.cbv.norm (func term -> term).
+type coq.reduction.cbv.whd_all (pred i:term, o:term).
+type coq.reduction.eta-contract (func term -> term).
+type coq.reduction.lazy.bi-norm (func term -> term).
+type coq.reduction.lazy.norm (func term -> term).
+type coq.reduction.lazy.whd (func term -> term).
+type coq.reduction.lazy.whd_all (func term -> term).
+type coq.reduction.native.available? (func).
+type coq.reduction.native.norm (func term, term -> term).
+type coq.reduction.vm.norm (func term, term -> term).
+type coq.reduction.vm.whd_all (pred i:term, i:term, o:term).
+type coq.register (func gref, coq.register).
 type coq.register.inline coq.register.
 type coq.register.lib string -> coq.register.
 type coq.register.scheme gref -> coq.register.scheme-kind -> coq.register.
@@ -408,142 +435,213 @@ type coq.register.scheme.sind_dep coq.register.scheme-kind.
 type coq.register.scheme.sind_nodep coq.register.scheme-kind.
 type coq.register.scheme.sym_internal coq.register.scheme-kind.
 type coq.register.scheme.sym_involutive coq.register.scheme-kind.
-type coq.replay-synterp-action-group func i:id.
-type coq.say any ..-> func.
-type coq.sigma.print func.
-type coq.sort.eq func o:sort, o:sort.
-type coq.sort.leq func o:sort, o:sort.
-type coq.sort.pts-triple func o:sort, o:sort, o:sort.
-type coq.sort.sup func o:sort, o:sort.
-type coq.strategy.get func i:constant, o:conversion_strategy.
-type coq.strategy.set func i:list constant, i:conversion_strategy.
-type coq.string->name func i:string, o:name.
-type coq.string->pstring func i:string, o:pstring.
-type coq.term->pp func i:term, o:coq.pp.
-type coq.term->string func i:term, o:string.
-type coq.typecheck func i:term, o:term, o:diagnostic.
-type coq.typecheck-ty func i:term, o:sort, o:diagnostic.
-type coq.uint63->int func i:uint63, o:int.
-type coq.unify-eq func i:term, i:term, o:diagnostic.
-type coq.unify-leq func i:term, i:term, o:diagnostic.
-type coq.univ func o:id, o:univ.
-type coq.univ-instance func o:univ-instance, o:list univ.variable.
-type coq.univ-instance.unify-eq func i:gref, i:univ-instance, i:univ-instance, 
-                                  o:diagnostic.
-type coq.univ-instance.unify-leq func i:gref, i:univ-instance, i:univ-instance, 
-                                   o:diagnostic.
-type coq.univ.alg-max func i:univ, i:univ, o:univ.
-type coq.univ.alg-super func i:univ, o:univ.
-type coq.univ.constraints func o:list univ-constraint.
-type coq.univ.global? func i:univ.
-type coq.univ.map.add func i:univ, i:A, i:coq.univ.map A, o:coq.univ.map A.
-type coq.univ.map.bindings func i:coq.univ.map A, o:list (pair univ A).
-type coq.univ.map.empty func o:coq.univ.map A.
-type coq.univ.map.filter func i:coq.univ.map A, i:(pred o:univ, o:A), 
-                           o:coq.univ.map A.
-type coq.univ.map.find func i:univ, i:coq.univ.map A, o:A.
-type coq.univ.map.fold func i:coq.univ.map A, i:C, i:(pred o:univ, o:A, 
-                                                        o:C, o:C), o:C.
-type coq.univ.map.map func i:coq.univ.map A, i:(pred o:univ, o:A, o:B), 
-                        o:coq.univ.map B.
-type coq.univ.map.mem func i:univ, i:coq.univ.map A.
-type coq.univ.map.remove func i:univ, i:coq.univ.map A, o:coq.univ.map A.
-type coq.univ.new func o:univ.
-type coq.univ.print func.
-type coq.univ.set.add func i:univ, i:coq.univ.set, o:coq.univ.set.
-type coq.univ.set.cardinal func i:coq.univ.set, o:int.
-type coq.univ.set.choose func i:coq.univ.set, o:univ.
-type coq.univ.set.diff func i:coq.univ.set, i:coq.univ.set, o:coq.univ.set.
-type coq.univ.set.elements func i:coq.univ.set, o:list univ.
-type coq.univ.set.empty func o:coq.univ.set.
-type coq.univ.set.equal func i:coq.univ.set, i:coq.univ.set.
-type coq.univ.set.filter func i:coq.univ.set, i:(pred o:univ), o:coq.univ.set.
-type coq.univ.set.fold func i:coq.univ.set, i:A, i:(pred o:univ, o:A, o:A), 
-                         o:A.
-type coq.univ.set.inter func i:coq.univ.set, i:coq.univ.set, o:coq.univ.set.
-type coq.univ.set.map func i:coq.univ.set, i:(pred o:univ, o:univ), o:coq.univ.set.
-type coq.univ.set.max func i:coq.univ.set, o:univ.
-type coq.univ.set.mem func i:univ, i:coq.univ.set.
-type coq.univ.set.min func i:coq.univ.set, o:univ.
-type coq.univ.set.partition func i:coq.univ.set, i:(pred o:univ), o:coq.univ.set, 
-                              o:coq.univ.set.
-type coq.univ.set.remove func i:univ, i:coq.univ.set, o:coq.univ.set.
-type coq.univ.set.subset func i:coq.univ.set, i:coq.univ.set.
-type coq.univ.set.union func i:coq.univ.set, i:coq.univ.set, o:coq.univ.set.
-type coq.univ.variable func o:univ, o:univ.variable.
-type coq.univ.variable.constraints func i:univ.variable, o:list
-                                                             univ-constraint.
-type coq.univ.variable.map.add func i:univ.variable, i:A, i:coq.univ.variable.map
-                                                              A, o:coq.univ.variable.map
-                                                                    A.
-type coq.univ.variable.map.bindings func i:coq.univ.variable.map A, o:list
-                                                                    (pair
-                                                                    univ.variable 
+type coq.replay-synterp-action-group (func id).
+type coq.say variadic any (func).
+type coq.sigma.print (func).
+type coq.sort.eq (func -> sort, sort).
+type coq.sort.leq (func -> sort, sort).
+type coq.sort.pts-triple (func -> sort, sort, sort).
+type coq.sort.sup (func -> sort, sort).
+type coq.strategy.get (func constant -> conversion_strategy).
+type coq.strategy.set (func list constant, conversion_strategy).
+type coq.string->name (func string -> name).
+type coq.string->pstring (func string -> pstring).
+type coq.term->pp (func term -> coq.pp).
+type coq.term->string (func term -> string).
+type coq.typecheck (func term -> term, diagnostic).
+type coq.typecheck-ty (func term -> sort, diagnostic).
+type coq.uint63->int (func uint63 -> int).
+type coq.unify-eq (func term, term -> diagnostic).
+type coq.unify-leq (func term, term -> diagnostic).
+type coq.univ (func -> id, univ).
+type coq.univ-instance (func -> univ-instance, list univ.variable).
+type coq.univ-instance.unify-eq (func
+                                       gref,
+                                              univ-instance, univ-instance
+                                                              -> diagnostic).
+type coq.univ-instance.unify-leq (func
+                                        gref,
+                                               univ-instance, univ-instance
+                                                               -> diagnostic).
+type coq.univ.alg-max (func univ, univ -> univ).
+type coq.univ.alg-super (func univ -> univ).
+type coq.univ.constraints (func -> list univ-constraint).
+type coq.univ.global? (func univ).
+type coq.univ.map.add (func univ, A, coq.univ.map A -> coq.univ.map A).
+type coq.univ.map.bindings (func coq.univ.map A -> list (pair univ A)).
+type coq.univ.map.empty (func -> coq.univ.map A).
+type coq.univ.map.filter (func
+                                coq.univ.map A, ((pred o:univ, o:A))
+                                                 -> coq.univ.map A).
+type coq.univ.map.find (func univ, coq.univ.map A -> A).
+type coq.univ.map.fold (func
+                              coq.univ.map A,
+                                               C,
+                                                   ((pred o:univ, o:A, 
+                                                      o:C, o:C)) -> C).
+type coq.univ.map.map (func
+                             coq.univ.map A, ((pred o:univ, o:A, o:B))
+                                              -> coq.univ.map B).
+type coq.univ.map.mem (func univ, coq.univ.map A).
+type coq.univ.map.remove (func univ, coq.univ.map A -> coq.univ.map A).
+type coq.univ.new (func -> univ).
+type coq.univ.print (func).
+type coq.univ.set.add (func univ, coq.univ.set -> coq.univ.set).
+type coq.univ.set.cardinal (func coq.univ.set -> int).
+type coq.univ.set.choose (func coq.univ.set -> univ).
+type coq.univ.set.diff (func coq.univ.set, coq.univ.set -> coq.univ.set).
+type coq.univ.set.elements (func coq.univ.set -> list univ).
+type coq.univ.set.empty (func -> coq.univ.set).
+type coq.univ.set.equal (func coq.univ.set, coq.univ.set).
+type coq.univ.set.filter (func coq.univ.set, ((func -> univ)) -> coq.univ.set).
+type coq.univ.set.fold (func coq.univ.set, A, ((pred o:univ, o:A, o:A)) -> A).
+type coq.univ.set.inter (func coq.univ.set, coq.univ.set -> coq.univ.set).
+type coq.univ.set.map (func
+                             coq.univ.set, ((pred o:univ, o:univ))
+                                            -> coq.univ.set).
+type coq.univ.set.max (func coq.univ.set -> univ).
+type coq.univ.set.mem (func univ, coq.univ.set).
+type coq.univ.set.min (func coq.univ.set -> univ).
+type coq.univ.set.partition (func
+                                   coq.univ.set, ((func -> univ))
+                                                  ->
+                                                      coq.univ.set,
+                                                                    coq.univ.set).
+type coq.univ.set.remove (func univ, coq.univ.set -> coq.univ.set).
+type coq.univ.set.subset (func coq.univ.set, coq.univ.set).
+type coq.univ.set.union (func coq.univ.set, coq.univ.set -> coq.univ.set).
+type coq.univ.variable (func -> univ, univ.variable).
+type coq.univ.variable.constraints (func univ.variable
+                                          -> list univ-constraint).
+type coq.univ.variable.map.add (func
+                                      univ.variable,
+                                                      A,
+                                                          coq.univ.variable.map
+                                                            A
+                                                          ->
+                                                              coq.univ.variable.map
+                                                                A).
+type coq.univ.variable.map.bindings (func coq.univ.variable.map A
+                                           -> list (pair univ.variable A)).
+type coq.univ.variable.map.empty (func -> coq.univ.variable.map A).
+type coq.univ.variable.map.filter (func
+                                         coq.univ.variable.map A,
+                                                                   ((pred 
+                                                                    o:univ.variable, 
+                                                                    o:A))
+                                                                   ->
+                                                                   
+                                                                    coq.univ.variable.map
                                                                     A).
-type coq.univ.variable.map.empty func o:coq.univ.variable.map A.
-type coq.univ.variable.map.filter func i:coq.univ.variable.map A, i:(
-                                                                    pred 
-                                                                    o:univ.variable, 
-                                                                    o:A), 
-                                    o:coq.univ.variable.map A.
-type coq.univ.variable.map.find func i:univ.variable, i:coq.univ.variable.map
-                                                          A, o:A.
-type coq.univ.variable.map.fold func i:coq.univ.variable.map A, i:C, 
-                                  i:(pred o:univ.variable, o:A, o:C, o:C), 
-                                  o:C.
-type coq.univ.variable.map.map func i:coq.univ.variable.map A, i:(pred 
+type coq.univ.variable.map.find (func
+                                       univ.variable, coq.univ.variable.map A
+                                                       -> A).
+type coq.univ.variable.map.fold (func
+                                       coq.univ.variable.map A,
+                                                                 C,
+                                                                    ((pred 
                                                                     o:univ.variable, 
                                                                     o:A, 
-                                                                    o:B), 
-                                 o:coq.univ.variable.map B.
-type coq.univ.variable.map.mem func i:univ.variable, i:coq.univ.variable.map
-                                                         A.
-type coq.univ.variable.map.remove func i:univ.variable, i:coq.univ.variable.map
-                                                            A, o:coq.univ.variable.map
-                                                                   A.
-type coq.univ.variable.of-term func i:term, o:coq.univ.variable.set.
-type coq.univ.variable.set.add func i:univ.variable, i:coq.univ.variable.set, 
-                                 o:coq.univ.variable.set.
-type coq.univ.variable.set.cardinal func i:coq.univ.variable.set, o:int.
-type coq.univ.variable.set.choose func i:coq.univ.variable.set, o:univ.variable.
-type coq.univ.variable.set.diff func i:coq.univ.variable.set, i:coq.univ.variable.set, 
-                                  o:coq.univ.variable.set.
-type coq.univ.variable.set.elements func i:coq.univ.variable.set, o:list
-                                                                    univ.variable.
-type coq.univ.variable.set.empty func o:coq.univ.variable.set.
-type coq.univ.variable.set.equal func i:coq.univ.variable.set, i:coq.univ.variable.set.
-type coq.univ.variable.set.filter func i:coq.univ.variable.set, i:(pred 
-                                                                    o:univ.variable), 
-                                    o:coq.univ.variable.set.
-type coq.univ.variable.set.fold func i:coq.univ.variable.set, i:A, i:(
-                                                                    pred 
+                                                                    o:C, 
+                                                                    o:C))
+                                                                    ->
+                                                                     C).
+type coq.univ.variable.map.map (func
+                                      coq.univ.variable.map A,
+                                                                ((pred 
+                                                                   o:univ.variable, 
+                                                                   o:A, 
+                                                                   o:B))
+                                                                ->
+                                                                    coq.univ.variable.map
+                                                                    B).
+type coq.univ.variable.map.mem (func univ.variable, coq.univ.variable.map A).
+type coq.univ.variable.map.remove (func
+                                         univ.variable,
+                                                         coq.univ.variable.map
+                                                           A
+                                                         ->
+                                                             coq.univ.variable.map
+                                                               A).
+type coq.univ.variable.of-term (func term -> coq.univ.variable.set).
+type coq.univ.variable.set.add (func
+                                      univ.variable, coq.univ.variable.set
+                                                      ->
+                                                          coq.univ.variable.set).
+type coq.univ.variable.set.cardinal (func coq.univ.variable.set -> int).
+type coq.univ.variable.set.choose (func coq.univ.variable.set
+                                         -> univ.variable).
+type coq.univ.variable.set.diff (func
+                                       coq.univ.variable.set,
+                                                               coq.univ.variable.set
+                                                               ->
+                                                                   coq.univ.variable.set).
+type coq.univ.variable.set.elements (func coq.univ.variable.set
+                                           -> list univ.variable).
+type coq.univ.variable.set.empty (func -> coq.univ.variable.set).
+type coq.univ.variable.set.equal (func
+                                        coq.univ.variable.set,
+                                                                coq.univ.variable.set).
+type coq.univ.variable.set.filter (func
+                                         coq.univ.variable.set,
+                                                                 ((func
+                                                                    ->
+                                                                    
+                                                                    univ.variable))
+                                                                 ->
+                                                                    coq.univ.variable.set).
+type coq.univ.variable.set.fold (func
+                                       coq.univ.variable.set,
+                                                               A,
+                                                                   ((pred 
                                                                     o:univ.variable, 
                                                                     o:A, 
-                                                                    o:A), 
-                                  o:A.
-type coq.univ.variable.set.inter func i:coq.univ.variable.set, i:coq.univ.variable.set, 
-                                   o:coq.univ.variable.set.
-type coq.univ.variable.set.map func i:coq.univ.variable.set, i:(pred 
-                                                                  o:univ.variable, 
-                                                                  o:univ.variable), 
-                                 o:coq.univ.variable.set.
-type coq.univ.variable.set.max func i:coq.univ.variable.set, o:univ.variable.
-type coq.univ.variable.set.mem func i:univ.variable, i:coq.univ.variable.set.
-type coq.univ.variable.set.min func i:coq.univ.variable.set, o:univ.variable.
-type coq.univ.variable.set.partition func i:coq.univ.variable.set, i:(
-                                                                    pred 
-                                                                    o:univ.variable), 
-                                       o:coq.univ.variable.set, o:coq.univ.variable.set.
-type coq.univ.variable.set.remove func i:univ.variable, i:coq.univ.variable.set, 
-                                    o:coq.univ.variable.set.
-type coq.univ.variable.set.subset func i:coq.univ.variable.set, i:coq.univ.variable.set.
-type coq.univ.variable.set.union func i:coq.univ.variable.set, i:coq.univ.variable.set, 
-                                   o:coq.univ.variable.set.
-type coq.version func o:string, o:int, o:int, o:int.
-type coq.warn any ..-> func.
-type coq.warning func o:string, o:string, variadic i:any.
+                                                                    o:A))
+                                                                   ->
+                                                                    A).
+type coq.univ.variable.set.inter (func
+                                        coq.univ.variable.set,
+                                                                coq.univ.variable.set
+                                                                ->
+                                                                    coq.univ.variable.set).
+type coq.univ.variable.set.map (func
+                                      coq.univ.variable.set,
+                                                              ((pred 
+                                                                 o:univ.variable, 
+                                                                 o:univ.variable))
+                                                              ->
+                                                                  coq.univ.variable.set).
+type coq.univ.variable.set.max (func coq.univ.variable.set -> univ.variable).
+type coq.univ.variable.set.mem (func univ.variable, coq.univ.variable.set).
+type coq.univ.variable.set.min (func coq.univ.variable.set -> univ.variable).
+type coq.univ.variable.set.partition (func
+                                            coq.univ.variable.set,
+                                                                    (
+                                                                    (func
+                                                                    ->
+                                                                    univ.variable))
+                                                                    ->
+                                                                    
+                                                                    coq.univ.variable.set,
+                                                                    
+                                                                    coq.univ.variable.set).
+type coq.univ.variable.set.remove (func
+                                         univ.variable, coq.univ.variable.set
+                                                         ->
+                                                             coq.univ.variable.set).
+type coq.univ.variable.set.subset (func
+                                         coq.univ.variable.set,
+                                                                 coq.univ.variable.set).
+type coq.univ.variable.set.union (func
+                                        coq.univ.variable.set,
+                                                                coq.univ.variable.set
+                                                                ->
+                                                                    coq.univ.variable.set).
+type coq.version (func -> string, int, int, int).
+type coq.warn variadic any (func).
+type coq.warning (pred o:string, o:string, variadic i:any).
 type cos float -> float.
-type counter func i:string, o:int.
+type counter (func string -> int).
 type covariant univ.variable -> univ-variance.
 type cs-default cs-pattern.
 type cs-gref gref -> cs-pattern.
@@ -552,73 +650,105 @@ type cs-prod cs-pattern.
 type cs-sort sort -> cs-pattern.
 type ctx-decl context-decl -> argument.
 type current scope.
-type decl func i:term, o:name, o:term.
-type declare-evar func i:list pred, i:term, i:term, i:term.
-type declare_constraint func i:func, variadic o:any.
-type def func i:term, o:name, o:term, o:term.
-type distinct_names func i:list any.
+type decl (func term -> name, term).
+type declare-evar (func list (pred), term, term, term).
+type declare_constraint (func (func) -> any).
+type def (func term -> name, term, term).
+type distinct_names (func list any).
 type (div) int -> int -> int.
-type dprint any ..-> func.
+type dprint variadic any (func).
 type end-module modpath -> synterp-action.
 type end-module-type modtypath -> synterp-action.
 type end-record record-decl.
 type end-section synterp-action.
-type eof func i:in_stream.
+type eof (func in_stream).
 type eq cmp.
 type eq univ.variable -> univ.variable -> univ-constraint.
 type error string -> diagnostic.
-type evar func i:term, i:term, o:term.
+type evar (func term, term -> term).
 type execution-site scope.
 type expand conversion_strategy.
 type explicit implicit_kind.
 type export-module modpath -> synterp-action.
-type fail func.
-type false func.
+type fail (func).
+type false (func).
 type ff bool.
 type field field-attributes ->
              id -> term -> (term -> record-decl) -> record-decl.
-type findall_solutions func i:pred, o:list pred.
+type findall_solutions (func (pred) -> list (pred)).
 type fix name -> int -> term -> (term -> term) -> term.
 type float64 float64 -> primitive-value.
 type floor float -> int.
-type flush func i:out_stream.
+type flush (func out_stream).
 type foo term.
-type fst func i:pair A B, o:A.
+type fst (func pair A B -> A).
 type fun name -> term -> (term -> term) -> term.
 type fun (term -> term) -> term.
 type funclass class.
-type gc.compact func.
-type gc.full func.
-type gc.get func o:int, o:int, o:int, o:int, o:int, o:int, o:int, o:int.
-type gc.major func.
-type gc.minor func.
-type gc.quick-stat func o:float, o:float, o:float, o:int, o:int, o:int, 
-                     o:int, o:int, o:int, o:int.
-type gc.set func i:int, i:int, i:int, i:int, i:int, i:int, i:int, i:int.
-type gc.stat func o:float, o:float, o:float, o:int, o:int, o:int, o:int, 
-               o:int, o:int, o:int, o:int, o:int, o:int, o:int, o:int, 
-               o:int.
-type ge_ func i:A, i:A.
-type get-option pred o:string, o:A.
-type getenv func i:string, o:option string.
-type gettimeofday func o:float.
+type gc.compact (func).
+type gc.full (func).
+type gc.get (func -> int, int, int, int, int, int, int, int).
+type gc.major (func).
+type gc.minor (func).
+type gc.quick-stat (func
+                     ->
+                         float,
+                                 float,
+                                         float,
+                                                 int,
+                                                       int,
+                                                             int,
+                                                                   int,
+                                                                   
+                                                                    int,
+                                                                     int,
+                                                                     int).
+type gc.set (func int, int, int, int, int, int, int, int).
+type gc.stat (func
+               ->
+                   float,
+                           float,
+                                   float,
+                                           int,
+                                                 int,
+                                                       int,
+                                                             int,
+                                                                   int,
+                                                                   
+                                                                    int,
+                                                                    
+                                                                    int,
+                                                                    
+                                                                    int,
+                                                                    
+                                                                    int,
+                                                                    
+                                                                    int,
+                                                                    
+                                                                    int,
+                                                                     int,
+                                                                     int).
+type ge_ (func A, A).
+type get-option (pred o:string, o:A).
+type getenv (func string -> option string).
+type gettimeofday (func -> float).
 type global gref -> term.
 type goal goal-ctx -> term -> term -> term -> list argument -> goal.
 type gref gref -> module-item.
 type grefclass gref -> class.
-type ground_term func i:any.
+type ground_term (func any).
 type gt cmp.
-type gt_ func i:A, i:A.
-type halt any ..-> func.
+type gt_ (func A, A).
+type halt variadic any (func).
 type (i+) int -> int -> int.
 type (i-) int -> int -> int.
-type (i<) func i:int, i:int.
-type (i=<) func i:int, i:int.
-type (i>) func i:int, i:int.
-type (i>=) func i:int, i:int.
+type (i<) (func int, int).
+type (i=<) (func int, int).
+type (i>) (func int, int).
+type (i>=) (func int, int).
 type iabs int -> int.
-type if func i:pred, i:func, i:func.
-type if2 func i:pred, i:func, i:pred, i:func, i:func.
+type if (func (pred), (func), (func)).
+type if2 (func (pred), (func), (pred), (func), (func)).
 type implicit implicit_kind.
 type import-module modpath -> synterp-action.
 type in argument_mode.
@@ -628,18 +758,18 @@ type indc constructor -> gref.
 type indt inductive -> gref.
 type indt-decl indt-decl -> argument.
 type inductive id -> bool -> arity -> (term -> list indc-decl) -> indt-decl.
-type input func i:in_stream, i:int, o:string.
-type input_line func i:in_stream, o:string.
+type input (func in_stream, int -> string).
+type input_line (func in_stream -> string).
 type int int -> argument.
 type int_to_real int -> float.
 type int_to_string int -> string.
 type invariant univ.variable -> univ-variance.
 type irrelevant univ.variable -> univ-variance.
-type (is) func o:A, i:A.
-type (is_cdata) func i:any, o:string.
+type (is) (pred o:A, i:A).
+type (is_cdata) (func any -> string).
 type (i~) int -> int.
 type le univ.variable -> univ.variable -> univ-constraint.
-type le_ func i:A, i:A.
+type le_ (func A, A).
 type leaf-loc loc -> attribute-value.
 type leaf-str string -> attribute-value.
 type let name -> term -> term -> (term -> term) -> term.
@@ -650,16 +780,16 @@ type loc-abbreviation abbreviation -> located.
 type loc-gref gref -> located.
 type loc-modpath modpath -> located.
 type loc-modtypath modtypath -> located.
-type loc.fields func i:loc, o:string, o:int, o:int, o:int, o:int.
-type lookahead func i:in_stream, o:string.
+type loc.fields (func loc -> string, int, int, int, int).
+type lookahead (func in_stream -> string).
 type lt cmp.
 type lt univ.variable -> univ.variable -> univ-constraint.
-type lt_ func i:A, i:A.
-type main pred i:list argument.
-type main-interp pred i:list argument, i:any.
-type main-interp-proof pred i:list argument, i:any, o:term, o:any.
-type main-interp-qed pred i:list argument, i:any, i:term, i:any.
-type main-synterp pred i:list argument, o:any.
+type lt_ (func A, A).
+type main (pred i:list argument).
+type main-interp (pred i:list argument, i:any).
+type main-interp-proof (pred i:list argument, i:any, o:term, o:any).
+type main-interp-qed (pred i:list argument, i:any, i:term, i:any).
+type main-synterp (pred i:list argument, o:any).
 type match term -> term -> list term -> term.
 type max float -> float -> float.
 type max int -> int -> int.
@@ -673,409 +803,442 @@ type (mode-output) hint-mode.
 type (module-functor) modpath -> list modtypath -> module-item.
 type (module-type) modtypath -> module-item.
 type (module-type-functor) modtypath -> list modtypath -> module-item.
-type msolve pred i:list sealed-goal, o:list sealed-goal.
+type msolve (pred i:list sealed-goal, o:list sealed-goal).
 type nabla (term -> sealed-goal) -> sealed-goal.
-type name func o:any, variadic o:any.
-type names func o:list any.
+type name (func -> any, any).
+type names (func -> list any).
 type never simplification_strategy.
-type new_int func o:int.
-type new_safe func o:safe.
+type new_int (func -> int).
+type new_safe (func -> safe).
 type node list attribute -> attribute-value.
 type none option A.
-type not func i:pred.
-type occurs func i:any, i:any.
-type of pred i:term, o:ty.
+type not (func (pred)).
+type occurs (func any, any).
+type of (pred i:term, o:ty).
 type off coercion-status.
 type ok diagnostic.
 type opaque conversion_strategy.
 type open-trm int -> term -> argument.
-type open_append func i:string, o:out_stream.
-type open_in func i:string, o:in_stream.
-type open_out func i:string, o:out_stream.
-type open_safe func i:safe, o:list A.
-type open_string func i:string, o:in_stream.
+type open_append (func string -> out_stream).
+type open_in (func string -> in_stream).
+type open_out (func string -> out_stream).
+type open_safe (func safe -> list A).
+type open_string (func string -> in_stream).
 type out argument_mode.
-type output func i:out_stream, i:string.
+type output (func out_stream, string).
 type parameter id -> implicit_kind -> term -> (term -> arity) -> arity.
 type parameter id ->
                  implicit_kind -> term -> (term -> indt-decl) -> indt-decl.
-type pattern_match func i:A, o:A.
+type pattern_match (func A -> A).
 type pglobal gref -> univ-instance -> term.
-type pi func i:(func i:A).
+type pi (func ((func A))).
 type pr A -> B -> pair A B.
 type primitive primitive-value -> term.
-type primitive? func i:any, i:string.
-type print any ..-> func.
-type print_constraints func.
-type printterm pred i:out_stream, i:A.
+type primitive? (func any, string).
+type print variadic any (func).
+type print_constraints (func).
+type printterm (pred i:out_stream, i:A).
 type prod name -> term -> (term -> term) -> term.
 type proj projection -> int -> primitive-value.
 type prop sort.
-type prune func o:any, i:list any.
+type prune (pred o:any, i:list any).
 type pstring pstring -> primitive-value.
 type (r+) float -> float -> float.
 type (r-) float -> float -> float.
-type (r<) func i:float, i:float.
-type (r=<) func i:float, i:float.
-type (r>) func i:float, i:float.
-type (r>=) func i:float, i:float.
+type (r<) (func float, float).
+type (r=<) (func float, float).
+type (r>) (func float, float).
+type (r>=) (func float, float).
 type rabs float -> float.
-type random.init func i:int.
-type random.int func i:int, o:int.
-type random.self_init func.
+type random.init (func int).
+type random.int (func int -> int).
+type random.self_init (func).
 type real_to_string float -> string.
 type record id -> term -> id -> record-decl -> indt-decl.
 type regular coercion-status.
 type remove id -> grafting.
 type replace id -> grafting.
 type reversible coercion-status.
-type rex.match func i:string, i:string.
-type rex.replace func i:string, i:string, i:string, o:string.
-type rex.split func i:string, i:string, o:list string.
-type rex_match func i:string, i:string.
-type rex_replace func i:string, i:string, i:string, o:string.
-type rex_split func i:string, i:string, o:list string.
+type rex.match (func string, string).
+type rex.replace (func string, string, string -> string).
+type rex.split (func string, string -> list string).
+type rex_match (func string, string).
+type rex_replace (func string, string, string -> string).
+type rex_split (func string, string -> list string).
 type rhc string -> int.
-type rm-evar func i:term, i:term.
+type rm-evar (func term, term).
 type (r~) float -> float.
-type (s<) func i:string, i:string.
-type (s=<) func i:string, i:string.
-type (s>) func i:string, i:string.
-type (s>=) func i:string, i:string.
-type same_term func i:A, i:A.
-type same_var func i:A, i:A.
+type (s<) (func string, string).
+type (s=<) (func string, string).
+type (s>) (func string, string).
+type (s>=) (func string, string).
+type same_term (func A, A).
+type same_var (func A, A).
 type seal goal -> sealed-goal.
-type sigma func i:(func i:A).
+type sigma (func ((func A))).
 type sin float -> float.
 type size string -> int.
-type snd func i:pair A B, o:B.
-type solve pred i:goal, o:list sealed-goal.
+type snd (func pair A B -> B).
+type solve (pred i:goal, o:list sealed-goal).
 type some A -> option A.
 type sort sort -> term.
 type sortclass class.
 type sprop sort.
 type sqrt float -> float.
-type stash_in_safe func i:safe, i:A.
-type std.any->string func i:A, o:string.
-type std.append func i:list A, i:list A, o:list A.
-type std.appendR pred o:list A, o:list A, o:list A.
-type std.assert! func i:pred, i:string.
-type std.assert-ok! func i:(pred o:diagnostic), i:string.
-type std.debug-print func i:string, i:any.
-type std.do! func i:list pred.
-type std.do-ok! func o:diagnostic, i:list (pred o:diagnostic).
-type std.drop func i:int, i:list A, o:list A.
-type std.drop-last func i:int, i:list A, o:list A.
-type std.exists pred i:list A, i:(pred i:A).
-type std.exists! func i:list A, i:(pred i:A).
-type std.exists2 pred i:list A, i:list B, i:(pred i:A, i:B).
-type std.fatal-error func i:string.
-type std.fatal-error-w-data func i:string, i:any.
-type std.filter func i:list A, i:(func i:A), o:list A.
-type std.findall func i:pred, o:list pred.
-type std.flatten func i:list (list A), o:list A.
-type std.flip func i:(func i:A, i:B), i:B, i:A.
-type std.fold func i:list B, i:A, i:(func i:B, i:A, o:A), o:A.
-type std.fold-map func i:list A, i:B, i:(func i:A, i:B, o:C, o:B), o:list C, 
-                    o:B.
-type std.fold-right func i:list B, i:A, i:(func i:B, i:A, o:A), o:A.
-type std.fold2 func i:list C, i:list B, i:A, i:(func i:C, i:B, i:A, o:A), o:A.
-type std.forall func i:list A, i:(func i:A).
-type std.forall-ok func i:list A, i:(func i:A, o:diagnostic), o:diagnostic.
-type std.forall2 func i:list A, i:list B, i:(func i:A, i:B).
-type std.ignore-failure! func i:pred.
-type std.int.map.add func i:int, i:A, i:std.int.map A, o:std.int.map A.
-type std.int.map.bindings func i:std.int.map A, o:list (pair int A).
-type std.int.map.empty func o:std.int.map A.
-type std.int.map.filter func i:std.int.map A, i:(pred o:int, o:A), o:std.int.map
-                                                                    A.
-type std.int.map.find func i:int, i:std.int.map A, o:A.
-type std.int.map.fold func i:std.int.map A, i:C, i:(pred o:int, o:A, o:C, o:C), 
-                        o:C.
-type std.int.map.map func i:std.int.map A, i:(pred o:int, o:A, o:B), 
-                       o:std.int.map B.
-type std.int.map.mem func i:int, i:std.int.map A.
-type std.int.map.remove func i:int, i:std.int.map A, o:std.int.map A.
-type std.int.set.add func i:int, i:std.int.set, o:std.int.set.
-type std.int.set.cardinal func i:std.int.set, o:int.
-type std.int.set.choose func i:std.int.set, o:int.
-type std.int.set.diff func i:std.int.set, i:std.int.set, o:std.int.set.
-type std.int.set.elements func i:std.int.set, o:list int.
-type std.int.set.empty func o:std.int.set.
-type std.int.set.equal func i:std.int.set, i:std.int.set.
-type std.int.set.filter func i:std.int.set, i:(pred o:int), o:std.int.set.
-type std.int.set.fold func i:std.int.set, i:A, i:(pred o:int, o:A, o:A), o:A.
-type std.int.set.inter func i:std.int.set, i:std.int.set, o:std.int.set.
-type std.int.set.map func i:std.int.set, i:(pred o:int, o:int), o:std.int.set.
-type std.int.set.max func i:std.int.set, o:int.
-type std.int.set.mem func i:int, i:std.int.set.
-type std.int.set.min func i:std.int.set, o:int.
-type std.int.set.partition func i:std.int.set, i:(pred o:int), o:std.int.set, 
-                             o:std.int.set.
-type std.int.set.remove func i:int, i:std.int.set, o:std.int.set.
-type std.int.set.subset func i:std.int.set, i:std.int.set.
-type std.int.set.union func i:std.int.set, i:std.int.set, o:std.int.set.
-type std.intersperse func i:A, i:list A, o:list A.
-type std.iota func i:int, o:list int.
-type std.last func i:list A, o:A.
-type std.length func i:list A, o:int.
-type std.lift-ok pred i:pred, i:string, o:diagnostic.
-type std.list.init func i:int, i:(func i:int, o:A), o:list A.
-type std.list.init.aux func i:int, i:int, i:(func i:int, o:A), o:list A.
-type std.list.make func i:int, i:A, o:list A.
-type std.loc.map.add func i:loc, i:A, i:std.loc.map A, o:std.loc.map A.
-type std.loc.map.bindings func i:std.loc.map A, o:list (pair loc A).
-type std.loc.map.empty func o:std.loc.map A.
-type std.loc.map.filter func i:std.loc.map A, i:(pred o:loc, o:A), o:std.loc.map
-                                                                    A.
-type std.loc.map.find func i:loc, i:std.loc.map A, o:A.
-type std.loc.map.fold func i:std.loc.map A, i:C, i:(pred o:loc, o:A, o:C, o:C), 
-                        o:C.
-type std.loc.map.map func i:std.loc.map A, i:(pred o:loc, o:A, o:B), 
-                       o:std.loc.map B.
-type std.loc.map.mem func i:loc, i:std.loc.map A.
-type std.loc.map.remove func i:loc, i:std.loc.map A, o:std.loc.map A.
-type std.loc.set.add func i:loc, i:std.loc.set, o:std.loc.set.
-type std.loc.set.cardinal func i:std.loc.set, o:int.
-type std.loc.set.choose func i:std.loc.set, o:loc.
-type std.loc.set.diff func i:std.loc.set, i:std.loc.set, o:std.loc.set.
-type std.loc.set.elements func i:std.loc.set, o:list loc.
-type std.loc.set.empty func o:std.loc.set.
-type std.loc.set.equal func i:std.loc.set, i:std.loc.set.
-type std.loc.set.filter func i:std.loc.set, i:(pred o:loc), o:std.loc.set.
-type std.loc.set.fold func i:std.loc.set, i:A, i:(pred o:loc, o:A, o:A), o:A.
-type std.loc.set.inter func i:std.loc.set, i:std.loc.set, o:std.loc.set.
-type std.loc.set.map func i:std.loc.set, i:(pred o:loc, o:loc), o:std.loc.set.
-type std.loc.set.max func i:std.loc.set, o:loc.
-type std.loc.set.mem func i:loc, i:std.loc.set.
-type std.loc.set.min func i:std.loc.set, o:loc.
-type std.loc.set.partition func i:std.loc.set, i:(pred o:loc), o:std.loc.set, 
-                             o:std.loc.set.
-type std.loc.set.remove func i:loc, i:std.loc.set, o:std.loc.set.
-type std.loc.set.subset func i:std.loc.set, i:std.loc.set.
-type std.loc.set.union func i:std.loc.set, i:std.loc.set, o:std.loc.set.
-type std.lookup pred i:list (pair A B), i:A, o:B.
-type std.lookup! func i:list (pair A B), i:A, o:B.
-type std.map std.map.private.map K V -> (pred i:K, i:K, o:cmp) -> std.map K V.
-type std.map func i:list A, i:(func i:A, o:B), o:list B.
-type std.map-filter func i:list A, i:(func i:A, o:B), o:list B.
-type std.map-i func i:list A, i:(func i:int, i:A, o:B), o:list B.
-type std.map-i.aux func i:list A, i:int, i:(func i:int, i:A, o:B), o:list B.
-type std.map-ok func i:list A, i:(func i:A, o:B, o:diagnostic), o:list B, 
-                  o:diagnostic.
-type std.map.add pred i:K, i:V, i:std.map K V, o:std.map K V.
-type std.map.bindings pred i:std.map K V, o:list (pair K V).
-type std.map.find pred i:K, i:std.map K V, o:V.
-type std.map.make pred i:(pred i:K, i:K, o:cmp), o:std.map K V.
-type std.map.private.add pred i:std.map.private.map K V, i:(pred i:K, 
-                                                              i:K, o:cmp), 
-                           i:K, i:V, o:std.map.private.map K V.
-type std.map.private.add.aux pred i:cmp, i:std.map.private.map K V, i:(
-                                                                    pred 
-                                                                    i:K, 
-                                                                    i:K, 
-                                                                    o:cmp), 
-                               i:K, i:V, o:std.map.private.map K V.
-type std.map.private.bal pred i:std.map.private.map K V, i:K, i:V, i:std.map.private.map
+type stash_in_safe (func safe, A).
+type std.any->string (func A -> string).
+type std.append (func list A, list A -> list A).
+type std.appendR (pred o:list A, o:list A, o:list A).
+type std.assert! (func (pred), string).
+type std.assert-ok! (func ((pred o:diagnostic)), string).
+type std.debug-print (func string, any).
+type std.do! (func list (pred)).
+type std.do-ok! (pred o:diagnostic, i:list ((pred o:diagnostic))).
+type std.drop (func int, list A -> list A).
+type std.drop-last (func int, list A -> list A).
+type std.exists (pred i:list A, i:((pred i:A))).
+type std.exists! (func list A, ((pred i:A))).
+type std.exists2 (pred i:list A, i:list B, i:((pred i:A, i:B))).
+type std.fatal-error (func string).
+type std.fatal-error-w-data (func string, any).
+type std.filter (func list A, ((func A)) -> list A).
+type std.findall (func (pred) -> list (pred)).
+type std.flatten (func list (list A) -> list A).
+type std.flip (func ((func A, B)), B, A).
+type std.fold (func list B, A, ((func B, A -> A)) -> A).
+type std.fold-map (func list A, B, ((func A, B -> C, B)) -> list C, B).
+type std.fold-right (func list B, A, ((func B, A -> A)) -> A).
+type std.fold2 (func list C, list B, A, ((func C, B, A -> A)) -> A).
+type std.forall (func list A, ((func A))).
+type std.forall-ok (func list A, ((func A -> diagnostic)) -> diagnostic).
+type std.forall2 (func list A, list B, ((func A, B))).
+type std.ignore-failure! (func (pred)).
+type std.int.map.add (func int, A, std.int.map A -> std.int.map A).
+type std.int.map.bindings (func std.int.map A -> list (pair int A)).
+type std.int.map.empty (func -> std.int.map A).
+type std.int.map.filter (func
+                               std.int.map A, ((pred o:int, o:A))
+                                               -> std.int.map A).
+type std.int.map.find (func int, std.int.map A -> A).
+type std.int.map.fold (func
+                             std.int.map A,
+                                             C, ((pred o:int, o:A, o:C, o:C))
+                                                 -> C).
+type std.int.map.map (func
+                            std.int.map A, ((pred o:int, o:A, o:B))
+                                            -> std.int.map B).
+type std.int.map.mem (func int, std.int.map A).
+type std.int.map.remove (func int, std.int.map A -> std.int.map A).
+type std.int.set.add (func int, std.int.set -> std.int.set).
+type std.int.set.cardinal (func std.int.set -> int).
+type std.int.set.choose (func std.int.set -> int).
+type std.int.set.diff (func std.int.set, std.int.set -> std.int.set).
+type std.int.set.elements (func std.int.set -> list int).
+type std.int.set.empty (func -> std.int.set).
+type std.int.set.equal (func std.int.set, std.int.set).
+type std.int.set.filter (func std.int.set, ((func -> int)) -> std.int.set).
+type std.int.set.fold (func std.int.set, A, ((pred o:int, o:A, o:A)) -> A).
+type std.int.set.inter (func std.int.set, std.int.set -> std.int.set).
+type std.int.set.map (func std.int.set, ((pred o:int, o:int)) -> std.int.set).
+type std.int.set.max (func std.int.set -> int).
+type std.int.set.mem (func int, std.int.set).
+type std.int.set.min (func std.int.set -> int).
+type std.int.set.partition (func
+                                  std.int.set, ((func -> int))
+                                                -> std.int.set, std.int.set).
+type std.int.set.remove (func int, std.int.set -> std.int.set).
+type std.int.set.subset (func std.int.set, std.int.set).
+type std.int.set.union (func std.int.set, std.int.set -> std.int.set).
+type std.intersperse (func A, list A -> list A).
+type std.iota (func int -> list int).
+type std.last (func list A -> A).
+type std.length (func list A -> int).
+type std.lift-ok (pred i:(pred), i:string, o:diagnostic).
+type std.list.init (func int, ((func int -> A)) -> list A).
+type std.list.init.aux (func int, int, ((func int -> A)) -> list A).
+type std.list.make (func int, A -> list A).
+type std.loc.map.add (func loc, A, std.loc.map A -> std.loc.map A).
+type std.loc.map.bindings (func std.loc.map A -> list (pair loc A)).
+type std.loc.map.empty (func -> std.loc.map A).
+type std.loc.map.filter (func
+                               std.loc.map A, ((pred o:loc, o:A))
+                                               -> std.loc.map A).
+type std.loc.map.find (func loc, std.loc.map A -> A).
+type std.loc.map.fold (func
+                             std.loc.map A,
+                                             C, ((pred o:loc, o:A, o:C, o:C))
+                                                 -> C).
+type std.loc.map.map (func
+                            std.loc.map A, ((pred o:loc, o:A, o:B))
+                                            -> std.loc.map B).
+type std.loc.map.mem (func loc, std.loc.map A).
+type std.loc.map.remove (func loc, std.loc.map A -> std.loc.map A).
+type std.loc.set.add (func loc, std.loc.set -> std.loc.set).
+type std.loc.set.cardinal (func std.loc.set -> int).
+type std.loc.set.choose (func std.loc.set -> loc).
+type std.loc.set.diff (func std.loc.set, std.loc.set -> std.loc.set).
+type std.loc.set.elements (func std.loc.set -> list loc).
+type std.loc.set.empty (func -> std.loc.set).
+type std.loc.set.equal (func std.loc.set, std.loc.set).
+type std.loc.set.filter (func std.loc.set, ((func -> loc)) -> std.loc.set).
+type std.loc.set.fold (func std.loc.set, A, ((pred o:loc, o:A, o:A)) -> A).
+type std.loc.set.inter (func std.loc.set, std.loc.set -> std.loc.set).
+type std.loc.set.map (func std.loc.set, ((pred o:loc, o:loc)) -> std.loc.set).
+type std.loc.set.max (func std.loc.set -> loc).
+type std.loc.set.mem (func loc, std.loc.set).
+type std.loc.set.min (func std.loc.set -> loc).
+type std.loc.set.partition (func
+                                  std.loc.set, ((func -> loc))
+                                                -> std.loc.set, std.loc.set).
+type std.loc.set.remove (func loc, std.loc.set -> std.loc.set).
+type std.loc.set.subset (func std.loc.set, std.loc.set).
+type std.loc.set.union (func std.loc.set, std.loc.set -> std.loc.set).
+type std.lookup (pred i:list (pair A B), i:A, o:B).
+type std.lookup! (func list (pair A B), A -> B).
+type std.map std.map.private.map K V ->
+               ((pred i:K, i:K, o:cmp)) -> std.map K V.
+type std.map (func list A, ((func A -> B)) -> list B).
+type std.map-filter (func list A, ((func A -> B)) -> list B).
+type std.map-i (func list A, ((func int, A -> B)) -> list B).
+type std.map-i.aux (func list A, int, ((func int, A -> B)) -> list B).
+type std.map-ok (func
+                       list A, ((func A -> B, diagnostic))
+                                -> list B, diagnostic).
+type std.map.add (pred i:K, i:V, i:std.map K V, o:std.map K V).
+type std.map.bindings (pred i:std.map K V, o:list (pair K V)).
+type std.map.find (pred i:K, i:std.map K V, o:V).
+type std.map.make (pred i:((pred i:K, i:K, o:cmp)), o:std.map K V).
+type std.map.private.add (pred i:std.map.private.map K V, i:((pred i:K, 
+                                                               i:K, o:cmp)), 
+                           i:K, i:V, o:std.map.private.map K V).
+type std.map.private.add.aux (pred i:cmp, i:std.map.private.map K V, 
+                               i:((pred i:K, i:K, o:cmp)), i:K, i:V, 
+                               o:std.map.private.map K V).
+type std.map.private.bal (pred i:std.map.private.map K V, i:K, i:V, i:std.map.private.map
                                                                     K V, 
-                           o:std.map.private.map K V.
-type std.map.private.bal.aux pred i:int, i:int, i:int, i:int, i:std.map.private.map
-                                                                  K V, 
+                           o:std.map.private.map K V).
+type std.map.private.bal.aux (pred i:int, i:int, i:int, i:int, i:std.map.private.map
+                                                                   K V, 
                                i:K, i:V, i:std.map.private.map K V, o:std.map.private.map
-                                                                    K V.
-type std.map.private.bindings pred i:std.map.private.map K V, i:list
-                                                                  (pair K V), 
-                                o:list (pair K V).
-type std.map.private.create pred i:std.map.private.map K V, i:K, i:V, 
+                                                                    K V).
+type std.map.private.bindings (pred i:std.map.private.map K V, i:list
+                                                                   (pair K V), 
+                                o:list (pair K V)).
+type std.map.private.create (pred i:std.map.private.map K V, i:K, i:V, 
                               i:std.map.private.map K V, o:std.map.private.map
-                                                             K V.
+                                                             K V).
 type std.map.private.empty std.map.private.map K V.
-type std.map.private.find pred i:std.map.private.map K V, i:(pred i:K, 
-                                                               i:K, o:cmp), 
-                            i:K, o:V.
-type std.map.private.find.aux pred i:cmp, i:(pred i:K, i:K, o:cmp), i:std.map.private.map
-                                                                    K V, 
-                                i:std.map.private.map K V, i:V, i:K, 
-                                o:V.
-type std.map.private.height pred i:std.map.private.map K V, o:int.
-type std.map.private.merge pred i:std.map.private.map K V, i:std.map.private.map
-                                                               K V, o:std.map.private.map
-                                                                    K V.
-type std.map.private.min-binding pred i:std.map.private.map K V, o:K, o:V.
+type std.map.private.find (pred i:std.map.private.map K V, i:((pred i:K, 
+                                                                i:K, 
+                                                                o:cmp)), 
+                            i:K, o:V).
+type std.map.private.find.aux (pred i:cmp, i:((pred i:K, i:K, o:cmp)), 
+                                i:std.map.private.map K V, i:std.map.private.map
+                                                               K V, i:V, 
+                                i:K, o:V).
+type std.map.private.height (pred i:std.map.private.map K V, o:int).
+type std.map.private.merge (pred i:std.map.private.map K V, i:std.map.private.map
+                                                                K V, 
+                             o:std.map.private.map K V).
+type std.map.private.min-binding (pred i:std.map.private.map K V, o:K, o:V).
 type std.map.private.node std.map.private.map K V ->
                             K ->
                               V ->
                                 std.map.private.map K V ->
                                   int -> std.map.private.map K V.
-type std.map.private.remove pred i:std.map.private.map K V, i:(pred i:K, 
-                                                                 i:K, 
-                                                                 o:cmp), 
-                              i:K, o:std.map.private.map K V.
-type std.map.private.remove-min-binding pred i:std.map.private.map K V, 
-                                          o:std.map.private.map K V.
-type std.map.private.remove.aux pred i:cmp, i:(pred i:K, i:K, o:cmp), 
+type std.map.private.remove (pred i:std.map.private.map K V, i:((pred 
+                                                                  i:K, 
+                                                                  i:K, 
+                                                                  o:cmp)), 
+                              i:K, o:std.map.private.map K V).
+type std.map.private.remove-min-binding (pred i:std.map.private.map K V, 
+                                          o:std.map.private.map K V).
+type std.map.private.remove.aux (pred i:cmp, i:((pred i:K, i:K, o:cmp)), 
                                   i:std.map.private.map K V, i:std.map.private.map
                                                                  K V, 
-                                  i:K, i:V, i:K, o:std.map.private.map K V.
-type std.map.remove pred i:K, i:std.map K V, o:std.map K V.
-type std.map2 func i:list A, i:list B, i:(func i:A, i:B, o:C), o:list C.
-type std.map2-filter func i:list A, i:list B, i:(func i:A, i:B, o:C), 
-                       o:list C.
-type std.max func i:A, i:A, o:A.
-type std.mem pred i:list A, o:A.
-type std.mem! func i:list A, i:A.
-type std.nth func i:int, i:list A, o:A.
-type std.null func i:list A.
-type std.omap func i:option A, i:(func i:A, o:B), o:option B.
-type std.once func i:pred.
-type std.partition func i:list A, i:(pred i:A), o:list A, o:list A.
-type std.rev func i:list A, o:list A.
-type std.rev.aux func i:list A, i:list A, o:list A.
-type std.set std.set.private.set E -> (pred i:E, i:E, o:cmp) -> std.set E.
-type std.set.add pred i:E, i:std.set E, o:std.set E.
-type std.set.cardinal pred i:std.set E, o:int.
-type std.set.elements pred i:std.set E, o:list E.
-type std.set.make pred i:(pred i:E, i:E, o:cmp), o:std.set E.
-type std.set.mem pred i:E, i:std.set E.
-type std.set.private.add pred i:std.set.private.set E, i:(pred i:E, i:E, 
-                                                            o:cmp), i:E, 
-                           o:std.set.private.set E.
-type std.set.private.add.aux pred i:cmp, i:(pred i:E, i:E, o:cmp), i:std.set.private.set
-                                                                    E, 
-                               i:std.set.private.set E, i:E, i:E, i:int, 
-                               o:std.set.private.set E.
-type std.set.private.bal pred i:std.set.private.set E, i:E, i:std.set.private.set
-                                                                E, o:std.set.private.set
-                                                                    E.
-type std.set.private.bal.aux pred i:int, i:int, i:int, i:int, i:std.set.private.set
-                                                                  E, 
-                               i:E, i:std.set.private.set E, o:std.set.private.set
-                                                                 E.
-type std.set.private.cardinal pred i:std.set.private.set E, o:int.
-type std.set.private.create pred i:std.set.private.set E, i:E, i:std.set.private.set
+                                  i:K, i:V, i:K, o:std.map.private.map K V).
+type std.map.remove (pred i:K, i:std.map K V, o:std.map K V).
+type std.map2 (func list A, list B, ((func A, B -> C)) -> list C).
+type std.map2-filter (func list A, list B, ((func A, B -> C)) -> list C).
+type std.max (func A, A -> A).
+type std.mem (pred i:list A, o:A).
+type std.mem! (func list A, A).
+type std.nth (func int, list A -> A).
+type std.null (func list A).
+type std.omap (func option A, ((func A -> B)) -> option B).
+type std.once (func (pred)).
+type std.partition (func list A, ((pred i:A)) -> list A, list A).
+type std.rev (func list A -> list A).
+type std.rev.aux (func list A, list A -> list A).
+type std.set std.set.private.set E -> ((pred i:E, i:E, o:cmp)) -> std.set E.
+type std.set.add (pred i:E, i:std.set E, o:std.set E).
+type std.set.cardinal (pred i:std.set E, o:int).
+type std.set.elements (pred i:std.set E, o:list E).
+type std.set.make (pred i:((pred i:E, i:E, o:cmp)), o:std.set E).
+type std.set.mem (pred i:E, i:std.set E).
+type std.set.private.add (pred i:std.set.private.set E, i:((pred i:E, 
+                                                             i:E, o:cmp)), 
+                           i:E, o:std.set.private.set E).
+type std.set.private.add.aux (pred i:cmp, i:((pred i:E, i:E, o:cmp)), 
+                               i:std.set.private.set E, i:std.set.private.set
+                                                            E, i:E, i:E, 
+                               i:int, o:std.set.private.set E).
+type std.set.private.bal (pred i:std.set.private.set E, i:E, i:std.set.private.set
+                                                                 E, o:std.set.private.set
+                                                                    E).
+type std.set.private.bal.aux (pred i:int, i:int, i:int, i:int, i:std.set.private.set
                                                                    E, 
-                              o:std.set.private.set E.
-type std.set.private.elements pred i:std.set.private.set E, i:list E, 
-                                o:list E.
-type std.set.private.empty std.set.private.set E.
-type std.set.private.height pred i:std.set.private.set E, o:int.
-type std.set.private.mem pred i:std.set.private.set E, i:(pred i:E, i:E, 
-                                                            o:cmp), i:E.
-type std.set.private.mem.aux pred i:cmp, i:(pred i:E, i:E, o:cmp), i:std.set.private.set
+                               i:E, i:std.set.private.set E, o:std.set.private.set
+                                                                 E).
+type std.set.private.cardinal (pred i:std.set.private.set E, o:int).
+type std.set.private.create (pred i:std.set.private.set E, i:E, i:std.set.private.set
                                                                     E, 
-                               i:std.set.private.set E, i:E.
-type std.set.private.merge pred i:std.set.private.set E, i:std.set.private.set
-                                                             E, o:std.set.private.set
-                                                                    E.
-type std.set.private.min-binding pred i:std.set.private.set E, o:E.
+                              o:std.set.private.set E).
+type std.set.private.elements (pred i:std.set.private.set E, i:list E, 
+                                o:list E).
+type std.set.private.empty std.set.private.set E.
+type std.set.private.height (pred i:std.set.private.set E, o:int).
+type std.set.private.mem (pred i:std.set.private.set E, i:((pred i:E, 
+                                                             i:E, o:cmp)), 
+                           i:E).
+type std.set.private.mem.aux (pred i:cmp, i:((pred i:E, i:E, o:cmp)), 
+                               i:std.set.private.set E, i:std.set.private.set
+                                                            E, i:E).
+type std.set.private.merge (pred i:std.set.private.set E, i:std.set.private.set
+                                                              E, o:std.set.private.set
+                                                                    E).
+type std.set.private.min-binding (pred i:std.set.private.set E, o:E).
 type std.set.private.node std.set.private.set E ->
                             E ->
                               std.set.private.set E ->
                                 int -> std.set.private.set E.
-type std.set.private.remove pred i:std.set.private.set E, i:(pred i:E, 
-                                                               i:E, o:cmp), 
-                              i:E, o:std.set.private.set E.
-type std.set.private.remove-min-binding pred i:std.set.private.set E, 
-                                          o:std.set.private.set E.
-type std.set.private.remove.aux pred i:cmp, i:(pred i:E, i:E, o:cmp), 
+type std.set.private.remove (pred i:std.set.private.set E, i:((pred i:E, 
+                                                                i:E, 
+                                                                o:cmp)), 
+                              i:E, o:std.set.private.set E).
+type std.set.private.remove-min-binding (pred i:std.set.private.set E, 
+                                          o:std.set.private.set E).
+type std.set.private.remove.aux (pred i:cmp, i:((pred i:E, i:E, o:cmp)), 
                                   i:std.set.private.set E, i:std.set.private.set
                                                                E, i:E, 
-                                  i:E, o:std.set.private.set E.
-type std.set.remove pred i:E, i:std.set E, o:std.set E.
-type std.split-at func i:int, i:list A, o:list A, o:list A.
-type std.spy pred i:pred.
-type std.spy! func i:pred.
-type std.spy-do! func i:list pred.
-type std.string.concat func i:string, i:list string, o:string.
-type std.string.map.add func i:string, i:A, i:std.string.map A, o:std.string.map
-                                                                    A.
-type std.string.map.bindings func i:std.string.map A, o:list (pair string A).
-type std.string.map.empty func o:std.string.map A.
-type std.string.map.filter func i:std.string.map A, i:(pred o:string, o:A), 
-                             o:std.string.map A.
-type std.string.map.find func i:string, i:std.string.map A, o:A.
-type std.string.map.fold func i:std.string.map A, i:C, i:(pred o:string, 
-                                                            o:A, o:C, 
-                                                            o:C), o:C.
-type std.string.map.map func i:std.string.map A, i:(pred o:string, o:A, o:B), 
-                          o:std.string.map B.
-type std.string.map.mem func i:string, i:std.string.map A.
-type std.string.map.remove func i:string, i:std.string.map A, o:std.string.map
-                                                                  A.
-type std.string.set.add func i:string, i:std.string.set, o:std.string.set.
-type std.string.set.cardinal func i:std.string.set, o:int.
-type std.string.set.choose func i:std.string.set, o:string.
-type std.string.set.diff func i:std.string.set, i:std.string.set, o:std.string.set.
-type std.string.set.elements func i:std.string.set, o:list string.
-type std.string.set.empty func o:std.string.set.
-type std.string.set.equal func i:std.string.set, i:std.string.set.
-type std.string.set.filter func i:std.string.set, i:(pred o:string), 
-                             o:std.string.set.
-type std.string.set.fold func i:std.string.set, i:A, i:(pred o:string, 
-                                                          o:A, o:A), 
-                           o:A.
-type std.string.set.inter func i:std.string.set, i:std.string.set, o:std.string.set.
-type std.string.set.map func i:std.string.set, i:(pred o:string, o:string), 
-                          o:std.string.set.
-type std.string.set.max func i:std.string.set, o:string.
-type std.string.set.mem func i:string, i:std.string.set.
-type std.string.set.min func i:std.string.set, o:string.
-type std.string.set.partition func i:std.string.set, i:(pred o:string), 
-                                o:std.string.set, o:std.string.set.
-type std.string.set.remove func i:string, i:std.string.set, o:std.string.set.
-type std.string.set.subset func i:std.string.set, i:std.string.set.
-type std.string.set.union func i:std.string.set, i:std.string.set, o:std.string.set.
-type std.take func i:int, i:list A, o:list A.
-type std.take-last func i:int, i:list A, o:list A.
-type std.time func i:func, o:float.
-type std.unsafe-cast func i:A, o:B.
-type std.unzip func i:list (pair A B), o:list A, o:list B.
-type std.while-ok-do! func i:diagnostic, i:list (pred o:diagnostic), 
-                        o:diagnostic.
-type std.zip func i:list A, i:list B, o:list (pair A B).
+                                  i:E, o:std.set.private.set E).
+type std.set.remove (pred i:E, i:std.set E, o:std.set E).
+type std.split-at (func int, list A -> list A, list A).
+type std.spy (pred i:(pred)).
+type std.spy! (func (pred)).
+type std.spy-do! (func list (pred)).
+type std.string.concat (func string, list string -> string).
+type std.string.map.add (func string, A, std.string.map A -> std.string.map A).
+type std.string.map.bindings (func std.string.map A -> list (pair string A)).
+type std.string.map.empty (func -> std.string.map A).
+type std.string.map.filter (func
+                                  std.string.map A, ((pred o:string, o:A))
+                                                     -> std.string.map A).
+type std.string.map.find (func string, std.string.map A -> A).
+type std.string.map.fold (func
+                                std.string.map A,
+                                                   C,
+                                                       ((pred o:string, 
+                                                          o:A, o:C, o:C))
+                                                       -> C).
+type std.string.map.map (func
+                               std.string.map A, ((pred o:string, o:A, o:B))
+                                                  -> std.string.map B).
+type std.string.map.mem (func string, std.string.map A).
+type std.string.map.remove (func string, std.string.map A -> std.string.map A).
+type std.string.set.add (func string, std.string.set -> std.string.set).
+type std.string.set.cardinal (func std.string.set -> int).
+type std.string.set.choose (func std.string.set -> string).
+type std.string.set.diff (func
+                                std.string.set, std.string.set
+                                                 -> std.string.set).
+type std.string.set.elements (func std.string.set -> list string).
+type std.string.set.empty (func -> std.string.set).
+type std.string.set.equal (func std.string.set, std.string.set).
+type std.string.set.filter (func
+                                  std.string.set, ((func -> string))
+                                                   -> std.string.set).
+type std.string.set.fold (func
+                                std.string.set,
+                                                 A,
+                                                     ((pred o:string, 
+                                                        o:A, o:A)) ->
+                                                      A).
+type std.string.set.inter (func
+                                 std.string.set, std.string.set
+                                                  -> std.string.set).
+type std.string.set.map (func
+                               std.string.set, ((pred o:string, o:string))
+                                                -> std.string.set).
+type std.string.set.max (func std.string.set -> string).
+type std.string.set.mem (func string, std.string.set).
+type std.string.set.min (func std.string.set -> string).
+type std.string.set.partition (func
+                                     std.string.set, ((func -> string))
+                                                      ->
+                                                          std.string.set,
+                                                           std.string.set).
+type std.string.set.remove (func string, std.string.set -> std.string.set).
+type std.string.set.subset (func std.string.set, std.string.set).
+type std.string.set.union (func
+                                 std.string.set, std.string.set
+                                                  -> std.string.set).
+type std.take (func int, list A -> list A).
+type std.take-last (func int, list A -> list A).
+type std.time (func (func) -> float).
+type std.unsafe-cast (func A -> B).
+type std.unzip (func list (pair A B) -> list A, list B).
+type std.while-ok-do! (func
+                             diagnostic, list ((pred o:diagnostic))
+                                          -> diagnostic).
+type std.zip (func list A, list B -> list (pair A B)).
 type std_err out_stream.
 type std_in in_stream.
 type std_out out_stream.
-type stop func.
+type stop (func).
 type str string -> argument.
 type string_to_int string -> int.
 type submodule modpath -> list module-item -> module-item.
 type substring string -> int -> int -> string.
-type system func i:string, o:int.
+type system (func string -> int).
 type tac ltac1-tactic -> argument.
 type tc-instance gref -> int -> tc-instance.
-type term_to_string func o:any, o:string.
-type trace.counter func i:string, o:int.
+type term_to_string (func -> any, string).
+type trace.counter (func string -> int).
 type triple A -> B -> C -> triple A B C.
-type triple_1 func i:triple A B C, o:A.
-type triple_2 func i:triple A B C, o:B.
-type triple_3 func i:triple A B C, o:C.
+type triple_1 (func triple A B C -> A).
+type triple_2 (func triple A B C -> B).
+type triple_3 (func triple A B C -> C).
 type trm term -> argument.
-type true func.
+type true (func).
 type truncate float -> int.
 type tt bool.
 type typ univ -> sort.
 type uint63 uint63 -> primitive-value.
 type unix.process out_stream -> in_stream -> in_stream -> unix.process.
-type unix.process.close func i:unix.process, o:diagnostic.
-type unix.process.open func i:string, i:list string, i:list string, o:unix.process, 
-                         o:diagnostic.
+type unix.process.close (func unix.process -> diagnostic).
+type unix.process.open (func
+                              string,
+                                       list string, list string
+                                                     ->
+                                                         unix.process,
+                                                          diagnostic).
 type upoly-const-decl id -> option term -> arity -> upoly-decl -> argument.
 type upoly-decl list univ.variable ->
                   bool -> list univ-constraint -> bool -> upoly-decl.
 type upoly-decl-cumul list univ-variance ->
                         bool -> list univ-constraint -> bool -> upoly-decl.
 type upoly-indt-decl indt-decl -> upoly-decl -> argument.
-type usage pred.
+type usage (pred).
 type uvar A.
-type var func o:any, variadic o:any.
-type whd pred i:term, o:term.
+type var (func -> any, any).
+type whd (pred i:term, o:term).
 type when list int -> option int -> simplification_strategy.
 type when-nomatch list int -> option int -> simplification_strategy.
 type (~) float -> float.
 type (~) int -> int.
 typeabbrv field-attributes (list field-attribute).
-typeabbrv goal-ctx (list pred).
+typeabbrv goal-ctx (list (pred)).
 typeabbrv id (string).
 typeabbrv opaque? (bool).
 % File "elpi-builtin.elpi", line 11, column 0, characters 147-151: [1] 
@@ -1084,77 +1247,77 @@ true :- .
 A0 ; _ :- A0.
 % File "elpi-builtin.elpi", line 38, column 0, characters 469-481: [3] 
 _ ; A0 :- A0.
-% File "elpi-builtin.elpi", line 64, column 0, characters 1032-1051: [4] 
+% File "elpi-builtin.elpi", line 64, column 0, characters 1047-1066: [4] 
 not A0 :- A0, !, fail.
-% File "elpi-builtin.elpi", line 66, column 0, characters 1054-1059: [5] 
+% File "elpi-builtin.elpi", line 66, column 0, characters 1069-1074: [5] 
 not _ :- .
-% File "elpi-builtin.elpi", line 80, column 0, characters 1404-1416: [6] 
+% File "elpi-builtin.elpi", line 80, column 0, characters 1420-1432: [6] 
 stop :- halt.
-% File "elpi-builtin.elpi", line 86, column 0, characters 1473-1491: [7] 
+% File "elpi-builtin.elpi", line 86, column 0, characters 1489-1507: [7] 
 A1 is A0 :- calc A0 A1.
-% File "elpi-builtin.elpi", line 191, column 0, characters 4065-4081: [8] 
+% File "elpi-builtin.elpi", line 191, column 0, characters 4081-4097: [8] 
 A0 > A1 :- gt_ A0 A1.
-% File "elpi-builtin.elpi", line 194, column 0, characters 4099-4115: [9] 
+% File "elpi-builtin.elpi", line 194, column 0, characters 4115-4131: [9] 
 A0 < A1 :- lt_ A0 A1.
-% File "elpi-builtin.elpi", line 197, column 0, characters 4134-4151: [10] 
+% File "elpi-builtin.elpi", line 197, column 0, characters 4150-4167: [10] 
 A0 =< A1 :- le_ A0 A1.
-% File "elpi-builtin.elpi", line 200, column 0, characters 4170-4187: [11] 
+% File "elpi-builtin.elpi", line 200, column 0, characters 4186-4203: [11] 
 A0 >= A1 :- ge_ A0 A1.
-% File "elpi-builtin.elpi", line 203, column 0, characters 4210-4227: [12] 
+% File "elpi-builtin.elpi", line 203, column 0, characters 4226-4243: [12] 
 A0 i> A1 :- gt_ A0 A1.
-% File "elpi-builtin.elpi", line 206, column 0, characters 4250-4267: [13] 
+% File "elpi-builtin.elpi", line 206, column 0, characters 4266-4283: [13] 
 A0 i< A1 :- lt_ A0 A1.
-% File "elpi-builtin.elpi", line 209, column 0, characters 4291-4309: [14] 
+% File "elpi-builtin.elpi", line 209, column 0, characters 4307-4325: [14] 
 A0 i=< A1 :- le_ A0 A1.
-% File "elpi-builtin.elpi", line 212, column 0, characters 4333-4351: [15] 
+% File "elpi-builtin.elpi", line 212, column 0, characters 4349-4367: [15] 
 A0 i>= A1 :- ge_ A0 A1.
-% File "elpi-builtin.elpi", line 215, column 0, characters 4378-4395: [16] 
+% File "elpi-builtin.elpi", line 215, column 0, characters 4394-4411: [16] 
 A0 r> A1 :- gt_ A0 A1.
-% File "elpi-builtin.elpi", line 218, column 0, characters 4422-4439: [17] 
+% File "elpi-builtin.elpi", line 218, column 0, characters 4438-4455: [17] 
 A0 r< A1 :- lt_ A0 A1.
-% File "elpi-builtin.elpi", line 221, column 0, characters 4467-4485: [18] 
+% File "elpi-builtin.elpi", line 221, column 0, characters 4483-4501: [18] 
 A0 r=< A1 :- le_ A0 A1.
-% File "elpi-builtin.elpi", line 224, column 0, characters 4513-4531: [19] 
+% File "elpi-builtin.elpi", line 224, column 0, characters 4529-4547: [19] 
 A0 r>= A1 :- ge_ A0 A1.
-% File "elpi-builtin.elpi", line 227, column 0, characters 4560-4577: [20] 
+% File "elpi-builtin.elpi", line 227, column 0, characters 4576-4593: [20] 
 A0 s> A1 :- gt_ A0 A1.
-% File "elpi-builtin.elpi", line 230, column 0, characters 4606-4623: [21] 
+% File "elpi-builtin.elpi", line 230, column 0, characters 4622-4639: [21] 
 A0 s< A1 :- lt_ A0 A1.
-% File "elpi-builtin.elpi", line 233, column 0, characters 4653-4671: [22] 
+% File "elpi-builtin.elpi", line 233, column 0, characters 4669-4687: [22] 
 A0 s=< A1 :- le_ A0 A1.
-% File "elpi-builtin.elpi", line 236, column 0, characters 4701-4719: [23] 
+% File "elpi-builtin.elpi", line 236, column 0, characters 4717-4735: [23] 
 A0 s>= A1 :- ge_ A0 A1.
-% File "elpi-builtin.elpi", line 257, column 0, characters 5213-5227: [24] 
+% File "elpi-builtin.elpi", line 257, column 0, characters 5229-5243: [24] 
 fst (pr A0 _) A0 :- .
-% File "elpi-builtin.elpi", line 261, column 0, characters 5256-5270: [25] 
+% File "elpi-builtin.elpi", line 261, column 0, characters 5272-5286: [25] 
 snd (pr _ A0) A0 :- .
-% File "elpi-builtin.elpi", line 268, column 0, characters 5391-5416: [26] 
+% File "elpi-builtin.elpi", line 268, column 0, characters 5407-5432: [26] 
 triple_1 (triple A0 _ _) A0 :- .
-% File "elpi-builtin.elpi", line 271, column 0, characters 5452-5477: [27] 
+% File "elpi-builtin.elpi", line 271, column 0, characters 5468-5493: [27] 
 triple_2 (triple _ A0 _) A0 :- .
-% File "elpi-builtin.elpi", line 274, column 0, characters 5513-5538: [28] 
+% File "elpi-builtin.elpi", line 274, column 0, characters 5529-5554: [28] 
 triple_3 (triple _ _ A0) A0 :- .
-% File "elpi-builtin.elpi", line 304, column 0, characters 6305-6337: [29] 
+% File "elpi-builtin.elpi", line 304, column 0, characters 6323-6355: [29] 
 counter A0 A1 :- trace.counter A0 A1.
-% File "elpi-builtin.elpi", line 330, column 0, characters 7187-7219: [30] 
+% File "elpi-builtin.elpi", line 330, column 0, characters 7205-7237: [30] 
 rex_match A0 A1 :- rex.match A0 A1.
-% File "elpi-builtin.elpi", line 334, column 0, characters 7303-7347: [31] 
+% File "elpi-builtin.elpi", line 334, column 0, characters 7321-7365: [31] 
 rex_replace A0 A1 A2 A3 :- rex.replace A0 A1 A2 A3.
-% File "elpi-builtin.elpi", line 338, column 0, characters 7424-7460: [32] 
+% File "elpi-builtin.elpi", line 338, column 0, characters 7442-7478: [32] 
 rex_split A0 A1 A2 :- rex.split A0 A1 A2.
-% File "elpi-builtin.elpi", line 369, column 0, characters 8575-8598: [33] 
+% File "elpi-builtin.elpi", line 369, column 0, characters 8593-8616: [33] 
 A0 == A1 :- same_term A0 A1.
-% File "elpi-builtin.elpi", line 402, column 0, characters 9723-9753: [34] 
+% File "elpi-builtin.elpi", line 402, column 0, characters 9741-9771: [34] 
 primitive? A0 A1 :- A0 is_cdata A1.
-% File "elpi-builtin.elpi", line 432, column 0, characters 10718-10737: [35] 
+% File "elpi-builtin.elpi", line 432, column 0, characters 10738-10757: [35] 
 if A0 A1 _ :- A0, !, A1.
-% File "elpi-builtin.elpi", line 433, column 0, characters 10739-10752: [36] 
+% File "elpi-builtin.elpi", line 433, column 0, characters 10759-10772: [36] 
 if _ _ A0 :- A0.
-% File "elpi-builtin.elpi", line 437, column 0, characters 10875-10905: [37] 
+% File "elpi-builtin.elpi", line 437, column 0, characters 10898-10928: [37] 
 if2 A0 A1 _ _ _ :- A0, !, A1.
-% File "elpi-builtin.elpi", line 438, column 0, characters 10907-10937: [38] 
+% File "elpi-builtin.elpi", line 438, column 0, characters 10930-10960: [38] 
 if2 _ _ A0 A1 _ :- A0, !, A1.
-% File "elpi-builtin.elpi", line 439, column 0, characters 10939-10964: [39] 
+% File "elpi-builtin.elpi", line 439, column 0, characters 10962-10987: [39] 
 if2 _ _ _ _ A0 :- !, A0.
 % File "builtin_stdlib.elpi", line 17, column 0, characters 657-712: [40] default-fatal-error
 std.fatal-error A0 :- halt A0.
@@ -1424,284 +1587,284 @@ std.intersperse _ [A0] [A0] :- !.
 std.intersperse A0 [A3 | A1] [A3, A0 | A2] :- std.intersperse A0 A1 A2.
 % File "builtin_stdlib.elpi", line 284, column 0, characters 9242-9261: [159] 
 std.flip A2 A1 A0 :- A2 A0 A1.
-% File "builtin_stdlib.elpi", line 287, column 0, characters 9290-9365: [160] 
+% File "builtin_stdlib.elpi", line 287, column 0, characters 9291-9366: [160] 
 std.time A1 A3 :- gettimeofday A0, A1, gettimeofday A2, A3 is A2 - A0.
-% File "builtin_stdlib.elpi", line 290, column 0, characters 9388-9394: [161] 
+% File "builtin_stdlib.elpi", line 290, column 0, characters 9389-9395: [161] 
 std.do! [] :- .
-% File "builtin_stdlib.elpi", line 291, column 0, characters 9396-9422: [162] 
+% File "builtin_stdlib.elpi", line 291, column 0, characters 9397-9423: [162] 
 std.do! [A0 | A1] :- A0, !, std.do! A1.
-% File "builtin_stdlib.elpi", line 296, column 0, characters 9503-9515: [163] 
+% File "builtin_stdlib.elpi", line 296, column 0, characters 9504-9516: [163] 
 std.do-ok! ok [] :- .
-% File "builtin_stdlib.elpi", line 297, column 0, characters 9517-9580: [164] 
+% File "builtin_stdlib.elpi", line 297, column 0, characters 9518-9581: [164] 
 std.do-ok! A2 [A1 | A3] :- A1 A0, !, 
  if (A0 = ok) (std.do-ok! A2 A3) (A2 = A0).
-% File "builtin_stdlib.elpi", line 300, column 0, characters 9628-9673: [165] 
+% File "builtin_stdlib.elpi", line 300, column 0, characters 9629-9674: [165] 
 std.lift-ok A0 A2 A1 :- A0 , A1 = ok ; A1 = error A2.
-% File "builtin_stdlib.elpi", line 303, column 0, characters 9700-9745: [166] 
+% File "builtin_stdlib.elpi", line 303, column 0, characters 9701-9746: [166] 
 std.spy-do! A0 :- std.map A0 (c0 \ c1 \ c1 = std.spy c0) A1, std.do! A1.
-% File "builtin_stdlib.elpi", line 306, column 0, characters 9818-9849: [167] 
+% File "builtin_stdlib.elpi", line 306, column 0, characters 9819-9850: [167] 
 std.while-ok-do! (as (error _) A0) _ A0 :- .
-% File "builtin_stdlib.elpi", line 307, column 0, characters 9851-9872: [168] 
+% File "builtin_stdlib.elpi", line 307, column 0, characters 9852-9873: [168] 
 std.while-ok-do! ok [] ok :- .
-% File "builtin_stdlib.elpi", line 308, column 0, characters 9874-9929: [169] 
+% File "builtin_stdlib.elpi", line 308, column 0, characters 9875-9930: [169] 
 std.while-ok-do! ok [A1 | A2] A3 :- A1 A0, !, std.while-ok-do! A0 A2 A3.
-% File "builtin_stdlib.elpi", line 311, column 0, characters 9962-9999: [170] 
+% File "builtin_stdlib.elpi", line 311, column 0, characters 9963-10000: [170] 
 std.any->string A0 A1 :- term_to_string A0 A1.
-% File "builtin_stdlib.elpi", line 314, column 0, characters 10022-10044: [171] 
+% File "builtin_stdlib.elpi", line 314, column 0, characters 10023-10045: [171] 
 std.max A0 A1 A0 :- A0 >= A1, !.
-% File "builtin_stdlib.elpi", line 315, column 0, characters 10046-10055: [172] 
+% File "builtin_stdlib.elpi", line 315, column 0, characters 10047-10056: [172] 
 std.max _ A0 A0 :- .
-% File "builtin_stdlib.elpi", line 319, column 0, characters 10167-10203: [173] 
+% File "builtin_stdlib.elpi", line 319, column 0, characters 10168-10204: [173] 
 std.findall A0 A1 :- findall_solutions A0 A1.
-% File "builtin_map.elpi", line 8, column 0, characters 11578-11614: [174] 
+% File "builtin_map.elpi", line 8, column 0, characters 11601-11637: [174] 
 std.map.make A0 (std.map std.map.private.empty A0) :- .
-% File "builtin_map.elpi", line 12, column 0, characters 11710-11760: [175] 
+% File "builtin_map.elpi", line 12, column 0, characters 11733-11783: [175] 
 std.map.find A2 (std.map A0 A1) A3 :- std.map.private.find A0 A1 A2 A3.
-% File "builtin_map.elpi", line 16, column 0, characters 11859-11927: [176] 
+% File "builtin_map.elpi", line 16, column 0, characters 11882-11950: [176] 
 std.map.add A2 A3 (std.map A0 A1) (std.map A4 A1) :- std.map.private.add A0 
                                                       A1 A2 A3 A4.
-% File "builtin_map.elpi", line 20, column 0, characters 12022-12092: [177] 
+% File "builtin_map.elpi", line 20, column 0, characters 12045-12115: [177] 
 std.map.remove A2 (std.map A0 A1) (std.map A3 A1) :- std.map.private.remove
                                                       A0 A1 A2 A3.
-% File "builtin_map.elpi", line 24, column 0, characters 12205-12256: [178] 
+% File "builtin_map.elpi", line 24, column 0, characters 12228-12279: [178] 
 std.map.bindings (std.map A0 _) A1 :- std.map.private.bindings A0 [] A1.
-% File "builtin_map.elpi", line 34, column 0, characters 12448-12462: [179] 
+% File "builtin_map.elpi", line 34, column 0, characters 12471-12485: [179] 
 std.map.private.height std.map.private.empty 0 :- .
-% File "builtin_map.elpi", line 35, column 0, characters 12464-12489: [180] 
+% File "builtin_map.elpi", line 35, column 0, characters 12487-12512: [180] 
 std.map.private.height (std.map.private.node _ _ _ _ A0) A0 :- .
-% File "builtin_map.elpi", line 38, column 0, characters 12547-12622: [181] 
+% File "builtin_map.elpi", line 38, column 0, characters 12570-12645: [181] 
 std.map.private.create A0 A6 A7 A2 (std.map.private.node A0 A6 A7 A2 A5) :- 
  std.map.private.height A0 A1, std.map.private.height A2 A3, 
  std.max A1 A3 A4, A5 is A4 + 1.
-% File "builtin_map.elpi", line 41, column 0, characters 12677-12791: [182] 
+% File "builtin_map.elpi", line 41, column 0, characters 12700-12814: [182] 
 std.map.private.bal A0 A6 A7 A2 A8 :- std.map.private.height A0 A1, 
  std.map.private.height A2 A3, A4 is A1 + 2, A5 is A3 + 2, 
  std.map.private.bal.aux A1 A3 A4 A5 A0 A6 A7 A2 A8.
-% File "builtin_map.elpi", line 49, column 0, characters 12878-13009: [183] 
+% File "builtin_map.elpi", line 49, column 0, characters 12901-13032: [183] 
 std.map.private.bal.aux A0 _ _ A1 (std.map.private.node A2 A10 A11 A4 _) A6 
  A7 A8 A12 :- A0 > A1, std.map.private.height A2 A3, 
  std.map.private.height A4 A5, A3 >= A5, !, 
  std.map.private.create A4 A6 A7 A8 A9, 
  std.map.private.create A2 A10 A11 A9 A12.
-% File "builtin_map.elpi", line 52, column 0, characters 13011-13158: [184] 
+% File "builtin_map.elpi", line 52, column 0, characters 13034-13181: [184] 
 std.map.private.bal.aux A0 _ _ A1 
  (std.map.private.node A2 A3 A4 (std.map.private.node A5 A12 A13 A7 _) _) A8 
  A9 A10 A14 :- A0 > A1, !, std.map.private.create A2 A3 A4 A5 A6, 
  std.map.private.create A7 A8 A9 A10 A11, 
  std.map.private.create A6 A12 A13 A11 A14.
-% File "builtin_map.elpi", line 55, column 0, characters 13160-13291: [185] 
+% File "builtin_map.elpi", line 55, column 0, characters 13183-13314: [185] 
 std.map.private.bal.aux _ A0 A1 _ A6 A7 A8 
  (std.map.private.node A4 A10 A11 A2 _) A12 :- A0 > A1, 
  std.map.private.height A2 A3, std.map.private.height A4 A5, A3 >= A5, !, 
  std.map.private.create A6 A7 A8 A4 A9, 
  std.map.private.create A9 A10 A11 A2 A12.
-% File "builtin_map.elpi", line 58, column 0, characters 13293-13440: [186] 
+% File "builtin_map.elpi", line 58, column 0, characters 13316-13463: [186] 
 std.map.private.bal.aux _ A0 A1 _ A2 A3 A4 
  (std.map.private.node (std.map.private.node A5 A12 A13 A7 _) A8 A9 A10 _) 
  A14 :- A0 > A1, !, std.map.private.create A2 A3 A4 A5 A6, 
  std.map.private.create A7 A8 A9 A10 A11, 
  std.map.private.create A6 A12 A13 A11 A14.
-% File "builtin_map.elpi", line 61, column 0, characters 13442-13487: [187] 
+% File "builtin_map.elpi", line 61, column 0, characters 13465-13510: [187] 
 std.map.private.bal.aux _ _ _ _ A0 A1 A2 A3 A4 :- std.map.private.create A0 
                                                    A1 A2 A3 A4.
-% File "builtin_map.elpi", line 64, column 0, characters 13557-13602: [188] 
+% File "builtin_map.elpi", line 64, column 0, characters 13580-13625: [188] 
 std.map.private.add std.map.private.empty _ A0 A1 A2 :- std.map.private.create
                                                          std.map.private.empty 
                                                          A0 A1 
                                                          std.map.private.empty 
                                                          A2.
-% File "builtin_map.elpi", line 65, column 0, characters 13604-13682: [189] 
+% File "builtin_map.elpi", line 65, column 0, characters 13627-13705: [189] 
 std.map.private.add (as (std.map.private.node _ A1 _ _ _) A4) A3 A0 A5 A6 :- 
  A3 A0 A1 A2, std.map.private.add.aux A2 A4 A3 A0 A5 A6.
-% File "builtin_map.elpi", line 68, column 0, characters 13763-13824: [190] 
+% File "builtin_map.elpi", line 68, column 0, characters 13786-13847: [190] 
 std.map.private.add.aux eq (std.map.private.node A1 _ _ A4 A5) _ A2 A3 A0 :- 
  A0 = std.map.private.node A1 A2 A3 A4 A5.
-% File "builtin_map.elpi", line 69, column 0, characters 13827-13897: [191] 
+% File "builtin_map.elpi", line 69, column 0, characters 13850-13920: [191] 
 std.map.private.add.aux lt (std.map.private.node A0 A5 A6 A7 _) A1 A2 A3 A8 :- 
  std.map.private.add A0 A1 A2 A3 A4, std.map.private.bal A4 A5 A6 A7 A8.
-% File "builtin_map.elpi", line 70, column 0, characters 13899-13969: [192] 
+% File "builtin_map.elpi", line 70, column 0, characters 13922-13992: [192] 
 std.map.private.add.aux gt (std.map.private.node A5 A6 A7 A0 _) A1 A2 A3 A8 :- 
  std.map.private.add A0 A1 A2 A3 A4, std.map.private.bal A5 A6 A7 A4 A8.
-% File "builtin_map.elpi", line 73, column 0, characters 14029-14101: [193] 
+% File "builtin_map.elpi", line 73, column 0, characters 14052-14124: [193] 
 std.map.private.find (std.map.private.node A4 A1 A6 A5 _) A3 A0 A7 :- 
  A3 A0 A1 A2, std.map.private.find.aux A2 A3 A4 A5 A6 A0 A7.
-% File "builtin_map.elpi", line 76, column 0, characters 14188-14213: [194] 
+% File "builtin_map.elpi", line 76, column 0, characters 14211-14236: [194] 
 std.map.private.find.aux eq _ _ _ A0 _ A0 :- .
-% File "builtin_map.elpi", line 77, column 0, characters 14215-14258: [195] 
+% File "builtin_map.elpi", line 77, column 0, characters 14238-14281: [195] 
 std.map.private.find.aux lt A1 A0 _ _ A2 A3 :- std.map.private.find A0 A1 A2 
                                                 A3.
-% File "builtin_map.elpi", line 78, column 0, characters 14260-14303: [196] 
+% File "builtin_map.elpi", line 78, column 0, characters 14283-14326: [196] 
 std.map.private.find.aux gt A1 _ A0 _ A2 A3 :- std.map.private.find A0 A1 A2 
                                                 A3.
-% File "builtin_map.elpi", line 81, column 0, characters 14352-14398: [197] 
+% File "builtin_map.elpi", line 81, column 0, characters 14375-14421: [197] 
 std.map.private.remove-min-binding
  (std.map.private.node std.map.private.empty _ _ A0 _) A0 :- !.
-% File "builtin_map.elpi", line 82, column 0, characters 14400-14475: [198] 
+% File "builtin_map.elpi", line 82, column 0, characters 14423-14498: [198] 
 std.map.private.remove-min-binding (std.map.private.node A0 A2 A3 A4 _) A5 :- 
  std.map.private.remove-min-binding A0 A1, 
  std.map.private.bal A1 A2 A3 A4 A5.
-% File "builtin_map.elpi", line 85, column 0, characters 14516-14557: [199] 
+% File "builtin_map.elpi", line 85, column 0, characters 14539-14580: [199] 
 std.map.private.min-binding
  (std.map.private.node std.map.private.empty A0 A1 _ _) A0 A1 :- !.
-% File "builtin_map.elpi", line 86, column 0, characters 14559-14612: [200] 
+% File "builtin_map.elpi", line 86, column 0, characters 14582-14635: [200] 
 std.map.private.min-binding (std.map.private.node A0 _ _ _ _) A1 A2 :- 
  std.map.private.min-binding A0 A1 A2.
-% File "builtin_map.elpi", line 89, column 0, characters 14659-14679: [201] 
+% File "builtin_map.elpi", line 89, column 0, characters 14682-14702: [201] 
 std.map.private.merge std.map.private.empty A0 A0 :- !.
-% File "builtin_map.elpi", line 90, column 0, characters 14681-14701: [202] 
+% File "builtin_map.elpi", line 90, column 0, characters 14704-14724: [202] 
 std.map.private.merge A0 std.map.private.empty A0 :- !.
-% File "builtin_map.elpi", line 91, column 0, characters 14703-14780: [203] 
+% File "builtin_map.elpi", line 91, column 0, characters 14726-14803: [203] 
 std.map.private.merge A4 A0 A5 :- std.map.private.min-binding A0 A1 A2, 
  std.map.private.remove-min-binding A0 A3, 
  std.map.private.bal A4 A1 A2 A3 A5.
-% File "builtin_map.elpi", line 96, column 0, characters 14848-14875: [204] 
+% File "builtin_map.elpi", line 96, column 0, characters 14871-14898: [204] 
 std.map.private.remove std.map.private.empty _ _ std.map.private.empty :- !.
-% File "builtin_map.elpi", line 97, column 0, characters 14877-14951: [205] 
+% File "builtin_map.elpi", line 97, column 0, characters 14900-14974: [205] 
 std.map.private.remove (std.map.private.node A4 A1 A6 A5 _) A3 A0 A7 :- 
  A3 A0 A1 A2, std.map.private.remove.aux A2 A3 A4 A5 A1 A6 A0 A7.
-% File "builtin_map.elpi", line 100, column 0, characters 15051-15095: [206] 
+% File "builtin_map.elpi", line 100, column 0, characters 15074-15118: [206] 
 std.map.private.remove.aux eq _ A0 A1 _ _ _ A2 :- std.map.private.merge A0 
                                                    A1 A2.
-% File "builtin_map.elpi", line 101, column 0, characters 15097-15158: [207] 
+% File "builtin_map.elpi", line 101, column 0, characters 15120-15181: [207] 
 std.map.private.remove.aux lt A1 A0 A6 A4 A5 A2 A7 :- std.map.private.remove
                                                        A0 A1 A2 A3, 
  std.map.private.bal A3 A4 A5 A6 A7.
-% File "builtin_map.elpi", line 102, column 0, characters 15160-15221: [208] 
+% File "builtin_map.elpi", line 102, column 0, characters 15183-15244: [208] 
 std.map.private.remove.aux gt A1 A4 A0 A5 A6 A2 A7 :- std.map.private.remove
                                                        A0 A1 A2 A3, 
  std.map.private.bal A4 A5 A6 A3 A7.
-% File "builtin_map.elpi", line 105, column 0, characters 15287-15305: [209] 
+% File "builtin_map.elpi", line 105, column 0, characters 15310-15328: [209] 
 std.map.private.bindings std.map.private.empty A0 A0 :- .
-% File "builtin_map.elpi", line 106, column 0, characters 15307-15380: [210] 
+% File "builtin_map.elpi", line 106, column 0, characters 15330-15403: [210] 
 std.map.private.bindings (std.map.private.node A3 A4 A5 A0 _) A1 A6 :- 
  std.map.private.bindings A0 A1 A2, 
  std.map.private.bindings A3 [pr A4 A5 | A2] A6.
-% File "builtin_set.elpi", line 8, column 0, characters 22247-22283: [211] 
+% File "builtin_set.elpi", line 8, column 0, characters 22260-22296: [211] 
 std.set.make A0 (std.set std.set.private.empty A0) :- .
-% File "builtin_set.elpi", line 12, column 0, characters 22344-22387: [212] 
+% File "builtin_set.elpi", line 12, column 0, characters 22357-22400: [212] 
 std.set.mem A2 (std.set A0 A1) :- std.set.private.mem A0 A1 A2.
-% File "builtin_set.elpi", line 16, column 0, characters 22459-22523: [213] 
+% File "builtin_set.elpi", line 16, column 0, characters 22472-22536: [213] 
 std.set.add A2 (std.set A0 A1) (std.set A3 A1) :- std.set.private.add A0 A1 
                                                    A2 A3.
-% File "builtin_set.elpi", line 20, column 0, characters 22601-22671: [214] 
+% File "builtin_set.elpi", line 20, column 0, characters 22614-22684: [214] 
 std.set.remove A2 (std.set A0 A1) (std.set A3 A1) :- std.set.private.remove
                                                       A0 A1 A2 A3.
-% File "builtin_set.elpi", line 24, column 0, characters 22758-22806: [215] 
+% File "builtin_set.elpi", line 24, column 0, characters 22771-22819: [215] 
 std.set.cardinal (std.set A0 _) A1 :- std.set.private.cardinal A0 A1.
-% File "builtin_set.elpi", line 27, column 0, characters 22846-22897: [216] 
+% File "builtin_set.elpi", line 27, column 0, characters 22859-22910: [216] 
 std.set.elements (std.set A0 _) A1 :- std.set.private.elements A0 [] A1.
-% File "builtin_set.elpi", line 37, column 0, characters 23066-23080: [217] 
+% File "builtin_set.elpi", line 37, column 0, characters 23079-23093: [217] 
 std.set.private.height std.set.private.empty 0 :- .
-% File "builtin_set.elpi", line 38, column 0, characters 23082-23105: [218] 
+% File "builtin_set.elpi", line 38, column 0, characters 23095-23118: [218] 
 std.set.private.height (std.set.private.node _ _ _ A0) A0 :- .
-% File "builtin_set.elpi", line 41, column 0, characters 23152-23223: [219] 
+% File "builtin_set.elpi", line 41, column 0, characters 23165-23236: [219] 
 std.set.private.create A0 A6 A2 (std.set.private.node A0 A6 A2 A5) :- 
  std.set.private.height A0 A1, std.set.private.height A2 A3, 
  std.max A1 A3 A4, A5 is A4 + 1.
-% File "builtin_set.elpi", line 44, column 0, characters 23267-23377: [220] 
+% File "builtin_set.elpi", line 44, column 0, characters 23280-23390: [220] 
 std.set.private.bal A0 A6 A2 A7 :- std.set.private.height A0 A1, 
  std.set.private.height A2 A3, A4 is A1 + 2, A5 is A3 + 2, 
  std.set.private.bal.aux A1 A3 A4 A5 A0 A6 A2 A7.
-% File "builtin_set.elpi", line 52, column 0, characters 23453-23574: [221] 
+% File "builtin_set.elpi", line 52, column 0, characters 23466-23587: [221] 
 std.set.private.bal.aux A0 _ _ A1 (std.set.private.node A2 A9 A4 _) A6 A7 A10 :- 
  A0 > A1, std.set.private.height A2 A3, std.set.private.height A4 A5, 
  A3 >= A5, !, std.set.private.create A4 A6 A7 A8, 
  std.set.private.create A2 A9 A8 A10.
-% File "builtin_set.elpi", line 55, column 0, characters 23576-23705: [222] 
+% File "builtin_set.elpi", line 55, column 0, characters 23589-23718: [222] 
 std.set.private.bal.aux A0 _ _ A1 
  (std.set.private.node A2 A3 (std.set.private.node A4 A10 A6 _) _) A7 A8 A11 :- 
  A0 > A1, !, std.set.private.create A2 A3 A4 A5, 
  std.set.private.create A6 A7 A8 A9, std.set.private.create A5 A10 A9 A11.
-% File "builtin_set.elpi", line 58, column 0, characters 23707-23828: [223] 
+% File "builtin_set.elpi", line 58, column 0, characters 23720-23841: [223] 
 std.set.private.bal.aux _ A0 A1 _ A6 A7 (std.set.private.node A4 A9 A2 _) A10 :- 
  A0 > A1, std.set.private.height A2 A3, std.set.private.height A4 A5, 
  A3 >= A5, !, std.set.private.create A6 A7 A4 A8, 
  std.set.private.create A8 A9 A2 A10.
-% File "builtin_set.elpi", line 61, column 0, characters 23830-23959: [224] 
+% File "builtin_set.elpi", line 61, column 0, characters 23843-23972: [224] 
 std.set.private.bal.aux _ A0 A1 _ A2 A3 
  (std.set.private.node (std.set.private.node A4 A10 A6 _) A7 A8 _) A11 :- 
  A0 > A1, !, std.set.private.create A2 A3 A4 A5, 
  std.set.private.create A6 A7 A8 A9, std.set.private.create A5 A10 A9 A11.
-% File "builtin_set.elpi", line 64, column 0, characters 23961-24002: [225] 
+% File "builtin_set.elpi", line 64, column 0, characters 23974-24015: [225] 
 std.set.private.bal.aux _ _ _ _ A0 A1 A2 A3 :- std.set.private.create A0 A1 
                                                 A2 A3.
-% File "builtin_set.elpi", line 67, column 0, characters 24063-24104: [226] 
+% File "builtin_set.elpi", line 67, column 0, characters 24076-24117: [226] 
 std.set.private.add std.set.private.empty _ A0 A1 :- std.set.private.create
                                                       std.set.private.empty 
                                                       A0 
                                                       std.set.private.empty 
                                                       A1.
-% File "builtin_set.elpi", line 68, column 0, characters 24106-24175: [227] 
+% File "builtin_set.elpi", line 68, column 0, characters 24119-24188: [227] 
 std.set.private.add (std.set.private.node A4 A1 A5 A6) A3 A0 A7 :- A3 A0 A1 
                                                                     A2, 
  std.set.private.add.aux A2 A3 A4 A5 A1 A0 A6 A7.
-% File "builtin_set.elpi", line 71, column 0, characters 24268-24307: [228] 
+% File "builtin_set.elpi", line 71, column 0, characters 24281-24320: [228] 
 std.set.private.add.aux eq _ A0 A1 A2 _ A3 (std.set.private.node A0 A2 A1 A3) :- .
-% File "builtin_set.elpi", line 72, column 0, characters 24309-24362: [229] 
+% File "builtin_set.elpi", line 72, column 0, characters 24322-24375: [229] 
 std.set.private.add.aux lt A1 A0 A5 A4 A2 _ A6 :- std.set.private.add A0 A1 
                                                    A2 A3, 
  std.set.private.bal A3 A4 A5 A6.
-% File "builtin_set.elpi", line 73, column 0, characters 24364-24417: [230] 
+% File "builtin_set.elpi", line 73, column 0, characters 24377-24430: [230] 
 std.set.private.add.aux gt A1 A4 A0 A5 A2 _ A6 :- std.set.private.add A0 A1 
                                                    A2 A3, 
  std.set.private.bal A4 A5 A3 A6.
-% File "builtin_set.elpi", line 76, column 0, characters 24469-24527: [231] 
+% File "builtin_set.elpi", line 76, column 0, characters 24482-24540: [231] 
 std.set.private.mem (std.set.private.node A4 A1 A5 _) A3 A0 :- A3 A0 A1 A2, 
  std.set.private.mem.aux A2 A3 A4 A5 A0.
-% File "builtin_set.elpi", line 77, column 0, characters 24529-24547: [232] 
+% File "builtin_set.elpi", line 77, column 0, characters 24542-24560: [232] 
 std.set.private.mem.aux eq _ _ _ _ :- .
-% File "builtin_set.elpi", line 80, column 0, characters 24619-24654: [233] 
+% File "builtin_set.elpi", line 80, column 0, characters 24632-24667: [233] 
 std.set.private.mem.aux lt A1 A0 _ A2 :- std.set.private.mem A0 A1 A2.
-% File "builtin_set.elpi", line 81, column 0, characters 24656-24691: [234] 
+% File "builtin_set.elpi", line 81, column 0, characters 24669-24704: [234] 
 std.set.private.mem.aux gt A1 _ A0 A2 :- std.set.private.mem A0 A1 A2.
-% File "builtin_set.elpi", line 84, column 0, characters 24736-24780: [235] 
+% File "builtin_set.elpi", line 84, column 0, characters 24749-24793: [235] 
 std.set.private.remove-min-binding
  (std.set.private.node std.set.private.empty _ A0 _) A0 :- !.
-% File "builtin_set.elpi", line 85, column 0, characters 24782-24853: [236] 
+% File "builtin_set.elpi", line 85, column 0, characters 24795-24866: [236] 
 std.set.private.remove-min-binding (std.set.private.node A0 A2 A3 _) A4 :- 
  std.set.private.remove-min-binding A0 A1, std.set.private.bal A1 A2 A3 A4.
-% File "builtin_set.elpi", line 88, column 0, characters 24887-24924: [237] 
+% File "builtin_set.elpi", line 88, column 0, characters 24900-24937: [237] 
 std.set.private.min-binding
  (std.set.private.node std.set.private.empty A0 _ _) A0 :- !.
-% File "builtin_set.elpi", line 89, column 0, characters 24926-24973: [238] 
+% File "builtin_set.elpi", line 89, column 0, characters 24939-24986: [238] 
 std.set.private.min-binding (std.set.private.node A0 _ _ _) A1 :- std.set.private.min-binding
                                                                    A0 A1.
-% File "builtin_set.elpi", line 92, column 0, characters 25014-25034: [239] 
+% File "builtin_set.elpi", line 92, column 0, characters 25027-25047: [239] 
 std.set.private.merge std.set.private.empty A0 A0 :- !.
-% File "builtin_set.elpi", line 93, column 0, characters 25036-25056: [240] 
+% File "builtin_set.elpi", line 93, column 0, characters 25049-25069: [240] 
 std.set.private.merge A0 std.set.private.empty A0 :- !.
-% File "builtin_set.elpi", line 94, column 0, characters 25058-25131: [241] 
+% File "builtin_set.elpi", line 94, column 0, characters 25071-25144: [241] 
 std.set.private.merge A3 A0 A4 :- std.set.private.min-binding A0 A1, 
  std.set.private.remove-min-binding A0 A2, std.set.private.bal A3 A1 A2 A4.
-% File "builtin_set.elpi", line 99, column 0, characters 25195-25217: [242] 
+% File "builtin_set.elpi", line 99, column 0, characters 25208-25230: [242] 
 std.set.private.remove std.set.private.empty _ _ std.set.private.empty :- .
-% File "builtin_set.elpi", line 100, column 0, characters 25219-25289: [243] 
+% File "builtin_set.elpi", line 100, column 0, characters 25232-25302: [243] 
 std.set.private.remove (std.set.private.node A4 A1 A5 _) A3 A0 A6 :- 
  A3 A0 A1 A2, std.set.private.remove.aux A2 A3 A4 A5 A1 A0 A6.
-% File "builtin_set.elpi", line 103, column 0, characters 25378-25420: [244] 
+% File "builtin_set.elpi", line 103, column 0, characters 25391-25433: [244] 
 std.set.private.remove.aux eq _ A0 A1 _ _ A2 :- std.set.private.merge A0 A1 
                                                  A2.
-% File "builtin_set.elpi", line 104, column 0, characters 25422-25479: [245] 
+% File "builtin_set.elpi", line 104, column 0, characters 25435-25492: [245] 
 std.set.private.remove.aux lt A1 A0 A5 A4 A2 A6 :- std.set.private.remove A0 
                                                     A1 A2 A3, 
  std.set.private.bal A3 A4 A5 A6.
-% File "builtin_set.elpi", line 105, column 0, characters 25481-25538: [246] 
+% File "builtin_set.elpi", line 105, column 0, characters 25494-25551: [246] 
 std.set.private.remove.aux gt A1 A4 A0 A5 A2 A6 :- std.set.private.remove A0 
                                                     A1 A2 A3, 
  std.set.private.bal A4 A5 A3 A6.
-% File "builtin_set.elpi", line 108, column 0, characters 25571-25587: [247] 
+% File "builtin_set.elpi", line 108, column 0, characters 25584-25600: [247] 
 std.set.private.cardinal std.set.private.empty 0 :- .
-% File "builtin_set.elpi", line 109, column 0, characters 25589-25654: [248] 
+% File "builtin_set.elpi", line 109, column 0, characters 25602-25667: [248] 
 std.set.private.cardinal (std.set.private.node A0 _ A2 _) A4 :- std.set.private.cardinal
                                                                  A0 A1, 
  std.set.private.cardinal A2 A3, A4 is A1 + 1 + A3.
-% File "builtin_set.elpi", line 112, column 0, characters 25700-25718: [249] 
+% File "builtin_set.elpi", line 112, column 0, characters 25713-25731: [249] 
 std.set.private.elements std.set.private.empty A0 A0 :- .
-% File "builtin_set.elpi", line 113, column 0, characters 25720-25788: [250] 
+% File "builtin_set.elpi", line 113, column 0, characters 25733-25801: [250] 
 std.set.private.elements (std.set.private.node A3 A4 A0 _) A1 A5 :- std.set.private.elements
                                                                     A0 A1 A2, 
  std.set.private.elements A3 [A4 | A2] A5.
-% File "builtin_set.elpi", line 258, column 0, characters 30560-30609: [251] 
+% File "builtin_set.elpi", line 258, column 0, characters 30573-30622: [251] 
 printterm A2 A0 :- term_to_string A0 A1, output A2 A1.
 % File "coq-builtin.elpi", line 282, column 0, characters 11937-12057: [252] default-declare-evar
 declare-evar A0 A1 A2 A3 :- declare_constraint (declare-evar A0 A1 A2 A3) 
@@ -1721,50 +1884,50 @@ coq.arity->term (parameter A0 _ A4 A2) (prod A1 A4 A3) :- coq.id->name A0 A1,
  pi c0 \ decl c0 A1 A4 => coq.arity->term (A2 c0) (A3 c0).
 % File "coq-builtin.elpi", line 329, column 0, characters 13800-13827: [258] 
 coq.arity->term (arity A0) A0 :- .
-% File "coq-builtin.elpi", line 778, column 2, characters 32462-32621: [259] 
+% File "coq-builtin.elpi", line 778, column 2, characters 32469-32628: [259] 
 coq.env.const-opaque? A0 :- coq.warning elpi.deprecated elpi.const-opaque 
                              use coq.env.opaque? in place of coq.env.const-opaque?, 
  coq.env.opaque? A0.
-% File "coq-builtin.elpi", line 785, column 2, characters 32710-32884: [260] 
+% File "coq-builtin.elpi", line 785, column 2, characters 32717-32891: [260] 
 coq.env.const-primitive? A0 :- coq.warning elpi.deprecated 
                                 elpi.const-primitive 
                                 use coq.env.primitive? in place of coq.env.const-primitive?, 
  coq.env.primitive? A0.
-% File "coq-builtin.elpi", line 841, column 0, characters 34921-34952: [261] 
+% File "coq-builtin.elpi", line 841, column 0, characters 34928-34959: [261] 
 coq.env.add-context context-end :- .
-% File "coq-builtin.elpi", line 842, column 0, characters 34954-35111: [262] 
+% File "coq-builtin.elpi", line 842, column 0, characters 34961-35118: [262] 
 coq.env.add-context (context-item A0 A1 A2 none A5) :- coq.env.add-section-variable
                                                         A0 A1 A2 A3, 
  coq.env.global (const A3) A4, coq.env.add-context (A5 A4).
-% File "coq-builtin.elpi", line 845, column 0, characters 35113-35269: [263] 
+% File "coq-builtin.elpi", line 845, column 0, characters 35120-35276: [263] 
 coq.env.add-context (context-item A0 _ A2 (some A1) A5) :- coq.env.add-const
                                                             A0 A1 A2 ff A3, 
  coq.env.global (const A3) A4, coq.env.add-context (A5 A4).
-% File "coq-builtin.elpi", line 878, column 0, characters 36511-36582: [264] 
+% File "coq-builtin.elpi", line 878, column 0, characters 36518-36589: [264] 
 coq.env.begin-module A0 A1 :- coq.env.begin-module-functor A0 A1 [].
-% File "coq-builtin.elpi", line 891, column 0, characters 36992-37069: [265] 
+% File "coq-builtin.elpi", line 891, column 0, characters 36999-37076: [265] 
 coq.env.begin-module-type A0 :- coq.env.begin-module-type-functor A0 [].
-% File "coq-builtin.elpi", line 1273, column 0, characters 52464-52654: [266] 
+% File "coq-builtin.elpi", line 1273, column 0, characters 52471-52661: [266] 
 coq.CS.canonical-projections A0 A1 :- coq.warning elpi.deprecated 
                                        elpi.canonical-projections 
                                        use coq.env.projections in place of coq.CS.canonical-projections, 
  coq.env.projections A0 A1.
-% File "coq-builtin.elpi", line 1570, column 0, characters 65481-65661: [267] 
+% File "coq-builtin.elpi", line 1570, column 0, characters 65488-65668: [267] 
 coq.reduction.cbv.whd_all A0 A1 :- coq.warning elpi.deprecated 
                                     elpi.cbv-whd-all 
                                     use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all, 
  coq.reduction.cbv.norm A0 A1.
-% File "coq-builtin.elpi", line 1577, column 0, characters 65759-65940: [268] 
+% File "coq-builtin.elpi", line 1577, column 0, characters 65766-65947: [268] 
 coq.reduction.vm.whd_all A0 A1 A2 :- coq.warning elpi.deprecated 
                                       elpi.vm-whd-all 
                                       use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all, 
  coq.reduction.vm.norm A0 A1 A2.
-% File "coq-builtin.elpi", line 1584, column 0, characters 65991-66084: [269] 
+% File "coq-builtin.elpi", line 1584, column 0, characters 65998-66091: [269] 
 coq.reduction.lazy.whd_all A0 A1 :- get-option coq:redflags coq.redflags.all
                                      => coq.reduction.lazy.whd A0 A1.
-% File "coq-builtin.elpi", line 1706, column 0, characters 70782-70822: [270] 
+% File "coq-builtin.elpi", line 1706, column 0, characters 70790-70830: [270] 
 coq.id->name A0 A1 :- coq.string->name A0 A1.
-% File "coq-builtin.elpi", line 1852, column 0, characters 77418-77482: [271] 
+% File "coq-builtin.elpi", line 1852, column 0, characters 77426-77490: [271] 
 coq.elpi.accumulate A0 A1 A2 :- coq.elpi.accumulate-clauses A0 A1 [A2].
 % File "./examples/tutorial_elpi_lang.v", line 688, column 2, characters 17708-17776: [272] 
 whd (app A0 A2) A3 :- whd A0 (fun A1), !, whd (A1 A2) A3.
