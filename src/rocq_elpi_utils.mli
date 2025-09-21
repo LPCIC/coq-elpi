@@ -77,6 +77,7 @@ val detype_to_pattern : Environ.env -> Evd.evar_map -> EConstr.t -> Names.Id.Set
 
 type qualified_name = string list
 val compare_qualified_name : qualified_name -> qualified_name -> int
+val eq_qualified_name : qualified_name -> qualified_name -> bool
 val pr_qualified_name : qualified_name -> Pp.t
 val show_qualified_name : qualified_name -> string
 val pp_qualified_name : Format.formatter -> qualified_name -> unit

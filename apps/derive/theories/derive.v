@@ -59,10 +59,11 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp.elpi" as derive_synt
 
 From elpi Require Import elpi.
 
-Elpi Command derive.
-
 #[phase="both"]
-Elpi Accumulate lp:{{
+Elpi Db derive lp:{{ }}.
+
+#[phase="both",superglobal]
+Elpi Accumulate derive lp:{{/*(*/
   % runs P in a context where Coq #[attributes] are parsed
   pred with-attributes i:prop.
   with-attributes P :-
@@ -82,10 +83,20 @@ Elpi Accumulate lp:{{
   get_name (inductive N _ _ _) N.
   get_name (minductive N _ _ _) N.
   get_name (record N _ _ _) N.
-}}.
+/*)*/}}.
 
-#[synterp] Elpi Accumulate File derive_synterp_hook.
-#[synterp] Elpi Accumulate File derive_synterp.
+#[synterp] Elpi Accumulate derive File derive_synterp_hook.
+#[synterp] Elpi Accumulate derive File derive_synterp.
+
+Elpi Accumulate derive File derive_hook.
+Elpi Accumulate derive File derive.
+
+
+
+
+Elpi Command derive_cmd.
+#[phase="both"]
+Elpi Accumulate Db derive.
 #[synterp] Elpi Accumulate lp:{{
   main [str TypeName] :- !,
     with-attributes (derive.main TypeName).
@@ -97,8 +108,6 @@ Elpi Accumulate lp:{{
   main _.
 }}.
 
-Elpi Accumulate File derive_hook.
-Elpi Accumulate File derive.
 Elpi Accumulate lp:{{
   main [str I] :- !,
     coq.locate I GR,
@@ -115,4 +124,4 @@ Elpi Accumulate lp:{{
 }}.
 
 
-Elpi Export derive.
+Elpi Export derive_cmd As derive.

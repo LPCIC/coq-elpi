@@ -12,11 +12,15 @@ type what = Code | SignatureOnly
 
 type src =
   | File of src_file
+  | EmbeddedString of src_string
   | DatabaseBody of qualified_name
   | DatabaseHeader of src_db_header
 and src_file = {
   fname : string;
   fast : cunit;
+}
+and src_string = {
+  sast : cunit;
 }
 and src_db_header = {
   dast : cunit;
@@ -43,27 +47,32 @@ module Chunk : sig
 end
   
 module Code : sig
-  type 'db t =
+  type ('base, 'db) t =
   | Base of {
       hash : int;
-      base : cunit;
+      base : 'base;
       }
   | Snoc of {
       source : cunit;
-      prev : 'db t;
+      prev : ('base,'db) t;
       hash : int;
       cacheme: bool;
       }
   | Snoc_db of {
       chunks : 'db;
-      prev : 'db t;
+      prev : ('base,'db) t;
       hash : int
       }
-  val hash : 'db t -> int
-  val cache : 'db t -> bool
-  val eq : ('db -> 'db -> bool) -> 'db t -> 'db t -> bool
-  val pp : (Format.formatter -> 'db -> unit) -> Format.formatter -> 'db t -> unit
-  val snoc_opt : cunit -> 'db t option -> 'db t
+  val hash : ('base,'db) t -> int
+  val cache : ('base,'db) t -> bool
+  val eq :
+    (cunit -> cunit -> bool) ->
+    ('base -> 'base -> bool) ->
+    ('db -> 'db -> bool) -> ('base, 'db) t -> ('base, 'db) t -> bool
+  val pp :
+    (Format.formatter -> 'base -> unit) ->
+    (Format.formatter -> 'db -> unit) -> Format.formatter -> ('base,'db) t -> unit
+  val snoc_opt : ?cache:bool -> cunit -> (cunit,'db) t option -> (cunit,'db) t
 end
 
 module SLMap : Map.S with type key = qualified_name
@@ -108,7 +117,9 @@ module type Programs = sig
   val accumulate_file_to_db   : loc:Loc.t -> db:qualified_name -> what:what -> file:string -> scope:Rocq_elpi_utils.clause_scope -> unit
   val accumulate_ast_to_db    : loc:Loc.t -> db:qualified_name -> what:what -> ast:Compile.scoped_program -> scope:Rocq_elpi_utils.clause_scope -> unit
   val accumulate_string_to_db : loc:Loc.t -> db:qualified_name -> code:(Ast.Loc.t * string) -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_string_to_db_with_secvars : loc:Loc.t -> db:qualified_name -> code:(Ast.Loc.t * string) -> secvars:Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
   val accumulate_units_to_db  : loc:Loc.t -> db:qualified_name -> units:cunit list -> secvars:Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_db_to_db     : loc:Loc.t -> db:qualified_name -> source:qualified_name -> scope:Rocq_elpi_utils.clause_scope -> unit
   val accumulate_header_to_db : loc:Loc.t -> db:qualified_name -> header:db_header -> scope:Rocq_elpi_utils.clause_scope -> unit
 
   val load_command : loc:Loc.t -> string -> unit
@@ -116,7 +127,7 @@ module type Programs = sig
 
   val ensure_initialized : unit -> Setup.elpi
 
-  val code : ?even_if_empty:bool -> qualified_name -> Chunk.t Code.t option
+  val code : ?even_if_empty:bool -> qualified_name -> (cunit, qualified_name) Code.t option
 
   val in_stage : string -> string
   val stage : Summary.Stage.t
