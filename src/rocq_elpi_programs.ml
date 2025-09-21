@@ -19,6 +19,8 @@ let eq_cunit x y =
   | Full(k1,_), Full(k2,_) -> Names.KerName.equal k1 k2
   | Signature(k1,_), Signature(k2,_) -> Names.KerName.equal k1 k2
   | _ -> false
+let kn_of_cunit = function
+  | Full (kn,_) | Signature (kn,_) -> kn
 
 [%%if coq = "9.0"]
 let my_filtered_open = Libobject.simple_open
@@ -36,11 +38,15 @@ module SLSet = Set.Make(struct type t = qualified_name let compare = compare_qua
 
 type src =
   | File of src_file
+  | EmbeddedString of src_string
   | DatabaseBody of qualified_name
   | DatabaseHeader of src_db_header
 and src_file = {
   fname : string;
   fast : cunit;
+}
+and src_string = {
+  sast : cunit;
 }
 and src_db_header = {
   dast : cunit;
@@ -59,6 +65,9 @@ let subst_src subst = function
   | File ({ fname; fast } as f) ->
     let fast' = subst_cunit subst fast in
     if fast == fast' then File f else File { fname; fast = fast' }
+  | EmbeddedString ({ sast } as s) ->
+    let sast' = subst_cunit subst sast in
+    if sast == sast' then EmbeddedString s else EmbeddedString { sast = sast' }
   | DatabaseBody n -> DatabaseBody n
   | DatabaseHeader ({ dast } as h) ->
     let dast' = subst_cunit subst dast in
@@ -107,20 +116,20 @@ module Chunk = struct
 end
 
 module Code = struct
-type 'db t =
+type ('base, 'db) t =
   | Base of {
     hash : int;
-    base : cunit;
+    base : 'base;
   }
   | Snoc of {
     source : cunit;
-    prev : 'db t;
+    prev : ('base, 'db) t;
     hash : int;
     cacheme: bool;
   }
   | Snoc_db of {
     chunks : 'db;
-    prev : 'db t;
+    prev : ('base, 'db) t;
     hash : int
   }
   [@@deriving show]
@@ -134,58 +143,52 @@ let cache = function
   | Snoc { cacheme } -> cacheme
   | Snoc_db _ -> false
 
-let snoc source prev =
+let snoc ?cache:ocache source prev =
 let hash = combine_hash (hash prev) (hash_cunit source) in
-  Snoc { hash; prev; source; cacheme = cache prev }
+  Snoc { hash; prev; source; cacheme = match ocache with Some cache -> cache | None -> cache prev }
 
-let snoc_opt source prev =
+let snoc_opt ?cache source prev =
   match prev with
-  | Some prev -> snoc source prev
+  | Some prev -> snoc ?cache source prev
   | None -> Base { hash = (hash_cunit source); base = source }
 
 let snoc_db f chunks prev =
   let hash = hash prev in
   let hash = combine_hash hash (f chunks) in
   Snoc_db { hash; prev; chunks }
-   
+
 let snoc_db_opt f chunks prev =
   match prev with
   | Some prev -> snoc_db f chunks prev
   | None -> assert false
 
-let rec map f = function
-  | Base x -> Base x
-  | Snoc { prev; source; cacheme = true } ->
-      (* no need to map, since prev is constant *)
-      let prev = Obj.magic prev in
-      snoc source prev
-  | Snoc { prev; source } ->
-      let prev = map f prev in
-      snoc source prev
-  | Snoc_db { prev; chunks } ->
-      let prev = map f prev in
-      let chunks = f chunks in
-      snoc_db Chunk.hash chunks prev
+let rec base = function
+  | Base { base } -> base
+  | Snoc { prev } | Snoc_db { prev } -> base prev
 
-let rec eq c x y =
-  x == y ||
-  match x,y with
-  | Base x, Base y -> eq_cunit x.base y.base
-  | Snoc x, Snoc y -> eq_cunit x.source y.source && eq c x.prev y.prev
-  | Snoc_db x, Snoc_db y -> c x.chunks y.chunks && eq c x.prev y.prev
-  | _ -> false
+let eq (type a b) cu cb cdb : (a,b) t -> (a,b) t -> bool =
+  let rec eq x y =
+    x == y ||
+    match x,y with
+    | Base x, Base y -> cb x.base y.base
+    | Snoc x, Snoc y -> cu x.source y.source && eq x.prev y.prev
+    | Snoc_db x, Snoc_db y -> cdb x.chunks y.chunks && eq x.prev y.prev
+    | _ -> false
+  in eq
 
 end
 
 type db = {
-  sources_rev : Chunk.t;
+  sources_rev : (cunit list, qualified_name) Code.t;
   units : Names.KNset.t;
+  files : CString.Set.t;
+  dbs : SLSet.t;
 }
 
 type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool }
 
 type program = {
-  sources_rev : qualified_name Code.t;
+  sources_rev : (cunit, qualified_name) Code.t;
   files : CString.Set.t;
   units : Names.KNset.t;
   dbs : SLSet.t;
@@ -194,12 +197,25 @@ type program = {
 
 type from = Initialization | User
 
-type snippet = {
+type db_initialization = {
   program : qualified_name;
-  code :cunit list;
+  base : cunit list;
+}
+
+type 'a db_addition = {
+  program : qualified_name;
+  code : 'a;
   scope : Rocq_elpi_utils.clause_scope;
   vars : Names.Id.t list;
 }
+
+type 'a snippet =
+  | DbInit of db_initialization
+  | DbAdd of 'a db_addition
+
+let scope_of_snippet : 'a snippet -> _ = function
+  | DbInit _ -> Rocq_elpi_utils.SuperGlobal
+  | DbAdd {scope} -> scope
 
 let group_clauses l =
   let rec aux acc l =
@@ -254,7 +270,9 @@ module type Programs = sig
   val accumulate_file_to_db   : loc:Loc.t -> db:qualified_name -> what:what -> file:string -> scope:Rocq_elpi_utils.clause_scope -> unit
   val accumulate_ast_to_db    : loc:Loc.t -> db:qualified_name -> what:what -> ast:Compile.scoped_program -> scope:Rocq_elpi_utils.clause_scope -> unit
   val accumulate_string_to_db : loc:Loc.t -> db:qualified_name -> code:(Ast.Loc.t * string) -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_string_to_db_with_secvars : loc:Loc.t -> db:qualified_name -> code:(Ast.Loc.t * string) -> secvars:Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
   val accumulate_units_to_db  : loc:Loc.t -> db:qualified_name -> units:cunit list -> secvars:Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_db_to_db     : loc:Loc.t -> db:qualified_name -> source:qualified_name -> scope:Rocq_elpi_utils.clause_scope -> unit
   val accumulate_header_to_db : loc:Loc.t -> db:qualified_name -> header:db_header -> scope:Rocq_elpi_utils.clause_scope -> unit
 
   val load_command : loc:Loc.t -> string -> unit
@@ -262,7 +280,7 @@ module type Programs = sig
 
   val ensure_initialized : unit -> Setup.elpi
 
-  val code : ?even_if_empty:bool -> qualified_name -> Chunk.t Code.t option
+  val code : ?even_if_empty:bool -> qualified_name -> (cunit, qualified_name) Code.t option
 
   val in_stage : string -> string
   val stage : Summary.Stage.t
@@ -518,16 +536,15 @@ let get ?(fail_if_not_exists=false) p =
     let files, units, dbs, prog =
       match src with
       (* undup *)
-      | File { fname; fast = Full (kn,_) } when CString.Set.mem fname files || Names.KNset.mem kn units -> files, units, dbs, prog
-      | DatabaseHeader { dast = Full(kn,_) } when Names.KNset.mem kn units -> files, units, dbs, prog
+      | File { fname; fast = u } when CString.Set.mem fname files || Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, prog
+      | EmbeddedString { sast = u } when Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, prog
+      | DatabaseHeader { dast = u } when Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, prog
       | DatabaseBody n  when SLSet.mem n dbs -> files, units, dbs, prog
       (* add *)
-      | File { fname; fast = Full (kn,_) as u } -> CString.Set.add fname files, (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
-      | DatabaseHeader { dast = Full(kn,_) as u } -> files, (Names.KNset.add kn units), dbs, Some (Code.snoc_opt u prog)
+      | File { fname; fast = u } -> CString.Set.add fname files, Names.KNset.add (kn_of_cunit u) units, dbs, Some (Code.snoc_opt u prog)
+      | EmbeddedString { sast = u } -> files, Names.KNset.add (kn_of_cunit u) units, dbs, Some (Code.snoc_opt u prog)
+      | DatabaseHeader { dast = u } -> files, Names.KNset.add (kn_of_cunit u) units, dbs, Some (Code.snoc_opt u prog)
       | DatabaseBody n -> files, units, SLSet.add n dbs, Some (Code.snoc_db_opt Hashtbl.hash n prog)
-      | File { fast = Signature _ as u } -> files, units, dbs, Some (Code.snoc_opt u prog)
-      | DatabaseHeader { dast = Signature _ as u } ->
-         files, units, dbs, Some (Code.snoc_opt u prog)
       in
     let prog = Option.get prog in
     { files; units; dbs; sources_rev = prog; empty = empty && from = Initialization }
@@ -552,43 +569,67 @@ let get ?(fail_if_not_exists=false) p =
     let obj = in_program (name, v, User) in
     Lib.add_leaf obj
 
-  let code ?(even_if_empty=false) n : Chunk.t Code.t option =
-    let _,_,_,_,sources, empty = get n in
-    if empty && not even_if_empty then None else
-    sources |> Option.map (fun sources -> sources |> Code.map (fun name ->
-    try
-      let { sources_rev } : db = SLMap.find name !db_name_src in
-      sources_rev
-    with
-      Not_found ->
-        CErrors.user_err Pp.(str "Unknown Db " ++ str (show_qualified_name name))))
-    
-  let db_code n : Chunk.t option =
-    SLMap.find_opt n !db_name_src |> Option.map (fun ({ sources_rev } : db) -> sources_rev)
+  let get_db name =
+    match SLMap.find_opt name !db_name_src with
+    | Some {sources_rev; units; files; dbs} ->
+      Some sources_rev, units, files, dbs, false
+    | None ->
+      None, Names.KNset.empty, CString.Set.empty, SLSet.empty, true
 
-  let append_to_db name kname c =
-    try
-      let (db : db) = SLMap.find name !db_name_src in
-      if Names.KNset.mem kname db.units then db
-      else { sources_rev = Chunk.snoc c db.sources_rev; units = Names.KNset.add kname db.units }
-    with Not_found ->
-      { sources_rev = Chunk.Base { hash = hash_list hash_cunit 0 c; base = List.rev c }; units = Names.KNset.singleton kname }
+  let db_code_raw n : (cunit list, qualified_name) Code.t option =
+    let sources,_,_,_,_ = get_db n in
+    sources
+
+  let code ?(even_if_empty=false) n : (cunit, qualified_name) Code.t option =
+    let _,_,_,_,sources, empty = get n in
+    if empty && not even_if_empty then None else sources
+
+  let initialize_db name ~base =
+    let (sources_rev, units, files, dbs, empty) = get_db name in
+    if not empty then {sources_rev=Option.get sources_rev; units; files; dbs} else
+    let units = List.fold_left (fun units u -> Names.KNset.add (kn_of_cunit u) units) units base in
+    let sources_rev = Code.Base { hash = hash_list hash_cunit 0 base; base } in
+    {sources_rev; units; files; dbs}
+
+  let append_to_db name (src : src) =
+    let (code, units, files, dbs, _) = get_db name in
+    let code = Option.get code in
+    let (files, units, dbs, code) =
+      match src with
+      | File { fname; fast = u } when CString.Set.mem fname files || Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, code
+      | EmbeddedString { sast = u } when Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, code
+      | DatabaseHeader { dast = u } when Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, code
+      | DatabaseBody n when SLSet.mem n dbs -> files, units, dbs, code
+      | File { fname; fast = u } -> CString.Set.add fname files, Names.KNset.add (kn_of_cunit u) units, dbs, Code.snoc u code
+      | EmbeddedString { sast = u } -> files, Names.KNset.add (kn_of_cunit u) units, dbs, Code.snoc u code
+      | DatabaseHeader { dast = u } -> files, Names.KNset.add (kn_of_cunit u) units, dbs, Code.snoc u code
+      | DatabaseBody n ->
+        assert (not (eq_qualified_name n name));
+        files, units, SLSet.add n dbs, Code.snoc_db Hashtbl.hash n code
+    in
+    {sources_rev=code; units; files; dbs}
         
   let is_inside_current_library kn =
     Names.DirPath.equal
       (Lib.library_dp ())
        (Names.KerName.modpath kn |> Names.ModPath.dp)
 
-  let in_db : Names.Id.t -> snippet -> Libobject.obj =
+  let in_db : Names.Id.t -> src snippet -> Libobject.obj =
     let open Libobject in
-    let cache ((_,kn),{ program = name; code = p; _ }) =
-      db_name_src := SLMap.add name (append_to_db name kn p) !db_name_src in
+    let cache ((_,_kn),s) =
+      match s with
+      | DbInit {program=name; base} ->
+        db_name_src := SLMap.add name (initialize_db name ~base) !db_name_src
+      | DbAdd {program=name; code=p} ->
+        db_name_src := SLMap.add name (append_to_db name p) !db_name_src in
     let load i ((_,kn),s as o) =
+      let scope = scope_of_snippet s in
       if Int.equal i 1 ||
-        (s.scope = Rocq_elpi_utils.Global && is_inside_current_library kn) ||
-        s.scope = Rocq_elpi_utils.SuperGlobal then cache o in
+        (scope = Rocq_elpi_utils.Global && is_inside_current_library kn) ||
+        scope = Rocq_elpi_utils.SuperGlobal then cache o in
     declare_named_object @@ { (default_object "ELPI-DB") with
-      classify_function = (fun { scope; _ } ->
+      classify_function = (fun s ->
+        let scope = scope_of_snippet s in
         match scope with
         | Rocq_elpi_utils.Local -> Dispose
         | Rocq_elpi_utils.Regular -> Substitute
@@ -596,10 +637,17 @@ let get ?(fail_if_not_exists=false) p =
         | Rocq_elpi_utils.SuperGlobal -> Keep);
       load_function  = load;
       cache_function  = cache;
-      subst_function = (fun (subst, ({ code; _ } as o)) ->
-        { o with code = List.map (subst_cunit subst) code });
+      subst_function = (fun (subst, s) ->
+        match s with
+        | DbInit i -> DbInit { i with base = List.map (subst_cunit subst) i.base }
+        | DbAdd a -> DbAdd { a with code = subst_src subst a.code });
       open_function = my_simple_open cache;
-      discharge_function = (fun (({ scope; program; vars; } as o)) ->
+      discharge_function = (fun (s as o) ->
+        let scope, vars =
+          match s with
+          | DbInit _ -> Rocq_elpi_utils.SuperGlobal, []
+          | DbAdd a -> a.scope, a.vars
+        in
         if scope = Rocq_elpi_utils.Local || (List.exists (fun x -> is_in_section (Names.GlobRef.VarRef x)) vars) then None
         else Some o);
     }
@@ -619,9 +667,9 @@ let get ?(fail_if_not_exists=false) p =
       }
 
   let accum = ref 0
-  let add_to_db program code vars scope =
+  let add_to_db (s : src snippet) =
     ignore @@ Lib.add_leaf
-      (in_db (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum)) { program; code; scope; vars })
+      (in_db (Names.Id.of_string (incr accum; Printf.sprintf "_ELPI_%d" !accum)) s)
 
   let add_to_file program code =
     ignore @@ Lib.add_leaf
@@ -642,7 +690,7 @@ let get ?(fail_if_not_exists=false) p =
 
   type db_header = cunit list
   let header_of_db qulid : db_header =
-    (Chunk.base @@ (SLMap.find qulid !db_name_src).sources_rev) 
+    Code.base @@ (SLMap.find qulid !db_name_src).sources_rev
 
   let ast_of_elpifile qulid = SLMap.find qulid !file_name_src
 
@@ -666,18 +714,19 @@ let get ?(fail_if_not_exists=false) p =
     | None -> CErrors.user_err Pp.(str "Elpi CommandTemplate was not called")
     | Some ast -> ast
 
-  let command_base_signature ~loc =
+  let command_base_units () =
     command_init () |> List.map (function
-    | File { fast = Full(kn,u) } -> Signature (kn,EC.signature u) 
+    | File { fast } -> fast
+    | EmbeddedString { sast } -> sast
     | _ -> assert false)
 
   let init_db qualid ~loc (sloc,s) =
     let elpi = ensure_initialized () in
     let base = EC.(empty_base ~elpi) in
-    let cmd_sig_base = command_base_signature ~loc in
-    let base = extend_with_idependent_units ~base ~loc cmd_sig_base in
+    let cmd_base = command_base_units () in
+    let base = extend_with_idependent_units ~base ~loc cmd_base in
     let units = private__units_from_string ~elpi ~base ~loc sloc s in
-    add_to_db qualid (cmd_sig_base @ units) [] Rocq_elpi_utils.SuperGlobal
+    add_to_db (DbInit { program = qualid; base = cmd_base @ units })
   
   let lp_tactic_ast = Summary.ref ~name:("elpi-lp-tactic") None
   let in_lp_tactic_ast : src list -> Libobject.obj =
@@ -710,7 +759,7 @@ let get ?(fail_if_not_exists=false) p =
     let elpi = ensure_initialized () in
     let base = EC.(empty_base ~elpi) in
     let units = private__units_from_string ~elpi ~base ~loc sloc s in
-    init_program_units p ~loc (List.map (fun u -> File { fname = name_of_cunit u; fast = u}) units)
+    init_program_units p ~loc (List.map (fun u -> EmbeddedString { sast = u }) units)
 
   
   let init_db (_,qualid) ~loc header =
@@ -727,10 +776,14 @@ let get ?(fail_if_not_exists=false) p =
       CErrors.user_err Pp.(str "No Elpi Program named " ++ pr_qualified_name p);
     add_to_program p v
   
+  let accumulate_to_db' (a : src list db_addition) =
+    if not (db_exists a.program) then
+      CErrors.user_err Pp.(str "No Elpi Db " ++ pr_qualified_name a.program);
+    let {program; vars; scope; code} = a in
+    List.iter (fun code -> add_to_db (DbAdd {program; vars; scope; code})) code
+
   let accumulate_to_db p v ~vs ~scope =
-    if not (db_exists p) then
-      CErrors.user_err Pp.(str "No Elpi Db " ++ pr_qualified_name p);
-    add_to_db p v vs scope
+    accumulate_to_db' { program = p; code = List.map (fun sast -> EmbeddedString {sast}) (List.rev v); vars = vs; scope }
   
   let in_stage = in_stage
   let stage = stage
@@ -747,6 +800,19 @@ let unit_signature_from_ast ~elpi ~base ~loc ast =
   
 let unit_from_plugin ?error_header ~elpi ~base ~loc builtins =
   unit_from_plugin ?error_header ~elpi ~base ~loc builtins ~flags:(cc_flags ())
+
+module Visited = struct
+  module Set = Names.KNset
+  type t = {
+    units : Set.t;
+    dbs : SLSet.t;
+  }
+  let empty = { units = Set.empty; dbs = SLSet.empty }
+  let add_unit u visited = { visited with units = Set.add (kn_of_cunit u) visited.units }
+  let mem_unit u visited = Set.mem (kn_of_cunit u) visited.units
+  let add_db n visited = { visited with dbs = SLSet.add n visited.dbs }
+  let mem_db n visited = SLSet.mem n visited.dbs
+end
 
 (* Units are marshalable, but programs are not *)
 
@@ -784,79 +850,86 @@ let () = at_exit (fun () ->
 
 let lookup b h src r cmp pp =
   let h = combine_hash b h in
-  let p, src' = find_with_stats h !r in
-  if cmp src src' then p else
+  let visited, p, src' = find_with_stats h !r in
+  if cmp src src' then visited, p else
     let () = Format.eprintf "@[%a@]%!" pp src in
     let () = Format.eprintf "@[%a@]%!" pp src' in
     assert false
 
-let cache b h prog src r =
+let cache b h visited prog src r =
   let h = combine_hash b h in
-  r := Int.Map.add h (prog,src) !r;
-  prog
+  r := Int.Map.add h (visited, prog, src) !r;
+  visited, prog
 
-let uncache b h r =
-  let h = combine_hash b h in
-  r := Int.Map.remove h !r
-    
-let lookup_code b h src = lookup b h src compiler_cache_code (Code.eq Chunk.eq) (Code.pp Chunk.pp)
-let lookup_chunk b h src = lookup b h src compiler_cache_chunk Chunk.eq Chunk.pp
+let eq_cunits = List.equal eq_cunit
+let pp_ignore _ _ = ()
+let lookup_code b h src : Visited.t * EC.program = lookup b h src compiler_cache_code (Code.eq eq_cunit eq_cunit eq_qualified_name) (Code.pp pp_ignore pp_qualified_name)
+let lookup_chunk b h src : Visited.t * EC.program = lookup b h src compiler_cache_chunk (Code.eq eq_cunit eq_cunits eq_qualified_name) (Code.pp pp_ignore pp_qualified_name)
+let cache_code b h (visited : Visited.t) (prog : EC.program) src : Visited.t * EC.program = cache b h visited prog src compiler_cache_code
+let cache_chunk b h (visited : Visited.t) (prog : EC.program) src : Visited.t * EC.program = cache b h visited prog src compiler_cache_chunk
 
-let cache_code b h prog src = cache b h prog src compiler_cache_code
-let cache_chunk b h prog src = cache b h prog src compiler_cache_chunk
-  
-let recache_code b h1 h2 p src =
-  uncache b h1 compiler_cache_code;
-  cache_code b h2 p src
+let extend_unseen_unit ~loc ~base visited u =
+  if Visited.mem_unit u visited then base, visited
+  else extend_with_unit ~base ~loc u, Visited.add_unit u visited
 
-let recache_chunk b h1 h2 p src =
-  uncache b h1 compiler_cache_chunk;
-  cache_chunk b h2 p src
+let extend_unseen_units ~loc ~base visited units =
+  List.fold_left (fun (base, visited) u ->
+    extend_unseen_unit ~loc ~base visited u) (base, visited) units
+
+let rec compile_code ~loc (src : (cunit, qualified_name) Code.t) : Visited.t * EC.program =
+  let h = Code.hash src in
+  try
+    if not (Code.cache src) then raise Not_found;
+    lookup_code 0 h src
+  with Not_found ->
+  match src with
+  | Code.Base { base = u } ->
+      let elpi = ensure_initialized () in
+      let base = EC.empty_base ~elpi in
+      let prog = extend_with_unit ~base ~loc u in
+      cache_code 0 h (Visited.add_unit u Visited.empty) prog src
+  | Code.Snoc { prev; source } ->
+      let visited, base = compile_code ~loc prev in
+      let base, visited = extend_unseen_unit ~loc ~base visited source in
+      if Code.cache src then cache_code 0 h visited base src else visited, base
+  | Code.Snoc_db { prev; chunks = db_name } ->
+      let visited, base = compile_code ~loc prev in
+      compile_db_name ~loc ~visited ~base db_name
+and compile_db_name ~loc ~visited ~base db_name =
+  if Visited.mem_db db_name visited then visited, base
+  else
+    match db_code_raw db_name with
+    | None -> CErrors.user_err Pp.(str "Unknown Db " ++ pr_qualified_name db_name)
+    | Some src ->
+        let visited = Visited.add_db db_name visited in
+        compile_db_code ~loc ~visited ~base src
+and compile_db_code ~loc ~visited ~base (src : (cunit list, qualified_name) Code.t) : Visited.t * EC.program =
+  match src with
+  | Code.Base { base = units } ->
+      let base, visited = extend_unseen_units ~loc ~base visited units in
+      visited, base
+  | Code.Snoc { prev; source } ->
+      let visited, base = compile_db_code ~loc ~visited ~base prev in
+      let base, visited = extend_unseen_unit ~loc ~base visited source in
+      visited, base
+  | Code.Snoc_db { prev; chunks = db_name } ->
+      let visited, base = compile_db_code ~loc ~visited ~base prev in
+      compile_db_name ~loc ~visited ~base db_name
 
 let compile ~loc src =
-  let rec compile_code src =
-    let h = Code.hash src in
-    try
-      lookup_code 0 h src
-    with Not_found ->
-      match src with
-      | Code.Base { base = u } ->
-          let elpi = ensure_initialized () in
-          let prog = extend_with_unit ~base:(EC.empty_base ~elpi) ~loc u in
-          cache_code 0 h prog src
-      | Code.Snoc { prev; source } ->
-          let base = compile_code prev in
-          let prog = extend_with_unit ~base ~loc source in
-          if Code.cache src then cache_code 0 h prog src else prog
-      | Code.Snoc_db { prev; chunks } ->
-          let base = compile_code prev in
-          let prog = compile_chunk (Code.hash prev) base chunks in
-          prog
-  and compile_chunk bh base src =
-    (* DBs have to be re-based on top of base, hence bh *)
-    let h = Chunk.hash src in
-    try
-      lookup_chunk bh h src
-    with Not_found ->
-      match src with
-      | Chunk.Base { base = _ } -> (* base already added as the header *)
-          base
-      | Chunk.Snoc { prev; source_rev } ->
-          let base = compile_chunk bh base prev in
-          let prog = extend_with_idependent_units ~base ~loc (List.rev source_rev) in
-          recache_chunk bh (Chunk.hash prev) h prog src
-  in
-    compile_code src
+  compile_code ~loc src |> snd
+
+let compile_db ~loc src =
+  let elpi = ensure_initialized () in
+  let base = EC.empty_base ~elpi in
+  compile_db_code ~loc ~visited:Visited.empty ~base src |> snd
 
 let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
   let t = Unix.gettimeofday () in
   let res = code ?even_if_empty name |> Option.map (fun src ->
-    (* Format.eprintf "compile %a = %a" pp_qualified_name name (Code.pp Chunk.pp) src; *)
     let prog = compile ~loc src in
     let new_hash = Code.hash src in
-    let old_hash = try SLMap.find name !programs_tip with Not_found -> 0 in
     programs_tip := SLMap.add name new_hash !programs_tip;
-    let prog = recache_code 0 old_hash new_hash prog src in
     let raw_args =
       match get_nature name with
       | Command { raw_args } -> raw_args
@@ -866,23 +939,8 @@ let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
     Rocq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
     res
 
-  let rec compile_db ~loc src =
-    let h = Chunk.hash src in
-    try
-      lookup_chunk 0 h src
-    with Not_found ->
-      match src with
-      | Chunk.Base { base } ->
-          let elpi = ensure_initialized () in
-          let prog = extend_with_idependent_units ~loc ~base:(EC.empty_base ~elpi) base in
-          cache_chunk 0 h prog src
-      | Chunk.Snoc { prev; source_rev } ->
-          let base = compile_db ~loc prev in
-          let prog = extend_with_idependent_units ~loc ~base (List.rev source_rev) in
-          cache_chunk 0 h prog src
-    
   let get_and_compile_existing_db ~loc name : EC.program =
-    match db_code name with
+    match db_code_raw name with
     | None -> err Pp.(str "Unknown Db " ++ pr_qualified_name name)
     | Some db -> compile_db ~loc db
     
@@ -918,7 +976,7 @@ let asts_from_string ~loc (sloc,s) : EC.scoped_program list =
   let accumulate_ast_to_program ~loc ~program ~what ~ast =
     accumulate_ast_to_X ~loc ~x:program ~what ast
       ~get_and_compile:get_and_compile_existing_program
-      ~accumulate:(fun n u -> accumulate_to_program n (File { fname = name_of_cunit u; fast = u }))
+      ~accumulate:(fun n u -> accumulate_to_program n (EmbeddedString { sast = u }))
 
   let accumulate_ast_to_db ~loc ~db ~what ~ast ~scope =
     accumulate_ast_to_X ~loc ~x:db ~what ast
@@ -940,17 +998,33 @@ let asts_from_string ~loc (sloc,s) : EC.scoped_program list =
       ~accumulate:(fun n u -> accumulate_to_program n (File { fname = name_of_cunit u; fast = u }))
 
   let accumulate_file_to_db ~loc ~db ~what ~file ~scope =
-    accumulate_file_to_X ~loc ~x:db ~what ~file
-      ~get_and_compile:get_and_compile_existing_db
-      ~accumulate:(fun n u -> accumulate_to_db ~scope ~vs:[] n [u])
+    handle_elpi_compiler_errors ~loc begin fun () ->
+      let elpi = ensure_initialized () in
+      let base = get_and_compile_existing_db ~loc db in
+      let asts = asts_from_file ~loc ~elpi ~base file in
+      List.iteri (fun i ast ->
+        let base = get_and_compile_existing_db ~loc db in
+        let u =
+          match what with
+          | Code -> unit_from_ast ~elpi ~base ~loc ast
+          | SignatureOnly -> unit_signature_from_ast ~elpi ~base ~loc ast in
+        accumulate_to_db' { program = db; vars = []; scope;
+          code = [File { fname = Printf.sprintf "%s:%d" file i; fast = u }] }) asts
+    end
 
   let accumulate_string_to_program ~loc ~program ~code =
     asts_from_string ~loc code
     |> List.iter (fun ast -> accumulate_ast_to_program ~loc ~program ~what:Code ~ast)
 
-  let accumulate_string_to_db ~loc ~db ~code ~scope =
+  let accumulate_string_to_db_with_secvars ~loc ~db ~code ~secvars ~scope =
     asts_from_string ~loc code
-    |> List.iter (fun ast -> accumulate_ast_to_db ~loc ~db ~what:Code ~ast ~scope)
+    |> List.iter (fun ast ->
+      accumulate_ast_to_X ~loc ~x:db ~what:Code ast
+        ~get_and_compile:get_and_compile_existing_db
+        ~accumulate:(fun n u -> accumulate_to_db ~scope ~vs:secvars n [u]))
+
+  let accumulate_string_to_db ~loc ~db ~code ~scope =
+    accumulate_string_to_db_with_secvars ~loc ~db ~code ~secvars:[] ~scope
 
   let accumulate_plugin_to_program ~loc ~program ~plugin =
     handle_elpi_compiler_errors ~loc begin fun () -> 
@@ -961,13 +1035,22 @@ let asts_from_string ~loc (sloc,s) : EC.scoped_program list =
     end
 
  let accumulate_db_to_program ~loc ~program ~db =
-    handle_elpi_compiler_errors ~loc begin fun () -> 
+    handle_elpi_compiler_errors ~loc begin fun () ->
       if db_exists db then
         let header = header_of_db db |> List.map (fun dast -> DatabaseHeader { dast }) in
         (header @ [DatabaseBody db]) |> List.iter (fun src ->
           accumulate_to_program program src)
       else
         CErrors.user_err Pp.(str "Db " ++ pr_qualified_name db ++ str" not found")
+    end
+
+  let accumulate_db_to_db ~loc ~db ~source ~scope =
+    handle_elpi_compiler_errors ~loc begin fun () ->
+      if db_exists source then
+        let header = header_of_db source |> List.map (fun dast -> DatabaseHeader { dast }) in
+        accumulate_to_db' { program = db; code = header @ [DatabaseBody source]; vars = []; scope }
+      else
+        CErrors.user_err Pp.(str "Db " ++ pr_qualified_name source ++ str" not found")
     end
 
 
@@ -999,7 +1082,9 @@ let accumulate_header_to_program ~loc ~program ~header = accumulate_header_to_pr
 let accumulate_file_to_db ~loc ~db ~what ~file ~scope = accumulate_file_to_db ~loc ~db ~what ~file ~scope; check_db ~loc ~db
 let accumulate_ast_to_db ~loc ~db ~what ~ast ~scope = accumulate_ast_to_db ~loc ~db ~what ~ast ~scope; check_db ~loc ~db
 let accumulate_string_to_db ~loc ~db ~code ~scope = accumulate_string_to_db ~loc ~db ~code ~scope; check_db ~loc ~db
+let accumulate_string_to_db_with_secvars ~loc ~db ~code ~secvars ~scope = accumulate_string_to_db_with_secvars ~loc ~db ~code ~secvars ~scope; check_db ~loc ~db
 let accumulate_units_to_db ~loc ~db ~units ~secvars ~scope = accumulate_units_to_db ~loc ~db ~units ~secvars ~scope; check_db ~loc ~db
+let accumulate_db_to_db ~loc ~db ~source ~scope = accumulate_db_to_db ~loc ~db ~source ~scope; check_db ~loc ~db
 let accumulate_header_to_db ~loc ~db ~header ~scope = accumulate_header_to_db ~loc ~db ~header ~scope; check_db ~loc ~db
 
 let init_program name ~loc sources = init_program name ~loc sources; check ~loc ~program:(snd name)

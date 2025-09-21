@@ -236,27 +236,34 @@ let current_program () =
   | None -> CErrors.user_err Pp.(str "No current Elpi Program")
   | Some x -> x
 
+let get_base_opt ~loc program : EC.program option =
+  if P.db_exists program then
+    Some (P.get_and_compile_existing_db ~loc program)
+  else
+    P.get_and_compile ~loc ~even_if_empty:true program |> Option.map fst
 
 let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x) (qloc, query) =
   let elpi = P.ensure_initialized () in
-  P.get_and_compile ~loc ~even_if_empty:true program |> Option.map (fun (base, _) ->
+  get_base_opt ~loc program |> Option.map (fun base ->
     let query_ast = Ast (st_setup base, P.parse_goal ~loc ~elpi qloc query) in
     run_and_print ~print:true ~loc program base query_ast |>
     (fun (x,y,_,_,_,_) -> x,y))
 
   let accumulate_extra_dep ~loc ~program ~scope ~what file =
-    if P.db_exists program then
-      P.accumulate_file_to_db ~loc ~db:program ~scope ~what ~file
-    else begin
+    if P.db_exists program then begin
+      warn_scope_not_regular ~loc scope;
+      P.accumulate_file_to_db ~loc ~db:program ~scope:SuperGlobal ~what ~file
+    end else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_file_to_program ~loc ~program ~what ~file
     end
 
     
   let accumulate_elpifile ~loc ~program ~scope ~what ast =
-    if P.db_exists program then
-      P.accumulate_ast_to_db ~loc ~db:program ~what ~ast ~scope
-    else begin
+    if P.db_exists program then begin
+      warn_scope_not_regular ~loc scope;
+      P.accumulate_ast_to_db ~loc ~db:program ~what ~ast ~scope:SuperGlobal
+    end else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_ast_to_program ~loc ~program ~what ~ast
     end
@@ -306,9 +313,10 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
 
   let accumulate_file ~loc ~program ~scope file =
     let what = Rocq_elpi_programs.Code in
-    if P.db_exists program then
-      P.accumulate_file_to_db ~loc ~db:program ~file ~scope ~what
-    else begin
+    if P.db_exists program then begin
+      warn_scope_not_regular ~loc scope;
+      P.accumulate_file_to_db ~loc ~db:program ~file ~scope:SuperGlobal ~what
+    end else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_file_to_program ~loc ~program ~file ~what
     end
@@ -317,9 +325,10 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let accumulate_files ~atts:((scope,only),ph) ~loc ?program s = skip ~only ~ph (accumulate_files ~loc ?program ~scope) s
   
   let accumulate_string ~loc ?(program=current_program()) ~scope code =
-    if P.db_exists program then
-      P.accumulate_string_to_db ~loc ~db:program ~code ~scope
-    else begin
+    if P.db_exists program then begin
+      warn_scope_not_regular ~loc scope;
+      P.accumulate_string_to_db ~loc ~db:program ~code ~scope:SuperGlobal
+    end else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_string_to_program ~loc ~program ~code
     end
@@ -327,18 +336,24 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let accumulate_string ~atts:((scope,only),ph) ~loc ?program sloc = skip ~only ~ph (accumulate_string ~loc ?program ~scope) sloc
   
   
-  let accumulate_db ~loc ?(program=current_program()) db =
-    P.accumulate_db_to_program ~loc ~program ~db
+  let accumulate_db ~loc ?(program=current_program()) ~scope db =
+    if P.db_exists program then begin
+      warn_scope_not_regular ~loc scope;
+      P.accumulate_db_to_db ~loc ~db:program ~source:db ~scope:SuperGlobal
+    end else begin
+      warn_scope_not_regular ~loc scope;
+      P.accumulate_db_to_program ~loc ~program ~db
+    end
   let accumulate_db ~atts:((scope,only),ph) ~loc ?program name =
-    warn_scope_not_regular ~loc scope;
-    skip ~only ~ph (accumulate_db ~loc ?program) name
+    skip ~only ~ph (accumulate_db ~loc ?program ~scope) name
   
   let accumulate_db_header ~loc ?(program=current_program()) ~scope name =
     if P.db_exists name then
       let header = P.header_of_db name in
-      if P.db_exists program then
-        P.accumulate_header_to_db ~loc ~db:program ~header ~scope
-      else
+      if P.db_exists program then begin
+        warn_scope_not_regular ~loc scope;
+        P.accumulate_header_to_db ~loc ~db:program ~header ~scope:SuperGlobal
+      end else
         let () = warn_scope_not_regular ~loc scope in
         P.accumulate_header_to_program ~loc ~program ~header
         (* let units = List.map (fun dast -> DatabaseHeader { dast }) units in *)
@@ -347,7 +362,8 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     skip ~only ~ph (accumulate_db_header ~loc ?program ~scope) name
   
   let accumulate_to_db ~loc db code ~scope idl =
-    P.accumulate_string_to_db ~loc ~code ~db ~scope
+    warn_scope_not_regular ~loc scope;
+    P.accumulate_string_to_db_with_secvars ~loc ~code ~db ~scope:SuperGlobal ~secvars:idl
   let accumulate_to_db ~atts:((scope,only),ph) ~loc db sloc idl = skip ~only ~ph (accumulate_to_db ~loc db sloc ~scope) idl
   
 
@@ -378,7 +394,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
       if P.db_exists name then
         Some (P.get_and_compile_existing_db ~loc name)
       else
-        Option.map fst @@ P.get_and_compile ~loc name in
+        Option.map fst @@ P.get_and_compile ~loc ~even_if_empty:true name in
     program |> Option.iter @@ fun program ->
     let fname =
       Rocq_elpi_programs.resolve_file_path
