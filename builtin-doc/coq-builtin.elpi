@@ -789,6 +789,7 @@ external pred coq.env.current-section-path o:list string.
 % - @using! (default: section variables actually used)
 % - @univpoly! (default unset)
 % - @udecl! (default unset)
+% - @udecl-cumul! (default unset)
 % - @dropunivs! (default: false, drops all universe constraints from the
 % store after the definition)
 % 

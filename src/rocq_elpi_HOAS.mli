@@ -246,6 +246,8 @@ val universe_level_variable : Univ.Level.t Conversion.t
 val univ : Univ.Universe.t Conversion.t
 val isuniv : RawOpaqueData.t -> bool
 val univout : RawOpaqueData.t -> Univ.Universe.t
+val isuinstance : RawOpaqueData.t -> bool
+val uinstanceout : RawOpaqueData.t -> UVars.Instance.t
 
 val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)

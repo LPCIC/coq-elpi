@@ -66,21 +66,31 @@ Elpi Query lp:{{
   coq.env.end-section
 }}.
 
-Elpi Db univs.db lp:{{ pred u o:univ. }}.
+Polymorphic Definition ut@{u} : Type@{u} := Type.
+
+Elpi Db univs.db lp:{{
+   pred u o:univ.
+   pred ut o:term, o:univ.
+  }}.
 Elpi Command test_u.
 Elpi Accumulate Db univs.db.
 Elpi Query lp:{{
   coq.univ.new U,
-  coq.elpi.accumulate current "univs.db" (clause _ _ (u U))
+  coq.elpi.accumulate current "univs.db" (clause _ _ (u U)),
+  coq.univ.variable U L,
+  coq.univ-instance I [L],
+  coq.elpi.accumulate current "univs.db" (clause _ _ (ut (pglobal {{:gref ut}} I) U))
 }}.
 
 Universe foo.
-
+Universe foo1.
+Elpi Print test_u "elpi.tests/test_u".
 Elpi Query lp:{{
   {{ Type@{foo} }} = sort (typ U),
-  coq.elpi.accumulate current "univs.db" (clause _ _ (u U))
+  u U, ut {{ ut@{foo} }} U
 }}.
 
+stop
 
 Axiom B : bool -> Type.
 Axiom N : nat -> Type.
