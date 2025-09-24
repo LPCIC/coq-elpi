@@ -311,6 +311,7 @@ type options = {
   keepunivs : bool option;
   redflags : RedFlags.reds option;
   no_tc: bool option;
+  no_coercion: bool option;
   algunivs : bool option;
 }
 let default_options () = {
@@ -330,15 +331,16 @@ let default_options () = {
   keepunivs = None;
   redflags = None;
   no_tc = None;
+  no_coercion = None;
   algunivs = None;
 }
 let make_options ~hoas_holes ~local ~warn ~depr ~primitive ~failsafe ~ppwidth
   ~pp ~pplevel ~using ~inline ~uinstance ~universe_decl ~reversible ~keepunivs
-  ~redflags ~no_tc ~algunivs =
+  ~redflags ~no_tc ~no_coercion ~algunivs =
   let user_warns = Some UserWarn.{ depr; warn } in
   { hoas_holes; local; user_warns; primitive; failsafe; ppwidth; pp;
     pplevel; using; inline; uinstance; universe_decl; reversible; keepunivs;
-    redflags; no_tc; algunivs; }
+    redflags; no_tc; no_coercion; algunivs; }
 let make_warn = UserWarn.make_warn
 
 type 'a coq_context = {
@@ -1314,12 +1316,13 @@ let get_options ~depth hyps state =
     let universe_decl = get_universe_decl () in
     let reversible = get_bool_option "coq:reversible" in
     let no_tc = get_bool_option "coq:no_tc" in
+    let no_coercion = get_bool_option "coq:no_coercion" in
     let keepunivs = get_bool_option "coq:keepunivs" in
     let redflags = get_redflags_option () in
     let algunivs = get_bool_option "coq:keepalgunivs" in
     make_options ~hoas_holes ~local ~warn ~depr ~primitive ~failsafe ~ppwidth
       ~pp ~pplevel ~using ~inline ~uinstance ~universe_decl ~reversible ~keepunivs
-      ~redflags ~no_tc ~algunivs
+      ~redflags ~no_tc ~no_coercion ~algunivs
 let mk_coq_context ~options state =
   let env = get_global_env state in
   let section = section_ids env in

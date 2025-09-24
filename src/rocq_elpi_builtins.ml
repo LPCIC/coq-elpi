@@ -3627,7 +3627,9 @@ Supported attributes:
 - @keepunivs! (default false, do not disregard universe levels)
 - @no-tc! (default false, do not infer typeclasses) |}))))),
   (fun gt ety _ diag ~depth proof_context _ state ->
-    let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
+    let flags = Pretyping.default_inference_flags false in
+    let flags = if proof_context.options.no_tc = Some true then {flags with use_typeclasses = NoUseTC} else flags in
+    let flags = if proof_context.options.no_coercion = Some true then {flags with use_coercions = false} else flags in
     try
       let sigma = get_sigma state in
       let ety_given, expected_type =
@@ -3674,7 +3676,9 @@ Supported attributes:
   (fun gt es _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in
-      let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
+      let flags = Pretyping.default_inference_flags false in
+      let flags = if proof_context.options.no_tc = Some true then {flags with use_typeclasses = NoUseTC} else flags in
+      let flags = if proof_context.options.no_coercion = Some true then {flags with use_coercions = false} else flags in
       let expected_type = Pretyping.IsType in
       let sigma = Evd.push_future_goals sigma in
       let sigma, uj_val, uj_type =

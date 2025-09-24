@@ -480,6 +480,7 @@ macro @keep-alg-univs! :- get-option "coq:keepalgunivs" tt.
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @reversible! :- get-option "coq:reversible" tt. % coercions
 macro @no-tc! :- get-option "coq:no_tc" tt. % skip typeclass inference 
+macro @no-coercion! :- get-option "coq:no_coercion" tt. % ignore coercions during pretyping
 
 macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
 
