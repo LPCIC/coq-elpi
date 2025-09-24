@@ -973,8 +973,8 @@ let file_resolver ?cwd:_ ~unit:file () =
 let versions =
   let open API.Setup.StrMap in
   empty
-  |> add "coq-elpi" (API.Utils.version_parser ~what:"coq-elpi" "%%VERSION_NUM%%")
-  |> add "rocq-elpi" (API.Utils.version_parser ~what:"rocq-elpi" "%%VERSION_NUM%%")
+  |> add "coq-elpi" (API.Utils.version_parser ~what:"coq-elpi" "2.5.2-45-gca1b82d")
+  |> add "rocq-elpi" (API.Utils.version_parser ~what:"rocq-elpi" "2.5.2-45-gca1b82d")
   |> add "coq" (API.Utils.version_parser ~what:"coq" Coq_config.version)
   |> add "rocq" (API.Utils.version_parser ~what:"rocq" Coq_config.version)
           
