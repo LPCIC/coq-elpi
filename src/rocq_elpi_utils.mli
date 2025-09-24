@@ -90,6 +90,13 @@ val gr2path: Names.GlobRef.t -> string list
 
 val eta_contract : Environ.env -> Evd.evar_map -> EConstr.t -> EConstr.t
 
+(* Command argument specifiers *)
+type arg_kind =
+  | Elaborated
+  | Unelaborated
+  | Syntactic
+val arg_kind_merge : ?loc:Loc.t -> arg_kind option -> arg_kind -> arg_kind
+
 (* Diagnostics *)
 val diag_error_lazy : ?on_ok:(unit -> 'a) -> (* defaults to [raise No_clause] *)
   Elpi.Builtin.diagnostic Elpi.API.BuiltInPredicate.ioarg ->

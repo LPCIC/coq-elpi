@@ -19,6 +19,7 @@ open Names
 
 open Rocq_elpi_utils
 open Rocq_elpi_HOAS
+open Rocq_elpi_arg_HOAS
 
 let prop = { B.any with Conv.ty = Conv.TyName "prop" }
 
@@ -1229,7 +1230,7 @@ Supported attributes:
   ] @ SynterpAction.get_parsing_actions_synterp @ [
   MLData attribute_value;
   MLData attribute;
-  ]
+  ] @ Syntactic.ml_data
 
 let synterp_api_doc = ". bla bla"
 
