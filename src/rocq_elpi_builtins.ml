@@ -383,6 +383,14 @@ let hint_globref = Hints.hint_globref
 let hint_globref gr = gr
 [%%endif]
 
+[%%if coq = "9.2"]
+let abbreviation_find_interp = Abbreviation.find_interp
+let abbreviation_declare = Abbreviation.declare
+[%%else]
+let abbreviation_find_interp = Abbreviation.seach_abbreviation
+let abbreviation_declare = Abbreviation.declare_abbreviation
+[%%endif]
+
 let cs_pattern =
   let open Conv in let open API.AlgebraicData in let open Structures.ValuePattern in declare {
   ty = TyName "cs-pattern";
@@ -3405,7 +3413,7 @@ Supported attributes:
      let gbody = Rocq_elpi_utils.detype env sigma body in
      let pat, _ = Notation_ops.notation_constr_of_glob_constr nenv gbody in
      let warns = warns_of_options options in
-     Abbreviation.declare_abbreviation ~local ~onlyparsing warns name (vars,pat);
+     abbreviation_declare ~local ~onlyparsing warns name (vars,pat);
      let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
      Dumpglob.dump_definition (CAst.make ~loc name) false "abbrev";
      let qname = Libnames.qualid_of_string (Id.to_string name) in
@@ -3420,7 +3428,7 @@ Supported attributes:
     Out(B.poly "term","Body",
     Full(global, "Unfolds an abbreviation")))),
   (fun sd arglist _ ~depth {env} _ state ->
-    let args, _ = Abbreviation.search_abbreviation sd in
+    let args, _ = abbreviation_find_interp sd in
     let nargs = List.length args in
     let argno = List.length arglist in
     if nargs > argno then
@@ -3457,7 +3465,7 @@ Supported attributes:
     Out(B.poly "term","Body",
     Full(global, "Retrieves the body of an abbreviation")))),
   (fun sd _ _ ~depth {env} _ state ->
-    let args, _ = Abbreviation.search_abbreviation sd in
+    let args, _ = abbreviation_find_interp sd in
     let nargs = List.length args in
     let open Constrexpr in
     let binders, vars = List.split (CList.init nargs (fun i ->

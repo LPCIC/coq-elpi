@@ -211,12 +211,18 @@ let lookup_inductive env i =
   if Array.length mind.Declarations.mind_packets <> 1 then nYI "API(env) mutual inductive";
   (mind, indbo)
 
+[%%if coq = "9.2"]
+let abbreviation_find_interp = Abbreviation.find_interp
+[%%else]
+let abbreviation_find_interp = Abbreviation.seach_abbreviation
+[%%endif]
+
 let locate_qualid qualid =
   try
     match Nametab.locate_extended qualid with
     | Globnames.TrueGlobal gr -> Some (`Gref gr)
     | Globnames.Abbrev sd -> (
-        match Abbreviation.search_abbreviation sd with
+        match abbreviation_find_interp sd with
         | _, Notation_term.NRef (gr, _) -> Some (`Gref gr)
         | _ -> Some (`Abbrev sd))
   with Not_found -> None
