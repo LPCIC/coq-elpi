@@ -3545,13 +3545,9 @@ Universe constraints are put in the constraint store.|})))),
        let state, assignments = set_current_sigma ~depth state sigma in
        state, r, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +! B.mkERROR error, [])),
+       diag_error_lazy diag @@ fun () ->
+       let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+       state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
   MLCode(Pred("coq.typecheck-ty",
@@ -3579,13 +3575,9 @@ Universe constraints are put in the constraint store.|})))),
        let state, assignments = set_current_sigma ~depth state sigma in
        state, r, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +! B.mkERROR error, [])),
+       diag_error_lazy diag @@ fun () ->
+       let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+       state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
   MLCode(Pred("coq.unify-eq",
@@ -3600,13 +3592,9 @@ Universe constraints are put in the constraint store.|})))),
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, !: (B.mkERROR error), [])),
+       diag_error_lazy diag @@ fun () ->
+       let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+       state, !: (B.mkERROR error), [])),
   DocAbove);
 
   MLCode(Pred("coq.unify-leq",
@@ -3621,13 +3609,9 @@ Universe constraints are put in the constraint store.|})))),
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, !: (B.mkERROR error), [])),
+       diag_error_lazy diag @@ fun () ->
+       let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+       state, !: (B.mkERROR error), [])),
   DocAbove);
 
    MLCode(Pred("coq.elaborate-skeleton",
@@ -3670,13 +3654,9 @@ Supported attributes:
           let state, assignments = set_current_sigma ~depth state sigma in
           state, ?: None +! uj_val +! B.mkOK, assignments
     with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +? None +! B.mkERROR error, [])),
+      diag_error_lazy diag @@ fun () ->
+      let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+      state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
    MLCode(Pred("coq.elaborate-ty-skeleton",
@@ -3704,13 +3684,9 @@ Supported attributes:
       let state, assignments = set_current_sigma ~depth state sigma in
       state, !: sort +! uj_val +! B.mkOK, assignments
     with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +? None +! B.mkERROR error, [])),
+      diag_error_lazy diag @@ fun () ->
+      let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+      state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
   LPDoc "-- Coq's reduction flags    ------------------------------------";

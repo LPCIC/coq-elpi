@@ -89,3 +89,9 @@ val mp2path: Names.ModPath.t -> string list
 val gr2path: Names.GlobRef.t -> string list
 
 val eta_contract : Environ.env -> Evd.evar_map -> EConstr.t -> EConstr.t
+
+(* Diagnostics *)
+val diag_error_lazy : ?on_ok:(unit -> 'a) -> (* defaults to [raise No_clause] *)
+  Elpi.Builtin.diagnostic Elpi.API.BuiltInPredicate.ioarg ->
+  (unit -> 'a) ->
+  'a

@@ -873,3 +873,26 @@ let eta_contract env sigma t =
   in
     (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
     map env t
+
+(* Command argument specifiers *)
+type arg_kind =
+  | Elaborated
+  | Unelaborated
+  | Syntactic
+let arg_kind_merge ?loc (old : arg_kind option) (k : arg_kind) =
+  match old with
+  | None -> k
+  | Some old when old = k -> k
+  | _ -> CErrors.user_err ?loc Pp.(str "Syntax error, incompatible values for attribute \"arguments\"")
+
+(* Helper for predicates that produce diagnostics *)
+let diag_error_lazy
+    ?(on_ok=fun () -> raise API.BuiltInPredicate.No_clause)
+    diag_arg
+    (on_other : unit -> 'a) : 'a =
+  let open API.BuiltInPredicate in
+  (* optimization: don't print the error if caller wants OK *)
+  match diag_arg with
+  | Data Elpi.Builtin.OK -> on_ok ()
+  | _ -> on_other ()
+
