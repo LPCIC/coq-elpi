@@ -5,24 +5,47 @@
 open Elpi.API.RawData
 open Rocq_elpi_utils
 
+module API = Elpi.API
+module CD = Elpi.API.RawOpaqueData
+
 type phase = Interp | Synterp | Both
 type proof =
   | Begin of string option (* None = always, Some x only if #[x] present*)
   | End
 
+module GS : sig
+  type 'a t = {
+    gs : Genintern.glob_sign;
+    vl : 'a
+  }
+  val get : 'a t -> 'a
+  val mk : Genintern.glob_sign -> 'a -> 'a t
+end
+
+module IS : sig
+  type 'a t = {
+    is : Geninterp.interp_sign;
+    gs : Genintern.glob_sign;
+    vl : 'a
+  }
+  val get : 'a t -> 'a
+  val mk : Geninterp.interp_sign -> Genintern.glob_sign ->  'a -> 'a t
+  val of_gs : Geninterp.interp_sign -> 'a GS.t -> 'a t
+end
+
 module Cmd : sig
 
 type raw_term = Constrexpr.constr_expr
-type glob_term = Genintern.glob_constr_and_expr
-type top_term = Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
+type glob_term = raw_term GS.t
+type top_term = raw_term IS.t
 
 type raw_record_decl = Vernacentries.Preprocessed_Mind_decl.record
-type glob_record_decl = Genintern.glob_sign * raw_record_decl
-type top_record_decl = Geninterp.interp_sign * glob_record_decl
+type glob_record_decl = raw_record_decl GS.t
+type top_record_decl = raw_record_decl IS.t
 
 type raw_indt_decl = Vernacentries.Preprocessed_Mind_decl.inductive
-type glob_indt_decl = Genintern.glob_sign * raw_indt_decl
-type top_indt_decl = Geninterp.interp_sign * glob_indt_decl
+type glob_indt_decl = raw_indt_decl GS.t
+type top_indt_decl = raw_indt_decl IS.t
 
 type raw_constant_decl = {
   name : qualified_name;
@@ -33,12 +56,12 @@ type raw_constant_decl = {
   red : Genredexpr.raw_red_expr option;
 }
 val pr_raw_constant_decl : Environ.env -> Evd.evar_map -> raw_constant_decl -> Pp.t
-type glob_constant_decl = Genintern.glob_sign * raw_constant_decl
-type top_constant_decl = Geninterp.interp_sign * glob_constant_decl
+type glob_constant_decl = raw_constant_decl GS.t
+type top_constant_decl = raw_constant_decl IS.t
 
 type raw_context_decl = Constrexpr.local_binder_expr list
-type glob_context_decl = Genintern.glob_sign * raw_context_decl
-type top_context_decl = Geninterp.interp_sign * glob_context_decl
+type glob_context_decl = raw_context_decl GS.t
+type top_context_decl = raw_context_decl IS.t
 
 type ('a,'b,'c,'d,'e) t =
   | Int : int            -> ('a,'b,'c,'d,'e) t
@@ -125,14 +148,56 @@ val in_elpi_tac_econstr :
   Elpi.API.State.t * term list * Elpi.API.Conversion.extra_goals
 
 (* for commands *)
+val arg_type : API.Data.term API.Conversion.t
+module Syntactic : sig
+  module Tag :
+    sig
+      type 'a t = {
+        is : Geninterp.interp_sign;
+        gs : Genintern.glob_sign;
+        vl : 'a;
+        tag : int;
+      }
+      val compare_tag : 'a t -> 'b t -> int
+      val counter : int ref
+      val fresh : 'a IS.t -> 'a t
+      val drop_tag : 'a t -> 'a IS.t
+    end
+  type res_term = Cmd.raw_term Tag.t
+  type res_record_decl = Cmd.raw_record_decl Tag.t
+  type res_indt_decl = Cmd.raw_indt_decl Tag.t
+  type res_constant_decl = Cmd.raw_constant_decl Tag.t
+  type res_context_decl = Cmd.raw_context_decl Tag.t
+  type res =
+      (res_term, res_record_decl, res_indt_decl, res_constant_decl,
+       res_context_decl)
+      Cmd.t
+  val pp_res : Environ.env -> Evd.evar_map -> res -> Pp.t
+  val trm : res_term CD.cdata
+  val trm_type : res_term API.Conversion.t
+  val constant_decl : res_constant_decl CD.cdata
+  val constant_decl_type : res_constant_decl API.Conversion.t
+  val indt_decl : res_indt_decl CD.cdata
+  val indt_decl_type : res_indt_decl API.Conversion.t
+  val record_decl : res_record_decl CD.cdata
+  val record_decl_type : res_record_decl API.Conversion.t
+  val context : res_context_decl CD.cdata
+  val context_type : res_context_decl API.Conversion.t
+  val arg_type : res API.Conversion.t
+  val delimiter_depth : Constrexpr.delimiter_depth API.Conversion.t
+  val as_normal_arg : API.RawData.constant
+  val res_of_top : Cmd.top -> res
+  val top_of_res : res -> Cmd.top
+  val ml_data : API.BuiltIn.declaration list
+end
 val in_elpi_cmd :
   loc:Loc.t ->
   depth:int ->
   base:Elpi.API.Compile.program ->
   ?calldepth:int -> 
+  kind:arg_kind ->
   Rocq_elpi_HOAS.empty Rocq_elpi_HOAS.coq_context ->
   Elpi.API.State.t ->
-  raw:bool ->
   Cmd.top ->
   Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
 val in_elpi_cmd_synterp :

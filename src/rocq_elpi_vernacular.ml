@@ -399,10 +399,10 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let print ~atts ~loc ~name ~args output =
     skip ~ph:atts (print ~loc ~name ~args) output
 
-  let create_command ~atts:(raw_args) ~loc n =
-    let raw_args = Option.default false raw_args in
+  let create_command ~atts:(args) ~loc n =
+    let args = Option.default Elaborated args in
     let _ = P.ensure_initialized () in
-    P.declare_program n (Command { raw_args });
+    P.declare_program n (Command { args });
     P.init_program n ~loc [P.command_init()];
     set_current_program (snd n)
 
@@ -412,10 +412,10 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     if P.stage = Summary.Stage.Interp then P.init_program n ~loc [P.command_init();P.tactic_init ()];
     set_current_program (snd n)
 
-  let create_program ~atts:(raw_args) ~loc n ~init:(sloc,s) =
-    let raw_args = Option.default false raw_args in
+  let create_program ~atts:(args) ~loc n ~init:(sloc,s) =
+    let args = Option.default Elaborated args in
     let elpi = P.ensure_initialized () in
-    P.declare_program n (Program { raw_args });
+    P.declare_program n (Program { args });
     if P.stage = Summary.Stage.Interp then begin
       let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
       let init = EmbeddedString { sast = unit} in
@@ -454,7 +454,7 @@ end
 
 module type Common = sig
   val get_and_compile :
-    loc:Loc.t -> qualified_name -> (Elpi.API.Compile.program * bool) option
+    loc:Loc.t -> qualified_name -> (Elpi.API.Compile.program * arg_kind) option
   val run : loc:Loc.t ->
     Elpi.API.Compile.program ->
      query ->
@@ -475,8 +475,8 @@ module type Common = sig
   val bound_steps   : atts:phase option -> int -> unit
   val print         : atts:phase option -> loc:Loc.t -> name:qualified_name -> args:string list -> string -> unit
 
-  val create_program : atts:bool option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
-  val create_command : atts:bool option -> loc:Loc.t -> program_name -> unit
+  val create_program : atts:arg_kind option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+  val create_command : atts:arg_kind option -> loc:Loc.t -> program_name -> unit
   val create_tactic : loc:Loc.t -> program_name -> unit
   val create_db : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
   val create_file : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
@@ -538,7 +538,7 @@ module Interp = struct
     strbrk "The command lacks code for the synterp phase. In order to add code to this phase use '#[synterp] Elpi Accumulate'. See also https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html#parsing-and-execution"
   
   let run_program ~loc name ~main ~atts ~syndata args more_args =
-    get_and_compile ~loc name |> Option.map (fun (program, raw_args) ->
+    get_and_compile ~loc name |> Option.map (fun (program, kind) ->
       let env = Global.env () in
       let sigma = Evd.from_env env in
       let args = args
@@ -555,7 +555,7 @@ module Interp = struct
       let query state =
         let depth = 0 in
         let state, args, gls = EU.map_acc
-          (Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:program ~raw:raw_args Rocq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state))
+          (Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:program ~kind:kind Rocq_elpi_HOAS.(mk_coq_context ~options:(default_options ()) state))
           state args in
         let loc = Rocq_elpi_utils.of_coq_loc loc in
 

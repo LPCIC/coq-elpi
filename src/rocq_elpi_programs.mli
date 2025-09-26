@@ -24,7 +24,7 @@ and src_db_header = {
   dast : cunit;
 }
 
-type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool }
+type nature = Command of { args : arg_kind } | Tactic | Program of { args : arg_kind }
 
 
 module Chunk : sig
@@ -120,7 +120,7 @@ module type Programs = sig
   val db_inspect : qualified_name -> int
 
   val get_and_compile_existing_db : loc:Loc.t -> qualified_name -> Compile.program
-  val get_and_compile : loc:Loc.t -> ?even_if_empty:bool -> qualified_name -> (Compile.program * bool) option
+  val get_and_compile : loc:Loc.t -> ?even_if_empty:bool -> qualified_name -> (Compile.program * arg_kind) option
 
 
 end
