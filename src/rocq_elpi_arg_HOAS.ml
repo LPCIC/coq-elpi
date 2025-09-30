@@ -1330,7 +1330,7 @@ module Syntactic = struct
      we equip each term with a unique integer to decide what to return when the
      glob constrs are not equal. *)
   let trm, trm_type = CD.declare {
-      name = "syntax.trm";
+      name = "syntactic.trm";
       doc = "Unprocessed term argument";
       pp = (fun fmt (t : res_term) ->
           Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.Term t))));
@@ -1345,7 +1345,7 @@ module Syntactic = struct
     }
 
   let constant_decl, constant_decl_type = CD.declare {
-      name = "syntax.const-decl";
+      name = "syntactic.const-decl";
       doc = "Unprocessed term argument";
       pp = (fun fmt (t : res_constant_decl) ->
           Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.ConstantDecl t))));
@@ -1356,7 +1356,7 @@ module Syntactic = struct
     }
 
   let indt_decl, indt_decl_type = CD.declare {
-      name = "syntax.indt-decl";
+      name = "syntactic.indt-decl";
       doc = "Unprocessed term argument";
       pp = (fun fmt (t : res_indt_decl) ->
           Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.IndtDecl t))));
@@ -1367,7 +1367,7 @@ module Syntactic = struct
     }
 
   let record_decl, record_decl_type = CD.declare {
-      name = "syntax.record-decl";
+      name = "syntactic.record-decl";
       doc = "Unprocessed term argument";
       pp = (fun fmt (t : res_record_decl) ->
           Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.RecordDecl t))));
@@ -1378,7 +1378,7 @@ module Syntactic = struct
     }
 
   let context, context_type = CD.declare {
-      name = "syntax.context-decl";
+      name = "syntactic.context-decl";
       doc = "Unprocessed term argument";
       pp = (fun fmt (t : res_context_decl) ->
           Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.Context t))));
@@ -1389,46 +1389,46 @@ module Syntactic = struct
     }
 
   let arg_type = Alg.declare {
-      ty = TyName "syntax.argument";
+      ty = TyName "syntactic.argument";
       doc = "Unprocessed command argument";
       pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty t)));
       constructors = [
-        K("syntax.str", "", A(API.BuiltInData.string, N),
+        K("syntactic.str", "", A(API.BuiltInData.string, N),
           B (fun s -> Cmd.String s),
           M (fun ~ok ~ko -> function Cmd.String s -> ok s | _ -> ko ())
          );
-        K("syntax.int", "", A(API.BuiltInData.int, N),
+        K("syntactic.int", "", A(API.BuiltInData.int, N),
           B (fun s -> Cmd.Int s),
           M (fun ~ok ~ko -> function Cmd.Int s -> ok s | _ -> ko ())
          );
-        K("syntax.trm", "", A(trm_type, N),
+        K("syntactic.trm", "", A(trm_type, N),
           B (fun s -> Cmd.Term s),
           M (fun ~ok ~ko -> function Cmd.Term s -> ok s | _ -> ko ())
          );
-        K("syntax.const-decl", "", A(constant_decl_type, N),
+        K("syntactic.const-decl", "", A(constant_decl_type, N),
           B (fun s -> Cmd.ConstantDecl s),
           M (fun ~ok ~ko -> function Cmd.ConstantDecl s -> ok s | _ -> ko ())
          );
-        K("syntax.indt-decl", "", A(indt_decl_type, N),
+        K("syntactic.indt-decl", "", A(indt_decl_type, N),
           B (fun s -> Cmd.IndtDecl s),
           M (fun ~ok ~ko -> function Cmd.IndtDecl s -> ok s | _ -> ko ())
          );
-        K("syntax.record-decl", "", A(record_decl_type, N),
+        K("syntactic.record-decl", "", A(record_decl_type, N),
           B (fun s -> Cmd.RecordDecl s),
           M (fun ~ok ~ko -> function Cmd.RecordDecl s -> ok s | _ -> ko ())
          );
-        K("syntax.ctx-decl", "", A(context_type, N),
+        K("syntactic.ctx-decl", "", A(context_type, N),
           B (fun s -> Cmd.Context s),
           M (fun ~ok ~ko -> function Cmd.Context s -> ok s | _ -> ko ())
          );
       ];
     } |> CC.(!<)
 
-  let as_normal_arg = E.Constants.declare_global_symbol "syntax.arg"
+  let as_normal_arg = E.Constants.declare_global_symbol "syntactic.arg"
 
   let delimiter_depth = API.OpaqueData.declare {
-      name = "delimiter_depth";
-      doc = "Syntax scope delimiter depth";
+      name = "syntactic.delimiter_depth";
+      doc = "Syntactic scope delimiter depth";
       pp = Constrexpr.(fun fmt -> function
           | DelimOnlyTmpScope -> Format.fprintf fmt "DelimOnlyTmpScope"
           | DelimUnboundedScope -> Format.fprintf fmt "DelimUnboundedScope");
@@ -1436,8 +1436,8 @@ module Syntactic = struct
       hash = Hashtbl.hash;
       hconsed = true;
       constants = [
-        ("delimit-only-tmp-scope", DelimOnlyTmpScope);
-        ("delimit-unbounded-scope", DelimUnboundedScope);
+        ("syntactic.delimit-only-tmp-scope", DelimOnlyTmpScope);
+        ("syntactic.delimit-unbounded-scope", DelimUnboundedScope);
       ];
     }
 

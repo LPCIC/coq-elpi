@@ -3647,7 +3647,9 @@ not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
 Supported attributes:
 - @keepunivs! (default false, do not disregard universe levels)
-- @no-tc! (default false, do not infer typeclasses) |}))))),
+- @no-tc! (default false, do not infer typeclasses)
+- @no-coercion! (default: false, do not insert coercions)
+|}))))),
   (fun gt ety _ diag ~depth proof_context _ state ->
     let flags = Pretyping.default_inference_flags false in
     let flags = if proof_context.options.no_tc = Some true then {flags with use_typeclasses = NoUseTC} else flags in
@@ -4414,7 +4416,7 @@ Supported attributes:
   ]
   @ Syntactic.ml_data @
   [MLDataC(type_constraint);
-   MLCode(Pred("syntax.default-elab",
+   MLCode(Pred("syntactic.default-elab",
     In(Syntactic.arg_type, "SyntaxArg",
     Out(Rocq_elpi_arg_HOAS.arg_type, "Arg",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
@@ -4437,7 +4439,7 @@ Supported attributes:
         state, ?: None +! B.mkERROR error, []
    ),
    DocAbove);
-   MLCode(Pred("syntax.default-unelab",
+   MLCode(Pred("syntactic.default-unelab",
     In(Syntactic.arg_type, "SyntaxArg",
     Out(Rocq_elpi_arg_HOAS.arg_type, "Arg",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
@@ -4460,7 +4462,7 @@ Supported attributes:
         state, ?: None +! B.mkERROR error, []
      ),
    DocAbove);
-   MLCode(Pred("syntax.push-scope",
+   MLCode(Pred("syntactic.push-scope",
     In(Syntactic.trm_type, "SyntaxTerm",
     In(Syntactic.delimiter_depth, "DelimiterDepth",
     In(B.string, "ScopeName",
@@ -4475,12 +4477,17 @@ Supported attributes:
       state, (!: ot), []
     ),
    DocAbove);
-   MLCode(Pred("syntax.elaborate",
-    In(Syntactic.trm_type, "SyntaxTerm",
+   MLCode(Pred("syntactic.elaborate",
+    In(Syntactic.trm_type, "SyntacticTerm",
     CIn(type_constraint, "TypeConstraint",
     COut(term, "Term",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
-    Full(proof_context, "Elaborates SyntaxTerm using TypeConstraint. Respects @no-tc! and @no-coercion!"))))),
+    Full(proof_context, {|
+Elaborates SyntaxTerm using TypeConstraint.
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)
+- @no-coercion! (default: false, do not insert coercions)
+|}))))),
     fun t expected_type _ diag ~depth coq_ctx csts state ->
       let open Syntactic in
       let Tag.{is;gs;vl} = t in
