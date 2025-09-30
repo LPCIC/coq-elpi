@@ -431,7 +431,7 @@ unresolved implicit arguments, since this is what the `constr` Ltac type means
 If they were typed as `open_constr` or `uconstr`, the last or both checks would
 be respectively skipped. In any case they are passed to the Elpi code as `trm ...`.
 Both `"a"` and `b` are passed to Elpi as `str ...`.
-Argument `U` flagged as `ltac_open_constr` can mention free variables. The Elpi
+Argument `U` flagged as `ltac_open_term` can mention free variables. The Elpi
 tactic receives `open-trm N F` where `N` is the number of free variables in `U`
 and `F` is `fun x1 => ... fun xN => U`.
 Finally, `ltac_term:(T)` and `(T)` are *not* synonyms: but the former must be used
