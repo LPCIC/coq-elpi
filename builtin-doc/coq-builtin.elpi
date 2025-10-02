@@ -1473,7 +1473,7 @@ external func coq.unify-eq term, term -> diagnostic.
 % if they are types)
 external func coq.unify-leq term, term -> diagnostic.
 
-% [coq.elaborate-skeleton T ETy E Diagnostic] elabotares T against the
+% [coq.elaborate-skeleton T ETy E Diagnostic] elaborates T against the
 % expected type ETy.
 % T is allowed to contain holes (unification variables) but these are
 % not assigned even if the elaborated term has a term in place of the
@@ -1483,7 +1483,7 @@ external func coq.unify-leq term, term -> diagnostic.
 % - @no-tc! (default false, do not infer typeclasses) 
 external func coq.elaborate-skeleton term -> term, term, diagnostic.
 
-% [coq.elaborate-ty-skeleton T U E Diagnostic] elabotares T expecting it to
+% [coq.elaborate-ty-skeleton T U E Diagnostic] elaborates T expecting it to
 % be a type of sort U.
 % T is allowed to contain holes (unification variables) but these are
 % not assigned even if the elaborated term has a term in place of the
