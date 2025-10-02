@@ -3643,7 +3643,7 @@ Universe constraints are put in the constraint store.|})))),
      CInOut(B.ioargC_flex term,  "ETy",
      COut(term,  "E",
      InOut(B.ioarg B.diagnostic, "Diagnostic",
-     Full (proof_context,{|elabotares T against the expected type ETy.
+     Full (proof_context,{|elaborates T against the expected type ETy.
 T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
@@ -3692,7 +3692,7 @@ Supported attributes:
      COut(sort, "U",
      COut(term,  "E",
      InOut(B.ioarg B.diagnostic, "Diagnostic",
-     Full (proof_context,{|elabotares T expecting it to be a type of sort U.
+     Full (proof_context,{|elaborates T expecting it to be a type of sort U.
 T is allowed to contain holes (unification variables) but these are
 not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
