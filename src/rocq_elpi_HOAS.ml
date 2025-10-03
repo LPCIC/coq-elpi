@@ -3309,9 +3309,15 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
     state, t, !gls
 ;;
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let inst_opt_names inst_opt = inst_opt
+[%%else]
+let inst_opt_names inst_opt = Option.map EConstr.EInstance.make inst_opt
+[%%endif]
 
 let type_of_global state r inst_opt = API.State.update_return engine state (fun x ->
-  let sigma, c = Evd.fresh_global x.global_env x.sigma r ?names:inst_opt in
+  let names = inst_opt_names inst_opt in
+  let sigma, c = Evd.fresh_global x.global_env x.sigma r ?names in
   let ty = Retyping.get_type_of x.global_env sigma c in
   { x with sigma }, (ty, EConstr.Unsafe.to_instance @@ snd @@ EConstr.destRef sigma c))
 
