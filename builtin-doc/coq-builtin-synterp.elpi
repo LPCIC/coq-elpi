@@ -97,7 +97,7 @@ external symbol str      : string -> argument. % Eg. x "y" z.w. or any Coq keywo
 external symbol trm      : term   -> argument. % Eg. (t).
 external symbol open-trm : int -> term -> argument.
 
-external symbol syntactic.arg : syntactic.argument -> argument.
+external symbol syntactic : syntactic.argument -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").

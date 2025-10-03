@@ -1429,7 +1429,7 @@ module Syntactic = struct
       ];
     } |> CC.(!<)
 
-  let as_normal_arg = E.Constants.declare_global_symbol "syntactic.arg"
+  let as_normal_arg = E.Constants.declare_global_symbol "syntactic"
 
   let delimiter_depth = API.OpaqueData.declare {
       name = "syntactic.delimiter_depth";
