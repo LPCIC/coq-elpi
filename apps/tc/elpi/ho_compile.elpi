@@ -369,10 +369,10 @@ namespace tc {
       decompile-problematic-term A L A L :- var A, !.
 
       decompile-problematic-term (fun N Ty Bo) L (fun N Ty' Bo') L3 :-
+        fold-map Ty L Ty' L1,
         (pi x\ fold-map (Bo x) [] (Bo' x) (Lx x)),
-        close-term-no-prune-ty Lx Ty L1,
-        fold-map Ty L Ty' L2,
-        std.append L2 L1 L3.
+        close-term-no-prune-ty Lx Ty' L2,
+        std.append L1 L2 L3.
 
       decompile-problematic-term (prod N Ty Bo) L (prod N Ty' Bo') L3 :-
         (pi x\ fold-map (Bo x) [] (Bo' x) (Lx x)),
