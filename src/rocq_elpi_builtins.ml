@@ -4511,7 +4511,7 @@ Supported attributes:
         diag_error_lazy diag @@ fun () ->
         let error =
           string_of_ppcmds coq_ctx.options @@
-          try CErrors.print_no_report e with | _ -> raise No_clause
+          try CErrors.print_no_report e with | _ -> Pp.str "syntactic.elaborate: anomaly printing error"
         in
         state, ?: None +! B.mkERROR error, []
     ),
