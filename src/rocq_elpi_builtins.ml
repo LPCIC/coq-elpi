@@ -259,10 +259,6 @@ let type_constraint =
     doc = "The expected type for elaborating syntactic terms";
     pp = (fun fmt _ -> Format.fprintf fmt "<TODO>");
     constructors = Pretyping.[
-        K("without-type-constraint", "Pretype without type constraint", N,
-          B (WithoutTypeConstraint),
-          M (fun ~ok ~ko -> function WithoutTypeConstraint -> ok | _ -> ko ())
-         );
         K("of-type", "Pretype with a specific expected type", CA(term, N),
           B (fun t -> OfType t),
           M (fun ~ok ~ko -> function OfType t -> ok t | _ -> ko ())
@@ -4479,11 +4475,11 @@ Supported attributes:
    DocAbove);
    MLCode(Pred("syntactic.elaborate",
     In(Syntactic.trm_type, "SyntacticTerm",
-    CIn(type_constraint, "TypeConstraint",
+    CIn(B.unspecC type_constraint, "TypeConstraint",
     COut(term, "Term",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full(proof_context, {|
-Elaborates SyntaxTerm using TypeConstraint.
+Elaborates SyntaxTerm using TypeConstraint (if provided).
 Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)
 - @no-coercion! (default: false, do not insert coercions)
@@ -4501,6 +4497,10 @@ Supported attributes:
         let use_coercions = not @@ Option.default false options.no_coercion in
         { flags with use_typeclasses; use_coercions }
       in
+      let expected_type =
+        match expected_type with
+        | B.Unspec -> Pretyping.WithoutTypeConstraint
+        | B.Given x -> x in
       try
         let sigma, vl =
           Ltac_plugin.Tacinterp.interp_open_constr ~flags ~expected_type is coq_ctx.env sigma vl

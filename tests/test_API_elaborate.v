@@ -294,7 +294,7 @@ Elpi syntax_test6 "test" ([test_notation ]).
 #[arguments(syntactic)] Elpi Command elaborate_test.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg (syntactic.trm T)] :-
-  syntactic.elaborate T without-type-constraint T' ok,
+  syntactic.elaborate T _ T' ok,
   T' = {{ _ + _ }}.
 /*)*/}}.
 Elpi elaborate_test (1 + 1).
@@ -342,7 +342,7 @@ Elpi elaborate_test_ty2 (Cls -> nat) (@proj).
 #[arguments(syntactic)] Elpi Command error_msgs.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg (syntactic.str RegExp), syntactic.arg (syntactic.trm T)] :-
-  syntactic.elaborate T without-type-constraint _ (error E),
+  syntactic.elaborate T _ _ (error E),
   rex.match RegExp E.
 /*)*/}}.
 Elpi error_msgs ".*has type.*True.*" (I + 1).
