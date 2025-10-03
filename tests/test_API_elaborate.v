@@ -217,7 +217,7 @@ Fail Elpi syntax_test2 "foo".
 #[arguments(syntactic)] Elpi Command syntax_test3.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg Arg] :-
-  syntactic.default-elab Arg (int 1) ok.
+  syntactic.argument->elaborated.argument Arg (int 1) ok.
 /*)*/}}.
 Elpi syntax_test3 1.
 Fail Elpi syntax_test3 2.
@@ -225,7 +225,7 @@ Fail Elpi syntax_test3 2.
 #[arguments(syntactic)] Elpi Command syntax_test4.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg Arg] :-
-  syntactic.default-elab Arg (trm {{(1 + 1)}}) ok.
+  syntactic.argument->elaborated.argument Arg (trm {{(1 + 1)}}) ok.
 /*)*/}}.
 Elpi syntax_test4 (1 + 1).
 Fail Elpi syntax_test4 (2 + 1).
@@ -246,8 +246,8 @@ Fail Elpi evar_deps (eq_refl : (?[x] = 1)) (?x).
 #[arguments(syntactic)] Elpi Command syntax_test_evars.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg Arg1, syntactic.arg Arg2] :-
-  syntactic.default-elab Arg1 (trm {{ 1 + 1 }}) ok,
-  syntactic.default-elab Arg2 (trm {{(1)}}) ok.
+  syntactic.argument->elaborated.argument Arg1 (trm {{ 1 + 1 }}) ok,
+  syntactic.argument->elaborated.argument Arg2 (trm {{(1)}}) ok.
 /*)*/}}.
 Elpi syntax_test_evars (1 + 1) (1).
 Elpi syntax_test_evars (?[x] + 1) (1).
@@ -261,8 +261,8 @@ Fail Elpi syntax_test_evars (?[x] + ?x) (?x).
 #[arguments(syntactic)] Elpi Command syntax_test_evars_staged.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg Arg1, syntactic.arg Arg2] :-
-  syntactic.default-elab Arg1 (trm T1) ok,
-  syntactic.default-elab Arg2 (trm T2) ok,
+  syntactic.argument->elaborated.argument Arg1 (trm T1) ok,
+  syntactic.argument->elaborated.argument Arg2 (trm T2) ok,
   T1 = {{ 1 + 1 }},
   T2 = {{ 1 }}.
 /*)*/}}.
@@ -282,7 +282,7 @@ Notation "'[test_notation' ]" := (tt) : test_scope.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg (syntactic.str Scope), syntactic.arg (syntactic.trm Arg1)] :-
   syntactic.push-scope Arg1 syntactic.delimit-only-tmp-scope Scope ScopedArg,
-  syntactic.default-elab (syntactic.trm ScopedArg) (trm {{ tt }}) ok.
+  syntactic.argument->elaborated.argument (syntactic.trm ScopedArg) (trm {{ tt }}) ok.
 /*)*/}}.
 Fail Check [test_notation].
 Fail Elpi syntax_test6 "core" ([test_notation ]).
@@ -315,8 +315,8 @@ Elpi elaborate_test (proj + tt).
 #[arguments(syntactic)] Elpi Command elaborate_test_ty.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg (syntactic.trm Ty), syntactic.arg (syntactic.trm T)] :-
-  syntactic.elaborate Ty is-type Ty' ok,
-  syntactic.elaborate T (of-type Ty') T' ok,
+  syntactic.elaborate-ty Ty Ty' ok,
+  syntactic.elaborate T Ty' T' ok,
   ground_term T'.
 /*)*/}}.
 Elpi elaborate_test_ty (nat) (1 + 1).
@@ -328,8 +328,8 @@ Elpi elaborate_test_ty (Cls -> nat) (@proj).
 #[arguments(syntactic)] Elpi Command elaborate_test_ty2.
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg (syntactic.trm Ty), syntactic.arg (syntactic.trm T)] :-
-  syntactic.elaborate Ty is-type Ty' ok,
-  (@no-tc! => @no-coercion! => syntactic.elaborate T (of-type Ty') T' ok),
+  syntactic.elaborate-ty Ty Ty' ok,
+  (@no-tc! => @no-coercion! => syntactic.elaborate T Ty' T' ok),
   ground_term T'.
 /*)*/}}.
 Elpi elaborate_test_ty2 (nat) (1 + 1).

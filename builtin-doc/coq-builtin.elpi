@@ -2336,20 +2336,17 @@ kind syntactic.delimiter_depth type.
 external symbol syntactic.delimit-unbounded-scope : syntactic.delimiter_depth = "1".
 external symbol syntactic.delimit-only-tmp-scope : syntactic.delimiter_depth = "1".
 
-% The expected type for elaborating syntactic terms
-kind type-constraint type.
-external symbol of-type : term -> type-constraint = "1".  % Pretype with a specific expected type
-external symbol is-type : type-constraint = "1".  % Pretype as a type
+% [syntactic.argument->elaborated.argument SyntaxArg Arg Diagnostic]
+% Elaborates the syntactic argument with the settings of
+% #[arguments(elaborated)]
+external func syntactic.argument->elaborated.argument syntactic.argument -> argument, 
+                                                     diagnostic.
 
-% [syntactic.default-elab SyntaxArg Arg Diagnostic] Elaborates the syntactic
-% argument with the settings of #[arguments(elaborated)]
-external func syntactic.default-elab syntactic.argument -> argument, 
-                                    diagnostic.
-
-% [syntactic.default-unelab SyntaxArg Arg Diagnostic] Elaborates the
-% syntactic argument with the settings of #[arguments(unelaborated)]
-external func syntactic.default-unelab syntactic.argument -> argument, 
-                                      diagnostic.
+% [syntactic.argument->unelaborated.argument SyntaxArg Arg Diagnostic]
+% Elaborates the syntactic argument with the settings of
+% #[arguments(unelaborated)]
+external func syntactic.argument->unelaborated.argument syntactic.argument -> argument, 
+                                                       diagnostic.
 
 % [syntactic.push-scope SyntaxTerm DelimiterDepth ScopeName
 % ScopedSyntaxTerm] Pushes the scope ScopeName on top of SyntaxTerm.
@@ -2364,8 +2361,15 @@ external func syntactic.push-scope syntactic.trm,
 % - @no-tc! (default false, do not infer typeclasses)
 % - @no-coercion! (default: false, do not insert coercions)
 % 
-external func syntactic.elaborate syntactic.trm, type-constraint -> term, 
-                                 diagnostic.
+external func syntactic.elaborate syntactic.trm, term -> term, diagnostic.
+
+% [syntactic.elaborate-ty SyntacticTerm Term Diagnostic] 
+% Elaborates SyntaxTerm as a Type.
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
+% - @no-coercion! (default: false, do not insert coercions)
+% 
+external func syntactic.elaborate-ty syntactic.trm -> term, diagnostic.
 
 
 

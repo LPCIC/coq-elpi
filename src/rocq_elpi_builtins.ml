@@ -253,23 +253,6 @@ let term_skeleton =  {
   embed = (fun ~depth _ _ _ _ -> assert false);
 }
 
-let type_constraint =
-  API.AlgebraicData.declare {
-    ty = TyName "type-constraint";
-    doc = "The expected type for elaborating syntactic terms";
-    pp = (fun fmt _ -> Format.fprintf fmt "<TODO>");
-    constructors = Pretyping.[
-        K("of-type", "Pretype with a specific expected type", CA(term, N),
-          B (fun t -> OfType t),
-          M (fun ~ok ~ko -> function OfType t -> ok t | _ -> ko ())
-         );
-        K("is-type", "Pretype as a type", N,
-          B (IsType),
-          M (fun ~ok ~ko -> function IsType -> ok | _ -> ko ())
-         );
-      ];
-    }
-
 let sealed_goal = {
   Conv.ty = Conv.TyName "sealed-goal";
   pp_doc = (fun fmt () -> ());
@@ -1520,9 +1503,58 @@ let apply_proof ~name ~poly env tac pf =
   pv
 [%%endif]
 
+let syntactic_arg_to_arg api ~kind sarg diag ~depth coq_ctx _csts state =
+  let open API.BuiltIn in
+  let open Pred in
+  let open Notation in
+  let open CConv in
+  let open Syntactic in
+  let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
+  let base = Option.get (State.get base state) in
+  try
+    let state, res, extra_goals =
+      Syntactic.top_of_res sarg |>
+      Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base ~kind coq_ctx state
+    in
+    state, (!: res +! B.mkOK), extra_goals
+  with e ->
+    diag_error_lazy diag @@ fun () ->
+    let error =
+      string_of_ppcmds coq_ctx.options @@
+      try CErrors.print_no_report e with | _ -> Pp.(str api ++ str ": anomaly printing error")
+    in
+    state, ?: None +! B.mkERROR error, []
 
-
-
+let syntactic_arg_elaborate api t expected_type diag ~depth coq_ctx csts state =
+  let open API.BuiltIn in
+  let open Pred in
+  let open Notation in
+  let open CConv in
+  let open Syntactic in
+  let Tag.{is;gs;vl} = t in
+  let vl = Ltac_plugin.Tacintern.intern_constr gs vl in
+  let sigma = get_sigma state in
+  let flags =
+    let open Pretyping in
+    let flags = all_no_fail_flags in
+    let options = coq_ctx.options in
+    let use_typeclasses = if Option.default false options.no_tc then NoUseTC else UseTC in
+    let use_coercions = not @@ Option.default false options.no_coercion in
+    { flags with use_typeclasses; use_coercions }
+  in
+  try
+    let sigma, vl =
+      Ltac_plugin.Tacinterp.interp_open_constr ~flags ~expected_type is coq_ctx.env sigma vl
+    in
+    let state, extra_goals = set_current_sigma ~depth state sigma in
+    state, (!: vl +! B.mkOK), extra_goals
+  with e ->
+    diag_error_lazy diag @@ fun () ->
+    let error =
+      string_of_ppcmds coq_ctx.options @@
+      try CErrors.print_no_report e with | _ -> Pp.(str api ++ str ": anomaly printing error")
+    in
+    state, ?: None +! B.mkERROR error, []
 
 let coq_misc_builtins =
   let open API.BuiltIn in
@@ -4411,52 +4443,23 @@ Supported attributes:
 
   ]
   @ Syntactic.ml_data @
-  [MLDataC(type_constraint);
-   MLCode(Pred("syntactic.default-elab",
+  [MLCode(Pred("syntactic.argument->elaborated.argument",
     In(Syntactic.arg_type, "SyntaxArg",
     Out(Rocq_elpi_arg_HOAS.arg_type, "Arg",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full(global, "Elaborates the syntactic argument with the settings of #[arguments(elaborated)]")))),
     fun sarg _ diag ~depth coq_ctx _csts state ->
-      let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
-      let base = Option.get (State.get base state) in
-      try
-        let state, res, extra_goals =
-          Syntactic.top_of_res sarg |>
-          Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base ~kind:Elaborated coq_ctx state
-        in
-        state, (!: res +! B.mkOK), extra_goals
-      with e ->
-        diag_error_lazy diag @@ fun () ->
-        let error =
-          string_of_ppcmds coq_ctx.options @@
-          try CErrors.print_no_report e with | _ -> raise No_clause
-        in
-        state, ?: None +! B.mkERROR error, []
+      syntactic_arg_to_arg "syntactic.argument->elaborated.argument" ~kind:Elaborated sarg diag ~depth coq_ctx _csts state
    ),
    DocAbove);
-   MLCode(Pred("syntactic.default-unelab",
+   MLCode(Pred("syntactic.argument->unelaborated.argument",
     In(Syntactic.arg_type, "SyntaxArg",
     Out(Rocq_elpi_arg_HOAS.arg_type, "Arg",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full(global, "Elaborates the syntactic argument with the settings of #[arguments(unelaborated)]")))),
     fun sarg _ diag ~depth coq_ctx _csts state ->
-      let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
-      let base = Option.get (State.get base state) in
-      try
-        let state, res, extra_goals =
-          Syntactic.top_of_res sarg |>
-          Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base ~kind:Unelaborated coq_ctx state
-        in
-        state, (!: res +! B.mkOK), extra_goals
-      with e ->
-        diag_error_lazy diag @@ fun () ->
-        let error =
-          string_of_ppcmds coq_ctx.options @@
-          try CErrors.print_no_report e with | _ -> raise No_clause
-        in
-        state, ?: None +! B.mkERROR error, []
-     ),
+      syntactic_arg_to_arg "syntactic.argument->unelaborated.argument" ~kind:Unelaborated sarg diag ~depth coq_ctx _csts state
+    ),
    DocAbove);
    MLCode(Pred("syntactic.push-scope",
     In(Syntactic.trm_type, "SyntaxTerm",
@@ -4475,7 +4478,7 @@ Supported attributes:
    DocAbove);
    MLCode(Pred("syntactic.elaborate",
     In(Syntactic.trm_type, "SyntacticTerm",
-    CIn(B.unspecC type_constraint, "TypeConstraint",
+    CIn(B.unspecC term, "TypeConstraint",
     COut(term, "Term",
     InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full(proof_context, {|
@@ -4485,37 +4488,29 @@ Supported attributes:
 - @no-coercion! (default: false, do not insert coercions)
 |}))))),
     fun t expected_type _ diag ~depth coq_ctx csts state ->
-      let open Syntactic in
-      let Tag.{is;gs;vl} = t in
-      let vl = Ltac_plugin.Tacintern.intern_constr gs vl in
-      let sigma = get_sigma state in
-      let flags =
-        let open Pretyping in
-        let flags = all_no_fail_flags in
-        let options = coq_ctx.options in
-        let use_typeclasses = if Option.default false options.no_tc then NoUseTC else UseTC in
-        let use_coercions = not @@ Option.default false options.no_coercion in
-        { flags with use_typeclasses; use_coercions }
-      in
       let expected_type =
         match expected_type with
         | B.Unspec -> Pretyping.WithoutTypeConstraint
-        | B.Given x -> x in
-      try
-        let sigma, vl =
-          Ltac_plugin.Tacinterp.interp_open_constr ~flags ~expected_type is coq_ctx.env sigma vl
-        in
-        let state, extra_goals = set_current_sigma ~depth state sigma in
-        state, (!: vl +! B.mkOK), extra_goals
-      with e ->
-        diag_error_lazy diag @@ fun () ->
-        let error =
-          string_of_ppcmds coq_ctx.options @@
-          try CErrors.print_no_report e with | _ -> Pp.str "syntactic.elaborate: anomaly printing error"
-        in
-        state, ?: None +! B.mkERROR error, []
+        | B.Given x -> Pretyping.OfType x in
+      syntactic_arg_elaborate "syntactic.elaborate" t expected_type diag ~depth coq_ctx csts state
     ),
    DocAbove);
+      MLCode(Pred("syntactic.elaborate-ty",
+    In(Syntactic.trm_type, "SyntacticTerm",
+    COut(term, "Term",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full(proof_context, {|
+Elaborates SyntaxTerm as a Type.
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)
+- @no-coercion! (default: false, do not insert coercions)
+|})))),
+    fun t _ diag ~depth coq_ctx csts state ->
+      let expected_type = Pretyping.IsType in
+      syntactic_arg_elaborate "syntactic.elaborate-ty" t expected_type diag ~depth coq_ctx csts state
+    ),
+   DocAbove);
+
   ]
 
 
