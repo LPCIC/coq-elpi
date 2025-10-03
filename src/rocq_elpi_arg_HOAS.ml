@@ -206,6 +206,18 @@ let map (type a b c d e v w x y z) :
   | IndtDecl s -> IndtDecl (h s)
   | ConstantDecl s -> ConstantDecl (i s)
   | Context c -> Context (j c)
+let inj (type a b c d e v) :
+  (int -> v) ->
+  (string -> v) ->
+  (a -> v) -> (b -> v) -> (c -> v) -> (d -> v) -> (e -> v) ->
+  (a,b,c,d,e) t -> v = fun f0 f1 f g h i j -> function
+  | Int x -> f0 x
+  | String x -> f1 x
+  | Term s -> (f s)
+  | RecordDecl s -> (g s)
+  | IndtDecl s -> (h s)
+  | ConstantDecl s -> (i s)
+  | Context c -> (j c)
 
 type raw  = (raw_term,  raw_record_decl,  raw_indt_decl,  raw_constant_decl,  raw_context_decl)  t
 type glob = (glob_term, glob_record_decl, glob_indt_decl, glob_constant_decl, glob_context_decl) t
@@ -214,15 +226,7 @@ type top  = (top_term,  top_record_decl,  top_indt_decl,  top_constant_decl,  to
 let raw_of_glob : glob -> raw = map GS.get GS.get GS.get GS.get GS.get
 let raw_of_top : top -> raw = map IS.get IS.get IS.get IS.get IS.get
 
-let pr_arg f g h i j x = match x with
-| Int n -> Pp.int n
-| String s -> Pp.qstring s
-| Term s -> f s
-| RecordDecl s -> g s
-| IndtDecl s -> h s
-| ConstantDecl s -> i s
-| Context c -> j c
-
+let pr_arg f g h i j x = inj Pp.int Pp.qstring f g h i j x
 let pp_raw env sigma : raw -> Pp.t =
   pr_arg
     (Ppconstr.pr_constr_expr env sigma)
@@ -1314,6 +1318,7 @@ module Syntactic = struct
       {is;gs;vl;tag}
 
     let drop_tag (type a) : a t -> a IS.t = fun {is;gs;vl;tag=_} -> IS.{is;gs;vl}
+
   end
 
   type res_term = raw_term Tag.t
