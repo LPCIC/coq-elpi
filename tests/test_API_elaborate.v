@@ -343,7 +343,7 @@ Elpi elaborate_test_ty2 (Cls -> nat) (@proj).
 Elpi Accumulate lp:{{/*(*/
   main [syntactic.arg (syntactic.str RegExp), syntactic.arg (syntactic.trm T)] :-
   syntactic.elaborate T _ _ (error E),
-  rex.match RegExp E.
+  std.assert! (rex.match RegExp E) "bad message".
 /*)*/}}.
 Elpi error_msgs ".*has type.*True.*" (I + 1).
-Elpi error_msgs ".*exhaust.*false.*" (match true with | true => I end).
+Elpi error_msgs ".*Non exhaust.*" (match true with | true => I end).
