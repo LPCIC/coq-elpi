@@ -4472,7 +4472,7 @@ Supported attributes:
       let open Syntactic in
       let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
       let Tag.{vl; _} = t in
-      let vl = CAst.make ~loc (Constrexpr.CDelimiters (delim_depth, scope, vl)) in
+      let vl = CAst.make ~loc:(Option.default loc vl.CAst.loc) (Constrexpr.CDelimiters (delim_depth, scope, vl)) in
       let ot = Tag.{t with vl} in
       state, (!: ot), []
     ),
