@@ -146,6 +146,10 @@ pred expand-spine
 expand-spine (info R _ _ Projs K KTY as Info) (fun _ (global (indt R)) Bo) Result AccL AccR Premises (pi r\ Clause r) :- !,
   pi r\ expand-abstraction Info r KTY Projs (Bo r) Result (global (indc K)) [] [r|AccL] AccR Premises (Clause r).
 
+expand-spine (info R _ _ Projs K KTY as Info) (fun _ (pglobal (indt R) Ui) Bo) Result AccL AccR Premises (pi r\ Clause r) :- !,
+  pi r\ expand-abstraction Info r KTY Projs (Bo r) Result (pglobal (indc K) Ui) [] [r|AccL] AccR Premises (Clause r).
+
+
 % otherwise we traverse the spine
 expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
   expand Ty Ty1, !,
