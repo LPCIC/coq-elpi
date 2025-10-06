@@ -102,7 +102,8 @@ module Modes = struct
 end
 
 module Solver = struct
-  let solve_TC program = let open Class_tactics in { solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
+
+  let solve_TC_solver = fun program env sigma ~depth ~unique ~best_effort ~goals ->
     let atts = [] in
     let gls = goals in
     let query ~base state =
@@ -127,7 +128,16 @@ module Solver = struct
         | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
         | API.Execute.Failure -> elpi_fails program
         | exception (Rocq_elpi_utils.LtacFail (level, msg)) -> raise Not_found
+
+  [%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+  let solve_TC program = let open Class_tactics in { solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
+      solve_TC_solver program env sigma ~depth ~unique ~best_effort ~goals
   }
+  [%%else]
+  let solve_TC program = let open Class_tactics in { solver = fun ?db env sigma ~depth ~unique ~best_effort ~goals ->
+      solve_TC_solver program env sigma ~depth ~unique ~best_effort ~goals
+  }
+  [%%endif]
 
   type action = 
     | Create
