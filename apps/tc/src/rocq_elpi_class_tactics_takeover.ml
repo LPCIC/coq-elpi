@@ -102,7 +102,7 @@ module Modes = struct
 end
 
 module Solver = struct
-  let solve_TC program = let open Class_tactics in { solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
+  let solve_TC program = let open Class_tactics in { solver = fun ?db env sigma ~depth ~unique ~best_effort ~goals ->
     let atts = [] in
     let gls = goals in
     let query ~base state =
