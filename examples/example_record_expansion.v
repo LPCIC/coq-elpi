@@ -63,8 +63,9 @@ Elpi Accumulate lp:{{
 
 % This builds a clause to replace "proji (k y1..yn)" by "yi"
 pred build-iotared-clause i:term, i:(pair constant term), o:prop.
-build-iotared-clause T   (pr Proj Var)
-  (pi L AppVar\ expand(app [global (const Proj),T|L]) AppVar :- coq.mk-app Var L AppVar).
+build-iotared-clause T   (pr Proj Var) C :-
+  coq.env.global (const Proj) HD, % HD is the global term for Proj
+  C = (pi L AppVar\ expand(app [HD,T|L]) AppVar :- coq.mk-app Var L AppVar).
 
 % The core algorithm ----------------------------------------------------------
 
@@ -143,12 +144,8 @@ pred expand-spine
   i:list prop, o:prop. % premises and final clause
 
 % if we find a lambda over the record R we expand
-expand-spine (info R _ _ Projs K KTY as Info) (fun _ (global (indt R)) Bo) Result AccL AccR Premises (pi r\ Clause r) :- !,
-  pi r\ expand-abstraction Info r KTY Projs (Bo r) Result (global (indc K)) [] [r|AccL] AccR Premises (Clause r).
-
-expand-spine (info R _ _ Projs K KTY as Info) (fun _ (pglobal (indt R) Ui) Bo) Result AccL AccR Premises (pi r\ Clause r) :- !,
-  pi r\ expand-abstraction Info r KTY Projs (Bo r) Result (pglobal (indc K) Ui) [] [r|AccL] AccR Premises (Clause r).
-
+expand-spine (info R _ _ Projs K KTY as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r\ Clause r) :- coq.env.global (indt R) LTy, !,
+  pi r\ expand-abstraction Info r KTY Projs (Bo r) Result {coq.env.global (indc K)} [] [r|AccL] AccR Premises (Clause r).
 
 % otherwise we traverse the spine
 expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
