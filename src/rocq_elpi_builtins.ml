@@ -164,11 +164,7 @@ let mk_algebraic_super x = Sorts.super x
 
 (* I don't want the user to even know that algebraic universes exist *)
 
-
-[%%if coq = "9.1"]
-let univ_super state u v =
-  add_universe_constraint state (constraint_eq (mk_algebraic_super u) v)
-[%%else]
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1" ]
 let univ_super state u v =
   let state, u = match u with
   | Sorts.Set | Sorts.Prop | Sorts.SProp -> state, u
@@ -180,6 +176,9 @@ let univ_super state u v =
       add_universe_constraint state (constraint_leq u w), w 
   in
   add_universe_constraint state (constraint_leq (mk_algebraic_super u) v)
+[%%else]
+let univ_super state u v =
+  add_universe_constraint state (constraint_eq (mk_algebraic_super u) v)
 [%%endif]
 
 let univ_product state s1 s2 =

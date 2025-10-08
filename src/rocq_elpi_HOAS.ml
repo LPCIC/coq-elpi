@@ -127,7 +127,7 @@ let add_universe_constraint state c =
       Feedback.msg_debug Pp.(str"UniversesDiffer");
       raise API.BuiltInPredicate.No_clause
 
-let new_univ_level_variable ?(flexible=false) state =
+let new_univ_level_variable ?(flexible=true) state =
   S.update_return (Option.get !pre_engine) state (fun ({ sigma } as e) ->
     (* ~name: really mean the universe level is a binder as in Definition f@{x} *)
     let rigidity = if flexible then UState.univ_flexible else UState.univ_rigid in
