@@ -358,7 +358,9 @@ let detype_sort ku sigma x =
   | Set -> glob_Set_sort
   | Type u when ku -> None, detype_universe sigma u
   | QSort (q, u) when ku -> Some (detype_qvar sigma q), detype_universe sigma u
-  | _ -> glob_Type_sort
+  | _ -> 
+    let glob_Type_sort = None, Glob_term.UAnonymous {rigid=UnivFlexible} in (* Fixed version from Glob_ops *)
+    glob_Type_sort
 
 (*
 let detype_relevance_info sigma na =
