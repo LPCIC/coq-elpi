@@ -1759,7 +1759,8 @@ Supported attributes:
           compute_with_uinstance ~depth options state mk_global gr ui_in in
         let state, t, gls2 =
           closed_ground_term.CConv.embed ~depth ctx csts state t in
-        state, !: maybe_gr +! t, gls @ gls1 @ gls2
+        let maybe_t = match ui_in with Some _ -> None | None -> Some t in
+        state, !: maybe_gr +? maybe_t, gls @ gls1 @ gls2
     | None, None -> err Pp.(str "coq.env.global: no input, all arguments are variables"))),
   DocAbove);
 
@@ -2173,7 +2174,7 @@ Supported attributes:
     | B.Given body ->
        let sigma = get_sigma state in
        if not (is_ground sigma body) then
-         err Pp.(str"coq.env.add-const: the body must be ground. Did you forge to call coq.typecheck?");
+         err Pp.(str"coq.env.add-const: the body must be ground. Did you forget to call coq.typecheck?");
        let opaque = opaque = B.Given true in
        let types =
          match types, opaque with
