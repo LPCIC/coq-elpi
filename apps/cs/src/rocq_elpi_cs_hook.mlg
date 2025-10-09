@@ -7,13 +7,19 @@ open Elpi_plugin
 open Rocq_elpi_arg_syntax
 open Rocq_elpi_vernacular
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let structure_projection_nparams env ind = Structures.Structure.projection_nparams ind
+[%%else]
+let structure_projection_nparams env ind = Structures.Structure.projection_nparams env ind
+[%%endif]
+
 let elpi_cs_hook program env sigma ((proji, u), params1, c1) (t2, args2) =
 	  let atts = [] in
      let rhs = Reductionops.Stack.zip sigma (t2, Reductionops.Stack.append_app_list args2 Reductionops.Stack.empty) in
      let sigma, (goal_ty, _) = Evarutil.new_type_evar env sigma Evd.UnivRigid in
 	  let sigma, goal = Evarutil.new_evar ~typeclass_candidate:false env sigma goal_ty in
 	  let goal_evar, _ = EConstr.destEvar sigma goal in
-    let nparams = Structures.Structure.projection_nparams proji in
+    let nparams = structure_projection_nparams env proji in
 	  let query state =
          let loc = Elpi.API.State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
 		 let state, q, gls =

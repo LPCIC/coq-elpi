@@ -1703,6 +1703,14 @@ let locality_of_options (o : options) = match o.local with
   | None -> Libobject.Export
 [%%endif]
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let find_structure_from_projection env ind = Structures.Structure.find_from_projection ind
+let find_structure_projections env ind = Structures.Structure.find_projections ind
+[%%else]
+let find_structure_from_projection env ind = Structures.Structure.find_from_projection env ind
+let find_structure_projections env ind = Structures.Structure.find_projections env ind
+[%%endif]
+
 let coq_rest_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -2504,28 +2512,31 @@ denote the same x as before.|};
   MLCode(Pred("coq.env.projections",
     In(inductive, "StructureName",
     Out(list (option constant), "Projections",
-    Easy "given a record StructureName lists all projections")),
-  (fun i _ ~depth ->
-    !: ((try Structures.Structure.find_projections i with Not_found -> []) |>
+    Read (global, "given a record StructureName lists all projections"))),
+  (fun i _ ~depth _ _ state ->
+    let env = get_global_env state in
+    !: ((try find_structure_projections env i with Not_found -> []) |>
       CList.map (Option.map (fun x -> Constant x))))),
   DocAbove);
 
   MLCode(Pred("coq.env.projection?",
     In(constant, "Constant",
     Out(B.int, "Number of parameters",
-    Easy "if the constant is a projection, returns the number of parameters of its record.")),
-    (fun c _ ~depth ->
+    Read (global, "if the constant is a projection, returns the number of parameters of its record."))),
+    (fun c _ ~depth _ _ state ->
+      let env = get_global_env state in
       let c = match c with Constant t -> t | _ -> raise No_clause in 
-      try !: ((Structures.Structure.find_from_projection c).nparams)
+      try !: ((find_structure_from_projection env c).nparams)
       with Not_found -> raise No_clause)),
   DocAbove);
 
   MLCode(Pred("coq.env.primitive-projections",
     In(inductive, "StructureName",
     Out(list (option (pair projection int)), "Projections",
-    Easy "given a record StructureName lists all primitive projections")),
-  (fun i _ ~depth ->
-      !: (Structures.Structure.find_projections i |>
+    Read (global, "given a record StructureName lists all primitive projections"))),
+  (fun i _ ~depth _ _ state ->
+      let env = get_global_env state in
+      !: (find_structure_projections env i |>
         CList.map (fun o -> Option.bind o (fun x ->
           Option.bind (Structures.PrimitiveProjections.find_opt x) (fun c ->
             let c = Names.Projection.make c false in
@@ -2978,12 +2989,13 @@ Supported attributes:
 
   MLCode(Pred("coq.CS.canonical-projection?",
     In(constant, "Projection",
-    Easy "Tells if the projection can be used for CS inference."),
-    (fun c ~depth ->
+    Read (global, "Tells if the projection can be used for CS inference.")),
+    (fun c ~depth _ _ state ->
+      let env = get_global_env state in
       match c with
       | Variable _ -> raise No_clause
       | Constant c ->
-        try ignore (Structures.Structure.find_from_projection c)
+        try ignore (find_structure_from_projection env c)
         with Not_found -> raise No_clause)),
   DocAbove);
 
