@@ -1906,7 +1906,11 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
         let s = S.update uim s (UIM.add b u) in
         s, u, [API.Conversion.Unify (E.mkUnifVar b ~args s,uinstancein u)]
       end
-    | _ -> uinstance.readback ~depth s i
+    | _ ->
+      let s, ri, extra = uinstance.readback ~depth s i in
+      let sigma = get_sigma s in
+      let eri = EConstr.EInstance.make ri in
+      s, EConstr.EInstance.kind sigma eri, extra
   in
   try
     let s, t, gls1 = gref.readback ~depth s t in
