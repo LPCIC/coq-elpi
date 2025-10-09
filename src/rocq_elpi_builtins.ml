@@ -540,7 +540,13 @@ let err_if_contains_alg_univ ~depth t =
     | Some l -> is_global_level env l in
   let rec aux ~depth (acc,acci) t =
     match E.look ~depth t with
-    | E.CData c when isuinstance c -> (acc,acci+1)
+    | E.App _ as x ->
+      begin match is_global_or_pglobal ~depth t with
+      | PGlobal(Some _, Some _) ->(acc,(1+acci))
+      | _ -> Rocq_elpi_utils.fold_elpi_term aux (acc,acci) ~depth x
+      end
+    | E.CData c when isuinstance c ->
+        err Pp.(strbrk "The hypothetical clause contains terms of universe instance")
     | E.CData c when isuniv c ->
         let u = univout c in
         if is_global u then acc, acci
@@ -556,47 +562,74 @@ let err_if_contains_alg_univ ~depth t =
   let univs = aux ~depth (Univ.Universe.Set.empty,0) t in
   univs
   
+let coq_env_globalc   = E.Constants.declare_global_symbol "coq.env.global"
+
 let preprocess_clause ~depth clause =
+  let origdepth = depth in
   let levels_to_abstract, instances_to_abstract = err_if_contains_alg_univ ~depth clause in
-  let levels_to_abstract_no = Univ.Universe.Set.cardinal levels_to_abstract in
-  let rec subst ~depth m mi t =
+  let db2gr = ref Int.Map.empty in
+  let rec subst ~depth m t =
     match E.look ~depth t with
     | E.CData c when isuniv c ->
         begin try E.mkBound (Univ.Universe.Map.find (univout c) m)
         with Not_found -> t end
-    | E.CData c when isuinstance c ->
-        decr mi; E.mkBound !mi
     | E.App(c,x,xs) ->
-        E.mkApp c (subst ~depth m mi x) (List.map (subst ~depth m mi) xs)
+      begin match is_global_or_pglobal ~depth t with
+      | PGlobal(Some gr, Some _) ->
+        let mi = Int.Map.cardinal !db2gr in
+        db2gr := Int.Map.add mi gr !db2gr; in_elpi_pglobal gr (E.mkBound mi)
+      | _ ->
+        E.mkApp c (subst ~depth m x) (List.map (subst ~depth m) xs)
+      end
     | E.Cons(x,xs) ->
-        E.mkCons (subst ~depth m mi x) (subst ~depth m mi xs)
+        E.mkCons (subst ~depth m x) (subst ~depth m xs)
     | E.Lam x ->
-        E.mkLam (subst ~depth:(depth+1) m mi x)
+        E.mkLam (subst ~depth:(depth+1) m x)
     | E.Builtin(c,xs) ->
-        E.mkBuiltin c (List.map (subst ~depth m mi) xs)
+        E.mkBuiltin c (List.map (subst ~depth m) xs)
     | E.UnifVar _ -> CErrors.user_err Pp.(str"The clause begin accumulated contains unification variables, this is forbidden. You must quantify them out using 'pi'.")
     | E.Const _ | E.Nil | E.CData _ -> t
     in
+  let map2hyp map rest =
+    let hyps =
+      Int.Map.bindings map |> List.map @@ fun (i,gr) ->
+        E.mkApp coq_env_globalc gr [in_elpi_pglobal gr (E.mkBound (origdepth+i))] in
+    E.mkAppGlobalL E.Constants.andc (hyps@rest) in
+  let rec add_premises depth t map =
+    match E.look ~depth t with
+    | E.App(c,hd,[pre]) when c == E.Constants.rimplc ->
+      E.mkApp E.Constants.rimplc hd [map2hyp map [pre]]
+    | E.App(c,lam,[]) when c == E.Constants.pic ->
+        begin match E.look ~depth lam with
+        | Lam t -> add_premises (depth+1) t map
+        | _ -> assert false
+        end
+    | _ -> E.mkApp E.Constants.rimplc t [map2hyp map []] in
   let clause = 
-    let rec bind d (map : int Univ.Universe.Map.t) (mapi : int ref) = function
+    let rec bind d (map : int Univ.Universe.Map.t) = function
      | [] ->
-         subst ~depth:d map mapi
-           (API.Utils.move ~from:depth ~to_:(depth + levels_to_abstract_no + !mapi) clause)
+        let clause = API.Utils.move ~from:depth ~to_:d clause in
+        let clause = subst ~depth:d map clause in
+        if Int.Map.is_empty !db2gr then clause
+        else add_premises d clause !db2gr
      | l :: ls ->
        E.mkApp E.Constants.pic (E.mkLam (*   pi x\  *)
-           (bind (d+1) (Univ.Universe.Map.add l d map) mapi ls)) []
-     and bindi d (map : int Univ.Universe.Map.t) (mapi : int ref) ua n =
+           (bind (d+1) (Univ.Universe.Map.add l d map) ls)) []
+     and bindi d (map : int Univ.Universe.Map.t) ua n =
       if n = 0 then
-         bind d map mapi ua
+         bind d map ua
       else
         E.mkApp E.Constants.pic (E.mkLam (*   pi x\  *)
-            (bindi (d+1) map mapi ua (n-1))) []
+            (bindi (d+1) map ua (n-1))) []
      in
-       bindi depth Univ.Universe.Map.empty (ref (depth+instances_to_abstract))
+       bindi depth Univ.Universe.Map.empty
          (Univ.Universe.Set.elements levels_to_abstract) instances_to_abstract
   in
   let vars = collect_term_variables ~depth clause in
+  (* Format.eprintf "CLAUSE=%a\n%!" (Elpi.API.RawPp.term depth) clause; *)
   vars, clause
+
+
 
 let argument_mode = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "argument_mode";

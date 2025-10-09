@@ -90,7 +90,6 @@ Elpi Query lp:{{
   u U, ut {{ ut@{foo} }} U
 }}.
 
-stop
 
 Axiom B : bool -> Type.
 Axiom N : nat -> Type.

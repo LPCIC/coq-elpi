@@ -65,3 +65,4 @@ Elpi Query lp:"
 ".
   Print polydef.
 Print test_cumul_def.
+End test_cumul_def.

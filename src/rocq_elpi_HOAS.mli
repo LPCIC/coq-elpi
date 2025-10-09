@@ -167,6 +167,7 @@ val in_elpi_appl : depth:int -> term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
 val in_elpi_name : Name.t -> term
+val in_elpi_pglobal : term -> term -> term
 
 val set_coq : Elpi.API.Ast.Scope.language -> unit
 

@@ -693,12 +693,15 @@ let in_elpiast_gr ~loc r =
   assert_in_elpi_gref_consistent ~poly:false r;
   A.mkAppGlobal ~loc globalc (in_elpiast_gref ~loc r) []
 
+let in_elpi_pglobal t i =
+  E.mkApp pglobalc t [i]
+
 let in_elpi_poly_gr ~depth s r i =
   assert_in_elpi_gref_consistent ~poly:true r;
   let open API.Conversion in
   let s, t, gl = gref.embed ~depth s r in
   assert (gl = []);
-  E.mkApp pglobalc t [i]
+  in_elpi_pglobal t i
 
 let in_elpiast_poly_gr ~loc r i =
   assert_in_elpi_gref_consistent ~poly:true r;
