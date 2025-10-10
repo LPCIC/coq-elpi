@@ -3431,6 +3431,13 @@ let mind_record (mib,_) = mib.Declarations.mind_record
 let mind_record (_,mip) = mip.Declarations.mind_record
 [%%endif]
 
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let find_structure env ind = Structures.Structure.find ind
+[%%else]
+let find_structure env ind = Structures.Structure.find env ind
+[%%endif]
+
+
 let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),(i_impls,k_impls)) =
   let { Declarations.mind_params_ctxt;
         mind_finite = kind;
@@ -3476,7 +3483,8 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
     else
       let kid = constructor_names.(0) in
       if (nuparamsno != 0) then nYI "record with non uniform paramters";
-      let projections = Structures.Structure.((find (mutind,0)).projections) in
+      let env = get_global_env state in
+      let projections = (find_structure env (mutind,0)).Structures.Structure.projections in
       let fieldsno = List.length projections in
       let kctx, _ = constructor_types.(0) in
       let kctx = EConstr.of_rel_context kctx in
