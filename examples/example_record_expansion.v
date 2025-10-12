@@ -65,7 +65,9 @@ Elpi Accumulate lp:{{
 pred build-iotared-clause i:term, i:(pair constant term), o:prop.
 build-iotared-clause T   (pr Proj Var) C :-
   coq.env.global (const Proj) HD, % HD is the global term for Proj
-  C = (pi L AppVar\ expand(app [HD,T|L]) AppVar :- coq.mk-app Var L AppVar).
+  (HD = global _, !, C = (pi L AppVar\ expand(app [HD,T|L]) AppVar :- coq.mk-app Var L AppVar));
+  (HD = pglobal _ _, !, C = (pi L AppVar U\ expand(app [(pglobal (const Proj) U),T|L]) AppVar :- coq.mk-app Var L AppVar))
+  .
 
 % The core algorithm ----------------------------------------------------------
 
