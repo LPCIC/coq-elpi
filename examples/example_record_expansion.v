@@ -90,7 +90,6 @@ type info
  -> gref % the term being expanded and its expanded name
  -> list (option constant) % canonical projections
  -> constructor % record constructor
- -> term % record constructor type
  -> info.
 
 % This predicate turns the OldBo in "fun x : r => OldBo" into
@@ -146,11 +145,13 @@ pred expand-spine
   i:list prop, o:prop. % premises and final clause
 
 % if we find a lambda over the record R we expand
-expand-spine (info R _ _ Projs K KTY as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r\ Clause r) :- coq.env.global (indt R) LTy, LTy = global _, !,
+expand-spine (info R _ _ Projs K as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r\ Clause r) :- coq.env.global (indt R) LTy, LTy = global _, !,
+  coq.env.indt R _ _ _ _ _ [KTY],
   pi r\ expand-abstraction Info r KTY Projs (Bo r) Result {coq.env.global (indc K)} [] [r|AccL] AccR Premises (Clause r).
 
-expand-spine (info R _ _ Projs K KTY as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r U\ Clause r U) :-
-  coq.env.global (indt R) LTy, LTy = pglobal _ _ , !,
+expand-spine (info R _ _ Projs K as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r U\ Clause r U) :-
+  coq.env.global (indt R) LTy, LTy = pglobal _ UL , !, % U is a subset of the universes in the main term to be expanded.
+  (@uinstance! UL ==> coq.env.indt R _ _ _ _ _ [KTY]), % Be sure that K is instantiated with the same universe instance UL occurring in the binder LTy
   pi r U\ expand-abstraction Info r KTY Projs (Bo r) Result (pglobal (indc K) U) [] [r|AccL] AccR Premises (Clause r U).
 
 % otherwise we traverse the spine
@@ -163,7 +164,7 @@ expand-spine Info (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (p
   pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
 
 % at the end of the spine we fire the iota redexes and complete the clause
-expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
+expand-spine (info _ GR NGR _ _) X Y AccL AccR Premises Clause :-
   expand X Y, !,
   % we build "app[f,x1..xn|rest]"
   if (coq.env.global GR (global _)) (
@@ -176,16 +177,16 @@ expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
   ) (
     (pi rest1 U\ coq.mk-app (pglobal GR U)  {std.append {std.rev AccL} rest1} (L' rest1 U)),
     (pi rest2 U\ coq.mk-app (pglobal NGR U) {std.append {std.rev AccR} rest2} (R' rest2 U)),
-    Clause = (pi rest1 rest2 U1 U2\ expand (L' rest1 U1) (R' rest2 U2) :- [!, std.map rest1 expand rest2 | Premises])
+    Clause = (pi rest1 rest2 U\ expand (L' rest1 U) (R' rest2 U) :- [!, std.map rest1 expand rest2 | Premises])
   ).
 
 % The entry point of the main algorithm, just fetchs some data and passes initial
 % values for the accumulators.
 pred expand-record i:inductive, i:gref, i:gref, i:term, o:term, o:prop.
 expand-record R GR NGR X Y Clause :-
-  std.assert! (coq.env.indt R tt 0 0 _ [K] [KTY]) "record is too complex for this example",
+  std.assert! (coq.env.indt R tt 0 0 _ [K] _) "record is too complex for this example",
   coq.env.projections R Projs,
-  expand-spine (info R GR NGR Projs K KTY) X Y [] [] [] Clause.
+  expand-spine (info R GR NGR Projs K) X Y [] [] [] Clause.
 
 % This simply dispatches between global references ----------------------------
 
