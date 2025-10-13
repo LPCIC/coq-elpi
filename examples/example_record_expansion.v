@@ -146,8 +146,12 @@ pred expand-spine
   i:list prop, o:prop. % premises and final clause
 
 % if we find a lambda over the record R we expand
-expand-spine (info R _ _ Projs K KTY as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r\ Clause r) :- coq.env.global (indt R) LTy, !,
+expand-spine (info R _ _ Projs K KTY as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r\ Clause r) :- coq.env.global (indt R) LTy, LTy = global _, !,
   pi r\ expand-abstraction Info r KTY Projs (Bo r) Result {coq.env.global (indc K)} [] [r|AccL] AccR Premises (Clause r).
+
+expand-spine (info R _ _ Projs K KTY as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r U\ Clause r U) :-
+  coq.env.global (indt R) LTy, LTy = pglobal _ _ , !,
+  pi r U\ expand-abstraction Info r KTY Projs (Bo r) Result (pglobal (indc K) U) [] [r|AccL] AccR Premises (Clause r U).
 
 % otherwise we traverse the spine
 expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
@@ -162,12 +166,18 @@ expand-spine Info (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (p
 expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
   expand X Y, !,
   % we build "app[f,x1..xn|rest]"
-  (pi rest1\ coq.mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
-  (pi rest2\ coq.mk-app (global NGR) {std.append {std.rev AccR} rest2} (R rest2)),
-  % we can now build the clause "expand (app[f,L1..Ln|Rest1]) (app[f1,R1..Rn|Rest2])"
-  % here we quantify only the tails, the other variables were quantified during
-  % expand-*
-  Clause = (pi rest1 rest2\ expand (L rest1) (R rest2) :- [!, std.map rest1 expand rest2 | Premises]).
+  if (coq.env.global GR (global _)) (
+    (pi rest1\ coq.mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
+    (pi rest2\ coq.mk-app (global NGR) {std.append {std.rev AccR} rest2} (R rest2)),
+    % we can now build the clause "expand (app[f,L1..Ln|Rest1]) (app[f1,R1..Rn|Rest2])"
+    % here we quantify only the tails, the other variables were quantified during
+    % expand-*
+    Clause = (pi rest1 rest2\ expand (L rest1) (R rest2) :- [!, std.map rest1 expand rest2 | Premises])
+  ) (
+    (pi rest1 U\ coq.mk-app (pglobal GR U)  {std.append {std.rev AccL} rest1} (L' rest1 U)),
+    (pi rest2 U\ coq.mk-app (pglobal NGR U) {std.append {std.rev AccR} rest2} (R' rest2 U)),
+    Clause = (pi rest1 rest2 U1 U2\ expand (L' rest1 U1) (R' rest2 U2) :- [!, std.map rest1 expand rest2 | Premises])
+  ).
 
 % The entry point of the main algorithm, just fetchs some data and passes initial
 % values for the accumulators.
@@ -188,7 +198,9 @@ expand-gref Record (const C) Name Clause :- !, std.do! [
   std.assert! (coq.env.const C (some Bo) _) "only transparent constants can be expanded",
   (pi nc\ expand-record Record (const C) nc Bo NewBo (NClause nc)),
   std.assert-ok! (coq.typecheck NewBo _) "illtyped",
-  coq.env.add-const Name NewBo _ _ NC,
+  if (coq.env.global (const C) (pglobal _ _ ))
+  (@univpoly! => coq.env.add-const Name NewBo _ _ NC)
+  (coq.env.add-const Name NewBo _ _ NC),
   Clause = NClause (const NC),
 ].
 
@@ -210,24 +222,30 @@ main [str R, str In, str Prefix] :- !,
 main _ :- coq.error "usage: Elpi record.expand record_name global_term prefix".
 }}.
 
-
+Set Universe Polymorphism.
 Record r := { T :> Type; X := T; op : T -> X -> bool }.
 
 Definition f b (t : r) (q := negb b) := fix rec (l1 l2 : list t) :=
   match l1, l2 with
   | nil, nil => b
-  | cons x xs, cons y ys => andb (op _ x y) (rec xs ys)
+  | cons x xs, cons y ys => andb (op _ x y) (rec xs ys) 
   | _, _ => q
   end.
+
+Set Printing Universes.
+Print T.
+Print X.
+Print op.
 
 Elpi record.expand r f "expanded_". 
 Print f.
 Print expanded_f.
 
 (* so that we can see the new "expand" clause *)
-Elpi Print record.expand "elpi_examples/record.expand".
+Elpi Print record.expand "elpi_examples/record.expand.poly".
 
 Definition g t l s h := (forall x y, op t x y = false) /\ f true t l s = h.
 
+Elpi Trace Browser.
 Elpi record.expand r g "expanded_".
 Print expanded_g.
