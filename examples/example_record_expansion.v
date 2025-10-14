@@ -63,11 +63,12 @@ Elpi Accumulate lp:{{
 
 % This builds a clause to replace "proji (k y1..yn)" by "yi"
 pred build-iotared-clause i:term, i:(pair constant term), o:prop.
-build-iotared-clause T   (pr Proj Var) C :-
-  coq.env.global (const Proj) HD, % HD is the global term for Proj
-  (HD = global _, !, C = (pi L AppVar\ expand(app [HD,T|L]) AppVar :- coq.mk-app Var L AppVar));
-  (HD = pglobal _ _, !, C = (pi L AppVar U\ expand(app [(pglobal (const Proj) U),T|L]) AppVar :- coq.mk-app Var L AppVar))
-  .
+
+build-iotared-clause T   (pr Proj Var) C :- coq.env.global (const Proj) (global _), !,
+  C = (pi L AppVar\ expand(app [(global (const Proj)),T|L]) AppVar :- coq.mk-app Var L AppVar).
+
+build-iotared-clause T   (pr Proj Var) C :- coq.env.global (const Proj) (pglobal _ _), !,
+  C = (pi L AppVar U\ expand(app [(pglobal (const Proj) U),T|L]) AppVar :- coq.mk-app Var L AppVar).
 
 % The core algorithm ----------------------------------------------------------
 
@@ -223,30 +224,58 @@ main [str R, str In, str Prefix] :- !,
 main _ :- coq.error "usage: Elpi record.expand record_name global_term prefix".
 }}.
 
-Set Universe Polymorphism.
-Record r := { T :> Type; X := T; op : T -> X -> bool }.
+Module WithoutPolymorphism.
+  Record r := { T :> Type; X := T; op : T -> X -> bool }.
 
-Definition f b (t : r) (q := negb b) := fix rec (l1 l2 : list t) :=
-  match l1, l2 with
-  | nil, nil => b
-  | cons x xs, cons y ys => andb (op _ x y) (rec xs ys) 
-  | _, _ => q
-  end.
+  Definition f b (t : r) (q := negb b) := fix rec (l1 l2 : list t) :=
+    match l1, l2 with
+    | nil, nil => b
+    | cons x xs, cons y ys => andb (op _ x y) (rec xs ys) 
+    | _, _ => q
+    end.
 
-Set Printing Universes.
-Print T.
-Print X.
-Print op.
+  Elpi record.expand r f "expanded_". 
+  Print f.
+  Print expanded_f.
 
-Elpi record.expand r f "expanded_". 
-Print f.
-Print expanded_f.
+  (* so that we can see the new "expand" clause *)
+  Elpi Print record.expand "elpi_examples/record.expand.poly".
 
-(* so that we can see the new "expand" clause *)
-Elpi Print record.expand "elpi_examples/record.expand.poly".
+  Definition g t l s h := (forall x y, op t x y = false) /\ f true t l s = h.
 
-Definition g t l s h := (forall x y, op t x y = false) /\ f true t l s = h.
+  Elpi record.expand r g "expanded_".
+  Print expanded_g.
 
-Elpi Trace Browser.
-Elpi record.expand r g "expanded_".
-Print expanded_g.
+  Definition id (t : r) := t.
+  Elpi record.expand r id "expanded_".
+  Print expanded_id.
+End WithoutPolymorphism.
+
+Module WithPolymorphism.
+  Local Set Universe Polymorphism.
+  Record r := { T :> Type; X := T; op : T -> X -> bool }.
+
+  Definition f b (t : r) (q := negb b) := fix rec (l1 l2 : list t) :=
+    match l1, l2 with
+    | nil, nil => b
+    | cons x xs, cons y ys => andb (op _ x y) (rec xs ys) 
+    | _, _ => q
+    end.
+
+  Elpi record.expand r f "expanded_". 
+  Print f.
+  Print expanded_f.
+
+  (* so that we can see the new "expand" clause *)
+  Elpi Print record.expand "elpi_examples/record.expand.poly".
+
+  Definition g t l s h := (forall x y, op t x y = false) /\ f true t l s = h.
+
+  Elpi record.expand r g "expanded_".
+  Print expanded_g.
+
+  Definition id (t : r) := t.
+  Elpi record.expand r id "expanded_".
+  Print expanded_id.
+End WithPolymorphism.
+
