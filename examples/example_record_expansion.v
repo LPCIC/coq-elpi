@@ -153,7 +153,8 @@ expand-spine (info R _ _ Projs K as Info) (fun _ LTy Bo) Result AccL AccR Premis
 expand-spine (info R _ _ Projs K as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r U\ Clause r U) :-
   coq.env.global (indt R) LTy, LTy = pglobal _ UL , !, % U is a subset of the universes in the main term to be expanded.
   (@uinstance! UL ==> coq.env.indt R _ _ _ _ _ [KTY]), % Be sure that K is instantiated with the same universe instance UL occurring in the binder LTy
-  pi r U\ expand-abstraction Info r KTY Projs (Bo r) Result (pglobal (indc K) U) [] [r|AccL] AccR Premises (Clause r U).
+  (pi r U\ expand-abstraction Info r KTY Projs (Bo r) (Result' U) (pglobal (indc K) U) [] [r|AccL] AccR Premises (Clause r U)),
+  Result = Result' UL.
 
 % otherwise we traverse the spine
 expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
@@ -263,19 +264,27 @@ Module WithPolymorphism.
     end.
 
   Elpi record.expand r f "expanded_". 
+  Section Universe.
+  Universe U.
   Print f.
+  Check f@{U}.
   Print expanded_f.
+  Check expanded_f@{U}.
 
   (* so that we can see the new "expand" clause *)
   Elpi Print record.expand "elpi_examples/record.expand.poly".
 
   Definition g t l s h := (forall x y, op t x y = false) /\ f true t l s = h.
-
   Elpi record.expand r g "expanded_".
+  Check g@{U}.
   Print expanded_g.
+  Check expanded_g@{U}.
 
   Definition id (t : r) := t.
   Elpi record.expand r id "expanded_".
   Print expanded_id.
+  Check id@{U}.
+  Check expanded_id@{U}.
+  End Universe.
 End WithPolymorphism.
 
