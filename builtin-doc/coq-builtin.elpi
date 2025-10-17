@@ -1243,14 +1243,15 @@ external func coq.TC.get-inst-prio gref, gref -> int.
 external func coq.TC.class? gref.
 
 % Node of the coercion graph
-kind class type.
-external symbol funclass : class = "1". 
-external symbol sortclass : class = "1". 
-external symbol grefclass : gref -> class = "1". 
+kind coq.coercion.class type.
+external symbol funclass : coq.coercion.class = "1". 
+external symbol sortclass : coq.coercion.class = "1". 
+external symbol grefclass : gref -> coq.coercion.class = "1". 
 
 % Edge of the coercion graph
 kind coercion type.
-external symbol coercion : gref -> int -> gref -> class -> coercion = "2".  % ref, nparams, src, tgt
+external symbol coercion : gref -> int -> gref -> coq.coercion.class ->
+                           coercion = "2".  % ref, nparams, src, tgt
 
 % [coq.coercion.declare C] Declares C = (coercion GR NParams From To) as a
 % coercion From >-> To.
@@ -1266,7 +1267,8 @@ external func coq.coercion.declare coercion.
 external func coq.coercion.db -> list coercion.
 
 % [coq.coercion.db-for From To L] L is a path From -> To
-external func coq.coercion.db-for class, class -> list (pair gref int).
+external func coq.coercion.db-for coq.coercion.class, 
+                                 coq.coercion.class -> list (pair gref int).
 
 % Deprecated, use coq.env.projections
 pred coq.CS.canonical-projections i:inductive, o:list (option constant).

@@ -634,7 +634,7 @@ let set_accumulate_text_to_db_interp, get_accumulate_text_to_db_interp =
 
 
 let class_ = let open Conv in let open API.AlgebraicData in let open Coercionops in declare {
-  ty = TyName "class";
+  ty = TyName "coq.coercion.class";
   doc = "Node of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
