@@ -1,3 +1,8 @@
+# Unreleased
+
+- HOAS:
+  - rename `class` to `coq.coercion.class`
+
 # [3.2.0] 19/09/2025
 
 Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
