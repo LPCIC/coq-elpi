@@ -77,7 +77,8 @@ Elpi Query lp:{{ std.do! [
     coq.say "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 
   std.assert-ok! (coq.elaborate-skeleton T _ T1) "does not typecheck",
-  T1 = {{ fun u => SubType _ _ _ _ (lp:K u) _ }},
+  T1 = {{ fun u => SubType _ _ _ _ lp:(X u) _ }},
+  (@pi-decl _ {{ nat }} u\ coq.unify-eq (X u) {{ lp:K lp:u }} ok),
   std.assert! (K = global GR, coq.locate "Ord" GR) "not the right constructor"
 ]
 }}.
