@@ -417,3 +417,15 @@ Check w.
 Abort.
 
 
+Elpi Tactic create_goal.
+Elpi Accumulate lp:{{
+  solve G GL :- std.spy-do! [
+    coq.elaborate-skeleton _ {{nat}} NewGoal' ok,
+    coq.ltac.collect-goals NewGoal' GL _,
+  ].
+}}.
+
+Goal forall x: nat, x =x.
+Proof.
+  elpi create_goal.
+Abort.
