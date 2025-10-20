@@ -2649,6 +2649,8 @@ let solution2evd ~eta_contract_solution sigma0 { API.Data.constraints; assignmen
   let reachable_undefined_evars = reachable sigma roots Evar.Set.empty in
   let declared_goals, shelved_goals =
     get_declared_goals (Evar.Set.diff reachable_undefined_evars solved_goals) constraints state assignments pp_ctx in
+  let reachable_undefined_evars =
+    List.fold_left (fun e x -> Evar.Set.add x e) reachable_undefined_evars (declared_goals @ shelved_goals) in
   debug Pp.(fun () -> str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
   debug Pp.(fun () -> str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
   Evd.fold_undefined (fun k _ sigma ->
