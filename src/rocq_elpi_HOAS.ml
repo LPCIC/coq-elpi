@@ -2664,14 +2664,18 @@ let tclSOLUTION2EVD ~eta_contract_solution sigma0 solution =
   let open Proofview.Unsafe in
   let open Tacticals in
   let open Proofview.Notations in
-    tclGETGOALS >>= fun gls ->
+  tclGETSHELF >>= fun sh ->
+  tclGETGOALS >>= fun gls ->
     let gls = gls |> List.map Proofview.drop_state in
     let roots = List.fold_right Evar.Set.add gls Evar.Set.empty in
     let sigma, declared_goals, shelved_goals = solution2evd ~eta_contract_solution sigma0 solution roots in
+    let sigma = Evd.fold_future_goals Evd.remove_future_goal sigma in
+    (* debug Pp.(fun () -> str "Old Shelved Goals: " ++ prlist_with_sep spc Evar.print sh);
+    debug Pp.(fun () -> str "New Evd Shelved Goals: " ++ prlist_with_sep spc Evar.print (Evd.shelf sigma)); *)
   tclTHENLIST [
     tclEVARS sigma;
     tclSETGOALS @@ List.map Proofview.with_empty_state declared_goals;
-    Proofview.shelve_goals shelved_goals
+    tclNEWSHELVED shelved_goals
   ]
 
 
