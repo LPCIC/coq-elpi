@@ -21,7 +21,6 @@ let master = [
   coq-common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
-    coq-elpi.override.elpi-version = "v3.1.0";
     coq-elpi-tests-stdlib.job = true;
 
     mathcomp-boot.job = true;
@@ -57,12 +56,11 @@ let master = [
   format = "1.0.0";
   attribute = "rocq-elpi";
   coq-attribute = "coq-elpi";
-  default-bundle = "coq-8.20";
+  default-bundle = "rocq-9.1";
   bundles = {
 
     "coq-8.20".coqPackages = coq-common-bundles // {
       coq.override.version = "8.20";
-      coq-elpi.override.elpi-version = "v3.1.0";
       odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
       mathcomp-real-closed.job = false;  # real-closed dropped support for 8.20
       coqeal.job = false;  # real-closed dropped support for 8.20
@@ -97,12 +95,10 @@ let master = [
     /* uncomment bundle below if min and max elpi version start to differ
     "coq-master-min-elpi" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "master";
-      rocq-elpi.override.elpi-version = "v3.1.0";
       stdlib.override.version = "master";
       bignums.override.version = "master";
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "master";
-      coq-elpi.override.elpi-version = "v3.1.0";
       stdlib.override.version = "master";
       bignums.override.version = "master";
     }; }; */
