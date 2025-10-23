@@ -90,11 +90,14 @@ external func attributes -> list attribute.
 external pred get-option o:string, o:A.
 
 % The data type of arguments (for commands or tactics)
-kind argument type.
+kind elaborated.argument type.
+typeabbrev argument elaborated.argument.
 external symbol int      : int    -> argument. % Eg. 1 -2.
 external symbol str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
 external symbol trm      : term   -> argument. % Eg. (t).
 external symbol open-trm : int -> term -> argument.
+
+external symbol syntactic : syntactic.argument -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
@@ -422,6 +425,46 @@ external symbol node : list attribute -> attribute-value = "1".
 % Generic attribute
 kind attribute type.
 external symbol attribute : string -> attribute-value -> attribute = "1". 
+
+% Unprocessed command argument
+kind syntactic.argument type.
+external symbol syntactic.str : string -> syntactic.argument = "1". 
+external symbol syntactic.int : int -> syntactic.argument = "1". 
+external symbol syntactic.trm : syntactic.trm -> syntactic.argument = "1". 
+external symbol syntactic.const-decl : syntactic.const-decl ->
+                                       syntactic.argument = "1". 
+external symbol syntactic.indt-decl : syntactic.indt-decl ->
+                                      syntactic.argument = "1". 
+external symbol syntactic.record-decl : syntactic.record-decl ->
+                                        syntactic.argument = "1". 
+external symbol syntactic.ctx-decl : syntactic.context-decl ->
+                                     syntactic.argument = "1". 
+
+% Unprocessed term argument
+kind syntactic.trm type.
+
+
+% Unprocessed term argument
+kind syntactic.const-decl type.
+
+
+% Unprocessed term argument
+kind syntactic.indt-decl type.
+
+
+% Unprocessed term argument
+kind syntactic.record-decl type.
+
+
+% Unprocessed term argument
+kind syntactic.context-decl type.
+
+
+% Syntactic scope delimiter depth
+kind syntactic.delimiter_depth type.
+
+external symbol syntactic.delimit-unbounded-scope : syntactic.delimiter_depth = "1".
+external symbol syntactic.delimit-only-tmp-scope : syntactic.delimiter_depth = "1".
 
 
 

@@ -195,7 +195,21 @@ let skip_and_synterp_attributes = Attributes.Notations.(skip_attribute ++ synter
 let scope_and_skip_and_synterp_attributes = Attributes.Notations.(scope_attribute ++ skip_attribute ++ synterp_attribute)
 
 let raw_args_attributes =
-  Attributes.(qualify_attribute "arguments" (bool_attribute ~name:"raw"))
+  Attributes.qualify_attribute "arguments"
+    (Attributes.attribute_of_list
+      ["elaborated", (fun ?loc old -> function
+        | VernacFlagEmpty -> U.arg_kind_merge ?loc old U.Elaborated
+        | _ -> CErrors.user_err ?loc Pp.(str "Argument \"elaborated\" does not expect a value"));
+       "unelaborated", (fun ?loc old -> function
+        | VernacFlagEmpty -> U.arg_kind_merge ?loc old U.Unelaborated
+        | _ -> CErrors.user_err ?loc Pp.(str "Argument \"unelaborated\" does not expect a value"));
+       "raw", (fun ?loc old -> function
+        | VernacFlagEmpty -> U.arg_kind_merge ?loc old U.Unelaborated
+        | _ -> CErrors.user_err ?loc Pp.(str "Argument \"raw\" does not expect a value"));
+       "syntactic", (fun ?loc old -> function
+        | VernacFlagEmpty -> U.arg_kind_merge ?loc old U.Syntactic
+        | _ -> CErrors.user_err ?loc Pp.(str "Argument \"syntactic\" does not expect a value"));
+      ])    
 
 let validate_attributes a flags =
   let extra, raw_args = Attributes.parse_with_extra a flags in

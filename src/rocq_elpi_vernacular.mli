@@ -20,7 +20,7 @@ type what = Code | Signature
 module type Common = sig
 
   val get_and_compile :
-    loc:Loc.t -> qualified_name -> (Elpi.API.Compile.program * bool) option
+    loc:Loc.t -> qualified_name -> (Elpi.API.Compile.program * arg_kind) option
   val run : loc:Loc.t ->
     Elpi.API.Compile.program -> query ->
     Elpi.API.Execute.outcome
@@ -42,8 +42,8 @@ module type Common = sig
   val bound_steps   : atts:phase option -> int -> unit
   val print         : atts:phase option -> loc:Loc.t -> name:qualified_name -> args:string list -> string -> unit
 
-  val create_program : atts:bool option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
-  val create_command : atts:bool option -> loc:Loc.t -> program_name -> unit
+  val create_program : atts:arg_kind option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
+  val create_command : atts:arg_kind option -> loc:Loc.t -> program_name -> unit
   val create_tactic : loc:Loc.t -> program_name -> unit
   val create_db : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit
   val create_file : atts:phase option -> loc:Loc.t -> program_name -> init:(Elpi.API.Ast.Loc.t * string) -> unit

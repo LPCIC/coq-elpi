@@ -27,6 +27,7 @@ open Names
 
 open Rocq_elpi_utils
 open Rocq_elpi_HOAS
+open Rocq_elpi_arg_HOAS
 
 let string_of_ppcmds options pp =
   let b = Buffer.create 512 in
@@ -1510,9 +1511,58 @@ let apply_proof ~name ~poly env tac pf =
   pv
 [%%endif]
 
+let syntactic_arg_to_arg api ~kind sarg diag ~depth coq_ctx _csts state =
+  let open API.BuiltIn in
+  let open Pred in
+  let open Notation in
+  let open CConv in
+  let open Syntactic in
+  let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
+  let base = Option.get (State.get base state) in
+  try
+    let state, res, extra_goals =
+      Syntactic.top_of_res sarg |>
+      Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base ~kind coq_ctx state
+    in
+    state, (!: res +! B.mkOK), extra_goals
+  with e ->
+    diag_error_lazy diag @@ fun () ->
+    let error =
+      string_of_ppcmds coq_ctx.options @@
+      try CErrors.print_no_report e with | _ -> Pp.(str api ++ str ": anomaly printing error")
+    in
+    state, ?: None +! B.mkERROR error, []
 
-
-
+let syntactic_arg_elaborate api t expected_type diag ~depth coq_ctx csts state =
+  let open API.BuiltIn in
+  let open Pred in
+  let open Notation in
+  let open CConv in
+  let open Syntactic in
+  let Tag.{is;gs;vl} = t in
+  let vl = Ltac_plugin.Tacintern.intern_constr gs vl in
+  let sigma = get_sigma state in
+  let flags =
+    let open Pretyping in
+    let flags = all_no_fail_flags in
+    let options = coq_ctx.options in
+    let use_typeclasses = if Option.default false options.no_tc then NoUseTC else UseTC in
+    let use_coercions = not @@ Option.default false options.no_coercion in
+    { flags with use_typeclasses; use_coercions }
+  in
+  try
+    let sigma, vl =
+      Ltac_plugin.Tacinterp.interp_open_constr ~flags ~expected_type is coq_ctx.env sigma vl
+    in
+    let state, extra_goals = set_current_sigma ~depth state sigma in
+    state, (!: vl +! B.mkOK), extra_goals
+  with e ->
+    diag_error_lazy diag @@ fun () ->
+    let error =
+      string_of_ppcmds coq_ctx.options @@
+      try CErrors.print_no_report e with | _ -> Pp.(str api ++ str ": anomaly printing error")
+    in
+    state, ?: None +! B.mkERROR error, []
 
 let coq_misc_builtins =
   let open API.BuiltIn in
@@ -3565,13 +3615,9 @@ Universe constraints are put in the constraint store.|})))),
        let state, assignments = set_current_sigma ~depth state sigma in
        state, r, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +! B.mkERROR error, [])),
+       diag_error_lazy diag @@ fun () ->
+       let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+       state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
   MLCode(Pred("coq.typecheck-ty",
@@ -3599,13 +3645,9 @@ Universe constraints are put in the constraint store.|})))),
        let state, assignments = set_current_sigma ~depth state sigma in
        state, r, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +! B.mkERROR error, [])),
+       diag_error_lazy diag @@ fun () ->
+       let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+       state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
   MLCode(Pred("coq.unify-eq",
@@ -3620,13 +3662,9 @@ Universe constraints are put in the constraint store.|})))),
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, !: (B.mkERROR error), [])),
+       diag_error_lazy diag @@ fun () ->
+       let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+       state, !: (B.mkERROR error), [])),
   DocAbove);
 
   MLCode(Pred("coq.unify-leq",
@@ -3641,13 +3679,9 @@ Universe constraints are put in the constraint store.|})))),
        let state, assignments = set_current_sigma ~depth state sigma in
        state, !: B.mkOK, assignments
      with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, !: (B.mkERROR error), [])),
+       diag_error_lazy diag @@ fun () ->
+       let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+       state, !: (B.mkERROR error), [])),
   DocAbove);
 
    MLCode(Pred("coq.elaborate-skeleton",
@@ -3661,9 +3695,13 @@ not assigned even if the elaborated term has a term in place of the
 hole. Similarly universe levels present in T are disregarded.
 Supported attributes:
 - @keepunivs! (default false, do not disregard universe levels)
-- @no-tc! (default false, do not infer typeclasses) |}))))),
+- @no-tc! (default false, do not infer typeclasses)
+- @no-coercion! (default: false, do not insert coercions)
+|}))))),
   (fun gt ety _ diag ~depth proof_context _ state ->
-    let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
+    let flags = Pretyping.default_inference_flags false in
+    let flags = if proof_context.options.no_tc = Some true then {flags with use_typeclasses = NoUseTC} else flags in
+    let flags = if proof_context.options.no_coercion = Some true then {flags with use_coercions = false} else flags in
     try
       let sigma = get_sigma state in
       let ety_given, expected_type =
@@ -3690,13 +3728,9 @@ Supported attributes:
           let state, assignments = set_current_sigma ~depth state sigma in
           state, ?: None +! uj_val +! B.mkOK, assignments
     with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +? None +! B.mkERROR error, [])),
+      diag_error_lazy diag @@ fun () ->
+      let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+      state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
    MLCode(Pred("coq.elaborate-ty-skeleton",
@@ -3714,7 +3748,9 @@ Supported attributes:
   (fun gt es _ diag ~depth proof_context _ state ->
     try
       let sigma = get_sigma state in
-      let flags = if proof_context.options.no_tc = Some true then {(Pretyping.default_inference_flags false) with  use_typeclasses = NoUseTC} else Pretyping.default_inference_flags false in
+      let flags = Pretyping.default_inference_flags false in
+      let flags = if proof_context.options.no_tc = Some true then {flags with use_typeclasses = NoUseTC} else flags in
+      let flags = if proof_context.options.no_coercion = Some true then {flags with use_coercions = false} else flags in
       let expected_type = Pretyping.IsType in
       let sigma = Evd.push_future_goals sigma in
       let sigma, uj_val, uj_type =
@@ -3724,13 +3760,9 @@ Supported attributes:
       let state, assignments = set_current_sigma ~depth state sigma in
       state, !: sort +! uj_val +! B.mkOK, assignments
     with Pretype_errors.PretypeError (env, sigma, err) ->
-       match diag with
-       | Data B.OK ->
-          (* optimization: don't print the error if caller wants OK *)
-          raise No_clause
-       | _ ->
-          let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
-          state, ?: None +? None +! B.mkERROR error, [])),
+      diag_error_lazy diag @@ fun () ->
+      let error = string_of_ppcmds proof_context.options @@ Himsg.explain_pretype_error env sigma err in
+      state, ?: None +? None +! B.mkERROR error, [])),
   DocAbove);
 
   LPDoc "-- Coq's reduction flags    ------------------------------------";
@@ -4430,5 +4462,76 @@ Supported attributes:
   DocAbove)
 
   ]
+  @ Syntactic.ml_data @
+  [MLCode(Pred("syntactic.argument->elaborated.argument",
+    In(Syntactic.arg_type, "SyntaxArg",
+    Out(Rocq_elpi_arg_HOAS.arg_type, "Arg",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full(global, "Elaborates the syntactic argument with the settings of #[arguments(elaborated)]")))),
+    fun sarg _ diag ~depth coq_ctx _csts state ->
+      syntactic_arg_to_arg "syntactic.argument->elaborated.argument" ~kind:Elaborated sarg diag ~depth coq_ctx _csts state
+   ),
+   DocAbove);
+   MLCode(Pred("syntactic.argument->unelaborated.argument",
+    In(Syntactic.arg_type, "SyntaxArg",
+    Out(Rocq_elpi_arg_HOAS.arg_type, "Arg",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full(global, "Elaborates the syntactic argument with the settings of #[arguments(unelaborated)]")))),
+    fun sarg _ diag ~depth coq_ctx _csts state ->
+      syntactic_arg_to_arg "syntactic.argument->unelaborated.argument" ~kind:Unelaborated sarg diag ~depth coq_ctx _csts state
+    ),
+   DocAbove);
+   MLCode(Pred("syntactic.push-scope",
+    In(Syntactic.trm_type, "SyntaxTerm",
+    In(Syntactic.delimiter_depth, "DelimiterDepth",
+    In(B.string, "ScopeName",
+    Out(Syntactic.trm_type, "ScopedSyntaxTerm",
+    Full(global, "Pushes the scope ScopeName on top of SyntaxTerm."))))),
+    fun t delim_depth scope _ ~depth coq_context _csts state ->
+      let open Syntactic in
+      let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
+      let Tag.{vl; _} = t in
+      let vl = CAst.make ~loc:(Option.default loc vl.CAst.loc) (Constrexpr.CDelimiters (delim_depth, scope, vl)) in
+      let ot = Tag.{t with vl} in
+      state, (!: ot), []
+    ),
+   DocAbove);
+   MLCode(Pred("syntactic.elaborate",
+    In(Syntactic.trm_type, "SyntacticTerm",
+    CIn(B.unspecC term, "TypeConstraint",
+    COut(term, "Term",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full(proof_context, {|
+Elaborates SyntaxTerm using TypeConstraint (if provided).
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)
+- @no-coercion! (default: false, do not insert coercions)
+|}))))),
+    fun t expected_type _ diag ~depth coq_ctx csts state ->
+      let expected_type =
+        match expected_type with
+        | B.Unspec -> Pretyping.WithoutTypeConstraint
+        | B.Given x -> Pretyping.OfType x in
+      syntactic_arg_elaborate "syntactic.elaborate" t expected_type diag ~depth coq_ctx csts state
+    ),
+   DocAbove);
+      MLCode(Pred("syntactic.elaborate-ty",
+    In(Syntactic.trm_type, "SyntacticTerm",
+    COut(term, "Term",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full(proof_context, {|
+Elaborates SyntaxTerm as a Type.
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)
+- @no-coercion! (default: false, do not insert coercions)
+|})))),
+    fun t _ diag ~depth coq_ctx csts state ->
+      let expected_type = Pretyping.IsType in
+      syntactic_arg_elaborate "syntactic.elaborate-ty" t expected_type diag ~depth coq_ctx csts state
+    ),
+   DocAbove);
+
+  ]
+
 
 ;;

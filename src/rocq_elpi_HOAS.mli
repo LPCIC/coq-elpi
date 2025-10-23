@@ -48,6 +48,7 @@ type options = {
   keepunivs : bool option;
   redflags : RedFlags.reds option;
   no_tc: bool option;
+  no_coercion: bool option;
   algunivs : bool option;
 }
 
