@@ -1,3 +1,11 @@
+# Unreleased
+
+### HOAS:
+- Fix explicitly declared goals are considered reachable, even if they
+  do not occur in the proof term
+- Fix avoid evar-map shelved goals to leak into the tactic shelve. Sometimes
+  a goal was both focused and shelved because of that
+
 # [3.2.0] 19/09/2025
 
 Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.
