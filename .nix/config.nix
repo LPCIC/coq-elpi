@@ -59,13 +59,6 @@ let master = [
   default-bundle = "rocq-9.1";
   bundles = {
 
-    "coq-8.20".coqPackages = coq-common-bundles // {
-      coq.override.version = "8.20";
-      odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
-      mathcomp-real-closed.job = false;  # real-closed dropped support for 8.20
-      coqeal.job = false;  # real-closed dropped support for 8.20
-    };
-
     "rocq-9.0" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "9.0";
     }; coqPackages = coq-common-bundles // {
