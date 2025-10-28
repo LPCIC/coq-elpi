@@ -21,6 +21,7 @@ let master = [
   coq-common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
+    coq-elpi.override.elpi-version = "v3.1.0";
     coq-elpi-tests-stdlib.job = true;
 
     mathcomp-boot.job = true;
