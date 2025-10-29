@@ -48,11 +48,14 @@ external func attributes -> list attribute.
 external pred get-option o:string, o:A.
 
 % The data type of arguments (for commands or tactics)
-kind argument type.
+kind elaborated.argument type.
+typeabbrev argument elaborated.argument.
 external symbol int      : int    -> argument. % Eg. 1 -2.
 external symbol str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
 external symbol trm      : term   -> argument. % Eg. (t).
 external symbol open-trm : int -> term -> argument.
+
+external symbol syntactic : syntactic.argument -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").

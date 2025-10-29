@@ -63,11 +63,14 @@ external func attributes -> list attribute.
 external pred get-option o:string, o:A.
 
 % The data type of arguments (for commands or tactics)
-kind argument type.
+kind elaborated.argument type.
+typeabbrev argument elaborated.argument.
 external symbol int      : int    -> argument. % Eg. 1 -2.
 external symbol str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
 external symbol trm      : term   -> argument. % Eg. (t).
 external symbol open-trm : int -> term -> argument.
+
+external symbol syntactic : syntactic.argument -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
@@ -480,6 +483,7 @@ macro @keep-alg-univs! :- get-option "coq:keepalgunivs" tt.
 macro @primitive! :- get-option "coq:primitive" tt. % primitive records
 macro @reversible! :- get-option "coq:reversible" tt. % coercions
 macro @no-tc! :- get-option "coq:no_tc" tt. % skip typeclass inference 
+macro @no-coercion! :- get-option "coq:no_coercion" tt. % ignore coercions during pretyping
 
 macro @uinstance! I :- get-option "coq:uinstance" I. % universe instance
 
@@ -1480,7 +1484,9 @@ external func coq.unify-leq term, term -> diagnostic.
 % hole. Similarly universe levels present in T are disregarded.
 % Supported attributes:
 % - @keepunivs! (default false, do not disregard universe levels)
-% - @no-tc! (default false, do not infer typeclasses) 
+% - @no-tc! (default false, do not infer typeclasses)
+% - @no-coercion! (default: false, do not insert coercions)
+% 
 external func coq.elaborate-skeleton term -> term, term, diagnostic.
 
 % [coq.elaborate-ty-skeleton T U E Diagnostic] elaborates T expecting it to
@@ -2289,6 +2295,81 @@ external symbol coq.pp.nl : coq.pp = "1".
 % Supported attributes:
 % - @ppwidth! N (default 80, max line length)
 external func coq.pp->string coq.pp -> string.
+
+% Unprocessed command argument
+kind syntactic.argument type.
+external symbol syntactic.str : string -> syntactic.argument = "1". 
+external symbol syntactic.int : int -> syntactic.argument = "1". 
+external symbol syntactic.trm : syntactic.trm -> syntactic.argument = "1". 
+external symbol syntactic.const-decl : syntactic.const-decl ->
+                                       syntactic.argument = "1". 
+external symbol syntactic.indt-decl : syntactic.indt-decl ->
+                                      syntactic.argument = "1". 
+external symbol syntactic.record-decl : syntactic.record-decl ->
+                                        syntactic.argument = "1". 
+external symbol syntactic.ctx-decl : syntactic.context-decl ->
+                                     syntactic.argument = "1". 
+
+% Unprocessed term argument
+kind syntactic.trm type.
+
+
+% Unprocessed term argument
+kind syntactic.const-decl type.
+
+
+% Unprocessed term argument
+kind syntactic.indt-decl type.
+
+
+% Unprocessed term argument
+kind syntactic.record-decl type.
+
+
+% Unprocessed term argument
+kind syntactic.context-decl type.
+
+
+% Syntactic scope delimiter depth
+kind syntactic.delimiter_depth type.
+
+external symbol syntactic.delimit-unbounded-scope : syntactic.delimiter_depth = "1".
+external symbol syntactic.delimit-only-tmp-scope : syntactic.delimiter_depth = "1".
+
+% [syntactic.argument->elaborated.argument SyntaxArg Arg Diagnostic]
+% Elaborates the syntactic argument with the settings of
+% #[arguments(elaborated)]
+external func syntactic.argument->elaborated.argument syntactic.argument -> argument, 
+                                                     diagnostic.
+
+% [syntactic.argument->unelaborated.argument SyntaxArg Arg Diagnostic]
+% Elaborates the syntactic argument with the settings of
+% #[arguments(unelaborated)]
+external func syntactic.argument->unelaborated.argument syntactic.argument -> argument, 
+                                                       diagnostic.
+
+% [syntactic.push-scope SyntaxTerm DelimiterDepth ScopeName
+% ScopedSyntaxTerm] Pushes the scope ScopeName on top of SyntaxTerm.
+external func syntactic.push-scope syntactic.trm, 
+                                  syntactic.delimiter_depth, 
+                                  string -> syntactic.trm.
+
+% [syntactic.elaborate SyntacticTerm TypeConstraint Term Diagnostic]
+% 
+% Elaborates SyntaxTerm using TypeConstraint (if provided).
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
+% - @no-coercion! (default: false, do not insert coercions)
+% 
+external func syntactic.elaborate syntactic.trm, term -> term, diagnostic.
+
+% [syntactic.elaborate-ty SyntacticTerm Term Diagnostic] 
+% Elaborates SyntaxTerm as a Type.
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
+% - @no-coercion! (default: false, do not insert coercions)
+% 
+external func syntactic.elaborate-ty syntactic.trm -> term, diagnostic.
 
 
 

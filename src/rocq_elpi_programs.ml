@@ -163,7 +163,7 @@ type db = {
   units : Names.KNset.t;
 }
 
-type nature = Command of { raw_args : bool } | Tactic | Program of { raw_args : bool }
+type nature = Command of { args : arg_kind } | Tactic | Program of { args : arg_kind }
 
 type program = {
   sources_rev : qualified_name Code.t;
@@ -242,7 +242,7 @@ module type Programs = sig
   val db_inspect : qualified_name -> int
 
   val get_and_compile_existing_db : loc:Loc.t -> qualified_name -> EC.program
-  val get_and_compile : loc:Loc.t -> ?even_if_empty:bool -> qualified_name -> (EC.program * bool) option
+  val get_and_compile : loc:Loc.t -> ?even_if_empty:bool -> qualified_name -> (EC.program * arg_kind) option
 
 end
 
@@ -804,7 +804,7 @@ let compile ~loc src =
   in
     compile_code src
 
-let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
+let get_and_compile ~loc ?even_if_empty name : (EC.program * arg_kind) option =
   let t = Unix.gettimeofday () in
   let res = code ?even_if_empty name |> Option.map (fun src ->
     (* Format.eprintf "compile %a = %a" pp_qualified_name name (Code.pp Chunk.pp) src; *)
@@ -815,9 +815,9 @@ let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
     let prog = recache_code 0 old_hash new_hash prog src in
     let raw_args =
       match get_nature name with
-      | Command { raw_args } -> raw_args
-      | Program { raw_args } -> raw_args
-      | Tactic -> true in
+      | Command { args } -> args
+      | Program { args } -> args
+      | Tactic -> Elaborated in
       (prog, raw_args)) in
     Rocq_elpi_utils.elpitime (fun _ -> Pp.(str(Printf.sprintf "Elpi: get_and_compile %1.4f" (Unix.gettimeofday () -. t))));
     res

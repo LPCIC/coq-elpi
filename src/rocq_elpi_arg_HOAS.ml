@@ -4,7 +4,12 @@
 
 module API = Elpi.API
 module E = API.RawData
+module CC = API.ContextualConversion
+module C = API.Conversion
+module D = API.OpaqueData
 module CD = API.RawOpaqueData
+module Alg = API.AlgebraicData
+module P  = API.RawPp
 
 open Rocq_elpi_utils
 open Rocq_elpi_HOAS
@@ -59,20 +64,39 @@ let drop_relevance (a,_,c,d,e) = (a,c,d,e)
 let intern_global_context_synterp (ctx : Constrexpr.local_binder_expr list) : Glob_term.glob_decl list =
   CList.concat_map intern_one ctx |> List.rev
 
+module GS = struct
+  type 'a t = {
+    gs : Genintern.glob_sign;
+    vl : 'a
+  }
+  let get {vl;_} = vl
+  let mk gs vl = {gs; vl}
+end
+
+module IS = struct
+  type 'a t = {
+    is : Geninterp.interp_sign;
+    gs : Genintern.glob_sign;
+    vl : 'a
+  }
+  let get {vl;_} = vl
+  let mk is gs vl = {is; gs; vl}
+  let of_gs is GS.{gs; vl} = {is; gs; vl}
+end
+
 module Cmd = struct
 
 type raw_term = Constrexpr.constr_expr
-type glob_term = Genintern.glob_constr_and_expr
-type top_term =
-  Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_expr
+type glob_term = raw_term GS.t
+type top_term = raw_term IS.t
 
 type raw_record_decl = Vernacentries.Preprocessed_Mind_decl.record
-type glob_record_decl = Genintern.glob_sign * raw_record_decl
-type top_record_decl = Geninterp.interp_sign * glob_record_decl
+type glob_record_decl = raw_record_decl GS.t
+type top_record_decl = raw_record_decl IS.t
 
 type raw_indt_decl = Vernacentries.Preprocessed_Mind_decl.inductive
-type glob_indt_decl = Genintern.glob_sign * raw_indt_decl
-type top_indt_decl = Geninterp.interp_sign * glob_indt_decl
+type glob_indt_decl = raw_indt_decl GS.t
+type top_indt_decl = raw_indt_decl IS.t
 
 type univpoly = Mono | Poly | CumulPoly
 
@@ -147,8 +171,8 @@ type glob_constant_decl_elpi = {
   typ : Glob_term.glob_constr;
   body : Glob_term.glob_constr option;
 }
-type glob_constant_decl = Genintern.glob_sign * raw_constant_decl
-type top_constant_decl = Geninterp.interp_sign * glob_constant_decl
+type glob_constant_decl = raw_constant_decl GS.t
+type top_constant_decl = raw_constant_decl IS.t
 
 let pr_raw_constant_decl _ _ _ = Pp.str "TODO: pr_raw_constant_decl"
 let pr_glob_constant_decl _ _ _ = Pp.str "TODO: pr_glob_constant_decl"
@@ -156,8 +180,8 @@ let pr_top_constant_decl _ _ _ = Pp.str "TODO: pr_top_constant_decl"
 
 
 type raw_context_decl = Constrexpr.local_binder_expr list
-type glob_context_decl = Genintern.glob_sign * raw_context_decl
-type top_context_decl = Geninterp.interp_sign * glob_context_decl
+type glob_context_decl = raw_context_decl GS.t
+type top_context_decl = raw_context_decl IS.t
 
 let pr_raw_context_decl _ _ _ = Pp.str "TODO: pr_raw_context_decl"
 let pr_glob_context_decl _ _ _ = Pp.str "TODO: pr_glob_context_decl"
@@ -172,19 +196,37 @@ type ('a,'b,'c,'d,'e) t =
   | ConstantDecl : 'd    -> ('a,'b,'c,'d,'e) t
   | Context : 'e         -> ('a,'b,'c,'d,'e) t
 
+let map (type a b c d e v w x y z) :
+  (a -> v) -> (b -> w) -> (c -> x) -> (d -> y) -> (e -> z) ->
+  (a,b,c,d,e) t -> (v,w,x,y,z) t = fun f g h i j -> function
+  | Int _ as x -> x
+  | String _ as x -> x
+  | Term s -> Term (f s)
+  | RecordDecl s -> RecordDecl (g s)
+  | IndtDecl s -> IndtDecl (h s)
+  | ConstantDecl s -> ConstantDecl (i s)
+  | Context c -> Context (j c)
+let inj (type a b c d e v) :
+  (int -> v) ->
+  (string -> v) ->
+  (a -> v) -> (b -> v) -> (c -> v) -> (d -> v) -> (e -> v) ->
+  (a,b,c,d,e) t -> v = fun f0 f1 f g h i j -> function
+  | Int x -> f0 x
+  | String x -> f1 x
+  | Term s -> (f s)
+  | RecordDecl s -> (g s)
+  | IndtDecl s -> (h s)
+  | ConstantDecl s -> (i s)
+  | Context c -> (j c)
+
 type raw  = (raw_term,  raw_record_decl,  raw_indt_decl,  raw_constant_decl,  raw_context_decl)  t
 type glob = (glob_term, glob_record_decl, glob_indt_decl, glob_constant_decl, glob_context_decl) t
 type top  = (top_term,  top_record_decl,  top_indt_decl,  top_constant_decl,  top_context_decl)  t
 
-let pr_arg f g h i j x = match x with
-| Int n -> Pp.int n
-| String s -> Pp.qstring s
-| Term s -> f s
-| RecordDecl s -> g s
-| IndtDecl s -> h s
-| ConstantDecl s -> i s
-| Context c -> j c
+let raw_of_glob : glob -> raw = map GS.get GS.get GS.get GS.get GS.get
+let raw_of_top : top -> raw = map IS.get IS.get IS.get IS.get IS.get
 
+let pr_arg f g h i j x = inj Pp.int Pp.qstring f g h i j x
 let pp_raw env sigma : raw -> Pp.t =
   pr_arg
     (Ppconstr.pr_constr_expr env sigma)
@@ -200,21 +242,11 @@ let pr_glob_constr_and_expr env sigma = function
     Printer.pr_glob_constr_env env sigma c
 
 let pp_glob env sigma : glob -> Pp.t =
-  pr_arg
-    (pr_glob_constr_and_expr env sigma)
-    (pr_glob_record_decl env sigma)
-    (pr_glob_indt_decl env sigma)
-    (pr_glob_constant_decl env sigma)
-    (pr_glob_context_decl env sigma)
-    
+  fun g -> g |> raw_of_glob |> pp_raw env sigma
+
 let pp_top env sigma : top -> Pp.t =
-  pr_arg
-    (fun (_,x) -> pr_glob_constr_and_expr env sigma x)
-    (pr_top_record_decl env sigma)
-    (pr_top_indt_decl env sigma)
-    (pr_top_constant_decl env sigma)
-    (pr_top_context_decl env sigma)
-    
+  fun g -> g |> raw_of_top |> pp_raw env sigma
+
 let sep_last_qualid = function
   | [] -> "_", []
   | l -> CList.sep_last l
@@ -326,7 +358,7 @@ let of_coq_record_definition id =
     univpoly = univpoly_of ~poly ~cumulative
   } 
 [%%endif]
-let intern_record_decl glob_sign (it : raw_record_decl) = glob_sign, it
+let intern_record_decl glob_sign (it : raw_record_decl) = it
 
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let dest_entry (_,_,_,_,x) = x
@@ -477,7 +509,7 @@ let raw_indt_decl_to_glob glob_sign ({ finiteness; name; parameters; non_uniform
     List.map (fun (id,ty) -> id.CAst.v,
       intern_global_constr_ty ~expty:(Pretyping.OfType indty) glob_sign_params_self ~intern_env ty) constructors in
   { finiteness; name = (space, name); arity; params; nuparams; nuparams_given; constructors; univpoly }
-let intern_indt_decl glob_sign (it : raw_indt_decl) = glob_sign, it
+let intern_indt_decl glob_sign (it : raw_indt_decl) = it
 
 let expr_hole = CAst.make @@ Constrexpr.CHole(None)
 
@@ -488,7 +520,7 @@ let raw_context_decl_to_glob_synterp fields =
 let raw_context_decl_to_glob glob_sign fields =
   let _intern_env, fields = intern_global_context ~intern_env:Constrintern.empty_internalization_env glob_sign fields in
   List.rev fields
-let intern_context_decl glob_sign (it : raw_context_decl) = glob_sign, it
+let intern_context_decl glob_sign (it : raw_context_decl) = it
 
 let raw_decl_name_to_glob name =
   let name, space = sep_last_qualid name in
@@ -570,28 +602,15 @@ let raw_constant_decl_to_glob glob_sign ({ name; atts; udecl; typ = (params,typ)
         let state = merge_universe_context state ustate in
         state, NonCumulative ((univdecl_instance,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) in
   state, { name = raw_decl_name_to_glob name; params; typ; udecl; body }
-let intern_constant_decl glob_sign (it : raw_constant_decl) = glob_sign, it
+let intern_constant_decl glob_sign (it : raw_constant_decl) = it
 
-let glob glob_sign : raw -> glob = function
-  | Int _ as x -> x
-  | String _ as x -> x
-  | Term t -> Term (intern_tactic_constr glob_sign t)
-  | RecordDecl t -> RecordDecl (intern_record_decl glob_sign t)
-  | IndtDecl t -> IndtDecl (intern_indt_decl glob_sign t)
-  | ConstantDecl t -> ConstantDecl (intern_constant_decl glob_sign t)
-  | Context c -> Context (intern_context_decl glob_sign c)
+let glob glob_sign raw = glob_sign, raw
+let glob glob_sign : raw -> glob = map (GS.mk glob_sign) (GS.mk glob_sign) (GS.mk glob_sign) (GS.mk glob_sign) (GS.mk glob_sign)
 
 let subst _mod_subst _x =
   CErrors.anomaly Pp.(str "command arguments should not be substituted")
 
-let interp ist env evd : glob -> top = function
-  | Int _ as x -> x
-  | String _ as x -> x
-  | Term t -> Term(ist,t)
-  | RecordDecl t -> (RecordDecl(ist,t))
-  | IndtDecl t -> (IndtDecl(ist,t))
-  | ConstantDecl t -> (ConstantDecl(ist,t))
-  | Context c -> (Context(ist,c))
+let interp ist env evd : glob -> top = map (IS.of_gs ist) (IS.of_gs ist) (IS.of_gs ist) (IS.of_gs ist) (IS.of_gs ist)
 
 end
 
@@ -945,6 +964,15 @@ let tacc = E.Constants.declare_global_symbol "tac"
 let intc = E.Constants.declare_global_symbol "int"
 let ctxc = E.Constants.declare_global_symbol "ctx-decl"
 
+(* HACK: We just want to be able to mention this in other places. *)
+let arg_type = API.Conversion.{
+    ty = TyName "argument";
+    pp_doc = (fun fmt _ -> Format.fprintf fmt "<TODO>");
+    pp = (fun fmt _ -> Format.fprintf fmt "<TODO>");
+    embed = (fun ~depth state s -> state, s, []);
+    readback = (fun ~depth state s -> state, s, []);
+  }
+
 let my_cast_to_string v =
   let open Ltac_plugin in
   try Taccoerce.Value.cast (Genarg.topwit Stdarg.wit_string) v
@@ -1191,30 +1219,31 @@ let interp_mutual_inductive ~flags ~env ~uniform ~private_ind ?typing_flags ~ude
 [%%endif]
 
 
-let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
+let in_elpi_cmd_interpreted ~loc ~depth ~base ?calldepth ~kind coq_ctx state (x : Cmd.top) =
   let open Cmd in
   let hyps = [] in
-  match x with
-  | RecordDecl (_ist,(glob_sign,raw_rdecl)) when raw ->
+  match x, kind with
+  | _, Syntactic -> assert false
+  | RecordDecl IS.{is=_ist; gs=glob_sign; vl=raw_rdecl}, Unelaborated ->
       let raw_rdecl = of_coq_record_definition raw_rdecl in
       let glob_rdecl = raw_record_decl_to_glob glob_sign raw_rdecl in
       let state = Rocq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = grecord2lp ~loc ~base ~depth state glob_rdecl in
       state, t, []
-  | RecordDecl (_ist,(glob_sign,raw_rdecl)) ->
+  | RecordDecl IS.{is=_ist; gs=glob_sign; vl=raw_rdecl}, Elaborated ->
       let flags, udecl, primitive_proj, kind, records = dest_rdecl raw_rdecl in
       let flags = handle_template_polymorphism flags in
       (* Definitional type classes cannot be interpreted using this function (why?) *)
       let kind = if kind = Vernacexpr.Class true then Vernacexpr.Class false else kind in
       let e = interp_structure ~flags udecl kind ~primitive_proj records in
       record_entry2lp ~depth coq_ctx E.no_constraints state ~loose_udecl:(udecl = None) e
-  | IndtDecl (_ist,(glob_sign,raw_indt)) when raw ->
+  | IndtDecl IS.{is=_ist; gs=glob_sign; vl=raw_indt}, Unelaborated ->
       let raw_indt = of_coq_inductive_definition raw_indt in
       let glob_indt = raw_indt_decl_to_glob glob_sign raw_indt in
       let state = Rocq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = ginductive2lp ~loc ~depth ~base state glob_indt in
       state, t, []
-  | IndtDecl (_ist,(glob_sign,raw_indt)) -> 
+  | IndtDecl IS.{is=_ist; gs=glob_sign; vl=raw_indt}, Elaborated ->
       let flags, udecl, typing_flags, uniform, private_ind, inductives = dest_idecl raw_indt in
       let flags = handle_template_polymorphism flags in
       let e =
@@ -1224,11 +1253,11 @@ let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
         | _ -> nYI "(HOAS) mutual inductives"
       in
       inductive_entry2lp ~depth coq_ctx E.no_constraints state ~loose_udecl:(udecl = None) e
-  | ConstantDecl (_ist,(glob_sign,raw_cdecl)) when raw ->
+  | ConstantDecl IS.{is=_ist; gs=glob_sign; vl=raw_cdecl}, Unelaborated ->
       let state, glob_cdecl = raw_constant_decl_to_glob glob_sign raw_cdecl state in
       let state = Rocq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       cdecl2lp ~loc ~depth ~base state glob_cdecl
-  | ConstantDecl (_ist,(glob_sign,({ name; typ = (bl,_) } as raw_cdecl))) ->
+  | ConstantDecl IS.{is=_ist; gs=glob_sign; vl=({ name; typ = (bl,_) } as raw_cdecl)}, Elaborated ->
       let state, udecl, typ, body, gls0 =
         raw_constant_decl_to_constr ~depth coq_ctx state raw_cdecl in
       let state, typ, gls1 = constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints state typ in
@@ -1244,24 +1273,215 @@ let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
           let state, ud, gls3 = universe_decl.API.Conversion.embed ~depth state (NonCumul udecl) in
           state, E.mkApp ucdeclc c [body;typ;ud], gls0 @ gls1 @ gls2 @ gls3
       end
-  | Context (_ist,(glob_sign,raw_ctx)) when raw ->
+  | Context IS.{is=_ist; gs=glob_sign; vl=raw_ctx}, Unelaborated ->
       let glob_ctx = raw_context_decl_to_glob glob_sign raw_ctx in
       let state = Rocq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
       let state, t = do_context_glob ~loc glob_ctx ~depth ~base state in
       state, E.mkApp ctxc t [], []
-  | Context (_ist,(glob_sign,raw_ctx)) ->
+  | Context IS.{is=_ist; gs=glob_sign; vl=raw_ctx}, Elaborated ->
       let sigma, ctx = ComAssumption.interp_context coq_ctx.env (get_sigma state) raw_ctx in
       let state, gls0 = set_current_sigma ~depth state sigma in
       let state, t, gls1 = do_context_constr (upcast coq_ctx) E.no_constraints ctx ~depth state in
       state, E.mkApp ctxc t [], gls0 @ gls1
-  | Int x -> in_elpi_int_arg ~depth state x
-  | String x -> in_elpi_string_arg ~depth state x
-  | Term (ist,glob_or_expr) when raw ->
+  | Int x, _ -> in_elpi_int_arg ~depth state x
+  | String x, _ -> in_elpi_string_arg ~depth state x
+  | Term IS.{is=ist; gs=glob_sign; vl=constexpr}, Unelaborated ->
       let sigma = get_sigma state in
+      let glob_or_expr = intern_tactic_constr glob_sign constexpr in
       in_elpi_term_arg ~loc ~depth ~base state coq_ctx hyps sigma ist glob_or_expr
-  | Term (ist,glob_or_expr) ->
+  | Term IS.{is=ist; gs=glob_sign; vl=constexpr}, Elaborated ->
       let sigma = get_sigma state in
+      let glob_or_expr = intern_tactic_constr glob_sign constexpr in
       in_elpi_elab_term_arg ~depth ?calldepth state coq_ctx hyps sigma ist glob_or_expr
+
+
+module Syntactic = struct
+  open Cmd
+
+  module Tag = struct
+    (* The Non-trivial syntactic types do not have comparison functions. We
+       augment the data with a tag to use for sorting.
+    *)
+    type 'a t = {
+      is : Geninterp.interp_sign;
+      gs : Genintern.glob_sign;
+      vl : 'a;
+      tag : int;
+    }
+    let compare_tag {tag=n1;_} {tag=n2;_} = Int.compare n1 n2
+
+    let counter = ref 0
+
+    let fresh IS.{is;gs;vl} =
+      incr counter;
+      let tag = !counter in
+      {is;gs;vl;tag}
+
+    let drop_tag (type a) : a t -> a IS.t = fun {is;gs;vl;tag=_} -> IS.{is;gs;vl}
+
+  end
+
+  type res_term = raw_term Tag.t
+  type res_record_decl = raw_record_decl Tag.t
+  type res_indt_decl = raw_indt_decl Tag.t
+  type res_constant_decl = raw_constant_decl Tag.t
+  type res_context_decl = raw_context_decl Tag.t
+  type res  = (res_term, res_record_decl, res_indt_decl, res_constant_decl, res_context_decl)  t
+
+  let pp_res env sigma : res -> Pp.t = fun r ->
+    Cmd.map Tag.drop_tag Tag.drop_tag Tag.drop_tag Tag.drop_tag Tag.drop_tag r |> pp_top env sigma
+
+  (* We need an order on syntactic terms but Rocq offers nothing of the sort. So
+     we equip each term with a unique integer to decide what to return when the
+     glob constrs are not equal. *)
+  let trm, trm_type = CD.declare {
+      name = "syntactic.trm";
+      doc = "Unprocessed term argument";
+      pp = (fun fmt (t : res_term) ->
+          Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.Term t))));
+      compare = (fun (Tag.{tag=n1; vl=ce1} as t1) (Tag.{tag=n2; vl=ce2} as t2) ->
+          if Constrexpr_ops.constr_expr_eq ce1 ce2
+          then 0
+          else Tag.compare_tag t1 t2
+        );
+      hash =  (fun _ -> 0);
+      hconsed = false;
+      constants = [];
+    }
+
+  let constant_decl, constant_decl_type = CD.declare {
+      name = "syntactic.const-decl";
+      doc = "Unprocessed term argument";
+      pp = (fun fmt (t : res_constant_decl) ->
+          Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.ConstantDecl t))));
+      compare = Tag.compare_tag; (* we do not even try to compare these based on contents *)
+      hash =  (fun _ -> 0);
+      hconsed = false;
+      constants = [];
+    }
+
+  let indt_decl, indt_decl_type = CD.declare {
+      name = "syntactic.indt-decl";
+      doc = "Unprocessed term argument";
+      pp = (fun fmt (t : res_indt_decl) ->
+          Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.IndtDecl t))));
+      compare = Tag.compare_tag; (* we do not even try to compare these based on contents *)
+      hash =  (fun _ -> 0);
+      hconsed = false;
+      constants = [];
+    }
+
+  let record_decl, record_decl_type = CD.declare {
+      name = "syntactic.record-decl";
+      doc = "Unprocessed term argument";
+      pp = (fun fmt (t : res_record_decl) ->
+          Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.RecordDecl t))));
+      compare = Tag.compare_tag; (* we do not even try to compare these based on contents *)
+      hash =  (fun _ -> 0);
+      hconsed = false;
+      constants = [];
+    }
+
+  let context, context_type = CD.declare {
+      name = "syntactic.context-decl";
+      doc = "Unprocessed term argument";
+      pp = (fun fmt (t : res_context_decl) ->
+          Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty (Cmd.Context t))));
+      compare = Tag.compare_tag; (* we do not even try to compare these based on contents *)
+      hash =  (fun _ -> 0);
+      hconsed = false;
+      constants = [];
+    }
+
+  let arg_type = Alg.declare {
+      ty = TyName "syntactic.argument";
+      doc = "Unprocessed command argument";
+      pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ((pp_res (Global.env()) Evd.empty t)));
+      constructors = [
+        K("syntactic.str", "", A(API.BuiltInData.string, N),
+          B (fun s -> Cmd.String s),
+          M (fun ~ok ~ko -> function Cmd.String s -> ok s | _ -> ko ())
+         );
+        K("syntactic.int", "", A(API.BuiltInData.int, N),
+          B (fun s -> Cmd.Int s),
+          M (fun ~ok ~ko -> function Cmd.Int s -> ok s | _ -> ko ())
+         );
+        K("syntactic.trm", "", A(trm_type, N),
+          B (fun s -> Cmd.Term s),
+          M (fun ~ok ~ko -> function Cmd.Term s -> ok s | _ -> ko ())
+         );
+        K("syntactic.const-decl", "", A(constant_decl_type, N),
+          B (fun s -> Cmd.ConstantDecl s),
+          M (fun ~ok ~ko -> function Cmd.ConstantDecl s -> ok s | _ -> ko ())
+         );
+        K("syntactic.indt-decl", "", A(indt_decl_type, N),
+          B (fun s -> Cmd.IndtDecl s),
+          M (fun ~ok ~ko -> function Cmd.IndtDecl s -> ok s | _ -> ko ())
+         );
+        K("syntactic.record-decl", "", A(record_decl_type, N),
+          B (fun s -> Cmd.RecordDecl s),
+          M (fun ~ok ~ko -> function Cmd.RecordDecl s -> ok s | _ -> ko ())
+         );
+        K("syntactic.ctx-decl", "", A(context_type, N),
+          B (fun s -> Cmd.Context s),
+          M (fun ~ok ~ko -> function Cmd.Context s -> ok s | _ -> ko ())
+         );
+      ];
+    } |> CC.(!<)
+
+  let as_normal_arg = E.Constants.declare_global_symbol "syntactic"
+
+  let delimiter_depth = API.OpaqueData.declare {
+      name = "syntactic.delimiter_depth";
+      doc = "Syntactic scope delimiter depth";
+      pp = Constrexpr.(fun fmt -> function
+          | DelimOnlyTmpScope -> Format.fprintf fmt "DelimOnlyTmpScope"
+          | DelimUnboundedScope -> Format.fprintf fmt "DelimUnboundedScope");
+      compare = Stdlib.compare;
+      hash = Hashtbl.hash;
+      hconsed = true;
+      constants = [
+        ("syntactic.delimit-only-tmp-scope", DelimOnlyTmpScope);
+        ("syntactic.delimit-unbounded-scope", DelimUnboundedScope);
+      ];
+    }
+
+  let ml_data =
+    let open API.BuiltIn in
+    [MLData arg_type;
+     MLData trm_type;
+     MLData constant_decl_type;
+     MLData indt_decl_type;
+     MLData record_decl_type;
+     MLData context_type;
+     MLData delimiter_depth;
+    ]
+
+  let res_of_top : top -> res =
+    Cmd.map
+      Tag.fresh
+      Tag.fresh
+      Tag.fresh
+      Tag.fresh
+      Tag.fresh
+
+  let top_of_res : res -> top =
+    Cmd.map
+      Tag.drop_tag
+      Tag.drop_tag
+      Tag.drop_tag
+      Tag.drop_tag
+      Tag.drop_tag
+end
+
+let in_elpi_cmd ~loc ~depth ~base ?calldepth ~kind coq_ctx state(x : Cmd.top) : API.State.t * E.term * _ =
+  match kind with
+  | Syntactic ->
+    let state, res, extra_goals =
+      Syntactic.arg_type.embed ~depth state (Syntactic.res_of_top x)
+    in
+    state, E.mkApp Syntactic.as_normal_arg res [], extra_goals
+  | _ -> in_elpi_cmd_interpreted ~loc ~depth ~base ?calldepth ~kind coq_ctx state x
 
 type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Geninterp.Val.t
 
