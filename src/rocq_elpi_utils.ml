@@ -879,3 +879,11 @@ let eta_contract env sigma t =
   in
     (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
     map env t
+
+[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+let is_anomaly_noasync = function
+  | Control.Timeout | Sys.Break | Out_of_memory | Stack_overflow -> false
+  | e -> if Memprof_coq.is_interrupted() then false else CErrors.is_anomaly e
+[%%else]
+let is_anomaly_noasync e = CErrors.is_anomaly ~async:false e
+[%%endif]
