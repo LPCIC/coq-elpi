@@ -1,4 +1,4 @@
-From elpi.core Require Import ssreflect ssrfun ssrbool.
+From Corelib Require Import ssreflect ssrfun ssrbool.
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps.derive Require Import induction param1_functor param1_trivial eqb_core_defs tag fields eqb.
@@ -35,7 +35,7 @@ Ltac eqb_refl_on__solver :=
   repeat ((apply /andP; split) || reflexivity || assumption).
 End exports.
 
-From elpi.core Require Uint63Axioms.
+From Corelib Require Uint63Axioms.
 
 Lemma uint63_eqb_correct i : eqb_correct_on PrimInt63.eqb i.
 Proof. exact: Uint63Axioms.eqb_correct. Qed.
@@ -43,17 +43,17 @@ Proof. exact: Uint63Axioms.eqb_correct. Qed.
 Lemma uint63_eqb_refl i : eqb_refl_on PrimInt63.eqb i.
 Proof. exact: Uint63Axioms.eqb_refl. Qed.
 
-From elpi.core Require PrimString PrimStringAxioms.
+From elpi.apps.derive Require PrimStringEqb.
 
-Lemma pstring_eqb_correct i : eqb_correct_on PrimString.eqb i.
+Lemma pstring_eqb_correct i : eqb_correct_on PrimStringEqb.eqb i.
 Proof.
-   move=> j; rewrite /PrimString.eqb; have [] := PrimStringAxioms.compare_ok i j.
+   move=> j; rewrite /PrimStringEqb.eqb; have [] := PrimStringEqb.compare_ok i j.
    by case: PrimString.compare => // /(_ erefl).
 Qed.
 
-Lemma pstring_eqb_refl i : eqb_refl_on PrimString.eqb i.
+Lemma pstring_eqb_refl i : eqb_refl_on PrimStringEqb.eqb i.
 Proof.
-   rewrite /PrimString.eqb /eqb_refl_on; have [] := PrimStringAxioms.compare_ok i i.
+   rewrite /PrimStringEqb.eqb /eqb_refl_on; have [] := PrimStringEqb.compare_ok i i.
    by case: PrimString.compare => // _ /(_ erefl).
 Qed.
 

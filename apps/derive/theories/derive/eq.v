@@ -9,7 +9,8 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 
-From elpi.core Require Import PrimInt63 PrimFloat PrimString.
+From Corelib Require Import PrimInt63 PrimFloat.
+From elpi.apps.derive Require Import PrimStringEqb.
 
 Register Coq.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Coq.Floats.PrimFloat.eqb as elpi.derive.eq_float64.

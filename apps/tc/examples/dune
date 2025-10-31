@@ -1,5 +1,5 @@
 (coq.theory
  (name elpi.apps.tc.examples)
- (theories elpi elpi.apps.tc elpi_stdlib))
+ (theories elpi elpi.apps.tc Stdlib))
 
 (include_subdirs qualified)

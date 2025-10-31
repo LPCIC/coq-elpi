@@ -1,4 +1,4 @@
-{ lib, rocq-elpi, rocqPackages }:
+{ rocq-elpi, rocqPackages }:
 
 rocqPackages.lib.overrideRocqDerivation {
 

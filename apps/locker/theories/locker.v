@@ -4,7 +4,7 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.locker.elpi Extra Dependency "locker.elpi" as locker.
 
-From elpi.core Require Import ssreflect.
+From Corelib Require Import ssreflect.
 From elpi Require Import elpi.
 
 (** [lock] locks a definition on an opaque key

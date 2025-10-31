@@ -9,7 +9,7 @@ DECLARE PLUGIN "rocq-elpi.elpi"
 open Stdarg
 open Ltac_plugin
 
-open Pcoq.Constr
+open Procq.Constr
 
 open Rocq_elpi_arg_syntax
 module EV = Rocq_elpi_vernacular
@@ -71,14 +71,14 @@ let warning_legacy_accumulate2 ?loc () = warning_legacy_accumulate_gen ?loc fals
 
 let lib_ref id =
   let id = String.concat "." (snd id) in
-  try Coqlib.lib_ref id
-  with Coqlib.NotFoundRef _ ->
+  try Rocqlib.lib_ref id
+  with Rocqlib.NotFoundRef _ ->
     CErrors.user_err
       Pp.(str "Global reference not found: lib:" ++ str id
           ++ str " (you may need to require some .v file with \
                   `Register ... as " ++ str id ++ str ".`).")
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let lookahead_lib_colon kwstate strm =
   match Gramlib.LStream.peek_nth kwstate 0 strm with
   | Tok.IDENT "lib" ->
@@ -96,11 +96,7 @@ let lookahead_lib_colon kwstate strm =
   | _ -> streamFail ()
 [%%endif]
 
-[%%if coq = "8.20"]
-let lookahead_lib_colon = Pcoq.Entry.(of_parser "lookahead_lib_colon" { parser_fun = lookahead_lib_colon })
-[%%else]
 let lookahead_lib_colon = Procq.Entry.(of_parser "lookahead_lib_colon" { parser_fun = lookahead_lib_colon })
-[%%endif]
 
 let idents_of loc s =
   let s = String.sub s 1 (String.length s - 2) in

@@ -1,4 +1,3 @@
-From elpi.core Require Import Bool.
 From elpi.apps Require Import derive.eqbOK.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib test_eqb test_eqbcorrect.

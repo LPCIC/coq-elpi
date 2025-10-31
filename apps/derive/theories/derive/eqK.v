@@ -8,7 +8,6 @@ From elpi.apps.derive.elpi Extra Dependency "eqK.elpi" as eqK.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
-From elpi.core Require Import Bool.  (* remove when requiring Rocq >= 9.0 *)
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps Require Import derive.bcongr derive.eq derive.isK.
