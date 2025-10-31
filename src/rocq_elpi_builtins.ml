@@ -2205,7 +2205,7 @@ Supported attributes:
             begin try Some (Retyping.get_type_of (get_global_env state) sigma body)
             with
             | Retyping.RetypeError _ -> err Pp.(str"coq.env.add-const: illtyped opaque")
-            | e when CErrors.is_anomaly e -> err Pp.(str"coq.env.add-const: illtyped opaque") end
+            | e when Rocq_elpi_utils.is_sync_anomaly e -> err Pp.(str"coq.env.add-const: illtyped opaque") end
          | B.Given ty, _ ->
             if not (is_ground sigma ty) then
               err Pp.(str"coq.env.add-const: the type must be ground. Did you forge to call coq.typecheck-indt-decl?");
