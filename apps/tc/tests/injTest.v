@@ -1,5 +1,5 @@
 From elpi.apps Require Import tc.
-From elpi.core Require Import Morphisms RelationClasses ListDef Setoid.
+From Corelib Require Import Morphisms RelationClasses ListDef Setoid.
 
 Generalizable All Variables.
 Elpi TC Solver Override TC.Solver All.

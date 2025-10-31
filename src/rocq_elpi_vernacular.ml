@@ -26,7 +26,7 @@ let main_interp_qedc = ET.Constants.declare_global_symbol "main-interp-qed"
 let main_synterpc = ET.Constants.declare_global_symbol "main-synterp"
 let attributesc = ET.Constants.declare_global_symbol "attributes"
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 exception ParseError = Gramlib.Grammar.Error
 [%%else]
 exception ParseError = Gramlib.Grammar.ParseError
@@ -42,8 +42,7 @@ let atts2impl ~depth loc phase
   and convert_att att = convert_att_r att.CAst.v
   and convert_atts l = List.map convert_att l
   and convert_att_value = function
-    | Attributes.FlagIdent s [@if coq = "8.20"] -> AttributeString s
-    | Attributes.FlagQualid q [@if coq <> "8.20"] -> AttributeString (Libnames.string_of_qualid q)
+    | Attributes.FlagQualid q -> AttributeString (Libnames.string_of_qualid q)
     | Attributes.FlagString s -> AttributeString s
   in
   let phase = match phase with Summary.Stage.Interp -> "interp" | Summary.Stage.Synterp -> "synterp" in
@@ -55,7 +54,7 @@ let atts2impl ~depth loc phase
     match Sys.getenv_opt "COQ_ELPI_ATTRIBUTES" with
     | None -> atts
     | Some txt ->
-        match Pcoq.parse_string (Pvernac.main_entry None) (Printf.sprintf "#[%s] Qed." txt) |> Option.map (fun x -> x.CAst.v) with
+        match Procq.parse_string (Pvernac.main_entry None) (Printf.sprintf "#[%s] Qed." txt) |> Option.map (fun x -> x.CAst.v) with
         | None -> atts
         | Some { Vernacexpr.attrs ; _ } -> List.map (fun {CAst.v=(name,v)} -> convert_att_r ("elpi."^name,v)) attrs @ atts
         | exception ParseError msg ->
@@ -193,10 +192,10 @@ let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi
         Feedback.msg_notice Pp.(str"Syntactic constraints:" ++ spc()++str scst);
       if P.stage = Summary.Stage.Interp then begin
         let sigma = Rocq_elpi_HOAS.get_sigma state in
-        let ccst = Evd.evar_universe_context sigma in
+        let ccst = Evd.ustate sigma in
         if not (UState.is_empty ccst) then
           Feedback.msg_notice Pp.(str"Universe constraints:" ++ spc() ++
-            Termops.pr_evar_universe_context ccst);
+            UState.pr ccst);
       end
     end;
     (* We add clauses declared via coq.elpi.accumulate *)
@@ -616,7 +615,7 @@ let get_stash def =
 
 let lemma_counter = ref 0
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let compat_typ sigma typ = EConstr.to_constr ~abort_on_undefined_evars:false sigma typ
 [%%else]
 let compat_typ _sigma typ = typ
@@ -735,7 +734,7 @@ let has_att s l =
     | { CAst.v = s',VernacFlagEmpty } -> String.equal s s'
     | _ -> false)
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let classifier proof _loc0 _args _loc1 =
   match proof with
   | Some (Begin None) -> Vernacextend.(VtStartProof (Doesn'tGuaranteeOpacity,[]))

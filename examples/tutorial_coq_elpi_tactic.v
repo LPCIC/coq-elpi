@@ -1043,7 +1043,7 @@ Elpi Accumulate default lp:{{
 }}.
 
 
-From elpi.core Require Import PrimInt63.
+From Corelib Require Import PrimInt63.
 Open Scope uint63_scope.
 
 Fail Definition baz : list nat := default 1.  (* .fails *)

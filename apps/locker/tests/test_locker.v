@@ -1,4 +1,4 @@
-From elpi.core Require Import ssreflect.
+From Corelib Require Import ssreflect.
 From elpi.apps Require Import locker.
 
 (* ----------------------- *)

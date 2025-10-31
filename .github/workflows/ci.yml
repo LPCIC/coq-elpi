@@ -20,11 +20,10 @@ jobs:
           - 'rocq/rocq-prover:dev'
           - 'rocq/rocq-prover:9.1'
           - 'rocq/rocq-prover:9.0'
-          - 'coqorg/coq:8.20'
         profile:
           - dev
         include:
-          - image: 'coqorg/coq:8.20'
+          - image: 'rocq/rocq-prover:9.0'
             profile: fatalwarnings
       fail-fast: false  # don't stop jobs if one fails
     steps:

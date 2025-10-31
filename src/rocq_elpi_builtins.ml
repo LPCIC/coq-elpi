@@ -351,7 +351,7 @@ let handle_uinst_option_for_inductive ~depth options i state =
  *     unify-list-eq R1 R2.
  *
  *)
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let build_of_sort = API.AlgebraicData.B (fun s -> Structures.ValuePattern.Sort_cs (Sorts.family s))
 let match_of_sort =
   let open API.AlgebraicData in let open Structures.ValuePattern in
@@ -377,13 +377,13 @@ let match_of_sort =
         | _ -> ko state)
 [%%endif]
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let hint_globref = Hints.hint_globref
 [%%else]
 let hint_globref gr = gr
 [%%endif]
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let abbreviation_find_interp = Abbreviation.search_abbreviation
 let abbreviation_declare = Abbreviation.declare_abbreviation
 [%%else]
@@ -432,7 +432,7 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Struct
 }
 
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let cs_entries_for_proj env p =
   Structures.CSTable.entries_for ~projection:p
 
@@ -457,7 +457,7 @@ type type_class_instance = {
   priority : int;
 }
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let tc_is_class env gr =
   Typeclasses.is_class gr
 [%%else]
@@ -546,22 +546,12 @@ let set_accumulate_to_db_interp, get_accumulate_to_db_interp =
   (fun x -> f := x),
   (fun () -> !f)
 
-[%%if coq = "8.20"]
-let is_global_level env u =
-  try
-    let set = Univ.Level.Set.singleton u in
-    let () = UGraph.check_declared_universes (Environ.universes env) set in
-    true
-  with UGraph.UndeclaredLevel _ -> false
-let global_push_context_set x = Global.push_context_set ~strict:true x
-[%%else]
 let is_global_level env u =
   let set = Univ.Level.Set.singleton u in
   match UGraph.check_declared_universes (Environ.universes env) set with
   | Ok () -> true
   | Error _ -> false
 let global_push_context_set x = Global.push_context_set x
-[%%endif]
 
 let err_if_contains_alg_univ ~depth t =
   let env = Global.env () in
@@ -903,7 +893,7 @@ let warn_deprecated_add_axiom =
 
 let comAssumption_declare_variable coe ~kind ty ~univs ~impargs impl ~name =
   ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:name.CAst.v
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ty =
   ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name:name.CAst.v ty
 let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
@@ -928,23 +918,12 @@ let eval_to_oeval = Evaluable.to_kevaluable
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let pattern_of_glob_constr env g = Patternops.pattern_of_glob_constr env g
 
-[%%if coq = "8.20"]
-let declare_definition hack using ~cinfo ~info ~opaque ~body sigma =
-  let using = Option.map Proof_using.using_from_string using in
-  let gr = Declare.declare_definition ~cinfo ~info ~opaque ~body ?using sigma in
-  gr, Option.get !hack
-[%%else]
 let declare_definition _ using ~cinfo ~info ~opaque ~body sigma =
   let using = Option.map Proof_using.using_from_string using in
   Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma
-[%%endif]
 
-
-[%%if coq = "8.20"]
-let warns_of_options options = options.user_warns
-[%%else]
 let warns_of_options options = options.user_warns |> Option.map UserWarn.with_empty_qf
-[%%endif]
+
 let add_axiom_or_variable api id ty local_bkind options state =
   let state, poly, cumul, udecl, _ = poly_cumul_udecl_variance_of_options state options in
   let used = universes_of_term state ty in
@@ -953,7 +932,7 @@ let add_axiom_or_variable api id ty local_bkind options state =
     err Pp.(str api ++ str": unsupported attribute @udecl-cumul! or @univpoly-cumul!");
   if poly && Option.has_some local_bkind then
     err Pp.(str api ++ str": section variables cannot be universe polymorphic");
-  let univs = UState.check_univ_decl (Evd.evar_universe_context sigma) udecl ~poly in
+  let univs = UState.check_univ_decl (Evd.ustate sigma) udecl ~poly in
   let kind = Decls.Logical in
   let impargs = [] in
   let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
@@ -983,22 +962,22 @@ type tac_abbrev = {
   tac_fixed_args : Rocq_elpi_arg_HOAS.Tac.glob list;
 }
 
-type ('a,'d) gbpmp = Gbpmp : ('d, _, 'b, Loc.t -> 'd) Pcoq.Rule.t * ('a -> 'b) -> ('a,'d) gbpmp
+type ('a,'d) gbpmp = Gbpmp : ('d, _, 'b, Loc.t -> 'd) Procq.Rule.t * ('a -> 'b) -> ('a,'d) gbpmp
 
 let rec gbpmp f = function
-  | [x] -> Gbpmp (Pcoq.Rule.next Pcoq.Rule.stop (Pcoq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a))
+  | [x] -> Gbpmp (Procq.Rule.next Procq.Rule.stop (Procq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a))
   | x :: xs ->
       let Gbpmp (r, f) = gbpmp f xs in
-      Gbpmp (Pcoq.Rule.next r (Pcoq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a))
+      Gbpmp (Procq.Rule.next r (Procq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a))
   | [] -> assert false
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_tactic
 [%%else]
 let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_ltac_in_term
 [%%endif]
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let with_hack_synterp f () = f ()
 [%%else]
 let with_hack_synterp f () =
@@ -1035,10 +1014,10 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
   let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
   (* HACK!!! changes the grammar but is called in interp phase *)
   with_hack_synterp (fun () ->
-  Pcoq.grammar_extend Pcoq.Constr.term (Pcoq.Fresh
+  Procq.grammar_extend Procq.Constr.term (Procq.Fresh
     (Gramlib.Gramext.Before "10",
-     [ (None, None, [ Pcoq.Production.make
-      (Pcoq.Rule.next rule (Pcoq.Symbol.list0 (Pcoq.Symbol.nterm Pcoq.Constr.arg)))
+     [ (None, None, [ Procq.Production.make
+      (Procq.Rule.next rule (Procq.Symbol.list0 (Procq.Symbol.nterm Procq.Constr.arg)))
       action
     ])])))
     ()
@@ -1251,14 +1230,8 @@ let register = let open API.AlgebraicData in declare {
   ]
 } |> CConv.(!<)
 
-[%%if coq = "8.20"]
-let register_ref _ = Coqlib.register_ref
-let declare_scheme _ = DeclareScheme.declare_scheme 
-[%%else]
 let register_ref = Rocqlib.register_ref
-let declare_scheme = DeclareScheme.declare_scheme 
-[%%endif]
-
+let declare_scheme = DeclareScheme.declare_scheme
 
 let find_hint_db s =
   try
@@ -1266,7 +1239,7 @@ let find_hint_db s =
   with Not_found ->
     err Pp.(str "Hint DB not found: " ++ str s)
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let hint_mode env gr db =
   let modes = Hints.Hint_db.modes db in
   List.map (fun a -> Array.to_list a) @@ GlobRef.Map.find gr modes
@@ -1458,23 +1431,12 @@ let coq_header_builtins =
 |};
   ]
 
-[%%if coq = "8.20" ]
-let compat_reduction_behavior_set ~local gref strategy =
-  Reductionops.ReductionBehaviour.set ~local gref strategy
-[%%else]
 let compat_reduction_behavior_set ~local gref strategy =
   Reductionops.ReductionBehaviour.set ~local gref (Some strategy)
-[%%endif]
 
-[%%if coq = "8.20" ]
-let compat_reset_simplification = []
-[%%else]
 let compat_reset_simplification =
   let open API.BuiltIn in
   let open Pred in
-  let open Notation in
-  let open CConv in
-  let pp ~depth = P.term depth in
   [MLCode(Pred("coq.arguments.reset-simplification",
     In(gref,"GR",
     Full(global,
@@ -1490,9 +1452,8 @@ Supported attributes:
        Univ.ContextSet.empty, state, (), []
      | _ -> err Pp.(str "reset-simplification must be called on constant")))),
   DocAbove)]
-[%%endif]
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let declare_projections ind ~kind univs id flags implicits fields =
   Record.Internal.declare_projections ind ~kind univs id flags implicits fields
 [%%else]
@@ -1500,7 +1461,7 @@ let declare_projections ind ~kind _ id flags implicits _ =
   Record.Internal.declare_projections ind ~kind ~inhabitant_id:id flags implicits
 [%%endif]
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let apply_proof ~name ~poly env tac pf =
   let (), pv, _, _ = Proofview.apply ~name ~poly env tac pf in
   pv
@@ -1681,20 +1642,20 @@ Note: [ctype "bla"] is an opaque data type and by convention it is written [@bla
     Easy {|locates a global definition, inductive type or constructor via its name.
 It unfolds syntactic notations, e.g. "Notation old_name := new_name."
 It understands qualified names, e.g. "Nat.t".
-It understands Coqlib Registered names using the "lib:" prefix,
+It understands Rocqlib Registered names using the "lib:" prefix,
 eg "lib:core.bool.true".
 It's a fatal error if Name cannot be located.|})),
   (fun s _ ~depth:_ -> !: (locate_gref s))),
   DocAbove);
 ]
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let univ_binder_compat_820 a b = a
 [%%else]
 let univ_binder_compat_820 a b = b
 [%%endif]
 
-[%%if coq = "8.20" || coq = "9.0" || coq= "9.1"]
+[%%if coq = "9.0" || coq= "9.1"]
 let locality_of_options (o : options) = o.local <> Some false
 [%%else]
 let locality_of_options (o : options) = match o.local with
@@ -1703,7 +1664,7 @@ let locality_of_options (o : options) = match o.local with
   | None -> Libobject.Export
 [%%endif]
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let find_structure_from_projection env ind = Structures.Structure.find_from_projection ind
 let find_structure_projections env ind = Structures.Structure.find_projections ind
 [%%else]
@@ -2663,9 +2624,8 @@ phase unnecessary.|};
     Read(unit_ctx,  "prints the set of universe constraints"),
   (fun ~depth _ _ state ->
     let sigma = get_sigma state in
-    let uc = Evd.evar_universe_context sigma in
-    let uc = Termops.pr_evar_universe_context uc in
-    Feedback.msg_notice Pp.(str "Universe constraints: " ++ uc);
+    let uc = Evd.ustate sigma in
+    Feedback.msg_notice Pp.(str "Universe constraints: " ++ UState.pr uc);
     ())),
   DocAbove);
 
@@ -2729,7 +2689,7 @@ phase unnecessary.|};
     Full(unit_ctx,  "gives the list of constraints, see also coq.univ.variable.constraints")),
    (fun _ ~depth _ _ state ->
       let sigma = get_sigma state in
-      let ustate = Evd.evar_universe_context sigma in
+      let ustate = Evd.ustate sigma in
       let constraints = UState.constraints ustate in
       state, !: (Univ.Constraints.elements constraints), []
     )),
@@ -2765,7 +2725,7 @@ phase unnecessary.|};
     Full(unit_ctx,  "gives the list of constraints on L. Can be used to craft a strict upoly-decl"))),
    (fun v _ ~depth _ _ state ->
       let sigma = get_sigma state in
-      let ustate = Evd.evar_universe_context sigma in
+      let ustate = Evd.ustate sigma in
       let constraints = UState.constraints ustate in
       let v_constraints = Univ.Constraints.filter (fun (l1,_,l2) -> Univ.Level.(equal v l1 || equal v l2)) constraints in
       state, !: (Univ.Constraints.elements v_constraints), []

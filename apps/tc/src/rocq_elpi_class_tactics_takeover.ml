@@ -129,7 +129,7 @@ module Solver = struct
         | API.Execute.Failure -> elpi_fails program
         | exception (Rocq_elpi_utils.LtacFail (level, msg)) -> raise Not_found
 
-  [%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+  [%%if coq = "9.0" || coq = "9.1"]
   let solve_TC program = let open Class_tactics in { solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
       solve_TC_solver program env sigma ~depth ~unique ~best_effort ~goals
   }

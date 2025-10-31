@@ -29,7 +29,7 @@ Elpi Query lp:{{
   coq.say BO1.
 }}.
 
-From elpi_stdlib Require Vector.
+From Stdlib Require Vector.
 
 Elpi Query lp:{{
   T = {{ fun v : Vector.t nat 2 =>

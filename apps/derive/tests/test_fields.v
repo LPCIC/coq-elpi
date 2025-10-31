@@ -40,7 +40,7 @@ Elpi derive.fields val.
 End Coverage.
 
 Import Coverage.
-From elpi.core Require Import PosDef.
+From Corelib Require Import PosDef.
 
 Redirect "tmp" Check empty_fields_t : positive -> Type. 
 Redirect "tmp" Check empty_fields : forall (n:empty), empty_fields_t (empty_tag n). 

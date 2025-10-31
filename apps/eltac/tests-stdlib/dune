@@ -1,6 +1,6 @@
 (coq.theory
  (package rocq-elpi-tests-stdlib)
  (name elpi_apps_eltac_tests_stdlib)
- (theories elpi elpi.apps.eltac elpi_stdlib))
+ (theories elpi elpi.apps.eltac Stdlib))
 
 (include_subdirs qualified)

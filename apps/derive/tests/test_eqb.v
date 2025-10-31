@@ -43,7 +43,7 @@ Elpi derive.eqb alias.
 
 End Coverage.
 Import Coverage.
-From elpi.core Require Import PosDef.
+From Corelib Require Import PosDef.
 
 Notation eq_test T := (T -> T -> bool).
 Notation eq_test2 T1 T2 := (T1 -> T2 -> bool).

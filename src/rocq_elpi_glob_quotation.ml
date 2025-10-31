@@ -564,12 +564,12 @@ let gterm2lpast ~pattern ~language state glob =
   in
     gterm2lp state glob
 
-let lconstr_eoi = Pcoq.eoi_entry Pcoq.Constr.lconstr
+let lconstr_eoi = Procq.eoi_entry Procq.Constr.lconstr
 
 let parse_string f ?loc x =
   let offset = Option.map (fun l -> l.Loc.bp) loc in
   let strm = Gramlib.Stream.of_string ?offset x in
-  Pcoq.Entry.parse f (Pcoq.Parsable.make ?loc strm)
+  Procq.Entry.parse f (Procq.Parsable.make ?loc strm)
 
 let coq_quotation ~language state loc src =
   let cloc = to_coq_loc loc in

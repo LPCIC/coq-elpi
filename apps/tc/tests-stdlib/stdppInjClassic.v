@@ -1,7 +1,7 @@
 (* File inspired from https://gitlab.mpi-sws.org/iris/stdpp/-/blob/8c98553ad0ca2029b30cf18b58e321ec3a79172b/stdpp/base.v *)
-From elpi.core Require Export Morphisms RelationClasses ListDef Bool Setoid.
-From elpi_stdlib Require Export List Peano Utf8 Permutation.
-From elpi_stdlib Require Export Program.Basics Program.Syntax.
+From Corelib Require Export Morphisms RelationClasses ListDef Setoid.
+From Stdlib Require Export List Peano Utf8 Permutation.
+From Stdlib Require Export Program.Basics Program.Syntax.
 
 Export ListNotations.
 

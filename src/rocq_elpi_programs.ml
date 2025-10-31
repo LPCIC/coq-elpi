@@ -17,7 +17,7 @@ let eq_cunit x y =
   | Signature s1, Signature s2 -> Hashtbl.hash s1 == Hashtbl.hash s2 (* BUG *)
   | _ -> false
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let my_filtered_open = Libobject.simple_open
 let my_simple_open ?cat f = my_filtered_open ?cat (fun i v -> if Int.equal i 1 then f v)
 let is_in_section = Lib.is_in_section
