@@ -1,5 +1,5 @@
 From elpi.apps Require Import coercion.
-From elpi.core Require Import ssreflect.
+From Corelib Require Import ssreflect.
 
 Ltac my_solver := try ((repeat apply: le_n_S); apply: le_0_n).
 

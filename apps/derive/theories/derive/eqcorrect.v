@@ -11,9 +11,9 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps Require Import  derive.eq derive.induction derive.eqK derive.param1.
 
-From elpi.core Require Import ssreflect.
+From Corelib Require Import ssreflect.
 
-From elpi.core Require PrimInt63 Uint63Axioms.
+From Corelib Require PrimInt63 Uint63Axioms.
 
 Lemma uint63_eq_correct i : is_uint63 i -> eq_axiom_at PrimInt63.int PrimInt63.eqb i.
 Proof.
@@ -24,15 +24,15 @@ by case: PrimInt63.eqb => [-> // _| _ abs]; constructor=> // /abs.
 Qed.
 Register uint63_eq_correct as elpi.derive.uint63_eq_correct.
 
-From elpi.core Require PrimString PrimStringAxioms.
+From elpi.apps.derive Require PrimStringEqb.
 
-Lemma pstring_eq_correct i : is_pstring i -> eq_axiom_at PrimString.string PrimString.eqb i.
+Lemma pstring_eq_correct i : is_pstring i -> eq_axiom_at PrimString.string PrimStringEqb.eqb i.
 Proof.
-  move=> _ j; have [] : (PrimString.eqb i j) = true <-> i = j.
-  rewrite /PrimString.eqb; have := PrimStringAxioms.compare_ok i j.
+  move=> _ j; have [] : (PrimStringEqb.eqb i j) = true <-> i = j.
+  rewrite /PrimStringEqb.eqb; have := PrimStringEqb.compare_ok i j.
    case: PrimString.compare => - [c r] //; split => //; [move=> _| by move=>/r ..].
    by apply: c.
-by case: PrimString.eqb => [-> // _| _ abs]; constructor=> // /abs.
+by case: PrimStringEqb.eqb => [-> // _| _ abs]; constructor=> // /abs.
 Qed.
 Register pstring_eq_correct as elpi.derive.pstring_eq_correct.
 

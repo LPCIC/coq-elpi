@@ -11,9 +11,9 @@ These two functions being defined both in [Coq.Bool] and in [Coq.Peano],
 we must export [Coq.Peano] later than any export of [Coq.Bool]. *)
 (* We also want to ensure that notations from [Coq.Utf8] take precedence
 over the ones of [Coq.Peano] (see Coq PR#12950), so we import [Utf8] last. *)
-From elpi.core Require Export Morphisms RelationClasses ListDef Bool Setoid.
-From elpi_stdlib Require Export Bool List Peano Utf8 Permutation.
-From elpi_stdlib Require Export Program.Basics Program.Syntax.
+From Corelib Require Export Morphisms RelationClasses ListDef Setoid.
+From Stdlib Require Export Bool List Peano Utf8 Permutation.
+From Stdlib Require Export Program.Basics Program.Syntax.
 
 Export ListNotations.
 

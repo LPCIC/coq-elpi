@@ -124,10 +124,10 @@ main [trm T] :-
 }}.
 
 
-From elpi.core Require Import PrimInt63.
+From Corelib Require Import PrimInt63.
 Elpi primitive (PrimInt63.add 2000000003333002 1).
 
-From elpi.core Require Import PrimFloat.
+From Corelib Require Import PrimFloat.
 Open Scope float_scope.
 Elpi primitive (2.4e13 + 1).
 End Pint.

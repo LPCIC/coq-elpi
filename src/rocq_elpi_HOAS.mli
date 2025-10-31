@@ -111,7 +111,7 @@ val lp2skeleton :
 type coercion_status = Regular | Off | Reversible
 type record_field_spec = { name : Name.t; is_coercion : coercion_status; is_canonical : bool }
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 val lp2inductive_entry :
   depth:int -> empty coq_context -> constraints -> State.t -> term ->
   State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
@@ -121,7 +121,7 @@ val lp2inductive_entry :
   State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UState.named_universes_entry * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 [%%endif]
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 val lp2record_field_spec : record_field_spec -> Name.t * Record.Internal.projection_flags
 [%%else]
 val lp2record_field_spec : record_field_spec -> Name.t * Record.Data.projection_flags
@@ -284,7 +284,7 @@ type module_item =
   | Functor of Names.ModPath.t * Names.ModPath.t list
   | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 val in_elpi_module : depth:int -> State.t -> ModPath.t -> Declarations.module_body -> module_item list
 val in_elpi_module_type : Declarations.module_type_body -> string list
 [%%else]

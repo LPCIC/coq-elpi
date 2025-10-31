@@ -1,6 +1,6 @@
 From elpi Require Import elpi.
 
-From elpi.core Require Import ListDef.
+From Corelib Require Import ListDef.
 
 Elpi Command typecheck.
 

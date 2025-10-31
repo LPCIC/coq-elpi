@@ -1,5 +1,6 @@
 From elpi Require Import elpi.
-From elpi.core Require Import PrimInt63 PrimFloat PrimString.
+From Corelib Require Import PrimInt63 PrimFloat.
+From elpi.apps.derive Require Import PrimStringEqb.
 From elpi.apps Require Export derive.
 
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.

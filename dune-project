@@ -31,8 +31,7 @@
  (depends
   (ocaml (>= 4.10.0))
   (elpi (and (>= 3.0) (< 3.2.0~)))
-  ; (or (coq (and (>= 8.20+rc1) (< 8.21~)))
-  ;     (rocq-core (and (>= 9.0+rc1) (< 9.2~))))
+  ; (rocq-core (and (>= 9.0+rc1) (< 9.2~)))
   ppx_optcomp
   (ocaml-lsp-server :with-dev-setup)))
 

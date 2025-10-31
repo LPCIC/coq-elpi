@@ -411,7 +411,7 @@ Elpi Query lp:{{
 Another commodity quotation lets one access the coqlib
 feature introduced in Coq 8.10.
 
-Coqlib gives you an indirection between your code and the actual name
+Rocqlib gives you an indirection between your code and the actual name
 of constants.
 
 |*)

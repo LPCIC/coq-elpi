@@ -2,6 +2,6 @@
  (package rocq-elpi-tests-stdlib)
  (name elpi_examples_stdlib)
  (plugins rocq-elpi.elpi)
- (theories elpi elpi_stdlib))
+ (theories elpi Stdlib))
 
 ; (include_subdirs qualified)

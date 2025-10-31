@@ -7,7 +7,7 @@ open Elpi_plugin
 open Rocq_elpi_arg_syntax
 open Rocq_elpi_vernacular
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let structure_projection_nparams env ind = Structures.Structure.projection_nparams ind
 [%%else]
 let structure_projection_nparams env ind = Structures.Structure.projection_nparams env ind
@@ -65,12 +65,6 @@ let elpi_cs_hook program env sigma ((proji, u), params1, c1) (t2, args2) =
 		 | API.Execute.Failure -> None
 		 end
 
-[%%if coq = "8.20"]
-let adapt_hook f : Evarconv.hook = fun env sigma (s,l,t) x -> f env sigma (s,Some l,t) x
-[%%else]
-let adapt_hook f : Evarconv.hook = f
-[%%endif]
-
 let add_cs_hook =
   let cs_hook_program = Summary.ref ~name:"elpi-cs" None in
   let cs_hook env sigma proj pat =
@@ -78,7 +72,7 @@ let add_cs_hook =
     | None -> None
     | Some h -> elpi_cs_hook h env sigma proj pat in
   let name = "elpi-cs" in
-  Evarconv.register_hook ~name (adapt_hook cs_hook);
+  Evarconv.register_hook ~name cs_hook;
   let inCs =
     let cache program =
       cs_hook_program := Some program;

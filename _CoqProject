@@ -10,8 +10,6 @@
 
 -R theories elpi
 -R _build/default/theories elpi
--Q theories-stdlib elpi_stdlib
--Q _build/default/theories-stdlib elpi_stdlib
 
 -Q elpi elpi_elpi
 -Q _build/default/elpi elpi_elpi
