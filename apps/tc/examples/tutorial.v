@@ -1,4 +1,4 @@
-From elpi_stdlib Require Import Bool.
+From Stdlib Require Import Bool.
 From elpi.apps Require Import tc.
 
 Class Eqb (T: Type) := {

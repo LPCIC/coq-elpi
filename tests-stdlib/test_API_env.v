@@ -1,5 +1,5 @@
 From elpi Require Import elpi.
-From elpi_stdlib Require Vector.
+From Stdlib Require Vector.
 
 (****** env **********************************)
 Elpi Command test.
@@ -333,7 +333,7 @@ Elpi Query lp:{{
 
 End HOAS.
 
-From elpi_stdlib Require Ranalysis5.
+From Stdlib Require Ranalysis5.
 
 Elpi Query lp:{{
 
@@ -372,7 +372,7 @@ Elpi Query lp:{{
 Set Printing Universes. Print Module Test.
 Check Test.f.
 
-From elpi_stdlib Require Import ZArith.
+From Stdlib Require Import ZArith.
 
 Elpi Query lp:{{
   coq.locate-module "N2Z" MP,

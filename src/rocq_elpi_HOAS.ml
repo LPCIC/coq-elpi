@@ -694,7 +694,7 @@ let in_coq_gref ~depth ~origin ~failsafe s t =
     s, t
   with API.Conversion.TypeErr _ ->
     if failsafe then
-      s, Coqlib.lib_ref "elpi.unknown_gref"
+      s, Rocqlib.lib_ref "elpi.unknown_gref"
     else
       err Pp.(str "The term " ++ str(pp2string (P.term depth) origin) ++
         str " cannot be represented in Coq since its gref part is illformed")
@@ -908,14 +908,8 @@ let show_coq_engine ?with_univs e = Format.asprintf "%a" (pp_coq_engine ?with_un
  let from_env env = from_env_sigma env (Evd.from_env env)
 
 
-[%%if coq = "8.20"]
-let demote uctx sigma0 env = 
-      let uctx = UState.update_sigma_univs (Evd.evar_universe_context sigma0) (Environ.universes env) in
-      UState.demote_global_univs env uctx
-[%%else]
  let demote uctx sigma0 env =
-   UState.demote_global_univs uctx (Evd.evar_universe_context sigma0)
-[%%endif]
+   UState.demote_global_univs uctx (Evd.ustate sigma0)
 
  let from_env_keep_univ_and_sigma ~uctx ~env0 ~env sigma0 =
    assert(env0 != env);
@@ -1879,7 +1873,7 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
     s, t, i, gls2
   with API.Conversion.TypeErr _ ->
     if failsafe then
-      s, Coqlib.lib_ref "elpi.unknown_gref", UVars.Instance.empty, []
+      s, Rocqlib.lib_ref "elpi.unknown_gref", UVars.Instance.empty, []
     else
       let open Pp in
       err ?loc:None @@
@@ -2027,7 +2021,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
          try state, EC.mkRel(coq_ctx.local_len - Int.Map.find n coq_ctx.db2rel + 1), []
          with Not_found -> 
           if coq_ctx.options.failsafe then
-            let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Global.env ()) (Coqlib.lib_ref "elpi.unknown_gref")) in
+            let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Global.env ()) (Rocqlib.lib_ref "elpi.unknown_gref")) in
             state, hole, []
           else      
            err Pp.(hov 0 (str"Bound variable " ++ str (E.Constants.show n) ++
@@ -2085,7 +2079,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
           aux rt `None in
       let default_case_info () =
         let unknown_ind_cinfo = Inductiveops.make_case_info (get_global_env state)
-            begin match Coqlib.lib_ref "elpi.unknown_inductive" with
+            begin match Rocqlib.lib_ref "elpi.unknown_inductive" with
             | GlobRef.IndRef i -> i
             | _ -> assert false end
             C.LetStyle in
@@ -2136,7 +2130,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         (* If we don't apply the hole to the whole context Detyping will prune
            (in the binder name) variables that don't occur, and then Pretyping
            does not put the variables back in scope *)
-        let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Global.env ()) (Coqlib.lib_ref "elpi.hole")) in
+        let hole = EConstr.of_constr (UnivGen.constr_of_monomorphic_global (Global.env ()) (Rocqlib.lib_ref "elpi.hole")) in
         let all_ctx = CArray.init coq_ctx.local_len (fun x -> EConstr.mkRel (x+1)) in
         (* We put another hole at the end to know how many arguments we added here *)
         let all_ctx = Array.append all_ctx [|hole|] in
@@ -2326,7 +2320,7 @@ let grab_global_env_drop_sigma state =
   if env == env0 then state
   else begin
     let sigma = get_sigma state in
-    let ustate = Evd.evar_universe_context sigma in
+    let ustate = Evd.ustate sigma in
     let state = S.set engine state (CoqEngine_HOAS.from_env_sigma env (Evd.from_ctx ustate)) in
     let state = UVMap.empty state in
     state
@@ -2938,7 +2932,7 @@ let inference_nonuniform_params_off =
       
 let restricted_sigma_of s state =
   let sigma = get_sigma state in
-  let ustate = Evd.evar_universe_context sigma in
+  let ustate = Evd.ustate sigma in
   let ustate = UState.restrict_even_binders ustate s in
   let ustate = UState.fix_undefined_variables ustate in
   let ustate = UState.collapse_sort_variables ustate in
@@ -2960,7 +2954,7 @@ let name_universe_level = ref 0
 
 let name_universe_level state l =
   S.update_return engine state (fun e ->
-    let ustate = Evd.evar_universe_context e.sigma in
+    let ustate = Evd.ustate e.sigma in
     match UState.id_of_level ustate l with
     | Some id -> e, id
     | None ->
@@ -2996,10 +2990,7 @@ let poly_cumul_udecl_variance_of_options state options =
     mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
     Array.of_list variance
 
-[%%if coq = "8.20"]
-let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite =
-  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~cumulative ~poly ~template ~finite 
-[%%elif coq = "9.0"]
+[%%if coq = "9.0"]
 let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite =
   let flags = {
     ComInductive.poly;
@@ -3315,7 +3306,7 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
     state, t, !gls
 ;;
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let inst_opt_names inst_opt = inst_opt
 [%%else]
 let inst_opt_names inst_opt = Option.map EConstr.EInstance.make inst_opt
@@ -3431,13 +3422,13 @@ let ideclc = E.Constants.declare_global_symbol "indt-decl"
 let uideclc = E.Constants.declare_global_symbol "upoly-indt-decl"
 
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let mind_record (mib,_) = mib.Declarations.mind_record
 [%%else]
 let mind_record (_,mip) = mip.Declarations.mind_record
 [%%endif]
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let find_structure env ind = Structures.Structure.find ind
 [%%else]
 let find_structure env ind = Structures.Structure.find env ind
@@ -3594,7 +3585,7 @@ let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   state, upoly_decl_of i, gls @ upoly_decl_gls
 ;;
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let open Record.Record_decl in
   let open Record.Data in
@@ -3826,7 +3817,7 @@ let lp2skeleton ~depth coq_ctx constraints state t =
   let gt =
     let is_GRef_hole x =
       match DAst.get x with
-      | Glob_term.GRef(r,None) -> Environ.QGlobRef.equal coq_ctx.env r (Coqlib.lib_ref "elpi.hole")
+      | Glob_term.GRef(r,None) -> Environ.QGlobRef.equal coq_ctx.env r (Rocqlib.lib_ref "elpi.hole")
       | _ -> false in
     let rec map x = match DAst.get x with
       | Glob_term.GEvar _ -> mkGHole
@@ -3849,7 +3840,7 @@ type module_item =
   | Functor of Names.ModPath.t * Names.ModPath.t list
   | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
-[%%if coq = "8.20" || coq = "9.0"]
+[%%if coq = "9.0"]
 type 'a generic_module_body = 'a Declarations.generic_module_body
 let module_view m = m.Declarations.mod_type
 let mod_type m = m.Declarations.mod_type

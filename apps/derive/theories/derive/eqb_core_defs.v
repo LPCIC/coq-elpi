@@ -1,4 +1,4 @@
-From elpi.core Require Import PosDef.
+From Corelib Require Import PosDef.
 Require Import ssreflect ssrbool.
 From elpi.apps.derive Require Import EqdepFacts.
 Set Implicit Arguments.

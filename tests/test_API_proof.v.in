@@ -49,13 +49,11 @@ Elpi Accumulate lp:{{
   main _.
 }}.
 
-#[skip="\(8.20\|9.0\)"] #[proof(begin_if="interactive")]
-#[skip="\(8.20\|9.0\)"] Elpi Export lemma_if.
-#[skip="\(8.20\|9.0\)"] #[interactive]
-#[skip="\(8.20\|9.0\)"] lemma_if it3 : (True).
-#[skip="\(8.20\|9.0\)"] Succeed Show.
-#[skip="\(8.20\|9.0\)"] Abort.
-#[skip="\(8.20\|9.0\)"] lemma_if it4 : (True).
-#[skip="\(8.20\|9.0\)"] Fail Show.
-
-
+#[skip="9.0"] #[proof(begin_if="interactive")]
+#[skip="9.0"] Elpi Export lemma_if.
+#[skip="9.0"] #[interactive]
+#[skip="9.0"] lemma_if it3 : (True).
+#[skip="9.0"] Succeed Show.
+#[skip="9.0"] Abort.
+#[skip="9.0"] lemma_if it4 : (True).
+#[skip="9.0"] Fail Show.

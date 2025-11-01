@@ -1,3 +1,0 @@
-#[only="8.20"] From Coq Require Export Peano.
-#[skip="8.20"] From Stdlib Require Export Peano.
-

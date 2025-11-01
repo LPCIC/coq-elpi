@@ -1,2 +1,0 @@
-#[only="8.20"] From Coq Require Export Setoid.
-#[skip="8.20"] From Corelib Require Export Setoid.

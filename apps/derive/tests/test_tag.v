@@ -41,7 +41,7 @@ Elpi derive.tag val.
 End Coverage.
 
 Import Coverage.
-From elpi.core Require Import PosDef.
+From Corelib Require Import PosDef.
 
 Local Notation tag X := (X -> positive).
 

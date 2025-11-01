@@ -1,3 +1,0 @@
-#[only="8.20"] From Coq Require Export FunctionalExtensionality.
-#[skip="8.20"] From Stdlib Require Export FunctionalExtensionality.
-
