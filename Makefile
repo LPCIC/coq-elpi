@@ -66,20 +66,18 @@ examples-stdlib:
 	$(call dune,build) examples-stdlib
 .PHONY: examples-stdlib
 
-doc: build
+doc:
 	@echo "########################## generating doc ##########################"
 	@python3 -m venv alectryon
-	@alectryon/bin/pip3 install git+https://github.com/cpitclaudel/alectryon.git@c8ab1ec
+	@alectryon/bin/pip3 install git+https://github.com/gares/alectryon.git@4509235b1b83b256fd15d8dff92ac71666f419a1
 	@mkdir -p doc
 	@$(foreach tut,$(wildcard examples/tutorial*$(ONLY)*.v),\
-		echo ALECTRYON $(tut) && OCAMLPATH=$(shell pwd)/_build/install/default/lib alectryon/bin/python3 etc/alectryon_elpi.py \
+		echo ALECTRYON $(tut) && alectryon/bin/python3 etc/alectryon_elpi.py \
 		    --frontend coq+rst \
 			--output-directory doc \
 		    --pygments-style vs \
-			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi_elpi elpi_elpi \
-			-R $(shell pwd)/_build/install/default/lib/coq/user-contrib/elpi elpi \
+			--coq-driver vsrocq \
 			$(tut) &&) true
-	@cp ./_build/default/examples/stlc.txt doc/
 	@cp etc/tracer.png doc/
 
 clean:
