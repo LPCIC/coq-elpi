@@ -640,7 +640,7 @@ Elpi Accumulate lp:{{
       att "more.stuff" int,
     ] Opts,
     coq.say "options=" Opts,
-    Opts ==> some-code.
+    (Opts =!=> some-code).
 
 }}.
 #[this, more(stuff="33")] Elpi parse_attr.
@@ -803,7 +803,17 @@ Elpi Accumulate lp:{{
 }}.
 
 
-Fail Elpi import_module Notations. (* .fails .in .messages *)
+Fail Elpi import_module Notations. (* .fails *)
+
+(*|
+
+Elpi reports a descriptive error message if actions affecting the parser are
+not declared in the synterp code of the command.
+
+Thanks to the synterp code below, Coq can parse the document without even looking
+at the interp code.
+
+|*)
 
 (* oops, we forgot to declare code for the synterp phase. Here it is *)
 #[synterp] Elpi Accumulate lp:{{
@@ -813,18 +823,9 @@ Fail Elpi import_module Notations. (* .fails .in .messages *)
 }}.
 
 
-Elpi import_module Notations.
+(* Elpi import_module Notations. *)
 
 (*|
-
-Elpi reports a descriptive error message if actions affecting the parser are
-not declared in the synterp code of the command.
-
-.. mquote:: .s(Elpi import_module Notations).msg{*Interp*actions*must*match*synterp*actions*}
-   :language: text
-
-Thanks to the synterp code, Coq can parse the document without even looking
-at the interp code.
 
 Sometimes it is necessary to pass data from the synterp code to the interp one.
 Passing data can be done in two ways. the former is by using the :e:`main-synterp`
