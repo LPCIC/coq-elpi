@@ -419,7 +419,6 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
       let unit = P.unit_from_string ~elpi ~base:(EC.empty_base ~elpi) ~loc sloc s in
       let init = EmbeddedString { sast = unit} in
       P.init_program n ~loc [init];
-      Printf.eprintf "INIT OK %s\n" s;
     end;
     set_current_program (snd n)
 
