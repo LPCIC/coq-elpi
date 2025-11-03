@@ -109,7 +109,7 @@ let action_manager x =
           let observer = Classes.register_observer ~name (observer_evt loc_name_atts) in 
           observers := StringMap.add name observer !observers;
           Classes.activate_observer observer
-        with e when CErrors.is_anomaly e ->
+        with e when Rocq_elpi_utils.is_sync_anomaly e ->
           Feedback.msg_warning Pp.(str (Printf.sprintf "%s already registered" name))
         end;
         let t2 = Sys.time () in
