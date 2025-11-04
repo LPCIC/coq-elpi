@@ -1637,8 +1637,6 @@ Elpi Print stlc "elpi_examples/stlc".
 
 (*|
 
-Look at the `generated page <https://lpcic.github.io/coq-elpi/stlc.txt>`_.
-
 -----------------------------
 Bounding the number of steps
 -----------------------------
