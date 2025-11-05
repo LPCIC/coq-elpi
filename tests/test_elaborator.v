@@ -1,4 +1,6 @@
-From elpi.core Require Import PrimInt63 PrimFloat PrimString.
+From Corelib Require Import PrimInt63 PrimFloat PrimString.
+
+Register PrimString.string as elpi.pstring.
 
 From elpi_elpi Extra Dependency "elpi_elaborator.elpi" as elab.
 
@@ -152,7 +154,7 @@ Elpi Query lp:{{get-option "of:coerce" tt =>
 }}.
 
 (* primitive *)
-From elpi.core Require Import PrimInt63.
+From Corelib Require Import PrimInt63.
 Elpi Query lp:{{ of {{ 99%uint63 }} T X }}.
 Elpi Query lp:{{ of {{ 99.3e4%float }} T X }}.
 Elpi Query lp:{{ whd1 {{ PrimInt63.add 99 1 }} {{ 100%uint63 }} }}.

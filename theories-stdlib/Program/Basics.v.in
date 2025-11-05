@@ -1,3 +1,0 @@
-#[only="8.20"] From Coq.Program Require Export Basics.
-#[skip="8.20"] From Stdlib.Program Require Export Basics.
-

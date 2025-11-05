@@ -60,11 +60,7 @@ if loc1.bp < loc2.bp then
 else if loc2.ep < loc1.ep then false
 else false
 
-[%%if coq = "8.20"]
-let feedback_error loc m = Feedback.(feedback (Message(Error,loc,m)))
-[%%else]
 let feedback_error loc m = Feedback.(feedback (Message(Error,loc,[],m)))
-[%%endif]
 
 let patch_loc_source execution_loc error_loc msg =
   match execution_loc, error_loc with
@@ -78,7 +74,7 @@ let patch_loc_source execution_loc error_loc msg =
       (* external file *)
       Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 exception ParseError = Gramlib.Grammar.Error
 [%%else]
 exception ParseError = Gramlib.Grammar.ParseError
@@ -211,7 +207,7 @@ let lookup_inductive env i =
   if Array.length mind.Declarations.mind_packets <> 1 then nYI "API(env) mutual inductive";
   (mind, indbo)
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let abbreviation_find_interp = Abbreviation.search_abbreviation
 [%%else]
 let abbreviation_find_interp = Abbreviation.find_interp
@@ -238,7 +234,7 @@ let locate_gref s =
   try
     let i = String.index s ':' in
     let id = String.sub s (i + 1) (String.length s - (i + 1)) in
-    let ref = Coqlib.lib_ref id in
+    let ref = Rocqlib.lib_ref id in
     let path = Nametab.path_of_global ref in
     let qualid = Libnames.qualid_of_path path in
     locate_simple_qualid qualid
@@ -337,7 +333,7 @@ let rec fix_detype x = match DAst.get x with Glob_term.GEvar _ -> mkGHole | _ ->
 
 let detype_qvar sigma q =
   let open Glob_term in
-  match UState.id_of_qvar (Evd.evar_universe_context sigma) q with
+  match UState.id_of_qvar (Evd.ustate sigma) q with
   | Some id -> GLocalQVar (CAst.make (Names.Name.Name id))
   | None -> GQVar q
 
@@ -350,7 +346,7 @@ let detype_level_name sigma l =
   let open Glob_term in
   if Univ.Level.is_set l then GSet
   else
-    match UState.id_of_level (Evd.evar_universe_context sigma) l with
+    match UState.id_of_level (Evd.ustate sigma) l with
     | Some id -> GLocalUniv (CAst.make id)
     | None -> GUniv l
 
@@ -525,27 +521,6 @@ let detype_primitive_string = function
   | Constr.String s -> DAst.make @@ Glob_term.GString s
   | _ -> assert false
 
-[%%if coq = "8.20" ]
-let fresh (names, e) sigma name ty =
-  let open EConstr in
-  let open Names.Name in
-  let mk_fresh was =
-    let id = Namegen.next_name_away was names in
-    (Name id, (Names.Id.Set.add id names, e))
-  in
-  match name with
-  | Anonymous ->
-      let noccurs sigma i = function None -> true | Some t -> Vars.noccurn sigma i t in
-      let name, names = Namegen.compute_displayed_name_in_gen noccurs e sigma names name ty in
-      (name, (names, e))
-  | Name id when Names.Id.Set.mem id names -> mk_fresh name
-  | Name id as x -> (x, (Names.Id.Set.add id names, e))
-
-let names_of_env env =
-  let namesr = Environ.rel_context env |> Context.Rel.to_vars in
-  let namesv = Environ.named_context env |> Context.Named.to_vars in
-  Names.Id.Set.union namesr namesv
-[%%else]
 let fresh (names, e) sigma name ty =
   let open EConstr in
   let open Names.Name in
@@ -565,7 +540,6 @@ let names_of_env env =
   let namesr = Environ.rel_context env |> Context.Rel.to_vars in
   let namesv = Environ.named_context env |> Context.Named.to_vars in
   Names.Id.Set.fold (fun id accu -> Nameops.Fresh.add id accu) namesr (Nameops.Fresh.of_set namesv)
-[%%endif]
 
 let detype ?(keepunivs = false) env sigma t =
   let open Glob_term in
@@ -591,7 +565,7 @@ let detype ?(keepunivs = false) env sigma t =
 
   let lookup_rel i (_, env) = Environ.lookup_rel i env in
 
-  let unknown_inductive = Coqlib.lib_ref "elpi.unknown_inductive" in
+  let unknown_inductive = Rocqlib.lib_ref "elpi.unknown_inductive" in
 
   let rec detype_binder env name bo ty t =
     let gty = aux env ty in
@@ -768,17 +742,11 @@ let detype ?(keepunivs = false) env sigma t =
   let x = aux (names_of_env env, env) t in
   x
 
-[%%if coq = "8.20" ]
-let detype_closed_glob env sigma closure =
-  let gbody = Detyping.detype_closed_glob Names.Id.Set.empty env sigma closure in
-  fix_detype gbody
-[%%else]
 let detype_closed_glob env sigma closure =
   let gbody = Detyping.detype_closed_glob env sigma closure in
   fix_detype gbody
-[%%endif]
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1"]
 let detype_to_pattern env sigma c =
   let c = detype env sigma c in
   Patternops.pattern_of_glob_constr env c

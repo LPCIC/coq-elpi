@@ -1,5 +1,5 @@
 From elpi Require Import elpi.
-From elpi_stdlib Require Import Eqdep_dec.
+From Stdlib Require Import Eqdep_dec.
 
 Inductive T : Type := a | b | f : T -> T.
 Axiom T_dec : forall x y : T, {x = y} + {x <> y}.

@@ -1,5 +1,5 @@
 From elpi Require Export elpi.
-From elpi.core Require Import ssreflect ssrfun ssrbool.
+From Corelib Require Import ssreflect ssrfun ssrbool.
 
 Ltac ltac_foo := cut True; [ idtac | abstract (exact I) ].
 
