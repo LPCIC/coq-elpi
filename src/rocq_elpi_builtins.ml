@@ -1672,6 +1672,13 @@ let find_structure_from_projection env ind = Structures.Structure.find_from_proj
 let find_structure_projections env ind = Structures.Structure.find_projections env ind
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1"]
+let next_name_away_with_default_using_types _ _ id na names ty =
+  Namegen.next_name_away_with_default_using_types id na names ty
+[%%else]
+let next_name_away_with_default_using_types = Namegen.next_name_away_with_default_using_types
+[%%endif]
+
 let coq_rest_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -4031,12 +4038,15 @@ Supported attributes:
   CIn(B.unspecC term, "Ty",
   Out(id,"FreshID",
   Read(proof_context, "TODO")))),
-  (fun id ty _ ~depth proof_context  _ _ ->
+  (fun id ty _ ~depth proof_context  _ state ->
      let id = match id with Unspec -> "x" | Given x -> x in
      let id =
        match ty with
        | Unspec -> Namegen.next_ident_away (Names.Id.of_string_soft id) proof_context.names
-       | Given ty -> Namegen.next_name_away_with_default_using_types id Name.Anonymous proof_context.names ty in
+       | Given ty ->
+         let env = proof_context.env in
+         let sigma = get_sigma state in
+         next_name_away_with_default_using_types env sigma id Name.Anonymous proof_context.names ty in
      !: (Id.to_string id))),
   DocAbove);
 
