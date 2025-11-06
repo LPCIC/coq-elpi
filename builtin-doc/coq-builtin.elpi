@@ -996,7 +996,7 @@ external pred coq.sort.sup o:sort, o:sort.
 
 % [coq.sort.pts-triple S1 S2 S3] constrains S3 = sort of product with domain
 % in S1 and codomain in S2
-external pred coq.sort.pts-triple o:sort, o:sort, o:sort.
+external pred coq.sort.pts-triple i:sort, i:sort, o:sort.
 
 % [coq.univ.print] prints the set of universe constraints
 external pred coq.univ.print .

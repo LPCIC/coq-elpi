@@ -2635,8 +2635,8 @@ phase unnecessary.|};
   DocAbove);
 
   MLCode(Pred("coq.sort.eq",
-    CInOut(B.ioargC_flex sort, "S1",
-    CInOut(B.ioargC_flex sort, "S2",
+    CInOut(B.ioargC_flex sort, "S1", (* FIXME (not out) *)
+    CInOut(B.ioargC_flex sort, "S2", (* FIXME (not out) *)
     Full(global, "constrains S1 = S2"))),
   (fun u1 u2 ~depth { options } _ -> grab_global_env "coq.sort.eq"
   (fun state ->
@@ -2657,20 +2657,18 @@ phase unnecessary.|};
     Full(global,  "constrains S2 = S1 + 1"))),
   (fun u1 u2 ~depth _ _ state ->
     match u1, u2 with
-    | Data u1, Data u2 -> univ_super state u1 u2, !: u1 +! u2, []
+    | Data u1, Data u2 -> univ_super state u1 u2, !: u1 +! u2, [] (* FIXME  *)
     | _ -> err Pp.(str"coq.sort.sup: called with _ as argument"))),
   DocAbove);
 
   MLCode(Pred("coq.sort.pts-triple",
-    CInOut(B.ioargC_flex sort, "S1",
-    CInOut(B.ioargC_flex sort, "S2",
+    CIn(sort, "S1",
+    CIn(sort, "S2",
     COut(sort, "S3",
     Full(global,  "constrains S3 = sort of product with domain in S1 and codomain in S2")))),
   (fun u1 u2 _ ~depth _ _ state ->
-    match u1, u2 with
-    | Data u1, Data u2 -> let state, u3 = univ_product state u1 u2 in state, !: u1 +! u2 +! u3, []
-    | _ -> err Pp.(str"coq.sort.pts-triple: called with _ as argument"))),
-    DocAbove);
+    let state, u3 = univ_product state u1 u2 in state, !: u3, [])),
+  DocAbove);
 
   MLCode(Pred("coq.univ.print",
     Read(unit_ctx,  "prints the set of universe constraints"),
