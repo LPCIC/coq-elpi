@@ -1688,7 +1688,7 @@ external func coq.option.available? list string -> bool.
 % and for all in a .v file which your clients will load. Eg.
 % 
 %   Elpi Query lp:{{ coq.option.add ... }}.
-%   
+% 
 % 
 external func coq.option.add list string, coq.option, bool.
 

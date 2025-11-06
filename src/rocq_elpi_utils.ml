@@ -567,52 +567,64 @@ let detype ?(keepunivs = false) env sigma t =
 
   let unknown_inductive = Rocqlib.lib_ref "elpi.unknown_inductive" in
 
-  let rec detype_binder env name bo ty t =
-    let gty = aux env ty in
-    let gbo = Option.map (aux env) bo in
+  let rec detype_binder env holes name bo ty t =
+    let holes, gty = aux env holes ty in
+    let holes, gbo = match bo with | None -> holes, None | Some bo -> let holes, bo = aux env holes bo in holes, Some bo in
     (*let rinfo = detype_relevance_info sigma binder_relevance in*)
     let env, name = push_rel (LocalAssum (name, ty)) env t in
-    let gt = aux env t in
-    (name, gbo, gty, gt)
-  and aux env t =
+    let holes, gt = aux env holes t in
+    holes, (name, gbo, gty, gt)
+  and aux env holes t =
     match kind sigma t with
     | Rel i -> (
-        match lookup_rel i env |> get_name with
+        holes, match lookup_rel i env |> get_name with
         | Names.Name.Anonymous -> assert false
         | Names.Name.Name x -> DAst.make @@ GVar x
         | exception Not_found -> assert false)
     | Var x ->
         (* Discriminate between section variable and non-section variable *)
-        DAst.make
+        holes, DAst.make
           (try
              let _ = Environ.lookup_named x (snd env) in
              GRef (Names.GlobRef.VarRef x, None)
            with Not_found -> GVar x)
     | Meta _ -> assert false
-    | Evar _ -> mkGHole
-    | Sort s -> DAst.make @@ GSort (detype_sort keepunivs sigma (ESorts.kind sigma s))
-    | Cast (t, k, ty) -> DAst.make @@ GCast (aux env t, Some k, aux env ty)
+    | Evar (ev, _) ->
+        let b = Evar.Set.mem ev holes in
+        let s = Pp.string_of_ppcmds (Evar.print ev) in
+        Evar.Set.add ev holes, DAst.make Glob_term.(GHole (GNamedHole (b, Names.Id.of_string (String.sub s 1 (String.length s - 1)))))
+    | Sort s -> holes, DAst.make @@ GSort (detype_sort keepunivs sigma (ESorts.kind sigma s))
+    | Cast (t, k, ty) ->
+        let holes, t = aux env holes t in
+        let holes, ty = aux env holes ty in
+        holes, DAst.make @@ GCast (t, Some k, ty)
     | Prod (name, ty, t) ->
-        let name, _, gty, gt = detype_binder env name None ty t in
-        DAst.make @@ mkGProd sigma name Explicit gty gt
+        let holes, (name, _, gty, gt) = detype_binder env holes name None ty t in
+        holes, DAst.make @@ mkGProd sigma name Explicit gty gt
     | Lambda (name, ty, t) ->
-        let name, _, gty, gt = detype_binder env name None ty t in
-        DAst.make @@ mkGLambda sigma name Explicit gty gt
+        let holes, (name, _, gty, gt) = detype_binder env holes name None ty t in
+        holes, DAst.make @@ mkGLambda sigma name Explicit gty gt
     | LetIn (name, bo, ty, t) ->
-        let name, gbo, gty, gt = detype_binder env name (Some bo) ty t in
-        DAst.make @@ mkGLetIn sigma name Option.(get gbo) (Some gty) gt
-    | App (hd, args) -> DAst.make @@ GApp (aux env hd, CArray.map_to_list (aux env) args)
-    | Int i -> DAst.make @@ GInt i
-    | Float i -> DAst.make @@ GFloat i
+        let holes, (name, gbo, gty, gt) = detype_binder env holes name (Some bo) ty t in
+        holes, DAst.make @@ mkGLetIn sigma name Option.(get gbo) (Some gty) gt
+    | App (hd, args) ->
+        let holes, hd = aux env holes hd in
+        let holes, args = List.fold_left_map (aux env) holes (CArray.to_list args) in
+        holes, DAst.make @@ GApp (hd, args)
+    | Int i -> holes, DAst.make @@ GInt i
+    | Float i -> holes, DAst.make @@ GFloat i
     | Array (u, a, d, ty) ->
-        DAst.make @@ GArray (detype_instance keepunivs sigma u, CArray.map (aux env) a, aux env d, aux env ty)
-    | Const (c, u) -> DAst.make @@ GRef (Names.GlobRef.ConstRef c, detype_instance keepunivs sigma u)
-    | Ind (c, u) -> DAst.make @@ GRef (Names.GlobRef.IndRef c, detype_instance keepunivs sigma u)
-    | Construct (c, u) -> DAst.make @@ GRef (Names.GlobRef.ConstructRef c, detype_instance keepunivs sigma u)
+        let holes, a = CArray.fold_left_map (aux env) holes a in
+        let holes, d = aux env holes d in
+        let holes, ty = aux env holes ty in
+        holes, DAst.make @@ GArray (detype_instance keepunivs sigma u, a, d, ty)
+    | Const (c, u) -> holes, DAst.make @@ GRef (Names.GlobRef.ConstRef c, detype_instance keepunivs sigma u)
+    | Ind (c, u) -> holes, DAst.make @@ GRef (Names.GlobRef.IndRef c, detype_instance keepunivs sigma u)
+    | Construct (c, u) -> holes, DAst.make @@ GRef (Names.GlobRef.ConstructRef c, detype_instance keepunivs sigma u)
     | Proj (p, r, c) ->
         if Names.Projection.unfolded p then
           let open Names in
-          let c = aux env c in
+          let holes, c = aux env holes c in
           let id = Label.to_id @@ Projection.label p in
           let nargs, parg =
             try
@@ -630,13 +642,14 @@ let detype ?(keepunivs = false) env sigma t =
           let pat = DAst.make @@ PatCstr ((Projection.inductive p, 1), patargs, Anonymous) in
           let br = ([ id ], [ pat ], DAst.make @@ GVar id) in
           (* MatchStyle looks relatively heavy *)
-          DAst.make @@ GCases (LetPatternStyle, None, [ (c, (Anonymous, None)) ], [ CAst.make br ])
+          holes, DAst.make @@ GCases (LetPatternStyle, None, [ (c, (Anonymous, None)) ], [ CAst.make br ])
         else
           let pars = Names.Projection.npars p in
           let hole = DAst.make @@ GHole GInternalHole in
           let args = CList.make pars hole in
-          DAst.make
-          @@ GApp (DAst.make @@ GRef (Names.GlobRef.ConstRef (Names.Projection.constant p), None), args @ [ aux env c ])
+          let holes, c = aux env holes c in
+          holes, DAst.make
+          @@ GApp (DAst.make @@ GRef (Names.GlobRef.ConstRef (Names.Projection.constant p), None), args @ [ c ])
     | Fix (((vn, _) as nvn), (names, tys, bodies)) ->
         let env, names =
           list_map_acc
@@ -645,8 +658,8 @@ let detype ?(keepunivs = false) env sigma t =
             (CList.combine (names|> CArray.to_list) (tys |> CArray.to_list))
         in
         let n = Array.length tys in
-        let v = CArray.map3 (fun c t i -> share_names (i + 1) [] env c (Vars.lift n t)) bodies tys vn in
-        DAst.make
+        let holes, v = CArray.fold_left_map_i (fun i holes c -> share_names holes (vn.(i) + 1) [] env c (Vars.lift n tys.(i))) holes bodies in
+        holes, DAst.make
         @@ GRec
              ( GFix (Array.map (fun i -> Some i) (fst nvn), snd nvn),
                CArray.map_of_list (function Names.Name.Name x -> x | _ -> assert false) (List.map Context.binder_name names),
@@ -655,66 +668,71 @@ let detype ?(keepunivs = false) env sigma t =
                Array.map (fun (_, bd, _) -> bd) v )
     | CoFix _ -> nYI "cofix"
     | Case (ci, u, pms, p, iv, c, [| bl |]) when unknown_inductive = Names.GlobRef.IndRef ci.ci_ind ->
-        let tomatch = aux env c in
+        let holes, tomatch = aux env holes c in
         let map i br =
           let ctx, body = RobustExpand.branch (snd env) sigma (ci.ci_ind, i + 1) u pms br in
           EConstr.it_mkLambda_or_LetIn body ctx
         in
         let bl = map 0 bl in
-        let bl' = aux env bl in
+        let holes, bl' = aux env holes bl in
         let (nal, d) = decompose [] bl' in
   
-        DAst.make @@ GLetTuple (nal, ((*Anonymous,None*) Name (Names.Id.of_string "xxx"), Some mkGHole), tomatch, d)
-    | Case (ci, u, pms, p, iv, c, bl) -> detype_case env (ci, u, pms, p, iv, c, bl)
-    | s -> detype_primitive_string s
- and share_names n l env bo ty =
-    if n = 0 then (List.rev l, aux env bo, aux env ty)
+        holes, DAst.make @@ GLetTuple (nal, ((*Anonymous,None*) Name (Names.Id.of_string "xxx"), Some mkGHole), tomatch, d)
+    | Case (ci, u, pms, p, iv, c, bl) -> detype_case env holes (ci, u, pms, p, iv, c, bl)
+    | s -> holes, detype_primitive_string s
+ and share_names holes n l env bo ty =
+    if n = 0 then
+      let holes, bo = aux env holes bo in
+      let holes, ty = aux env holes ty in
+      holes, (List.rev l, bo, ty)
     else
       match (EConstr.kind sigma bo, EConstr.kind sigma ty) with
-      | LetIn (_, b, _, x), _ -> share_names n l env (Vars.subst1 b x) ty
-      | _, LetIn (_, b, _, x) -> share_names n l env bo (Vars.subst1 b x)
+      | LetIn (_, b, _, x), _ -> share_names holes n l env (Vars.subst1 b x) ty
+      | _, LetIn (_, b, _, x) -> share_names holes n l env bo (Vars.subst1 b x)
       | Lambda (na, lty, bo), Prod (na', _, ty) ->
           let na = Nameops.Name.pick_annot na na' in
           let decl = LocalAssum (na, lty) in
-          let lty = aux env lty in
+          let holes, lty = aux env holes lty in
           let env, na = push_rel decl env bo in
-          share_names (n - 1) (mk_glob_decl_g sigma na Explicit None lty :: l) env bo ty
+          share_names holes (n - 1) (mk_glob_decl_g sigma na Explicit None lty :: l) env bo ty
       | _, Prod (na, lty, ty) ->
           let decl = LocalAssum (na, lty) in
-          let lty = aux env lty in
+          let holes, lty = aux env holes lty in
           let env, na = push_occurring_rel decl env in
           let bo = mkApp (Vars.lift 1 bo, [| mkRel 1 |]) in
-          share_names (n - 1) (mk_glob_decl_g sigma na Explicit None lty :: l) env bo ty
+          share_names holes (n - 1) (mk_glob_decl_g sigma na Explicit None lty :: l) env bo ty
       | _ -> assert false
-  and detype_case env (ci, univs, params, p, iv, c, bl) =
+  and detype_case env holes (ci, univs, params, p, iv, c, bl) =
     let open Constr in
-    let tomatch = aux env c in
-    let tomatch =
+    let holes, tomatch = aux env holes c in
+    let holes, tomatch =
       let _, mip = Global.lookup_inductive ci.ci_ind in
       let hole = DAst.make @@ GHole GInternalHole in
       let indices = CList.make mip.mind_nrealargs hole in
       let t = EConstr.mkApp (EConstr.mkIndU (ci.ci_ind, univs), params) in
-      DAst.make @@ GCast (tomatch, None, Glob_ops.mkGApp (aux env t) indices)
+      let holes, t = aux env holes t in
+      holes, DAst.make @@ GCast (tomatch, None, Glob_ops.mkGApp t indices)
     in
 
-    let alias, aliastyp, pred =
+    let holes, (alias, aliastyp, pred) =
       let tags = get_ind_tags (snd env) ci p in
       let ctx, p = RobustExpand.return_clause (snd env) sigma ci.ci_ind univs params p in
       let p = EConstr.it_mkLambda_or_LetIn p ctx in
-      let p = aux env p in
+      let holes, p = aux env holes p in
       let nl, typ = it_destRLambda_or_LetIn_names tags p in
       let n, typ = get_GLambda_name_tgt typ in
       let aliastyp = if List.for_all (Names.Name.equal Anonymous) nl then None else Some (CAst.make (ci.ci_ind, nl)) in
-      (n, aliastyp, Some typ)
+      holes, (n, aliastyp, Some typ)
     in
     let constructs = Array.init (Array.length bl) (fun i -> (ci.ci_ind, i + 1)) in
-      let constagsl = get_cstr_tags (snd env) ci bl in
-      let eqnl = detype_eqns env constructs constagsl (ci, univs, params, bl) in
-      DAst.make @@ GCases (MatchStyle, pred, [ (tomatch, (alias, aliastyp)) ], eqnl)
-  and detype_eqns env constructs consnargsl bl =
+    let constagsl = get_cstr_tags (snd env) ci bl in
+    let holes, eqnl = detype_eqns env holes constructs constagsl (ci, univs, params, bl) in
+    holes, DAst.make @@ GCases (MatchStyle, pred, [ (tomatch, (alias, aliastyp)) ], eqnl)
+  and detype_eqns env holes constructs consnargsl bl =
     let ci, u, pms, bl = bl in
-    CArray.to_list (CArray.map3 (detype_eqn env u pms) constructs consnargsl bl)
-  and detype_eqn env u pms constr construct_nargs br =
+    let holes, l = CArray.fold_left_map_i (fun i holes c -> detype_eqn env holes u pms c consnargsl.(i) bl.(i)) holes constructs in
+    holes, CArray.to_list l
+  and detype_eqn env holes u pms constr construct_nargs br =
     let ctx, body = RobustExpand.branch (snd env) sigma constr u pms br in
     let branch = EConstr.it_mkLambda_or_LetIn body ctx in
     let make_pat decl env b ids =
@@ -722,25 +740,26 @@ let detype ?(keepunivs = false) env sigma t =
       let ids = match Context.binder_name na with Names.Name.Name x -> Names.Id.Set.add x ids | _ -> ids in
       (DAst.make (PatVar (Context.binder_name na)), env, ids)
     in
-    let rec buildrec ids patlist env n b =
+    let rec buildrec ids patlist env holes n b =
       if Int.equal n 0 then
-        CAst.make
-        @@ (Names.Id.Set.elements ids, [ DAst.make @@ PatCstr (constr, List.rev patlist, Anonymous) ], aux env b)
+        let holes, b = aux env holes b in
+        holes, CAst.make
+          @@ (Names.Id.Set.elements ids, [ DAst.make @@ PatCstr (constr, List.rev patlist, Anonymous) ], b)
       else
         match EConstr.kind sigma b with
         | Lambda (x, t, b) ->
             let pat, env, new_ids = make_pat (LocalAssum (x, t)) env b ids in
-            buildrec new_ids (pat :: patlist) env (pred n) b
+            buildrec new_ids (pat :: patlist) env holes (pred n) b
         | LetIn (x, b, t, b') ->
             let pat, env, new_ids = make_pat (LocalDef (x, b, t)) env b' ids in
-            buildrec new_ids (pat :: patlist) env (pred n) b'
+            buildrec new_ids (pat :: patlist) env holes (pred n) b'
         | _ -> assert false
     in
-    buildrec Names.Id.Set.empty [] env (List.length ctx) branch
+    buildrec Names.Id.Set.empty [] env holes (List.length ctx) branch
   in
 
-  let x = aux (names_of_env env, env) t in
-  x
+  let x = aux (names_of_env env, env) Evar.Set.empty t in
+  snd x
 
 [%%if coq = "9.0" || coq = "9.1"]
 let pr_constr_expr = Ppconstr.pr_constr_expr
