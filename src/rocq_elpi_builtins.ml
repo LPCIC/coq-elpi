@@ -2566,58 +2566,48 @@ phase unnecessary.|};
   MLDataC sort;
 
   MLCode(Pred("coq.sort.leq",
-    CInOut(B.ioargC_flex sort, "S1",
-    CInOut(B.ioargC_flex sort, "S2",
+    CIn(sort, "S1",
+    CIn(sort, "S2",
     Full(global, "constrains S1 <= S2"))),
-  (fun u1 u2 ~depth { options } _ -> grab_global_env "coq.sort.leq"
-  (fun state ->
-    match u1, u2 with
-    | Data u1, Data u2 ->
-        if Sorts.equal u1 u2 then Univ.ContextSet.empty, state, !: u1 +! u2,[]
-        else
-          let state, u2 = if true (* options.algunivs != Some true *)
-          then purge_algebraic_univs_sort state (EConstr.ESorts.make u2)
-          else state, u2 in
-        Univ.ContextSet.empty, add_universe_constraint state (constraint_leq u1 u2), !: u1 +! u2,[]
-    | _ -> err Pp.(str"coq.sort.leq: called with _ as argument")))),
+  (fun u1 u2 ~depth { options } _ -> grab_global_env "coq.sort.leq" (fun state ->
+    if Sorts.equal u1 u2 then Univ.ContextSet.empty, state, (),[]
+    else
+      let state, u2 = if true (* options.algunivs != Some true *)
+      then purge_algebraic_univs_sort state (EConstr.ESorts.make u2)
+      else state, u2 in
+    Univ.ContextSet.empty, add_universe_constraint state (constraint_leq u1 u2), (),[]))),
   DocAbove);
 
   MLCode(Pred("coq.sort.eq",
-    CInOut(B.ioargC_flex sort, "S1",
-    CInOut(B.ioargC_flex sort, "S2",
+    CIn(sort, "S1",
+    CIn(sort, "S2",
     Full(global, "constrains S1 = S2"))),
-  (fun u1 u2 ~depth { options } _ -> grab_global_env "coq.sort.eq"
-  (fun state ->
-    match u1, u2 with
-    | Data u1, Data u2 ->
-      if Sorts.equal u1 u2 then Univ.ContextSet.empty, state, !: u1 +! u2,[]
-      else
-        let state, u2 = if true (* options.algunivs != Some true *)
-        then purge_algebraic_univs_sort state (EConstr.ESorts.make u2)
-        else state, u2 in
-        Univ.ContextSet.empty, add_universe_constraint state (constraint_eq u1 u2), !: u1 +! u2, []
-    | _ -> err Pp.(str"coq.sort.eq: called with _ as argument")))),
+  (fun u1 u2 ~depth { options } _ -> grab_global_env "coq.sort.eq" (fun state ->
+    if Sorts.equal u1 u2 then Univ.ContextSet.empty, state, (),[]
+    else
+      let state, u2 = if true (* options.algunivs != Some true *)
+      then purge_algebraic_univs_sort state (EConstr.ESorts.make u2)
+      else state, u2 in
+      Univ.ContextSet.empty, add_universe_constraint state (constraint_eq u1 u2), (), []))),
   DocAbove);
 
   MLCode(Pred("coq.sort.sup",
-    CInOut(B.ioargC_flex sort, "S1",
-    CInOut(B.ioargC_flex sort, "S2",
+    CIn(sort, "S1",
+    CIn(sort, "S2",
     Full(global,  "constrains S2 = S1 + 1"))),
-  (fun u1 u2 ~depth _ _ state ->
-    match u1, u2 with
-    | Data u1, Data u2 -> univ_super state u1 u2, !: u1 +! u2, []
-    | _ -> err Pp.(str"coq.sort.sup: called with _ as argument"))),
+  (fun u1 u2 ~depth _ _ state -> univ_super state u1 u2, (), [])),
   DocAbove);
 
   MLCode(Pred("coq.sort.pts-triple",
-    CInOut(B.ioargC_flex sort, "S1",
-    CInOut(B.ioargC_flex sort, "S2",
-    COut(sort, "S3",
+    CIn(sort, "S1",
+    CIn(sort, "S2",
+    CInOut(B.ioargC_flex sort, "S3",
     Full(global,  "constrains S3 = sort of product with domain in S1 and codomain in S2")))),
-  (fun u1 u2 _ ~depth _ _ state ->
-    match u1, u2 with
-    | Data u1, Data u2 -> let state, u3 = univ_product state u1 u2 in state, !: u1 +! u2 +! u3, []
-    | _ -> err Pp.(str"coq.sort.pts-triple: called with _ as argument"))),
+  (fun u1 u2 u3 ~depth _ _ state ->
+    let state, u3' = univ_product state u1 u2 in 
+    match u3 with
+    | NoData -> state, !: u3', []
+    | Data u3 -> add_universe_constraint state (constraint_eq u3 u3'), ?: None, [])),
     DocAbove);
 
   MLCode(Pred("coq.univ.print",

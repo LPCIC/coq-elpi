@@ -50,7 +50,7 @@ pred unif i:term, i:stack, i:term, i:stack, i:bool, i:cumul.
 unif X CX Y CY D M :-
   coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
 
-pred swap i:bool, i:(A -> A -> prop), i:A, i:A.
+func swap bool, (func A, A -> ), A, A -> .
 swap tt F A B :- F B A.
 swap ff F A B :- F A B.
 
