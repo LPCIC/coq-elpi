@@ -1006,17 +1006,17 @@ external symbol sprop : sort.         % impredicative sort of propositions with 
 external symbol typ   : univ -> sort. % predicative sort of data (carries a universe level)
 
 % [coq.sort.leq S1 S2] constrains S1 <= S2
-external func coq.sort.leq -> sort, sort.
+external func coq.sort.leq sort, sort.
 
 % [coq.sort.eq S1 S2] constrains S1 = S2
-external func coq.sort.eq -> sort, sort.
+external func coq.sort.eq sort, sort.
 
 % [coq.sort.sup S1 S2] constrains S2 = S1 + 1
-external func coq.sort.sup -> sort, sort.
+external func coq.sort.sup sort, sort.
 
 % [coq.sort.pts-triple S1 S2 S3] constrains S3 = sort of product with domain
 % in S1 and codomain in S2
-external func coq.sort.pts-triple -> sort, sort, sort.
+external func coq.sort.pts-triple sort, sort -> sort.
 
 % [coq.univ.print] prints the set of universe constraints
 external func coq.univ.print.
