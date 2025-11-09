@@ -24,13 +24,19 @@ type raw_indt_decl = Vernacentries.Preprocessed_Mind_decl.inductive
 type glob_indt_decl = Genintern.glob_sign * raw_indt_decl
 type top_indt_decl = Geninterp.interp_sign * glob_indt_decl
 
+[%%if coq = "9.0" || coq = "9.1"]
+type raw_red_expr = Genredexpr.raw_red_expr
+[%%else]
+type raw_red_expr = Redexpr.raw_red_expr
+[%%endif]
+
 type raw_constant_decl = {
   name : qualified_name;
   atts : Attributes.vernac_flags;
   udecl : Constrexpr.universe_decl_expr option;
   typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
   body : Constrexpr.constr_expr option;
-  red : Genredexpr.raw_red_expr option;
+  red : raw_red_expr option;
 }
 val pr_raw_constant_decl : Environ.env -> Evd.evar_map -> raw_constant_decl -> Pp.t
 type glob_constant_decl = Genintern.glob_sign * raw_constant_decl
