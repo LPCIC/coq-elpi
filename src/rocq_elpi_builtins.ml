@@ -61,7 +61,7 @@ let with_pp_options o f =
         Constrextern.print_parentheses := true;
         Constrextern.print_projections := false;
         Detyping.print_evar_arguments := false;
-        Constrextern.with_meta_as_hole f
+        f
     | Normal ->
         (* If no preference is given, we print using Coq's current value *)
         f
