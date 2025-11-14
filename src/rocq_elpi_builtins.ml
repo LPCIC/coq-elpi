@@ -38,7 +38,7 @@ let string_of_ppcmds options pp =
 
 let with_pp_options o f =
   let raw_print = !Flags.raw_print in
-  let print_universes = !Constrextern.print_universes in
+  let print_universes = !Detyping.print_universes in
   let print_no_symbol = !Constrextern.print_no_symbol in
   (* 8.14 let print_primitive_token = !Constrextern.print_primitive_token in*)
   let print_implicits = !Constrextern.print_implicits in
@@ -53,7 +53,7 @@ let with_pp_options o f =
         f
     | Most ->
         Flags.raw_print := false;
-        Constrextern.print_universes := false;
+        Detyping.print_universes := false;
         Constrextern.print_no_symbol := true;
         (* 8.14 Constrextern.print_primitive_token := true; *)
         Constrextern.print_implicits := true;
@@ -69,7 +69,7 @@ let with_pp_options o f =
   try
     let rc = f () in
     Flags.raw_print := raw_print;
-    Constrextern.print_universes := print_universes;
+    Detyping.print_universes := print_universes;
     Constrextern.print_no_symbol := print_no_symbol;
     (* 8.14 Constrextern.print_primitive_token := print_primitive_token; *)
     Constrextern.print_implicits := print_implicits;
@@ -80,7 +80,7 @@ let with_pp_options o f =
     rc
   with reraise ->
     Flags.raw_print := raw_print;
-    Constrextern.print_universes := print_universes;
+    Detyping.print_universes := print_universes;
     Constrextern.print_no_symbol := print_no_symbol;
     (* 8.14 Constrextern.print_primitive_token := print_primitive_token; *)
     Constrextern.print_implicits := print_implicits;
