@@ -115,7 +115,7 @@ let pr_econstr_env options env sigma t =
 let tactic_mode : bool State.component = State.declare_component ~name:"rocq-elpi:tactic-mode" ~descriptor:interp_state
   ~pp:(fun fmt x -> Format.fprintf fmt "%b" x)
   ~init:(fun () -> false)
-  ~start:(fun x -> x) ()  
+  ~start:(fun x -> x) ()
 
 let base =
   API.State.declare_component ~name:"rocq-elpi:base" ~descriptor:interp_state
@@ -153,7 +153,7 @@ let grab_global_env_drop_sigma_keep_univs api thunk = (); (fun state ->
     Rocq_elpi_utils.err Pp.(strbrk ("API " ^ api ^ " cannot be used in tactics"));
   let uctx, state, result, gls = thunk state in
   Rocq_elpi_HOAS.grab_global_env_drop_sigma_keep_univs ~uctx state, result, gls)
-  
+
 let bool = B.bool
 let int = B.int
 let list = B.list
@@ -391,6 +391,14 @@ let abbreviation_find_interp = Abbreviation.find_interp
 let abbreviation_declare = Abbreviation.declare
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1"]
+let for_scheme = function
+| GlobRef.ConstRef c -> c
+| _ -> U.type_error "Register Scheme: expecing a constant."
+[%%else]
+let for_scheme gr = gr
+[%%endif]
+
 let cs_pattern =
   let open Conv in let open API.AlgebraicData in let open Structures.ValuePattern in declare {
   ty = TyName "cs-pattern";
@@ -486,16 +494,16 @@ let get_instance_prio env class_gr inst_gr =
     (* since we have not a "find" API in Hints.Hint_db to get the value associated to a class gref
        we iterate over the list until finding the wanted result *)
        (* complexity: O(N) where N is the number of typeclasses *)
-    Hints.Hint_db.iter (fun gro _ fh -> 
-      Option.iter (fun gr -> 
-      if Environ.QGlobRef.equal env gr class_gr then 
+    Hints.Hint_db.iter (fun gro _ fh ->
+      Option.iter (fun gr ->
+      if Environ.QGlobRef.equal env gr class_gr then
       (full_hint := Some fh; raise STOP)) gro) db;
   with STOP -> ());
   match !full_hint with
   (* None means that we cannot find the class gref in the db *)
   | None -> err Pp.(str"Cannot find the gref" ++ GlobRef.print class_gr ++ str" in typeclass_instances: is it a valid typeclass?")
   | Some full_hint ->
-    let same_inst e = 
+    let same_inst e =
       match Hints.FullHint.name e with
       | Some hint_name when Environ.QGlobRef.equal env hint_name inst_gr -> Some (Hints.FullHint.priority e)
       | _ -> None
@@ -503,38 +511,38 @@ let get_instance_prio env class_gr inst_gr =
     (* We look in the list of hint for the one associated to inst_gr, if it does not exists: error *)
     (* complexity: O(N) where N is the number of instances of class_gr *)
     match List.find_map same_inst full_hint with
-    | None -> err Pp.(str"Cannot find the priority of " ++ GlobRef.print inst_gr ++ 
-                    str": either it is not an instance of " ++ GlobRef.print class_gr ++ 
+    | None -> err Pp.(str"Cannot find the priority of " ++ GlobRef.print inst_gr ++
+                    str": either it is not an instance of " ++ GlobRef.print class_gr ++
                     str" or it is not stored as a hint in typeclasses_instances")
     | Some e -> e
 
 let get_instance env class_gr inst_gr : type_class_instance =
-  let priority = get_instance_prio env class_gr inst_gr in 
+  let priority = get_instance_prio env class_gr inst_gr in
   { implementation = inst_gr; priority }
 
 let warning_tc_hints = CWarnings.create ~name:"elpi.TC.hints" ~category:elpi_cat Pp.str
 
 
-let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list = 
-  let hint_db = Hints.searchtable_map "typeclass_instances" in 
-  let secvars : Names.Id.Pred.t = Names.Id.Pred.full in 
-  let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in 
+let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list =
+  let hint_db = Hints.searchtable_map "typeclass_instances" in
+  let secvars : Names.Id.Pred.t = Names.Id.Pred.full in
+  let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in
   (* let hint_asts = List.map Hints.FullHint.repr full_hints in  *)
   let hints = List.filter_map (fun (e : Hints.FullHint.t) -> match Hints.FullHint.repr e with
     | Hints.Res_pf a | ERes_pf a | Give_exact a -> Some a (* Respectively Hint Apply | EApply | Exact *)
-    | Extern _ -> 
-      warning_tc_hints (Printf.sprintf "There is an hint extern in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
+    | Extern _ ->
+      warning_tc_hints (Printf.sprintf "There is an hint extern in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e));
       None
     | Res_pf_THEN_trivial_fail _ -> (* Hint Immediate *)
-      warning_tc_hints (Printf.sprintf "There is an hint immediate in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
+      warning_tc_hints (Printf.sprintf "There is an hint immediate in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e));
       None
-    | Unfold_nth _ -> 
-      warning_tc_hints (Printf.sprintf "There is an hint unfold in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e)); 
-      None) full_hints in 
-  let constrs = List.map (fun a -> Hints.hint_as_term a |> snd) hints in 
+    | Unfold_nth _ ->
+      warning_tc_hints (Printf.sprintf "There is an hint unfold in the typeclass db: \n%s" (Pp.string_of_ppcmds @@ Hints.FullHint.print env sigma e));
+      None) full_hints in
+  let constrs = List.map (fun a -> Hints.hint_as_term a |> snd) hints in
   (* Printer.pr_global tc |> Pp.string_of_ppcmds |> Printf.printf "%s\n"; *)
   let instances_grefs = List.filter_map (fun e ->
-    match EConstr.kind sigma e with 
+    match EConstr.kind sigma e with
     | Constr.Ind (a, _) -> Some (Names.GlobRef.IndRef a)
     | Constr.Const (a, _) -> Some (Names.GlobRef.ConstRef a)
     | Constr.Construct (a, _) -> Some (Names.GlobRef.ConstructRef a)
@@ -555,7 +563,7 @@ let global_push_context_set x = Global.push_context_set x
 
 let err_if_contains_alg_univ ~depth t =
   let env = Global.env () in
-  let is_global u = 
+  let is_global u =
     match Univ.Universe.level u with
     | None -> true
     | Some l -> is_global_level env l in
@@ -575,7 +583,7 @@ let err_if_contains_alg_univ ~depth t =
   in
   let univs = aux ~depth Univ.Universe.Set.empty t in
   univs
-  
+
 let preprocess_clause ~depth clause =
   let levels_to_abstract = err_if_contains_alg_univ ~depth clause in
   let levels_to_abstract_no = Univ.Universe.Set.cardinal levels_to_abstract in
@@ -595,7 +603,7 @@ let preprocess_clause ~depth clause =
     | E.UnifVar _ -> CErrors.user_err Pp.(str"The clause begin accumulated contains unification variables, this is forbidden. You must quantify them out using 'pi'.")
     | E.Const _ | E.Nil | E.CData _ -> t
     in
-  let clause = 
+  let clause =
     let rec bind d map = function
      | [] ->
          subst ~depth:d map
@@ -623,7 +631,7 @@ let argument_mode = let open Conv in let open API.AlgebraicData in declare {
         M (fun ~ok ~ko -> function `Output -> ok | _ -> ko ()));
   ]
 } |> CConv.(!<)
-  
+
 
 let set_accumulate_text_to_db_interp, get_accumulate_text_to_db_interp =
   let f = ref (fun ~loc:_ _ _ _ -> assert false) in
@@ -767,7 +775,7 @@ let module_item = let open API.AlgebraicData in declare {
       M (fun ~ok ~ko -> function FunctorType(s,a) -> ok s a | _ -> ko ()));
   ]
 } |> CConv.(!<)
-  
+
 
 let warning = CWarnings.create ~name:"lib" ~category:elpi_cat Pp.str
 
@@ -802,7 +810,7 @@ let gr2id state gr =
       let env = get_global_env state in
       let { mind_packets } = Environ.lookup_mind i env in
       (Id.to_string (mind_packets.(k).mind_consnames.(j-1)))
-        
+
 let ppbox = let open Conv in let open Pp in let open API.AlgebraicData in declare {
   ty = TyName "coq.pp.box";
   doc = {|Coq box types for pretty printing:
@@ -1053,7 +1061,7 @@ let goption_set name value =
   | StringOptValue None -> Goptions.unset_option_value_gen name
   | StringOptValue (Some x) -> Goptions.set_string_option_value name x
   | StringValue _ -> assert false
-    
+
 let cache_goption_declaration (depr,key,value) =
   let open Goptions in
   if is_available_option key <> None then goption_set key value else
@@ -1205,7 +1213,7 @@ let scheme_kind = let open API.AlgebraicData in declare {
   ty = Conv.TyName "coq.register.scheme-kind";
   doc = "Coq scheme kind (currently undocumented in Rocq)";
   pp = (fun fmt k -> Format.fprintf fmt "%s" (string_of_scheme_kind k));
-  constructors = 
+  constructors =
   List.map (fun k ->
     let s = string_of_scheme_kind k in
     K("coq.register.scheme."^s,"",N,B k,M (fun ~ok ~ko x -> if x = k then ok else ko ()))
@@ -1568,7 +1576,7 @@ line option|}))),
       match args with
       | [] -> None, args
       | x :: rest ->
-        match E.look ~depth x with 
+        match E.look ~depth x with
         | E.CData x when API.RawOpaqueData.is_loc x ->
           let loc = API.RawOpaqueData.to_loc x in
           Some loc, args
@@ -1601,7 +1609,7 @@ let coq_locate_builtins =
     LPDoc "-- Environment: names -----------------------------------------------";
     LPDoc {|To make the API more precise we use different data types for the names of global objects.
 Note: [ctype "bla"] is an opaque data type and by convention it is written [@bla].|};
-  
+
     MLData constant;
     MLData inductive;
     MLData constructor;
@@ -1772,7 +1780,7 @@ Supported attributes:
     let co  = mind.mind_finite <> Declarations.CoFinite in
     let lno = mind.mind_nparams in
     let luno = mind.mind_nparams_rec in
-    let uinst, state, extra_goals = handle_uinst_option_for_inductive ~depth options i state in    
+    let uinst, state, extra_goals = handle_uinst_option_for_inductive ~depth options i state in
     let arity = if_keep arity (fun () ->
       Inductive.type_of_inductive (ind,uinst)
       |> EConstr.of_constr) in
@@ -1793,7 +1801,7 @@ Supported attributes:
 % - @uinstance! I (default: fresh instance I)|}))),
   (fun i _ ~depth { env; options } _ state  ->
      let mind, indbo = lookup_inductive env i in
-     let uinst, state, extra_goals = handle_uinst_option_for_inductive ~depth options i state in    
+     let uinst, state, extra_goals = handle_uinst_option_for_inductive ~depth options i state in
      let knames = CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args) (fun k -> GlobRef.ConstructRef(i,k+1))) in
      let k_impls = List.map (fun x -> Impargs.extract_impargs_data (Impargs.implicits_of_global x)) knames in
      let hd x = match x with [] -> [] | (_,x) :: _ -> List.map implicit_kind_of_status x in
@@ -1930,7 +1938,7 @@ regarded as not non-informative).|})),
         | GlobRef.VarRef _ -> assert false
       else raise No_clause)),
   DocAbove);
-  
+
   MLCode(Pred("coq.env.const",
     In(constant,  "GR",
     COut(!>> option closed_ground_term, "Bo",
@@ -2110,14 +2118,14 @@ Supported attributes:
     coq.warning "elpi.deprecated" "elpi.const-opaque" "use coq.env.opaque? in place of coq.env.const-opaque?",
     coq.env.opaque? C.
   |};
- 
+
   LPCode {|% Deprecated, use coq.env.primitive?
   pred coq.env.const-primitive? i:constant.
   coq.env.const-primitive? C :-
     coq.warning "elpi.deprecated" "elpi.const-primitive" "use coq.env.primitive? in place of coq.env.const-primitive?",
     coq.env.primitive? C.
   |};
- 
+
   LPDoc "-- Environment: write -----------------------------------------------";
 
   LPDoc ("Note: (monomorphic) universe constraints are taken from ELPI's constraints "^
@@ -2199,7 +2207,7 @@ Supported attributes:
            (Option.default (EConstr.mkRel 1) types |> universes_of_term state) in
        let used = Univ.Level.Set.union used (universes_of_udecl state udecl) in
        let sigma = restricted_sigma_of used state in
-   
+
        let gr, uctx = declare_definition uctx options.using ~cinfo ~info ~opaque ~body sigma in
        let () =
         let lid = CAst.make ~loc:(to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state) (Id.of_string id) in
@@ -2264,7 +2272,7 @@ Supported attributes:
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forget to call coq.typecheck-indt-decl?");
      let primitive_expected = match record_info with Some(p, _) -> p | _ -> false in
-     let (uentry, uentry', ubinders) = 
+     let (uentry, uentry', ubinders) =
        let open Entries in
        match me.mind_entry_universes with
        | Monomorphic_ind_entry -> (Monomorphic_entry, UState.Monomorphic_entry uctx, univ_binders)
@@ -2397,7 +2405,7 @@ coq.env.begin-module-type Name :-
       let state, mp = Rocq_elpi_builtins_synterp.SynterpAction.pop_ApplyModule (name,mp,f,arguments,inline) state in
       Univ.ContextSet.empty, state, ?: mp, []))),
   DocNext);
-  
+
   MLCode(Pred("coq.env.apply-module-type-functor",
     In(id, "The name of the new module type",
     In(B.unspec modtypath, "The functor (optional)",
@@ -2493,7 +2501,7 @@ denote the same x as before.|};
     Read (global, "if the constant is a projection, returns the number of parameters of its record."))),
     (fun c _ ~depth _ _ state ->
       let env = get_global_env state in
-      let c = match c with Constant t -> t | _ -> raise No_clause in 
+      let c = match c with Constant t -> t | _ -> raise No_clause in
       try !: ((find_structure_from_projection env c).nparams)
       with Not_found -> raise No_clause)),
   DocAbove);
@@ -2611,7 +2619,7 @@ phase unnecessary.|};
     CInOut(B.ioargC_flex sort, "S3",
     Full(global,  "constrains S3 = sort of product with domain in S1 and codomain in S2")))),
   (fun u1 u2 u3 ~depth _ _ state ->
-    let state, u3' = univ_product state u1 u2 in 
+    let state, u3' = univ_product state u1 u2 in
     match u3 with
     | NoData -> state, !: u3', []
     | Data u3 -> add_universe_constraint state (constraint_eq u3 u3'), ?: None, [])),
@@ -2738,7 +2746,7 @@ phase unnecessary.|};
       let s = Univ.Level.Set.fold UnivLevelSet.add s UnivLevelSet.empty in
       state, !: s, [])),
   DocAbove);
- 
+
   LPDoc "-- Universe instance (for universe polymorphic global terms) ------";
 
   LPDoc {|As of today a universe polymorphic constant can only be instantiated
@@ -2876,7 +2884,7 @@ declared as cumulative.|};
       | NoData, Data q -> !: Projection.(make (repr q) false) +? None
       )),
     DocAbove);
-    
+
   MLCode(Pred("coq.pstring->string",
     In(Rocq_elpi_utils.pstring,"PS",
     Out(B.string,"S",
@@ -2969,15 +2977,15 @@ Supported attributes:
     In(B.list (pair (B.poly "A") (B.list (B.poly "A"))), "Graph",
     Out(B.list (B.poly "A"), "Nodes in toposort order",
     Read(global,"takes a graph and returns the nodes in topological order"))),
-  (fun graph _ ~depth { options } _ _ -> 
-    let graph = Rocq_elpi_graph.Graph.build graph in 
-    let topo_sort = Rocq_elpi_graph.Graph.topo_sort graph in 
+  (fun graph _ ~depth { options } _ _ ->
+    let graph = Rocq_elpi_graph.Graph.build graph in
+    let topo_sort = Rocq_elpi_graph.Graph.topo_sort graph in
     (* Rocq_elpi_graph.Graph.print string_of_int graph; *)
     !: topo_sort)),
   DocAbove);
 
   MLData tc_instance;
- 
+
   MLCode(Pred("coq.TC.declare-instance",
     In(gref, "GR",
     In(int,  "Priority",
@@ -2997,7 +3005,7 @@ Supported attributes:
     Read(global, "reads all type class instances")),
   (fun _ ~depth { env } _ state ->
     let sigma = get_sigma state in
-    let x = Typeclasses.typeclasses () in 
+    let x = Typeclasses.typeclasses () in
     let classes = List.map (fun x -> x.Typeclasses.cl_impl) x in
     !: (classes |> List.map (get_instances env sigma) |> List.concat))),
   DocAbove);
@@ -3006,19 +3014,19 @@ Supported attributes:
     Out(list gref, "TypeClasses",
     Easy "reads all type classes"),
   (fun _ ~depth -> !: (
-    let x = Typeclasses.typeclasses () in 
-    let l = List.map (fun x -> x.Typeclasses.cl_impl) x in 
+    let x = Typeclasses.typeclasses () in
+    let l = List.map (fun x -> x.Typeclasses.cl_impl) x in
     l))),
   DocAbove);
 
-  MLCode(Pred("coq.TC.db-for", 
+  MLCode(Pred("coq.TC.db-for",
     In(gref, "GR",
     Out(list tc_instance,  "InstanceList",
     Read (global, "reads all instances of the given class GR. Instances are in their precedence order."))),
   (fun gr _ ~depth { env } _ state -> !: (get_instances env (get_sigma state) gr))),
   DocAbove);
 
-  MLCode(Pred("coq.TC.get-inst-prio", 
+  MLCode(Pred("coq.TC.get-inst-prio",
     In(gref, "ClassGR",
     In(gref, "InstGR",
     Out(int, "InstPrio",
@@ -4001,7 +4009,7 @@ Supported attributes:
         sigma in
 
        Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
-       
+
        let state, assignments = set_current_sigma ~depth state sigma in
 
        (* universe constraints fixed by the code above*)
@@ -4066,7 +4074,7 @@ Supported attributes:
     In(B.list B.string,"Option",
     Out(B.bool,"Deprecated",
     Easy "checks if Option exists and tells if is deprecated (tt) or not (ff)")),
-  (fun name _ ~depth -> 
+  (fun name _ ~depth ->
       match is_available_option name with
       | None -> raise No_clause
       | Some e -> !: e)
@@ -4084,7 +4092,7 @@ This call cannot be undone in a Coq interactive session, use it once
 and for all in a .v file which your clients will load. Eg.
 
   Elpi Query lp:{{ coq.option.add ... }}.
-  
+
 |}))),
   (fun key value depr ~depth ->
     let depr = Option.default false @@ unspec2opt depr in
@@ -4212,7 +4220,7 @@ Supported attributes:
       let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
       Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl)) in
      let s = Pp.(repr @@ with_pp_options proof_context.options.pp (fun () ->
-        v 0 @@ 
+        v 0 @@
         pr_named_context_of proof_context.env sigma ++ cut () ++
         str "======================" ++ cut () ++
         Printer.pr_econstr_env proof_context.env sigma
@@ -4242,16 +4250,12 @@ Supported attributes:
         register_ref local x gr;
         state, (), []
       | Scheme(x,k) ->
-        let gr = match gr with
-        | ConstRef c -> c
-        | _ -> U.type_error "Register Scheme: expecing a constant."
-        in
         let k = string_of_scheme_kind k in
          let ind =
           match x with
           | GlobRef.IndRef i -> i
           | _ -> U.type_error "Register_scheme: expecting an inductive" in
-        declare_scheme local k (ind,gr);
+        declare_scheme local k (ind,for_scheme gr);
         state, (), []
       )),
   DocAbove);
@@ -4360,7 +4364,7 @@ Supported attributes:
         match args with
         | [] -> state, !: (E.mkGlobal c), []
         | x :: xs -> state, !: (E.mkApp c x xs), []
-      with Not_found -> U.type_error ("predicate name expected, got " ^ name) 
+      with Not_found -> U.type_error ("predicate name expected, got " ^ name)
       )),
   DocAbove);
 
