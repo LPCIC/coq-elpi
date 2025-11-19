@@ -36,6 +36,8 @@ let string_of_ppcmds options pp =
   Format.pp_print_flush fmt ();
   Buffer.contents b
 
+
+[%%if coq = "9.0" || coq = "9.1"]
 let with_pp_options o f =
   let raw_print = !Flags.raw_print in
   let print_universes = !Detyping.print_universes in
@@ -90,6 +92,52 @@ let with_pp_options o f =
     Detyping.print_evar_arguments := print_evar_arguments;
     raise reraise
 
+let extern_constr_flagged () = Constrextern.extern_constr
+let pr_constr_expr_n_flagged () = Ppconstr.pr_constr_expr_n
+let pr_econstr_env_flagged () = Printer.pr_econstr_env
+let pr_named_decl_flagged () = Printer.pr_named_decl
+let empty_extern_env () = Constrextern.empty_extern_env
+[%%else]
+let flags_of_pp_options o =
+  let flags = PrintingFlags.current() in
+  match o with
+  | Normal -> flags
+  | All -> {
+      detype = { flags.detype with raw = true };
+      extern = { flags.extern with raw = true };
+    }
+  | Most -> {
+      detype = {
+        flags.detype with
+        raw = false;
+        universes = false;
+        evar_instances = false;
+      };
+      extern = {
+        flags.extern with
+        raw = false;
+        notations = false;
+        implicits = true;
+        coercions = true;
+        parentheses = true;
+        projections = false;
+      };
+    }
+
+let with_pp_options o f =
+  f (flags_of_pp_options o)
+
+let extern_constr_flagged flags env sigma c =
+  Constrextern.extern_constr ~flags env sigma c
+let pr_constr_expr_n_flagged flags env sigma lev expr =
+  Ppconstr.pr_constr_expr_n ~flags:(Ppconstr.of_printing_flags flags) env sigma lev expr
+let pr_econstr_env_flagged flags env sigma c =
+  Printer.pr_econstr_env ~flags env sigma c
+let pr_named_decl_flagged flags env sigma d =
+  Printer.pr_named_decl ~flags env sigma d
+let empty_extern_env () = Constrextern.empty_extern_env ~flags:(PrintingFlags.Extern.current())
+[%%endif]
+
 let with_no_tc ~no_tc f sigma =
   if no_tc then
     let typeclass_evars = Evd.get_typeclass_evars sigma in
@@ -103,14 +151,14 @@ let with_no_tc ~no_tc f sigma =
   else f sigma
 
 let pr_econstr_env options env sigma t =
-  with_pp_options options.pp (fun () ->
-    let expr = Constrextern.extern_constr env sigma t in
+  with_pp_options options.pp (fun flags ->
+    let expr = extern_constr_flagged flags env sigma t in
     let expr =
       let rec aux () ({ CAst.v } as orig) = match v with
       | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None)
       | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
       if options.hoas_holes = Some Heuristic then aux () expr else expr in
-    Ppconstr.pr_constr_expr_n env sigma options.pplevel expr)
+    pr_constr_expr_n_flagged flags env sigma options.pplevel expr)
 
 let tactic_mode : bool State.component = State.declare_component ~name:"rocq-elpi:tactic-mode" ~descriptor:interp_state
   ~pp:(fun fmt x -> Format.fprintf fmt "%b" x)
@@ -1007,7 +1055,8 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
       | Rocq_elpi_arg_HOAS.Tac.Int _ as t -> t
       | Rocq_elpi_arg_HOAS.Tac.String _ as t -> t
       | Rocq_elpi_arg_HOAS.Tac.Term (t,_) ->
-        let expr = Constrextern.extern_glob_constr Constrextern.empty_extern_env t in
+        let eenv = empty_extern_env () in
+        let expr = Constrextern.extern_glob_constr eenv t in
         let rec aux () ({ CAst.v } as orig) = match v with
         | Constrexpr.CEvar _ -> CAst.make @@ Constrexpr.CHole(None)
         | _ -> Constrexpr_ops.map_constr_expr_with_binders (fun _ () -> ()) aux () orig in
@@ -4215,15 +4264,15 @@ Supported attributes:
 - @holes! (default: false, prints evars as _)|}))),
   (fun (proof_context,evar,args) _ ~depth _ _ state ->
      let sigma = get_sigma state in
-     let pr_named_context_of env sigma =
-      let make_decl_list env d pps = Printer.pr_named_decl env sigma d :: pps in
+     let pr_named_context_of flags env sigma =
+      let make_decl_list env d pps = pr_named_decl_flagged flags env sigma d :: pps in
       let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
       Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl)) in
-     let s = Pp.(repr @@ with_pp_options proof_context.options.pp (fun () ->
-        v 0 @@
-        pr_named_context_of proof_context.env sigma ++ cut () ++
+     let s = Pp.(repr @@ with_pp_options proof_context.options.pp (fun flags ->
+        v 0 @@ 
+        pr_named_context_of flags proof_context.env sigma ++ cut () ++
         str "======================" ++ cut () ++
-        Printer.pr_econstr_env proof_context.env sigma
+        pr_econstr_env_flagged flags proof_context.env sigma
           Evd.(evar_concl @@ find_undefined sigma evar))) in
      state, !: s, [])),
   DocAbove);

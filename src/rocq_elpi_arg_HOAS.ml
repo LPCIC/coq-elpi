@@ -193,7 +193,7 @@ let pr_arg f g h i j x = match x with
 
 let pp_raw env sigma : raw -> Pp.t =
   pr_arg
-    (Ppconstr.pr_constr_expr env sigma)
+    (pr_constr_expr env sigma)
     (pr_raw_record_decl env sigma)
     (pr_raw_indt_decl env sigma)
     (pr_raw_constant_decl env sigma)
@@ -201,7 +201,7 @@ let pp_raw env sigma : raw -> Pp.t =
 
 let pr_glob_constr_and_expr env sigma = function
   | (_, Some c) ->
-    Ppconstr.pr_constr_expr env sigma c
+    pr_constr_expr env sigma c
   | (c, None) ->
     Printer.pr_glob_constr_env env sigma c
 
@@ -595,7 +595,7 @@ let pr_arg f k t x = match x with
 
 let pr_glob_constr_and_expr env sigma = function
   | (_, Some c) ->
-    Ppconstr.pr_constr_expr env sigma c
+    pr_constr_expr env sigma c
   | (c, None) ->
     Printer.pr_glob_constr_env env sigma c
 
@@ -603,7 +603,7 @@ let _pr_glob_constr = Printer.pr_glob_constr_env
 
 let pp_raw env sigma : raw -> Pp.t =
   pr_arg
-    (Ppconstr.pr_constr_expr env sigma)
+    (pr_constr_expr env sigma)
     (pr_raw_ltac_arg env sigma)
     (pr_raw_ltac_tactic env sigma)
     
