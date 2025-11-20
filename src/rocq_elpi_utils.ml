@@ -742,8 +742,16 @@ let detype ?(keepunivs = false) env sigma t =
   let x = aux (names_of_env env, env) t in
   x
 
+[%%if coq = "9.0" || coq = "9.1"]
+let pr_constr_expr = Ppconstr.pr_constr_expr
+let detype_closed_glob = Detyping.detype_closed_glob
+[%%else]
+let pr_constr_expr env sigma c = Ppconstr.pr_constr_expr ~flags:(Ppconstr.current_flags()) env sigma c
+let detype_closed_glob env sigma c = Detyping.detype_closed_glob ~flags:(PrintingFlags.Detype.current()) env sigma c
+[%%endif]
+
 let detype_closed_glob env sigma closure =
-  let gbody = Detyping.detype_closed_glob env sigma closure in
+  let gbody = detype_closed_glob env sigma closure in
   fix_detype gbody
 
 [%%if coq = "9.0" || coq = "9.1"]
