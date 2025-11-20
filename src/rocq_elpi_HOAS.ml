@@ -3001,6 +3001,18 @@ let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~fin
   }
   in
   ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~flags
+[%%elif coq = "9.1"]
+let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite ~ctx_params ~env_ar_params =
+  let flags = {
+    ComInductive.poly;
+    cumulative;
+    template = Some false;
+    finite;
+    mode = None;
+  }
+  in
+  let env_ar = Environ.pop_rel_context (List.length ctx_params) env_ar_params in
+  ComInductive.interp_mutual_inductive_constr ~arities_explicit:[true] ~template_syntax:[SyntaxAllowsTemplatePoly] ~flags ~env_ar ~ctx_params
 [%%else]
 let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite ~ctx_params ~env_ar_params =
   let flags = {
@@ -3009,6 +3021,7 @@ let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~fin
     template = Some false;
     finite;
     mode = None;
+    schemes = Default;
   }
   in
   let env_ar = Environ.pop_rel_context (List.length ctx_params) env_ar_params in
