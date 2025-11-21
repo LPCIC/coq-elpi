@@ -99,23 +99,17 @@ let pr_named_decl_flagged () = Printer.pr_named_decl
 let empty_extern_env () = Constrextern.empty_extern_env
 [%%else]
 let flags_of_pp_options o =
-  let flags = PrintingFlags.current() in
   match o with
-  | Normal -> flags
-  | All -> {
-      detype = { flags.detype with raw = true };
-      extern = { flags.extern with raw = true };
-    }
+  | Normal -> PrintingFlags.current()
+  | All -> PrintingFlags.(make_raw @@ current())
   | Most -> {
       detype = {
-        flags.detype with
-        raw = false;
+        (PrintingFlags.Detype.current_ignore_raw()) with
         universes = false;
         evar_instances = false;
       };
       extern = {
-        flags.extern with
-        raw = false;
+        (PrintingFlags.Extern.current_ignore_raw()) with
         notations = false;
         implicits = true;
         coercions = true;
