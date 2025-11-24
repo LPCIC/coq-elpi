@@ -1035,9 +1035,13 @@ let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_ltac_in_term
 
 [%%if coq = "9.0" || coq = "9.1"]
 let with_hack_synterp f () = f ()
+
+let grammar_extend e ext : unit = Procq.grammar_extend e ext
 [%%else]
 let with_hack_synterp f () =
   Flags.with_modified_ref Flags.in_synterp_phase (fun _ -> None) f ()
+
+let grammar_extend e ext : unit = Procq.grammar_extend ~ignore_kw:false e ext
 [%%endif]
 
 let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
@@ -1071,7 +1075,7 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
   let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
   (* HACK!!! changes the grammar but is called in interp phase *)
   with_hack_synterp (fun () ->
-  Procq.grammar_extend Procq.Constr.term (Procq.Fresh
+  grammar_extend Procq.Constr.term (Procq.Fresh
     (Gramlib.Gramext.Before "10",
      [ (None, None, [ Procq.Production.make
       (Procq.Rule.next rule (Procq.Symbol.list0 (Procq.Symbol.nterm Procq.Constr.arg)))
