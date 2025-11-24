@@ -11,29 +11,29 @@ kind upoly-decl-cumul type.
 % -- Misc ---------------------------------------------------------
 
 % [coq.info ...] Prints an info message
-external type coq.info variadic any (func).
+external type coq.info variadic any fprop.
 
 % [coq.notice ...] Prints a notice message
-external type coq.notice variadic any (func).
+external type coq.notice variadic any fprop.
 
 % [coq.say ...] Prints a notice message
-external type coq.say variadic any (func).
+external type coq.say variadic any fprop.
 
 % [coq.debug ...] Prints a debug message
-external type coq.debug variadic any (func).
+external type coq.debug variadic any fprop.
 
 % [coq.warn ...] Prints a generic warning message
-external type coq.warn variadic any (func).
+external type coq.warn variadic any fprop.
 
 % [coq.warning Category Name ...] 
 % Prints a warning message with a Name and Category which can be used
 % to silence this warning or turn it into an error. See coqc -w command
 % line option
-external type coq.warning string -> string -> variadic any (func).
+external type coq.warning string -> string -> variadic any fprop.
 
 % [coq.error ...] Prints and *aborts* the program. It is a fatal error for
 % Elpi and Ltac
-external type coq.error variadic any (func).
+external type coq.error variadic any fprop.
 
 % [coq.version VersionString Major Minor Patch] Fetches the version of Coq,
 % as a string and as 3 numbers

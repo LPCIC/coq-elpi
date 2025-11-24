@@ -141,7 +141,7 @@ type raw_red_expr = Redexpr.raw_red_expr
 type raw_constant_decl = {
   name : qualified_name;
   atts : Attributes.vernac_flags;
-  udecl : Constrexpr.universe_decl_expr option;
+  udecl : Constrexpr.sort_poly_decl_expr option;
   typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
   body : Constrexpr.constr_expr option;
   red : raw_red_expr option;
@@ -459,14 +459,14 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
     match udecl, poly with
     | None, false -> state, NotUniversePolymorphic
     | Some _, false -> nYI "only universe polymorphic definitions can take universe binders"
-    | None, true -> state, NonCumulative (([],true),(Univ.Constraints.empty,true))
+    | None, true -> state, NonCumulative (([],true),(Univ.UnivConstraints.empty,true))
     | Some udecl, true ->
         let open UState in
-        let sigma,  { univdecl_extensible_instance; univdecl_extensible_constraints; univdecl_constraints; univdecl_instance} =
-          Constrintern.interp_univ_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
+        let sigma,  { sort_poly_decl_extensible_instance; sort_poly_decl_extensible_constraints; sort_poly_decl_univ_constraints; sort_poly_decl_instance} =
+          Constrintern.interp_sort_poly_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
         let ustate = Evd.ustate sigma in
         let state = merge_universe_context state ustate in
-        state, NonCumulative ((univdecl_instance,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) in
+        state, NonCumulative ((sort_poly_decl_instance,sort_poly_decl_extensible_instance),(sort_poly_decl_univ_constraints,sort_poly_decl_extensible_constraints)) in
   let sigma = get_sigma state in
   match body, typ with
   | Some body, _ ->
@@ -497,7 +497,7 @@ let raw_constant_decl_to_glob_synterp ({ name; atts; udecl; typ = (params,typ); 
     let open Attributes in
     parse polymorphic atts in
   let udecl =
-    if poly then NonCumulative (([],true),(Univ.Constraints.empty,true))
+    if poly then NonCumulative (([],true),(Univ.UnivConstraints.empty,true))
     else NotUniversePolymorphic in
   state, { name = raw_decl_name_to_glob name; params; typ; udecl; body }
   
@@ -515,14 +515,14 @@ let raw_constant_decl_to_glob glob_sign ({ name; atts; udecl; typ = (params,typ)
     match udecl, poly with
     | None, false -> state, NotUniversePolymorphic
     | Some _, false -> nYI "only universe polymorphic definitions can take universe binders"
-    | None, true -> state, NonCumulative (([],true),(Univ.Constraints.empty,true))
+    | None, true -> state, NonCumulative (([],true),(Univ.UnivConstraints.empty,true))
     | Some udecl, true ->
         let open UState in
-        let sigma,  { univdecl_extensible_instance; univdecl_extensible_constraints; univdecl_constraints; univdecl_instance} =
-          Constrintern.interp_univ_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
+        let sigma,  { sort_poly_decl_extensible_instance; sort_poly_decl_extensible_constraints; sort_poly_decl_univ_constraints; sort_poly_decl_instance} =
+          Constrintern.interp_sort_poly_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
         let ustate = Evd.ustate sigma in
         let state = merge_universe_context state ustate in
-        state, NonCumulative ((univdecl_instance,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) in
+        state, NonCumulative ((sort_poly_decl_instance,sort_poly_decl_extensible_instance),(sort_poly_decl_univ_constraints,sort_poly_decl_extensible_constraints)) in
   state, { name = raw_decl_name_to_glob name; params; typ; udecl; body }
 let intern_constant_decl glob_sign (it : raw_constant_decl) = glob_sign, it
 
@@ -677,11 +677,11 @@ let mk_indt_decl state univpoly r =
   match univpoly with
   | Cmd.Mono -> state, E.mkApp ideclc r []
   | Cmd.Poly -> 
-      let state, up, gls = universe_decl.API.Conversion.embed ~depth:0 state (NonCumul(([],true),(Univ.Constraints.empty,true))) in
+      let state, up, gls = universe_decl.API.Conversion.embed ~depth:0 state (NonCumul(([],true),(Univ.UnivConstraints.empty,true))) in
       assert(gls=[]);
       state, E.mkApp uideclc r [up]
   | Cmd.CumulPoly ->
-      let state, up, gls = universe_decl.API.Conversion.embed ~depth:0 state (Cumul(([],true),(Univ.Constraints.empty,true))) in
+      let state, up, gls = universe_decl.API.Conversion.embed ~depth:0 state (Cumul(([],true),(Univ.UnivConstraints.empty,true))) in
       assert(gls=[]);
       state, E.mkApp uideclc r [up]
 

@@ -109,7 +109,7 @@ let constraint_eq u1 u2 =
   ULe (u1, u2)
 
 let add_constraints state c = S.update (Option.get !pre_engine) state (fun ({ sigma } as x) ->
-  { x with sigma = Evd.add_universe_constraints sigma c })
+  { x with sigma = Evd.add_constraints sigma c })
     
 let add_universe_constraint state c =
   let open UnivProblem in
@@ -204,21 +204,22 @@ let universe_level_variable =
   end
 }
 
-let universe_constraint : Univ.univ_constraint API.Conversion.t =
+let universe_constraint : Univ.UnivConstraint.t API.Conversion.t =
+  let open Univ in
   let open API.Conversion in let open API.AlgebraicData in declare {
   ty = TyName "univ-constraint";
   doc = "Constraint between two universes level variables";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("lt","",A(universe_level_variable,A(universe_level_variable,N)),
-      B (fun u1 u2 -> (u1,Univ.Lt,u2)),
-      M (fun ~ok ~ko -> function (l1,Univ.Lt,l2) -> ok l1 l2 | _ -> ko ()));
+      B (fun u1 u2 -> (u1,UnivConstraint.Lt,u2)),
+      M (fun ~ok ~ko -> function (l1,UnivConstraint.Lt,l2) -> ok l1 l2 | _ -> ko ()));
     K("le","",A(universe_level_variable,A(universe_level_variable,N)),
-      B (fun u1 u2 -> (u1,Univ.Le,u2)),
-      M (fun ~ok ~ko -> function (l1,Univ.Le,l2) -> ok l1 l2 | _ -> ko ()));
+      B (fun u1 u2 -> (u1,UnivConstraint.Le,u2)),
+      M (fun ~ok ~ko -> function (l1,UnivConstraint.Le,l2) -> ok l1 l2 | _ -> ko ()));
     K("eq","",A(universe_level_variable,A(universe_level_variable,N)),
-      B (fun u1 u2 -> (u1,Univ.Eq,u2)),
-      M (fun ~ok ~ko -> function (l1,Univ.Eq,l2) -> ok l1 l2 | _ -> ko ()))
+      B (fun u1 u2 -> (u1,UnivConstraint.Eq,u2)),
+      M (fun ~ok ~ko -> function (l1,UnivConstraint.Eq,l2) -> ok l1 l2 | _ -> ko ()))
   ]
 } |> API.ContextualConversion.(!<)
 
@@ -243,8 +244,8 @@ let universe_variance : (Univ.Level.t * UVars.Variance.t option) API.Conversion.
   ]
 } |> API.ContextualConversion.(!<)
 
-type universe_decl = (Univ.Level.t list * bool) * (Univ.Constraints.t * bool)
-type universe_decl_cumul = ((Univ.Level.t * UVars.Variance.t option) list  * bool) * (Univ.Constraints.t * bool)
+type universe_decl = (Univ.Level.t list * bool) * (Univ.UnivConstraints.t * bool)
+type universe_decl_cumul = ((Univ.Level.t * UVars.Variance.t option) list  * bool) * (Univ.UnivConstraints.t * bool)
 
 type any_universe_decl =
   | NonCumul of universe_decl
@@ -257,11 +258,11 @@ let universe_decl : any_universe_decl API.Conversion.t =
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
     K("upoly-decl","",A(list universe_level_variable,A(bool,A(list universe_constraint,A(bool,N)))),
-     B (fun x sx y sy-> NonCumul ((x,sx),(Univ.Constraints.of_list  y,sy))),
-     M (fun ~ok ~ko -> function NonCumul ((x,sx),(y,sy)) -> ok x sx (Univ.Constraints.elements y) sy | Cumul _ -> ko ()));
+     B (fun x sx y sy-> NonCumul ((x,sx),(Univ.UnivConstraints.of_list  y,sy))),
+     M (fun ~ok ~ko -> function NonCumul ((x,sx),(y,sy)) -> ok x sx (Univ.UnivConstraints.elements y) sy | Cumul _ -> ko ()));
     K("upoly-decl-cumul","",A(list universe_variance,A(bool,A(list universe_constraint,A(bool,N)))),
-     B (fun x sx y sy -> Cumul ((x,sx),(Univ.Constraints.of_list y,sy))),
-     M (fun ~ok ~ko -> function Cumul ((x,sx),(y,sy)) -> ok x sx (Univ.Constraints.elements y) sy | NonCumul _ -> ko ()))
+     B (fun x sx y sy -> Cumul ((x,sx),(Univ.UnivConstraints.of_list y,sy))),
+     M (fun ~ok ~ko -> function Cumul ((x,sx),(y,sy)) -> ok x sx (Univ.UnivConstraints.elements y) sy | NonCumul _ -> ko ()))
   ]
 } |> API.ContextualConversion.(!<)
 
@@ -889,8 +890,8 @@ module CoqEngine_HOAS : sig
 
   (* when the env changes under the hood, we can adapt sigma or drop it but keep
      its constraints *)
-  val from_env_keep_univ_of_sigma :  uctx:Univ.ContextSet.t -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
-  val from_env_keep_univ_and_sigma : uctx:Univ.ContextSet.t -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_keep_univ_of_sigma :  uctx:PConstraints.ContextSet.t -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_keep_univ_and_sigma : uctx:PConstraints.ContextSet.t -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
 
 end = struct
 
@@ -1690,11 +1691,11 @@ let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
      let c, ctx = UnivGen.fresh_global_instance x.global_env (ConstRef c) ?names:inst_opt  in
      let c, inst = Constr.destConst c in
      let bo = Vars.subst_instance_constr inst bo in
-     let sigma = Evd.merge_sort_context_set Evd.univ_rigid x.sigma ctx in
+     let sigma = Evd.merge_sort_context_set Evd.univ_rigid QGraph.Internal x.sigma ctx in
      let sigma = match priv with
      | Opaqueproof.PrivateMonomorphic () -> sigma
      | Opaqueproof.PrivatePolymorphic ctx ->
-      let ctx = Util.on_snd (Univ.subst_univs_level_constraints (snd (UVars.make_instance_subst inst))) ctx in
+      let ctx = Util.on_snd (UVars.subst_univs_constraints (Sorts.QVar.Map.empty, snd (UVars.make_instance_subst inst))) ctx in
       Evd.merge_context_set Evd.univ_rigid sigma ctx
      in
      { x with sigma }, (Some (EConstr.of_constr bo), Some inst)
@@ -1852,7 +1853,7 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
         s, u, []
       with Not_found ->
         let u, ctx = UnivGen.fresh_global_instance (get_global_env s) t in
-        let s = update_sigma s (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
+        let s = update_sigma s (fun sigma -> Evd.merge_sort_context_set UState.univ_flexible_alg QGraph.Internal sigma ctx) in
         let u =
           match C.kind u with
           | C.Const (_, u) -> u
@@ -2943,9 +2944,9 @@ let universes_of_term state t =
   let sigma = get_sigma state in
   snd (EConstr.universes_of_constr sigma t)
 
-let universes_of_udecl state ({ UState.univdecl_instance ; univdecl_constraints } : UState.universe_decl) =
-  let used1 = univdecl_instance in
-  let used2 = List.map (fun (x,_,y) -> [x;y]) (Univ.Constraints.elements univdecl_constraints) in
+let universes_of_udecl state ({ UState.sort_poly_decl_instance ; sort_poly_decl_univ_constraints } : UState.sort_poly_decl) =
+  let used1 = sort_poly_decl_instance in
+  let used2 = List.map (fun (x,_,y) -> [x;y]) (Univ.UnivConstraints.elements sort_poly_decl_univ_constraints) in
   let used = List.fold_right Univ.Level.Set.add used1 Univ.Level.Set.empty in
   let used = List.fold_right Univ.Level.Set.add (List.flatten used2) used in
   used
@@ -2966,18 +2967,19 @@ let name_universe_level state l =
   )
 
 
-let mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance =
+let mk_universe_decl sort_poly_decl_extensible_instance sort_poly_decl_extensible_constraints sort_poly_decl_univ_constraints sort_poly_decl_instance =
   let open UState in
-  { univdecl_qualities = [];
-    univdecl_extensible_instance;
-    univdecl_extensible_qualities = false;
-    univdecl_extensible_constraints;
-    univdecl_constraints;
-    univdecl_instance}
+  { sort_poly_decl_qualities = [];
+    sort_poly_decl_extensible_instance;
+    sort_poly_decl_elim_constraints = Sorts.ElimConstraints.empty;
+    sort_poly_decl_extensible_qualities = false;
+    sort_poly_decl_extensible_constraints;
+    sort_poly_decl_univ_constraints;
+    sort_poly_decl_instance}
 
 let poly_cumul_udecl_variance_of_options state options =
   match options.universe_decl with
-  | NotUniversePolymorphic -> state, false, false, UState.default_univ_decl, [| |]
+  | NotUniversePolymorphic -> state, false, false, UState.default_sort_poly_decl, [| |]
   | Cumulative ((univ_lvlt_var,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
     let univdecl_instance, variance = List.split univ_lvlt_var in
     state, true, true,
@@ -3536,7 +3538,7 @@ let upoly_decl_of ~depth state ~loose_udecl mie =
     if not (CArray.is_empty qvars) then nYI "sort poly inductives"
     else
       let state, vars = CArray.fold_left_map (fun s l -> fst (name_universe_level s l), l) state vars in
-      let csts = UVars.UContext.constraints uc in
+      let csts = PConstraints.univs @@ UVars.UContext.constraints uc in
       begin match mie.mind_entry_variance with
       | None ->
           let state, up, gls = universe_decl.API.Conversion.embed ~depth state (NonCumul ((Array.to_list vars,loose_udecl),(csts,loose_udecl))) in

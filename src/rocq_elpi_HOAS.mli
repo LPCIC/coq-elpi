@@ -24,8 +24,8 @@ type uinstanceoption =
   | VarInstance of (FlexibleData.Elpi.t * RawData.term list * inv_rel_key)
     (* a variable was provided, the command will compute the instance to unify with it *)
 
-type universe_decl = (Univ.Level.t list * bool) * (Univ.Constraints.t * bool)
-type universe_decl_cumul = ((Univ.Level.t * UVars.Variance.t option) list  * bool) * (Univ.Constraints.t * bool)
+type universe_decl = (Univ.Level.t list * bool) * (Univ.UnivConstraints.t * bool)
+type universe_decl_cumul = ((Univ.Level.t * UVars.Variance.t option) list  * bool) * (Univ.UnivConstraints.t * bool)
 type universe_decl_option =
   | NotUniversePolymorphic
   | Cumulative of universe_decl_cumul
@@ -114,11 +114,11 @@ type record_field_spec = { name : Name.t; is_coercion : coercion_status; is_cano
 [%%if coq = "9.0"]
 val lp2inductive_entry :
   depth:int -> empty coq_context -> constraints -> State.t -> term ->
-  State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+  State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * PConstraints.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 [%%else]
 val lp2inductive_entry :
   depth:int -> empty coq_context -> constraints -> State.t -> term ->
-  State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UState.named_universes_entry * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
+  State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * PConstraints.ContextSet.t * UState.named_universes_entry * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 [%%endif]
 
 [%%if coq = "9.0"]
@@ -222,7 +222,7 @@ val in_elpiast_primitive : loc:Ast.Loc.t -> primitive_value -> Ast.Term.t
 
 val uinstance : UVars.Instance.t Conversion.t
 
-val universe_constraint : Univ.univ_constraint Conversion.t
+val universe_constraint : Univ.UnivConstraint.t Conversion.t
 val universe_variance : (Univ.Level.t * UVars.Variance.t option) Conversion.t
 type any_universe_decl =
   | NonCumul of universe_decl
@@ -306,10 +306,10 @@ val body_of_constant :
   State.t -> Names.Constant.t -> UVars.Instance.t option ->
   State.t * EConstr.t option * UVars.Instance.t option
 
-val grab_global_env : uctx:Univ.ContextSet.t -> State.t -> State.t
+val grab_global_env : uctx:PConstraints.ContextSet.t -> State.t -> State.t
 val grab_global_env_drop_univs_and_sigma : State.t -> State.t
 val grab_global_env_drop_sigma : State.t -> State.t
-val grab_global_env_drop_sigma_keep_univs : uctx:Univ.ContextSet.t -> State.t -> State.t
+val grab_global_env_drop_sigma_keep_univs : uctx:PConstraints.ContextSet.t -> State.t -> State.t
 
 val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
@@ -347,10 +347,10 @@ val force_level_of_universe : state -> Univ.Universe.t -> state * Univ.Level.t *
 val purge_algebraic_univs_sort : state -> EConstr.ESorts.t -> state * Sorts.t
 val ideclc : constant
 val uideclc : constant
-val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bool * UState.universe_decl * Entries.variance_entry
+val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bool * UState.sort_poly_decl * Entries.variance_entry
 val merge_universe_context : state -> UState.t -> state
 val restricted_sigma_of : Univ.Level.Set.t -> state -> Evd.evar_map
 val universes_of_term : state -> EConstr.t -> Univ.Level.Set.t
-val universes_of_udecl : state -> UState.universe_decl -> Univ.Level.Set.t
+val universes_of_udecl : state -> UState.sort_poly_decl -> Univ.Level.Set.t
 
 val mind_record : Declarations.mind_specif -> Declarations.record_info
