@@ -102,7 +102,7 @@ Elpi Accumulate lp:{{
      GrRefl = const R,
      GrCorrect = const C,
      coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done GrType)),
-     coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-for (global GrType) (global GrType) (global GrEqb))),
+     coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") (eqb-for (global GrType) (global GrType) (global GrEqb))),
      coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (eqcorrect-for GrType C R)),
      coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (correct-lemma-for (global GrType) (global GrCorrect))),
      coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (refl-lemma-for (global GrType) (global GrRefl))),
