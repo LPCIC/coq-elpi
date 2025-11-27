@@ -620,7 +620,7 @@ module SynterpAction = struct
         interp_close_section ();
         (Rocq_elpi_HOAS.grab_global_env_drop_sigma state, None)
     | ImportModule mp ->
-        Declaremods.import_module ~export:Lib.Import Libobject.unfiltered mp;
+        Declaremods.Interp.import_module ~export:Lib.Import Libobject.unfiltered mp;
         (state, None)
     | ExportModule mp ->
         Declaremods.Interp.import_module ~export:Lib.Export Libobject.unfiltered mp;
