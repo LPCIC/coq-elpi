@@ -764,6 +764,14 @@ let execution proof p loc0 args loc1 ?loc ~atts () =
   | _ -> Vernactypes.vtdefault (fun () -> Interp.run_program ~loc p ~atts ~syndata args)
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1"]
+let extend_vernac_command_grammar ext : unit =
+  Egramml.extend_vernac_command_grammar ~undoable:true ext
+[%%else]
+let extend_vernac_command_grammar ext : unit =
+  Egramml.extend_vernac_command_grammar ~ignore_kw:false ~undoable:true ext
+[%%endif]
+
 let cache_program (proof,nature,p,q) =
   let p_str = String.concat "." q in
   match nature with
@@ -795,7 +803,7 @@ let cache_program (proof,nature,p,q) =
 
         (execution proof p)
     in
-    Egramml.extend_vernac_command_grammar ~undoable:true ext
+    extend_vernac_command_grammar ext
 
   | Tactic ->
     Rocq_elpi_builtins.cache_tac_abbrev ~code:p ~name:q
