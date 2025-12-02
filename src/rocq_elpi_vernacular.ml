@@ -215,7 +215,7 @@ let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi
         let units = asts |> List.map (fun ast -> P.unit_from_ast ~error_header:(Format.asprintf "accumulating clause to %s" (String.concat "." dbname)) ~elpi None ~base ~loc (EC.scope ~elpi ast)) in
       dbname,units,vs,scope) in
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
-      P.accumulate_to_db dbname units vs ~scope);
+      P.accumulate_to_db ~loc dbname units vs ~scope);
     relocate_assignment_to_runtime,
     (if P.stage = Summary.Stage.Synterp then
       API.State.get Rocq_elpi_builtins_synterp.SynterpAction.log state |> Rocq_elpi_builtins_synterp.SynterpAction.RZipper.of_w
@@ -235,20 +235,31 @@ let current_program () =
   | None -> CErrors.user_err Pp.(str "No current Elpi Program")
   | Some x -> x
 
-let get_base ~loc ~elpi program : [ `Program of EC.program | `Db of EC.program ]=
+let get_base_opt ~loc ~elpi program : [ `Program of EC.program | `Db of EC.program ] option =
   if P.db_exists program then
-    `Db (P.get_and_compile_existing_db ~loc program)
+    Some (`Db (P.get_and_compile_existing_db ~loc program))
   else
     match P.get_and_compile ~loc ~even_if_empty:true program with
-    | None -> CErrors.user_err ~loc Pp.(str "Unknown program " ++ pr_qualified_name program)
-    | Some (base, _) -> `Program base
+    | None -> None
+    | Some (base, _) -> Some (`Program base)
+
+let get_base ~loc ~elpi program : [ `Program of EC.program | `Db of EC.program ] =
+  match get_base_opt ~loc ~elpi program with
+  | Some base -> base
+  | None -> CErrors.user_err ~loc Pp.(str "Unknown program " ++ pr_qualified_name program)
 
 let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x) (qloc, query) =
   let elpi = P.ensure_initialized () in
-  P.get_and_compile ~loc ~even_if_empty:true program |> Option.map (fun (base, _) ->
-    let query_ast = Ast (st_setup base, P.parse_goal ~loc ~elpi qloc query) in
-    run_and_print ~print:true ~loc program base query_ast |>
-    (fun (x,y,_,_,_) -> x,y))
+  let obase =
+    get_base_opt ~loc ~elpi program |> Option.map (function
+        | `Db base -> base
+        | `Program base -> base
+      )
+  in
+  obase |> Option.map (fun base ->
+  let query_ast = Ast (st_setup base, P.parse_goal ~loc ~elpi qloc query) in
+  run_and_print ~print:true ~loc program base query_ast |>
+  (fun (x,y,_,_,_) -> x,y))
 
   let accumulate_extra_deps ~loc ?(program=current_program()) ~scope ~what ids =
     let elpi = P.ensure_initialized () in
@@ -256,7 +267,9 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
       let base = get_base ~loc ~elpi program in
       let base, add =
         match base with
-        | `Db base -> base, (fun _ fast -> P.accumulate_to_db program [fast] [] ~scope)
+        | `Db base ->
+          warn_scope_not_regular ~loc scope;
+          base, (fun fname fast -> P.accumulate_to_db' ~loc {program; code=[File{fname; fast}]; vars=[]; scope=SuperGlobal })
         | `Program base -> base, (fun fname fast ->
            warn_scope_not_regular ~loc scope;
            P.accumulate ~loc program [File { fname; fast}]) in
@@ -296,8 +309,9 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     try
       match get_base ~loc ~elpi program with
       | `Db base ->
+        warn_scope_not_regular ~loc scope;
         let new_src_ast = List.map (fun fname -> P.unit_from_file ~loc ~elpi ~base fname) s in
-        P.accumulate_to_db program new_src_ast [] ~scope
+        P.accumulate_to_db ~loc program new_src_ast [] ~scope:SuperGlobal
       | `Program base ->
         warn_scope_not_regular ~loc scope;
         let new_src_ast = List.map (fun fname -> P.unit_from_file ~loc ~elpi ~base fname) s in
@@ -315,7 +329,8 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     match get_base ~elpi ~loc program with
     | `Db base ->
       let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
-      P.accumulate_to_db program [new_ast] [] ~scope
+      warn_scope_not_regular ~loc scope;
+      P.accumulate_to_db ~loc program [new_ast] [] ~scope:SuperGlobal
     | `Program base ->
       warn_scope_not_regular ~loc scope;
       let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
@@ -323,25 +338,38 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let accumulate_string ~atts:((scope,only),ph) ~loc ?program sloc = skip ~only ~ph (accumulate_string ~loc ?program ~scope) sloc
   
   
-  let accumulate_db ~loc ?(program=current_program()) name =
-    let _ = P.ensure_initialized () in
-    let header = P.header_of_db name |> List.map (fun dast -> DatabaseHeader { dast }) in
-    if P.db_exists name then P.accumulate ~loc program (header @ [DatabaseBody name])
-    else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
+  let accumulate_db ~loc ?(target=current_program()) source ~scope =
+    let elpi = P.ensure_initialized () in
+    let header = P.header_of_db source |> List.map (fun dast -> DatabaseHeader { dast }) in
+    let code = header @ [DatabaseBody source] in
+    begin try
+        match get_base ~elpi ~loc target with
+        | `Db base ->
+          let vars = [] in      (* FIXME: how to compute? *)
+          warn_scope_not_regular ~loc scope;
+          P.accumulate_to_db' ~loc {program=target; vars; scope=SuperGlobal; code=code}
+        | `Program _ ->
+          P.accumulate ~loc target code;
+      with Failure s ->  CErrors.user_err Pp.(str s)
+    end
+
   let accumulate_db ~atts:((scope,only),ph) ~loc ?program name =
     warn_scope_not_regular ~loc scope;
-    skip ~only ~ph (accumulate_db ~loc ?program) name
+    skip ~only ~ph (accumulate_db ~loc ?target:program ~scope) name
   
   let accumulate_db_header ~loc ?(program=current_program()) ~scope name =
     let _ = P.ensure_initialized () in
     if P.db_exists name then
       let units = P.header_of_db name in
       if P.db_exists program then
-        P.accumulate_to_db program units [] ~scope
-      else
+        let units = List.map (fun dast -> DatabaseHeader { dast }) units in
+        warn_scope_not_regular ~loc scope;
+        P.accumulate_to_db' ~loc {program; code=units; vars=[]; scope=SuperGlobal }
+      else begin
         let () = warn_scope_not_regular ~loc scope in
         let units = List.map (fun dast -> DatabaseHeader { dast }) units in
         P.accumulate ~loc program units
+      end
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
   let accumulate_db_header ~atts:((scope,only),ph) ~loc ?program name =
     skip ~only ~ph (accumulate_db_header ~loc ?program ~scope) name
@@ -351,7 +379,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     match get_base ~elpi ~loc db with
     | `Db base ->
        let new_ast = P.unit_from_string ~elpi ~base ~loc sloc s in
-       P.accumulate_to_db db [new_ast] idl ~scope
+       P.accumulate_to_db ~loc db [new_ast] idl ~scope
     | _ -> CErrors.user_err Pp.(str "Db " ++ pr_qualified_name db ++ str" not found") 
   let accumulate_to_db ~atts:((scope,only),ph) ~loc db sloc idl = skip ~only ~ph (accumulate_to_db ~loc db sloc ~scope) idl
   
@@ -383,7 +411,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
       if P.db_exists name then
         Some (P.get_and_compile_existing_db ~loc name)
       else
-        Option.map fst @@ P.get_and_compile ~loc name in
+        Option.map fst @@ P.get_and_compile ~even_if_empty:true ~loc name in
     program |> Option.iter @@ fun program ->
     let fname =
       Rocq_elpi_programs.resolve_file_path
