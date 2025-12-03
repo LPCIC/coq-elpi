@@ -329,13 +329,8 @@ val body_of_constant :
 val grab_global_env_drop_univs_and_sigma : State.t -> State.t
 val grab_global_env_drop_sigma : State.t -> State.t
 
-[%%if coq = "9.0" || coq = "9.1"]
 val grab_global_env : uctx:Univ.ContextSet.t -> State.t -> State.t
 val grab_global_env_drop_sigma_keep_univs : uctx:Univ.ContextSet.t -> State.t -> State.t
-[%%else]
-val grab_global_env : uctx:PConstraints.ContextSet.t -> State.t -> State.t
-val grab_global_env_drop_sigma_keep_univs : uctx:PConstraints.ContextSet.t -> State.t -> State.t
-[%%endif]
 val mk_decl : depth:int -> Name.t -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
 
