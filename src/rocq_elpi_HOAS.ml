@@ -260,7 +260,7 @@ let univ_eq = Univ.UnivConstraint.Eq
 let univ_csts_of_list = Univ.UnivConstraints.of_list
 let univ_csts_to_list = Univ.UnivConstraints.elements
 let evd_merge_ctx_set rigid = Evd.merge_sort_context_set rigid QGraph.Internal
-let subst_univs_constraints x = UVars.subst_univs_constraints (Sorts.QVar.Map.empty,x)
+let subst_univs_constraints x = UVars.subst_univs_constraints x
 let univs_of_csts x = PConstraints.univs @@ UVars.UContext.constraints x
 let mk_universe_decl sort_poly_decl_extensible_instance sort_poly_decl_extensible_constraints sort_poly_decl_univ_constraints sort_poly_decl_instance =
   let open UState in
@@ -962,8 +962,8 @@ module CoqEngine_HOAS : sig
 
   (* when the env changes under the hood, we can adapt sigma or drop it but keep
      its constraints *)
-  val from_env_keep_univ_of_sigma :  uctx:univ_ctx_set -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
-  val from_env_keep_univ_and_sigma : uctx:univ_ctx_set -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_keep_univ_of_sigma :  uctx:Univ.ContextSet.t -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
+  val from_env_keep_univ_and_sigma : uctx:Univ.ContextSet.t -> env0:Environ.env -> env:Environ.env -> Evd.evar_map -> coq_engine
 
 end = struct
 
@@ -1755,6 +1755,14 @@ let mk_global state gr inst_opt = S.update_return engine state (fun x ->
       x, (EConstr.mkRef (gr,i), None)
 ) |> (fun (x,(y,z)) -> x,y,z)
 
+[%%if coq = "9.0" || coq = "9.1"]
+let merge_universe_context_sext sigma uctx =
+  Evd.merge_context_set Evd.univ_rigid sigma uctx
+[%%else]
+let merge_universe_context_sext sigma uctx =
+  Evd.merge_context_set Evd.univ_rigid sigma (PConstraints.ContextSet.of_univ_context_set uctx)
+[%%endif]
+
 let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
   match
     Global.body_of_constant_body (Library.indirect_accessor[@alert "-deprecated"]) (Environ.lookup_constant c x.global_env)
@@ -1768,7 +1776,7 @@ let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
      | Opaqueproof.PrivateMonomorphic () -> sigma
      | Opaqueproof.PrivatePolymorphic ctx ->
       let ctx = Util.on_snd (subst_univs_constraints (snd (UVars.make_instance_subst inst))) ctx in
-      Evd.merge_context_set Evd.univ_rigid sigma ctx
+      merge_universe_context_sext sigma ctx
      in
      { x with sigma }, (Some (EConstr.of_constr bo), Some inst)
   | None -> x, (None, None)) |> (fun (x,(y,z)) -> x,y,z)
@@ -3613,6 +3621,15 @@ let upoly_decl_of ~depth state ~loose_udecl mie =
       end
   | Monomorphic_ind_entry -> state, (fun i -> E.mkApp ideclc i []), []
 
+[%%if coq = "9.0" || coq = "9.1"]
+let merge_ucontext sigma cs =
+  Evd.merge_context_set UState.univ_flexible sigma (snd (UVars.UContext.to_context_set cs))
+[%%else]
+let merge_ucontext sigma cs =
+  let (_, qcst), (uvar, ucst) = UVars.UContext.to_context_set cs in
+  Evd.merge_context_set UState.univ_flexible sigma (uvar, (qcst, ucst)) (* makes no sense *)
+[%%endif]
+
 let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let open ComInductive.Mind_decl in
   let open Entries in
@@ -3633,7 +3650,7 @@ let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
     | Template_ind_entry _ -> nYI "template polymorphic inductives"
     | Monomorphic_ind_entry -> state
     | Polymorphic_ind_entry cs -> S.update engine state (fun e ->
-        { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma (snd (UVars.UContext.to_context_set cs)) }) (* ???? *) in
+        { e with sigma = merge_ucontext e.sigma cs }) (* ???? *) in
   let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie in
   let allparams = mie.mind_entry_params in
   let allparams = Vars.lift_rel_context indno allparams in
@@ -3689,7 +3706,7 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
     | Template_ind_entry _ -> nYI "template polymorphic inductives"
     | Monomorphic_ind_entry -> state
     | Polymorphic_ind_entry cs -> S.update engine state (fun e ->
-      { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma (snd (UVars.UContext.to_context_set cs)) }) (* ???? *) in
+      { e with sigma = merge_ucontext e.sigma cs }) (* ???? *) in
   
   let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie in
 
@@ -3758,7 +3775,7 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl (decl:Record.R
     | Template_ind_entry _ -> nYI "template polymorphic inductives"
     | Monomorphic_ind_entry -> state
     | Polymorphic_ind_entry cs -> S.update engine state (fun e ->
-      { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma (snd (UVars.UContext.to_context_set cs)) }) (* ???? *) in
+      { e with sigma = merge_ucontext e.sigma cs }) (* ???? *) in
 
   let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie in
 
