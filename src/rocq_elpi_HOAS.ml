@@ -1756,11 +1756,11 @@ let mk_global state gr inst_opt = S.update_return engine state (fun x ->
 ) |> (fun (x,(y,z)) -> x,y,z)
 
 [%%if coq = "9.0" || coq = "9.1"]
-let merge_universe_context_sext sigma uctx =
-  Evd.merge_context_set Evd.univ_rigid sigma uctx
+let merge_universe_context_set rigid sigma uctx =
+  Evd.merge_context_set rigid sigma uctx
 [%%else]
-let merge_universe_context_sext sigma uctx =
-  Evd.merge_context_set Evd.univ_rigid sigma (PConstraints.ContextSet.of_univ_context_set uctx)
+let merge_universe_context_set rigid sigma uctx =
+  Evd.merge_context_set rigid sigma (PConstraints.ContextSet.of_univ_context_set uctx)
 [%%endif]
 
 let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
@@ -1776,7 +1776,7 @@ let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
      | Opaqueproof.PrivateMonomorphic () -> sigma
      | Opaqueproof.PrivatePolymorphic ctx ->
       let ctx = Util.on_snd (subst_univs_constraints (snd (UVars.make_instance_subst inst))) ctx in
-      merge_universe_context_sext sigma ctx
+      merge_universe_context_set Evd.univ_rigid sigma ctx
      in
      { x with sigma }, (Some (EConstr.of_constr bo), Some inst)
   | None -> x, (None, None)) |> (fun (x,(y,z)) -> x,y,z)
@@ -3645,7 +3645,7 @@ let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let indno = 1 in
   let state = 
     S.update engine state (fun e ->
-      { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma uctx}) in
+      { e with sigma = merge_universe_context_set UState.univ_flexible e.sigma uctx}) in
   let state = match mie.mind_entry_universes with
     | Template_ind_entry _ -> nYI "template polymorphic inductives"
     | Monomorphic_ind_entry -> state
@@ -3768,7 +3768,7 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl (decl:Record.R
 
   let state =
     S.update engine state (fun e ->
-        { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma decl.entry.global_univs})
+        { e with sigma = merge_universe_context_set UState.univ_flexible e.sigma decl.entry.global_univs})
   in
 
   let state = match mie.mind_entry_universes with

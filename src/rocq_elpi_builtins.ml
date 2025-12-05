@@ -354,7 +354,6 @@ let is_mutual_inductive_entry_ground { Entries.mind_entry_params; mind_entry_ind
 
 [%%if coq = "9.0" || coq = "9.1"]
 let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid
-let global_push_context_set x = Global.push_context_set x
 let check_sort_poly_decl =  UState.check_univ_decl
 let empty_ctxset = Univ.ContextSet.empty
 let univ_csts_to_list = Univ.Constraints.elements
@@ -362,9 +361,6 @@ let univs_of_csts = UState.constraints
 let ucsts_filter = Univ.Constraints.filter
 [%%else]
 let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid QGraph.Internal
-let global_push_context_set x =
-  let () = Global.push_context_set (PConstraints.ContextSet.univ_context_set x) in
-  Global.push_qualities QGraph.Internal (PConstraints.ContextSet.sort_context_set x)
 let check_sort_poly_decl =  UState.check_sort_poly_decl
 let empty_ctxset = PConstraints.ContextSet.empty
 let univ_csts_to_list = Univ.UnivConstraints.elements
@@ -987,17 +983,13 @@ let eval_to_oeval = Evaluable.to_kevaluable
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let pattern_of_glob_constr env g = Patternops.pattern_of_glob_constr env g
 
-[%%if coq = "9.0" || coq = "9.1"]
 let get_entry_context = function
 | UState.Monomorphic_entry x, _ -> x
 | _ -> Univ.ContextSet.empty
 
+[%%if coq = "9.0" || coq = "9.1"]
 let drop_sort_context uctx = uctx
 [%%else]
-let get_entry_context = function
-| UState.Monomorphic_entry x, _ -> PConstraints.ContextSet.univ_context_set x
-| _ -> Univ.ContextSet.empty
-
 let drop_sort_context = PConstraints.ContextSet.univ_context_set
 [%%endif]
 
@@ -2361,7 +2353,7 @@ Supported attributes:
        | Polymorphic_ind_entry uctx ->
           (Polymorphic_entry uctx, UState.Polymorphic_entry uctx, univ_binders)
        in
-     let () = global_push_context_set uctx in
+     let () = Global.push_context_set uctx in
      let mind =
        let univ_binders = univ_binder_compat_820 (uentry', ubinders) univ_binders in
        declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim me univ_binders ind_impls in
@@ -2396,7 +2388,6 @@ Supported attributes:
            | Names.Name id -> Dumpglob.dump_definition (lid_of id) false "proj"
            | Names.Anonymous -> ()) names;
       end;
-      let uctx = drop_sort_context uctx in (* ??? *)
       uctx,state, !: ind, []))),
   DocAbove);
 
