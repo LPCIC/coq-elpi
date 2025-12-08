@@ -354,14 +354,14 @@ let is_mutual_inductive_entry_ground { Entries.mind_entry_params; mind_entry_ind
 
 [%%if coq = "9.0" || coq = "9.1"]
 let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid
-let check_sort_poly_decl =  UState.check_univ_decl
+let check_univ_decl =  UState.check_univ_decl
 let empty_ctxset = Univ.ContextSet.empty
 let univ_csts_to_list = Univ.Constraints.elements
 let univs_of_csts = UState.constraints
 let ucsts_filter = Univ.Constraints.filter
 [%%else]
 let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid QGraph.Internal
-let check_sort_poly_decl =  UState.check_sort_poly_decl
+let check_univ_decl =  UState.check_univ_decl
 let empty_ctxset = PConstraints.ContextSet.empty
 let univ_csts_to_list = Univ.UnivConstraints.elements
 let univs_of_csts x = PConstraints.univs @@ UState.constraints x
@@ -1008,7 +1008,7 @@ let add_axiom_or_variable api id ty local_bkind options state =
     err Pp.(str api ++ str": unsupported attribute @udecl-cumul! or @univpoly-cumul!");
   if poly && Option.has_some local_bkind then
     err Pp.(str api ++ str": section variables cannot be universe polymorphic");
-  let univs = check_sort_poly_decl (Evd.ustate sigma) udecl ~poly in
+  let univs = check_univ_decl (Evd.ustate sigma) udecl ~poly in
   let kind = Decls.Logical in
   let impargs = [] in
   let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in

@@ -138,7 +138,6 @@ type raw_red_expr = Genredexpr.raw_red_expr
 type raw_red_expr = Redexpr.raw_red_expr
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
 type raw_constant_decl = {
   name : qualified_name;
   atts : Attributes.vernac_flags;
@@ -147,23 +146,16 @@ type raw_constant_decl = {
   body : Constrexpr.constr_expr option;
   red : raw_red_expr option;
 }
+[%%if coq = "9.0" || coq = "9.1"]
 let empty_univ_csts = Univ.Constraints.empty
 let dest_udecl ({ UState.univdecl_instance ; univdecl_extensible_instance; univdecl_extensible_constraints; univdecl_constraints } : UState.universe_decl) =
   univdecl_extensible_instance, univdecl_extensible_constraints, univdecl_constraints, univdecl_instance
-let interp_sort_poly_decl_opt = Constrintern.interp_univ_decl_opt
+let interp_univ_decl_opt = Constrintern.interp_univ_decl_opt
 [%%else]
-type raw_constant_decl = {
-  name : qualified_name;
-  atts : Attributes.vernac_flags;
-  udecl : Constrexpr.sort_poly_decl_expr option;
-  typ : Constrexpr.local_binder_expr list * Constrexpr.constr_expr option;
-  body : Constrexpr.constr_expr option;
-  red : raw_red_expr option;
-}
 let empty_univ_csts = Univ.UnivConstraints.empty
-let dest_udecl ({ UState.sort_poly_decl_instance ; sort_poly_decl_extensible_instance; sort_poly_decl_extensible_constraints; sort_poly_decl_univ_constraints } : UState.sort_poly_decl) =
-  sort_poly_decl_extensible_instance, sort_poly_decl_extensible_constraints, sort_poly_decl_univ_constraints, sort_poly_decl_instance
-let interp_sort_poly_decl_opt = Constrintern.interp_sort_poly_decl_opt
+let dest_udecl ({ UState.univdecl_instance ; univdecl_extensible_instance; univdecl_extensible_constraints; univdecl_univ_constraints } : UState.universe_decl) =
+  univdecl_extensible_instance, univdecl_extensible_constraints, univdecl_univ_constraints, univdecl_instance
+let interp_univ_decl_opt = Constrintern.interp_univ_decl_opt
 [%%endif]
 type glob_constant_decl_elpi = {
   name : string list * Names.Id.t;
@@ -480,11 +472,11 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
     | Some _, false -> nYI "only universe polymorphic definitions can take universe binders"
     | None, true -> state, NonCumulative (([],true),(empty_univ_csts,true))
     | Some udecl, true ->
-        let sigma, udecl = interp_sort_poly_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
-        let sort_poly_decl_extensible_instance, sort_poly_decl_extensible_constraints, sort_poly_decl_univ_constraints, sort_poly_decl_instance = dest_udecl udecl in
+        let sigma, udecl = interp_univ_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
+        let univ_decl_extensible_instance, univ_decl_extensible_constraints, univ_decl_univ_constraints, univ_decl_instance = dest_udecl udecl in
         let ustate = Evd.ustate sigma in
         let state = merge_universe_context state ustate in
-        state, NonCumulative ((sort_poly_decl_instance,sort_poly_decl_extensible_instance),(sort_poly_decl_univ_constraints,sort_poly_decl_extensible_constraints)) in
+        state, NonCumulative ((univ_decl_instance,univ_decl_extensible_instance),(univ_decl_univ_constraints,univ_decl_extensible_constraints)) in
   let sigma = get_sigma state in
   match body, typ with
   | Some body, _ ->
@@ -535,11 +527,11 @@ let raw_constant_decl_to_glob glob_sign ({ name; atts; udecl; typ = (params,typ)
     | Some _, false -> nYI "only universe polymorphic definitions can take universe binders"
     | None, true -> state, NonCumulative (([],true),(empty_univ_csts,true))
     | Some udecl, true ->
-        let sigma, udecl = interp_sort_poly_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
-        let sort_poly_decl_extensible_instance, sort_poly_decl_extensible_constraints, sort_poly_decl_univ_constraints, sort_poly_decl_instance = dest_udecl udecl in
+        let sigma, udecl = interp_univ_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
+        let univ_decl_extensible_instance, univ_decl_extensible_constraints, univ_decl_univ_constraints, univ_decl_instance = dest_udecl udecl in
         let ustate = Evd.ustate sigma in
         let state = merge_universe_context state ustate in
-        state, NonCumulative ((sort_poly_decl_instance,sort_poly_decl_extensible_instance),(sort_poly_decl_univ_constraints,sort_poly_decl_extensible_constraints)) in
+        state, NonCumulative ((univ_decl_instance,univ_decl_extensible_instance),(univ_decl_univ_constraints,univ_decl_extensible_constraints)) in
   state, { name = raw_decl_name_to_glob name; params; typ; udecl; body }
 let intern_constant_decl glob_sign (it : raw_constant_decl) = glob_sign, it
 

@@ -367,12 +367,7 @@ val merge_universe_context : state -> UState.t -> state
 val restricted_sigma_of : Univ.Level.Set.t -> state -> Evd.evar_map
 val universes_of_term : state -> EConstr.t -> Univ.Level.Set.t
 
-[%%if coq = "9.0" || coq = "9.1"]
 val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bool * UState.universe_decl * Entries.variance_entry
 val universes_of_udecl : state -> UState.universe_decl -> Univ.Level.Set.t
-[%%else]
-val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bool * UState.sort_poly_decl * Entries.variance_entry
-val universes_of_udecl : state -> UState.sort_poly_decl -> Univ.Level.Set.t
-[%%endif]
 
 val mind_record : Declarations.mind_specif -> Declarations.record_info
