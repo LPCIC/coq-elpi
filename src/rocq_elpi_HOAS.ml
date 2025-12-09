@@ -262,18 +262,18 @@ let univ_csts_to_list = Univ.UnivConstraints.elements
 let evd_merge_ctx_set rigid = Evd.merge_sort_context_set rigid QGraph.Internal
 let subst_univs_constraints x = UVars.subst_univs_constraints x
 let univs_of_csts x = PConstraints.univs @@ UVars.UContext.constraints x
-let mk_universe_decl sort_poly_decl_extensible_instance sort_poly_decl_extensible_constraints sort_poly_decl_univ_constraints sort_poly_decl_instance =
+let mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_univ_constraints univdecl_instance =
   let open UState in
-  { sort_poly_decl_qualities = [];
-    sort_poly_decl_extensible_instance;
-    sort_poly_decl_elim_constraints = Sorts.ElimConstraints.empty;
-    sort_poly_decl_extensible_qualities = false;
-    sort_poly_decl_extensible_constraints;
-    sort_poly_decl_univ_constraints;
-    sort_poly_decl_instance}
-let default_univ_decl = UState.default_sort_poly_decl
-let dest_udecl ({ UState.sort_poly_decl_instance ; sort_poly_decl_univ_constraints } : UState.sort_poly_decl) =
-  sort_poly_decl_instance, sort_poly_decl_univ_constraints
+  { univdecl_qualities = [];
+    univdecl_extensible_instance;
+    univdecl_elim_constraints = Sorts.ElimConstraints.empty;
+    univdecl_extensible_qualities = false;
+    univdecl_extensible_constraints;
+    univdecl_univ_constraints;
+    univdecl_instance}
+let default_univ_decl = UState.default_univ_decl
+let dest_udecl ({ UState.univdecl_instance ; univdecl_univ_constraints } : UState.universe_decl) =
+  univdecl_instance, univdecl_univ_constraints
 
 let universe_constraint : univ_cst API.Conversion.t =
   let open API.Conversion in let open API.AlgebraicData in declare {
