@@ -3088,8 +3088,7 @@ let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~fin
 [%%else]
 let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite ~ctx_params ~env_ar_params =
   let flags = {
-    ComInductive.poly;
-    cumulative;
+    ComInductive.poly = PolyFlags.make ~univ_poly:poly ~cumulative ~collapse_sort_variables:true;
     template = Some false;
     finite;
     mode = None;

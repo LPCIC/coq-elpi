@@ -359,6 +359,7 @@ let empty_ctxset = Univ.ContextSet.empty
 let univ_csts_to_list = Univ.Constraints.elements
 let univs_of_csts = UState.constraints
 let ucsts_filter = Univ.Constraints.filter
+let default_polyflags = false
 [%%else]
 let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid QGraph.Internal
 let check_univ_decl =  UState.check_univ_decl
@@ -366,6 +367,7 @@ let empty_ctxset = PConstraints.ContextSet.empty
 let univ_csts_to_list = Univ.UnivConstraints.elements
 let univs_of_csts x = PConstraints.univs @@ UState.constraints x
 let ucsts_filter = Univ.UnivConstraints.filter
+let default_polyflags = PolyFlags.default
 [%%endif]
 
 let handle_uinst_option_for_inductive ~depth options i state =
@@ -987,6 +989,13 @@ let get_entry_context = function
 | UState.Monomorphic_entry x, _ -> x
 | _ -> Univ.ContextSet.empty
 
+[%%if coq = "9.0" || coq = "9.1"]
+let make_polyflags poly cumul = poly
+[%%else]
+let make_polyflags poly cumul =
+  PolyFlags.make ~univ_poly:poly ~cumulative:cumul ~collapse_sort_variables:true
+[%%endif]
+
 let declare_definition _ using ~cinfo ~info ~opaque ~body sigma =
   let using = Option.map Proof_using.using_from_string using in
   let (kn, uctx) = Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma in
@@ -1002,7 +1011,7 @@ let add_axiom_or_variable api id ty local_bkind options state =
     err Pp.(str api ++ str": unsupported attribute @udecl-cumul! or @univpoly-cumul!");
   if poly && Option.has_some local_bkind then
     err Pp.(str api ++ str": section variables cannot be universe polymorphic");
-  let univs = check_univ_decl (Evd.ustate sigma) udecl ~poly in
+  let univs = check_univ_decl (Evd.ustate sigma) udecl ~poly:(make_polyflags poly cumul) in
   let kind = Decls.Logical in
   let impargs = [] in
   let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
@@ -2266,7 +2275,7 @@ Supported attributes:
        let hook = Declare.Hook.make (fun { Declare.Hook.S.uctx = x } -> uctx := Some (UState.context_set x)) in
        (* End hack *)
 
-       let info = Declare.Info.make ~scope ~kind ~poly ~udecl ~hook () in
+       let info = Declare.Info.make ~scope ~kind ~poly:(make_polyflags poly cumul) ~udecl ~hook () in
 
        let used =
          Univ.Level.Set.union
@@ -4062,7 +4071,7 @@ Supported attributes:
             let pv =
               let vernac_state = Vernacstate.freeze_full_state () in
               try
-                let rc = apply_proof ~name:(Id.of_string "elpi") ~poly:false proof_context.env focused_tac pv in
+                let rc = apply_proof ~name:(Id.of_string "elpi") ~poly:default_polyflags proof_context.env focused_tac pv in
                 let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
                 let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
                 Vernacstate.unfreeze_full_state vernac_state;
