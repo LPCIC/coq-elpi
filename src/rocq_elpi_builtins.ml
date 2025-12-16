@@ -987,16 +987,10 @@ let get_entry_context = function
 | UState.Monomorphic_entry x, _ -> x
 | _ -> Univ.ContextSet.empty
 
-[%%if coq = "9.0" || coq = "9.1"]
-let drop_sort_context uctx = uctx
-[%%else]
-let drop_sort_context = PConstraints.ContextSet.univ_context_set
-[%%endif]
-
 let declare_definition _ using ~cinfo ~info ~opaque ~body sigma =
   let using = Option.map Proof_using.using_from_string using in
   let (kn, uctx) = Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma in
-  kn, drop_sort_context uctx
+  kn, uctx
 
 let warns_of_options options = options.user_warns |> Option.map UserWarn.with_empty_qf
 
