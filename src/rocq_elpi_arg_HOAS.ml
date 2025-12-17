@@ -242,6 +242,14 @@ let univpoly_of ~poly ~cumulative =
   | true, false -> Poly
   | false, _ -> Mono
 
+[%%if coq = "9.0" || coq = "9.1"]
+let univpoly_of_flags flags =
+  univpoly_of ~poly:flags.ComInductive.poly ~cumulative:flags.ComInductive.cumulative
+[%%else]
+let univpoly_of_flags flags =
+  univpoly_of ~poly:(PolyFlags.univ_poly flags.ComInductive.poly) ~cumulative:(PolyFlags.cumulative flags.poly)
+[%%endif]
+
 let of_coq_inductive_definition id =
   let open Vernacentries.Preprocessed_Mind_decl in
   let { flags; udecl; typing_flags; private_ind; uniform; inductives } = id in
@@ -254,7 +262,7 @@ let of_coq_inductive_definition id =
         List.map (function (Vernacexpr.(_,NoCoercion,NoInstance),c) -> c
           | _ -> CErrors.user_err Pp.(str "coercion and instance flags not supported"))
           constructors in
-  let { ComInductive.template; cumulative; poly; finite } = flags in
+  let { ComInductive.template; finite } = flags in
   if template <> None then nYI "raw template polymorphic inductives";
   if udecl <> None then nYI "raw universe polymorphic inductives with universe declaration";
   {
@@ -264,7 +272,7 @@ let of_coq_inductive_definition id =
     non_uniform_parameters;
     arity;
     constructors;
-    univpoly = univpoly_of ~poly ~cumulative
+    univpoly = univpoly_of_flags flags
   }
 
 let of_coq_record_definition id =
@@ -279,7 +287,7 @@ let of_coq_record_definition id =
     match sort.CAst.v with
     | Constrexpr.CSort s -> s
     | _ -> CErrors.user_err ?loc:sort.CAst.loc Pp.(str "only explicits sorts are supported")) in
-  let { ComInductive.template; cumulative; poly; finite } = flags in
+  let { ComInductive.template; finite } = flags in
   if template <> None then nYI "raw template polymorphic inductives";
   if udecl <> None then nYI "raw universe polymorphic inductives with universe declaration";
   {
@@ -288,7 +296,7 @@ let of_coq_record_definition id =
     sort;
     constructor = Some idbuild.v;
     fields = cfs;
-    univpoly = univpoly_of ~poly ~cumulative
+    univpoly = univpoly_of_flags flags
   } 
 
 let intern_record_decl glob_sign (it : raw_record_decl) = glob_sign, it
@@ -461,6 +469,16 @@ let raw_decl_name_to_glob name =
 
 let interp_red_expr = Redexpr.interp_redexp_no_ltac
 
+[%%if coq = "9.0" || coq = "9.1"]
+let interp_definition ~program_mode poly = ComDefinition.interp_definition ~program_mode
+let interp_assumption ~program_mode poly = ComAssumption.interp_assumption ~program_mode
+[%%else]
+let interp_definition ~program_mode poly =
+  ComDefinition.interp_definition ~program_mode ~poly:(PolyFlags.of_univ_poly poly)
+let interp_assumption ~program_mode poly =
+  ComAssumption.interp_assumption ~program_mode ~poly:(PolyFlags.of_univ_poly poly)
+[%%endif]
+
 let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); body; red; udecl; atts } =
   let env = coq_ctx.env in
   let poly =
@@ -482,7 +500,7 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
   | Some body, _ ->
       let sigma, red = option_map_acc (interp_red_expr env) sigma red in
       let sigma, (body, typ), impargs =
-        ComDefinition.interp_definition ~program_mode:false
+        interp_definition ~program_mode:false poly
           env sigma Constrintern.empty_internalization_env bl red body typ
       in
       let state, gls0 = set_current_sigma ~depth state sigma in
@@ -491,7 +509,7 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
   | None, Some typ ->
       assert(red = None);
       let sigma, typ, impargs =
-        ComAssumption.interp_assumption ~program_mode:false
+        interp_assumption ~program_mode:false poly
           env sigma Constrintern.empty_internalization_env bl typ in
       let state, gls0 = set_current_sigma ~depth state sigma in
       state, udecl, typ, None, gls0

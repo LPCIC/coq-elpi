@@ -748,7 +748,6 @@ let execution proof p loc0 args loc1 ?loc ~atts () =
   | _ -> Vernactypes.vtdefault (fun () -> Interp.run_program ~loc p ~atts ~syndata args)
 [%%else]
 let classifier proof _loc0 _args _loc1 ~atts =
-  let open Vernac_classifier in
   match proof with
   | Some (Begin None) -> Vernacextend.(VtStartProof (Doesn'tGuaranteeOpacity,[]))
   | Some (Begin (Some a)) when has_att a atts -> Vernacextend.(VtStartProof (Doesn'tGuaranteeOpacity,[]))
