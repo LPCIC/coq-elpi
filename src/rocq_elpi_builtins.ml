@@ -355,7 +355,6 @@ let is_mutual_inductive_entry_ground { Entries.mind_entry_params; mind_entry_ind
 [%%if coq = "9.0" || coq = "9.1"]
 let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid
 let check_univ_decl =  UState.check_univ_decl
-let empty_ctxset = Univ.ContextSet.empty
 let univ_csts_to_list = Univ.Constraints.elements
 let univs_of_csts = UState.constraints
 let ucsts_filter = Univ.Constraints.filter
@@ -363,7 +362,6 @@ let default_polyflags = false
 [%%else]
 let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid QGraph.Internal
 let check_univ_decl =  UState.check_univ_decl
-let empty_ctxset = PConstraints.ContextSet.empty
 let univ_csts_to_list = Univ.UnivConstraints.elements
 let univs_of_csts x = PConstraints.univs @@ UState.constraints x
 let ucsts_filter = Univ.UnivConstraints.filter

@@ -27,11 +27,9 @@ type uinstanceoption =
 [%%if coq = "9.0" || coq = "9.1"]
 type univ_cst = Univ.univ_constraint
 type univ_csts = Univ.Constraints.t
-type univ_ctx_set = Univ.ContextSet.t
 [%%else]
 type univ_cst = Univ.UnivConstraint.t
 type univ_csts = Univ.UnivConstraints.t
-type univ_ctx_set = PConstraints.ContextSet.t
 [%%endif]
 
 type universe_decl = (Univ.Level.t list * bool) * (univ_csts * bool)
