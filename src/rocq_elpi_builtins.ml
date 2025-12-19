@@ -994,7 +994,7 @@ let make_polyflags poly cumul =
   PolyFlags.make ~univ_poly:poly ~cumulative:cumul ~collapse_sort_variables:true
 [%%endif]
 
-let declare_definition _ using ~cinfo ~info ~opaque ~body sigma =
+let declare_definition using ~cinfo ~info ~opaque ~body sigma =
   let using = Option.map Proof_using.using_from_string using in
   let (kn, uctx) = Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma in
   kn, uctx
@@ -2268,12 +2268,7 @@ Supported attributes:
         else Locality.(Global ImportDefaultBehavior) in
        let cinfo = cinfo_make state types options.using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
 
-       (* This is a hack, drop after 8.21 *)
-       let uctx = ref None in
-       let hook = Declare.Hook.make (fun { Declare.Hook.S.uctx = x } -> uctx := Some (UState.context_set x)) in
-       (* End hack *)
-
-       let info = Declare.Info.make ~scope ~kind ~poly:(make_polyflags poly cumul) ~udecl ~hook () in
+       let info = Declare.Info.make ~scope ~kind ~poly:(make_polyflags poly cumul) ~udecl () in
 
        let used =
          Univ.Level.Set.union
@@ -2282,7 +2277,7 @@ Supported attributes:
        let used = Univ.Level.Set.union used (universes_of_udecl state udecl) in
        let sigma = restricted_sigma_of used state in
 
-       let gr, uctx = declare_definition uctx options.using ~cinfo ~info ~opaque ~body sigma in
+       let gr, uctx = declare_definition options.using ~cinfo ~info ~opaque ~body sigma in
        let () =
         let lid = CAst.make ~loc:(to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state) (Id.of_string id) in
         match scope with
