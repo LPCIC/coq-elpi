@@ -1760,7 +1760,7 @@ let merge_universe_context_set rigid sigma uctx =
   Evd.merge_context_set rigid sigma uctx
 [%%else]
 let merge_universe_context_set rigid sigma uctx =
-  Evd.merge_context_set rigid sigma (PConstraints.ContextSet.of_univ_context_set uctx)
+  Evd.merge_universe_context_set rigid sigma uctx
 [%%endif]
 
 let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
@@ -3625,8 +3625,8 @@ let merge_ucontext sigma cs =
   Evd.merge_context_set UState.univ_flexible sigma (snd (UVars.UContext.to_context_set cs))
 [%%else]
 let merge_ucontext sigma cs =
-  let (_, qcst), (uvar, ucst) = UVars.UContext.to_context_set cs in
-  Evd.merge_context_set UState.univ_flexible sigma (uvar, (qcst, ucst)) (* makes no sense *)
+  let (qs, us), (qcst, ucst) = UVars.UContext.to_context_set cs in
+  Evd.merge_sort_context_set UState.univ_flexible QGraph.Internal sigma ((qs, qcst), (us, ucst))
 [%%endif]
 
 let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
