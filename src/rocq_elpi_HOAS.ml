@@ -211,7 +211,6 @@ let universe_level_variable =
 [%%if coq = "9.0" || coq = "9.1"]
 type univ_cst = Univ.univ_constraint
 type univ_csts = Univ.Constraints.t
-type univ_ctx_set = Univ.ContextSet.t
 
 let univ_lt = Univ.Lt
 let univ_le = Univ.Le
@@ -253,7 +252,6 @@ let universe_constraint : univ_cst API.Conversion.t =
 [%%else]
 type univ_cst = Univ.UnivConstraint.t
 type univ_csts = Univ.UnivConstraints.t
-type univ_ctx_set = PConstraints.ContextSet.t
 let univ_lt = Univ.UnivConstraint.Lt
 let univ_le = Univ.UnivConstraint.Le
 let univ_eq = Univ.UnivConstraint.Eq
