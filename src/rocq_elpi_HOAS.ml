@@ -115,6 +115,8 @@ let add_constraints state c = S.update (Option.get !pre_engine) state (fun ({ si
 let add_constraints state c = S.update (Option.get !pre_engine) state (fun ({ sigma } as x) ->
   { x with sigma = Evd.add_constraints sigma c })
 [%%endif]
+
+[%%if coq = "9.0" || coq = "9.1"]
 let add_universe_constraint state c =
   let open UnivProblem in
   try add_constraints state (Set.singleton c)
@@ -130,6 +132,28 @@ let add_universe_constraint state c =
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
       Feedback.msg_debug Pp.(str"UniversesDiffer");
       raise API.BuiltInPredicate.No_clause
+[%%else]
+let add_universe_constraint state c =
+  let open UnivProblem in
+  try add_constraints state (Set.singleton c)
+  with
+  | QGraph.(EliminationError (QualityInconsistency (Some printer, (k, q, q', e)))) ->
+     Feedback.msg_debug
+       (QGraph.explain_quality_inconsistency printer e);
+     raise API.BuiltInPredicate.No_clause
+
+  | UGraph.UniverseInconsistency p ->
+      let sigma = (S.get (Option.get !pre_engine) state).sigma in
+      Feedback.msg_debug
+        (UGraph.explain_universe_inconsistency
+          (Termops.pr_evd_qvar sigma)
+          (Termops.pr_evd_level sigma)
+           p);
+      raise API.BuiltInPredicate.No_clause
+  | Evd.UniversesDiffer | UState.UniversesDiffer ->
+      Feedback.msg_debug Pp.(str"UniversesDiffer");
+      raise API.BuiltInPredicate.No_clause
+[%%endif]
 
 let new_univ_level_variable ?(flexible=false) state =
   S.update_return (Option.get !pre_engine) state (fun ({ sigma } as e) ->
