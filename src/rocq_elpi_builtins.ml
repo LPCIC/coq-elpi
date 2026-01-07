@@ -988,10 +988,10 @@ let get_entry_context = function
 | _ -> Univ.ContextSet.empty
 
 [%%if coq = "9.0" || coq = "9.1"]
-let make_polyflags poly cumul = poly
+let make_polyflags poly cumul csv = poly
 [%%else]
-let make_polyflags poly cumul =
-  PolyFlags.make ~univ_poly:poly ~cumulative:cumul ~collapse_sort_variables:true
+let make_polyflags poly cumul csv =
+  PolyFlags.make ~univ_poly:poly ~cumulative:cumul ~collapse_sort_variables:csv
 [%%endif]
 
 let declare_definition using ~cinfo ~info ~opaque ~body sigma =
@@ -1009,7 +1009,7 @@ let add_axiom_or_variable api id ty local_bkind options state =
     err Pp.(str api ++ str": unsupported attribute @udecl-cumul! or @univpoly-cumul!");
   if poly && Option.has_some local_bkind then
     err Pp.(str api ++ str": section variables cannot be universe polymorphic");
-  let univs = check_univ_decl (Evd.ustate sigma) udecl ~poly:(make_polyflags poly cumul) in
+  let univs = check_univ_decl (Evd.ustate sigma) udecl ~poly:(make_polyflags poly cumul true) in
   let kind = Decls.Logical in
   let impargs = [] in
   let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
@@ -1536,11 +1536,11 @@ Supported attributes:
   DocAbove)]
 
 [%%if coq = "9.0"]
-let declare_projections ind ~kind univs id flags implicits fields =
+let declare_projections ind ~kind univs id flags _ implicits fields =
   Record.Internal.declare_projections ind ~kind univs id flags implicits fields
 [%%else]
-let declare_projections ind ~kind _ id flags implicits _ =
-  Record.Internal.declare_projections ind ~kind ~inhabitant_id:id flags implicits
+let declare_projections ind ~kind _ id flags ~poly implicits _ =
+  Record.Internal.declare_projections ind ~kind ~inhabitant_id:id flags ~poly implicits
 [%%endif]
 
 [%%if coq = "9.0"]
@@ -2268,7 +2268,7 @@ Supported attributes:
         else Locality.(Global ImportDefaultBehavior) in
        let cinfo = cinfo_make state types options.using ~name:(Id.of_string id) ~typ:types ~impargs:[] () in
 
-       let info = Declare.Info.make ~scope ~kind ~poly:(make_polyflags poly cumul) ~udecl () in
+       let info = Declare.Info.make ~scope ~kind ~poly:(make_polyflags poly cumul true) ~udecl () in
 
        let used =
          Univ.Level.Set.union
@@ -2371,11 +2371,13 @@ Supported attributes:
          let open Entries in
          let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_decls k_ty in
+         let _, univ_poly, cumul, _, _ = poly_cumul_udecl_variance_of_options state options in
+         let poly = make_polyflags univ_poly cumul true in
          let projections =
            declare_projections ind ~kind:Decls.Definition
              (uentry, ubinders)
              (Names.Id.of_string "record")
-             flags is_implicit fields_as_relctx
+             flags ~poly is_implicit fields_as_relctx
          in
          let struc = Structures.Structure.make (Global.env()) ind projections in
          Record.Internal.declare_structure_entry struc;
