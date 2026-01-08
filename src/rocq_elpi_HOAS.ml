@@ -257,7 +257,7 @@ let univ_le = Univ.UnivConstraint.Le
 let univ_eq = Univ.UnivConstraint.Eq
 let univ_csts_of_list = Univ.UnivConstraints.of_list
 let univ_csts_to_list = Univ.UnivConstraints.elements
-let evd_merge_ctx_set rigid = Evd.merge_sort_context_set rigid QGraph.Internal
+let evd_merge_ctx_set rigid = Evd.merge_sort_context_set rigid
 let subst_univs_constraints x = UVars.subst_univs_constraints x
 let univs_of_csts x = PConstraints.univs @@ UVars.UContext.constraints x
 let mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_univ_constraints univdecl_instance =
@@ -3624,7 +3624,7 @@ let merge_ucontext sigma cs =
 [%%else]
 let merge_ucontext sigma cs =
   let (qs, us), (qcst, ucst) = UVars.UContext.to_context_set cs in
-  Evd.merge_sort_context_set UState.univ_flexible QGraph.Internal sigma ((qs, qcst), (us, ucst))
+  Evd.merge_sort_context_set UState.univ_flexible sigma ((qs, qcst), (us, ucst))
 [%%endif]
 
 let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
