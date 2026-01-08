@@ -360,7 +360,7 @@ let univs_of_csts = UState.constraints
 let ucsts_filter = Univ.Constraints.filter
 let default_polyflags = false
 [%%else]
-let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid QGraph.Internal
+let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid
 let check_univ_decl =  UState.check_univ_decl
 let univ_csts_to_list = Univ.UnivConstraints.elements
 let univs_of_csts x = PConstraints.univs @@ UState.constraints x
