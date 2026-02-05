@@ -679,12 +679,20 @@ let interp return ist = function
         return @@ LTac(ty,(ist,id))
   | LTacTactic t -> return @@ LTacTactic (Ltac_plugin.Tacinterp.Value.of_closure ist t)
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let register_interp0 wit f = Geninterp.register_interp0 wit f
+let freturn = Ftactic.return
+[%%else]
+let register_interp0 wit f = Ltac_plugin.Tacinterp.Register.register_interp0 wit f
+let freturn = Ltac_plugin.Ftactic.return
+[%%endif]
+
 let add_genarg tag pr_raw pr_glob pr_top glob subst interp =
   let wit = Genarg.make0 tag in
   let tag = Geninterp.Val.create tag in
   let () = Genintern.register_intern0 wit glob in
   let () = Gensubst.register_subst0 wit subst in
-  let () = Geninterp.register_interp0 wit (interp (fun x -> Ftactic.return @@ Geninterp.Val.Dyn (tag, x))) in
+  let () = register_interp0 wit (interp (fun x -> freturn @@ Geninterp.Val.Dyn (tag, x))) in
   let () = Geninterp.register_val0 wit (Some (Geninterp.Val.Base tag)) in
   Ltac_plugin.Pptactic.declare_extra_genarg_pprule wit pr_raw pr_glob pr_top;
   wit
