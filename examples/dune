@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (package rocq-elpi)
  (name elpi_examples)
  (plugins rocq-elpi.elpi)

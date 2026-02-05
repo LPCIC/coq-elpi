@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
   ; myExtension.lib is the logical path that can be used in rocq
  (name myExtension.lib)
  (theories elpi)

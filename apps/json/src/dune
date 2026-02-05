@@ -2,5 +2,5 @@
  (name elpi_json_plugin)
  (public_name rocq-elpi-json.elpi_json_plugin)
  (flags :standard -w -27)
- (preprocess (pps ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
+ (preprocess (pps ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{rocq:version.major}.%{rocq:version.minor}\")"))
  (libraries rocq-runtime.plugins.ltac rocq-runtime.vernac rocq-elpi.elpi elpi yojson))

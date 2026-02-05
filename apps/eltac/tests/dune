@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.eltac.tests)
  (package rocq-elpi-tests)
  (theories elpi elpi.apps.eltac))
