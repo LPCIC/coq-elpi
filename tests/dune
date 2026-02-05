@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (name elpi.tests)
  (plugins rocq-elpi.elpi)
  (theories elpi))
@@ -11,7 +11,7 @@
   (glob_files test_API_proof.v.in))
  (action
   (with-stdout-to %{target}
-   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{rocq:version.major}.%{rocq:version.minor}" %{deps}))))
 
 (rule
  (target dummy.v)

@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.derive.tests)
  (package rocq-elpi-tests)
  (flags :standard -w -default-output-directory)

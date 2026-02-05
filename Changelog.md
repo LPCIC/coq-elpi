@@ -11,6 +11,11 @@
 - Fix `coq.ltac.collect-simple-goals` returning goals whose evar is applied
   to the wrong variables when the proof context is not empty
 
+### Build:
+- the Rocq rules of dune (`rocq.theory`, `using rocq 0.11`), so dune 3.21 or
+  later is needed (3.24 dropped the Coq rules); the empty compatibility
+  package `coq-elpi` is gone
+
 ### HOAS:
 - `cache` is an ordinary predicate (it was declared `builtin`, but OCaml
   neither declares nor implements it)
