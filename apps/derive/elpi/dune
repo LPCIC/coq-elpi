@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.derive.elpi)
  (package rocq-elpi)
  (theories elpi))
