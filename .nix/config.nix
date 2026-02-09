@@ -14,7 +14,7 @@ let master = [
     "trakt"
   ];
   rocq-common-bundles = {
-    rocq-elpi.override.elpi-version = "v3.1.0";
+    rocq-elpi.override.elpi-version = "3.4.2";
     hierarchy-builder.override.version = "master";
     rocq-elpi-tests.job = true;
     rocq-elpi-tests-stdlib.job = true;
@@ -22,7 +22,7 @@ let master = [
   coq-common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
-    coq-elpi.override.elpi-version = "v3.1.0";
+    coq-elpi.override.elpi-version = "3.4.2";
 
     mathcomp-boot.job = true;
     mathcomp-fingroup.job = true;
@@ -75,6 +75,22 @@ let master = [
       hierarchy-builder.override.version = "master";
     }; };
 
+    "rocq-9.2" = { rocqPackages = rocq-common-bundles // {
+      rocq-core.override.version = "9.2";
+      bignums.job = false;  # Stdlib not released yet
+      coqeal.job = false;  # Stdlib not released yet
+      mathcomp-reals-stdlib.job = false;  # Stdlib not released yet
+      mathcomp-analysis-stdlib.job = false;  # Stdlib not released yet
+      mathcomp-zify.job = false;  # Stdlib not released yet
+      mathcomp-algebra-tactics.job = false;  # Stdlib not released yet
+      rocq-elpi-tests-stdlib.job = false;  # Stdlib not released yet
+      stdlib.job = false;  # Stdlib not released yet
+      trakt.job = false;  # Stdlib not released yet
+    }; coqPackages = coq-common-bundles // {
+      coq.override.version = "9.2";
+      hierarchy-builder.override.version = "master";
+    }; };
+
     "coq-master" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "master";
       bignums.override.version = "master";
@@ -86,16 +102,18 @@ let master = [
       hierarchy-builder.override.version = "master";
     }; };
 
-    /* uncomment bundle below if min and max elpi version start to differ
     "coq-master-min-elpi" = { rocqPackages = rocq-common-bundles // {
+      rocq-elpi.override.elpi-version = "3.3.0";
       rocq-core.override.version = "master";
       stdlib.override.version = "master";
       bignums.override.version = "master";
     }; coqPackages = coq-common-bundles // {
+      coq-elpi.override.elpi-version = "3.3.0";
       coq.override.version = "master";
       stdlib.override.version = "master";
       bignums.override.version = "master";
-    }; }; */
+      trakt.job = false;
+    }; };
 
   };
 
