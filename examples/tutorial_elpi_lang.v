@@ -461,7 +461,7 @@ Elpi Program tutorial_functions3 lp:{{
 
 Elpi accepts the code because:
 
-* the two rules are mutually esclusive (thanks to the cut)
+* the two rules are mutually exclusive (thanks to the cut)
 * because the code after the cut is itself a function call
   (:e:`Y = 2` is a call to unification that is a function)
 
