@@ -1065,6 +1065,14 @@ let with_hack_synterp f () =
 let grammar_extend e ext : unit = Procq.grammar_extend ~ignore_kw:false e ext
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let mk_ltac_in_term ?loc tac =
+   CAst.make ?loc @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit wit_ltac_in_term) tac)
+[%%else]
+let mk_ltac_in_term ?loc tac =
+  CAst.make ?loc @@ Constrexpr.CGenarg (Raw (wit_ltac_in_term, tac))
+[%%endif]
+
 let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
   let action args loc =
   let open Ltac_plugin in
@@ -1092,7 +1100,7 @@ let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = mor
     let args = args |> List.map (fun (arg,_) -> Rocq_elpi_arg_HOAS.Tac.Term(arg)) in
     let args = Genarg.in_gen (Genarg.rawwit (Genarg.wit_list Rocq_elpi_arg_syntax.wit_elpi_tactic_arg)) (more_args @ args) in
     (TacML (elpi_tac_entry, [TacGeneric(None, tacname); TacGeneric(None, args)])) in
-  CAst.make @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit wit_ltac_in_term) (CAst.make tac)) in
+  mk_ltac_in_term (CAst.make tac) in
   let Gbpmp (rule, action) = gbpmp action (List.rev abbrev_name) in
   (* HACK!!! changes the grammar but is called in interp phase *)
   with_hack_synterp (fun () ->

@@ -291,11 +291,31 @@ let name_of = function
   | Names.Name.Anonymous -> None
   | Names.Name.Name id -> Some (name_of_id id)
 
-let is_elpi_code = ref (fun _ -> assert false)
-let get_elpi_code = ref (fun _ -> assert false)
-let is_elpi_code_appArg = ref (fun _ -> assert false)
-let get_elpi_code_appArg = ref (fun _ -> assert false)
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let is_elpi_code_r = ref (fun _ -> assert false)
+let get_elpi_code_r = ref (fun _ -> assert false)
+let is_elpi_code_appArg_r = ref (fun _ -> assert false)
+let get_elpi_code_appArg_r = ref (fun _ -> assert false)
 
+let is_elpi_code x = !is_elpi_code_r x
+let get_elpi_code x = !get_elpi_code_r x
+let is_elpi_code_appArg x = !is_elpi_code_appArg_r x
+let get_elpi_code_appArg x = !get_elpi_code_appArg_r x
+[%%else]
+let elpi_code_tag = Genintern.create_uniform_genconstr "elpi_code"
+let elpi_code_appArg_tag = Genintern.create_uniform_genconstr "elpi_code_appArg"
+
+let tag_helpers (type raw glb) (tag:(raw, glb) GenConstr.tag) =
+  let check (GenConstr.Glb (tag', _)) = Option.has_some @@ GenConstr.eq tag tag' in
+  let get (GenConstr.Glb (tag', v)) : glb =
+    let Refl = Option.get @@ GenConstr.eq tag tag' in
+    v
+  in
+  check, get
+
+let is_elpi_code, get_elpi_code = tag_helpers elpi_code_tag
+let is_elpi_code_appArg, get_elpi_code_appArg = tag_helpers elpi_code_appArg_tag
+[%%endif]
 
 let gterm2lpast ~pattern ~language state glob =
 
@@ -381,16 +401,16 @@ let gterm2lpast ~pattern ~language state glob =
       under_binder ~loc name ty (Some bo) t state ~k:(fun name t state ->
         in_elpiast_let ~loc name ~ty ~bo (gterm2lp state t))
   
-  | GGenarg arg when !is_elpi_code arg ->
-      let loc, text = !get_elpi_code arg in
+  | GGenarg arg when is_elpi_code arg ->
+      let loc, text = get_elpi_code arg in
       let ast = Q.elpi ~language:Q.elpi_language state loc text in
       if A.Term.is_spill_from_quotation ast then
         let { hyps } = get_glob_env state in
         if hyps = [] then ast
         else A.Term.extend_spill_hyp_from_quotation ast hyps
       else ast
-  | GGenarg arg when !is_elpi_code_appArg arg ->
-      begin match !get_elpi_code_appArg arg with
+  | GGenarg arg when is_elpi_code_appArg arg ->
+      begin match get_elpi_code_appArg arg with
       | _, [] -> assert false
       | loc, hd :: stuff ->
           let stuff = List.map (fun s -> DAst.make ~loc:coqloc @@ GVar(Id.of_string s)) stuff in

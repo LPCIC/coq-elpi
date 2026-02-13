@@ -21,19 +21,38 @@ module U = Rocq_elpi_utils
 (* Anti-quotation ******************************************************** *)
 
 {
-let pr_elpi_code _ _ _ (s : Elpi.API.Ast.Loc.t * string) = Pp.str (snd s)
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+  let pr_elpi_code _ _ _ (s : Elpi.API.Ast.Loc.t * string) = Pp.str (snd s)
 }
 
 ARGUMENT EXTEND elpi_code
     PRINTED BY { pr_elpi_code }
 END
 {
-let () = Rocq_elpi_glob_quotation.is_elpi_code :=
+let () = Rocq_elpi_glob_quotation.is_elpi_code_r :=
            (fun x -> Genarg.(has_type x (glbwit wit_elpi_code)))
-let () = Rocq_elpi_glob_quotation.get_elpi_code :=
+let () = Rocq_elpi_glob_quotation.get_elpi_code_r :=
            (fun x -> Genarg.(out_gen (glbwit wit_elpi_code) x))
 
 let pr_elpi_code_appArg _ _ _ (s : Elpi.API.Ast.Loc.t * string list) = Pp.prlist Pp.str (snd s)
+}
+
+ARGUMENT EXTEND elpi_code_appArg
+  PRINTED BY { pr_elpi_code_appArg }
+END
+{
+
+let () = Rocq_elpi_glob_quotation.is_elpi_code_appArg_r  :=
+           (fun x -> Genarg.(has_type x (glbwit wit_elpi_code_appArg )))
+let () = Rocq_elpi_glob_quotation.get_elpi_code_appArg_r  :=
+           (fun x -> Genarg.(out_gen (glbwit wit_elpi_code_appArg ) x))
+
+let mk_elpi_code x = Genarg.in_gen (Genarg.rawwit wit_elpi_code) x
+let mk_elpi_code_appArg x = Genarg.in_gen (Genarg.rawwit wit_elpi_code_appArg) x
+[%%else]
+let mk_elpi_code x = GenConstr.Raw (Rocq_elpi_glob_quotation.elpi_code_tag, x)
+let mk_elpi_code_appArg x = GenConstr.Raw (Rocq_elpi_glob_quotation.elpi_code_appArg_tag, x)
+[%%endif]
 
 let pr_ghost_loc _ _ _ loc = Loc.pr loc
 }
@@ -42,15 +61,7 @@ ARGUMENT EXTEND ghost PRINTED BY { pr_ghost_loc }
 | [ ] -> { loc }
 END
 
-ARGUMENT EXTEND elpi_code_appArg 
-  PRINTED BY { pr_elpi_code_appArg } 
-END
 {
-
-let () = Rocq_elpi_glob_quotation.is_elpi_code_appArg  :=
-           (fun x -> Genarg.(has_type x (glbwit wit_elpi_code_appArg )))
-let () = Rocq_elpi_glob_quotation.get_elpi_code_appArg  :=
-           (fun x -> Genarg.(out_gen (glbwit wit_elpi_code_appArg ) x))
 
 let rec inlogpath q = function
   | [] -> []
@@ -117,15 +128,13 @@ GRAMMAR EXTEND Gram
     [ [ s = QUOTATION "lp:" -> 
         { 
           let loc = { loc with Loc.bp = loc.Loc.bp + 3 } in
-          let arg =
-            if s.[0] = '('
-            then Genarg.in_gen (Genarg.rawwit wit_elpi_code_appArg) (idents_of loc s)
-            else if s.[0] = '\123'
-            then Genarg.in_gen (Genarg.rawwit wit_elpi_code) (strip_curly loc s)
-            else Genarg.in_gen (Genarg.rawwit wit_elpi_code) (Rocq_elpi_utils.of_coq_loc loc,s) in
-          CAst.make ~loc
-            (Constrexpr.CGenarg arg) } ]
-    ]
+          let mk mk0 v = CAst.make ~loc @@ Constrexpr.CGenarg (mk0 v) in
+          if s.[0] = '('
+          then mk mk_elpi_code_appArg (idents_of loc s)
+          else if s.[0] = '\123'
+          then mk mk_elpi_code (strip_curly loc s)
+          else mk mk_elpi_code (Rocq_elpi_utils.of_coq_loc loc,s) }
+      ] ]
   ;
 END
 

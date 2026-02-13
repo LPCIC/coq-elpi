@@ -54,10 +54,15 @@ val runtime_gterm2lp :
   depth:int -> State.t -> term
   
 (* Used for anti-quotations *)
-val is_elpi_code : (Genarg.glob_generic_argument -> bool) ref
-val get_elpi_code : (Genarg.glob_generic_argument -> Ast.Loc.t * string) ref
-val is_elpi_code_appArg : (Genarg.glob_generic_argument -> bool) ref
-val get_elpi_code_appArg : (Genarg.glob_generic_argument -> Ast.Loc.t * string list) ref
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+val is_elpi_code_r : (Genarg.glob_generic_argument -> bool) ref
+val get_elpi_code_r : (Genarg.glob_generic_argument -> Ast.Loc.t * string) ref
+val is_elpi_code_appArg_r : (Genarg.glob_generic_argument -> bool) ref
+val get_elpi_code_appArg_r : (Genarg.glob_generic_argument -> Ast.Loc.t * string list) ref
+[%%else]
+val elpi_code_tag : ((Ast.Loc.t * string) as 'a, 'a) GenConstr.tag
+val elpi_code_appArg_tag : ((Ast.Loc.t * string list) as 'a, 'a) GenConstr.tag
+[%%endif]
 
 (* Hacks *)
 val mk_restricted_name : int -> string
