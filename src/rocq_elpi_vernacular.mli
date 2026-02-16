@@ -5,6 +5,7 @@
 open Rocq_elpi_utils
 open Rocq_elpi_programs
 open Rocq_elpi_arg_HOAS
+open Ltac_plugin
 
 val atts2impl :
   depth:int -> Elpi.API.Ast.Loc.t -> Summary.Stage.t -> Elpi.API.State.t -> Attributes.vernac_flags ->
@@ -64,8 +65,8 @@ val document_builtins : unit -> unit
 
 
 
-val run_tactic : loc:Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Geninterp.interp_sign -> Tac.top list -> unit Proofview.tactic
-val run_in_tactic : loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Geninterp.interp_sign -> unit Proofview.tactic
+val run_tactic : loc:Loc.t -> qualified_name -> atts:Attributes.vernac_flags -> Tacinterp.interp_sign -> Tac.top list -> unit Proofview.tactic
+val run_in_tactic : loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> Tacinterp.interp_sign -> unit Proofview.tactic
 
 (* move to synterp *)
 val export_command : atts:proof option -> ?as_:qualified_name -> qualified_name -> unit
