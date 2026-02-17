@@ -4,6 +4,7 @@
 
 open Elpi.API.RawData
 open Rocq_elpi_utils
+open Ltac_plugin.Tacinterp
 
 type phase = Interp | Synterp | Both
 type proof =
@@ -18,11 +19,11 @@ type top_term = Ltac_plugin.Tacinterp.interp_sign * Genintern.glob_constr_and_ex
 
 type raw_record_decl = Vernacentries.Preprocessed_Mind_decl.record
 type glob_record_decl = Genintern.glob_sign * raw_record_decl
-type top_record_decl = Geninterp.interp_sign * glob_record_decl
+type top_record_decl = interp_sign * glob_record_decl
 
 type raw_indt_decl = Vernacentries.Preprocessed_Mind_decl.inductive
 type glob_indt_decl = Genintern.glob_sign * raw_indt_decl
-type top_indt_decl = Geninterp.interp_sign * glob_indt_decl
+type top_indt_decl = interp_sign * glob_indt_decl
 
 [%%if coq = "9.0" || coq = "9.1"]
 type raw_red_expr = Genredexpr.raw_red_expr
@@ -41,11 +42,11 @@ type raw_constant_decl = {
 
 val pr_raw_constant_decl : Environ.env -> Evd.evar_map -> raw_constant_decl -> Pp.t
 type glob_constant_decl = Genintern.glob_sign * raw_constant_decl
-type top_constant_decl = Geninterp.interp_sign * glob_constant_decl
+type top_constant_decl = interp_sign * glob_constant_decl
 
 type raw_context_decl = Constrexpr.local_binder_expr list
 type glob_context_decl = Genintern.glob_sign * raw_context_decl
-type top_context_decl = Geninterp.interp_sign * glob_context_decl
+type top_context_decl = interp_sign * glob_context_decl
 
 type ('a,'b,'c,'d,'e) t =
   | Int : int            -> ('a,'b,'c,'d,'e) t
@@ -65,7 +66,7 @@ val pp_glob : Environ.env -> Evd.evar_map -> glob -> Pp.t
 val pp_top : Environ.env -> Evd.evar_map -> top -> Pp.t
 
 val glob : Genintern.glob_sign -> raw -> glob
-val interp : Geninterp.interp_sign -> Environ.env -> Evd.evar_map -> glob -> top
+val interp : interp_sign -> Environ.env -> Evd.evar_map -> glob -> top
 val subst : Mod_subst.substitution -> glob -> glob
  
 end
@@ -74,11 +75,11 @@ module Tac : sig
 
 type raw_term = Constrexpr.constr_expr
 type glob_term = Genintern.glob_constr_and_expr
-type top_term = Geninterp.interp_sign * Genintern.glob_constr_and_expr
+type top_term = interp_sign * Genintern.glob_constr_and_expr
 
 type raw_ltac_term = Constrexpr.constr_expr
 type glob_ltac_term = Glob_term.glob_constr
-type top_ltac_term = Geninterp.interp_sign * Names.Id.t
+type top_ltac_term = interp_sign * Names.Id.t
 
 type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr

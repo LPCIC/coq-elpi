@@ -9,6 +9,7 @@ module CD = API.RawOpaqueData
 open Rocq_elpi_utils
 open Rocq_elpi_HOAS
 open Names
+open Ltac_plugin.Tacinterp
 
 type phase = Interp | Synterp | Both
 type proof =
@@ -68,11 +69,11 @@ type top_term =
 
 type raw_record_decl = Vernacentries.Preprocessed_Mind_decl.record
 type glob_record_decl = Genintern.glob_sign * raw_record_decl
-type top_record_decl = Geninterp.interp_sign * glob_record_decl
+type top_record_decl = interp_sign * glob_record_decl
 
 type raw_indt_decl = Vernacentries.Preprocessed_Mind_decl.inductive
 type glob_indt_decl = Genintern.glob_sign * raw_indt_decl
-type top_indt_decl = Geninterp.interp_sign * glob_indt_decl
+type top_indt_decl = interp_sign * glob_indt_decl
 
 type univpoly = Mono | Poly | CumulPoly
 
@@ -165,7 +166,7 @@ type glob_constant_decl_elpi = {
   body : Glob_term.glob_constr option;
 }
 type glob_constant_decl = Genintern.glob_sign * raw_constant_decl
-type top_constant_decl = Geninterp.interp_sign * glob_constant_decl
+type top_constant_decl = interp_sign * glob_constant_decl
 
 let pr_raw_constant_decl _ _ _ = Pp.str "TODO: pr_raw_constant_decl"
 let pr_glob_constant_decl _ _ _ = Pp.str "TODO: pr_glob_constant_decl"
@@ -174,7 +175,7 @@ let pr_top_constant_decl _ _ _ = Pp.str "TODO: pr_top_constant_decl"
 
 type raw_context_decl = Constrexpr.local_binder_expr list
 type glob_context_decl = Genintern.glob_sign * raw_context_decl
-type top_context_decl = Geninterp.interp_sign * glob_context_decl
+type top_context_decl = interp_sign * glob_context_decl
 
 let pr_raw_context_decl _ _ _ = Pp.str "TODO: pr_raw_context_decl"
 let pr_glob_context_decl _ _ _ = Pp.str "TODO: pr_glob_context_decl"
@@ -580,11 +581,11 @@ module Tac = struct
 
 type raw_term = Constrexpr.constr_expr
 type glob_term = Genintern.glob_constr_and_expr
-type top_term = Geninterp.interp_sign * Genintern.glob_constr_and_expr
+type top_term = interp_sign * Genintern.glob_constr_and_expr
 
 type raw_ltac_term = Constrexpr.constr_expr
 type glob_ltac_term = Glob_term.glob_constr
-type top_ltac_term = Geninterp.interp_sign * Names.Id.t
+type top_ltac_term = interp_sign * Names.Id.t
 
 type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
@@ -1093,7 +1094,7 @@ let in_elpi_tac ~loc ~base ~depth ?calldepth coq_ctx hyps sigma state x =
   match x with
   | LTacTactic t -> in_elpi_ltac_tactic ~depth ?calldepth coq_ctx hyps sigma state t
   | LTac(ty,(ist,id)) ->
-      let v = try Id.Map.find id ist.Geninterp.lfun with Not_found -> assert false in
+      let v = try Id.Map.find id ist.lfun with Not_found -> assert false in
       begin try
         in_elpi_ltac_arg ~loc ~depth ~base ?calldepth coq_ctx hyps sigma state ty ist v
       with Ltac_plugin.Taccoerce.CannotCoerceTo s ->
