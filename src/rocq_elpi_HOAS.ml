@@ -2191,7 +2191,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let { sigma } = S.get engine state in
       begin match ind with
       | `SomeInd ind ->
-          let ci = Inductiveops.make_case_info (get_global_env state) ind C.RegularStyle in
+          let ci = Inductiveops.make_case_info (get_global_env state) ind C.MatchStyle in
           state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,(rt,relevant),C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
       | `None -> CErrors.anomaly Pp.(str "non dependent match on unknown, non singleton, inductive")
       | `SomeTerm (n,rt) ->

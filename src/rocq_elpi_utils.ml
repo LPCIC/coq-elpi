@@ -710,7 +710,7 @@ let detype ?(keepunivs = false) env sigma t =
     let constructs = Array.init (Array.length bl) (fun i -> (ci.ci_ind, i + 1)) in
       let constagsl = get_cstr_tags (snd env) ci bl in
       let eqnl = detype_eqns env constructs constagsl (ci, univs, params, bl) in
-      DAst.make @@ GCases (RegularStyle, pred, [ (tomatch, (alias, aliastyp)) ], eqnl)
+      DAst.make @@ GCases (MatchStyle, pred, [ (tomatch, (alias, aliastyp)) ], eqnl)
   and detype_eqns env constructs consnargsl bl =
     let ci, u, pms, bl = bl in
     CArray.to_list (CArray.map3 (detype_eqn env u pms) constructs consnargsl bl)
