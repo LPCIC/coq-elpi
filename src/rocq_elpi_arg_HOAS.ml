@@ -667,21 +667,23 @@ let subst mod_subst = function
   | LTacTactic t ->
       LTacTactic (Ltac_plugin.Tacsubst.subst_tactic mod_subst t)
   
-let interp return ist = function
-  | Int _ as x -> return x
-  | String _ as x -> return x
-  | Term t -> return @@ Term(ist,t)
-  | OpenTerm t -> return @@ OpenTerm(ist,t)
+let interp ist = function
+  | Int _ as x -> x
+  | String _ as x -> x
+  | Term t -> Term(ist,t)
+  | OpenTerm t -> OpenTerm(ist,t)
   | LTac(ty,v) ->
       let id =
         match DAst.get v with
         | Glob_term.GVar id -> id
         | _ -> assert false in
-        return @@ LTac(ty,(ist,id))
-  | LTacTactic t -> return @@ LTacTactic (Ltac_plugin.Tacinterp.Value.of_closure ist t)
+        LTac(ty,(ist,id))
+  | LTacTactic t -> LTacTactic (Ltac_plugin.Tacinterp.Value.of_closure ist t)
 
 [%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
-let register_interp0 wit f = Geninterp.register_interp0 wit f
+let register_interp0 wit f = Geninterp.register_interp0 wit (fun ist x ->
+    Ftactic.bind (f ist x) @@ fun v ->
+    Ftactic.return (Geninterp.Val.inject (Geninterp.val_tag (Topwit wit)) v))
 let freturn = Ftactic.return
 [%%else]
 let register_interp0 wit f = Ltac_plugin.Tacinterp.Register.register_interp0 wit f
@@ -693,7 +695,7 @@ let add_genarg tag pr_raw pr_glob pr_top glob subst interp =
   let tag = Geninterp.Val.create tag in
   let () = Genintern.register_intern0 wit glob in
   let () = Gensubst.register_subst0 wit subst in
-  let () = register_interp0 wit (interp (fun x -> freturn @@ Geninterp.Val.Dyn (tag, x))) in
+  let () = register_interp0 wit interp in
   let () = Geninterp.register_val0 wit (Some (Geninterp.Val.Base tag)) in
   Ltac_plugin.Pptactic.declare_extra_genarg_pprule wit pr_raw pr_glob pr_top;
   wit
@@ -705,7 +707,7 @@ let wit = add_genarg "elpi_ftactic_arg"
   (fun env sigma _ _ _ -> pp_top env sigma)
   glob
   subst
-  interp        
+  (fun ist x -> freturn (interp ist x))
 
 end
 
