@@ -11,7 +11,7 @@ namespace tc {
 
   func has-context-deps gref -> .
   has-context-deps GR :-
-    coq.env.section SectionVars,
+    coq.env.section-variables SectionVars,
     coq.env.dependencies GR _ Deps, 
     std.exists! SectionVars (x\ coq.gref.set.mem (const x) Deps).
 

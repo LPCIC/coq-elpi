@@ -63,7 +63,7 @@ namespace tc {
   instances-of-current-section InstsFiltered :-
     coq.env.current-section-path SectionPath,
     std.findall (tc.instance SectionPath _ _ _) Insts,
-    coq.env.section SectionVars,
+    coq.env.section-variables SectionVars,
     std.map-filter Insts (x\r\ sigma X\ tc.instance _ r _ _ = x, const X = r, not(std.mem SectionVars X)) InstsFiltered.
 
   func is-instance-gr gref ->.
@@ -182,7 +182,7 @@ namespace tc {
   % [section-var->decl L] decl representing seciton variables with their types
   func section-var->decl -> list prop.
   section-var->decl L :-
-    section-var->decl.aux {coq.env.section} L.
+    section-var->decl.aux {coq.env.section-variables} L.
 
   func time-is-active (func (list string) ->) ->.
   :name "time-is-active"
