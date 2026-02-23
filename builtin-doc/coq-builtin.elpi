@@ -749,9 +749,21 @@ external func coq.env.module modpath -> list module-item.
 % type (does not recurse on submodules) *E*
 external func coq.env.module-type modtypath -> list id.
 
-% [coq.env.section GlobalObjects] lists the global objects that are marked
-% as to be abstracted at the end of the enclosing sections
-external func coq.env.section -> list constant.
+% [coq.env.section-variables ConstantsRepresentingVariables] lists all the
+% section variables, i.e. the global objects that are marked as to be
+% abstracted at the end of the enclosing sections
+external func coq.env.section-variables -> list constant.
+
+% [coq.env.section-contents GlobalObjects] lists the global objects that are
+% defined withing the current section
+external func coq.env.section-contents -> list gref.
+
+% Deprecated, use coq.env.section-variables
+  func coq.env.section -> list constant.
+  coq.env.section L :-
+    coq.warning "elpi.deprecated" "elpi.env.section" "use coq.env.section-variables in place of coq.env.section",
+    coq.env.section-variables L.
+  
 
 % [coq.env.dependencies GR MP Deps] Computes the direct dependencies of GR.
 % If MP is given, Deps only contains grefs from that module
@@ -1688,7 +1700,7 @@ external func coq.option.available? list string -> bool.
 % and for all in a .v file which your clients will load. Eg.
 % 
 %   Elpi Query lp:{{ coq.option.add ... }}.
-%   
+% 
 % 
 external func coq.option.add list string, coq.option, bool.
 

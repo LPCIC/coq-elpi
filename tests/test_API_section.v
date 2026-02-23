@@ -12,7 +12,7 @@ Section SB.
 Variable b : nat.
 Let c := b.
 Elpi Query lp:{{
-  coq.env.section [CA, CB, CC],
+  coq.env.section-variables [CA, CB, CC],
   coq.locate "a" (const CA),
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
@@ -34,7 +34,7 @@ Elpi Query lp:{{
 }} lp:{{
   coq.env.begin-section "Foo",
   coq.env.add-section-variable "x" _ {{ nat }} X,
-  coq.env.section [X],
+  coq.env.section-variables [X],
   coq.env.add-const "fx" (global (const X)) _ _ _,
   coq.env.end-section.
 }}.
@@ -63,3 +63,28 @@ End Using.
 Check foo : nat.
 Check bar : bool -> nat.
 
+(* section inspection *)
+
+Section Foo.
+
+Variable x : nat.
+Definition a := x + 1.
+
+Section Bar.
+
+Definition b := a.
+Inductive C := .
+
+Elpi Query lp:{{
+  coq.env.section-contents L,
+  std.assert! (L = [ 
+    
+    [ {{:gref C_sind }}, {{:gref C_rec }}, {{:gref C_ind }}, {{:gref C_rect }}, {{:gref C }}, {{:gref b }}, ],
+    
+    [ {{:gref a }}]
+    
+    ]) "bad section listing".
+}}.
+
+End Bar.
+End Foo.
