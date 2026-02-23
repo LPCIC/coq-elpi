@@ -1562,6 +1562,19 @@ let apply_proof ~name ~poly env tac pf =
 [%%endif]
 
 
+[%%if coq = "9.0"]
+let section_close_section x =
+  let a,b,_,_ = Section.close_section x in
+  a, b
+[%%elif coq = "9.1"]
+let section_close_section x =
+  let a,b,_,_,_ = Section.close_section x in
+  a, b
+[%%else]
+let section_close_section x =
+  let a,b,_,_ = Section.close_section x in
+  a, b
+[%%endif]
 
 
 
@@ -2154,12 +2167,12 @@ Supported attributes:
         match section with
         | None -> []
         | Some s ->
-            let section,l,_,_ = Section.close_section s in
+            let section,l = section_close_section s in
             List.concat_map (function
               | Section.SecDefinition c -> [GlobRef.ConstRef c]
               | Section.SecInductive m -> 
-                  let { Declarations.mind_ntypes } = Environ.lookup_mind m (Safe_typing.env_of_safe_env safe_env) in
-                  List.init mind_ntypes (fun i -> GlobRef.IndRef(m,i))
+                  let { Declarations.mind_packets } = Environ.lookup_mind m (Safe_typing.env_of_safe_env safe_env) in
+                  List.init (Array.length mind_packets) (fun i -> GlobRef.IndRef(m,i))
               ) l :: aux section
       in
         aux section
