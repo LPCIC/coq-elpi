@@ -1562,6 +1562,19 @@ let apply_proof ~name ~poly env tac pf =
 [%%endif]
 
 
+[%%if coq = "9.0"]
+let section_close_section x =
+  let a,b,_,_ = Section.close_section x in
+  a, b
+[%%elif coq = "9.1"]
+let section_close_section x =
+  let a,b,_,_,_ = Section.close_section x in
+  a, b
+[%%else]
+let section_close_section x =
+  let a,b,_,_ = Section.close_section x in
+  a, b
+[%%endif]
 
 
 
@@ -2135,13 +2148,44 @@ Supported attributes:
     !: (in_elpi_module_type (Environ.lookup_modtype mp env)))),
   DocAbove);
 
-  MLCode(Pred("coq.env.section",
-    Out(list constant, "GlobalObjects",
-    Read(unit_ctx, "lists the global objects that are marked as to be abstracted at the end of the enclosing sections")),
+  MLCode(Pred("coq.env.section-variables",
+    Out(list constant, "ConstantsRepresentingVariables",
+    Read(unit_ctx, "lists all the section variables, i.e. the global objects that are marked as to be abstracted at the end of the enclosing sections")),
   (fun _ ~depth _ _ state ->
      let { section } = mk_coq_context ~options:(default_options ()) state in
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
+
+  MLCode(Pred("coq.env.section-contents",
+    Out(list (list gref), "GlobalObjects",
+    Read(unit_ctx, "lists the global objects that are defined withing the open sections. Inner section first.")),
+  (fun _ ~depth _ _ state ->
+     let l =
+      let safe_env = Global.safe_env () in
+      let section = Safe_typing.sections_of_safe_env safe_env in
+      let rec aux section =
+        match section with
+        | None -> []
+        | Some s ->
+            let section,l = section_close_section s in
+            List.concat_map (function
+              | Section.SecDefinition c -> [GlobRef.ConstRef c]
+              | Section.SecInductive m -> 
+                  let { Declarations.mind_packets } = Environ.lookup_mind m (Safe_typing.env_of_safe_env safe_env) in
+                  List.init (Array.length mind_packets) (fun i -> GlobRef.IndRef(m,i))
+              ) l :: aux section
+      in
+        aux section
+    in
+     !: l)),
+  DocAbove);
+
+  LPCode {|% Deprecated, use coq.env.section-variables
+  func coq.env.section -> list constant.
+  coq.env.section L :-
+    coq.warning "elpi.deprecated" "elpi.env.section" "use coq.env.section-variables in place of coq.env.section",
+    coq.env.section-variables L.
+  |};
 
   MLCode(Pred("coq.env.dependencies",
     In(gref, "GR",

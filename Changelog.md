@@ -9,6 +9,8 @@
 ### API:
 - Fix `coq.sort.*` to not rely on puring algebraic universes that will become
   first class in Rocq 10
+- Rename `coq.env.section`, use `coq.env.section-variables`
+- New `coq.env.section-contents` listing the contents of sections.
 
 # [3.2.0] 19/09/2025
 
