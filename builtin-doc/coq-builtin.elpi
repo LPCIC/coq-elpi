@@ -755,8 +755,8 @@ external func coq.env.module-type modtypath -> list id.
 external func coq.env.section-variables -> list constant.
 
 % [coq.env.section-contents GlobalObjects] lists the global objects that are
-% defined withing the current section
-external func coq.env.section-contents -> list gref.
+% defined withing the open sections. Inner section first.
+external func coq.env.section-contents -> list (list gref).
 
 % Deprecated, use coq.env.section-variables
   func coq.env.section -> list constant.
@@ -1645,6 +1645,30 @@ external type coq.ltac.fail int -> variadic any (func).
 % 
 external func coq.ltac.collect-goals term -> list sealed-goal, 
                                     list sealed-goal.
+
+% [coq.ltac.call-mltac PluginName BlockName BlockIndex G GL] Calls OCaml
+% code bound via TACTIC EXTEND. For example the
+% OCaml code for lia looks like:
+% 
+%   DECLARE PLUGIN "rocq-runtime.plugins.micromega"
+%   ...
+%   TACTIC EXTEND Lia
+%   | [ "xlia" tactic(t) ] -> { Coq_micromega.xlia
+% (Tacinterp.tactic_of_value ist t) }
+%   END
+% 
+% In order to call the code between curly braces one has to run
+% 
+%   coq.ltac.call-mltac "rocq-runtime.plugins.micromega" "Lia" 0 G GL
+% 
+% Note that each TACTIC EXTEND block can have many entries and their
+% numbering
+% starts from 0. Also, each block has a name, "Lia" in this case.
+%     
+% Supported attributes:
+% - @no-tc! (default false, do not infer typeclasses)
+external func coq.ltac.call-mltac string, string, int, 
+                                 goal -> list sealed-goal.
 
 % [coq.ltac.call-ltac1 Tac G GL] Calls Ltac1 tactic Tac on goal G (passing
 % the arguments of G, see coq.ltac.call for a handy wrapper).
