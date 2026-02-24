@@ -1561,6 +1561,32 @@ let apply_proof ~name ~poly env tac pf =
   pv
 [%%endif]
 
+let call_tactic ~depth state ~no_tc proof_context goal tactic =
+  let sigma = get_sigma state in
+  let sigma, subgoals =
+    let open Proofview in let open Notations in
+    let focused_tac =
+      Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
+    with_no_tc ~no_tc (fun sigma ->
+      let _, pv = init sigma [] in
+      let pv =
+        let vernac_state = Vernacstate.freeze_full_state () in
+        try
+          let rc = apply_proof ~name:(Id.of_string "elpi") ~poly:default_polyflags proof_context.env focused_tac pv in
+          let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
+          let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
+          Vernacstate.unfreeze_full_state vernac_state;
+          rc
+        with e when CErrors.noncritical e ->
+          Vernacstate.unfreeze_full_state vernac_state;
+          raise Pred.No_clause
+      in
+      let subgoals, sigma = proofview pv in
+      sigma, subgoals)
+  sigma in
+  Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
+  let state, assignments = set_current_sigma ~depth state sigma in
+  state, subgoals, assignments
 
 [%%if coq = "9.0"]
 let section_close_section x =
@@ -4060,6 +4086,52 @@ fold_left over the terms, letin body comes before the type).
     )),
     DocAbove);
 
+  MLCode(Pred("coq.ltac.call-mltac",
+    In(B.string, "PluginName",
+    In(B.string, "BlockName",
+    In(B.int, "BlockIndex",
+    CIn(goal, "G",
+    Out(list sealed_goal,"GL",
+    Full(raw_ctx, {|Calls OCaml code bound via TACTIC EXTEND. For example the
+OCaml code for lia looks like:
+
+  DECLARE PLUGIN "rocq-runtime.plugins.micromega"
+  ...
+  TACTIC EXTEND Lia
+  | [ "xlia" tactic(t) ] -> { Coq_micromega.xlia (Tacinterp.tactic_of_value ist t) }
+  END
+
+In order to call the code between curly braces one has to run
+
+  coq.ltac.call-mltac "rocq-runtime.plugins.micromega" "Lia" 0 G GL
+
+Note that each TACTIC EXTEND block can have many entries and their numbering
+starts from 0. Also, each block has a name, "Lia" in this case.
+    
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)|})))))),
+    (fun plugin block index (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
+      let no_tc = if proof_context.options.no_tc = Some true then true else false in
+      let open Ltac_plugin in
+
+       let tac_args = tac_args |> List.map (function
+         | Rocq_elpi_arg_HOAS.Ctrm t -> Tacinterp.Value.of_constr t
+         | Rocq_elpi_arg_HOAS.Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
+         | Rocq_elpi_arg_HOAS.Cint i -> Tacinterp.Value.of_int i
+         | Rocq_elpi_arg_HOAS.CLtac1 x -> Geninterp.(Val.inject (val_tag (Topwit Ltac_plugin.Tacarg.wit_tactic))) x) in
+       let tactic =
+         let tacname = Tacexpr.{ mltac_name  = { mltac_plugin  = plugin; mltac_tactic = block; }; mltac_index = index } in
+         Tacenv.interp_ml_tactic tacname tac_args (Tacinterp.default_ist ()) in
+
+      let state, subgoals, assignments =
+        call_tactic ~depth state ~no_tc proof_context goal tactic in
+
+       (* universe constraints fixed by the code above*)
+       Univ.ContextSet.empty, state, !: subgoals, assignments
+      ))),
+  DocAbove);
+
+
   MLCode(Pred("coq.ltac.call-ltac1",
     In(B.any, "Tac",
     CIn(goal, "G",
@@ -4079,7 +4151,6 @@ Supported attributes:
     (fun tac (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
-      let sigma = get_sigma state in
 
        let tac_args = tac_args |> List.map (function
          | Rocq_elpi_arg_HOAS.Ctrm t -> Tacinterp.Value.of_constr t
@@ -4107,31 +4178,9 @@ Supported attributes:
           | _ -> U.type_error ("coq.ltac.call-ltac1: string or ltac1-tactic are expected as the tactic to call")
          in
          Tacinterp.Value.apply tac tac_args in
-       let sigma, subgoals =
-         let open Proofview in let open Notations in
-         let focused_tac =
-           Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
-         with_no_tc ~no_tc (fun sigma ->
-            let _, pv = init sigma [] in
-            let pv =
-              let vernac_state = Vernacstate.freeze_full_state () in
-              try
-                let rc = apply_proof ~name:(Id.of_string "elpi") ~poly:default_polyflags proof_context.env focused_tac pv in
-                let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
-                let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
-                Vernacstate.unfreeze_full_state vernac_state;
-                rc
-              with e when CErrors.noncritical e ->
-                Vernacstate.unfreeze_full_state vernac_state;
-                raise Pred.No_clause
-            in
-            let subgoals, sigma = proofview pv in
-            sigma, subgoals)
-        sigma in
 
-       Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
-
-       let state, assignments = set_current_sigma ~depth state sigma in
+      let state, subgoals, assignments =
+        call_tactic ~depth state ~no_tc proof_context goal tactic in
 
        (* universe constraints fixed by the code above*)
        Univ.ContextSet.empty, state, !: subgoals, assignments

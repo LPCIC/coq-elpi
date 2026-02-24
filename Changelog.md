@@ -11,6 +11,8 @@
   first class in Rocq 10
 - Rename `coq.env.section`, use `coq.env.section-variables`
 - New `coq.env.section-contents` listing the contents of sections.
+- New `coq.ltac.call-mltac` to call code defined via `TACTIC EXTEND` directives
+  in OCaml.
 
 # [3.2.0] 19/09/2025
 
