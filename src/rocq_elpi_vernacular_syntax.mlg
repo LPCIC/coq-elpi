@@ -257,6 +257,18 @@ VERNAC COMMAND EXTEND ElpiAccumulate CLASSIFIED AS SIDEFF
      atts
    } -> {
      EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:Signature (List.map snd ids) }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Plugin" string(s) ] SYNTERP AS atts {
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_plugin ~atts ~loc:gloc s;
+     atts
+   } -> {
+     EV.Interp.accumulate_plugin ~atts ~loc:gloc s }
+| #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "Plugin" string(s) ] SYNTERP AS atts {
+     let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
+     EV.Synterp.accumulate_plugin ~atts ~loc:gloc ~program:(snd p) s;
+     atts
+   } -> {
+     EV.Interp.accumulate_plugin ~atts ~loc:gloc ~program:(snd p) s }
 
 (************************************** legacy accumulation *************************************************)
 

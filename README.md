@@ -148,6 +148,8 @@ and `ocaml-lsp-server` (version 1.15).
 - [open terms](examples/example_open_terms.v) implements
   a tactic like `replace` that receives terms containing free variables, i.e.
   variables bound in the goal but not in the proof context.
+- [builtins](examples/example_plugin/) adds builtin predicates
+  (hence implemented in OCaml) to Elpi via a Rocq plugin
 
 ### Applications written in Coq-Elpi
 
