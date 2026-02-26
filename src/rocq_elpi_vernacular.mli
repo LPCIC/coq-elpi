@@ -28,6 +28,7 @@ module type Common = sig
 
   val accumulate_files       : atts:atts -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
   val accumulate_extra_deps  : atts:atts -> loc:Loc.t -> ?program:qualified_name -> what:what -> qualified_name list -> unit
+  val accumulate_plugin      : atts:atts -> loc:Loc.t -> ?program:qualified_name -> string -> unit
   val accumulate_string      : atts:atts -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
   val accumulate_db          : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
   val accumulate_db_header   : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit

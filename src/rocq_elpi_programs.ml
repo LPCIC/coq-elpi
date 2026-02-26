@@ -207,6 +207,7 @@ module type Programs = sig
   val ast_from_string : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> Digest.t * API.Compile.scoped_program
   val unit_from_ast    : ?error_header:string -> elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Compile.scoped_program -> cunit
   val unit_signature_from_ast    : elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string option -> API.Compile.scoped_program -> cunit
+  val unit_from_plugin : ?error_header:string -> elpi:API.Setup.elpi -> base:API.Compile.program -> loc:Loc.t -> string -> API.Setup.builtins -> cunit
   val extend_w_units : base:API.Compile.program -> loc:Loc.t -> cunit list -> API.Compile.program
   val parse_goal : elpi:API.Setup.elpi -> loc:Loc.t -> API.Ast.Loc.t -> string -> API.Ast.query
 
@@ -391,9 +392,9 @@ let intern_unit_signature u =
   
 (* Source files can be large, and loaded multiple times since many entry point
    can be implemented in the same file. We share (in memory) the parsed file. *)
-let unit_from_ast ?error_header ~elpi ~flags h ~base ~loc ast =
+let unit_from_ast ?error_header ~elpi ~flags h ~base ~loc ?builtins ast =
   handle_elpi_compiler_errors ~loc ?error_header (fun () ->
-    let u = EC.unit ~elpi ~flags ~base ast in
+    let u = EC.unit ~elpi ~flags ~base ?builtins ast in
     intern_unit (h,u,flags))
 
 let unit_signature_from_ast ~elpi ~flags h ~base ~loc ast =
@@ -401,6 +402,15 @@ let unit_signature_from_ast ~elpi ~flags h ~base ~loc ast =
     let u = EC.unit ~elpi ~flags ~base ast in
     intern_unit_signature (h,u,flags))
         
+let unit_from_plugin ?error_header ~elpi ~base ~loc name builtins ~flags : cunit =
+  handle_elpi_compiler_errors ~loc (fun () ->
+    let ast = EP.program ~elpi ~files:[] in
+    let ast = EC.scope ~elpi ~builtins ast in
+    let loc = Loc.initial Loc.ToplevelInput in
+    let hash = Digest.(to_hex @@ string name) in
+    unit_from_ast ~elpi ~flags (Some hash) ~base ~loc ~builtins ast)
+
+
 let unit_from_file ~elpi ~base ~loc x : cunit =
   let flags = cc_flags () in
   let hash = Digest.(to_hex @@ file (EP.resolve_file ~elpi ~unit:x ())) in
@@ -703,6 +713,8 @@ let get ?(fail_if_not_exists=false) p =
 let unit_signature_from_ast ~elpi ~base ~loc h ast =
   unit_signature_from_ast ~elpi ~base h ~loc ast ~flags:(cc_flags ())
   
+let unit_from_plugin ?error_header ~elpi ~base ~loc name builtins =
+  unit_from_plugin ?error_header ~elpi ~base ~loc name builtins ~flags:(cc_flags ())
 
 (* Units are marshalable, but programs are not *)
 

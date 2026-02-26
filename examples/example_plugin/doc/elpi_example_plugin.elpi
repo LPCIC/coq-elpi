@@ -1,0 +1,12 @@
+
+
+% doc
+kind stuff type.
+external symbol stuff : int -> stuff = "1". 
+
+% [q xxx] bla
+external func q stuff.
+
+
+
+
