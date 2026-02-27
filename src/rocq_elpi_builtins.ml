@@ -4110,7 +4110,7 @@ starts from 0. Also, each block has a name, "Lia" in this case.
     
 Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|})))))),
-    (fun plugin block index (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
+    (fun plugin block index (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-mltac" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
 
