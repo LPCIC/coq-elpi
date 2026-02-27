@@ -43,35 +43,46 @@ module Chunk : sig
   val pp : Format.formatter -> t -> unit
 
 end
-  
+
 module Code : sig
-  type 'db t =
+  type ('base, 'db) t =
   | Base of {
       hash : int;
-      base : cunit;
+      base : 'base;
       }
   | Snoc of {
       source : cunit;
-      prev : 'db t;
+      prev : ('base,'db) t;
       hash : int;
       cacheme: bool;
       }
   | Snoc_db of {
       chunks : 'db;
-      prev : 'db t;
+      prev : ('base,'db) t;
       hash : int
       }
-  val hash : 'db t -> int
-  val cache : 'db t -> bool
-  val eq : ('db -> 'db -> bool) -> 'db t -> 'db t -> bool
-  val pp : (Format.formatter -> 'db -> unit) -> Format.formatter -> 'db t -> unit
-  val snoc_opt : cunit -> 'db t option -> 'db t
+  val hash : ('base,'db) t -> int
+  val cache : ('base,'db) t -> bool
+  val eq :
+    (cunit -> cunit -> bool) ->
+    ('base -> 'base -> bool) ->
+    ('db -> 'db -> bool) -> ('base, 'db) t -> ('base, 'db) t -> bool
+  val pp :
+    (Format.formatter -> 'base -> unit) ->
+    (Format.formatter -> 'db -> unit) -> Format.formatter -> ('base,'db) t -> unit
+  val snoc_opt : ?cache:bool -> cunit -> (cunit,'db) t option -> (cunit,'db) t
 end
 
 module SLMap : Map.S with type key = qualified_name
 
 val combine_hash : int -> int -> int
 
+type 'a db_addition = {
+  program : qualified_name;
+  code : 'a;
+  scope : Rocq_elpi_utils.clause_scope;
+  vars : Names.Id.t list;
+}
 
 (* runtime *)
 
@@ -103,7 +114,8 @@ module type Programs = sig
   val ast_of_file : qualified_name -> Digest.t * Compile.scoped_program
 
   val accumulate : loc:Loc.t -> qualified_name -> src list -> unit
-  val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_to_db : loc:Loc.t -> qualified_name -> cunit list -> Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_to_db' : loc:Loc.t -> src list db_addition -> unit
 
   val load_command : loc:Loc.t -> string -> unit
   val load_tactic : loc:Loc.t -> string -> unit
@@ -113,7 +125,7 @@ module type Programs = sig
   val tactic_init : unit -> src
   val command_init : unit -> src
 
-  val code : ?even_if_empty:bool -> qualified_name -> Chunk.t Code.t option
+  val code : ?even_if_empty:bool -> qualified_name -> (cunit, qualified_name) Code.t option
 
   val in_stage : string -> string
   val stage : Summary.Stage.t
