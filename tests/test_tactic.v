@@ -379,7 +379,7 @@ End Test.
 Elpi Tactic app.
 Elpi Accumulate lp:{{
   solve (goal C R T P [tac F, tac X]) GL :-
-    coq.ltac.call-ltac1 F (goal C R T P [tac X]) GL.
+    coq.ltac.call-ltac1 F (goal C R T P [tac X]) GL ok.
 }}.
 
 
@@ -428,4 +428,34 @@ Elpi Accumulate lp:{{
 Goal forall x: nat, x =x.
 Proof.
   elpi create_goal.
+Abort.
+
+
+(** test simple call *)
+
+Elpi Tactic simple_call.
+Elpi Accumulate lp:{{
+  solve (goal C R Ty E [str T] as G) [seal G'] :-
+    std.assert-ok! (coq.ltac.call-simple-ltac1 T (goal C R Ty E []) [G']) T.
+}}.
+
+Goal forall x y: nat, x = y.
+Proof.
+  intros.
+  elpi simple_call "symmetry".
+  match goal with |- y = x => idtac end.
+Abort.
+
+Ltac myintros := intros.
+Ltac myrefl := reflexivity.
+
+Goal forall x y: nat, x = y.
+Proof.
+  Fail elpi simple_call "myintros".
+Abort.
+
+Goal forall x y: nat, x = y.
+Proof.
+  intros.
+  Fail elpi simple_call "myrefl".
 Abort.

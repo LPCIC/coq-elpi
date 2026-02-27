@@ -40,7 +40,7 @@ Elpi Accumulate lp:{{
   main [] :-
     coq.elaborate-skeleton _ {{ True }} Bo ok,
     coq.ltac.collect-goals Bo [SealedGoal] [],
-    coq.ltac.open (coq.ltac.call "horror" []) SealedGoal [],
+    coq.ltac.open (g\gl\coq.ltac.call "horror" [] g gl ok) SealedGoal [],
     coq.locate "elpi_subproof" _,
     coq.env.add-const "it" Bo _ @transparent! C_.
 
@@ -96,4 +96,37 @@ Proof.
 Fail elpi barendregt True.
 elpi barendregt.
 elpi barendregt True.
+Abort.
+
+
+(*******************)
+
+Elpi Tactic simple.
+Elpi Accumulate lp:{{
+  solve G GL :-
+    coq.say G,
+    refine.simple-elaborate {{ conj _ _ }} G GL',
+    coq.say GL',
+    std.map GL' (x\r\r = seal x) GL. 
+  solve G GL :-
+    coq.say G,
+    refine.simple-elaborate {{ ex_intro _ (fun w => _) _ }} G GL',
+    coq.say GL',
+    std.map GL' (x\r\r = seal x) GL. 
+
+}}.
+
+Goal True -> False -> True /\ False.
+intros.
+elpi simple.
+assumption.
+assumption.
+Abort.
+
+Goal exists f : nat -> nat, forall y, y = f 1.
+intros.
+elpi simple.
+Unshelve.
+admit.
+Show.
 Abort.

@@ -114,8 +114,8 @@ val in_elpi_tac :
   base: Elpi.API.Compile.program ->
   depth:int ->
   ?calldepth:int -> 
-  Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context ->
-  Rocq_elpi_HOAS.hyp list ->
+  Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context ->
+  hyps ->
   Evd.evar_map ->
   Elpi.API.State.t ->
   Tac.top ->
@@ -125,8 +125,8 @@ val in_elpi_tac :
 val in_elpi_tac_econstr :
   base:unit ->
   depth:int -> ?calldepth:int -> 
-  Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context ->
-  Rocq_elpi_HOAS.hyp list ->
+  Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context ->
+  hyps ->
   Evd.evar_map ->
   Elpi.API.State.t ->
   EConstr.t ->
@@ -138,7 +138,7 @@ val in_elpi_cmd :
   depth:int ->
   base:Elpi.API.Compile.program ->
   ?calldepth:int -> 
-  Rocq_elpi_HOAS.empty Rocq_elpi_HOAS.coq_context ->
+  Rocq_elpi_HOAS.empty Rocq_elpi_HOAS.conv_context ->
   Elpi.API.State.t ->
   raw:bool ->
   Cmd.top ->
@@ -153,7 +153,7 @@ type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Geni
 
 val in_coq_arg :
   depth:int ->
-  Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context ->
+  Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context ->
   Elpi.API.Data.constraints ->
   Elpi.API.State.t ->
   term ->

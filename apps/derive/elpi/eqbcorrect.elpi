@@ -128,7 +128,7 @@ search-eqcorrect-apply (eqb.inductive _ _) [] C R C R.
 
 func run-solver sealed-goal, string ->.
 run-solver G Name :-
-  if (coq.ltac.open (coq.ltac.call Name []) G []) true
+  if (coq.ltac.open (g\gl\coq.ltac.call Name [] g gl ok) G []) true
      ((@holes! => coq.sealed-goal->string G SG),
       std.fatal-error {calc ( "solver " ^ Name ^ " fails on goal:\n" ^ SG )}).
 
