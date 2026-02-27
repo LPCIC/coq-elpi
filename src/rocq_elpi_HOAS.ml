@@ -449,6 +449,7 @@ type 'a coq_context = {
   db2rel : int Int.Map.t;
   names : Id.Set.t;
   options : options;
+  hyps : API.Data.hyps;
 }
 let upcast (x : [> `Options ] coq_context) : full coq_context = (x :> full coq_context)
 
@@ -1409,7 +1410,7 @@ let get_options ~depth hyps state =
     make_options ~hoas_holes ~local ~warn ~depr ~primitive ~failsafe ~ppwidth
       ~pp ~pplevel ~using ~inline ~uinstance ~universe_decl ~reversible ~keepunivs
       ~redflags ~no_tc ~algunivs
-let mk_coq_context ~options state =
+let mk_coq_context ~hyps ~options state =
   let env = get_global_env state in
   let section = section_ids env in
   {
@@ -1425,6 +1426,7 @@ let mk_coq_context ~options state =
     names = Environ.named_context env |> Context.Named.to_vars;
     env;
     options;
+    hyps;
   }
 
 let push_coq_ctx_proof i e coq_ctx =
@@ -1453,7 +1455,7 @@ let push_coq_ctx_local i e coq_ctx =
 (* Not sure this is sufficient, eg we don't restrict evars, but elpi shuld... *)
 let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; options;  } =
   let named_ctx =
-    mk_coq_context ~options state |> List.fold_right (fun e ctx ->
+    mk_coq_context ~hyps:[] ~options state |> List.fold_right (fun e ctx ->
       let id = Context.Named.Declaration.get_id e in
       let db = Names.Id.Map.find id name2db in
       if List.mem db live_db
@@ -1653,7 +1655,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
   in
   let state, coq_ctx, hyps =
       let state, coq_ctx, hyps =
-        aux 0 ~depth:calldepth (mk_coq_context ~options:(default_options ()) state) [] state (List.rev ctx) in
+        aux 0 ~depth:calldepth (mk_coq_context ~hyps:[] ~options:(default_options ()) state) [] state (List.rev ctx) in
       state, coq_ctx, hyps in
   let state, t, gls_t = kont coq_ctx hyps ~depth:(calldepth + List.length hyps) state in
   gls := gls_t @ !gls;
@@ -2366,7 +2368,8 @@ and create_evar_unknown ~calldepth syntactic_constraints (coq_ctx : 'a coq_conte
 (* Evar info read back from a constraint (contains the context and the type) *)
 and declare_evar_of_constraint ~calldepth elpi_revkc elpi_evkc syntactic_constraints ctx (depth_concl,concl) state options =
   let state, coq_ctx, gl1 =
-    of_elpi_ctx ~calldepth syntactic_constraints depth_concl ctx state (mk_coq_context ~options state) in
+    of_elpi_ctx ~calldepth syntactic_constraints depth_concl ctx state
+      (mk_coq_context ~hyps:[] ~options state) in
   let state, ty, gl2 = lp2constr ~calldepth syntactic_constraints coq_ctx ~depth:depth_concl state concl in
   let state, k = S.update_return engine state (fun ({ sigma } as e) ->
     let sigma, t = Evarutil.new_evar~typeclass_candidate:false ~naming:(Namegen.IntroFresh (Names.Id.of_string "elpi_evar")) coq_ctx.env sigma ty in
@@ -2459,7 +2462,7 @@ let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg ~base state k =
   let env = get_global_env state in
   let sigma = get_sigma state in
   let state, elpi_goal_evar, elpi_raw_goal_evar, evar_decls = in_elpi_evar ~calldepth k state in
-  let evar_concl, goal_ctx, goal_env =
+  let evar_concl, goal_ctx, _goal_env =
     info_of_evar ~env ~sigma ~section:(section_ids env) k in
   let state, g, gls =
     under_coq2elpi_ctx ~calldepth state goal_ctx
@@ -3868,11 +3871,11 @@ let get_current_env_sigma ~depth hyps constraints state =
     | _ ->
       of_elpi_ctx ~calldepth:depth constraints depth
         (preprocess_context (fun _ -> true) (E.of_hyps hyps))
-        state (mk_coq_context ~options:(get_options ~depth hyps state) state)
+        state (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state)
     | exception Not_found -> 
         of_elpi_ctx ~calldepth:depth constraints depth
           (preprocess_context (fun _ -> true) (E.of_hyps hyps))
-          state (mk_coq_context ~options:(get_options ~depth hyps state) state)
+          state (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state)
   in
   CtxReadbackCache.reset ctx_cache_lp2c;
   CtxReadbackCache.add ctx_cache_lp2c hyps (coq_ctx,Global.env (),depth);
@@ -3881,7 +3884,7 @@ let get_current_env_sigma ~depth hyps constraints state =
 
 let get_global_env_current_sigma ~depth hyps constraints state =
   let state, _, changed, gls = elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth constraints state in
-  let coq_ctx = mk_coq_context ~options:(get_options ~depth hyps state) state in
+  let coq_ctx = mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state in
   let coq_ctx = { coq_ctx with env = Environ.set_universes (Evd.universes (get_sigma state)) coq_ctx.env } in
   state, coq_ctx, get_sigma state, gls
 ;;
@@ -3899,10 +3902,33 @@ let rec lp2goal ~depth hyps syntactic_constraints state t =
     let state, coq_ctx, gl2 =
       of_elpi_ctx ~calldepth:depth syntactic_constraints depth
         (preprocess_context (fun x -> Int.Set.mem x visible_set)
-          (U.lp_list_to_list ~depth ctx |> List.map (fun hsrc -> { E.hdepth = depth; E.hsrc })))
+          (U.lp_list_to_list ~depth ctx |>
+            List.map (fun hsrc -> { E.hdepth = depth; E.hsrc })))
         state
-        (mk_coq_context ~options:(get_options ~depth hyps state) state) in
-    state, coq_ctx, k, args, gl1@gl2
+        (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state) in
+    state, (ctx, coq_ctx, k, args), gl1@gl2
+
+let goal2lp ~depth (hyps : API.Data.hyp list) syntactic_constraints state (ctx,coq_ctx,k) =
+  let calldepth = depth in
+  let env = get_global_env state in
+  let sigma = get_sigma state in
+  let state, elpi_goal_evar, elpi_raw_goal_evar, evar_decls =
+    in_elpi_evar ~calldepth k state in
+  let evar_concl, goal_ctx, _goal_env =
+    info_of_evar ~env ~sigma ~section:(section_ids env) k in
+
+  let same_ctx sigma c1 c2 =
+    let eq_named_declaration =
+      Context.Named.Declaration.equal (EConstr.ERelevance.equal sigma) (EConstr.eq_constr sigma) in
+    CList.equal eq_named_declaration c1 c2 in
+  
+  if same_ctx sigma coq_ctx.proof goal_ctx then
+    let state, _, raw_ev, ev, goal_ty, gls =
+      in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
+        coq_ctx [] ~calldepth ~depth state in
+    Result.Ok (state, in_elpi_goal state ~args:[] ~hyps:ctx ~raw_ev ~ty:goal_ty ~ev, evar_decls@gls)
+  else
+    Result.Error goal_ctx
 
 let constr2lp ~depth ?(calldepth=depth) coq_ctx _constraints state t =
   constr2lp coq_ctx ~calldepth ~depth state t

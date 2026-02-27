@@ -1,5 +1,7 @@
 # Unreleased
 
+Requires Elpi 3.6.0 and Rocq 9.0, 9.1 or 9.2.
+
 ### HOAS:
 - Fix explicitly declared goals are considered reachable, even if they
   do not occur in the proof term
@@ -13,6 +15,11 @@
 - New `coq.env.section-contents` listing the contents of sections.
 - New `coq.ltac.call-mltac` to call code defined via `TACTIC EXTEND` directives
   in OCaml.
+- New `coq.ltac.call-simple-mltac` for tactics not changing the proof context
+- New `coq.ltac.call-simple-ltac1` for tactics not changing the proof context
+- Rename `coq.ltac.collect-goals` -> `coq.ltac.collect-sealed-goals`
+- New `coq.ltac.collect-simple-goals` for goals in the current proof context
+- Change `coq.ltac.call-ltac1` also gives a diagnostic
 
 # [3.2.0] 19/09/2025
 

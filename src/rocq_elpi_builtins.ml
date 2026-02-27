@@ -17,6 +17,22 @@ module B = struct
   let ioargC_flex = API.BuiltInPredicate.ioargC_flex
   (* let ioarg_flex = API.BuiltInPredicate.ioarg_flex *)
   let ioarg_poly s = { ioarg_any with API.Conversion.ty = API.Conversion.TyName s }
+
+  let listC (d : ('a,'h,'cst) CConv.t) =
+    let embed ~depth h cst s l =
+      let s, l, eg = API.Utils.map_acc (d.CConv.embed ~depth h cst ) s l in
+      s, API.Utils.list_to_lp_list l, eg in
+    let readback ~depth h cst s t =
+      API.Utils.map_acc (d.CConv.readback ~depth h cst) s
+        (API.Utils.lp_list_to_list ~depth t)
+    in
+    let pp fmt l =
+      Format.fprintf fmt "[%a]" (API.RawPp.list d.CConv.pp ~boxed:true "; ") l in
+    { CConv.embed; readback;
+      ty = TyApp ("list",d.CConv.ty,[]);
+      pp;
+      pp_doc = (fun fmt () -> ()) }
+
 end
 module Pred = API.BuiltInPredicate
 module U = API.Utils
@@ -131,6 +147,11 @@ let pr_named_decl_flagged flags env sigma d =
   Printer.pr_named_decl ~flags env sigma d
 let empty_extern_env () = Constrextern.empty_extern_env ~flags:(PrintingFlags.Extern.current())
 [%%endif]
+
+let pr_named_context_of flags env sigma =
+  let make_decl_list env d pps = pr_named_decl_flagged flags env sigma d :: pps in
+  let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
+  Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl))
 
 let with_no_tc ~no_tc f sigma =
   if no_tc then
@@ -302,15 +323,44 @@ let sealed_goal = {
   readback = (fun ~depth _ _ -> assert false);
 }
 
-let goal : ( (Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context * Evar.t * Rocq_elpi_arg_HOAS.coq_arg list) , API.Data.hyps, API.Data.constraints) CConv.t = {
+type goal = E.term option * E.term * Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context * Evar.t * Rocq_elpi_arg_HOAS.coq_arg list
+
+let goal_readback ~depth hyps csts state g =
+    let state, (ctx,coq_ctx, k, raw_args), gls1 = Rocq_elpi_HOAS.lp2goal ~depth hyps csts state g in
+    let state, args, gls2 = U.map_acc (Rocq_elpi_arg_HOAS.in_coq_arg ~depth coq_ctx csts) state raw_args in
+    state, (None,ctx,coq_ctx,k,args), gls1 @ gls2
+
+let goal_embed ~depth hyps csts state (tac,ctx,coq_ctx,ev,args) =
+    assert(args=[]);
+    match Rocq_elpi_HOAS.goal2lp ~depth hyps csts state (ctx,coq_ctx,ev) with
+    | Result.Ok (st, r, gl) -> st,r,gl
+    | Result.Error env ->
+        let old_env = coq_ctx.env in
+        let msg =
+          Pp.string_of_ppcmds
+          Pp.(strbrk "coq.ltac.call-simple-ltac1: The tactic "
+            ++ Option.cata (fun tac -> str (pp2string (API.RawPp.term depth) tac)) (mt ()) tac
+            ++ strbrk " generates a subgoal that lives in a different context."
+            ++ fnl () ++ str "Input context:" ++ fnl ()
+            ++ pr_named_context_of () old_env (get_sigma state)
+            ++ fnl () ++ str "Output context:" ++ fnl ()
+            ++ pr_named_context_of () (Environ.reset_with_named_context (EConstr.val_of_named_context env) old_env) (get_sigma state))
+        in
+        U.type_error msg
+
+let goal : ( goal , API.Data.hyps, API.Data.constraints) CConv.t = {
   CConv.ty = Conv.TyName "goal";
   pp_doc = (fun fmt () -> ());
   pp = (fun fmt _ -> Format.fprintf fmt "TODO");
-  embed = (fun ~depth _ _ _ _ -> assert false);
-  readback = (fun ~depth hyps csts state g ->
-    let state, ctx, k, raw_args, gls1 = Rocq_elpi_HOAS.lp2goal ~depth hyps csts state g in
-    let state, args, gls2 = U.map_acc (Rocq_elpi_arg_HOAS.in_coq_arg ~depth ctx csts) state raw_args in
-    state, (ctx,k,args), gls1 @ gls2);
+  embed = goal_embed;
+  readback = goal_readback
+}
+let goal' : ( goal , Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context , API.Data.constraints) CConv.t = {
+  CConv.ty = Conv.TyName "goal";
+  pp_doc = (fun fmt () -> ());
+  pp = (fun fmt _ -> Format.fprintf fmt "TODO");
+  embed = (fun ~depth hyps csts state x -> goal_embed ~depth hyps.hyps csts state x);
+  readback = (fun ~depth hyps csts state g -> goal_readback ~depth hyps.hyps csts state g);
 }
 
 let tactic_arg : (Rocq_elpi_arg_HOAS.coq_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context, API.Data.constraints) CConv.t = {
@@ -320,6 +370,42 @@ let tactic_arg : (Rocq_elpi_arg_HOAS.coq_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS
   embed = (fun ~depth _ _ _ _ -> assert false);
   readback = Rocq_elpi_arg_HOAS.in_coq_arg;
 }
+
+let goals_of_term state proof_context proof =
+  let env = proof_context.env in
+  let sigma = get_sigma state in
+  let evars_of_term c =
+    let rec evrec env (acc_set,acc_rev_l as acc) c =
+      match EConstr.kind sigma c with
+      | Constr.Evar (n, l) ->
+        if Evar.Set.mem n acc_set then
+          acc
+        else
+          let acc = Evar.Set.add n acc_set, n :: acc_rev_l in
+          SList.Skip.fold (evrec env) acc l
+      | Constr.Proj (_, _, c) ->
+        let t = Retyping.get_type_of env sigma c in
+        let acc = evrec env acc t in
+        evrec env acc c
+      | _ -> Termops.fold_constr_with_full_binders env sigma EConstr.push_rel evrec env acc c
+    in
+    let _, rev_l = evrec env (Evar.Set.empty, []) c in
+    List.rev rev_l in
+  let subgoals = evars_of_term proof in
+  let free_evars =
+    let cache = Evarutil.create_undefined_evars_cache () in
+    let map ev =
+      let EvarInfo evi = Evd.find sigma ev in
+      let fevs = lazy (Evarutil.filtered_undefined_evars_of_evar_info ~cache sigma evi) in
+      (ev, fevs)
+    in
+    List.map map subgoals in
+  let shelved_subgoals, subgoals =
+    CList.partition
+      (fun g ->
+          CList.exists (fun (tgt, lazy evs) -> not (Evar.equal g tgt) && Evar.Set.mem g evs) free_evars)
+      subgoals in
+  shelved_subgoals, subgoals
 
 let id = Rocq_elpi_builtins_synterp.id
 
@@ -1477,7 +1563,7 @@ let coq_print pp msg_f =
   (fun args ~depth _hyps _constraints state ->
      let pp = pp ~depth in
      msg_f Pp.(str (pp2string (P.list ~boxed:true pp " ") args));
-     state, ())
+     state, (), [])
 
 (*****************************************************************************)
 (*****************************************************************************)
@@ -1561,32 +1647,60 @@ let apply_proof ~name ~poly env tac pf =
   pv
 [%%endif]
 
+let apply_ltac1 ~depth tac tac_args =
+  let open Ltac_plugin in
+  let tac =
+    match E.look ~depth tac with
+    | E.CData s when API.RawOpaqueData.is_string s ->
+        let tac_name = API.RawOpaqueData.to_string s in
+        let tac_name =
+          let q = Libnames.qualid_of_string tac_name in
+          try Tacenv.locate_tactic q
+          with Not_found ->
+            match Tacenv.locate_extended_all_tactic q with
+            | [x] -> x
+            | _::_::_ -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" is ambiguous, qualify the name")
+            | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
+        let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
+        let tacexpr = Tacexpr.(CAst.make @@ TacArg (TacCall (CAst.make @@ (tacref, [])))) in
+        Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr
+    | E.CData t when Rocq_elpi_arg_HOAS.is_ltac_tactic t ->
+        Rocq_elpi_arg_HOAS.to_ltac_tactic t
+    | _ -> U.type_error ("coq.ltac.call-ltac1: string or ltac1-tactic are expected as the tactic to call")
+  in
+  Tacinterp.Value.apply tac tac_args
+
+exception TacticFails of Exninfo.iexn
+
 let call_tactic ~depth state ~no_tc proof_context goal tactic =
   let sigma = get_sigma state in
-  let sigma, subgoals =
-    let open Proofview in let open Notations in
-    let focused_tac =
-      Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
-    with_no_tc ~no_tc (fun sigma ->
-      let _, pv = init sigma [] in
-      let pv =
-        let vernac_state = Vernacstate.freeze_full_state () in
-        try
-          let rc = apply_proof ~name:(Id.of_string "elpi") ~poly:default_polyflags proof_context.env focused_tac pv in
-          let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
-          let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
-          Vernacstate.unfreeze_full_state vernac_state;
-          rc
-        with e when CErrors.noncritical e ->
-          Vernacstate.unfreeze_full_state vernac_state;
-          raise Pred.No_clause
-      in
-      let subgoals, sigma = proofview pv in
-      sigma, subgoals)
-  sigma in
-  Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
-  let state, assignments = set_current_sigma ~depth state sigma in
-  state, subgoals, assignments
+  try 
+    let sigma, subgoals =
+      let open Proofview in let open Notations in
+      let focused_tac =
+        Unsafe.tclSETGOALS [with_empty_state goal] <*> tactic in
+      with_no_tc ~no_tc (fun sigma ->
+        let _, pv = init sigma [] in
+        let pv =
+          let vernac_state = Vernacstate.freeze_full_state () in
+          try
+            let rc = apply_proof ~name:(Id.of_string "elpi") ~poly:default_polyflags proof_context.env focused_tac pv in
+            let pstate = Vernacstate.Stm.pstate (Vernacstate.freeze_full_state ()) in
+            let vernac_state = Vernacstate.Stm.set_pstate vernac_state pstate in
+            Vernacstate.unfreeze_full_state vernac_state;
+            rc
+          with e when CErrors.noncritical e ->
+            let e = Exninfo.capture e in
+            Vernacstate.unfreeze_full_state vernac_state;
+            raise (TacticFails e)
+        in
+        let subgoals, sigma = proofview pv in
+        sigma, subgoals)
+    sigma in
+    Declare.Internal.export_side_effects (Evd.eval_side_effects sigma);
+    let state, assignments = set_current_sigma ~depth state sigma in
+    Result.Ok (state, subgoals, assignments)
+  with TacticFails e -> Result.Error e
 
 [%%if coq = "9.0"]
 let section_close_section x =
@@ -1651,7 +1765,7 @@ let coq_misc_builtins =
          | _ -> None, x :: args
      in
      warning ?loc (pp2string (P.list ~boxed:true pp " ") args);
-     state, ()
+     state, (), []
      )),
   DocAbove);
 
@@ -1686,7 +1800,7 @@ line option|}))),
      in
      let txt = pp2string (P.list ~boxed:true pp " ") args in
      if coq_warning_cache category_name name loc txt then warning ?loc txt;
-     state, ())),
+     state, (), [])),
   DocAbove);
 
   MLCode(Pred("coq.error",
@@ -2178,7 +2292,7 @@ Supported attributes:
     Out(list constant, "ConstantsRepresentingVariables",
     Read(unit_ctx, "lists all the section variables, i.e. the global objects that are marked as to be abstracted at the end of the enclosing sections")),
   (fun _ ~depth _ _ state ->
-     let { section } = mk_coq_context ~options:(default_options ()) state in
+     let { section } = mk_coq_context ~hyps:[] ~options:(default_options ()) state in
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
 
@@ -4032,7 +4146,7 @@ coq.reduction.lazy.whd_all X Y :-
      ltac_fail_err level msg)),
   DocAbove);
 
-  MLCode(Pred("coq.ltac.collect-goals",
+  MLCode(Pred("coq.ltac.collect-sealed-goals",
     CIn(failsafe_term, "T",
     Out(list sealed_goal, "Goals",
     Out(list sealed_goal, "ShelvedGoals",
@@ -4045,39 +4159,7 @@ The order of Goals is given by the traversal order of EConstr.fold (a
 fold_left over the terms, letin body comes before the type).
 |})))),
     (fun proof _ shelved ~depth proof_context constraints state ->
-      let env = proof_context.env in
-      let sigma = get_sigma state in
-      let evars_of_term c =
-        let rec evrec env (acc_set,acc_rev_l as acc) c =
-          match EConstr.kind sigma c with
-          | Constr.Evar (n, l) ->
-            if Evar.Set.mem n acc_set then
-              acc
-            else
-              let acc = Evar.Set.add n acc_set, n :: acc_rev_l in
-              SList.Skip.fold (evrec env) acc l
-          | Constr.Proj (_, _, c) ->
-            let t = Retyping.get_type_of env sigma c in
-            let acc = evrec env acc t in
-            evrec env acc c
-          | _ -> Termops.fold_constr_with_full_binders env sigma EConstr.push_rel evrec env acc c
-        in
-        let _, rev_l = evrec env (Evar.Set.empty, []) c in
-        List.rev rev_l in
-      let subgoals = evars_of_term proof in
-      let free_evars =
-        let cache = Evarutil.create_undefined_evars_cache () in
-        let map ev =
-          let EvarInfo evi = Evd.find sigma ev in
-          let fevs = lazy (Evarutil.filtered_undefined_evars_of_evar_info ~cache sigma evi) in
-          (ev, fevs)
-        in
-        List.map map subgoals in
-      let shelved_subgoals, subgoals =
-        CList.partition
-          (fun g ->
-             CList.exists (fun (tgt, lazy evs) -> not (Evar.equal g tgt) && Evar.Set.mem g evs) free_evars)
-          subgoals in
+      let shelved_subgoals, subgoals = goals_of_term state proof_context proof in
       let shelved =
         match shelved with
         | Keep -> Some shelved_subgoals
@@ -4086,12 +4168,39 @@ fold_left over the terms, letin body comes before the type).
     )),
     DocAbove);
 
+  LPCode {|
+func coq.ltac.collect-goals term -> list sealed-goal, list sealed-goal.
+coq.ltac.collect-goals T GA GB :- coq.ltac.collect-sealed-goals T GA GB.
+|};
+
+  MLCode(Pred("coq.ltac.collect-simple-goals",
+    CIn(failsafe_term, "T",
+    COut(B.listC goal', "Goals",
+    Out(list sealed_goal, "ShelvedGoals",
+    Full(proof_context, {|Like coq.ltac.collect-sealed-goals turns the holes in T into
+Goals but fails if the goals do not live in the current proof context.
+|})))),
+    (fun proof _ shelved ~depth proof_context constraints state ->
+      let shelved_subgoals, subgoals = goals_of_term state proof_context proof in
+      let shelved =
+        match shelved with
+        | Keep -> Some shelved_subgoals
+        | Discard -> None in
+      (* TODO FIXME *)
+      let ctx = U.list_to_lp_list [] in
+      let subgoals = List.map (fun ev -> Some (API.RawOpaqueData.of_string "collect-simple-goals"),ctx,proof_context,ev,[]) subgoals in
+      state, !: subgoals +? shelved, []
+    )),
+    DocAbove);
+
+
   MLCode(Pred("coq.ltac.call-mltac",
     In(B.string, "PluginName",
     In(B.string, "BlockName",
     In(B.int, "BlockIndex",
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
     Full(raw_ctx, {|Calls OCaml code bound via TACTIC EXTEND. For example the
 OCaml code for lia looks like:
 
@@ -4108,9 +4217,11 @@ In order to call the code between curly braces one has to run
 Note that each TACTIC EXTEND block can have many entries and their numbering
 starts from 0. Also, each block has a name, "Lia" in this case.
     
+When the diagnostic is (error Msg), then GL is not set.
+
 Supported attributes:
-- @no-tc! (default false, do not infer typeclasses)|})))))),
-    (fun plugin block index (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-mltac" (fun state ->
+- @no-tc! (default false, do not infer typeclasses)|}))))))),
+    (fun plugin block index (_,_,proof_context,goal,tac_args) _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-mltac" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
 
@@ -4123,11 +4234,56 @@ Supported attributes:
          let tacname = Tacexpr.{ mltac_name  = { mltac_plugin  = plugin; mltac_tactic = block; }; mltac_index = index } in
          Tacenv.interp_ml_tactic tacname tac_args (Tacinterp.default_ist ()) in
 
-      let state, subgoals, assignments =
-        call_tactic ~depth state ~no_tc proof_context goal tactic in
+      match call_tactic ~depth state ~no_tc proof_context goal tactic with
+      | Result.Ok (state, subgoals, assignments) ->
+        (* universe constraints fixed by the code above*)
+        Univ.ContextSet.empty, state, !: subgoals +! B.mkOK, assignments
+      | Result.Error ie ->
+        match diag with
+        | Data B.OK -> raise No_clause (* optimization: don't print the error if caller wants OK *)
+        | _ ->
+          let error = string_of_ppcmds proof_context.options @@ CErrors.iprint_no_report ie in
+          Univ.ContextSet.empty, state, ?: None +! B.mkERROR error, []
+      ))),
+  DocAbove);
 
-       (* universe constraints fixed by the code above*)
-       Univ.ContextSet.empty, state, !: subgoals, assignments
+  MLCode(Pred("coq.ltac.call-simple-mltac",
+    In(B.string, "PluginName",
+    In(B.string, "BlockName",
+    In(B.int, "BlockIndex",
+    CIn(goal, "G",
+    COut(B.listC goal,"GL",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full(raw_ctx, {|Like coq.ltac.call-mltac but Tac is not allowed to
+generate new goals GL in different contexts. For example "intro" does not
+obey this restriction.
+
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)|}))))))),
+    (fun plugin block index (_,ctx,proof_context,goal,tac_args) _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-mltac" (fun state ->
+      let no_tc = if proof_context.options.no_tc = Some true then true else false in
+      let open Ltac_plugin in
+
+       let tac_args = tac_args |> List.map (function
+         | Rocq_elpi_arg_HOAS.Ctrm t -> Tacinterp.Value.of_constr t
+         | Rocq_elpi_arg_HOAS.Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
+         | Rocq_elpi_arg_HOAS.Cint i -> Tacinterp.Value.of_int i
+         | Rocq_elpi_arg_HOAS.CLtac1 x -> Geninterp.(Val.inject (val_tag (Topwit Ltac_plugin.Tacarg.wit_tactic))) x) in
+       let tactic =
+         let tacname = Tacexpr.{ mltac_name  = { mltac_plugin  = plugin; mltac_tactic = block; }; mltac_index = index } in
+         Tacenv.interp_ml_tactic tacname tac_args (Tacinterp.default_ist ()) in
+
+      match call_tactic ~depth state ~no_tc proof_context goal tactic with
+      | Result.Ok (state, subgoals, assignments) ->
+        let subgoals = List.map (fun ev -> Some (API.RawOpaqueData.of_string (Format.asprintf "%s#%s(%d)" plugin block index)),ctx,proof_context,ev,[]) subgoals in
+        (* universe constraints fixed by the code above*)
+        Univ.ContextSet.empty, state, !: subgoals +! B.mkOK, assignments
+      | Result.Error ie ->
+        match diag with
+        | Data B.OK -> raise No_clause (* optimization: don't print the error if caller wants OK *)
+        | _ ->
+          let error = string_of_ppcmds proof_context.options @@ CErrors.iprint_no_report ie in
+          Univ.ContextSet.empty, state, ?: None +! B.mkERROR error, []
       ))),
   DocAbove);
 
@@ -4136,7 +4292,7 @@ Supported attributes:
     In(B.any, "Tac",
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
-    Full(raw_ctx, {|Calls Ltac1 tactic Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper).
+    VariadicInOut(raw_ctx,B.ioargC (CConv.(!>) B.diagnostic), {|Calls Ltac1 tactic Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper).
 Tac can either be a string (the tactic name), or a value
 of type ltac1-tactic, see the tac argument constructor
 and the ltac_tactic:(...) syntax to pass arguments to
@@ -4146,9 +4302,12 @@ Caveat:
   "Ltac name := body", it cannot be a builtin one. For example
   "Ltac myapply x := apply x." lets one call apply by running
   coq.ltac.call-ltac1 "myapply" G GL.
+
+When the diagnostic is (error Msg), then GL is not set.
+
 Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|})))),
-    (fun tac (proof_context,goal,tac_args) _ ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
+    (fun tac (_,_,proof_context,goal,tac_args) _ diags ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
 
@@ -4157,33 +4316,56 @@ Supported attributes:
          | Rocq_elpi_arg_HOAS.Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
          | Rocq_elpi_arg_HOAS.Cint i -> Tacinterp.Value.of_int i
          | Rocq_elpi_arg_HOAS.CLtac1 x -> x) in
-       let tactic =
-         let tac =
-          match E.look ~depth tac with
-          | E.CData s when API.RawOpaqueData.is_string s ->
-              let tac_name = API.RawOpaqueData.to_string s in
-              let tac_name =
-                let q = Libnames.qualid_of_string tac_name in
-                try Tacenv.locate_tactic q
-                with Not_found ->
-                  match Tacenv.locate_extended_all_tactic q with
-                  | [x] -> x
-                  | _::_::_ -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" is ambiguous, qualify the name")
-                  | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
-              let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
-              let tacexpr = Tacexpr.(CAst.make @@ TacArg (TacCall (CAst.make @@ (tacref, [])))) in
-              Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr
-          | E.CData t when Rocq_elpi_arg_HOAS.is_ltac_tactic t ->
-              Rocq_elpi_arg_HOAS.to_ltac_tactic t
-          | _ -> U.type_error ("coq.ltac.call-ltac1: string or ltac1-tactic are expected as the tactic to call")
-         in
-         Tacinterp.Value.apply tac tac_args in
+       let tactic = apply_ltac1 ~depth tac tac_args in
 
-      let state, subgoals, assignments =
-        call_tactic ~depth state ~no_tc proof_context goal tactic in
+      match call_tactic ~depth state ~no_tc proof_context goal tactic with
+      | Result.Ok (state, subgoals, assignments) ->
+        (* universe constraints fixed by the code above*)
+        Univ.ContextSet.empty, state, !: subgoals +! [Some B.mkOK], assignments
+      | Result.Error ie ->
+        match diags with
+        | [] -> raise No_clause (* optimization: don't print the error if caller wants OK *)
+        | _ :: _ :: _ -> U.type_error "coq.ltac.call-ltac1: too many arguments"
+        | [Data B.OK] -> raise No_clause (* optimization: don't print the error if caller wants OK *)
+        | _ ->
+          let error = string_of_ppcmds proof_context.options @@ CErrors.iprint_no_report ie in
+          Univ.ContextSet.empty, state, ?: None +! [Some(B.mkERROR error)], []
+      ))),
+  DocAbove);
 
-       (* universe constraints fixed by the code above*)
-       Univ.ContextSet.empty, state, !: subgoals, assignments
+  MLCode(Pred("coq.ltac.call-simple-ltac1",
+    In(B.any, "Tac",
+    CIn(goal, "G",
+    COut(B.listC goal,"GL",
+    InOut(B.ioarg B.diagnostic, "Diagnostic",
+    Full(raw_ctx, {|Like coq.ltac.call-ltac1 but Tac is not allowed to
+generate new goals GL in different contexts. For example "intro" does not
+obey this restriction.
+
+Supported attributes:
+- @no-tc! (default false, do not infer typeclasses)|}))))),
+    (fun tac (_,ctx,proof_context,goal,tac_args) _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-simple-ltac1" (fun state ->
+      let no_tc = if proof_context.options.no_tc = Some true then true else false in
+      let open Ltac_plugin in
+
+       let tac_args = tac_args |> List.map (function
+         | Rocq_elpi_arg_HOAS.Ctrm t -> Tacinterp.Value.of_constr t
+         | Rocq_elpi_arg_HOAS.Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
+         | Rocq_elpi_arg_HOAS.Cint i -> Tacinterp.Value.of_int i
+         | Rocq_elpi_arg_HOAS.CLtac1 x -> x) in
+       let tactic = apply_ltac1 ~depth tac tac_args in
+
+      match call_tactic ~depth state ~no_tc proof_context goal tactic with
+      | Result.Ok (state, subgoals, assignments) ->
+        let subgoals = List.map (fun ev -> Some tac,ctx,proof_context,ev,[]) subgoals in
+        (* universe constraints fixed by the code above*)
+        Univ.ContextSet.empty, state, !: subgoals +! B.mkOK, assignments
+      | Result.Error ie ->
+        match diag with
+        | Data B.OK -> raise No_clause (* optimization: don't print the error if caller wants OK *)
+        | _ ->
+          let error = string_of_ppcmds proof_context.options @@ CErrors.iprint_no_report ie in
+          Univ.ContextSet.empty, state, ?: None +! B.mkERROR error, []
       ))),
   DocAbove);
 
@@ -4196,7 +4378,7 @@ Supported attributes:
     hints), but for the ergonomy of a tactic it may help to know if an
     hypothesis name is already taken.
 |}))),
-  (fun id (proof_context,_,_) ~depth _ _ _ ->
+  (fun id (_,_,proof_context,_,_) ~depth _ _ _ ->
      if not @@ Id.Set.mem (Names.Id.of_string_soft id) proof_context.names then ()
      else raise No_clause)),
   DocAbove);
@@ -4383,12 +4565,12 @@ Supported attributes:
 - @ppmost! (default: false, prints most details)
 - @pplevel! (default: _, prints parentheses to reach that level, 200 = off)
 - @holes! (default: false, prints evars as _)|}))),
-  (fun (proof_context,evar,args) _ ~depth _ _ state ->
+  (fun (_,_,proof_context,evar,args) _ ~depth _ _ state ->
      let sigma = get_sigma state in
      let pr_named_context_of flags env sigma =
-      let make_decl_list env d pps = pr_named_decl_flagged flags env sigma d :: pps in
-      let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
-      Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl)) in
+        let make_decl_list env d pps = pr_named_decl_flagged flags env sigma d :: pps in
+        let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
+        Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl)) in
      let s = Pp.(repr @@ with_pp_options proof_context.options.pp (fun flags ->
         v 0 @@
         pr_named_context_of flags proof_context.env sigma ++ cut () ++

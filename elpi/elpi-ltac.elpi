@@ -36,14 +36,14 @@ refine.no_check T (goal _ RawEv _ Ev _) GS :-
 % calling other tactics, with arguments ---------------------------------------
 
 func coq.ltac string, sealed-goal -> list sealed-goal.
-coq.ltac Tac G GS :- coq.ltac.open (coq.ltac.call-ltac1 Tac) G GS.
+coq.ltac Tac G GS :- coq.ltac.open (x\y\coq.ltac.call-ltac1 Tac x y ok) G GS.
 
 namespace coq.ltac {
 
 func call string, list argument, goal -> list sealed-goal.
 call Tac Args G GS :-
   set-goal-arguments Args G (seal G) (seal G1),
-  coq.ltac.call-ltac1 Tac G1 GS.
+  coq.ltac.call-ltac1 Tac G1 GS ok.
 
 :index(_ _ 1)
 func set-goal-arguments list argument, goal, sealed-goal -> sealed-goal.

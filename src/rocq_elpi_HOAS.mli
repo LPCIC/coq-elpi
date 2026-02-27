@@ -80,8 +80,11 @@ type 'a coq_context = {
 
   (* Options (get-option context entries) *)
   options : options;
+
+  (* the origin (when read from elpi), [] when generated *)
+  hyps : Elpi.API.Data.hyps;
 }
-val mk_coq_context : options:options -> State.t -> empty coq_context
+val mk_coq_context : hyps: Data.hyps -> options:options -> State.t -> empty coq_context
 val get_options : depth:int -> Data.hyps -> State.t -> options
 val default_options : unit -> options
 val upcast : [> `Options ] coq_context -> full coq_context
@@ -161,7 +164,11 @@ val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
 val sealed_goal2lp : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 val lp2goal : depth:int -> Data.hyps -> constraints -> State.t -> term -> 
-  State.t * full coq_context * Evar.t * term list * Conversion.extra_goals
+  State.t * (term * full coq_context * Evar.t * term list) * Conversion.extra_goals
+
+(* checks the evar context is the same as the one in input *)
+val goal2lp : depth:int -> Data.hyps -> constraints -> State.t -> term * full coq_context * Evar.t -> 
+  (State.t * term * Conversion.extra_goals,EConstr.named_context) Result.t
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val unspec2opt : 'a Elpi.Builtin.unspec -> 'a option
