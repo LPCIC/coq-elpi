@@ -18,12 +18,13 @@ jobs:
       matrix:
         image:
           - 'rocq/rocq-prover:dev'
+          - 'rocq/rocq-prover:9.2'
           - 'rocq/rocq-prover:9.1'
           - 'rocq/rocq-prover:9.0'
         profile:
           - dev
         include:
-          - image: 'rocq/rocq-prover:9.0'
+          - image: 'rocq/rocq-prover:9.1'
             profile: fatalwarnings
       fail-fast: false  # don't stop jobs if one fails
     steps:
