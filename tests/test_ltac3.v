@@ -10,7 +10,7 @@ Elpi Tactic fail_foo.
 Elpi Accumulate lp:{{
 
 solve (goal _ _ _ _ [_] as G) GS :-
-  coq.ltac.call "ltac_foo" [] G GS.
+  coq.ltac.call "ltac_foo" [] G GS ok.
 
 }}.
 

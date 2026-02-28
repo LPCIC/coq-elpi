@@ -60,7 +60,7 @@ type options = {
   algunivs : bool option;
 }
 
-type 'a coq_context = {
+type 'a conv_context = {
   (* Elpi representation of the context *)
   section : Names.Id.t list;
   section_len : int;
@@ -80,41 +80,44 @@ type 'a coq_context = {
 
   (* Options (get-option context entries) *)
   options : options;
+
+  (* the origin (when read from elpi) *)
+  hyps : hyps;
 }
-val mk_coq_context : options:options -> State.t -> empty coq_context
-val get_options : depth:int -> Data.hyps -> State.t -> options
+val empty_conv_context : options:options -> State.t -> empty conv_context
+val get_options : depth:int -> hyps -> State.t -> options
 val default_options : unit -> options
-val upcast : [> `Options ] coq_context -> full coq_context
+val upcast : [> `Options ] conv_context -> full conv_context
 
 val get_current_env_sigma : depth:int ->
-  Data.hyps -> constraints -> State.t -> State.t * full coq_context * Evd.evar_map * Conversion.extra_goals
+  Data.hyps -> constraints -> State.t -> State.t * full conv_context * Evd.evar_map * Conversion.extra_goals
 val set_current_sigma : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
 val get_global_env_current_sigma : depth:int ->
-  Data.hyps -> constraints -> State.t -> State.t * empty coq_context * Evd.evar_map * Conversion.extra_goals
+  Data.hyps -> constraints -> State.t -> State.t * empty conv_context * Evd.evar_map * Conversion.extra_goals
 
 (* HOAS of terms *)
 val constr2lp :
-  depth:int -> ?calldepth:int -> full coq_context -> constraints -> State.t ->
+  depth:int -> ?calldepth:int -> full conv_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
 
 (* readback: adds to the evar map universes and evars in the term *)
 val lp2constr :
-  depth:int -> full coq_context -> constraints -> State.t -> 
+  depth:int -> full conv_context -> constraints -> State.t -> 
   term -> State.t * EConstr.t * Conversion.extra_goals
 
 (* variants in the global context *)
-val constr2lp_closed : depth:int -> ?calldepth:int -> empty coq_context -> constraints -> State.t ->
+val constr2lp_closed : depth:int -> ?calldepth:int -> empty conv_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
-val lp2constr_closed :  depth:int -> empty coq_context -> constraints -> State.t ->
+val lp2constr_closed :  depth:int -> empty conv_context -> constraints -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
-val constr2lp_closed_ground : depth:int -> ?calldepth:int -> empty coq_context -> constraints -> State.t ->
+val constr2lp_closed_ground : depth:int -> ?calldepth:int -> empty conv_context -> constraints -> State.t ->
   EConstr.t -> State.t * term * Conversion.extra_goals
-val lp2constr_closed_ground :  depth:int -> empty coq_context -> constraints -> State.t ->
+val lp2constr_closed_ground :  depth:int -> empty conv_context -> constraints -> State.t ->
   term -> State.t * EConstr.t * Conversion.extra_goals
 
 (* another variant, to call the pretyper *)
 val lp2skeleton :
-  depth:int -> full coq_context -> constraints -> State.t ->
+  depth:int -> full conv_context -> constraints -> State.t ->
   term -> State.t * Glob_term.glob_constr * Conversion.extra_goals
 
 type coercion_status = Regular | Off | Reversible
@@ -122,11 +125,11 @@ type record_field_spec = { name : Name.t; is_coercion : coercion_status; is_cano
 
 [%%if coq = "9.0"]
 val lp2inductive_entry :
-  depth:int -> empty coq_context -> constraints -> State.t -> term ->
+  depth:int -> empty conv_context -> constraints -> State.t -> term ->
   State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 [%%else]
 val lp2inductive_entry :
-  depth:int -> empty coq_context -> constraints -> State.t -> term ->
+  depth:int -> empty conv_context -> constraints -> State.t -> term ->
   State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UState.named_universes_entry * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
 [%%endif]
 
@@ -137,15 +140,15 @@ val lp2record_field_spec : record_field_spec -> Name.t * Record.Data.projection_
 [%%endif]
 
 val inductive_decl2lp :
-  depth:int -> empty coq_context -> constraints -> State.t -> (Names.MutInd.t * UVars.Instance.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
+  depth:int -> empty conv_context -> constraints -> State.t -> (Names.MutInd.t * UVars.Instance.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
     State.t * term * Conversion.extra_goals
 
 val inductive_entry2lp :
-  depth:int -> empty coq_context -> constraints -> State.t -> loose_udecl:bool -> ComInductive.Mind_decl.t ->
+  depth:int -> empty conv_context -> constraints -> State.t -> loose_udecl:bool -> ComInductive.Mind_decl.t ->
     State.t * term * Conversion.extra_goals
 
 val record_entry2lp :
-  depth:int -> empty coq_context -> constraints -> State.t -> loose_udecl:bool ->Record.Record_decl.t ->
+  depth:int -> empty conv_context -> constraints -> State.t -> loose_udecl:bool ->Record.Record_decl.t ->
     State.t * term * Conversion.extra_goals
   
 val in_elpi_id : Names.Name.t -> term
@@ -160,8 +163,12 @@ val in_elpi_indtdecl_inductive : State.t -> Declarations.recursivity_kind -> Nam
 val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
 val sealed_goal2lp : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
-val lp2goal : depth:int -> Data.hyps -> constraints -> State.t -> term -> 
-  State.t * full coq_context * Evar.t * term list * Conversion.extra_goals
+val lp2goal : depth:int -> hyps -> constraints -> State.t -> term -> 
+  State.t * (term * full conv_context * Evar.t * term list) * Conversion.extra_goals
+
+(* checks the evar context is the same as the one in input *)
+val goal2lp : depth:int -> constraints -> State.t -> term * full conv_context * Evar.t -> 
+  (State.t * term * Conversion.extra_goals,EConstr.named_context) Result.t
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
 val unspec2opt : 'a Elpi.Builtin.unspec -> 'a option
@@ -171,7 +178,7 @@ val in_elpi_gr : depth:int -> State.t -> Names.GlobRef.t -> term
 val in_elpi_poly_gr : depth:int -> State.t -> Names.GlobRef.t -> term -> term
 val in_elpi_poly_gr_instance : depth:int -> State.t -> Names.GlobRef.t -> UVars.Instance.t -> term
 val in_elpi_flex_sort : term -> term
-val in_elpi_sort : depth:int -> 'a coq_context -> constraints -> state -> Sorts.t -> state * term * Conversion.extra_goals
+val in_elpi_sort : depth:int -> 'a conv_context -> constraints -> state -> Sorts.t -> state * term * Conversion.extra_goals
 val in_elpi_prod : Name.t -> term -> term -> term
 val in_elpi_lam : Name.t -> term -> term -> term
 val in_elpi_let : Name.t -> term -> term -> term -> term
@@ -214,7 +221,7 @@ val gref : Names.GlobRef.t Conversion.t
 val inductive : inductive Conversion.t
 val constructor : constructor Conversion.t
 val constant : global_constant Conversion.t
-val sort : (Sorts.t,'a coq_context,constraints) ContextualConversion.t
+val sort : (Sorts.t,'a conv_context,constraints) ContextualConversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.abbreviation Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t
@@ -335,11 +342,9 @@ val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map
 val update_sigma : State.t -> (Evd.evar_map -> Evd.evar_map) -> State.t
 
-type hyp = { ctx_entry : term; depth : int }
-
 val solvegoals2query :
   Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:'a list ->
-  in_elpi_tac_arg:(base:'base -> depth:int -> ?calldepth:int -> 'b coq_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
+  in_elpi_tac_arg:(base:'base -> depth:int -> ?calldepth:int -> 'b conv_context -> hyp list -> Evd.evar_map -> State.t -> 'a -> State.t * term list * Conversion.extra_goals) ->
   depth:int -> base:'base -> State.t -> State.t * term * Conversion.extra_goals
 val txtgoals2query :
   Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:string ->

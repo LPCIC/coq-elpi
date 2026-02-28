@@ -1,9 +1,13 @@
 /* elpi-ltac: building blocks for tactics                                    */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
-typeabbrev tactic (pred i:sealed-goal, o:list sealed-goal).
+typeabbrev tactic (pred sealed-goal -> list sealed-goal).
 typeabbrev func-tactic (func sealed-goal -> list sealed-goal).
-typeabbrev open-tactic (pred i:goal, o:list sealed-goal).
+
+typeabbrev simple-tactic (pred goal -> list goal).
+typeabbrev func-simple-tactic (func goal -> list goal).
+
+typeabbrev open-tactic (pred goal -> list sealed-goal).
 typeabbrev func-open-tactic (func goal -> list sealed-goal).
 
 % The one tactic ------------------------------------------------------------
@@ -15,6 +19,14 @@ refine.elaborate T (goal _ RawEv Ty Ev _) GS :-
   rm-evar RawEv Ev,
   (@keepunivs! => coq.elaborate-skeleton T Ty TR ok),
   coq.ltac.collect-goals TR GS _,
+  RawEv = T,
+  Ev = TR.
+
+func refine.simple-elaborate term, goal -> list goal.
+refine.simple-elaborate T (goal _ RawEv Ty Ev _) GS :-
+  rm-evar RawEv Ev,
+  (@keepunivs! => coq.elaborate-skeleton T Ty TR ok),
+  coq.ltac.collect-simple-goals TR GS _,
   RawEv = T,
   Ev = TR.
 
@@ -36,14 +48,19 @@ refine.no_check T (goal _ RawEv _ Ev _) GS :-
 % calling other tactics, with arguments ---------------------------------------
 
 func coq.ltac string, sealed-goal -> list sealed-goal.
-coq.ltac Tac G GS :- coq.ltac.open (coq.ltac.call-ltac1 Tac) G GS.
+coq.ltac Tac G GS :- coq.ltac.open (x\y\coq.ltac.call-ltac1 Tac x y ok) G GS.
 
 namespace coq.ltac {
 
-func call string, list argument, goal -> list sealed-goal.
-call Tac Args G GS :-
+func call string, list argument, goal -> list sealed-goal, diagnostic.
+call Tac Args G GS D :-
   set-goal-arguments Args G (seal G) (seal G1),
-  coq.ltac.call-ltac1 Tac G1 GS.
+  coq.ltac.call-ltac1 Tac G1 GS D.
+
+func simple.call string, list argument, goal -> list goal, diagnostic.
+simple.call Tac Args G GS D :-
+  set-goal-arguments Args G (seal G) (seal G1),
+  coq.ltac.call-simple-ltac1 Tac G1 GS D.
 
 :index(_ _ 1)
 func set-goal-arguments list argument, goal, sealed-goal -> sealed-goal.
@@ -61,25 +78,47 @@ try _ G [G].
 
 %:index (_ 1) % TODO
 :external
-pred all i:tactic, i:list sealed-goal, o:list sealed-goal.
+pred all tactic, list sealed-goal -> list sealed-goal.
 all T [G|Gs] O :- T G O1, all T Gs O2, std.append O1 O2 O.
 all _ [] [].
 
-pred thenl i:list tactic, i:sealed-goal, o:list sealed-goal.
+pred thenl list tactic, sealed-goal -> list sealed-goal.
 thenl [] G [G].
 thenl [T|Ts] G GS :- T G NG, all (thenl Ts) NG GS.
 
-pred repeat i:tactic, i:sealed-goal, o:list sealed-goal.
+pred repeat tactic, sealed-goal -> list sealed-goal.
 repeat T G GS :- T G GS1, all (repeat T) GS1 GS.
 repeat _ G [G].
 
-pred repeat! i:tactic, i:sealed-goal, o:list sealed-goal.
-repeat! T G GS :- T G GS1, !, all (repeat T) GS1 GS.
+pred repeat! tactic, sealed-goal -> list sealed-goal.
+repeat! T G GS :- T G GS1, !, all (repeat! T) GS1 GS.
 repeat! _ G [G].
 
-pred or i:list tactic, i:sealed-goal, o:list sealed-goal.
+pred or list tactic, sealed-goal -> list sealed-goal.
 or TL G GS :- std.exists TL (t\ t G GS).
 
+namespace simple {
+
+func all func-simple-tactic, list goal -> list goal.
+all T [G|Gs] O :- T G O1, all T Gs O2, std.append O1 O2 O.
+all _ [] [].
+
+pred thenl list simple-tactic, goal -> list goal.
+thenl [] G [G].
+thenl [T|Ts] G GS :- T G NG, all (thenl Ts) NG GS.
+
+pred repeat simple-tactic, goal -> list goal.
+repeat T G GS :- T G GS1, all (repeat T) GS1 GS.
+repeat _ G [G].
+
+func repeat! simple-tactic, goal -> list goal.
+repeat! T G GS :- T G GS1, !, all (repeat! T) GS1 GS.
+repeat! _ G [G].
+
+pred or list simple-tactic, goal -> list goal.
+or TL G GS :- std.exists TL (t\ t G GS).
+
+}
 % :index (_ 1) TODO
 :external :index(_ 1)
 func open func-open-tactic, sealed-goal -> list sealed-goal.

@@ -185,7 +185,7 @@ let set_coq_ctx_hyps s (x,h) =
   set_glob_ctx s (glob_ctx_of_coq_ctx (upcast x))
 
 let under_ctx name ty bo ~k ~depth state =
-  let coq_ctx, hyps as orig_ctx = Option.default (upcast @@ mk_coq_context ~options:(default_options ()) state,[]) (get_ctx state) in
+  let coq_ctx, hyps as orig_ctx = Option.default (upcast @@ empty_conv_context ~options:(default_options ()) state,[]) (get_ctx state) in
   let orig_glob_ctx = S.get glob_ctx state in
   let state =
     let id =
@@ -199,7 +199,7 @@ let under_ctx name ty bo ~k ~depth state =
       match bo with
       | None -> state, mk_decl ~depth name ~ty
       | Some bo -> state, mk_def ~depth name ~bo ~ty in
-    let new_hyp = { ctx_entry; depth } in
+    let new_hyp = { E.hsrc = ctx_entry; hdepth = depth } in
     let state = set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
     let state = push_glob_ctx state id None in
     state in
@@ -616,7 +616,7 @@ let _ = API.Quotation.register_named_quotation ~name:"gref" ~descriptor:interp_q
    
 let gterm2lp ~loc ~base glob ~depth state =
   let t = gterm2lpast ~pattern:false ~language:coq state glob in
-  let coq_ctx, _ = Option.default (upcast @@ mk_coq_context ~options:(default_options ()) state,[]) (get_ctx state) in
+  let coq_ctx, _ = Option.default (upcast @@ empty_conv_context ~options:(default_options ()) state,[]) (get_ctx state) in
   let ctx = Names.Id.Map.fold (fun id i m ->
     API.Ast.Scope.Map.add (API.Ast.Name.from_string @@ Names.Id.to_string id,coq) i m
     ) coq_ctx.name2db API.Ast.Scope.Map.empty in
@@ -625,7 +625,7 @@ let gterm2lp ~loc ~base glob ~depth state =
 
 let runtime_gterm2lp ~loc ~base glob ~depth state =
   let t = gterm2lpast ~pattern:false ~language:coq state glob in
-  let coq_ctx, _ = Option.default (upcast @@ mk_coq_context ~options:(default_options ()) state,[]) (get_ctx state) in
+  let coq_ctx, _ = Option.default (upcast @@ empty_conv_context ~options:(default_options ()) state,[]) (get_ctx state) in
   let ctx = Names.Id.Map.fold (fun id i m ->
     API.Ast.Scope.Map.add (API.Ast.Name.from_string @@ Names.Id.to_string id,coq) i m
     ) coq_ctx.name2db API.Ast.Scope.Map.empty in
