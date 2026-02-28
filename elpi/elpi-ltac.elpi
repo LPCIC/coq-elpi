@@ -52,15 +52,15 @@ coq.ltac Tac G GS :- coq.ltac.open (x\y\coq.ltac.call-ltac1 Tac x y ok) G GS.
 
 namespace coq.ltac {
 
-func call string, list argument, goal -> list sealed-goal.
-call Tac Args G GS :-
+func call string, list argument, goal -> list sealed-goal, diagnostic.
+call Tac Args G GS D :-
   set-goal-arguments Args G (seal G) (seal G1),
-  coq.ltac.call-ltac1 Tac G1 GS ok.
+  coq.ltac.call-ltac1 Tac G1 GS D.
 
-func simple.call string, list argument, goal -> list goal.
-simple.call Tac Args G GS :-
+func simple.call string, list argument, goal -> list goal, diagnostic.
+simple.call Tac Args G GS D :-
   set-goal-arguments Args G (seal G) (seal G1),
-  coq.ltac.call-simple-ltac1 Tac G1 GS ok.
+  coq.ltac.call-simple-ltac1 Tac G1 GS D.
 
 :index(_ _ 1)
 func set-goal-arguments list argument, goal, sealed-goal -> sealed-goal.

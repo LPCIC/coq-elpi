@@ -20,7 +20,7 @@ Elpi Accumulate lp:{{
     std.assert-ok! (coq.elaborate-skeleton Lem _ ELem) "failed",
     std.assert-ok! (coq.typecheck {{ lp:Bo : lp:ELem }} _) "failed",
     coq.ltac.collect-goals Bo [SealedGoal] [],
-    coq.ltac.open (coq.ltac.call "ltac1_that_calls_elpi" []) SealedGoal [],
+    coq.ltac.open (g\gl\coq.ltac.call "ltac1_that_calls_elpi" [] g gl ok) SealedGoal [],
     % !tactic_mode should equal false here
     coq.env.add-const Name Bo ELem @transparent! C_,
   ].

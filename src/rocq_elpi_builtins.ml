@@ -4293,6 +4293,7 @@ Supported attributes:
     CIn(goal, "G",
     Out(list sealed_goal,"GL",
     VariadicInOut(raw_ctx,B.ioargC (CConv.(!>) B.diagnostic), {|Calls Ltac1 tactic Tac on goal G (passing the arguments of G, see coq.ltac.call for a handy wrapper).
+It accepts one diagnostic argument, defaults to ok if omitted.
 Tac can either be a string (the tactic name), or a value
 of type ltac1-tactic, see the tac argument constructor
 and the ltac_tactic:(...) syntax to pass arguments to

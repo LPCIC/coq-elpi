@@ -20,6 +20,7 @@ Requires Elpi 3.6.0 and Rocq 9.0, 9.1 or 9.2.
 - Rename `coq.ltac.collect-goals` -> `coq.ltac.collect-sealed-goals`
 - New `coq.ltac.collect-simple-goals` for goals in the current proof context
 - Change `coq.ltac.call-ltac1` also gives a diagnostic
+- Change `coq.ltac.call` also gives a diagnostic
 
 # [3.2.0] 19/09/2025
 

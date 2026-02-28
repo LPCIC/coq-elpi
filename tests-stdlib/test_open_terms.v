@@ -264,7 +264,7 @@ solve (goal _ _ {{lp:X = lp:Y }} _ [Arg1, Arg2] as G) GL1 :-
   preserve_bound_variables X X1,
   refine {{@eq_trans _ lp:X1 lp:Y2 _ _ (eq_sym lp:P)}} G GL,
   if (GL = [Ng, Ng2])
-    (coq.ltac.open (coq.ltac.call "lazy_beta" []) Ng2 GL_aux,
+    (coq.ltac.open (g\gl\coq.ltac.call "lazy_beta" [] g gl ok) Ng2 GL_aux,
      GL1 = [Ng | GL_aux])
     (GL1 = GL).
   % refine {{eq_sym (@eq_trans lp:Y lp:Y2 lp:X lp:P (eq_sym _))}} G GL.

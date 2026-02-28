@@ -280,7 +280,7 @@ Ltac helper_split2 n t := fail n || apply t.
 Elpi Tactic split2.
 Elpi Accumulate lp:{{
   solve (goal _ _ {{ _ /\ _ }} _ _ as G) GL :-
-    coq.ltac.call "helper_split2" [int 0, trm {{ conj }}] G GL.
+    coq.ltac.call "helper_split2" [int 0, trm {{ conj }}] G GL ok.
   solve _ _ :-
     coq.ltac.fail _ "not a conjunction".
 }}.

@@ -40,7 +40,7 @@ Elpi Accumulate lp:{{
   main [] :-
     coq.elaborate-skeleton _ {{ True }} Bo ok,
     coq.ltac.collect-goals Bo [SealedGoal] [],
-    coq.ltac.open (coq.ltac.call "horror" []) SealedGoal [],
+    coq.ltac.open (g\gl\coq.ltac.call "horror" [] g gl ok) SealedGoal [],
     coq.locate "elpi_subproof" _,
     coq.env.add-const "it" Bo _ @transparent! C_.
 
