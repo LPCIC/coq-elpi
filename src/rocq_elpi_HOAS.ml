@@ -1410,7 +1410,7 @@ let get_options ~depth hyps state =
     make_options ~hoas_holes ~local ~warn ~depr ~primitive ~failsafe ~ppwidth
       ~pp ~pplevel ~using ~inline ~uinstance ~universe_decl ~reversible ~keepunivs
       ~redflags ~no_tc ~algunivs
-let mk_coq_context ~hyps ~options state =
+let mk_empty_coq_context ~options state =
   let env = get_global_env state in
   let section = section_ids env in
   {
@@ -1426,7 +1426,7 @@ let mk_coq_context ~hyps ~options state =
     names = Environ.named_context env |> Context.Named.to_vars;
     env;
     options;
-    hyps;
+    hyps = [];
   }
 
 let push_coq_ctx_proof i e coq_ctx =
@@ -1455,7 +1455,7 @@ let push_coq_ctx_local i e coq_ctx =
 (* Not sure this is sufficient, eg we don't restrict evars, but elpi shuld... *)
 let restrict_coq_context live_db state { proof; proof_len; local; name2db; env; options;  } =
   let named_ctx =
-    mk_coq_context ~hyps:[] ~options state |> List.fold_right (fun e ctx ->
+    mk_empty_coq_context ~options state |> List.fold_right (fun e ctx ->
       let id = Context.Named.Declaration.get_id e in
       let db = Names.Id.Map.find id name2db in
       if List.mem db live_db
@@ -1654,7 +1654,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
   in
   let state, coq_ctx, hyps =
       let state, coq_ctx, hyps =
-        aux 0 ~depth:calldepth (mk_coq_context ~hyps:[] ~options:(default_options ()) state) [] state (List.rev ctx) in
+        aux 0 ~depth:calldepth (mk_empty_coq_context ~options:(default_options ()) state) [] state (List.rev ctx) in
       state, coq_ctx, hyps in
   let state, t, gls_t = kont coq_ctx hyps ~depth:(calldepth + List.length hyps) state in
   gls := gls_t @ !gls;
@@ -2368,7 +2368,7 @@ and create_evar_unknown ~calldepth syntactic_constraints (coq_ctx : 'a coq_conte
 and declare_evar_of_constraint ~calldepth elpi_revkc elpi_evkc syntactic_constraints ctx (depth_concl,concl) state options =
   let state, coq_ctx, gl1 =
     of_elpi_ctx ~calldepth syntactic_constraints depth_concl ctx state
-      (mk_coq_context ~hyps:[] ~options state) in
+      (mk_empty_coq_context ~options state) in
   let state, ty, gl2 = lp2constr ~calldepth syntactic_constraints coq_ctx ~depth:depth_concl state concl in
   let state, k = S.update_return engine state (fun ({ sigma } as e) ->
     let sigma, t = Evarutil.new_evar~typeclass_candidate:false ~naming:(Namegen.IntroFresh (Names.Id.of_string "elpi_evar")) coq_ctx.env sigma ty in
@@ -3871,11 +3871,11 @@ let get_current_env_sigma ~depth hyps constraints state =
     | _ ->
       of_elpi_ctx ~calldepth:depth constraints depth
         (preprocess_context (fun _ -> true) hyps)
-        state (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state)
+        state (mk_empty_coq_context ~options:(get_options ~depth hyps state) state)
     | exception Not_found -> 
         of_elpi_ctx ~calldepth:depth constraints depth
           (preprocess_context (fun _ -> true) hyps)
-          state (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state)
+          state (mk_empty_coq_context ~options:(get_options ~depth hyps state) state)
   in
   CtxReadbackCache.reset ctx_cache_lp2c;
   CtxReadbackCache.add ctx_cache_lp2c hyps (coq_ctx,Global.env (),depth);
@@ -3885,7 +3885,7 @@ let get_current_env_sigma ~depth hyps constraints state =
 let get_global_env_current_sigma ~depth hyps constraints state =
   let hyps = E.of_hyps hyps in
   let state, _, changed, gls = elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth constraints state in
-  let coq_ctx = mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state in
+  let coq_ctx = mk_empty_coq_context ~options:(get_options ~depth hyps state) state in
   let coq_ctx = { coq_ctx with env = Environ.set_universes (Evd.universes (get_sigma state)) coq_ctx.env } in
   state, coq_ctx, get_sigma state, gls
 ;;
@@ -3906,7 +3906,7 @@ let rec lp2goal ~depth hyps syntactic_constraints state t =
           (U.lp_list_to_list ~depth ctx |>
             List.map (fun hsrc -> { E.hdepth = depth; E.hsrc })))
         state
-        (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state) in
+        (mk_empty_coq_context ~options:(get_options ~depth hyps state) state) in
     state, (ctx, coq_ctx, k, args), gl1@gl2
 
 let goal2lp ~depth syntactic_constraints state (ctx,coq_ctx,k) =
