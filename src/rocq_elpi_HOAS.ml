@@ -1456,14 +1456,13 @@ let push_coq_ctx_local i e coq_ctx =
 (* Not sure this is sufficient, eg we don't restrict evars, but elpi shuld... *)
 let restrict_conv_context live_db state { proof; proof_len; local; name2db; env; options; hyps } =
   let named_ctx =
-    empty_conv_context ~options state |> List.fold_right (fun e ctx ->
+    empty_conv_context ~options state |> List.fold_right2 (fun e h ctx ->
       let id = Context.Named.Declaration.get_id e in
       let db = Names.Id.Map.find id name2db in
       if List.mem db live_db
       then
-        let h = assert false (* TODO hyps *) in
         push_coq_ctx_proof db (e,h) ctx
-      else ctx) proof in
+      else ctx) proof hyps in
 
   debug Pp.(fun () ->
       str "restrict_conv_context: named: " ++
@@ -1667,8 +1666,9 @@ and in_elpi_evar_concl evar_concl ~raw_uvar elpi_evk coq_ctx ~calldepth ~depth s
   let args = CList.init coq_ctx.proof_len (fun i -> E.mkConst @@ i + calldepth) in
   debug Pp.(fun () -> str"in_elpi_evar_concl: moving Ctx down to" ++ int depth);
   let hyps = List.map (fun { E.hsrc = ctx_entry; hdepth = from } ->
-    U.move ~from ~to_:depth ctx_entry) coq_ctx.hyps in
-  state, U.list_to_lp_list hyps,
+    U.move ~from ~to_:depth ctx_entry) coq_ctx.hyps
+    |> U.list_to_lp_list in
+  state, hyps,
   (E.mkUnifVar raw_uvar ~args state),
   (E.mkUnifVar elpi_evk ~args state),
   evar_concl, gls_evar_concl
@@ -1870,14 +1870,14 @@ let find_evar var csts =
     | _ -> None) 
 
 let preprocess_context visible context =
-  let select_ctx_entries visible { E.hdepth = depth; E.hsrc = t } =
+  let select_ctx_entries visible ({ E.hdepth = depth; E.hsrc = t } as h) =
     let isVisibleConst t = match E.look ~depth t with E.Const i -> visible i | _ -> false in
     let destConst t = match E.look ~depth t with E.Const x -> x | _ -> assert false in
     match E.look ~depth t with
     | E.App(c,v,[name;ty]) when c == declc && isVisibleConst v ->
-       Some (destConst v, depth, `Decl(name,ty))
+       Some (destConst v, depth, h, `Decl(name,ty))
     | E.App(c,v,[name;ty;bo]) when c == defc && isVisibleConst v ->
-       Some (destConst v, depth, `Def (name,ty,bo))
+       Some (destConst v, depth, h, `Def (name,ty,bo))
     | _ ->
       debug Pp.(fun () ->
           str "skip entry" ++
@@ -1886,11 +1886,11 @@ let preprocess_context visible context =
   in
   let ctx_hyps = CList.map_filter (select_ctx_entries visible) context in
   let dbl2ctx =
-    List.fold_right (fun (i,d,e) m ->
+    List.fold_right (fun (i,d,t,e) m ->
       if Int.Map.mem i m
       then err Pp.(str "Duplicate context entry for " ++
                   str(pp2string (P.term d) (E.mkConst i)))
-      else Int.Map.add i (d,e) m)
+      else Int.Map.add i (d,t,e) m)
     ctx_hyps Int.Map.empty in
   dbl2ctx
 
@@ -2036,11 +2036,10 @@ let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial
   in
   let rec build_ctx_entry coq_ctx state gls = function
     | [] -> state, coq_ctx, List.(concat (rev gls))
-    | (i,id,d,e) :: rest ->
+    | (i,id,d,h,e) :: rest ->
       debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
       let state, e, gl1 = of_elpi_ctx_entry id i coq_ctx ~depth:d e state in
       debug Pp.(fun () -> str "<<< context entry for DBL "++ int i ++ str" at depth" ++ int d);
-      let h = assert false in (* TODO *)
       let coq_ctx = push_coq_ctx_proof i (e,h) coq_ctx in
       build_ctx_entry coq_ctx state (gl1 :: gls) rest
   in
@@ -2052,10 +2051,10 @@ let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial
       if not (Int.Map.mem i dbl2ctx)
       then ctx_entries_names names (i - 1)
       else
-        let d, e = Int.Map.find i dbl2ctx in
+        let d, t, e = Int.Map.find i dbl2ctx in
         let id = of_elpi_ctx_entry_name i names ~depth:d e in
         let names = Id.Set.add (Context.binder_name id) names in
-        (i,id,d,e) :: ctx_entries_names names (i - 1)
+        (i,id,d,t,e) :: ctx_entries_names names (i - 1)
   in
     ctx_entries_names Id.Set.empty (depth-1) |>
     List.rev |> (* we need to readback the context from top to bottom *)
