@@ -81,11 +81,11 @@ type 'a coq_context = {
   (* Options (get-option context entries) *)
   options : options;
 
-  (* the origin (when read from elpi), [] when generated *)
-  hyps : Elpi.API.Data.hyps;
+  (* the origin (when read from elpi) *)
+  hyps : hyps;
 }
-val mk_coq_context : hyps: Data.hyps -> options:options -> State.t -> empty coq_context
-val get_options : depth:int -> Data.hyps -> State.t -> options
+val mk_coq_context : hyps: hyps -> options:options -> State.t -> empty coq_context
+val get_options : depth:int -> hyps -> State.t -> options
 val default_options : unit -> options
 val upcast : [> `Options ] coq_context -> full coq_context
 
@@ -163,11 +163,11 @@ val in_elpi_indtdecl_inductive : State.t -> Declarations.recursivity_kind -> Nam
 val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
 val sealed_goal2lp : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
-val lp2goal : depth:int -> Data.hyps -> constraints -> State.t -> term -> 
+val lp2goal : depth:int -> hyps -> constraints -> State.t -> term -> 
   State.t * (term * full coq_context * Evar.t * term list) * Conversion.extra_goals
 
 (* checks the evar context is the same as the one in input *)
-val goal2lp : depth:int -> Data.hyps -> constraints -> State.t -> term * full coq_context * Evar.t -> 
+val goal2lp : depth:int -> constraints -> State.t -> term * full coq_context * Evar.t -> 
   (State.t * term * Conversion.extra_goals,EConstr.named_context) Result.t
 
 (* *** Low level API to reuse parts of the embedding *********************** *)
@@ -341,8 +341,6 @@ val mk_def :
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map
 val update_sigma : State.t -> (Evd.evar_map -> Evd.evar_map) -> State.t
-
-type hyp = { ctx_entry : term; depth : int }
 
 val solvegoals2query :
   Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:'a list ->

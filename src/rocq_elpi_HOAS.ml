@@ -449,7 +449,7 @@ type 'a coq_context = {
   db2rel : int Int.Map.t;
   names : Id.Set.t;
   options : options;
-  hyps : API.Data.hyps;
+  hyps : E.hyp list;
 }
 let upcast (x : [> `Options ] coq_context) : full coq_context = (x :> full coq_context)
 
@@ -1287,7 +1287,7 @@ let get_options ~depth hyps state =
     | E.CData d -> CD.to_string d
     | _ -> assert false in
   let options =
-    E.of_hyps hyps |> CList.map_filter (fun { E.hdepth = depth; E.hsrc = t } ->
+    hyps |> CList.map_filter (fun { E.hdepth = depth; E.hsrc = t } ->
     match E.look ~depth t with
     | E.App(c,name,[p]) when c == get_optionc && is_string ~depth name ->
         Some (get_string ~depth name, (p,depth))
@@ -1508,7 +1508,6 @@ let info_of_evar ~env ~sigma ~section k =
 (*  <---- depth ---->                          *)
 (*  proof_ctx |- pis \ t                       *)
 (* ******************************************* *)
-type hyp = { ctx_entry : E.term; depth : int }
 
 let declc = E.Constants.declare_global_symbol "decl"
 let defc = E.Constants.declare_global_symbol "def"
@@ -1640,7 +1639,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state ty in
         gls := gls_ty @ !gls;
         let hyp = mk_decl ~depth name ~ty in
-        let hyps = { ctx_entry = hyp ; depth = depth + 1 } :: hyps in
+        let hyps = { E.hsrc = hyp ; hdepth = depth + 1 } :: hyps in
         let coq_ctx = push_coq_ctx_proof depth e coq_ctx in
         aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest
       | LocalDef (Context.{binder_name=coq_name},bo,ty) as e :: rest ->
@@ -1649,7 +1648,7 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
         let state, bo, gls_bo = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state bo in
         gls := gls_ty @ gls_bo @ !gls;
         let hyp = mk_def ~depth name ~bo ~ty in
-        let hyps = { ctx_entry = hyp ; depth = depth + 1 } :: hyps in
+        let hyps = { E.hsrc = hyp ; hdepth = depth + 1 } :: hyps in
         let coq_ctx = push_coq_ctx_proof depth e coq_ctx in
         aux (succ i) ~depth:(depth+1) coq_ctx hyps state rest
   in
@@ -1659,14 +1658,14 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
       state, coq_ctx, hyps in
   let state, t, gls_t = kont coq_ctx hyps ~depth:(calldepth + List.length hyps) state in
   gls := gls_t @ !gls;
-  let t = List.fold_left (fun rest hyp -> mk_ctx_item hyp.ctx_entry rest) t hyps in
+  let t = List.fold_left (fun rest hyp -> mk_ctx_item hyp.E.hsrc rest) t hyps in
   state, t, !gls
   
 and in_elpi_evar_concl evar_concl ~raw_uvar elpi_evk coq_ctx hyps ~calldepth ~depth state =
   let state, evar_concl, gls_evar_concl = constr2lp coq_ctx ~calldepth ~depth state evar_concl in
   let args = CList.init coq_ctx.proof_len (fun i -> E.mkConst @@ i + calldepth) in
   debug Pp.(fun () -> str"in_elpi_evar_concl: moving Ctx down to" ++ int depth);
-  let hyps = List.map (fun { ctx_entry; depth = from } ->
+  let hyps = List.map (fun { E.hsrc = ctx_entry; hdepth = from } ->
     U.move ~from ~to_:depth ctx_entry) hyps in
   state, U.list_to_lp_list hyps,
   (E.mkUnifVar raw_uvar ~args state),
@@ -3405,7 +3404,7 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth state typ in
         gls := gls_ty @ !gls;
         let hyp = mk_decl ~depth name ~ty in
-        let hyps = { ctx_entry = hyp ; depth = depth } :: hyps in
+        let hyps = { E.hsrc = hyp ; hdepth = depth } :: hyps in
         let e = Context.Rel.Declaration.LocalAssum (annotR name, typ) in
         let coq_ctx = push_coq_ctx_local depth e coq_ctx in
         let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
@@ -3856,13 +3855,14 @@ let merge_universe_context state uctx =
 (* ****************************** API ********************************** *)
 
 module CtxReadbackCache = Ephemeron.K1.Make(struct
-  type t = API.Data.hyp list
+  type t = E.hyps
   let equal = (==)
   let hash = Hashtbl.hash
 end)
 let ctx_cache_lp2c = CtxReadbackCache.create 1
 
 let get_current_env_sigma ~depth hyps constraints state =
+  let hyps = E.of_hyps hyps in
   let state, _, changed, gl1 = elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth constraints state in
   if changed then CtxReadbackCache.reset ctx_cache_lp2c;
   let state, coq_ctx, gl2 =
@@ -3870,11 +3870,11 @@ let get_current_env_sigma ~depth hyps constraints state =
     | (c,e,d) when d == depth && e == Global.env () -> state, c, []
     | _ ->
       of_elpi_ctx ~calldepth:depth constraints depth
-        (preprocess_context (fun _ -> true) (E.of_hyps hyps))
+        (preprocess_context (fun _ -> true) hyps)
         state (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state)
     | exception Not_found -> 
         of_elpi_ctx ~calldepth:depth constraints depth
-          (preprocess_context (fun _ -> true) (E.of_hyps hyps))
+          (preprocess_context (fun _ -> true) hyps)
           state (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state)
   in
   CtxReadbackCache.reset ctx_cache_lp2c;
@@ -3883,6 +3883,7 @@ let get_current_env_sigma ~depth hyps constraints state =
 ;;
 
 let get_global_env_current_sigma ~depth hyps constraints state =
+  let hyps = E.of_hyps hyps in
   let state, _, changed, gls = elpi_solution_to_coq_solution ~eta_contract_solution:true ~calldepth:depth constraints state in
   let coq_ctx = mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state in
   let coq_ctx = { coq_ctx with env = Environ.set_universes (Evd.universes (get_sigma state)) coq_ctx.env } in
@@ -3908,7 +3909,7 @@ let rec lp2goal ~depth hyps syntactic_constraints state t =
         (mk_coq_context ~hyps ~options:(get_options ~depth hyps state) state) in
     state, (ctx, coq_ctx, k, args), gl1@gl2
 
-let goal2lp ~depth (hyps : API.Data.hyp list) syntactic_constraints state (ctx,coq_ctx,k) =
+let goal2lp ~depth syntactic_constraints state (ctx,coq_ctx,k) =
   let calldepth = depth in
   let env = get_global_env state in
   let sigma = get_sigma state in

@@ -330,9 +330,9 @@ let goal_readback ~depth hyps csts state g =
     let state, args, gls2 = U.map_acc (Rocq_elpi_arg_HOAS.in_coq_arg ~depth coq_ctx csts) state raw_args in
     state, (None,ctx,coq_ctx,k,args), gls1 @ gls2
 
-let goal_embed ~depth hyps csts state (tac,ctx,coq_ctx,ev,args) =
+let goal_embed ~depth _ csts state (tac,ctx,coq_ctx,ev,args) =
     assert(args=[]);
-    match Rocq_elpi_HOAS.goal2lp ~depth hyps csts state (ctx,coq_ctx,ev) with
+    match Rocq_elpi_HOAS.goal2lp ~depth csts state (ctx,coq_ctx,ev) with
     | Result.Ok (st, r, gl) -> st,r,gl
     | Result.Error env ->
         let old_env = coq_ctx.env in
@@ -353,7 +353,7 @@ let goal : ( goal , API.Data.hyps, API.Data.constraints) CConv.t = {
   pp_doc = (fun fmt () -> ());
   pp = (fun fmt _ -> Format.fprintf fmt "TODO");
   embed = goal_embed;
-  readback = goal_readback
+  readback = (fun ~depth hyps csts st g -> goal_readback ~depth (E.of_hyps hyps) csts st g)
 }
 let goal' : ( goal , Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context , API.Data.constraints) CConv.t = {
   CConv.ty = Conv.TyName "goal";

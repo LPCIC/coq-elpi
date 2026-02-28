@@ -199,7 +199,7 @@ let under_ctx name ty bo ~k ~depth state =
       match bo with
       | None -> state, mk_decl ~depth name ~ty
       | Some bo -> state, mk_def ~depth name ~bo ~ty in
-    let new_hyp = { ctx_entry; depth } in
+    let new_hyp = { E.hsrc = ctx_entry; hdepth = depth } in
     let state = set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
     let state = push_glob_ctx state id None in
     state in

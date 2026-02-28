@@ -115,7 +115,7 @@ val in_elpi_tac :
   depth:int ->
   ?calldepth:int -> 
   Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context ->
-  Rocq_elpi_HOAS.hyp list ->
+  hyps ->
   Evd.evar_map ->
   Elpi.API.State.t ->
   Tac.top ->
@@ -126,7 +126,7 @@ val in_elpi_tac_econstr :
   base:unit ->
   depth:int -> ?calldepth:int -> 
   Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context ->
-  Rocq_elpi_HOAS.hyp list ->
+  hyps ->
   Evd.evar_map ->
   Elpi.API.State.t ->
   EConstr.t ->
