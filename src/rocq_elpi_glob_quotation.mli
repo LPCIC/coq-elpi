@@ -9,7 +9,7 @@ open RawData
 val coq : Ast.Scope.language
   
 (* The context used to interpret Var("x") nodes in all the APIs below *)
-val set_coq_ctx_hyps : State.t -> [> `Options ] Rocq_elpi_HOAS.coq_context * hyps -> State.t
+val set_coq_ctx_hyps : State.t -> [> `Options ] Rocq_elpi_HOAS.conv_context * hyps -> State.t
 
 val under_ctx :
   Names.Name.t -> term -> term option ->

@@ -279,7 +279,7 @@ let failsafe_term = {
   embed = constr2lp;
 }
 
-let proof_context : (full coq_context, API.Data.constraints) CConv.ctx_readback =
+let proof_context : (full conv_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
     let state, proof_context, _, gls = get_current_env_sigma ~depth hyps constraints state in
     state, proof_context, constraints, gls
@@ -291,7 +291,7 @@ let closed_term = {
   readback = lp2constr_closed;
   embed = constr2lp_closed
 }
-let global : (empty coq_context, API.Data.constraints) CConv.ctx_readback =
+let global : (empty conv_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
     let state, proof_context, _, gls = get_global_env_current_sigma ~depth hyps constraints state in
     state, proof_context, constraints, gls
@@ -323,7 +323,7 @@ let sealed_goal = {
   readback = (fun ~depth _ _ -> assert false);
 }
 
-type goal = E.term option * E.term * Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context * Evar.t * Rocq_elpi_arg_HOAS.coq_arg list
+type goal = E.term option * E.term * Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context * Evar.t * Rocq_elpi_arg_HOAS.coq_arg list
 
 let goal_readback ~depth hyps csts state g =
     let state, (ctx,coq_ctx, k, raw_args), gls1 = Rocq_elpi_HOAS.lp2goal ~depth hyps csts state g in
@@ -355,7 +355,7 @@ let goal : ( goal , API.Data.hyps, API.Data.constraints) CConv.t = {
   embed = goal_embed;
   readback = (fun ~depth hyps csts st g -> goal_readback ~depth (E.of_hyps hyps) csts st g)
 }
-let goal' : ( goal , Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context , API.Data.constraints) CConv.t = {
+let goal' : ( goal , Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context , API.Data.constraints) CConv.t = {
   CConv.ty = Conv.TyName "goal";
   pp_doc = (fun fmt () -> ());
   pp = (fun fmt _ -> Format.fprintf fmt "TODO");
@@ -363,7 +363,7 @@ let goal' : ( goal , Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context , API.Data.c
   readback = (fun ~depth hyps csts state g -> goal_readback ~depth hyps.hyps csts state g);
 }
 
-let tactic_arg : (Rocq_elpi_arg_HOAS.coq_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS.coq_context, API.Data.constraints) CConv.t = {
+let tactic_arg : (Rocq_elpi_arg_HOAS.coq_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context, API.Data.constraints) CConv.t = {
   CConv.ty = Conv.TyName "argument";
   pp_doc = (fun fmt () -> ());
   pp = (fun fmt _ -> Format.fprintf fmt "TODO");
@@ -2292,7 +2292,7 @@ Supported attributes:
     Out(list constant, "ConstantsRepresentingVariables",
     Read(unit_ctx, "lists all the section variables, i.e. the global objects that are marked as to be abstracted at the end of the enclosing sections")),
   (fun _ ~depth _ _ state ->
-     let { section } = mk_coq_context ~hyps:[] ~options:(default_options ()) state in
+     let { section } = empty_conv_context ~options:(default_options ()) state in
      !: (section |> List.map (fun x -> Variable x)) )),
   DocAbove);
 
@@ -2787,15 +2787,15 @@ denote the same x as before.|};
     InOut(B.ioarg constant, "Compatibility constant",
     Out(int, "Index",
     Read(global, "Relates a primitive projection to its compatibility constant. Index is set to the constructor argument extracted by the projection (starting from 0).")))),
-    (fun p c _ ~depth coq_context _ _ ->
+    (fun p c _ ~depth conv_context _ _ ->
       match p, c with
       | _, Data (Variable c) -> raise No_clause
       | Data p, Data (Constant c) ->
-          if Environ.QConstant.equal coq_context.env (Projection.constant p) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
+          if Environ.QConstant.equal conv_context.env (Projection.constant p) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
       | NoData, NoData -> U.type_error "coq.env.primitive-projection?: got no input data"
       | Data p, NoData -> ?: None +! (Constant (Projection.constant p)) +! Names.Projection.(arg p + npars p)
       | NoData, Data (Constant c) ->
-          (match Environ.constant_opt_value_in coq_context.env (UVars.in_punivs c) with
+          (match Environ.constant_opt_value_in conv_context.env (UVars.in_punivs c) with
           | None -> raise No_clause
           | Some p ->
             let rec get_proj c =
@@ -3132,14 +3132,14 @@ declared as cumulative.|};
     InOut(B.ioarg projection,"P",
     InOut(B.ioarg projection,"PU",
     Read(global, "Relates a primitive projection P to its unfolded version PU. PU is still a primitive projection, but it is displayed as a match and some Ltac code can see that."))),
-    (fun p q ~depth:_ coq_context _ _ ->
+    (fun p q ~depth:_ conv_context _ _ ->
       let test_folded = function Data x -> if Projection.unfolded x then raise No_clause | _ -> () in
       let test_unfolded = function Data x -> if not (Projection.unfolded x) then raise No_clause | _ -> () in
       test_folded p;
       test_unfolded q;
       match p, q with
       | Data p, Data q ->
-          if Environ.QProjection.Repr.equal coq_context.env (Projection.repr p) (Projection.repr q) then ?: None +? None else raise No_clause
+          if Environ.QProjection.Repr.equal conv_context.env (Projection.repr p) (Projection.repr q) then ?: None +? None else raise No_clause
       | NoData, NoData -> U.type_error "coq.projection.unfolded: got no input data"
       | Data p, NoData -> ?: None +! Projection.(make (repr p) true)
       | NoData, Data q -> !: Projection.(make (repr q) false) +? None

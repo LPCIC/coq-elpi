@@ -554,7 +554,7 @@ module Interp = struct
         let depth = 0 in
         let state, args, gls = EU.map_acc
           (Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:program ~raw:raw_args
-            Rocq_elpi_HOAS.(mk_coq_context ~hyps:[] ~options:(default_options ()) state))
+            Rocq_elpi_HOAS.(empty_conv_context ~options:(default_options ()) state))
           state args in
         let loc = Rocq_elpi_utils.of_coq_loc loc in
 
@@ -642,7 +642,7 @@ let run_program_open_proof ~loc name ~atts ~syndata args : Declare.Proof.t =
         try
           let t = API.Setup.StrMap.find "Statement" assignments in
           let state, t, _ = Rocq_elpi_builtins.closed_term.readback ~depth:0
-            Rocq_elpi_HOAS.(mk_coq_context ~hyps:[] ~options:(default_options()) state) constraints state t in
+            Rocq_elpi_HOAS.(empty_conv_context ~options:(default_options()) state) constraints state t in
           Some t
         with Not_found | Elpi.API.Conversion.TypeErr _ -> None in
        let data = relocate "Data" in
@@ -670,7 +670,7 @@ let run_program_close_proof ~loc name ~atts ~syndata args ~lemma =
   let p = Declare.Proof.get lemma |> Proof.partial_proof |> List.hd in (* all of them *)
   let proof ~target:_ ~depth state =
     let state, p, _ = Rocq_elpi_builtins.closed_term.embed
-      Rocq_elpi_HOAS.(mk_coq_context ~hyps:[] ~options:(default_options ()) state) Elpi.API.RawData.no_constraints ~depth state p in
+      Rocq_elpi_HOAS.(empty_conv_context ~options:(default_options ()) state) Elpi.API.RawData.no_constraints ~depth state p in
     Ok(state, p) in
   let data ~target ~depth state = get_stash (Declare.Proof.get_name lemma) ~target ~depth |> Result.map (fun x -> state,x) in
   (run_program ~loc name ~main:main_end_proof ~atts ~syndata args [syn;proof;data]) |> (function
