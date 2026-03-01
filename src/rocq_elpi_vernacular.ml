@@ -534,13 +534,20 @@ module Interp = struct
   let missing_synterp = let open Pp in
     fnl() ++
     strbrk "The command lacks code for the synterp phase. In order to add code to this phase use '#[synterp] Elpi Accumulate'. See also https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html#parsing-and-execution"
+
+  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+  let empty_glob_sign env = Genintern.empty_glob_sign ~strict:true env
+  [%%else]
+  let empty_glob_sign env = Genintern.empty_glob_sign ~strict:true env UnivNames.empty_binders
+  [%%endif]
+
   
   let run_program ~loc name ~main ~atts ~syndata args more_args =
     get_and_compile ~loc name |> Option.map (fun (program, raw_args) ->
       let env = Global.env () in
       let sigma = Evd.from_env env in
       let args = args
-        |> List.map (Rocq_elpi_arg_HOAS.Cmd.glob (Genintern.empty_glob_sign ~strict:true env))
+        |> List.map (Rocq_elpi_arg_HOAS.Cmd.glob (empty_glob_sign env))
         |> List.map (Rocq_elpi_arg_HOAS.Cmd.interp (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
       in
       let initial_synterp_state, synterplog =
