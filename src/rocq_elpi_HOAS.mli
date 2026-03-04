@@ -164,10 +164,10 @@ val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
 val sealed_goal2lp : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 val lp2goal : depth:int -> hyps -> constraints -> State.t -> term -> 
-  State.t * (term * full conv_context * Evar.t * term list) * Conversion.extra_goals
+  State.t * (full conv_context * Evar.t * term list) * Conversion.extra_goals
 
 (* checks the evar context is the same as the one in input *)
-val goal2lp : depth:int -> constraints -> State.t -> term * full conv_context * Evar.t -> 
+val goal2lp : depth:int -> constraints -> State.t -> full conv_context -> Evar.t -> 
   (State.t * term * Conversion.extra_goals,EConstr.named_context) Result.t
 
 (* *** Low level API to reuse parts of the embedding *********************** *)

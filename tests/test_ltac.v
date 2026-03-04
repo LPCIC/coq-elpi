@@ -105,12 +105,12 @@ Elpi Tactic simple.
 Elpi Accumulate lp:{{
   solve G GL :-
     coq.say G,
-    refine.simple-elaborate {{ conj _ _ }} G GL',
+    coq.ltac.simple.refine.elaborate {{ conj _ _ }} G GL',
     coq.say GL',
     std.map GL' (x\r\r = seal x) GL. 
   solve G GL :-
     coq.say G,
-    refine.simple-elaborate {{ ex_intro _ (fun w => _) _ }} G GL',
+    coq.ltac.simple.refine.elaborate {{ ex_intro _ (fun w => _) _ }} G GL',
     coq.say GL',
     std.map GL' (x\r\r = seal x) GL. 
 

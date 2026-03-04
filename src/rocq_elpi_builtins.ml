@@ -324,28 +324,33 @@ let sealed_goal = {
   readback = (fun ~depth _ _ -> assert false);
 }
 
-type goal = E.term option * E.term * Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context * Evar.t * Rocq_elpi_arg_HOAS.coq_arg list
+type goal = {
+  caller : E.term option; (* for error messages *)
+  proof_context : Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context;
+  evar : Evar.t;
+  tac_args : Rocq_elpi_arg_HOAS.coq_arg list;
+}
 
-let goal_readback ~depth hyps csts state g =
-    let state, (ctx,coq_ctx, k, raw_args), gls1 = Rocq_elpi_HOAS.lp2goal ~depth hyps csts state g in
-    let state, args, gls2 = U.map_acc (Rocq_elpi_arg_HOAS.in_coq_arg ~depth coq_ctx csts) state raw_args in
-    state, (None,ctx,coq_ctx,k,args), gls1 @ gls2
+let goal_readback ~depth hyps csts state g : State.t * goal * Conv.extra_goals =
+    let state, (proof_context, evar, raw_args), gls1 = Rocq_elpi_HOAS.lp2goal ~depth hyps csts state g in
+    let state, tac_args, gls2 = U.map_acc (Rocq_elpi_arg_HOAS.in_coq_arg ~depth proof_context csts) state raw_args in
+    state, { caller = None; proof_context; evar; tac_args }, gls1 @ gls2
 
-let goal_embed ~depth _ csts state (tac,ctx,coq_ctx,ev,args) =
-    assert(args=[]);
-    match Rocq_elpi_HOAS.goal2lp ~depth csts state (ctx,coq_ctx,ev) with
+let goal_embed ~depth _ csts state { caller = tac; proof_context; evar; tac_args } =
+    assert(tac_args=[]);
+    match Rocq_elpi_HOAS.goal2lp ~depth csts state proof_context evar with
     | Result.Ok (st, r, gl) -> st,r,gl
     | Result.Error env ->
-        let old_env = coq_ctx.env in
+        let old_env = proof_context.env in
         let msg =
           Pp.string_of_ppcmds
           Pp.(strbrk "coq.ltac.call-simple-ltac1: The tactic "
             ++ Option.cata (fun tac -> str (pp2string (API.RawPp.term depth) tac)) (mt ()) tac
             ++ strbrk " generates a subgoal that lives in a different context."
             ++ fnl () ++ str "Input context:" ++ fnl ()
-            ++ pr_named_context_of coq_ctx.options old_env (get_sigma state)
+            ++ pr_named_context_of proof_context.options old_env (get_sigma state)
             ++ fnl () ++ str "Output context:" ++ fnl ()
-            ++ pr_named_context_of coq_ctx.options (Environ.reset_with_named_context (EConstr.val_of_named_context env) old_env) (get_sigma state))
+            ++ pr_named_context_of proof_context.options (Environ.reset_with_named_context (EConstr.val_of_named_context env) old_env) (get_sigma state))
         in
         U.type_error msg
 
@@ -4188,8 +4193,10 @@ Goals but fails if the goals do not live in the current proof context.
         | Keep -> Some shelved_subgoals
         | Discard -> None in
       (* TODO FIXME *)
-      let ctx = U.list_to_lp_list [] in
-      let subgoals = List.map (fun ev -> Some (API.RawOpaqueData.of_string "collect-simple-goals"),ctx,proof_context,ev,[]) subgoals in
+      let subgoals = List.map (fun evar -> {
+          caller = Some (API.RawOpaqueData.of_string "collect-simple-goals");
+          proof_context; evar; tac_args = [] })
+        subgoals in
       state, !: subgoals +? shelved, []
     )),
     DocAbove);
@@ -4222,7 +4229,7 @@ When the diagnostic is (error Msg), then GL is not set.
 
 Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|}))))))),
-    (fun plugin block index (_,_,proof_context,goal,tac_args) _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-mltac" (fun state ->
+    (fun plugin block index { proof_context; evar; tac_args } _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-mltac" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
 
@@ -4235,7 +4242,7 @@ Supported attributes:
          let tacname = Tacexpr.{ mltac_name  = { mltac_plugin  = plugin; mltac_tactic = block; }; mltac_index = index } in
          Tacenv.interp_ml_tactic tacname tac_args (Tacinterp.default_ist ()) in
 
-      match call_tactic ~depth state ~no_tc proof_context goal tactic with
+      match call_tactic ~depth state ~no_tc proof_context evar tactic with
       | Result.Ok (state, subgoals, assignments) ->
         (* universe constraints fixed by the code above*)
         Univ.ContextSet.empty, state, !: subgoals +! B.mkOK, assignments
@@ -4261,7 +4268,7 @@ obey this restriction.
 
 Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|}))))))),
-    (fun plugin block index (_,ctx,proof_context,goal,tac_args) _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-mltac" (fun state ->
+    (fun plugin block index { proof_context; evar; tac_args } _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-mltac" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
 
@@ -4274,9 +4281,12 @@ Supported attributes:
          let tacname = Tacexpr.{ mltac_name  = { mltac_plugin  = plugin; mltac_tactic = block; }; mltac_index = index } in
          Tacenv.interp_ml_tactic tacname tac_args (Tacinterp.default_ist ()) in
 
-      match call_tactic ~depth state ~no_tc proof_context goal tactic with
+      match call_tactic ~depth state ~no_tc proof_context evar tactic with
       | Result.Ok (state, subgoals, assignments) ->
-        let subgoals = List.map (fun ev -> Some (API.RawOpaqueData.of_string (Format.asprintf "%s#%s(%d)" plugin block index)),ctx,proof_context,ev,[]) subgoals in
+        let subgoals = List.map (fun evar -> {
+            caller = Some (API.RawOpaqueData.of_string (Format.asprintf "%s#%s(%d)" plugin block index));
+            proof_context; evar; tac_args = [] })
+          subgoals in
         (* universe constraints fixed by the code above*)
         Univ.ContextSet.empty, state, !: subgoals +! B.mkOK, assignments
       | Result.Error ie ->
@@ -4309,7 +4319,7 @@ When the diagnostic is (error Msg), then GL is not set.
 
 Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|})))),
-    (fun tac (_,_,proof_context,goal,tac_args) _ diags ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
+    (fun tac { proof_context; evar; tac_args } _ diags ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
 
@@ -4320,7 +4330,7 @@ Supported attributes:
          | Rocq_elpi_arg_HOAS.CLtac1 x -> x) in
        let tactic = apply_ltac1 ~depth tac tac_args in
 
-      match call_tactic ~depth state ~no_tc proof_context goal tactic with
+      match call_tactic ~depth state ~no_tc proof_context evar tactic with
       | Result.Ok (state, subgoals, assignments) ->
         (* universe constraints fixed by the code above*)
         Univ.ContextSet.empty, state, !: subgoals +! [Some B.mkOK], assignments
@@ -4346,7 +4356,7 @@ obey this restriction.
 
 Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|}))))),
-    (fun tac (_,ctx,proof_context,goal,tac_args) _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-simple-ltac1" (fun state ->
+    (fun tac { proof_context; evar; tac_args } _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-simple-ltac1" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
       let open Ltac_plugin in
 
@@ -4357,9 +4367,11 @@ Supported attributes:
          | Rocq_elpi_arg_HOAS.CLtac1 x -> x) in
        let tactic = apply_ltac1 ~depth tac tac_args in
 
-      match call_tactic ~depth state ~no_tc proof_context goal tactic with
+      match call_tactic ~depth state ~no_tc proof_context evar tactic with
       | Result.Ok (state, subgoals, assignments) ->
-        let subgoals = List.map (fun ev -> Some tac,ctx,proof_context,ev,[]) subgoals in
+        let subgoals = List.map (fun evar -> {
+            caller = Some tac; proof_context; evar; tac_args = [] })
+          subgoals in
         (* universe constraints fixed by the code above*)
         Univ.ContextSet.empty, state, !: subgoals +! B.mkOK, assignments
       | Result.Error ie ->
@@ -4380,7 +4392,7 @@ Supported attributes:
     hints), but for the ergonomy of a tactic it may help to know if an
     hypothesis name is already taken.
 |}))),
-  (fun id (_,_,proof_context,_,_) ~depth _ _ _ ->
+  (fun id { proof_context } ~depth _ _ _ ->
      if not @@ Id.Set.mem (Names.Id.of_string_soft id) proof_context.names then ()
      else raise No_clause)),
   DocAbove);
@@ -4567,7 +4579,7 @@ Supported attributes:
 - @ppmost! (default: false, prints most details)
 - @pplevel! (default: _, prints parentheses to reach that level, 200 = off)
 - @holes! (default: false, prints evars as _)|}))),
-  (fun (_,_,proof_context,evar,args) _ ~depth _ _ state ->
+  (fun { proof_context; evar } _ ~depth _ _ state ->
      let sigma = get_sigma state in
      let pr_named_context_of flags env sigma =
         let make_decl_list env d pps = pr_named_decl_flagged flags env sigma d :: pps in

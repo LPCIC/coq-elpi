@@ -3908,9 +3908,9 @@ let rec lp2goal ~depth hyps syntactic_constraints state t =
             List.map (fun hsrc -> { E.hdepth = depth; E.hsrc })))
         state
         (empty_conv_context ~options:(get_options ~depth hyps state) state) in
-    state, (ctx, coq_ctx, k, args), gl1@gl2
+    state, (coq_ctx, k, args), gl1@gl2
 
-let goal2lp ~depth syntactic_constraints state (_ctx,coq_ctx,k) = (* TODO: reuse _ctx in in_elpi_evar_concl *)
+let goal2lp ~depth syntactic_constraints state coq_ctx k =
   let calldepth = depth in
   let env = get_global_env state in
   let sigma = get_sigma state in
