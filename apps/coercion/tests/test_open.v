@@ -12,7 +12,7 @@ coercion _ X Ty {{ @sig lp:Ty lp:P }} Solution :- std.do! [
   Solution = {{ @exist lp:Ty lp:P lp:X1 _ }},
   % we call the solver
   coq.ltac.collect-goals Solution [G] [],
-  coq.ltac.open (coq.ltac.call-ltac1 "my_solver") G [],
+  coq.ltac.open (x\y\coq.ltac.call-ltac1 "my_solver" x y ok) G [],
 ].
 
 }}.

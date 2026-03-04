@@ -34,7 +34,7 @@ type scope = ExecutionSite | CurrentModule | Library
 
 let options : (options, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
-    state, get_options ~depth hyps state, constraints, []
+    state, get_options ~depth (API.RawData.of_hyps hyps) state, constraints, []
 
 let scope = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "scope";
