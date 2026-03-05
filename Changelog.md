@@ -22,6 +22,10 @@ Requires Elpi 3.6.0 and Rocq 9.0, 9.1 or 9.2.
 - Change `coq.ltac.call-ltac1` also gives a diagnostic
 - Change `coq.ltac.call` also gives a diagnostic
 
+### Vernacular:
+- New `Elpi Accumulate Plugin` to load built-in defined in a plugin, see the
+  corresponding example
+
 # [3.2.0] 19/09/2025
 
 Requires Elpi 3.0.0 and Coq 8.20 or Rocq 9.0 or Rocq 9.1.

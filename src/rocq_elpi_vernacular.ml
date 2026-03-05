@@ -291,6 +291,24 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     
   let accumulate_extra_deps ~atts:((scope,only),ph) ~loc ?program ~what ids = skip ~only ~ph (accumulate_extra_deps ~loc ?program ~scope ~what) ids
 
+
+  let accumulate_plugin ~loc ?(program=current_program()) ~scope id =
+    let elpi = P.ensure_initialized () in
+    warn_scope_not_regular ~loc scope;
+    match get_base ~loc ~elpi program with
+    | `Db _ -> err ~loc:(of_coq_loc loc) Pp.(str "TODO")
+    | `Program base ->
+        let b =
+          try Elpi.API.BuiltIn.of_file id
+          with Not_found -> err ~loc:(of_coq_loc loc) Pp.(str "Elpi plugin " ++ str id ++
+            str " not found." ++ spc () ++ str "Did you have a Declare ML Module for the plugin?"++ spc () ++
+            str "Does the plugin run Elpi.API.BuiltIn.declare ~file_name:\"" ++ str id ++ str "\"?") in
+        let u = P.unit_from_plugin ~elpi ~base ~loc id b in
+        let new_src_ast = File { fname = id; fast = u; } in
+        P.accumulate ~loc program [new_src_ast]
+
+  let accumulate_plugin ~atts:((scope,only),ph) ~loc ?program id = skip ~only ~ph (accumulate_plugin ~loc ?program ~scope) id
+
   let accumulate_files ~loc ?(program=current_program()) ~scope s =
     let elpi = P.ensure_initialized () in
     try
@@ -460,6 +478,7 @@ module type Common = sig
 
   val accumulate_files       : atts:atts -> loc:Loc.t -> ?program:qualified_name -> string list -> unit
   val accumulate_extra_deps  : atts:atts -> loc:Loc.t -> ?program:qualified_name -> what:what -> qualified_name list -> unit
+  val accumulate_plugin      : atts:atts -> loc:Loc.t -> ?program:qualified_name -> string -> unit
   val accumulate_string      : atts:atts -> loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t * string -> unit
   val accumulate_db          : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit
   val accumulate_db_header   : atts:atts -> loc:Loc.t -> ?program:qualified_name -> qualified_name -> unit

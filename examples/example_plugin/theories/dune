@@ -1,0 +1,6 @@
+(coq.theory
+ (name example_plugin)
+ (theories elpi)
+ (plugins rocq-elpi.elpi_example_plugin))
+
+(include_subdirs qualified)
