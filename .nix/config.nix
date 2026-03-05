@@ -103,12 +103,12 @@ let master = [
     }; };
 
     "coq-master-min-elpi" = { rocqPackages = rocq-common-bundles // {
-      rocq-elpi.override.elpi-version = "3.3.0";
+      rocq-elpi.override.elpi-version = "3.6.1";
       rocq-core.override.version = "master";
       stdlib.override.version = "master";
       bignums.override.version = "master";
     }; coqPackages = coq-common-bundles // {
-      coq-elpi.override.elpi-version = "3.3.0";
+      coq-elpi.override.elpi-version = "3.6.1";
       coq.override.version = "master";
       stdlib.override.version = "master";
       bignums.override.version = "master";
