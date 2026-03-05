@@ -2457,6 +2457,14 @@ let mk_goal hyps rev ty ev args =
 let in_elpi_goal state ~args ~hyps ~raw_ev ~ty ~ev =
   mk_goal hyps raw_ev ty ev args
 
+let show_coq_engine ?with_univs state =
+  show_coq_engine ?with_univs (S.get engine state)
+  
+let show_coq_elpi_engine_mapping state =
+  "Rocq-Elpi mapping:\n" ^ UVMap.show state
+
+let show_all_engine state = show_coq_engine ~with_univs:true state ^ "\n" ^ show_coq_elpi_engine_mapping state
+
 let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg ~base state k =
   let calldepth = depth in
   let env = get_global_env state in
@@ -2479,6 +2487,9 @@ let sealed_goal2lp ~depth ~args ~in_elpi_tac_arg ~base state k =
 let solvegoal2query sigma goals loc args ~in_elpi_tac_arg ~depth:calldepth ~base state =
 
   let state = S.set engine state (from_env_sigma (get_global_env state) sigma) in
+
+  debug Pp.(fun () -> str"initial coq sigma:\n" ++ str (show_all_engine state));
+  debug Pp.(fun () -> str"initial coq goals:\n" ++ prlist_with_sep spc Evar.print goals);
 
   let state, gl, gls =
     API.Utils.map_acc (fun state goal ->
@@ -2521,7 +2532,7 @@ let customtac2query sigma goals loc text ~depth:calldepth ~base state =
           let q = API.Quotation.elpi ~language:API.Quotation.elpi_language state loc text in
           let _amap, q = API.RawQuery.term_to_raw_term state base ~depth q in
           state, q, []) in
-    debug Pp.(fun () -> str"engine: " ++ str (show_coq_engine (S.get engine state)));
+    debug Pp.(fun () -> str"engine: " ++ str (show_coq_engine state));
     state, query, evar_decls @ gls
 ;;
 
@@ -2587,14 +2598,6 @@ let no_list_given = function
 let rec skip_lams ~depth d t = match E.look ~depth t with
   | E.Lam t -> skip_lams ~depth:(depth+1) (d+1) t
   | x -> x, d
-
-let show_coq_engine ?with_univs state =
-  show_coq_engine ?with_univs (S.get engine state)
-  
-let show_coq_elpi_engine_mapping state =
-  "Rocq-Elpi mapping:\n" ^ UVMap.show state
-
-let show_all_engine state = show_coq_engine ~with_univs:true state ^ "\n" ^ show_coq_elpi_engine_mapping state
 
 let is_uvar ~depth t =
   match E.look ~depth t with
@@ -2745,7 +2748,6 @@ let reachable sigma roots acc =
 let solution2evd ~eta_contract_solution sigma0 { API.Data.constraints; assignments; state; pp_ctx } roots =
   let state, solved_goals, _, _gls = elpi_solution_to_coq_solution ~eta_contract_solution ~calldepth:0 constraints state in
   let sigma = get_sigma state in
-  let roots = Evd.fold_undefined (fun k _ acc -> Evar.Set.add k acc) sigma0 roots in 
   let reachable_undefined_evars = reachable sigma roots Evar.Set.empty in
   let declared_goals, shelved_goals =
     get_declared_goals (Evar.Set.diff reachable_undefined_evars solved_goals) constraints state assignments pp_ctx in
@@ -2754,19 +2756,17 @@ let solution2evd ~eta_contract_solution sigma0 { API.Data.constraints; assignmen
   debug Pp.(fun () -> str "Goals: " ++ prlist_with_sep spc Evar.print declared_goals);
   debug Pp.(fun () -> str "Shelved Goals: " ++ prlist_with_sep spc Evar.print shelved_goals);
   Evd.fold_undefined (fun k _ sigma ->
-    if Evar.Set.mem k reachable_undefined_evars then sigma
+    if Evar.Set.mem k reachable_undefined_evars || Evd.mem sigma0 k then sigma
     else Evd.remove sigma k
     ) sigma sigma,
   declared_goals,
   shelved_goals
 
-let tclSOLUTION2EVD ~eta_contract_solution sigma0 solution =
+let tclSOLUTION2EVD ~eta_contract_solution sigma0 solution gls =
   let open Proofview.Unsafe in
   let open Tacticals in
   let open Proofview.Notations in
   tclGETSHELF >>= fun sh ->
-  tclGETGOALS >>= fun gls ->
-    let gls = gls |> List.map Proofview.drop_state in
     let roots = List.fold_right Evar.Set.add gls Evar.Set.empty in
     let sigma, declared_goals, shelved_goals = solution2evd ~eta_contract_solution sigma0 solution roots in
     let sigma = Evd.fold_future_goals Evd.remove_future_goal sigma in
