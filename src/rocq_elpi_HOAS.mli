@@ -350,7 +350,7 @@ val txtgoals2query :
   Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:string ->
   depth:int -> base:Elpi.API.Compile.program -> State.t -> State.t * term * Conversion.extra_goals
 
-val tclSOLUTION2EVD : eta_contract_solution:bool -> Evd.evar_map -> Elpi.API.Data.solution -> unit Proofview.tactic
+val tclSOLUTION2EVD : eta_contract_solution:bool -> Evd.evar_map -> Elpi.API.Data.solution -> Evar.t list -> unit Proofview.tactic
 val solution2evd : eta_contract_solution:bool -> Evd.evar_map -> Elpi.API.Data.solution -> Evar.Set.t -> Evd.evar_map * Evar.t list * Evar.t list
 
 val show_coq_engine : ?with_univs:bool -> State.t -> string

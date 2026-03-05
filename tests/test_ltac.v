@@ -130,3 +130,18 @@ Unshelve.
 admit.
 Show.
 Abort.
+
+
+Elpi Tactic dummy.
+Elpi Accumulate lp:{{ solve _ _. }}.
+
+(* bug #968 *)
+Goal O = O /\ 1 = 1.
+  split.
+  Show Existentials.
+  Set Debug "elpi".
+
+  elpi dummy.
+  Unshelve. 
+  Fail 3: idtac.
+Abort.
