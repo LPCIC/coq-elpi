@@ -1,6 +1,6 @@
-# Unreleased
+# [3.3.0] 06/03/2026
 
-Requires Elpi 3.6.0 and Rocq 9.0, 9.1 or 9.2.
+Requires Elpi 3.6.1 and Rocq 9.0, 9.1 or 9.2.
 
 ### HOAS:
 - Fix explicitly declared goals are considered reachable, even if they
