@@ -343,8 +343,9 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   
   let accumulate_db ~loc ?(program=current_program()) name =
     let _ = P.ensure_initialized () in
-    let header = P.header_of_db name |> List.map (fun dast -> DatabaseHeader { dast }) in
-    if P.db_exists name then P.accumulate ~loc program (header @ [DatabaseBody name])
+    if P.db_exists name then
+      let header = P.header_of_db name |> List.map (fun dast -> DatabaseHeader { dast }) in
+      P.accumulate ~loc program (header @ [DatabaseBody name])
     else CErrors.user_err Pp.(str "Db " ++ pr_qualified_name name ++ str" not found")
   let accumulate_db ~atts:((scope,only),ph) ~loc ?program name =
     warn_scope_not_regular ~loc scope;
