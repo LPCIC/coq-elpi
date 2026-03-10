@@ -62,13 +62,13 @@ namespace tc {
 
         decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty' Bo') (pr XS2 L3) :- !,
           (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
-          close-term-no-prune-ty L1x Ty L1,
+          close-term-no-prune-ty L1x {clean-term Ty} L1,
           decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
           std.append L1 L2 L3.
 
         decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty' Bo') (pr XS2 L3) :- !,
           (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
-          close-term-no-prune-ty L1x Ty L1,
+          close-term-no-prune-ty L1x {clean-term Ty} L1,
           decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
           std.append L1 L2 L3.
 
