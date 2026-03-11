@@ -1,0 +1,16 @@
+(executable
+ (name gen_doc)
+ (libraries elpi_json_plugin))
+
+(rule
+ (targets
+  json.elpi)
+ (deps gen_doc.exe)
+ (mode promote)
+ (action (run ./gen_doc.exe)))
+
+(install
+ (files
+  json.elpi)
+ (section doc)
+ (package rocq-elpi-json))
