@@ -2,10 +2,9 @@ From elpi Require Import tc.
 
 Elpi Accumulate TC.Compiler lp:{{
   :before "0"
-  tc.add-class-gr _ A :- 
+  tc.add-class-gr _ A SM :- 
     coq.say "Adding predicate for" A,
-    coq.hints.modes A "typeclass_instances" C, 
-    coq.say "with mode" C, fail, !.
+    coq.say "with mode" SM, fail, !.
 }}.
 
 Module ES3.
