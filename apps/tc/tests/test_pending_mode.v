@@ -2,23 +2,10 @@ From elpi Require Import tc.
 
 Elpi Accumulate TC.Compiler lp:{{
   :before "0"
-  tc.add-class-gr _ A SM :- 
+  tc.add-class-gr _ A :- 
     coq.say "Adding predicate for" A,
-    coq.say "with mode" SM, fail, !.
-
-  func old-version string, int, int, int ->.
-  old-version _ 9 0 _.
-  old-version _ 9 1 _.
-  old-version _ 9 2 _.
-
-  pred get-old-mode o:string.
-
-  :after "0"
-  main [str "new_class", str Cl, str _] :- old-version {coq.version}, get-old-mode Modes, not (var Modes), !,
-    tc.time-it tc.oTC-time-compile-class (
-      coq.locate Cl GR, tc.add-class-gr tc.classic GR {rex.split " " Modes}
-    ) "Compiler for Class".
-
+    coq.hints.modes A "typeclass_instances" C, 
+    coq.say "with mode" C, fail, !.
 }}.
 
 Module ES3.
@@ -37,23 +24,8 @@ Proof. eexists; now apply _. Qed.
 
 End ES3.
 
-Module ES3'.
-
-#[mode = "-"]Class Add (I: nat).
-
-Instance addNat: Add 0. Qed.
-
-(* No problem in apply _ since the evar can be unified with the pattern 0 *)
-Goal exists x, (Add x).
-Proof. eexists; now apply _. Qed.
-
-End ES3'.
-
 Module ES4.
-Section S.
-Elpi Accumulate TC.Compiler lp:{{
-  get-old-mode "+".
-}}.
+
 (* Plus is mapped to the elpi input mode, i.e. 
    the type of the predicate for add is `pred term -> term`.
 *)
@@ -64,7 +36,7 @@ Instance addNat: Add 0. Qed.
 (* Failure in apply _ since the evar does not match the pattern 0 *)
 Goal exists x, (Add x).
 Proof. eexists. Fail apply _. Abort.
-End S.
+
 End ES4.
 
 
