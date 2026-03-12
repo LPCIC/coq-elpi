@@ -56,4 +56,4 @@ jobs:
         env:
           OPAMWITHTEST: 'true'
           OPAMIGNORECONSTRAINTS: 'coq'
-          OPAMVERBOSE: '2'
+          OPAMVERBOSE: '1'
