@@ -211,16 +211,16 @@ namespace tc {
 
       :functional
       pred compile-premise
-        i:list term,
-        o:list term,
-        i:term,
-        i:term,
-        i:term,
-        i:bool,
-        i:term,
-        i:list term,
-        i:list prop,
-        o:prop.
+        i:list term,       % L  : a list of pi-quantified variables (used as elpi unification variables when building links)
+        o:list term,       % L' : a suffix of L containing the still unused variables
+        i:term,            % P  : the premise of an instance whose applicative head is a class
+        i:term,            % Pt : the type of P
+        i:term,            % I  : the instance at toplevel that triggered the instance compilation
+        i:bool,            % B  : tells if the premise P is in positive or negative position
+        i:term,            % It : the type of I that has not yet been explored
+        i:list term,       % Ag : the arguments of I that will be part of the proof
+        i:list prop,       % Pr : the premises of the rule
+        o:prop.            % C  : the final clause corresponding to the compilation of I
       compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
         ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- !, tc.get-TC-of-inst-type a b) => 
           tc.get-TC-of-inst-type PTy TC), !,
@@ -233,15 +233,15 @@ namespace tc {
         compile-ty L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
 
       :index (_ _ _ _ 1)
-      func compile-ty 
-        list term,
-        list term,
-        term,
-        bool,
-        term,
-        list term,
-        list prop
-        -> prop.
+      func compile-ty
+        list term,    % L  : a list of pi-quantified variables (used as elpi unification variables when building links)
+        list term,    % L' : a suffix of L containing the still unused variables
+        term,         % I  : the premise of an instance whose applicative head is a class
+        bool,         % B  : tells if the premise P is in positive or negative position
+        term,         % It : the type of I that has not yet been explored
+        list term,    % Ag : the arguments of I that will be part of the proof
+        list prop     % Pr : the premises of the rule
+        -> prop.      % C  : the final clause corresponding to the compilation of I
       compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
         std.do![
           if (IsPositive = tt) 
