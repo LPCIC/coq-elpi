@@ -36,7 +36,19 @@
   (ocaml-lsp-server :with-dev-setup)))
 
 (package
+ (name rocq-elpi-json)
+ (synopsis "Technical package to run tests")
+ (description "Do not install")
+ (depends rocq-elpi yojson))
+
+(package
  (name rocq-elpi-tests)
+ (synopsis "Technical package to run tests")
+ (description "Do not install")
+ (depends rocq-elpi))
+
+(package
+ (name rocq-elpi-json-tests)
  (synopsis "Technical package to run tests")
  (description "Do not install")
  (depends rocq-elpi))

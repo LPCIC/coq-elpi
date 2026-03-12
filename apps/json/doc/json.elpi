@@ -1,0 +1,65 @@
+
+
+% Yojson bindings for Elpi
+
+% license: GNU Lesser General Public License Version 2.1 or later
+
+% ------------------------------------------------------------------------
+
+% This code is not Rocq specific, i.e. could go to an Elpi specific
+% package.
+
+% Yojson.Basic.t
+kind json type.
+external symbol json.null : json = "1". 
+external symbol json.bool : bool -> json = "1". 
+external symbol json.int : int -> json = "1". 
+external symbol json.float : float -> json = "1". 
+external symbol json.string : string -> json = "1". 
+external symbol json.assoc : list (pair string json) -> json = "1".  % key value pairs. When generated from built-in predicates, keys are sorted
+external symbol json.list : list json -> json = "1". 
+
+% [json.from_file File J D] like Yojson.Basic.from_file reads J from File.
+% If D is error then J is not assigned.
+external func json.from_file string -> json, diagnostic.
+
+% [json.from_string String J D] like Yojson.Basic.from_string reads J from
+% String.
+% If D is error then J is not assigned.
+external func json.from_string string -> json, diagnostic.
+
+% [json.to_file File J D] like Yojson.Basic.to_file write J to File.
+external func json.to_file string, json -> diagnostic.
+
+% [json.to_string J S D] like Yojson.Basic.to_string write J to a compact
+% string S.
+external func json.to_string json -> string, diagnostic.
+
+% [json.pretty_to_string J S D] like Yojson.Basic.pretty_to_string write J
+% to a nice string S.
+external func json.pretty_to_string json -> string, diagnostic.
+
+% ------------------------------------------------------------------------
+
+% Rocq-Elpi APIs
+
+% ------------------------------------------------------------------------
+
+
+func coq.json->string json -> string.
+coq.json->string J S :- json.pretty_to_string J S ok.
+
+func coq.string->json string -> json.
+coq.string->json S J :- json.from_string S J ok.
+
+% [coq.extra-dep->json Dep J D] reads a json file declared as an extra
+% dependency, see the coq.extra-dep API.
+func coq.extra-dep->json string -> json, diagnostic.
+coq.extra-dep->json S J D :- coq.extra-dep S (some P), !, json.from_file P J D.
+coq.extra-dep->json S _ (error Msg) :- Msg is "unknown Extra Dependency " ^ S.
+
+
+
+
+
+

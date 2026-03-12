@@ -1,0 +1,7 @@
+(coq.theory
+ (name elpi.json)
+ (theories elpi_elpi elpi)
+ (plugins rocq-elpi-json.elpi_json_plugin)
+ (package rocq-elpi-json))
+
+(include_subdirs qualified)

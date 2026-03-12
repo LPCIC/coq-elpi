@@ -1,0 +1,17 @@
+(coq.theory
+ (name elpi.json.tests)
+ (package rocq-elpi-json-tests)
+ (theories elpi elpi.json))
+
+; work around missing dune support for Extra Dependency 
+; https://github.com/ocaml/dune/pull/9591
+(rule
+ (target dummy.v)
+ (deps
+  (glob_files *.json))
+ (action
+  (with-stdout-to %{target}
+   (progn
+     (run rocq_elpi_shafile %{deps})))))
+
+(include_subdirs qualified)
