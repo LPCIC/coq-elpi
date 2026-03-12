@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message>
+    <warning zlevel="2" level="2">
+         Hello World
+    </warning>
+</message>

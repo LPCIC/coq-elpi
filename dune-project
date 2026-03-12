@@ -37,8 +37,14 @@
 
 (package
  (name rocq-elpi-json)
- (synopsis "Technical package to run tests")
- (description "Do not install")
+ (synopsis "Yojson bindings for rocq-elpi")
+ (description "This package provides basic support for reading and writing json files from Elpi programs running in Rocq")
+ (depends rocq-elpi yojson))
+
+(package
+ (name rocq-elpi-xml)
+ (synopsis "Xml-light bindings for rocq-elpi")
+ (description "DThis package provides basic support for reading xml files from Elpi programs running in Rocq")
  (depends rocq-elpi yojson))
 
 (package
@@ -49,6 +55,12 @@
 
 (package
  (name rocq-elpi-json-tests)
+ (synopsis "Technical package to run tests")
+ (description "Do not install")
+ (depends rocq-elpi))
+
+(package
+ (name rocq-elpi-xml-tests)
  (synopsis "Technical package to run tests")
  (description "Do not install")
  (depends rocq-elpi))

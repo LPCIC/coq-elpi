@@ -1,0 +1,58 @@
+
+
+% Xml-light bindings for Elpi
+
+% license: GNU Lesser General Public License Version 2.1 or later
+
+% ------------------------------------------------------------------------
+
+% This code is not Rocq specific, i.e. could go to an Elpi specific
+% package.
+
+% Xml.xml
+kind xml type.
+external symbol xml.element : string -> list (pair string string) ->
+                              list xml -> xml = "1".  % Attributes are sorted by key
+external symbol xml.pcdata : string -> xml = "1". 
+
+% [xml.parse_file File XML D] like Xml.parse_file reads XML from File.
+% If D is error then XML is not assigned.
+external func xml.parse_file string -> xml, diagnostic.
+
+% [xml.parse_string String XML D] like Xml.parse_string reads XML from
+% String.
+% If D is error then XML is not assigned.
+external func xml.parse_string string -> xml, diagnostic.
+
+% [xml.to_string XML S D] like Xml.to_string write XML to a compact string
+% S.
+external func xml.to_string xml -> string, diagnostic.
+
+% [xml.to_string_fmt XML S D] like Xml.to_string_fmt write XML to a nice
+% string S.
+external func xml.to_string_fmt xml -> string, diagnostic.
+
+% ------------------------------------------------------------------------
+
+% Rocq-Elpi APIs
+
+% ------------------------------------------------------------------------
+
+
+func coq.xml->string xml -> string.
+coq.xml->string XML S :- xml.to_string_fmt XML S ok.
+
+func coq.string->xml string -> xml.
+coq.string->xml S XML :- xml.parse_string S XML ok.
+
+% [coq.extra-dep->xml Dep XML D] reads a xml file declared as an extra
+% dependency, see the coq.extra-dep API.
+func coq.extra-dep->xml string -> xml, diagnostic.
+coq.extra-dep->xml S XML D :- coq.extra-dep S (some P), !, xml.parse_file P XML D.
+coq.extra-dep->xml S _ (error Msg) :- Msg is "unknown Extra Dependency " ^ S.
+
+
+
+
+
+

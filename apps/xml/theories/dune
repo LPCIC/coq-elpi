@@ -1,0 +1,7 @@
+(coq.theory
+ (name elpi.xml)
+ (theories elpi_elpi elpi)
+ (plugins rocq-elpi-xml.elpi_xml_plugin)
+ (package rocq-elpi-xml))
+
+(include_subdirs qualified)

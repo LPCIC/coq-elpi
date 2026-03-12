@@ -1,0 +1,6 @@
+(library
+ (name elpi_xml_plugin)
+ (public_name rocq-elpi-xml.elpi_xml_plugin)
+ (flags :standard -w -27)
+ (preprocess (pps ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
+ (libraries rocq-runtime.plugins.ltac rocq-runtime.vernac rocq-elpi.elpi elpi xml-light))
