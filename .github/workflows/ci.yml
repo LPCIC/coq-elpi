@@ -36,18 +36,22 @@ jobs:
             sudo apt-get update -y -q
             opam pin add -n -y -k path rocq-elpi $WORKDIR
             opam pin add -n -y -k path rocq-elpi-json $WORKDIR
+            opam pin add -n -y -k path rocq-elpi-xml $WORKDIR
             opam update -y
             opam install --confirm-level=unsafe-yes -j 2 rocq-elpi --deps-only
             opam install --confirm-level=unsafe-yes -j 2 rocq-elpi-json --deps-only
+            opam install --confirm-level=unsafe-yes -j 2 rocq-elpi-xml --deps-only
           uninstall: |
             opam remove -y rocq-elpi
             opam remove -y rocq-elpi-json
+            opam remove -y rocq-elpi-xml
           before_script: |
             sudo chmod -R a+w .
             if [ "${{ matrix.profile }}" = "fatalwarnings" ]; then sed -i 's/-A/+A/' dune; fi
           script: |
             opam install -y -v -j 2 rocq-elpi
             opam install -y -v -j 2 rocq-elpi-json
+            opam install -y -v -j 2 rocq-elpi-xml
             opam list
           after_script: |
             make all-examples
