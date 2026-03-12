@@ -31,7 +31,8 @@ in the middle of an Elpi program instead of the equivalent AST.
 
 Finally Rocq-Elpi provides an FFI to bind OCaml libraries. For
 example [apps/json](apps/json) provides access to external data
-in json format via the Yojson library.
+in json format via the Yojson library, and [apps/xml](apps/xml) does the same
+for xml-light.
 
 ## What is the purpose of all that
 In the short term, provide an extension language for Rocq well suited to

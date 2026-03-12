@@ -1,0 +1,16 @@
+(executable
+ (name gen_doc)
+ (libraries elpi_xml_plugin))
+
+(rule
+ (targets
+  xml.elpi)
+ (deps gen_doc.exe)
+ (mode promote)
+ (action (run ./gen_doc.exe)))
+
+(install
+ (files
+  xml.elpi)
+ (section doc)
+ (package rocq-elpi-xml))

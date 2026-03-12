@@ -1,3 +1,10 @@
+# UNRELEASED
+
+### Plugins
+- New `xml` plugin containing minimal bindings to `xml-light`, see
+  [apps/xml](apps/xml/) for the doc.
+
+
 # [3.3.1] 12/03/2026
 
 Requires Elpi 3.6.1 and Rocq 9.0, 9.1 or 9.2.
