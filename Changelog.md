@@ -1,3 +1,11 @@
+# [3.3.1] 12/03/2026
+
+Requires Elpi 3.6.1 and Rocq 9.0, 9.1 or 9.2.
+
+### Plugins
+- New `json` plugin containing minimal bindings to `yojson`, see
+  [apps/json](apps/json/) for the doc.
+
 # [3.3.0] 06/03/2026
 
 Requires Elpi 3.6.1 and Rocq 9.0, 9.1 or 9.2.
