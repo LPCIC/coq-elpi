@@ -55,5 +55,5 @@ jobs:
           export: 'OPAMWITHTEST OPAMIGNORECONSTRAINTS OPAMVERBOSE'  # space-separated list of variables
         env:
           OPAMWITHTEST: 'true'
-          OPAMIGNORECONSTRAINTS: 'coq'
+          #OPAMIGNORECONSTRAINTS: 'rocq-core'
           OPAMVERBOSE: '1'
