@@ -5,64 +5,71 @@
 [![Nix master](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml)
 [![DOC](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml)
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users.20.26.20devs)
-<img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/logo.png" alt="Coq-Elpi logo" width="25%" />
+<img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/logo.png" alt="Rocq-Elpi logo" width="25%" />
 
-<h1 tabindex="-1" class="heading-element" dir="auto" style="width: 60%">Coq-Elpi</h1>
+<h1 tabindex="-1" class="heading-element" dir="auto" style="width: 60%">Rocq-Elpi</h1>
 
-[Coq](https://github.com/coq/coq) plugin embedding [Elpi](https://github.com/LPCIC/elpi).
+[Rocq](https://github.com/coq/coq) plugin embedding [Elpi](https://github.com/LPCIC/elpi).
 
 ## What is Elpi
 [Elpi](https://github.com/LPCIC/elpi) provides an easy-to-embed implementation
 of a dialect of λProlog, a programming language well suited to manipulate
 abstract syntax trees containing binders and unification variables.
 
-## What is Coq-Elpi
-Coq-Elpi provides a Coq plugin that lets one define new commands and tactics in
-Elpi. For that purpose it provides an embedding of Coq's terms into λProlog
+## What is Rocq-Elpi
+Rocq-Elpi provides a Rocq plugin that lets one define new commands and tactics in
+Elpi. For that purpose it provides an embedding of Rocq's terms into λProlog
 using the Higher-Order Abstract Syntax approach
-([HOAS](https://en.wikipedia.org/wiki/Higher-order_abstract_syntax)). It also
-exports to Elpi a comprehensive set of Coq's primitives, so that one can
-print a message, access the environment of theorems and data types, define a
-new constant, declare implicit arguments, type classes instances, and so on.
-For convenience it also provides quotations and anti-quotations for Coq's
-syntax, so that one can write `{{ nat -> lp:X }}` in the middle of a λProlog
-program instead of the equivalent AST.
+([HOAS](https://en.wikipedia.org/wiki/Higher-order_abstract_syntax)). 
+
+Rocq-Elpi also exports to Elpi a comprehensive set of Rocq's primitives,
+so that one can print a message, access the environment of theorems and data
+types, define a new constant, declare implicit arguments, type classes
+instances, and so on. For convenience it also provides quotations
+and anti-quotations for Rocq's syntax, so that one can write `{{ nat -> lp:X }}`
+in the middle of an Elpi program instead of the equivalent AST.
+
+Finally Rocq-Elpi provides an FFI to bind OCaml libraries. For
+example [apps/json](apps/json) provides access to external data
+in json format via the Yojson library.
 
 ## What is the purpose of all that
-In the short term, provide an extension language for Coq well suited to
+In the short term, provide an extension language for Rocq well suited to
 manipulate terms containing binders. One can already use Elpi to implement
 commands and tactics.
-As ongoing research we are
-looking forward to express algorithms like higher order unification and type
-inference, and to provide an alternative elaborator for Coq.
+
+As ongoing research we are looking forward to express algorithms like higher
+order unification and type inference, and to provide an alternative
+elaborator for Rocq.
 
 ## Installation
 
 The simplest way is to use [OPAM](http://opam.ocaml.org/) and type
 ```
-opam repo add coq-released https://coq.inria.fr/opam/released
+opam repo add rocq-released https://rocq-prover.org/opam/released
 opam install rocq-elpi
+opam install rocq-elpi-json # example of optional plugin
 ```
 
 ### Editor Setup
 
-The recommended user interface is [VSCoq](https://github.com/coq-community/vscoq/).
+The recommended user interface is [VSRocq](https://github.com/rocq-prover/vsrocq/).
 We provide an [extension for vscode](https://github.com/LPCIC/coq-elpi-lang) in the
-market place, just look for Coq Elpi. The extension provides syntax hilighting
+market place, just look for Elpi. The extension provides syntax hilighting
 for both languages even when they are nested via quotations and antiquotations.
 
 <details><summary>Other editors (click to expand)</summary><p>
 
 At the time of writing Proof General does not handle quotations correctly, see ProofGeneral/PG#437.
-In particular `Elpi Accumulate lp:{{ .... }}.` is used in tutorials to mix Coq and Elpi code
-without escaping. Coq-Elpi also accepts `Elpi Accumulate " .... ".` but strings part of the
+In particular `Elpi Accumulate lp:{{ .... }}.` is used in tutorials to mix Rocq and Elpi code
+without escaping. Rocq-Elpi also accepts `Elpi Accumulate " .... ".` but strings part of the
 Elpi code needs to be escaped. Finally, for non-tutorial material, one can always put
 the code in an external file declared with `From some.load.path Extra Dependency "filename" as f.`
 and use `Elpi Accumulate File f.`.
 
-CoqIDE does handle quotations. The installation process puts
+RocqIDE does handle quotations. The installation process puts
 [coq-elpi.lang](etc/coq-elpi.lang)
-in a place where CoqIDE can find it.  Then you can select `coq-elpi`
+in a place where RocqIDE can find it.  Then you can select `coq-elpi`
 from the menu `Edit -> Preferences -> Colors`.
 
 For Vim users, [Coqtail](https://github.com/whonore/Coqtail) provides syntax
@@ -90,7 +97,7 @@ and `ocaml-lsp-server` (version 1.15).
 ### Tutorials
 
 - [The Elpi programming language](https://lpcic.github.io/coq-elpi/tutorial_elpi_lang.html) is an Elpi
-  tutorial, there is nothing Coq specific in there even if the tutorial uses Coq
+  tutorial, there is nothing Rocq specific in there even if the tutorial uses Rocq
   to step trough the various examples. If you never heard of λProlog or HOAS
   based languages (like Twelf or Beluga) then you are strongly encouraged to
   read this tutorial and have a look at
@@ -100,22 +107,22 @@ and `ocaml-lsp-server` (version 1.15).
   features. Last but not least it covers common pitfalls for people with a
   background in functional programming and the tracing mechanisms (useful for
   debugging).
-- [HOAS of Coq terms](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html) focuses on how
-  Coq terms are represented in Elpi, how to inspect them and call Coq APIs under
-  a context of binders, and finally how holes ("evars" in Coq slang) are
+- [HOAS of Rocq terms](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html) focuses on how
+  Rocq terms are represented in Elpi, how to inspect them and call Rocq APIs under
+  a context of binders, and finally how holes ("evars" in Rocq slang) are
   represented. It assumes the reader is familiar with Elpi.
 - [Writing commands in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html) focuses on how to
   write commands, in particular how to store a state across calls via so called
   DBs and how to handled command arguments. It assumes the reader is familiar
-  with Elpi and the HOAS of Coq terms.
+  with Elpi and the HOAS of Rocq terms.
 - [Writing tactics in Elpi](https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html) describes how goals
   and tactics are represented, how to handle tactic arguments and finally how
   to define tactic notations. It assumes the reader is familiar with Elpi and
-  the HOAS of Coq terms.
+  the HOAS of Rocq terms.
 - [Elpi: rule-based meta-language for Rocq](https://www.youtube.com/watch?v=XjkpA5rVxkM)
-  video recording of the keynote at CoqPL25 ([slides & demo files](https://www-sop.inria.fr/members/Enrico.Tassi/coqpl2025/)).
-- [Coq-Elpi in 20 minutes](https://youtu.be/m60rHnvCJ2o)
-  video recording of a talk given at the Coq Users and Developers Workshop 2020.
+  video recording of the keynote at RocqPL25 ([slides & demo files](https://www-sop.inria.fr/members/Enrico.Tassi/coqpl2025/)).
+- [Rocq-Elpi in 20 minutes](https://youtu.be/m60rHnvCJ2o)
+  video recording of a talk given at the Rocq Users and Developers Workshop 2020.
 
 ### Small examples (proofs of concept)
 
@@ -135,7 +142,7 @@ and `ocaml-lsp-server` (version 1.15).
   makes nothing useful per se, but shows how to map a term and call the type
   checker deep inside it.
 - [tactics](examples/example_curry_howard_tactics.v) show how to create
-  simple tactics by using (proof) terms and the elaborator of Coq
+  simple tactics by using (proof) terms and the elaborator of Rocq
 - [generalize](examples/example_generalize.v) show how to abstract
   subterms out (one way to skin the cat, there are many)
 - [abs_evars](examples/example_abs_evars.v) show how to close a term
@@ -151,34 +158,34 @@ and `ocaml-lsp-server` (version 1.15).
 - [builtins](examples/example_plugin/) adds builtin predicates
   (hence implemented in OCaml) to Elpi via a Rocq plugin
 
-### Applications written in Coq-Elpi
+### Applications written in Rocq-Elpi
 
 - [Derive](apps/derive/examples/usage.v) shows how to 
   obtain proved equality tests and a few extra gadgets out of
   inductive type declarations. See the [README](apps/derive/README.md)
-  for the list of derivations. It comes bundled with Coq-Elpi.
+  for the list of derivations. It comes bundled with Rocq-Elpi.
 - [Locker](apps/locker) lets one hide the computational contents of definitions
-  via modules or opaque locks. It comes bundled with Coq-Elpi.
+  via modules or opaque locks. It comes bundled with Rocq-Elpi.
 - [Hierarchy Builder](https://github.com/math-comp/hierarchy-builder) is a
-  Coq extension to declare hierarchies of algebraic structures.
+  Rocq extension to declare hierarchies of algebraic structures.
 - [Algebra Tactics](https://github.com/math-comp/algebra-tactics/) is a 
   port of the `ring` and `field` tactics to the Mathematical Components
   library.
 - [Trakt](https://github.com/ecranceMERCE/trakt) is a generic goal
-  preprocessing tool for proof automation tactics in Coq.
+  preprocessing tool for proof automation tactics in Rocq.
 - [Namespace Emulation System](apps/NES/examples/usage_NES.v) implements
-  most of the features of namespaces (on top of Coq's modules).
+  most of the features of namespaces (on top of Rocq's modules).
 - [Dx](https://gitlab.univ-lille.fr/samuel.hym/dx) uses elpi to generate
-  an intermediate representation of Coq terms, to be later tranformed into
+  an intermediate representation of Rocq terms, to be later tranformed into
   C.
 - [Coercion](apps/coercion) enable to program coercions in Elpi.
-  It comes bundled with Coq-Elpi.
+  It comes bundled with Rocq-Elpi.
 - [Record builder](apps/rbuild) implements fancy record build/update syntax.
-  It comes bundled with Coq-Elpi.
+  It comes bundled with Rocq-Elpi.
 
 ### Quick Reference
 
-In order to load Coq-Elpi use `From elpi Require Import elpi`.
+In order to load Rocq-Elpi use `From elpi Require Import elpi`.
 
 #### Vernacular commands
 
@@ -197,7 +204,7 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 - `From some.load.path Extra Dependency <filename> as <fname>` declares `<fname>`
    as a piece of code that can be accumulated via `Elpi Accumulate File`.
    The content is given in the external file `<filename>` to be found in
-   the Coq load path `some.load.path`.
+   the Rocq load path `some.load.path`.
 - `Elpi File <fname> <code>.` declares `<fname>`
    as a piece of code that can be accumulated via `Elpi Accumulate File`.
    This time the code is given in the .v file.
@@ -221,12 +228,12 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
   after the Db (but not after its header) may need to be recompiled. Hence
   we recommend to accumulate Dbs last.
   It understands the `#[skip="rex"]` and `#[only="rex"]` which make the command
-  a no op if the Coq version is matched (or not) by the given regular expression.
+  a no op if the Rocq version is matched (or not) by the given regular expression.
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands).
   It understands the `#[local]`, `#[global]`, and `#[superglobal]` scope attributes,
   although only when accumulating to a `<dbname>` (all accumulations to a program
   are `#[superglobal]`). Default accumulation to db is the equivalent of `#[export]`.
-  See the Coq reference manual for the meaning of these scopes.
+  See the Rocq reference manual for the meaning of these scopes.
 - `Elpi Typecheck [<qname>]` typechecks the current program (or `<qname>` if
   specified).
   It understands the `#[phase]` attribute, see [synterp-vs-interp](README.md#separation-of-parsing-from-execution-of-vernacular-commands)
@@ -248,15 +255,15 @@ In order to load Coq-Elpi use `From elpi Require Import elpi`.
 
 where:
 
-- `<qname>` is a qualified Coq name, e.g. `derive.eq` or `my_program`.
+- `<qname>` is a qualified Rocq name, e.g. `derive.eq` or `my_program`.
 - `<dbname>` is like `<qname>` but lives in a different namespace. By convention
   `<dbname>` ends in `.db`, e.g. `derive.eq.db`.
 - `<code>` is verbatim Elpi code, either `lp:{{ ... }}` or `" ... "` (in the
-  latter case, strings delimiters need to be escaped following Coq rules, e.g.
+  latter case, strings delimiters need to be escaped following Rocq rules, e.g.
   `lp:{{ coq.say "hello!" }}` becomes `" coq.say ""hello!"" "`).
 - `<filename>` is a string containing the path of an external file, e.g.
   `"this_file.elpi"`.
-- `<fname>` is a qualified Coq name, eg `foo.elpi` (note that `Extra Dependency`
+- `<fname>` is a qualified Rocq name, eg `foo.elpi` (note that `Extra Dependency`
   only allows simple identifiers).
 - `<start>` and `<stop>` are numbers, e.g. `17 24`.
 - `<predicate-filter>` is a regexp against which the predicate name is matched,
@@ -268,14 +275,14 @@ where:
 
 <details><summary>(click to expand)</summary>
 
-Since version 8.18 Coq has separate parsing and execution phases,
+Since version 8.18 Rocq has separate parsing and execution phases,
 respectively called synterp and interp.
 
-Since Coq has an extensible grammar the parsing phase is not entirely
-performed by the parser: after parsing one sentence Coq evaluates its
+Since Rocq has an extensible grammar the parsing phase is not entirely
+performed by the parser: after parsing one sentence Rocq evaluates its
 synterp action. The synterp actions of a command like `Import A.` are
 the subset of its effect which affect parsing, like enabling a notation.
-Later, during the execution phase Coq evaluates the its
+Later, during the execution phase Rocq evaluates the its
 interp action, which includes effects like putting lemma names in scope or
 enables type class instances etc.
 
@@ -283,14 +290,14 @@ Being able to parse an entire document quickly,
 without actually executing any sentence, is important for developing reactive
 user interfaces, but requires some extra work when defining new commands,
 in particular to separate their synterp actions from their interp ones.
-Each command defined with Coq-Elpi is split into two programs,
+Each command defined with Rocq-Elpi is split into two programs,
 one running during the parsing phase and the other one during the execution
 phase.
 
 ##### Declaration of synterp actions
 
 Each `Elpi Command` internally declares two programs with the same name.
-One to be run while the Coq document is parsed, the synterp-command,
+One to be run while the Rocq document is parsed, the synterp-command,
 and the other one while it is executed, the interp command.
 `Elpi Accumulate`, by default, adds code to the interp-command.
 The `#[phase]` attribute can be used to accumulate code to the synterp-command
@@ -386,19 +393,19 @@ where `<argument>` can be:
 
 - a number, e.g. `3`, represented in Elpi as `(int 3)`
 - a string, e.g. `"foo"` or `bar.baz`,  represented in Elpi as `(str "foo")` and
-  `(str "bar.baz")`. Coq keywords and symbols are recognized as strings,
+  `(str "bar.baz")`. Rocq keywords and symbols are recognized as strings,
   eg `=>` requires no quotes. Quotes are necessary if the string contains
   a space or a character that is not accepted for qualified identifiers or
   if the string is `Definition`, `Axiom`, `Record`, `Structure`, `Inductive`,
   `CoInductive`, `Variant` or `Context`.
 - a term, e.g. `(3)` or `(f x)`, represented in Elpi as `(trm ...)`. Note that
-  terms always require parentheses, that is `3` is a number while `(3)` is a Coq
+  terms always require parentheses, that is `3` is a number while `(3)` is a Rocq
   term and depending on the context could be a natural number
   (i.e. `S (S (S O))`) or a `Z` or ... See also the section Terms as arguments
   down below, and the syntax for Ltac variables down below.
 
 Commands also accept the following arguments (the syntax is as close as possible
-to the Coq one: [...] means optional, * means 0 or more). See the `argument`
+to the Rocq one: [...] means optional, * means 0 or more). See the `argument`
 data type in `coq-builtin.elpi` for their HOAS encoding. See also the section
 Terms as arguments down below.
 
@@ -447,7 +454,7 @@ Attributes are supported in both commands and tactics. Examples:
 - `#[ att ] cmd` for a command `cmd` exported via `Elpi Export cmd`
 - `#[ att ] elpi tac`
 - `Tactic Notation ... attributes(A) ... := ltac_attributes:(A) elpi tac`.
-  Due to a parsing conflict in Coq grammar, at the time of writing this code:
+  Due to a parsing conflict in Rocq grammar, at the time of writing this code:
   ```coq
   Tactic Notation "#[" attributes(A) "]" "tac" :=
     ltac_attributes:(A) elpi tac.
@@ -461,7 +468,7 @@ Attributes are supported in both commands and tactics. Examples:
 
 Since version 1.15, terms passed to Elpi commands code via `(term)` or via a
 declaration (like `Record`, `Inductive` ...) are in elaborated format by
-default. This means that all Coq notational facilities are available, like
+default. This means that all Rocq notational facilities are available, like
 deep pattern matching, or tactics in terms.
 One can use the attribute `#[arguments(raw)]` to declare a command which instead
 takes arguments in raw format. In that case, notations are unfolded,
@@ -488,7 +495,7 @@ Arguments of type `uconstr` are passed raw.
 
 </p></details>
 
-#### Supported features of Gallina (core calculus of Coq)
+#### Supported features of Gallina (core calculus of Rocq)
 
 <details><summary>(click to expand)</summary>
 
@@ -521,7 +528,7 @@ Checked boxes are available, unchecked boxes are planned, missing items are not
 planned. This is a high level list, for the details
 see [coq-builtin](builtin-doc/coq-builtin.elpi).
 
-- [x] i/o: messages, warnings, errors, Coq version
+- [x] i/o: messages, warnings, errors, Rocq version
 - [x] logical environment: read, write, locate
   + [x] dependencies between objects
 - [x] type classes database: read, write
@@ -547,12 +554,12 @@ see [coq-builtin](builtin-doc/coq-builtin.elpi).
 
 #### Relevant files
 
-- [coq-builtin](builtin-doc/coq-builtin.elpi) documents the HOAS encoding of Coq terms
-  and the API to access Coq
-- [coq-builtin-synterp](builtin-doc/coq-builtin-synterp.elpi) documents APIs to interact with Coq at parsing time
+- [coq-builtin](builtin-doc/coq-builtin.elpi) documents the HOAS encoding of Rocq terms
+  and the API to access Rocq
+- [coq-builtin-synterp](builtin-doc/coq-builtin-synterp.elpi) documents APIs to interact with Rocq at parsing time
 - [elpi-buitin](builtin-doc/elpi-builtin.elpi) documents Elpi's standard library, you may
   look here for list processing code
-- [coq-lib](elpi/coq-lib.elpi) provides some utilities to manipulate Coq terms;
+- [coq-lib](elpi/coq-lib.elpi) provides some utilities to manipulate Rocq terms;
   it is an addendum to coq-builtin
 - [elpi-command-template](elpi/elpi-command-template.elpi) provides the pre-loaded code for `Elpi Command` (execution phase) and `Elpi Tactic`
 - [elpi-command-template-synterp](elpi/elpi-command-template-synterp.elpi) provides the pre-loaded code for `Elpi Command` (parsing phase)
@@ -560,7 +567,7 @@ see [coq-builtin](builtin-doc/coq-builtin.elpi).
 
 #### Organization of the repository
 
-The code of the Coq plugin is at the root of the repository in the [src](src/),
+The code of the Rocq plugin is at the root of the repository in the [src](src/),
 [elpi](elpi/) and [theories](theories/) directories.
 
-The [apps](apps/) directory contains client applications written in Coq-Elpi.
+The [apps](apps/) directory contains client applications written in Rocq-Elpi.
