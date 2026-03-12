@@ -30,7 +30,7 @@ namespace tc {
     In elpi, we would have the rule: `tc-Equiv (option A) (option_equiv A B) :- tc-equiv A B.`
             since the argument in first position of the premise is flexible, then we have a failure
   */
-  coq->elpi-mode mode-input (pr out "term").
+  coq->elpi-mode mode-input (pr in "term").
   coq->elpi-mode mode-output (pr out "term").
 
   func string->elpi-mode string -> elpi-mode.
