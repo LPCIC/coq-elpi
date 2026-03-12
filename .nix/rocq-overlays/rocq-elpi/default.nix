@@ -25,6 +25,7 @@ let
     rocq-core.ocamlPackages.findlib
     rocq-core.ocamlPackages.ppx_optcomp
     rocq-core.ocamlPackages.yojson
+    rocq-core.ocamlPackages.xml-light
   ];
   derivation = mkRocqDerivation {
     pname = "elpi";
