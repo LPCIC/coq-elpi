@@ -1,0 +1,5 @@
+(coq.theory
+ (name elpi.xml.examples)
+ (theories elpi elpi.xml elpi.xml.tests))
+
+(include_subdirs qualified)
