@@ -14,14 +14,18 @@ type loc_name_atts = (Loc.t * qualified_name * Attributes.vernac_flags)
 let gref2elpi_term (gref: GlobRef.t) : Cmd.raw = 
   let gref_2_string gref = Pp.string_of_ppcmds (Printer.pr_global gref) in
   Cmd.String (gref_2_string gref)
-  (* TODO: maybe returning an elpi term is cleaner, but this creates a loop in 
-    stdppInj test *)
-  (* Cmd.Term (CAst.make @@ Constrexpr.CRef(
-    Libnames.qualid_of_string @@ gref_2_string gref,None)) *)
+
+
+let mode2str = function
+  | None | Some [] -> ""
+  | Some (x::xs) -> 
+    let pp_mode = Hints.string_of_mode in
+    List.fold_left (fun acc e -> acc ^ " " ^ pp_mode e) (pp_mode x) xs
+
 
 (* Returns the elpi term representing the type class received in argument *)
-let observer_class (x : Typeclasses.typeclass) : Rocq_elpi_arg_HOAS.Cmd.raw list = 
-  [Cmd.String "new_class"; gref2elpi_term x.cl_impl]
+let observer_class m (x : Typeclasses.typeclass) : Rocq_elpi_arg_HOAS.Cmd.raw list = 
+  [Cmd.String "new_class"; gref2elpi_term x.cl_impl; Cmd.String (mode2str m)]
 
 let observer_default_instance (x : Typeclasses.typeclass) : Rocq_elpi_arg_HOAS.Cmd.raw list = 
   [Cmd.String "default_instance";gref2elpi_term x.cl_impl]
@@ -58,10 +62,10 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Rocq
     prio2elpi_int info
   ]
 
-let class_runner f cl =
+let class_runner f m cl =
   let actions = [
     observer_coercion false; 
-    observer_class; 
+    observer_class m; 
     observer_coercion true; 
     (* observer_default_instance *)
   ] in
@@ -70,7 +74,7 @@ let class_runner f cl =
 let inObservation =
   Libobject.declare_object @@
     Libobject.local_object "TC_HACK_OBSERVER_CLASSES"
-      ~cache:(fun (run,cl) -> class_runner run cl)
+      ~cache:(fun (run,m,cl) -> class_runner run m cl)
       ~discharge:(fun x -> Some x)
 
 let inObservation1 =
@@ -83,7 +87,7 @@ let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) =
   let open Rocq_elpi_vernacular in
   let run_program e = Interp.run_program ~loc name ~syndata:None ~atts e in 
   match x with  
-  | Event.NewClass cl -> Lib.add_leaf (inObservation (run_program,cl)) 
+  | Event.NewClass (omode, cl) -> Lib.add_leaf (inObservation (run_program,omode,cl)) 
   | Event.NewInstance inst -> Lib.add_leaf (inObservation1 (run_program,inst))
 
 module StringMap = Map.Make(String)

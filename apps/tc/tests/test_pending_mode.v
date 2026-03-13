@@ -1,5 +1,44 @@
 From elpi Require Import tc.
 
+Elpi Accumulate TC.Compiler lp:{{
+  :before "0"
+  tc.add-class-gr _ A SM :- 
+    coq.say "Adding predicate for" A,
+    coq.say "with mode" SM, fail, !.
+}}.
+
+Module ES3.
+
+(* No explicit mode in the class, 
+   the type of the predicate for add is `pred -> term, term`.
+   i.e. the nat is considered as an output
+*)
+Class Add (I: nat).
+
+Instance addNat: Add 0. Qed.
+
+(* No problem in apply _ since the evar can be unified with the pattern 0 *)
+Goal exists x, (Add x).
+Proof. eexists; now apply _. Qed.
+
+End ES3.
+
+Module ES4.
+
+(* Plus is mapped to the elpi input mode, i.e. 
+   the type of the predicate for add is `pred term -> term`.
+*)
+#[mode = "+"] Class Add (I: nat).
+
+Instance addNat: Add 0. Qed.
+
+(* Failure in apply _ since the evar does not match the pattern 0 *)
+Goal exists x, (Add x).
+Proof. eexists. Fail apply _. Abort.
+
+End ES4.
+
+
 Module m1.
   Elpi TC.Pending_mode +.
   Class C (i : nat).

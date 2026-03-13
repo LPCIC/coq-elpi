@@ -116,9 +116,9 @@ Elpi Accumulate lp:{{
     coq.locate Inst GRInst,
     tc.add-inst GRInst GRCl Locality Prio) "Compiler for Instance".
 
-  main [str "new_class", str Cl] :- !,
+  main [str "new_class", str Cl, str Modes] :- !,
     tc.time-it tc.oTC-time-compile-class (
-      coq.locate Cl GR, tc.add-class-gr tc.classic GR
+      coq.locate Cl GR, tc.add-class-gr tc.classic GR {rex.split " " Modes}
     ) "Compiler for Class".
 
   % used to build ad-hoc instance for eta-reduction on the argument of 

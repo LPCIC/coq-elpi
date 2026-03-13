@@ -75,15 +75,25 @@ namespace tc {
     N' is N + 1,
     std.assert! (std.length L N') "Pending mode invalid for class GR".
 
-  func get-elpi-mode gref -> elpi-modeL, string-modeL.
-  get-elpi-mode ClassGR EM SM :-
+  % [get-elpi-mode GR RSM EM SM]
+  % GR is a term gref.
+  % RSM represents the raw modes of the GR that have been passed as attributes.
+  %     If the length of RSM is N and greater than 0, then the arity of the type of GR is exactly N.
+  %     Otherwise, it means that the user has not passed the attribute to the GR.
+  % EM represents the Elpi modes.
+  % SM represents the Rocq modes; it is RSM if RSM is not empty, otherwise it is a list [-,-,..,-]
+  %    with the length equal to the arity of the type of GR.
+  func get-elpi-mode gref, string-modeL -> elpi-modeL, string-modeL.
+  get-elpi-mode ClassGR _ EM SM :-
     pending-mode SM, !,
     check-pending-mode-arity ClassGR SM, 
     remove-pending-mode,
     std.map SM string->elpi-mode EM.
-  get-elpi-mode ClassGR EM SM :-
+  get-elpi-mode ClassGR [] EM SM :- !,
     modes-of-class ClassGR EM, 
     std.map EM elpi->string-mode SM.
+  get-elpi-mode ClassGR SM EM SM :-
+    std.append {std.map SM string->elpi-mode} [pr out "term"] EM.
 
   func get-evars term -> list term.
   get-evars T L :-

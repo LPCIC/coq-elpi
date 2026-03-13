@@ -60,7 +60,7 @@ Elpi Accumulate lp:{{
   % Ignore is the list of classes we do not want to add
   main IgnoreStr :-
     std.map IgnoreStr (x\r\ sigma S\ str S = x, coq.locate S r) IgnoreGR,
-    tc.time-it _ (std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (tc.add-class-gr tc.classic x))) "TC.AddAllClasses".
+    tc.time-it _ (std.forall {coq.TC.db-tc} (x\ if (std.mem IgnoreGR x) true (tc.add-class-gr tc.classic x []))) "TC.AddAllClasses".
 }}.
 
 
