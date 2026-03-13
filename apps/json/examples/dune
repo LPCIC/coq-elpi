@@ -1,0 +1,5 @@
+(coq.theory
+ (name elpi.json.examples)
+ (theories elpi elpi.json elpi.json.tests))
+
+(include_subdirs qualified)
