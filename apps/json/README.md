@@ -36,5 +36,5 @@ Elpi read_json data. (* data is the name of the Extra Dependency *)
 
 Note: At the time of writing `rocq_makefile` fully supports this directive and
 considers `<file>` as a dependency of the `.v` file. Dune does not yet
-support this. For a workaround see the [tests/](tests/) directory.
+support this. For a workaround see the [tests/](tests-plugin/) directory.
 

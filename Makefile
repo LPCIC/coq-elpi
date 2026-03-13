@@ -28,7 +28,10 @@ build:
 	$(call dune,build) builtin-doc
 .PHONY: build
 
-all-tests: test-core test-stdlib test-apps test-apps-stdlib
+all-tests-no-plugins: test-core test-stdlib test-apps test-apps-stdlib
+.PHONY: all-tests-no-plugins
+
+all-tests: all-tests-no-plugins test-plugins
 .PHONY: all-tests
 
 test-core:
@@ -46,6 +49,10 @@ test-core:
 test-apps:
 	$(call dune,build) $$(find apps -type d -name tests)
 .PHONY: test-apps
+
+test-plugins:
+	$(call dune,build) $$(find apps -type d -name tests-plugin)
+.PHONY: test-plugins
 
 test-apps-stdlib:
 	$(call dune,build) $$(find apps -type d -name tests-stdlib)
