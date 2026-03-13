@@ -18,13 +18,13 @@ Elpi Command hello_xml.
 Elpi Accumulate Plugin "xml.elpi".
 Elpi Accumulate lp:{{
   main [str D] :-
-    std.assert-ok! (coq.extra-dep->xml D J) "bad file",
-    coq.say "xml AST:" J,
-    coq.xml->string J S,
+    std.assert-ok! (coq.extra-dep->xml D X) "bad file",
+    coq.say "xml AST:" X,
+    coq.xml->string X S,
     coq.say "pretty:" S,
-    coq.string->xml S J',
-    coq.say "xml AST:" J',
-    std.assert! (J = J') "this would be bad".
+    coq.string->xml S X',
+    coq.say "xml AST:" X',
+    std.assert! (X = X') "this would be bad".
 }}.
 Elpi Export hello_xml.
 
