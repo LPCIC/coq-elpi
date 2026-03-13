@@ -33,5 +33,5 @@ hello_json "json_test_file".
 
 Note: At the time of writing `rocq_makefile` fully supports this directive and
 considers `<file>` as a dependency of the `.v` file. Dune does not yet
-support this. For a workaround see the [tests/](tests/) directory.
+support this. For a workaround see the [tests/](tests-plugin/) directory.
 
