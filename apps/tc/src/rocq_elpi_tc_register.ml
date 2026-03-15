@@ -83,12 +83,21 @@ let inObservation1 =
       ~cache:(fun (run,inst) -> run @@ observer_instance inst)
       ~discharge:(fun (_,inst as x) -> if inst.locality = Local then None else Some x)
 
+[%%if coq = "??"]
 let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) = 
   let open Rocq_elpi_vernacular in
   let run_program e = Interp.run_program ~loc name ~syndata:None ~atts e in 
   match x with  
   | Event.NewClass (omode, cl) -> Lib.add_leaf (inObservation (run_program,omode,cl)) 
   | Event.NewInstance inst -> Lib.add_leaf (inObservation1 (run_program,inst))
+[%%else]
+let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) = 
+  let open Rocq_elpi_vernacular in
+  let run_program e = Interp.run_program ~loc name ~syndata:None ~atts e in 
+  match x with  
+  | Event.NewClass cl -> Lib.add_leaf (inObservation (run_program,None,cl)) 
+  | Event.NewInstance inst -> Lib.add_leaf (inObservation1 (run_program,inst))
+[%%endif]
 
 module StringMap = Map.Make(String)
 
