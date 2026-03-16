@@ -71,33 +71,30 @@ let class_runner f m cl =
   ] in
   List.iter (fun obs -> f (obs cl)) actions
 
-let inObservation =
+let observer_class =
   Libobject.declare_object @@
     Libobject.local_object "TC_HACK_OBSERVER_CLASSES"
       ~cache:(fun (run,m,cl) -> class_runner run m cl)
       ~discharge:(fun x -> Some x)
 
-let inObservation1 =
+let observer_instance =
   Libobject.declare_object @@
     Libobject.local_object "TC_HACK_OBSERVER_INSTANCE"
       ~cache:(fun (run,inst) -> run @@ observer_instance inst)
       ~discharge:(fun (_,inst as x) -> if inst.locality = Local then None else Some x)
 
-[%%if coq = "??"]
-let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) = 
-  let open Rocq_elpi_vernacular in
-  let run_program e = Interp.run_program ~loc name ~syndata:None ~atts e in 
-  match x with  
-  | Event.NewClass (omode, cl) -> Lib.add_leaf (inObservation (run_program,omode,cl)) 
-  | Event.NewInstance inst -> Lib.add_leaf (inObservation1 (run_program,inst))
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let observer_class_disp rp c = (observer_class (rp,None,c)) 
 [%%else]
+let observer_class_disp rp (omode,c) = (observer_class (rp,omode,c)) 
+[%%endif]
+
 let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) = 
   let open Rocq_elpi_vernacular in
   let run_program e = Interp.run_program ~loc name ~syndata:None ~atts e in 
   match x with  
-  | Event.NewClass cl -> Lib.add_leaf (inObservation (run_program,None,cl)) 
-  | Event.NewInstance inst -> Lib.add_leaf (inObservation1 (run_program,inst))
-[%%endif]
+  | Event.NewClass cl -> Lib.add_leaf (observer_class_disp run_program cl) 
+  | Event.NewInstance inst -> Lib.add_leaf (observer_instance (run_program,inst))
 
 module StringMap = Map.Make(String)
 
