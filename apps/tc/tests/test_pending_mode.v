@@ -5,6 +5,20 @@ Elpi Accumulate TC.Compiler lp:{{
   tc.add-class-gr _ A SM :- 
     coq.say "Adding predicate for" A,
     coq.say "with mode" SM, fail, !.
+
+  func old-version string, int, int, int ->.
+  old-version _ 9 0 _.
+  old-version _ 9 1 _.
+  old-version _ 9 2 _.
+
+  pred get-old-mode o:string.
+
+  :after "0"
+  main [str "new_class", str Cl, str _] :- old-version {coq.version}, get-old-mode Modes, not (var Modes), !,
+    tc.time-it tc.oTC-time-compile-class (
+      coq.locate Cl GR, tc.add-class-gr tc.classic GR {rex.split " " Modes}
+    ) "Compiler for Class".
+
 }}.
 
 Module ES3.
@@ -23,8 +37,23 @@ Proof. eexists; now apply _. Qed.
 
 End ES3.
 
-Module ES4.
+Module ES3'.
 
+#[mode = "-"]Class Add (I: nat).
+
+Instance addNat: Add 0. Qed.
+
+(* No problem in apply _ since the evar can be unified with the pattern 0 *)
+Goal exists x, (Add x).
+Proof. eexists; now apply _. Qed.
+
+End ES3'.
+
+Module ES4.
+Section S.
+Elpi Accumulate TC.Compiler lp:{{
+  get-old-mode "+".
+}}.
 (* Plus is mapped to the elpi input mode, i.e. 
    the type of the predicate for add is `pred term -> term`.
 *)
@@ -35,7 +64,7 @@ Instance addNat: Add 0. Qed.
 (* Failure in apply _ since the evar does not match the pattern 0 *)
 Goal exists x, (Add x).
 Proof. eexists. Fail apply _. Abort.
-
+End S.
 End ES4.
 
 
@@ -93,12 +122,13 @@ Module ground3.
   Elpi TC.Pending_mode + +.
   Class C {i : Type} (f : i -> i -> Prop).
   Instance i {X : Type}: C (@eq X). Qed.
-  Hint Mode C ! ! : typeclass_instances.
 
   Goal exists (X : Type), C (@eq X). 
     eexists.
-    Fail apply _.
-  Abort.
+    apply _.
+    Unshelve.
+    apply nat.
+  Qed.
 End ground3.
 
 Module ground4.
@@ -121,8 +151,8 @@ Module rigid_head1.
 
   Goal exists (x : Type), C (list x). 
     eexists.
-    apply _.
-  Qed.
+    Fail apply _.
+  Abort.
 
   Goal exists (x : Type), C x. 
     eexists.
@@ -138,8 +168,10 @@ Module rigid_head2.
 
   Goal exists (X : Type), C (@eq X). 
     eexists.
-    Fail apply _.
-  Abort.
+    apply _.
+    Unshelve.
+    apply nat.
+  Qed.
 End rigid_head2.
 
 Module simplEq.

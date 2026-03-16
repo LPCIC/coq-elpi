@@ -55,7 +55,7 @@ namespace tc {
     tc.time-it _ (tc.normalize-ty TyRaw Ty) "normalize ty",
     if-true print-goal (coq.say "The goal is <<<" Ty ">>>"),
     if-true print-goal-pp (coq.say "The goal is <<<" {coq.term->string Ty} ">>>"),
-    tc.time-it tc.oTC-time-mode-check (tc.modes-check Ty) "mode check", !,
+    % tc.time-it tc.oTC-time-mode-check (tc.modes-check Ty) "mode check", !,
     tc.time-it _ (tc.compile.context Ctx CtxClause) "compile context", !,
     CtxClause => solve-under-context Ty Proof.
   solve-aux1 _ _ tc.mode_fail :- if-true (print-solution; print-solution-pp) (coq.say "Invalid mode call").
