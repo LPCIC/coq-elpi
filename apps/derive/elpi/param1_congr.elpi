@@ -58,7 +58,7 @@ main _ (indt GR) Prefix Clauses2 :-
   forall Clauses2
     (x\ coq.elpi.accumulate _ "derive.param1.congr.db" (clause _ _ x)).
 
-main _ (const IsGR) Prefix [param1-congr-done (const IsGR)].
+main _ (const IsGR) _ [param1-congr-done (const IsGR)].
 
 }
 

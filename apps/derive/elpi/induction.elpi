@@ -46,7 +46,7 @@ branches (sort _) Ity Args IH Rno Rno Fty (fun `x` ItyArgs Bo) :- do! [
   copy Ity P,
   mk-paramX.prove-clause Args Ity P IH C,
   @pi-decl `x` ItyArgs x\
-    C =>
+    C =!=>
     coq.build-match x ItyArgs oty branch (Bo x)
 ].
 
@@ -131,7 +131,7 @@ main GR Prefix [Clause] :- do! [
   assert! (Ind = tt) "derive.induction: Coinductive types are not supported",
 
   % we build the induction principle
-  Informative => params Lno TR {std.map K (k\r\ r = global (indc k))} KT Arity R,
+  Informative =!=> params Lno TR {std.map K (k\r\ r = global (indc k))} KT Arity R,
   % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.induction generates illtyped term",
 

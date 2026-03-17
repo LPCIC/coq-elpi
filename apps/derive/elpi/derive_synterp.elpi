@@ -10,7 +10,7 @@ dep X Y :- dep1 X Z, dep Z Y.
 
 func selected string ->.
 selected Name :- get-option "only" Map, !,
-  Map ==> (get-option Name _; (get-option X _, dep X Name)), !.
+  Map =!=> (get-option Name _; (get-option X _, dep X Name)), !.
 selected _.
 
 :index (_ 1)

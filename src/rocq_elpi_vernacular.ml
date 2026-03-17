@@ -299,7 +299,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     | `Db _ -> err ~loc:(of_coq_loc loc) Pp.(str "TODO")
     | `Program base ->
         let b =
-          try Elpi.API.BuiltIn.of_file id
+          try Elpi.API.BuiltIn.of_file ~file_name:id
           with Not_found -> err ~loc:(of_coq_loc loc) Pp.(str "Elpi plugin " ++ str id ++
             str " not found." ++ spc () ++ str "Did you have a Declare ML Module for the plugin?"++ spc () ++
             str "Does the plugin run Elpi.API.BuiltIn.declare ~file_name:\"" ++ str id ++ str "\"?") in
