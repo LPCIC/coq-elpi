@@ -93,7 +93,7 @@ Elpi Accumulate lp:{{
     realiR T {coq.env.global IsGR},
     coq.env.global GR T,
     derive.param1.inhab.main GR IsGR "_inhab" CL,
-    CL => derive.param1.trivial.main GR IsGR "_trivial" _.
+    CL =!=> derive.param1.trivial.main GR IsGR "_trivial" _.
   main _ :- usage.
 
   usage :-

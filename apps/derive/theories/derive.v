@@ -75,7 +75,7 @@ Elpi Accumulate lp:{{
       att "module" string,
       att "no_alias" bool,
     ] Opts, !,
-    Opts => P.
+    Opts =!=> P.
 
   pred get_name i:indt-decl, o:string.
   get_name (parameter _ _ _ F) N :- pi p\ get_name (F p) N.
