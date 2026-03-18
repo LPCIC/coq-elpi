@@ -3089,21 +3089,26 @@ let name_universe_level state l =
         { e with sigma }, id
   )
 
+[%%if coq = "9.0" || coq = "9.1"]
+let fixup_variance v = v
+[%%else]
+let fixup_variance v = [||], v
+[%%endif]
 
 let poly_cumul_udecl_variance_of_options state options =
   match options.universe_decl with
-  | NotUniversePolymorphic -> state, false, false, default_univ_decl, [| |]
+  | NotUniversePolymorphic -> state, false, false, default_univ_decl, fixup_variance [| |]
   | Cumulative ((univ_lvlt_var,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
     let univdecl_instance, variance = List.split univ_lvlt_var in
     state, true, true,
     mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
-    Array.of_list variance
+    fixup_variance @@ Array.of_list variance
   | NonCumulative((univ_lvlt,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
     let univdecl_instance = univ_lvlt in
     let variance = List.init (List.length univdecl_instance) (fun _ -> None) in
     state, true, false,
     mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
-    Array.of_list variance
+    fixup_variance @@ Array.of_list variance
 
 [%%if coq = "9.0"]
 let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite =
@@ -3641,7 +3646,15 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
   let ind = { params; decl } in
   hoas_ind2lp ~depth coq_ctx state ind
 ;;
-       
+
+[%%if coq = "9.0" || coq = "9.1"]
+let fixup_mind_variance v = v
+[%%else]
+let fixup_mind_variance (q,v) =
+  if not @@ CArray.is_empty q then CErrors.user_err Pp.(str "Cumulative sort polymorphism not supported.");
+  v
+[%%endif]
+
 let upoly_decl_of ~depth state ~loose_udecl mie =
   let open Entries in
   match mie.mind_entry_universes with
@@ -3657,6 +3670,7 @@ let upoly_decl_of ~depth state ~loose_udecl mie =
           let state, up, gls = universe_decl.API.Conversion.embed ~depth state (NonCumul ((Array.to_list vars,loose_udecl),(csts,loose_udecl))) in
           state, (fun i -> E.mkApp uideclc i [up]), gls
       | Some variance ->
+          let variance = fixup_mind_variance variance in
           assert(Array.length variance = Array.length vars);
           let uv = Array.map2 (fun x y -> (x,y)) vars variance |> Array.to_list in
           let state, up, gls = universe_decl.API.Conversion.embed ~depth state (Cumul((uv,loose_udecl),(csts,loose_udecl))) in
