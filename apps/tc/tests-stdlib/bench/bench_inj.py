@@ -3,6 +3,7 @@ import time
 import sys
 import os
 import re
+import random
 
 """
 About this file:
@@ -45,28 +46,41 @@ def findFloats(s):
 
 def filterLines(lines):
     #print(lines)
-    validStarts = ["Finished", "Refine", "Elpi:", "Instance search", "Time build query"]
+    validStarts = ["Finished", "refine", "Elpi: query-compilation", "Time of instance search", "Time of build query"]
+    r = {}
     for line in lines.split("\n"):
         for start in validStarts:
             if start in line:
-                yield line
-
+                fl = findFloats(line)
+                if start in r:
+                    r[start] = [r[start], fl]
+                else:
+                    r[start] = fl
+                continue
+    return r
 
 def parseFile(s):
-    lines = [findFloats(x) for x in filterLines(s)]
+    with open("xxx.txt", "w") as f:
+        f.write(s)
+    lines = filterLines(s)
     #print(lines)
-    base = 0
-    coqT = lines[base][0]
-    buildQuery = lines[base + 1][0]
-    tcSearch = lines[base + 2][0]
-    refineT = lines[base + 3][0]
-    elpiStats = lines[base + 4]
+    with open("www.txt", "w") as f:
+        f.write(str(lines))
+
+    # base = 0
+    coqT = lines["Finished"][0][0]
+    elpiT = lines["Finished"][1][0]
+    buildQuery = lines["Time of build query"][0]
+    tcSearch = lines["Time of instance search"][0]
+    refineT = lines["refine"][0]
+    elpiStats = lines["Elpi: query-compilation"]
     compilT, runtimeT = elpiStats[0], elpiStats[-1]
-    elpiT = lines[base + 5][0]
     res = buildDict()
     for key in KEYS:
         res[key].append(eval(key))
     #print(res)
+    with open("zzz.txt", "w") as f:
+        f.write(str(res))
     return res
 
 
@@ -87,10 +101,23 @@ Elpi Accumulate TC_solver lp:{{
 }}.
 """
 
+refine_no_check = """
+Elpi Accumulate TC.Solver lp:{{
+  :after "0"
+  tc.refine-proof Proof G GL :- !,
+      
+    /*********** CHECK IF THE PROOF TYPECHECKS ***********/
+    tc.time-it tc.oTC-time-refine (@no-tc! => refine.no_check Proof G GL) "refine.typecheck",
+    
+    if-true tc.print-solution (coq.say "[TC] The proof typechecks").
+}}.
+"""
+
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
-    PREAMBLE = f"""\
+    PREAMBLE = f"""
+(* {random.random()} *)
 From elpi_apps_tc_tests_stdlib Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-{"" if isCoq else 'Elpi TC.Solver. Set TC Time Refine. Set TC Time Instance Search. Set TC Time Build Query. Set Debug "elpitime".'}
+{"" if isCoq else (refine_no_check + 'Elpi TC.Solver. Set TC Time Refine. Set TC Time Instance Search. Set TC Time Compile Query. Set Debug "elpitime".')}
 """
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
@@ -102,7 +129,10 @@ def runCoqMake(fileName):
     fileName = fileName + ".vo"
     if (os.path.exists(file_name)):
         subprocess.run(["rm", fileName])
-    return subprocess.check_output(["make", fileName]).decode()
+    r = subprocess.run(["dune" , "build", fileName], capture_output=True, text=True)
+    out = r.stdout
+    err = r.stderr
+    return f"{out}\n---\n f{err}"
 
 
 def run(file_name, height):
@@ -126,7 +156,7 @@ def loopTreeDepth(file_name: str, maxHeight: int, makeCoq=True, onlyOne=False):
 
 if __name__ == "__main__":
     print(os.curdir)
-    file_name = "tests/bench/bench_inj"
+    file_name = "tests-stdlib/bench/bench_inj"
     height = int(sys.argv[1])
     loopTreeDepth(file_name, height, makeCoq=not (
         "-nocoq" in sys.argv), onlyOne=("-onlyOne" in sys.argv))
