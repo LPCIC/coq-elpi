@@ -589,7 +589,11 @@ type top_ltac_term = interp_sign * Names.Id.t
 
 type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
-type top_ltac_tactic = Geninterp.Val.t
+[%%if coq = "9.0" || coq = "9.1"]
+type top_ltac_tactic = Ltac_plugin.Tacinterp.value
+[%%else]
+type top_ltac_tactic = Ltac_plugin.Tacarg.tacvalue
+[%%endif]
 
 type ltac_ty = Int | String | Term | OpenTerm | List of ltac_ty
 
@@ -667,6 +671,12 @@ let subst mod_subst = function
   | LTacTactic t ->
       LTacTactic (Ltac_plugin.Tacsubst.subst_tactic mod_subst t)
   
+[%%if coq = "9.0" || coq = "9.1"]
+let ltac1closure = Ltac_plugin.Tacinterp.Value.of_closure
+[%%else]
+let ltac1closure = Ltac_plugin.Tacinterp.Value.closure
+[%%endif]
+
 let interp ist = function
   | Int _ as x -> x
   | String _ as x -> x
@@ -678,7 +688,7 @@ let interp ist = function
         | Glob_term.GVar id -> id
         | _ -> assert false in
         LTac(ty,(ist,id))
-  | LTacTactic t -> LTacTactic (Ltac_plugin.Tacinterp.Value.of_closure ist t)
+  | LTacTactic t -> LTacTactic (ltac1closure ist t)
 
 [%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 let register_interp0 wit f = Geninterp.register_interp0 wit (fun ist x ->
@@ -1226,7 +1236,7 @@ let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let sigma = get_sigma state in
       in_elpi_elab_term_arg ~depth ?calldepth state coq_ctx hyps sigma ist glob_or_expr
 
-type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Geninterp.Val.t
+type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Tac.top_ltac_tactic
 
 let in_coq_arg ~depth proof_context constraints state t =
   match E.look ~depth t with
@@ -1253,3 +1263,14 @@ let in_coq_arg ~depth proof_context constraints state t =
     end
   | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
 
+[%%if coq = "9.0" || coq = "9.1"]
+let ltac1ofvalue x = x
+[%%else]
+let ltac1ofvalue = Ltac_plugin.Taccoerce.Value.of_tacvalue
+[%%endif]
+
+let ltac1_of_arg = let open Ltac_plugin in function
+  | Ctrm t -> Tacinterp.Value.of_constr t
+  | Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
+  | Cint i -> Tacinterp.Value.of_int i
+  | CLtac1 x -> ltac1ofvalue x
