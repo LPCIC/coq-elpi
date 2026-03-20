@@ -374,3 +374,5 @@ val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bo
 val universes_of_udecl : state -> UState.universe_decl -> Univ.Level.Set.t
 
 val mind_record : Declarations.mind_specif -> Declarations.record_info
+
+val univ_of_sort : Sorts.t -> Univ.Universe.t

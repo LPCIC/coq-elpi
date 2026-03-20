@@ -132,7 +132,7 @@ let add_universe_constraint state c =
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
       Feedback.msg_debug Pp.(str"UniversesDiffer");
       raise API.BuiltInPredicate.No_clause
-[%%else]
+[%%elif coq = "9.2"]
 let add_universe_constraint state c =
   let open UnivProblem in
   try add_constraints state (Set.singleton c)
@@ -148,6 +148,26 @@ let add_universe_constraint state c =
         (UGraph.explain_universe_inconsistency
           (Termops.pr_evd_qvar sigma)
           (Termops.pr_evd_level sigma)
+           p);
+      raise API.BuiltInPredicate.No_clause
+  | Evd.UniversesDiffer | UState.UniversesDiffer ->
+      Feedback.msg_debug Pp.(str"UniversesDiffer");
+      raise API.BuiltInPredicate.No_clause
+[%%else]
+let add_universe_constraint state c =
+  let open UnivProblem in
+  try add_constraints state (Set.singleton c)
+  with
+  | QGraph.(EliminationError (QualityInconsistency (Some printer, (k, q, q', e)))) ->
+     Feedback.msg_debug
+       (QGraph.explain_quality_inconsistency printer e);
+     raise API.BuiltInPredicate.No_clause
+
+  | UGraph.UniverseInconsistency p ->
+      let sigma = (S.get (Option.get !pre_engine) state).sigma in
+      Feedback.msg_debug
+        (UGraph.explain_universe_inconsistency
+          (Evd.sort_printer sigma)
            p);
       raise API.BuiltInPredicate.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
@@ -471,6 +491,22 @@ let propc   = E.Constants.declare_global_symbol "prop"
 let spropc   = E.Constants.declare_global_symbol "sprop"
 let typc   = E.Constants.declare_global_symbol "typ"
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let ppsort fmt = function
+  | Sorts.Type _ -> Format.fprintf fmt "Type"
+  | Sorts.Set -> Format.fprintf fmt "Set"
+  | Sorts.Prop -> Format.fprintf fmt "Prop"
+  | Sorts.SProp -> Format.fprintf fmt "SProp"
+  | Sorts.QSort _ -> Format.fprintf fmt "QSort"
+[%%else]
+let ppsort fmt = function
+  | Sorts.Type _ -> Format.fprintf fmt "Type"
+  | Sorts.Set -> Format.fprintf fmt "Set"
+  | Sorts.Prop -> Format.fprintf fmt "Prop"
+  | Sorts.SProp -> Format.fprintf fmt "SProp"
+  | Sorts.GSort _ -> Format.fprintf fmt "GSort"
+  | Sorts.VSort _ -> Format.fprintf fmt "VSort"
+[%%endif]
 
 let sort : (Sorts.t, _ conv_context, API.Data.constraints) API.ContextualConversion.t =
   let open API.ContextualConversion in
@@ -483,12 +519,7 @@ let sort : (Sorts.t, _ conv_context, API.Data.constraints) API.ContextualConvers
     Format.fprintf fmt "external symbol sprop : sort.         %% impredicative sort of propositions with definitional proof irrelevance\n";
     Format.fprintf fmt "external symbol typ   : univ -> sort. %% predicative sort of data (carries a universe level)\n";
   );
-  pp = (fun fmt -> function
-    | Sorts.Type _ -> Format.fprintf fmt "Type"
-    | Sorts.Set -> Format.fprintf fmt "Set"
-    | Sorts.Prop -> Format.fprintf fmt "Prop"
-    | Sorts.SProp -> Format.fprintf fmt "SProp"
-    | Sorts.QSort _ -> Format.fprintf fmt "QSort");
+  pp = ppsort;
   embed = (fun ~depth { options } _ state s ->
     match s with
     | Sorts.Prop -> state, E.mkConst propc, []
@@ -499,7 +530,7 @@ let sort : (Sorts.t, _ conv_context, API.Data.constraints) API.ContextualConvers
     | Sorts.Type u ->
         let state, u, gls = univ.embed ~depth state u in
         state, E.mkApp typc u [], gls
-    | Sorts.QSort _ -> nYI "sort polymorphism");
+    | _ -> nYI "sort polymorphism");
   readback = (fun ~depth { options } _ state t ->
     match E.look ~depth t with
     | E.Const c when c == propc -> state, Sorts.prop, []
@@ -618,12 +649,18 @@ let compare_instances x y =
   and qy, uy = UVars.Instance.to_array y in
   Util.Compare.(compare [(CArray.compare Sorts.Quality.compare, qx, qy); (CArray.compare Univ.Level.compare, ux, uy)])
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let ppinst u = UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes u
+[%%else]
+let ppinst u = UVars.Instance.pr Sorts.raw_printer u
+[%%endif]
+
 let uinstancein, uinstanceino, isuinstance, uinstanceout, uinstance =
   let { CD.cin; cino; isc; cout }, uinstance = CD.declare {
     CD.name = "univ-instance";
     doc = "Universes level instance for a universe-polymorphic constant";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes x) in
+      let s = Pp.string_of_ppcmds (ppinst x) in
       Format.fprintf fmt "«%s»" s);
     compare = compare_instances;
     hash = UVars.Instance.hash;
@@ -1157,13 +1194,21 @@ let force_level_of_universe state u =
       let w = Sorts.sort_of_univ v in
       add_universe_constraint state (constraint_eq (Sorts.sort_of_univ u) w), l, v, w
 
+[%%if coq = "9.0"]
+let univ_of_sort = let open Sorts in function
+  | SProp | Prop | Set -> Univ.Universe.type0
+  | Type u | QSort (_, u) -> u
+[%%else]
+let univ_of_sort = Sorts.univ_of_sort
+[%%endif]
+
 let purge_algebraic_univs_sort state s =
   let sigma = (S.get engine state).sigma in
   match EConstr.ESorts.kind sigma s with
-  | Sorts.Type u | Sorts.QSort (_ , u) ->
-      let state, _, _, s = force_level_of_universe state u in
+  | Set | Prop | SProp as x -> state, x
+  | s ->
+      let state, _, _, s = force_level_of_universe state (univ_of_sort s) in
       state, s
-  | x -> state, x
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
 let in_elpiast_flex_sort ~loc t =
@@ -1939,8 +1984,15 @@ let analyze_scope ~depth coq_ctx args =
 module UIM = F.Map(struct
   type t = UVars.Instance.t
   let compare = compare_instances
-  let show x = Pp.string_of_ppcmds @@ UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes x
-  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes x)
+
+  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+  let ppinst u = UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes u
+  [%%else]
+  let ppinst u = UVars.Instance.pr UnivNames.(sort_printer empty_binders) u
+  [%%endif]
+
+  let show x = Pp.string_of_ppcmds @@ ppinst x
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (ppinst x)
 end)
     
 let uim = S.declare_component ~name:"rocq-elpi:evar-univ-instance-map" ~descriptor:interp_state
