@@ -230,8 +230,8 @@ let mk_algebraic_super x = Sorts.super x
 
 let univ_super state u v =
   let state, u = match u with
-  | Sorts.Set | Sorts.Prop | Sorts.SProp -> state, u
-  | Sorts.Type ul | Sorts.QSort (_, ul) ->
+  | Sorts.(Set | Prop | SProp) -> state, u
+  | Type ul | GQSort (_, ul) | VQSort (_, ul) ->
     if Univ.Universe.is_level ul then state, u
     else
       let state, (_,w) = new_univ_level_variable state in
@@ -1500,8 +1500,7 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
           let sigma = get_sigma state in
           let msg =
             UGraph.explain_universe_inconsistency
-              (Termops.pr_evd_qvar sigma)
-              (Termops.pr_evd_level sigma)
+              (Evd.sort_printer sigma)
               p
           in
           state, !: (B.mkERROR (Pp.string_of_ppcmds msg)), []
