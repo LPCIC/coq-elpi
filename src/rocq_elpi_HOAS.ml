@@ -146,8 +146,7 @@ let add_universe_constraint state c =
       let sigma = (S.get (Option.get !pre_engine) state).sigma in
       Feedback.msg_debug
         (UGraph.explain_universe_inconsistency
-          (Termops.pr_evd_qvar sigma)
-          (Termops.pr_evd_level sigma)
+          (Evd.sort_printer sigma)
            p);
       raise API.BuiltInPredicate.No_clause
   | Evd.UniversesDiffer | UState.UniversesDiffer ->
@@ -488,7 +487,8 @@ let sort : (Sorts.t, _ conv_context, API.Data.constraints) API.ContextualConvers
     | Sorts.Set -> Format.fprintf fmt "Set"
     | Sorts.Prop -> Format.fprintf fmt "Prop"
     | Sorts.SProp -> Format.fprintf fmt "SProp"
-    | Sorts.QSort _ -> Format.fprintf fmt "QSort");
+    | Sorts.GQSort _ -> Format.fprintf fmt "GQSort"
+    | Sorts.VQSort _ -> Format.fprintf fmt "VQSort");
   embed = (fun ~depth { options } _ state s ->
     match s with
     | Sorts.Prop -> state, E.mkConst propc, []
@@ -499,7 +499,7 @@ let sort : (Sorts.t, _ conv_context, API.Data.constraints) API.ContextualConvers
     | Sorts.Type u ->
         let state, u, gls = univ.embed ~depth state u in
         state, E.mkApp typc u [], gls
-    | Sorts.QSort _ -> nYI "sort polymorphism");
+    | Sorts.VQSort _ | GQSort _ -> nYI "sort polymorphism");
   readback = (fun ~depth { options } _ state t ->
     match E.look ~depth t with
     | E.Const c when c == propc -> state, Sorts.prop, []
@@ -623,7 +623,7 @@ let uinstancein, uinstanceino, isuinstance, uinstanceout, uinstance =
     CD.name = "univ-instance";
     doc = "Universes level instance for a universe-polymorphic constant";
     pp = (fun fmt x ->
-      let s = Pp.string_of_ppcmds (UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes x) in
+      let s = Pp.string_of_ppcmds (UVars.Instance.pr Sorts.raw_printer x) in
       Format.fprintf fmt "«%s»" s);
     compare = compare_instances;
     hash = UVars.Instance.hash;
@@ -1160,10 +1160,10 @@ let force_level_of_universe state u =
 let purge_algebraic_univs_sort state s =
   let sigma = (S.get engine state).sigma in
   match EConstr.ESorts.kind sigma s with
-  | Sorts.Type u | Sorts.QSort (_ , u) ->
+  | Sorts.Type u | GQSort (_, u) | Sorts.VQSort (_ , u) ->
       let state, _, _, s = force_level_of_universe state u in
       state, s
-  | x -> state, x
+  | Set | Prop | SProp as x -> state, x
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
 let in_elpiast_flex_sort ~loc t =
@@ -1939,8 +1939,8 @@ let analyze_scope ~depth coq_ctx args =
 module UIM = F.Map(struct
   type t = UVars.Instance.t
   let compare = compare_instances
-  let show x = Pp.string_of_ppcmds @@ UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes x
-  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes x)
+  let show x = Pp.string_of_ppcmds @@ UVars.Instance.pr UnivNames.(sort_printer empty_binders) x
+  let pp fmt x = Format.fprintf fmt "%a" Pp.pp_with (UVars.Instance.pr UnivNames.(sort_printer empty_binders) x)
 end)
     
 let uim = S.declare_component ~name:"rocq-elpi:evar-univ-instance-map" ~descriptor:interp_state

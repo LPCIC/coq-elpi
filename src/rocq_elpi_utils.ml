@@ -335,12 +335,12 @@ let detype_qvar sigma q =
   let open Glob_term in
   match UState.id_of_qvar (Evd.ustate sigma) q with
   | Some id -> GLocalQVar (CAst.make (Names.Name.Name id))
-  | None -> GQVar q
+  | None -> GQuality (QVar q)
 
 let detype_quality sigma q =
   let open Glob_term in
   let open Sorts.Quality in
-  match q with QConstant q -> GQConstant q | QVar q -> GQualVar (detype_qvar sigma q)
+  match q with QConstant _ | QGlobal _ -> GQuality q | QVar q -> (detype_qvar sigma q)
 
 let detype_level_name sigma l =
   let open Glob_term in
@@ -364,7 +364,8 @@ let detype_sort ku sigma x =
   | Prop -> glob_Prop_sort
   | Set -> glob_Set_sort
   | Type u when ku -> None, detype_universe sigma u
-  | QSort (q, u) when ku -> Some (detype_qvar sigma q), detype_universe sigma u
+  | VQSort (q, u) when ku -> Some (detype_qvar sigma q), detype_universe sigma u
+  | GQSort (q, u) -> Some (detype_quality sigma (QGlobal q)), if ku then detype_universe sigma u else glob_rigid_univ
   | _ -> glob_Type_sort
 
 (*
