@@ -83,7 +83,11 @@ type top_ltac_term = interp_sign * Names.Id.t
 
 type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
-type top_ltac_tactic = Geninterp.Val.t
+[%%if coq = "9.0" || coq = "9.1"]
+type top_ltac_tactic = Ltac_plugin.Tacinterp.value
+[%%else]
+type top_ltac_tactic = Ltac_plugin.Tacarg.tacvalue
+[%%endif]
 
 type ltac_ty = Int | String | Term | OpenTerm | List of ltac_ty
 
@@ -149,7 +153,7 @@ val in_elpi_cmd_synterp :
   Cmd.raw ->
   Elpi.API.State.t * term * Elpi.API.Conversion.extra_goals
 
-type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Geninterp.Val.t
+type coq_arg = Cint of int | Cstr of string | Ctrm of EConstr.t | CLtac1 of Tac.top_ltac_tactic
 
 val in_coq_arg :
   depth:int ->
@@ -158,3 +162,5 @@ val in_coq_arg :
   Elpi.API.State.t ->
   term ->
     Elpi.API.State.t * coq_arg * Elpi.API.Conversion.extra_goals
+
+val ltac1_of_arg : coq_arg -> Ltac_plugin.Tacinterp.value

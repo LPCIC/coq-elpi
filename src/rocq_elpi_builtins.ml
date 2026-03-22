@@ -1653,6 +1653,12 @@ let apply_proof ~name ~poly env tac pf =
   pv
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1"]
+let ltac1closure = Ltac_plugin.Tacinterp.Value.of_closure
+[%%else]
+let ltac1closure = Ltac_plugin.Tacinterp.Value.closure
+[%%endif]
+
 let apply_ltac1 ~depth tac tac_args =
   let open Ltac_plugin in
   let tac =
@@ -1669,7 +1675,7 @@ let apply_ltac1 ~depth tac tac_args =
             | [] -> err Pp.(str"Ltac1 tactic " ++ str tac_name ++ str" not found") in
         let tacref = Locus.ArgArg (Loc.tag @@ tac_name) in
         let tacexpr = Tacexpr.(CAst.make @@ TacArg (TacCall (CAst.make @@ (tacref, [])))) in
-        Tacinterp.Value.of_closure (Tacinterp.default_ist ()) tacexpr
+        ltac1closure (Tacinterp.default_ist ()) tacexpr
     | E.CData t when Rocq_elpi_arg_HOAS.is_ltac_tactic t ->
         Rocq_elpi_arg_HOAS.to_ltac_tactic t
     | _ -> U.type_error ("coq.ltac.call-ltac1: string or ltac1-tactic are expected as the tactic to call")
@@ -4321,13 +4327,8 @@ Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|})))),
     (fun tac { proof_context; evar; tac_args } _ diags ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-ltac1" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
-      let open Ltac_plugin in
 
-       let tac_args = tac_args |> List.map (function
-         | Rocq_elpi_arg_HOAS.Ctrm t -> Tacinterp.Value.of_constr t
-         | Rocq_elpi_arg_HOAS.Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
-         | Rocq_elpi_arg_HOAS.Cint i -> Tacinterp.Value.of_int i
-         | Rocq_elpi_arg_HOAS.CLtac1 x -> x) in
+       let tac_args = tac_args |> List.map Rocq_elpi_arg_HOAS.ltac1_of_arg in
        let tactic = apply_ltac1 ~depth tac tac_args in
 
       match call_tactic ~depth state ~no_tc proof_context evar tactic with
@@ -4358,13 +4359,8 @@ Supported attributes:
 - @no-tc! (default false, do not infer typeclasses)|}))))),
     (fun tac { proof_context; evar; tac_args } _ diag ~depth _ _ -> abstract__grab_global_env_keep_sigma "coq.ltac.call-simple-ltac1" (fun state ->
       let no_tc = if proof_context.options.no_tc = Some true then true else false in
-      let open Ltac_plugin in
 
-       let tac_args = tac_args |> List.map (function
-         | Rocq_elpi_arg_HOAS.Ctrm t -> Tacinterp.Value.of_constr t
-         | Rocq_elpi_arg_HOAS.Cstr s -> Geninterp.(Val.inject (val_tag (Genarg.topwit Stdarg.wit_string))) s
-         | Rocq_elpi_arg_HOAS.Cint i -> Tacinterp.Value.of_int i
-         | Rocq_elpi_arg_HOAS.CLtac1 x -> x) in
+       let tac_args = tac_args |> List.map Rocq_elpi_arg_HOAS.ltac1_of_arg in
        let tactic = apply_ltac1 ~depth tac tac_args in
 
       match call_tactic ~depth state ~no_tc proof_context evar tactic with
