@@ -20,23 +20,32 @@ type class search.
 """
 
 INJ_BASE_FUN = "f"
-KEYS = "coqT, elpiT, tcSearch, refineT, compilT, runtimeT, buildQuery".split(", ")
 
+TOT_COQ_TIME = "coqT"
+TOT_ELPI_TIME = "elpiT"
+TOT_NORMALIZE = "normalize"
+TOT_COMPILE_CTX = "compile context"
+TOT_BUILD_QUERY = "build query"
+TOT_INSTANCE_SEARCH = "instance search"
+TOT_FULL_INSTANCE_SEARCH = "full instance search"
+TOT_REFINE = "refine"
+MSOLVE = "msolve"
 
-def buildDict():
-    res = dict()
-    for key in KEYS:
-        res[key] = []
-    return res
+COMPILT = "compilT"
+RUNTIMET = "runtimeT"
+
+KEYL =                               [TOT_COQ_TIME, TOT_ELPI_TIME, TOT_NORMALIZE, TOT_COMPILE_CTX, TOT_BUILD_QUERY, TOT_INSTANCE_SEARCH, TOT_FULL_INSTANCE_SEARCH, TOT_REFINE, MSOLVE, COMPILT,    RUNTIMET]
+HEADER = re.sub(r'\s+', ' ', "Height, Coq,          Elpi,          normalize,     ctx,             BuildQuery,      TC search,           TC Search Full,           Refine,     msolve, ElpiCompil, ElpiRuntime, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
 
 
 def printDict(d):
-    for key in KEYS:
-        d[key] = sum(d[key])/len(d[key])
-    L = [d[k] for k in KEYS]
-    L.append(d["elpiT"] - d["refineT"] - d["buildQuery"])
-    L.append(d["coqT"] / d["elpiT"])
-    L.append(d["elpiT"] / d["coqT"] if d["coqT"] > 0 else 100)
+    # for key in KEYS:
+        # d[key] = sum(d[key])/len(d[key])
+    # L = [d[k] for k in KEYS]
+    L = []
+    for k in KEYL: L.append(d[k])
+    L.append(d[TOT_COQ_TIME] / d[TOT_ELPI_TIME])
+    L.append(d[TOT_ELPI_TIME] / d[TOT_COQ_TIME] if d[TOT_COQ_TIME] > 0 else 100)
     print(", ".join(map(lambda x: str(round(x, 5)), L)))
 
 
@@ -45,44 +54,32 @@ def findFloats(s):
 
 
 def filterLines(lines):
-    #print(lines)
-    validStarts = ["Finished", "refine", "Elpi: query-compilation", "Time of instance search", "Time of build query"]
+    with open("xxx.txt", "w") as f:
+        f.write(lines)
+    DEBUG_STR = "Debug: [TC] - Time of "
     r = {}
     for line in lines.split("\n"):
-        for start in validStarts:
-            if start in line:
-                fl = findFloats(line)
-                if start in r:
-                    r[start] = [r[start], fl]
-                else:
-                    r[start] = fl
-                continue
-    return r
-
-def parseFile(s):
-    with open("xxx.txt", "w") as f:
-        f.write(s)
-    lines = filterLines(s)
-    #print(lines)
-    with open("www.txt", "w") as f:
-        f.write(str(lines))
-
-    # base = 0
-    coqT = lines["Finished"][0][0]
-    elpiT = lines["Finished"][1][0]
-    buildQuery = lines["Time of build query"][0]
-    tcSearch = lines["Time of instance search"][0]
-    refineT = lines["refine"][0]
-    elpiStats = lines["Elpi: query-compilation"]
-    compilT, runtimeT = elpiStats[0], elpiStats[-1]
-    res = buildDict()
-    for key in KEYS:
-        res[key].append(eval(key))
-    #print(res)
+        fl = findFloats(line)
+        if line.startswith("Finished transaction"):
+            if TOT_COQ_TIME in r: r[TOT_ELPI_TIME] = fl[0]
+            else: r[TOT_COQ_TIME] = fl[0]
+        elif line.strip().startswith("Elpi: query-compilation"):
+            r[COMPILT] = fl[0]
+            r[RUNTIMET] = fl[-1]
+        elif line.startswith(DEBUG_STR):
+            def check_(n): return line.startswith(DEBUG_STR + n)
+            def set_(n): r[n] = fl[0]
+            if check_(TOT_NORMALIZE): set_(TOT_NORMALIZE)
+            elif check_(TOT_COMPILE_CTX): set_(TOT_COMPILE_CTX)
+            elif check_(TOT_BUILD_QUERY): set_(TOT_BUILD_QUERY)
+            elif check_(TOT_INSTANCE_SEARCH): set_(TOT_INSTANCE_SEARCH)
+            elif check_(TOT_FULL_INSTANCE_SEARCH): set_(TOT_FULL_INSTANCE_SEARCH)
+            elif check_(TOT_REFINE): set_(TOT_REFINE)
+            elif check_(MSOLVE): set_(MSOLVE)
+            else: raise "Not found" + line
     with open("zzz.txt", "w") as f:
-        f.write(str(res))
-    return res
-
+        f.write(str(r))
+    return r
 
 def buildTree(len):
     if len == 0:
@@ -111,13 +108,13 @@ Elpi Accumulate TC.Solver lp:{{
     
     if-true tc.print-solution (coq.say "[TC] The proof typechecks").
 }}.
-"""
+""" if True else ""
 
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
     PREAMBLE = f"""
 (* {random.random()} *)
 From elpi_apps_tc_tests_stdlib Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-{"" if isCoq else (refine_no_check + 'Elpi TC.Solver. Set TC Time Refine. Set TC Time Instance Search. Set TC Time Compile Query. Set Debug "elpitime".')}
+{"" if isCoq else (refine_no_check + 'Elpi TC.Solver. Set Time TC Bench. Set Debug "elpitime".')}
 """
     GOAL = buildTree(composeLen)
     with open(fileName + ".v", "w") as fd:
@@ -142,15 +139,18 @@ def run(file_name, height):
     return partialFun
 
 
+# def plot_dict(d):
+#     L = 
+
 def loopTreeDepth(file_name: str, maxHeight: int, makeCoq=True, onlyOne=False):
-    print("Height, Coq, Elpi, TC search, Refine, ElpiCompil, ElpiRuntime, BuildQuery, ElpiNoRefine, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
+    print(HEADER)
     for i in range(1 if not onlyOne else maxHeight, maxHeight+1):
         FUN = run(file_name, i)
         x = FUN(True) if makeCoq else "Finished 0.0"
         y = FUN(False)
         print(i, ", ", end="", sep="")
         # print("The xx result is " , x)
-        dic = parseFile(x + y)
+        dic = filterLines(x + y)
         printDict(dic)
 
 
