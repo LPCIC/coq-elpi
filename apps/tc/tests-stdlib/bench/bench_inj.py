@@ -44,7 +44,7 @@ def printDict(d):
     # L = [d[k] for k in KEYS]
     L = []
     for k in KEYL: L.append(d[k])
-    L.append(d[TOT_ELPI_TIME] / d[MSOLVE])
+    L.append(d[TOT_ELPI_TIME] - d[MSOLVE])
     L.append(d[TOT_COQ_TIME] / d[TOT_ELPI_TIME])
     L.append(d[TOT_ELPI_TIME] / d[TOT_COQ_TIME] if d[TOT_COQ_TIME] > 0 else 100)
     print(", ".join(map(lambda x: str(round(x, 5)), L)))
@@ -132,7 +132,7 @@ def writeFile(fileName: str, composeLen: int, isCoq: bool):
 
 def runCoqMake(fileName):
     fileName = fileName + ".vo"
-    if (os.path.exists(file_name)):
+    if (os.path.exists(fileName)):
         subprocess.run(["rm", fileName])
     r = subprocess.run(["dune" , "build", fileName], capture_output=True, text=True)
     out = r.stdout
@@ -147,10 +147,22 @@ def run(file_name, height):
     return partialFun
 
 
-# def plot_dict(d):
-#     L = 
+def plot_dict(i, d):
+    L = [2**i, d[TOT_INSTANCE_SEARCH]]
+    L.append(L[-1] + d[TOT_INSTANCE_SEARCH] + d[TOT_BUILD_QUERY] + d[TOT_COMPILE_CTX] + d[TOT_NORMALIZE])
+    L.append(L[-1] + d[TOT_REFINE])
+    L.append(d[TOT_ELPI_TIME])
+    L.append(d[TOT_COQ_TIME])
+    return L
+
+def print_plot(pl):
+    l = ""
+    for i in pl:
+        l += ",".join(map(lambda x: str(round(x, 5)), i)) + "\n"
+    return l
 
 def loopTreeDepth(file_name: str, maxHeight: int, makeCoq=True, onlyOne=False):
+    plot = []
     print(HEADER)
     for i in range(1 if not onlyOne else maxHeight, maxHeight+1):
         FUN = run(file_name, i)
@@ -159,13 +171,19 @@ def loopTreeDepth(file_name: str, maxHeight: int, makeCoq=True, onlyOne=False):
         print(2**i, ", ", end="", sep="")
         # print("The xx result is " , x)
         dic = filterLines(x + y)
+        plot.append(plot_dict(i, dic))
         printDict(dic)
-
+    return plot
 
 if __name__ == "__main__":
     print(os.curdir)
     file_name = "tests-stdlib/bench/bench_inj"
     height = int(sys.argv[1])
-    loopTreeDepth(file_name, height, makeCoq=not (
+    pl = loopTreeDepth(file_name, height, makeCoq=not (
         "-nocoq" in sys.argv), onlyOne=("-onlyOne" in sys.argv))
+    
+    print("\n\n ELPI STATS")
+    print("HEIGHT, TC, BUILD, REFINE, COQ")
+
+    print(print_plot((pl)))
     #writeFile(file_name, 1, False)
