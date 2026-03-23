@@ -35,7 +35,7 @@ COMPILT = "compilT"
 RUNTIMET = "runtimeT"
 
 KEYL =                               [TOT_COQ_TIME, TOT_ELPI_TIME, TOT_NORMALIZE, TOT_COMPILE_CTX, TOT_BUILD_QUERY, TOT_INSTANCE_SEARCH, TOT_FULL_INSTANCE_SEARCH, TOT_REFINE, MSOLVE, COMPILT,    RUNTIMET]
-HEADER = re.sub(r'\s+', ' ', "Height, Coq,          Elpi,          normalize,     ctx,             BuildQuery,      TC search,           TC Search Full,           Refine,     msolve, ElpiCompil, ElpiRuntime, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
+HEADER = re.sub(r'\s+', ' ', "Height, Coq,          Elpi,          normalize,     ctx,             BuildQuery,      TC search,           TC Search Full,           Refine,     msolve, ElpiCompil, ElpiRuntime, DIFF, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
 
 
 def printDict(d):
@@ -44,6 +44,7 @@ def printDict(d):
     # L = [d[k] for k in KEYS]
     L = []
     for k in KEYL: L.append(d[k])
+    L.append(d[TOT_ELPI_TIME] / d[MSOLVE])
     L.append(d[TOT_COQ_TIME] / d[TOT_ELPI_TIME])
     L.append(d[TOT_ELPI_TIME] / d[TOT_COQ_TIME] if d[TOT_COQ_TIME] > 0 else 100)
     print(", ".join(map(lambda x: str(round(x, 5)), L)))
@@ -108,19 +109,26 @@ Elpi Accumulate TC.Solver lp:{{
     
     if-true tc.print-solution (coq.say "[TC] The proof typechecks").
 }}.
-""" if True else ""
+""" if False else ""
 
 def writeFile(fileName: str, composeLen: int, isCoq: bool):
-    PREAMBLE = f"""
-(* {random.random()} *)
-From elpi_apps_tc_tests_stdlib Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-{"" if isCoq else (refine_no_check + 'Elpi TC.Solver. Set Time TC Bench. Set Debug "elpitime".')}
-"""
+    TXT = f"(* {random.random()} *)\n"
     GOAL = buildTree(composeLen)
+    if isCoq:
+        TXT += "From elpi_apps_tc_tests_stdlib Require Import stdppInjClassic.\n"
+        TXT += f"Goal Inj eq eq({GOAL}). Time apply _. Qed.\n"
+    else:
+        TXT += "From elpi_apps_tc_tests_stdlib Require Import stdppInj.\n"
+        TXT += refine_no_check # (Un)Comment this for using refine or refine.no_check
+        TXT += "Elpi TC.Solver.\n"
+        TXT += f"Goal Inj eq eq({GOAL}).\n"
+        # TXT += "Elpi Command time_it. Elpi Accumulate  lp:{{ main _ :- coq.say {gettimeofday}. }}. Elpi time_it.\n"
+        TXT += 'Set Time TC Bench. Set Debug "elpitime".\n'
+        TXT += "Time apply _.\n"
+        # TXT += "Unset Time TC Bench. Set Debug \"-elpitime\". Elpi time_it.\n"
+        TXT += "Qed.\n"
     with open(fileName + ".v", "w") as fd:
-        fd.write(PREAMBLE)
-        fd.write(f"Goal Inj eq eq({GOAL}). Time apply _. Qed.\n")
-
+        fd.write(TXT)
 
 def runCoqMake(fileName):
     fileName = fileName + ".vo"
@@ -146,9 +154,9 @@ def loopTreeDepth(file_name: str, maxHeight: int, makeCoq=True, onlyOne=False):
     print(HEADER)
     for i in range(1 if not onlyOne else maxHeight, maxHeight+1):
         FUN = run(file_name, i)
-        x = FUN(True) if makeCoq else "Finished 0.0"
+        x = FUN(True) if makeCoq else "Finished transaction in 0.0"
         y = FUN(False)
-        print(i, ", ", end="", sep="")
+        print(2**i, ", ", end="", sep="")
         # print("The xx result is " , x)
         dic = filterLines(x + y)
         printDict(dic)
