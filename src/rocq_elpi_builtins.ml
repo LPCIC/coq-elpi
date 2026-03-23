@@ -1653,7 +1653,7 @@ let apply_proof ~name ~poly env tac pf =
   pv
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 let ltac1closure = Ltac_plugin.Tacinterp.Value.of_closure
 [%%else]
 let ltac1closure = Ltac_plugin.Tacinterp.Value.closure

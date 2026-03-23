@@ -83,7 +83,7 @@ type top_ltac_term = interp_sign * Names.Id.t
 
 type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 type top_ltac_tactic = Ltac_plugin.Tacinterp.value
 [%%else]
 type top_ltac_tactic = Ltac_plugin.Tacarg.tacvalue

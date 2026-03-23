@@ -589,7 +589,7 @@ type top_ltac_term = interp_sign * Names.Id.t
 
 type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 type top_ltac_tactic = Ltac_plugin.Tacinterp.value
 [%%else]
 type top_ltac_tactic = Ltac_plugin.Tacarg.tacvalue
@@ -671,7 +671,7 @@ let subst mod_subst = function
   | LTacTactic t ->
       LTacTactic (Ltac_plugin.Tacsubst.subst_tactic mod_subst t)
   
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 let ltac1closure = Ltac_plugin.Tacinterp.Value.of_closure
 [%%else]
 let ltac1closure = Ltac_plugin.Tacinterp.Value.closure
@@ -1263,7 +1263,7 @@ let in_coq_arg ~depth proof_context constraints state t =
     end
   | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 let ltac1ofvalue x = x
 [%%else]
 let ltac1ofvalue = Ltac_plugin.Taccoerce.Value.of_tacvalue
