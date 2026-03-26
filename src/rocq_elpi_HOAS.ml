@@ -3041,7 +3041,7 @@ let restricted_sigma_of s state =
   let ustate = Evd.ustate sigma in
   let ustate = UState.restrict_even_binders ustate s in
   let ustate = UState.fix_undefined_variables ustate in
-  let ustate = UState.collapse_sort_variables ustate in
+  let ustate = UState.collapse_sort_variables ~only_above_prop:false ustate in
   let sigma = Evd.set_universe_context sigma ustate in
   sigma
 
