@@ -3,6 +3,11 @@
 
 ### HOAS:
 - New `minductive` and `mblock` for mutual inductive types
+- New the `name` data type carries a relevance (as in Rocq). Quotations
+  default to "relevant" as before, while omitted biner names are mapped to
+  Rocq relevance variables, that can be set by the typechecker.
+  Similarly `coq.id->name` leaves the relevance unset, and `coq.name-suffix`
+  preserves the orignal relevance.
 
 ### API:
 - fix `coq.CS.canonical-projection?`, used to disregard `#[canonical=no]`
@@ -10,6 +15,7 @@
 - New `coq.elpi.add-predicate?` to check if a predicate is declared in elpi
 - New `coq.env.indt-block` to list the inductive types in the same
   mutual block
+- New `coq.name.relevant?` to test the relevance set by the typechecker
 
 ### LIB:
 - Change `coq.build-indt-decl`, now taking a `coq.indt-spec` tuple

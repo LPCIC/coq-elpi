@@ -103,6 +103,7 @@ let update_subst_id l na =
     (na,id')::l, id'
   else l,na
     
+let drop_relevance (a,_,c,d,e) = (a,c,d,e)
 
 let rename_var l id =
   try
@@ -156,7 +157,7 @@ let rec rename_glob_vars l c = DAst.map_with_loc (fun ?loc -> function
   ) c
 
 let under_glob_ctx1 name ~tyast ~k t state =
-  match name with
+  match Context.binder_name name with
   | Names.Name.Anonymous -> k name t state
   | Names.Name.Name id ->
     (* let () = Printf.eprintf " intro %s\n" (Id.to_string id) in *)
@@ -167,14 +168,16 @@ let under_glob_ctx1 name ~tyast ~k t state =
           (* let () = Printf.eprintf "%s -> %s\n" (Id.to_string id) (Id.to_string new_id) in *)
           rename_glob_vars [id,new_id] t, new_id
         else t, id in
-      let state = push_glob_ctx state id (Some (tyast id)) in
-      k (Names.Name.Name id) t state
+      let name = Context.map_annot (fun _ -> Names.Name.Name id) name in
+      let aid = Context.map_annot (fun _ -> id) name in
+      let state = push_glob_ctx state id (Some (tyast aid)) in
+      k name t state
   
 let rec under_glob_ctxn names ~tyasts ~k ts state acc =
   match names, tyasts with
   | [], [] -> k (List.rev acc) ts state
   | name :: names, tyast :: tyasts ->
-    begin match name with
+    begin match Context.binder_name name with
     | Names.Name.Anonymous -> under_glob_ctxn names ~tyasts ~k ts state acc
     | Names.Name.Name id ->
       (* let () = Printf.eprintf " intro %s\n" (Id.to_string id) in *)
@@ -185,8 +188,10 @@ let rec under_glob_ctxn names ~tyasts ~k ts state acc =
             (* let () = Printf.eprintf "%s -> %s\n" (Id.to_string id) (Id.to_string new_id) in *)
             List.map (rename_glob_vars [id,new_id]) ts, new_id
           else ts, id in
-        let state = push_glob_ctx state id (Some (tyast id)) in
-        under_glob_ctxn names ~tyasts ~k ts state (Names.Name.Name id::acc)
+        let name = Context.map_annot (fun _ -> Names.Name.Name id) name in
+        let aid = Context.map_annot (fun _ -> id) name in
+        let state = push_glob_ctx state id (Some (tyast aid)) in
+        under_glob_ctxn names ~tyasts ~k ts state (name::acc)
     end
   | _ -> assert false
 
@@ -209,7 +214,7 @@ let under_ctx name ty bo ~k ~depth state =
   let orig_glob_ctx = S.get glob_ctx state in
   let state =
     let id =
-      match name with
+      match Context.binder_name name with
       | Name id -> id
       | Anonymous ->
           Id.of_string_soft
@@ -363,12 +368,12 @@ let gterm2lpast ~pattern ~language state glob =
     | Some bo -> mk_def state ~loc id ~ty ~bo
 
   and mk_decl state ~loc name ~ty =
-    let v = A.Term.mkBound ~loc ~language @@ name_of_id name in
-    in_elpiast_decl ~loc ~v (Name.Name name) ~ty
+    let v = A.Term.mkBound ~loc ~language @@ name_of_id @@ Context.binder_name name in
+    in_elpiast_decl ~loc ~v (Context.map_annot (fun x -> Name.Name x) name) ~ty
 
   and mk_def state ~loc name ~ty ~bo =
-    let v = A.Term.mkBound ~loc ~language @@ name_of_id name in
-    in_elpiast_def ~loc ~v (Name.Name name) ~ty ~bo
+    let v = A.Term.mkBound ~loc ~language @@ name_of_id @@ Context.binder_name name in
+    in_elpiast_def ~loc ~v (Context.map_annot (fun x -> Name.Name x) name) ~ty ~bo
 
   and gterm2lp state ({ CAst.loc; v } as x) : A.Term.t =
   debug Pp.(fun () ->
@@ -403,12 +408,12 @@ let gterm2lpast ~pattern ~language state glob =
   | GProd _ as t ->
       let (name,s,t) = dest_GProd t in
       let s = gterm2lp state s in
-      under_binder ~loc name s None t state ~k:(fun name t state ->
+      under_binder ~loc (EConstr.annotR name) s None t state ~k:(fun name t state ->
         in_elpiast_prod ~loc name s (gterm2lp state t))
   | GLambda _ as t ->
       let (name,s,t) = dest_GLambda t in
       let s = gterm2lp state s in
-      under_binder ~loc name s None t state ~k:(fun name t state ->
+      under_binder ~loc (EConstr.annotR name) s None t state ~k:(fun name t state ->
         in_elpiast_lam ~loc name s (gterm2lp state t))
   | GLetIn _ as t ->
       let (name,bo , oty, t) = dest_GLetIn t in
@@ -420,7 +425,7 @@ let gterm2lpast ~pattern ~language state glob =
             A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ())
               (List.map (fun x -> A.Term.mkBound ~loc ~language (name_of_id x)) args)
         | Some ty -> gterm2lp state ty in
-      under_binder ~loc name ty (Some bo) t state ~k:(fun name t state ->
+      under_binder ~loc (EConstr.annotR name) ty (Some bo) t state ~k:(fun name t state ->
         in_elpiast_let ~loc name ~ty ~bo (gterm2lp state t))
   
   | GGenarg arg when is_elpi_code arg ->
@@ -465,7 +470,7 @@ let gterm2lpast ~pattern ~language state glob =
       let id = Id.of_string "self" in
       let name = Names.Name.Name id in
       let self = A.Term.mkBound ~loc ~language (name_of_id id) in
-      in_elpiast_let ~loc name ~bo:t ~ty:c_ty self
+      in_elpiast_let ~loc (EConstr.annotR name) ~bo:t ~ty:c_ty self
 
   | GEvar(_k,_subst) -> nYI "(glob)HOAS for GEvar"
   | GPatVar _ -> nYI "(glob)HOAS for GPatVar"
@@ -596,11 +601,11 @@ let gterm2lpast ~pattern ~language state glob =
       let ty = glob_intros_prod tctx ty in
       let ty = gterm2lp state ty in
       let bo = glob_intros tctx bo in
-      under_binder ~loc (Name.Name name) ty None bo state ~k:(fun name t state ->
+      under_binder ~loc (EConstr.nameR name) ty None bo state ~k:(fun name t state ->
         in_elpiast_fix ~loc name rno ty (gterm2lp state bo))
   | GRec(GFix(rnos,focus_idx),names,tctxs,tys,bos) ->
       let n_fix = Array.length names in
-      let names = Array.map (fun x -> Name.Name x) names |> Array.to_list in
+      let names = Array.map EConstr.nameR names |> Array.to_list in
       let tys = Array.map2 glob_intros_prod tctxs tys in
       let tys = Array.map (gterm2lp state) tys |> Array.to_list in
       let bos = Array.map2 glob_intros tctxs bos |> Array.to_list in
@@ -669,20 +674,19 @@ let runtime_gterm2lp ~loc ~base glob ~depth state =
 let rec gparams2lp ~loc ~base inp params (kont : depth:int -> S.t -> S.t * _) ~depth state =
   match params with
   | [] -> kont ~depth state
-  | (name,imp,ob,src) :: params ->
+  | (name,_rel,imp,ob,src) :: params ->
       if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let state, src = gterm2lp ~loc ~depth ~base src state in
       let k = nogls (gparams2lp ~loc ~base inp params kont) in
+      let name = EConstr.annotR name in
       let state, tgt, () = under_ctx name src None ~k ~depth state in
       let state, imp = in_elpi_imp ~depth state imp in
       state, inp name ~imp src tgt
-
-let drop_relevance (a,_,c,d,e) = (a,c,d,e)
     
 let gindparams2lp ~loc ~base params ~k ~depth s =
-  gparams2lp ~loc ~base in_elpi_inductive_parameter (List.map drop_relevance params) k ~depth s
+  gparams2lp ~loc ~base in_elpi_inductive_parameter params k ~depth s
 let garityparams2lp ~loc ~base params ~k ~depth s =
-  gparams2lp ~loc ~base in_elpi_arity_parameter(List.map drop_relevance params) k ~depth s
+  gparams2lp ~loc ~base in_elpi_arity_parameter params k ~depth s
   
 let garity2lp ~loc ~base t ~depth state =
   let state, t = gterm2lp ~loc t ~depth ~base state in
@@ -693,7 +697,7 @@ let rec gfields2lp ~loc ~base fields ~depth state =
   | [] -> state, in_elpi_indtdecl_endrecord ()
   | (f,({ name; is_coercion; is_canonical } as att)) :: fields ->
       let state, f = gterm2lp ~loc ~base f ~depth state in
-      let state, fields, () = under_ctx name f None ~k:(nogls (gfields2lp ~loc ~base fields)) ~depth state in
+      let state, fields, () = under_ctx (EConstr.annotR name) f None ~k:(nogls (gfields2lp ~loc ~base fields)) ~depth state in
       in_elpi_indtdecl_field ~depth state att f fields
 
 let grecord2lp ~loc ~base ~name ~constructorname arity fields ~depth state =

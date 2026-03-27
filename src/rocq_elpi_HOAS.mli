@@ -151,11 +151,12 @@ val inductive_entry2lp :
 val record_entry2lp :
   depth:int -> empty conv_context -> constraints -> State.t -> loose_udecl:bool ->Record.Record_decl.t ->
     State.t * term * Conversion.extra_goals
+type annot_name = (Name.t,EConstr.ERelevance.t) Context.pbinder_annot
   
 val in_elpi_id : Names.Name.t -> term
 val in_elpi_bool : State.t -> bool -> term
-val in_elpi_arity_parameter : Names.Name.t -> imp:term -> term -> term -> term
-val in_elpi_inductive_parameter : Names.Name.t -> imp:term -> term -> term -> term
+val in_elpi_arity_parameter : annot_name -> imp:term -> term -> term -> term
+val in_elpi_inductive_parameter : annot_name -> imp:term -> term -> term -> term
 val in_elpi_arity : term -> term
 val in_elpi_indtdecl_record : Names.Name.t -> term -> Names.Name.t -> term -> term
 val in_elpi_indtdecl_endrecord : unit -> term
@@ -181,14 +182,14 @@ val in_elpi_poly_gr : depth:int -> State.t -> Names.GlobRef.t -> term -> term
 val in_elpi_poly_gr_instance : depth:int -> State.t -> Names.GlobRef.t -> UVars.Instance.t -> term
 val in_elpi_flex_sort : term -> term
 val in_elpi_sort : depth:int -> 'a conv_context -> constraints -> state -> Sorts.t -> state * term * Conversion.extra_goals
-val in_elpi_prod : Name.t -> term -> term -> term
-val in_elpi_lam : Name.t -> term -> term -> term
-val in_elpi_let : Name.t -> term -> term -> term -> term
+val in_elpi_prod : annot_name -> term -> term -> term
+val in_elpi_lam : annot_name -> term -> term -> term
+val in_elpi_let : annot_name -> term -> term -> term -> term
 val in_elpi_appl : depth:int -> term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
-val in_elpi_fix : Name.t -> int -> term -> term -> term
-val in_elpi_mfix : (Names.Name.t * int * term) list -> int -> term list -> term
-val in_elpi_name : Name.t -> term
+val in_elpi_fix : annot_name -> int -> term -> term -> term
+val in_elpi_mfix : (annot_name * int * term) list -> int -> term list -> term
+val in_elpi_name : annot_name -> term
 
 val set_coq : Elpi.API.Ast.Scope.language -> unit
 
@@ -200,18 +201,20 @@ val in_elpiast_poly_gr : loc:Ast.Loc.t -> Names.GlobRef.t -> Ast.Term.t -> Ast.T
 val in_elpiast_poly_gr_instance : loc:Ast.Loc.t -> Names.GlobRef.t -> UVars.Instance.t -> Ast.Term.t
 val in_elpiast_flex_sort : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t
 val in_elpiast_sort : loc:Ast.Loc.t -> state -> Sorts.t -> Ast.Term.t
-val in_elpiast_prod : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
-val in_elpiast_lam : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
-val in_elpiast_let : loc:Ast.Loc.t -> Names.Name.t -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_prod : loc:Ast.Loc.t -> annot_name -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_lam : loc:Ast.Loc.t -> annot_name -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_let : loc:Ast.Loc.t -> annot_name -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t -> Ast.Term.t
 val in_elpiast_appl : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t list -> Ast.Term.t
 val in_elpiast_match : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t list -> Ast.Term.t
-val in_elpiast_fix : loc:Ast.Loc.t -> Names.Name.t -> int -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
-val in_elpiast_mfix : loc:Ast.Loc.t -> (Names.Name.t * int * Ast.Term.t) list -> int -> Ast.Term.t list -> Ast.Term.t
-val in_elpiast_name : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t
-val in_elpiast_decl : loc:Ast.Loc.t -> v:Ast.Term.t -> Names.Name.t -> ty:Ast.Term.t -> Ast.Term.t
-val in_elpiast_def : loc:Ast.Loc.t -> v:Ast.Term.t -> Names.Name.t -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t
+val in_elpiast_fix : loc:Ast.Loc.t -> annot_name -> int -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_mfix : loc:Ast.Loc.t -> (annot_name * int * Ast.Term.t) list -> int -> Ast.Term.t list -> Ast.Term.t
+val in_elpiast_name : loc:Ast.Loc.t -> annot_name -> Ast.Term.t
+val in_elpiast_decl : loc:Ast.Loc.t -> v:Ast.Term.t -> annot_name -> ty:Ast.Term.t -> Ast.Term.t
+val in_elpiast_def : loc:Ast.Loc.t -> v:Ast.Term.t -> annot_name -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t
 
-val in_coq_name : depth:int -> term -> Name.t
+val mk_coq_annot : State.t -> Names.Id.t -> State.t * annot_name
+
+val in_coq_name : depth:int -> State.t -> term -> State.t * annot_name * Conversion.extra_goals
 val is_coq_name : depth:int -> term -> bool
 
 val in_coq_imp : depth:int -> State.t -> term -> State.t * Glob_term.binding_kind
@@ -284,8 +287,8 @@ val is_let : depth:int -> term -> (term * term * term) option (* ty, d, bo @ dep
 val is_lam : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
 
 val isname : RawOpaqueData.t -> bool
-val nameout : RawOpaqueData.t -> Name.t
-val name : Name.t Conversion.t
+val nameout : RawOpaqueData.t -> annot_name
+val name : annot_name Conversion.t
 
 type global_or_pglobal =
   | Global of term option
@@ -337,11 +340,11 @@ val grab_global_env_drop_sigma : State.t -> State.t
 
 val grab_global_env : uctx:Univ.ContextSet.t -> State.t -> State.t
 val grab_global_env_drop_sigma_keep_univs : uctx:Univ.ContextSet.t -> State.t -> State.t
-val mk_decl : depth:int -> Name.t -> ty:term -> term
+val mk_decl : depth:int -> annot_name -> ty:term -> term
 (* Adds an Arg for the normal form with ctx_len context entry vars in scope *)
 
 val mk_def :
-  depth:int -> Name.t -> bo:term -> ty:term -> term
+  depth:int -> annot_name -> bo:term -> ty:term -> term
 
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map

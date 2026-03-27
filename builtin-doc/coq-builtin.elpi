@@ -1826,6 +1826,10 @@ coq.id->name S N :- coq.string->name S N.
 % is for internal use, no guarantee on its behavior.
 external func coq.name->id name -> id.
 
+% [coq.name.relevant? Name Relevance] Reads the relevance mark. none means
+% unset, some tt means relevant.
+external func coq.name.relevant? name -> option bool.
+
 % [coq.gref->id GR Id] extracts the label (last component of a full kernel
 % name)
 external func coq.gref->id gref -> id.
