@@ -331,16 +331,29 @@ let rec list_map_acc f acc = function
 
 let rec fix_detype x = match DAst.get x with Glob_term.GEvar _ -> mkGHole | _ -> Glob_ops.map_glob_constr fix_detype x
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let gqvar q = Glob_term.GQVar q
+[%%else]
+let gqvar q = Glob_term.GQuality (QVar q)
+[%%endif]
+
 let detype_qvar sigma q =
   let open Glob_term in
   match UState.id_of_qvar (Evd.ustate sigma) q with
   | Some id -> GLocalQVar (CAst.make (Names.Name.Name id))
-  | None -> GQVar q
+  | None -> gqvar q
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 let detype_quality sigma q =
   let open Glob_term in
   let open Sorts.Quality in
   match q with QConstant q -> GQConstant q | QVar q -> GQualVar (detype_qvar sigma q)
+[%%else]
+let detype_quality sigma q =
+  let open Glob_term in
+  let open Sorts.Quality in
+  match q with QConstant _ | QGlobal _ -> GQuality q | QVar q -> (detype_qvar sigma q)
+[%%endif]
 
 let detype_level_name sigma l =
   let open Glob_term in
@@ -354,6 +367,7 @@ let detype_level sigma l =
   let open Glob_term in
   UNamed (detype_level_name sigma l)
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 let detype_universe sigma u =
   Glob_term.UNamed (List.map (Util.on_fst (detype_level_name sigma)) (Univ.Universe.repr u))
 let detype_sort ku sigma x =
@@ -366,6 +380,21 @@ let detype_sort ku sigma x =
   | Type u when ku -> None, detype_universe sigma u
   | QSort (q, u) when ku -> Some (detype_qvar sigma q), detype_universe sigma u
   | _ -> glob_Type_sort
+[%%else]
+let detype_universe sigma u =
+  Glob_term.UNamed (List.map (Util.on_fst (detype_level_name sigma)) (Univ.Universe.repr u))
+let detype_sort ku sigma x =
+  let open Sorts in
+  let open Glob_ops in
+  match x with
+  | SProp -> glob_SProp_sort
+  | Prop -> glob_Prop_sort
+  | Set -> glob_Set_sort
+  | Type u when ku -> None, detype_universe sigma u
+  | VSort (q, u) when ku -> Some (detype_qvar sigma q), detype_universe sigma u
+  | GSort (q, u) -> Some (detype_quality sigma (QGlobal q)), if ku then detype_universe sigma u else glob_rigid_univ
+  | _ -> glob_Type_sort
+[%%endif]
 
 (*
 let detype_relevance_info sigma na =

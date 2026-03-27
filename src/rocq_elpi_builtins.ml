@@ -230,8 +230,9 @@ let mk_algebraic_super x = Sorts.super x
 
 let univ_super state u v =
   let state, u = match u with
-  | Sorts.Set | Sorts.Prop | Sorts.SProp -> state, u
-  | Sorts.Type ul | Sorts.QSort (_, ul) ->
+  | Sorts.(Set | Prop | SProp) -> state, u
+  | _ ->
+    let ul = Rocq_elpi_HOAS.univ_of_sort u in
     if Univ.Universe.is_level ul then state, u
     else
       let state, (_,w) = new_univ_level_variable state in
@@ -1450,6 +1451,19 @@ let hint_locality_doc = {|
 - @local! (default is export)
 - @global! (discouraged, may become deprecated)|}
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let explain_incon sigma p =
+  UGraph.explain_universe_inconsistency
+    (Termops.pr_evd_qvar sigma)
+    (Termops.pr_evd_level sigma)
+    p
+[%%else]
+let explain_incon sigma p =
+  UGraph.explain_universe_inconsistency
+    (Evd.sort_printer sigma)
+    p
+[%%endif]
+
 let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
   let open Pred in
   let open Notation in
@@ -1498,12 +1512,7 @@ let unify_instances_gref gr ui1 ui2 diag env state cmp_constr_universes =
         | Data B.OK -> raise No_clause
         | _ ->
           let sigma = get_sigma state in
-          let msg =
-            UGraph.explain_universe_inconsistency
-              (Termops.pr_evd_qvar sigma)
-              (Termops.pr_evd_level sigma)
-              p
-          in
+          let msg = explain_incon sigma p in
           state, !: (B.mkERROR (Pp.string_of_ppcmds msg)), []
 
 let gref_set, gref_set_decl = B.ocaml_set_conv ~name:"coq.gref.set" gref (module GRSet)
