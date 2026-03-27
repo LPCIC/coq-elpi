@@ -24,13 +24,15 @@ open Rocq_elpi_utils
 
 (* {{{ CData ************************************************************** *)
 
+type annot_name = (Name.t,EConstr.ERelevance.t) Context.pbinder_annot
+
 (* names *)
-let namein, naminc, isname, nameout, name =
+let namein, naminc, isname, nameout, (name : annot_name API.Conversion.t) =
   let { CD.cin; cino; isc; cout }, name  = CD.declare {
     CD.name = "name";
     doc = "Name.Name.t: Name hints (in binders), can be input writing a name between backticks, e.g. `x` or `_` for anonymous. Important: these are just printing hints with no meaning, hence in elpi two name are always related: `x` = `y`";
-    pp = (fun fmt x ->
-      Format.fprintf fmt "`%a`" Pp.pp_with (Name.print x));
+    pp = (fun fmt (x : annot_name) ->
+      Format.fprintf fmt "`%a`" Pp.pp_with (Name.print @@ Context.binder_name x));
     compare = (fun _ _ -> 0);
     hash = (fun _ -> 0);
     hconsed = false;
@@ -43,23 +45,13 @@ let in_elpiast_name ~loc x = A.mkOpaque ~loc @@ naminc x
 let coq_language = ref API.Quotation.elpi_language
 let set_coq coq = coq_language := coq
 let name_of_name ~loc = function
-  | Names.Name.Anonymous -> None
-  | Names.Name.Name id -> Some (API.Ast.Name.from_string @@ Names.Id.to_string id, loc, !coq_language)
+  | { Context.binder_name = Names.Name.Anonymous } -> None
+  | { Context.binder_name = Names.Name.Name id } -> Some (API.Ast.Name.from_string @@ Names.Id.to_string id, loc, !coq_language)
 
 let is_coq_name ~depth t =
   match E.look ~depth t with
   | E.CData n -> isname n || (CD.is_string n && Id.is_valid (CD.to_string n))
   | _ -> false
-
-let in_coq_name ~depth t =
-  match E.look ~depth t with
-  | E.CData n when isname n -> nameout n
-  | E.CData n when CD.is_string n ->
-     let s = CD.to_string n in
-     if s = "_" then Name.Anonymous
-     else Name.Name (Id.of_string s)
-  | E.UnifVar _ -> Name.Anonymous
-  | _ -> err Pp.(str"Not a name: " ++ str (API.RawPp.Debug.show_term t))
 
 (* engine prologue, to break ciclicity *)
 
@@ -558,31 +550,6 @@ let ast_sort ~loc = function
   | Sorts.Type u -> A.mkAppGlobal ~loc ~hdloc:loc typc (A.mkOpaque ~loc @@ univino u) []
   | _ -> assert false
 
-
-let in_coq_fresh ~id_only =
-  let mk_fresh dbl =
-    Id.of_string_soft
-      (Printf.sprintf "elpi_ctx_entry_%d_" dbl) in
-fun ~depth dbl name ~names ->
-  match in_coq_name ~depth name with
-  | Name.Anonymous when id_only -> Name.Name (mk_fresh dbl)
-  | Name.Anonymous as x -> x
-  | Name.Name id when Id.Set.mem id names -> Name.Name (mk_fresh dbl)
-  | Name.Name id as x -> x
-
-let relevant = EConstr.ERelevance.relevant
-let anonR = Context.make_annot Names.Name.Anonymous EConstr.ERelevance.irrelevant 
-let nameR x = Context.make_annot (Names.Name.Name x) EConstr.ERelevance.irrelevant 
-let annotR x = Context.make_annot x EConstr.ERelevance.irrelevant 
-    
-let in_coq_annot ~depth t = Context.make_annot (in_coq_name ~depth t) relevant
-
-let in_coq_fresh_annot_name ~depth ~coq_ctx dbl t =
-  Context.make_annot (in_coq_fresh ~id_only:false ~depth ~names:coq_ctx.names dbl t) relevant
-
-let in_coq_fresh_annot_id ~depth ~names dbl t =
-  let get_name = function Name.Name x -> x | Name.Anonymous -> assert false in
-  Context.make_annot (in_coq_fresh ~id_only:true ~depth ~names dbl t |> get_name) relevant
 
 let unspec2opt = function Elpi.Builtin.Given x -> Some x | Elpi.Builtin.Unspec -> None
 let opt2unspec = function Some x -> Elpi.Builtin.Given x | None -> Elpi.Builtin.Unspec
@@ -1178,6 +1145,54 @@ module UVMap = struct
 
 end
 
+let fresh_relevance_variable state =
+  S.update_return engine state (fun e -> 
+    let sigma, qv = Evd.new_quality_variable e.sigma in
+    let rv = Sorts.RelevanceVar qv in
+    let rv = EConstr.ERelevance.make rv in
+    { e with sigma }, rv)
+
+let mk_coq_annot state id =
+  let state, rv = fresh_relevance_variable state in
+  state, Context.make_annot (Name.Name id) rv
+
+let in_coq_name ~depth state t =
+  match E.look ~depth t with
+  | E.CData n when isname n -> state, nameout n
+  | E.CData n when CD.is_string n ->
+     let state, rv = fresh_relevance_variable state in
+     let s = CD.to_string n in
+     if s = "_" then
+      state, Context.make_annot Name.Anonymous rv
+     else
+      state, Context.make_annot (Name.Name (Id.of_string s)) rv
+  | E.UnifVar _ ->
+     let state, rv = fresh_relevance_variable state in
+     state, Context.make_annot Name.Anonymous rv
+  | _ -> err Pp.(str"Not a name: " ++ str (API.RawPp.Debug.show_term t))
+
+let in_coq_fresh ~id_only =
+  let mk_fresh dbl =
+    Id.of_string_soft
+      (Printf.sprintf "elpi_ctx_entry_%d_" dbl) in
+fun ~depth dbl name ~names state ->
+  let state, binder = in_coq_name ~depth name state in
+  state,match binder.Context.binder_name with
+        | Name.Anonymous when id_only -> { binder with Context.binder_name = Name.Name (mk_fresh dbl) }
+        | Name.Anonymous -> binder
+        | Name.Name id when Id.Set.mem id names -> { binder with Context.binder_name = Name.Name (mk_fresh dbl) }
+        | Name.Name _ -> binder
+
+let in_coq_annot ~depth state t = in_coq_name ~depth state t
+
+let in_coq_fresh_annot_name ~depth ~coq_ctx dbl state t =
+  in_coq_fresh ~id_only:false ~depth ~names:coq_ctx.names dbl state t
+
+let in_coq_fresh_annot_id ~depth ~names dbl state t =
+  let get_name (st,n) = st, Context.map_annot (function Name.Name x -> x | Name.Anonymous -> assert false) n in
+  in_coq_fresh ~id_only:true ~depth ~names dbl state t |> get_name
+
+
 let section_ids env =
     let named_ctx = Environ.named_context env in
     Context.Named.fold_inside
@@ -1611,25 +1626,25 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
     | C.Cast (t,_,ty0) ->
          let state, t = aux ~depth env state t in
          let state, ty = aux ~depth env state ty0 in
-         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(Context.make_annot Anonymous relevant,ty0)) env in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(EConstr.anonR,ty0)) env in
          let state, self = aux ~depth:(depth+1) env state (EC.mkRel 1) in
-         state, in_elpi_let Names.Name.Anonymous t ty self
+         state, in_elpi_let EConstr.anonR t ty self
     | C.Prod(n,s0,t) ->
          let state, s = aux ~depth env state s0 in
          let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(n,s0)) env in
          let state, t = aux ~depth:(depth+1) env state t in
-         state, in_elpi_prod n.Context.binder_name s t
+         state, in_elpi_prod n s t
     | C.Lambda(n,s0,t) ->
          let state, s = aux ~depth env state s0 in
          let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(n,s0)) env in
          let state, t = aux ~depth:(depth+1) env state t in
-         state, in_elpi_lam n.Context.binder_name s t
+         state, in_elpi_lam n s t
     | C.LetIn(n,b0,s0,t) ->
          let state, b = aux ~depth env state b0 in
          let state, s = aux ~depth env state s0 in
          let env = EConstr.push_rel Context.Rel.Declaration.(LocalDef(n,b0,s0)) env in
          let state, t = aux ~depth:(depth+1) env state t in
-         state, in_elpi_let n.Context.binder_name b s t
+         state, in_elpi_let n b s t
     | C.App(hd,args) ->
          let state, hd = aux ~depth env state hd in
          let state, args = CArray.fold_left_map (aux ~depth env) state args in
@@ -1659,7 +1674,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, typ = aux ~depth env state typ0 in
          let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
          let state, bo = aux ~depth:(depth+1) env state bo in
-         state, in_elpi_fix name.Context.binder_name rarg typ bo
+         state, in_elpi_fix name rarg typ bo
     | C.Proj(p,_,t) ->
          let state, t = aux ~depth env state t in
          let state, p = in_elpi_primitive ~depth state (Projection p) in
@@ -1681,16 +1696,16 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
   let gls = ref [] in
   let rec aux i ~depth coq_ctx state = function
     | [] -> state, coq_ctx
-    | LocalAssum (Context.{binder_name=coq_name}, ty) as e :: rest ->
-        let name = Name coq_name in
+    | LocalAssum (name, ty) as e :: rest ->
+        let name = Context.map_annot (fun x -> Name x) name in
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state ty in
         gls := gls_ty @ !gls;
         let hsrc = mk_decl ~depth name ~ty in
         let hyp = { E.hsrc ; hdepth = depth + 1 } in
         let coq_ctx = push_coq_ctx_proof depth (e,hyp) coq_ctx in
         aux (succ i) ~depth:(depth+1) coq_ctx state rest
-      | LocalDef (Context.{binder_name=coq_name},bo,ty) as e :: rest ->
-        let name = Name coq_name in
+      | LocalDef (name,bo,ty) as e :: rest ->
+        let name = Context.map_annot (fun x -> Name x) name in
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state ty in
         let state, bo, gls_bo = constr2lp coq_ctx ~calldepth ~depth:(depth+1) state bo in
         gls := gls_ty @ gls_bo @ !gls;
@@ -2081,10 +2096,10 @@ let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial
         let state, bo, gl2 = aux coq_ctx depth state bo in
         state, Context.Named.Declaration.LocalDef(id,bo,ty), gl1 @ gl2
   in
-  let of_elpi_ctx_entry_name dbl names ~depth e =
+  let of_elpi_ctx_entry_name dbl names ~depth state e =
     match e with
-    | `Decl(name_hint,_) -> in_coq_fresh_annot_id ~depth ~names dbl name_hint
-    | `Def(name_hint,_,_) -> in_coq_fresh_annot_id ~depth ~names dbl name_hint
+    | `Decl(name_hint,_) -> in_coq_fresh_annot_id ~depth ~names dbl state name_hint
+    | `Def(name_hint,_,_) -> in_coq_fresh_annot_id ~depth ~names dbl state name_hint
   in
   let rec build_ctx_entry coq_ctx state gls = function
     | [] -> state, coq_ctx, List.(concat (rev gls))
@@ -2097,19 +2112,20 @@ let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial
   in
   (* we go from the bottom (most recent addition) to the top in order to
      give precedence to the name recently introduced *)
-  let rec ctx_entries_names names i =
-    if i < 0 then []
+  let rec ctx_entries_names names i state =
+    if i < 0 then state, []
     else (* context entry for the i-th variable *)
       if not (Int.Map.mem i dbl2ctx)
-      then ctx_entries_names names (i - 1)
+      then ctx_entries_names names (i - 1) state
       else
         let d, t, e = Int.Map.find i dbl2ctx in
-        let id = of_elpi_ctx_entry_name i names ~depth:d e in
+        let state, id = of_elpi_ctx_entry_name i names ~depth:d state e in
         let names = Id.Set.add (Context.binder_name id) names in
-        (i,id,d,t,e) :: ctx_entries_names names (i - 1)
+        let state, res = ctx_entries_names names (i - 1) state in
+        state, (i,id,d,t,e) :: res
   in
-    ctx_entries_names Id.Set.empty (depth-1) |>
-    List.rev |> (* we need to readback the context from top to bottom *)
+    let state, names = ctx_entries_names Id.Set.empty (depth-1) state in
+    List.rev names |> (* we need to readback the context from top to bottom *)
     build_ctx_entry initial_coq_ctx state []
 
 (* ***************************************************************** *)
@@ -2153,14 +2169,14 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
     end
  (* binders *)
   | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
-      let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name in
+      let state, name = in_coq_fresh_annot_name ~depth ~coq_ctx depth state name in
       let state, s, gl1 = aux ~depth state ~on_ty:true s in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(name,s)) coq_ctx in
       let state, t, gl2 = aux_lam coq_ctx ~depth state t in
       if lamc == c then state, EC.mkLambda (name,s,t), gl1 @ gl2
       else state, EC.mkProd (name,s,t), gl1 @ gl2
   | E.App(c,name,[s;b;t]) when letc == c ->
-      let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name in
+      let state, name = in_coq_fresh_annot_name ~depth ~coq_ctx depth state name in
       let state, s, gl1 = aux ~depth state ~on_ty:true s in
       let state, b, gl2 = aux ~depth state b in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalDef(name,b,s)) coq_ctx in
@@ -2199,8 +2215,8 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
               | Projection p ->
                   let state, i, gl1 = aux ~depth state i in
                   let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
-                  (* TODO handle relevance *)
-                  state, EC.mkApp (EC.mkProj (p,relevant,i),Array.of_list xs), gls @ gl1 @ gl2
+                  let state, rv = fresh_relevance_variable state in
+                  state, EC.mkApp (EC.mkProj (p,rv,i),Array.of_list xs), gls @ gl1 @ gl2
               | _ ->  err Pp.(str"not a primitive projection:" ++ str (E.Constants.show c))
               end
           | x, _ ->
@@ -2246,7 +2262,8 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       begin match ind with
       | `SomeInd ind ->
           let ci = Inductiveops.make_case_info (get_global_env state) ind C.MatchStyle in
-          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,(rt,relevant),C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
+          let state, rv = fresh_relevance_variable state in
+          state, EC.mkCase (EConstr.contract_case (get_global_env state) sigma (ci,(rt,rv),C.NoInvert,t,Array.of_list bt)), gl1 @ gl2 @ gl3
       | `None -> CErrors.anomaly Pp.(str "non dependent match on unknown, non singleton, inductive")
       | `SomeTerm (n,rt) ->
           let ci = default_case_info () in
@@ -2254,12 +2271,13 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
             match bt with
             | [t] -> [||], t
             | _ -> assert false in
-          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],(([|n|],rt),relevant),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
+          let state, rv = fresh_relevance_variable state in
+          state, EConstr.mkCase (ci,EConstr.EInstance.empty,[||],(([|n|],rt),rv),Constr.NoInvert,t,[|b|]), gl1 @ gl2 @ gl3
       end
 
  (* fix *)
   | E.App(c,name,[rno;ty;bo]) when fixc == c ->
-      let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name in
+      let state, name = in_coq_fresh_annot_name ~depth ~coq_ctx depth state name in
       let state, ty, gl1 = aux ~depth state ~on_ty:true ty in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
       let state, bo, gl2 = aux_lam coq_ctx ~depth state bo in
@@ -3012,9 +3030,9 @@ let in_coq_bool ~depth state ~default b =
   | Elpi.Builtin.Unspec -> default
 
 let in_elpi_arity_parameter id ~imp ty rest =
-  E.mkApp arity_parameterc (in_elpi_id id) [imp;ty;E.mkLam rest]
+  E.mkApp arity_parameterc (in_elpi_id @@ Context.binder_name id) [imp;ty;E.mkLam rest]
 let in_elpi_inductive_parameter id ~imp ty rest =
-  E.mkApp inductive_parameterc (in_elpi_id id) [imp;ty;E.mkLam rest]
+  E.mkApp inductive_parameterc (in_elpi_id @@ Context.binder_name id) [imp;ty;E.mkLam rest]
   
 let in_elpi_arity t =
   E.mkApp arityc t []
@@ -3063,7 +3081,7 @@ let readback_arity ~depth coq_ctx constraints state t =
   let rec aux_arity coq_ctx ~depth params impls state extra t =
     match E.look ~depth t with
     | E.App(c,name,[imp;ty;decl]) when is_coq_name ~depth name && c == arity_parameterc ->
-        let name = in_coq_annot ~depth name in
+        let state, name = in_coq_annot ~depth state name in
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
@@ -3258,9 +3276,10 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       let private_ind = false in
       let state, poly, cumulative, udecl, variances =
         poly_cumul_udecl_variance_of_options state coq_ctx.options in
+      let state, name = mk_coq_annot state itname in
       let the_type =
         let open Context.Rel.Declaration in
-        LocalAssum(nameR itname, EConstr.it_mkProd_or_LetIn arity (nuparams @ params)) in
+        LocalAssum(name, EConstr.it_mkProd_or_LetIn arity (nuparams @ params)) in
       let env_ar_params = (Global.env ()) |> EC.push_rel the_type |> EC.push_rel_context (nuparams @ params) in
 
     (* restruction to used universes *)
@@ -3316,10 +3335,10 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       begin match E.look ~depth fields with
       | E.Lam fields ->
         let state, fs, tf = aux_fields (depth+1) state ind fields in
-        let name = in_coq_name ~depth n in
+        let state, name = in_coq_name ~depth state n in
         let state, atts, gls = record_field_attributes.API.Conversion.readback ~depth state atts in
         assert(gls = []);
-        state, { name; is_coercion = is_coercion_att atts; is_canonical = is_canonical_att atts } :: fs,
+        state, { name = name.Context.binder_name; is_coercion = is_coercion_att atts; is_canonical = is_canonical_att atts } :: fs,
           in_elpi_prod name ty tf
       | _ -> err Pp.(str"field/end-record expected: "++
                    str (pp2string P.(term depth) fields))
@@ -3334,14 +3353,14 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
 
     match E.look ~depth t with
     | E.App(c,name,[imp;ty;decl]) when is_coq_name ~depth name && c == inductive_parameterc ->
-        let name = in_coq_annot ~depth name in
+        let state, name = in_coq_annot ~depth state name in
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
         aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_binding_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
     | E.App(c,id,[fin;arity;ks])
       when c == inductivec ->
-        let name = in_coq_annot ~depth id in
+        let state, name = in_coq_annot ~depth state id in
         if Name.is_anonymous (Context.binder_name name) then
           err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
         let fin = if in_coq_bool ~depth state ~default:true fin then Declarations.Finite else Declarations.CoFinite in
@@ -3365,7 +3384,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
 
         let state, arity, gl1 = lp2constr coq_ctx ~depth state arity in
 
-        let name = in_coq_annot ~depth id in
+        let state, name = in_coq_annot ~depth state id in
         if Name.is_anonymous (Context.binder_name name) then
           err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
         let e = Context.Rel.Declaration.LocalAssum(name,arity) in
@@ -3443,7 +3462,7 @@ let mk_arity_parameter2 ~depth name impl ty rest state =
   
 let mk_ctx_item_record_field ~depth name atts ty rest state =
   let state, atts, gls = record_field_attributes.API.Conversion.embed ~depth state (Elpi.Builtin.Given atts) in
-  state, in_elpi_field atts name ty rest
+  state, in_elpi_field atts (Context.binder_name name) ty rest
 
 let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~mk_ctx_item kont =
   let gls = ref [] in
@@ -3453,12 +3472,12 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
         gls := gls_t @ !gls;
         state, t
     | { id; typ; extra } :: rest ->
-        let name = Names.Name id in
+        let state, name = mk_coq_annot state id in
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth state typ in
         gls := gls_ty @ !gls;
         let hyp = mk_decl ~depth name ~ty in
         let hyps = { E.hsrc = hyp ; hdepth = depth } :: hyps in
-        let e = Context.Rel.Declaration.LocalAssum (annotR name, typ) in
+        let e = Context.Rel.Declaration.LocalAssum (name, typ) in
         let coq_ctx = push_coq_ctx_local depth e coq_ctx in
         let state, rest = aux ~depth:(depth+1) coq_ctx hyps state rest in
         mk_ctx_item ~depth name extra ty rest state
@@ -3529,7 +3548,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
         let i = i + 1 in (* init is 0 based, rels are 1 base *)
         if i = arityno + paramsno + 1 then
           let ind = EC.mkRel (arityno + 1) in
-          iter paramsno ind (fun x -> EConstr.mkLambda (anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
+          iter paramsno ind (fun x -> EConstr.mkLambda (EConstr.anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
         else if i > arityno then EC.mkRel(i+1)
         else EC.mkRel i) in
       let reloc ctx_len t =
@@ -3537,7 +3556,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
         Reductionops.nf_beta (Global.env()) sigma t in
     
       let state, arity, gls1 = embed_arity ~depth coq_ctx state (nuparams,typ) in
-      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(anonR,EConstr.mkProp)) coq_ctx in
+      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(EConstr.anonR,EConstr.mkProp)) coq_ctx in
       let depth = depth+1 in
       let embed_constructor state { id; arity; typ } =
         let alen = List.length arity in
