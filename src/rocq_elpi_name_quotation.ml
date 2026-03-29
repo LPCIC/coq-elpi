@@ -8,8 +8,8 @@ open Rocq_elpi_HOAS
 open Names
 
 let to_name ~loc src =
-    if src = "_" then in_elpiast_name ~loc Name.Anonymous
-    else in_elpiast_name ~loc (Name.Name (Id.of_string src))
+    if src = "_" then in_elpiast_name ~loc (Context.make_annot Name.Anonymous EConstr.ERelevance.relevant)
+    else in_elpiast_name ~loc (Context.make_annot (Name.Name (Id.of_string src)) EConstr.ERelevance.relevant)
 
 (* Install the quotation *)
 let () =
