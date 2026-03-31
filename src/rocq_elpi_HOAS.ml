@@ -3087,13 +3087,17 @@ let inference_nonuniform_params_off =
     ~name:"elpi.unsupported-nonuniform-parameters-inference"
     ~category:Rocq_elpi_utils.elpi_cat Pp.(fun () ->
       strbrk"Inference of non-uniform parameters is not available in Elpi, please use the explicit | mark in the inductive declaration or Set Uniform Inductive Parameters")
-      
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let collapse = UState.collapse_sort_variables
+[%%else]
+let collapse = UState.collapse_sort_variables ~only_above_prop:false
+[%%endif]
 let restricted_sigma_of s state =
   let sigma = get_sigma state in
   let ustate = Evd.ustate sigma in
   let ustate = UState.restrict_even_binders ustate s in
   let ustate = UState.fix_undefined_variables ustate in
-  let ustate = UState.collapse_sort_variables ustate in
+  let ustate = collapse ustate in
   let sigma = Evd.set_universe_context sigma ustate in
   sigma
 
