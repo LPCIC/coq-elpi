@@ -42,6 +42,7 @@ let namein, naminc, isname, nameout, (name : annot_name API.Conversion.t) =
 ;;
 let in_elpi_name x = namein x
 let in_elpiast_name ~loc x = A.mkOpaque ~loc @@ naminc x
+let annot_of_name n = Context.make_annot n EConstr.ERelevance.relevant
 let coq_language = ref API.Quotation.elpi_language
 let set_coq coq = coq_language := coq
 let name_of_name ~loc = function
@@ -845,16 +846,19 @@ let lamc   = E.Constants.declare_global_symbol "fun"
 let in_elpi_lam n s t = E.mkApp lamc (in_elpi_name n) [s;E.mkLam t]
 
 let in_elpiast_lam ~loc n s t =
+  let n = annot_of_name n in
   A.mkAppGlobal ~loc ~hdloc:loc lamc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name ~loc n) t]
 
 let prodc  = E.Constants.declare_global_symbol "prod"
 let in_elpi_prod n s t = E.mkApp prodc (in_elpi_name n) [s;E.mkLam t]
 let in_elpiast_prod ~loc n s t =
+  let n = annot_of_name n in
   A.mkAppGlobal ~loc~hdloc:loc  prodc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name ~loc n) t]
 
 let letc   = E.Constants.declare_global_symbol "let"
 let in_elpi_let n b s t = E.mkApp letc (in_elpi_name n) [s;b;E.mkLam t]
 let in_elpiast_let ~loc n ~ty:s ~bo:b t =
+  let n = annot_of_name n in
   A.mkAppGlobal ~loc ~hdloc:loc letc (in_elpiast_name ~loc n) [s;b;A.mkLam ~loc (name_of_name ~loc n) t]
 
 (* other *)
@@ -904,6 +908,7 @@ let in_elpi_fix name rno ty bo =
   E.mkApp fixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam bo]
 
 let in_elpiast_fix ~loc n rno ty bo =
+  let n = annot_of_name n in
   A.mkAppGlobal ~loc ~hdloc:loc fixc (in_elpiast_name ~loc n) [A.mkOpaque ~loc @@ CD.int.cino rno; ty; A.mkLam ~loc (name_of_name ~loc n) bo]
   
 let primitivec   = E.Constants.declare_global_symbol "primitive"
@@ -1585,13 +1590,13 @@ let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
 
 let in_elpiast_decl ~loc ~v name ~ty =
-  A.mkAppGlobal ~loc ~hdloc:loc declc v [in_elpiast_name ~loc name;ty]
+  A.mkAppGlobal ~loc ~hdloc:loc declc v [in_elpiast_name ~loc (annot_of_name name);ty]
 
 let mk_def ~depth name ~bo ~ty =
   E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo]
 
 let in_elpiast_def ~loc ~v name ~ty ~bo =
-  A.mkAppGlobal ~loc ~hdloc:loc defc v [in_elpiast_name ~loc name;ty;bo]
+  A.mkAppGlobal ~loc ~hdloc:loc defc v [in_elpiast_name ~loc (annot_of_name name);ty;bo]
   
 let rec constr2lp coq_ctx ~calldepth ~depth state t =
   assert(depth >= coq_ctx.proof_len);
@@ -3141,21 +3146,26 @@ let name_universe_level state l =
         { e with sigma }, id
   )
 
+[%%if coq = "9.0" || coq = "9.1"]
+let fixup_variance v = v
+[%%else]
+let fixup_variance v = [||], v
+[%%endif]
 
 let poly_cumul_udecl_variance_of_options state options =
   match options.universe_decl with
-  | NotUniversePolymorphic -> state, false, false, default_univ_decl, [| |]
+  | NotUniversePolymorphic -> state, false, false, default_univ_decl, fixup_variance [| |]
   | Cumulative ((univ_lvlt_var,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
     let univdecl_instance, variance = List.split univ_lvlt_var in
     state, true, true,
     mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
-    Array.of_list variance
+    fixup_variance @@ Array.of_list variance
   | NonCumulative((univ_lvlt,univdecl_extensible_instance),(univdecl_constraints,univdecl_extensible_constraints)) ->
     let univdecl_instance = univ_lvlt in
     let variance = List.init (List.length univdecl_instance) (fun _ -> None) in
     state, true, false,
     mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
-    Array.of_list variance
+    fixup_variance @@ Array.of_list variance
 
 [%%if coq = "9.0"]
 let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite =
@@ -3455,10 +3465,10 @@ type hoas_ind = {
 
 let mk_inductive_parameter2 ~depth name impl ty rest state =
   let state, imp = in_elpi_imp ~depth state impl in
-  state, in_elpi_inductive_parameter ~imp name ty rest
+  state, in_elpi_inductive_parameter ~imp (Context.binder_name name) ty rest
 let mk_arity_parameter2 ~depth name impl ty rest state =
   let state, imp = in_elpi_imp ~depth state impl in
-  state, in_elpi_arity_parameter ~imp name ty rest
+  state, in_elpi_arity_parameter ~imp (Context.binder_name name) ty rest
   
 let mk_ctx_item_record_field ~depth name atts ty rest state =
   let state, atts, gls = record_field_attributes.API.Conversion.embed ~depth state (Elpi.Builtin.Given atts) in
@@ -3693,7 +3703,15 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
   let ind = { params; decl } in
   hoas_ind2lp ~depth coq_ctx state ind
 ;;
-       
+
+[%%if coq = "9.0" || coq = "9.1"]
+let fixup_mind_variance v = v
+[%%else]
+let fixup_mind_variance (q,v) =
+  if not @@ CArray.is_empty q then CErrors.user_err Pp.(str "Cumulative sort polymorphism not supported.");
+  v
+[%%endif]
+
 let upoly_decl_of ~depth state ~loose_udecl mie =
   let open Entries in
   match mie.mind_entry_universes with
@@ -3709,6 +3727,7 @@ let upoly_decl_of ~depth state ~loose_udecl mie =
           let state, up, gls = universe_decl.API.Conversion.embed ~depth state (NonCumul ((Array.to_list vars,loose_udecl),(csts,loose_udecl))) in
           state, (fun i -> E.mkApp uideclc i [up]), gls
       | Some variance ->
+          let variance = fixup_mind_variance variance in
           assert(Array.length variance = Array.length vars);
           let uv = Array.map2 (fun x y -> (x,y)) vars variance |> Array.to_list in
           let state, up, gls = universe_decl.API.Conversion.embed ~depth state (Cumul((uv,loose_udecl),(csts,loose_udecl))) in

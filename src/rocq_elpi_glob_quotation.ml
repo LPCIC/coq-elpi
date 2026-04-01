@@ -196,9 +196,11 @@ let under_ctx name ty bo ~k ~depth state =
             (Printf.sprintf "_elpi_ctx_entry_%d_" (Id.Map.cardinal coq_ctx.name2db)) in
     let name2db = Id.Map.add id depth coq_ctx.name2db in
     let state, ctx_entry =
+      let state, rv = fresh_relevance_variable state in
+      let aname = Context.make_annot name rv in
       match bo with
-      | None -> state, mk_decl ~depth name ~ty
-      | Some bo -> state, mk_def ~depth name ~bo ~ty in
+      | None -> state, mk_decl ~depth aname ~ty
+      | Some bo -> state, mk_def ~depth aname ~bo ~ty in
     let new_hyp = { E.hsrc = ctx_entry; hdepth = depth } in
     let state = set_coq_ctx_hyps state ({ coq_ctx with name2db }, new_hyp :: hyps) in
     let state = push_glob_ctx state id None in
