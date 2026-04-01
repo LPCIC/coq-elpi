@@ -1695,7 +1695,7 @@ exception TacticFails of Exninfo.iexn
 
 let call_tactic ~depth state ~no_tc proof_context goal tactic =
   let sigma = get_sigma state in
-  try 
+  try
     let sigma, subgoals =
       let open Proofview in let open Notations in
       let focused_tac =
@@ -1942,6 +1942,20 @@ let univ_binder_compat_820 a b = a
 [%%else]
 let univ_binder_compat_820 a b = b
 [%%endif]
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let declare_scheme_aux local ref k gr =
+  let ind =
+    match ref with
+    | GlobRef.IndRef i -> i
+    | _ -> U.type_error "Register_scheme: expecting an inductive"
+  in
+  declare_scheme local k (ind,for_scheme gr)
+[%%else]
+let declare_scheme_aux local ref k gr =
+  declare_scheme local k (ref,for_scheme gr)
+[%%endif]
+
 
 let coq_rest_builtins =
   let open API.BuiltIn in
@@ -2331,7 +2345,7 @@ Supported attributes:
             let section,l = section_close_section s in
             List.concat_map (function
               | Section.SecDefinition c -> [GlobRef.ConstRef c]
-              | Section.SecInductive m -> 
+              | Section.SecInductive m ->
                   let { Declarations.mind_packets } = Environ.lookup_mind m (Safe_typing.env_of_safe_env safe_env) in
                   List.init (Array.length mind_packets) (fun i -> GlobRef.IndRef(m,i))
               ) l :: aux section
@@ -4239,7 +4253,7 @@ In order to call the code between curly braces one has to run
 
 Note that each TACTIC EXTEND block can have many entries and their numbering
 starts from 0. Also, each block has a name, "Lia" in this case.
-    
+
 When the diagnostic is (error Msg), then GL is not set.
 
 Supported attributes:
@@ -4620,13 +4634,9 @@ Supported attributes:
       | Rocqlib x ->
         register_ref local x gr;
         state, (), []
-      | Scheme(x,k) ->
+      | Scheme(ref,k) ->
         let k = string_of_scheme_kind k in
-         let ind =
-          match x with
-          | GlobRef.IndRef i -> i
-          | _ -> U.type_error "Register_scheme: expecting an inductive" in
-        declare_scheme local k (ind,for_scheme gr);
+        declare_scheme_aux local ref k gr;
         state, (), []
       )),
   DocAbove);
