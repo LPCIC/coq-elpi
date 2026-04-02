@@ -29,7 +29,7 @@ Module DecEq.
   End theory.
 End DecEq.
 
-Require Import Coq.Lists.List.
+From Stdlib Require Import List.
 
 Inductive mbtree :=
 | mbnode : mbtree -> mbtree -> nat -> mbtree

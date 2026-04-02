@@ -7,10 +7,10 @@ abstract interfaces for ordered structures, sets, and various other data
 structures. *)
 
 (* We want to ensure that [le] and [lt] refer to operations on [nat].
-These two functions being defined both in [Coq.Bool] and in [Coq.Peano],
-we must export [Coq.Peano] later than any export of [Coq.Bool]. *)
-(* We also want to ensure that notations from [Coq.Utf8] take precedence
-over the ones of [Coq.Peano] (see Coq PR#12950), so we import [Utf8] last. *)
+These two functions being defined both in [Stdlib.Bool] and in [Stdlib.Peano],
+we must export [Stdlib.Peano] later than any export of [Stdlib.Bool]. *)
+(* We also want to ensure that notations from [Stdlib.Utf8] take precedence
+over the ones of [Stdlib.Peano] (see Coq PR#12950), so we import [Utf8] last. *)
 From Corelib Require Export Morphisms RelationClasses ListDef Setoid.
 From Stdlib Require Export Bool List Peano Utf8 Permutation.
 From Stdlib Require Export Program.Basics Program.Syntax.

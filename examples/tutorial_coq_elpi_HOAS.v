@@ -416,8 +416,8 @@ of constants.
 
 |*)
 
-Register Coq.Init.Datatypes.nat as my.N.
-Register Coq.Init.Logic.eq as my.eq.
+Register Corelib.Init.Datatypes.nat as my.N.
+Register Corelib.Init.Logic.eq as my.eq.
 
 Elpi Query lp:{{
 

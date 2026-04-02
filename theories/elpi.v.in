@@ -31,15 +31,15 @@ Inductive unknown_gref : Prop := .
 Register unknown_gref as elpi.unknown_gref.
 
 (* Common constants available inside Coq's syntax {{ ... lib:<name> ... }} *)
-Register Coq.Init.Logic.eq      as elpi.eq.
-Register Coq.Init.Logic.eq_refl as elpi.erefl.
+Register Corelib.Init.Logic.eq      as elpi.eq.
+Register Corelib.Init.Logic.eq_refl as elpi.erefl.
 
-Register Coq.Init.Logic.False as elpi.False.
+Register Corelib.Init.Logic.False as elpi.False.
 
-Register Coq.Init.Datatypes.bool  as elpi.bool.
-Register Coq.Init.Datatypes.andb  as elpi.andb.
-Register Coq.Init.Datatypes.true  as elpi.true.
-Register Coq.Init.Datatypes.false as elpi.false.
+Register Corelib.Init.Datatypes.bool  as elpi.bool.
+Register Corelib.Init.Datatypes.andb  as elpi.andb.
+Register Corelib.Init.Datatypes.true  as elpi.true.
+Register Corelib.Init.Datatypes.false as elpi.false.
 
 Register Corelib.Init.Datatypes.reflect  as elpi.reflect.
 Register Corelib.Init.Datatypes.ReflectF as elpi.ReflectF.

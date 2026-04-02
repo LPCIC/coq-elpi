@@ -67,7 +67,7 @@ Redirect "tmp" Check list_eqb_correct.
 Redirect "tmp" Check list_eqb_refl.
 (* ---------------------------------------------------- *)
 
-Require Vector.
+From Stdlib Require Vector.
 Elpi Print derive "elpi.apps.derive.tests/derive".
 #[only(eqOK), verbose] derive nat.
 Module Vector.
