@@ -7,9 +7,13 @@ open Rocq_elpi_utils
 open Rocq_elpi_HOAS
 open Names
 
+let qvar_annot n =
+  Context.make_annot n
+    (EConstr.ERelevance.make (Sorts.RelevanceVar (Sorts.QVar.make_unif "elpi_quotation" 0)))
+
 let to_name ~loc src =
-    if src = "_" then in_elpiast_name ~loc (Context.make_annot Name.Anonymous EConstr.ERelevance.relevant)
-    else in_elpiast_name ~loc (Context.make_annot (Name.Name (Id.of_string src)) EConstr.ERelevance.relevant)
+    if src = "_" then in_elpiast_name ~loc (qvar_annot Name.Anonymous)
+    else in_elpiast_name ~loc (qvar_annot (Name.Name (Id.of_string src)))
 
 (* Install the quotation *)
 let () =

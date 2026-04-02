@@ -42,7 +42,6 @@ let namein, naminc, isname, nameout, (name : annot_name API.Conversion.t) =
 ;;
 let in_elpi_name x = namein x
 let in_elpiast_name ~loc x = A.mkOpaque ~loc @@ naminc x
-let annot_of_name n = Context.make_annot n EConstr.ERelevance.relevant
 let coq_language = ref API.Quotation.elpi_language
 let set_coq coq = coq_language := coq
 let name_of_name ~loc = function
@@ -809,19 +808,16 @@ let lamc   = E.Constants.declare_global_symbol "fun"
 let in_elpi_lam n s t = E.mkApp lamc (in_elpi_name n) [s;E.mkLam t]
 
 let in_elpiast_lam ~loc n s t =
-  let n = annot_of_name n in
   A.mkAppGlobal ~loc ~hdloc:loc lamc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name ~loc n) t]
 
 let prodc  = E.Constants.declare_global_symbol "prod"
 let in_elpi_prod n s t = E.mkApp prodc (in_elpi_name n) [s;E.mkLam t]
 let in_elpiast_prod ~loc n s t =
-  let n = annot_of_name n in
   A.mkAppGlobal ~loc~hdloc:loc  prodc (in_elpiast_name ~loc n) [s;A.mkLam ~loc (name_of_name ~loc n) t]
 
 let letc   = E.Constants.declare_global_symbol "let"
 let in_elpi_let n b s t = E.mkApp letc (in_elpi_name n) [s;b;E.mkLam t]
 let in_elpiast_let ~loc n ~ty:s ~bo:b t =
-  let n = annot_of_name n in
   A.mkAppGlobal ~loc ~hdloc:loc letc (in_elpiast_name ~loc n) [s;b;A.mkLam ~loc (name_of_name ~loc n) t]
 
 (* other *)
@@ -871,7 +867,6 @@ let in_elpi_fix name rno ty bo =
   E.mkApp fixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam bo]
 
 let in_elpiast_fix ~loc n rno ty bo =
-  let n = annot_of_name n in
   A.mkAppGlobal ~loc ~hdloc:loc fixc (in_elpiast_name ~loc n) [A.mkOpaque ~loc @@ CD.int.cino rno; ty; A.mkLam ~loc (name_of_name ~loc n) bo]
   
 let primitivec   = E.Constants.declare_global_symbol "primitive"
@@ -1124,9 +1119,16 @@ let mk_coq_annot state id =
   let state, rv = fresh_relevance_variable state in
   state, Context.make_annot (Name.Name id) rv
 
+let mk_qvar_annot state n =
+  let state, rv = fresh_relevance_variable state in
+  state, Context.make_annot n rv
+
 let in_coq_name ~depth state t =
   match E.look ~depth t with
-  | E.CData n when isname n -> state, nameout n
+  | E.CData n when isname n ->
+     let an = nameout n in
+     let state, rv = fresh_relevance_variable state in
+     state, { an with Context.binder_relevance = rv }
   | E.CData n when CD.is_string n ->
      let state, rv = fresh_relevance_variable state in
      let s = CD.to_string n in
@@ -1545,13 +1547,13 @@ let mk_decl ~depth name ~ty =
   E.mkApp declc E.(mkConst depth) [in_elpi_name name; ty]
 
 let in_elpiast_decl ~loc ~v name ~ty =
-  A.mkAppGlobal ~loc ~hdloc:loc declc v [in_elpiast_name ~loc (annot_of_name name);ty]
+  A.mkAppGlobal ~loc ~hdloc:loc declc v [in_elpiast_name ~loc name;ty]
 
 let mk_def ~depth name ~bo ~ty =
   E.mkApp defc E.(mkConst depth) [in_elpi_name name; ty; bo]
 
 let in_elpiast_def ~loc ~v name ~ty ~bo =
-  A.mkAppGlobal ~loc ~hdloc:loc defc v [in_elpiast_name ~loc (annot_of_name name);ty;bo]
+  A.mkAppGlobal ~loc ~hdloc:loc defc v [in_elpiast_name ~loc name;ty;bo]
   
 let rec constr2lp coq_ctx ~calldepth ~depth state t =
   assert(depth >= coq_ctx.proof_len);

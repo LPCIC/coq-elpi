@@ -157,7 +157,9 @@ let rec rename_glob_vars l c = DAst.map_with_loc (fun ?loc -> function
 
 let under_glob_ctx name ~tyast ~k t state =
   match name with
-  | Names.Name.Anonymous -> k name t state
+  | Names.Name.Anonymous ->
+      let state, an = mk_qvar_annot state name in
+      k an t state
   | Names.Name.Name id ->
     (* let () = Printf.eprintf " intro %s\n" (Id.to_string id) in *)
       let { taken } = get_glob_env state in
@@ -168,7 +170,8 @@ let under_glob_ctx name ~tyast ~k t state =
           rename_glob_vars [id,new_id] t, new_id
         else t, id in
       let state = push_glob_ctx state id (Some (tyast id)) in
-      k (Names.Name.Name id) t state
+      let state, an = mk_qvar_annot state (Names.Name.Name id) in
+      k an t state
   
 (* Set by the parser that declares an ARGUMENT EXTEND to Coq *)
 let get_ctx, set_ctx, _update_ctx =
@@ -343,11 +346,13 @@ let gterm2lpast ~pattern ~language state glob =
 
   and mk_decl state ~loc name ~ty =
     let v = A.Term.mkBound ~loc ~language @@ name_of_id name in
-    in_elpiast_decl ~loc ~v (Name.Name name) ~ty
+    let _state, an = mk_qvar_annot state (Name.Name name) in
+    in_elpiast_decl ~loc ~v an ~ty
 
   and mk_def state ~loc name ~ty ~bo =
     let v = A.Term.mkBound ~loc ~language @@ name_of_id name in
-    in_elpiast_def ~loc ~v (Name.Name name) ~ty ~bo
+    let _state, an = mk_qvar_annot state (Name.Name name) in
+    in_elpiast_def ~loc ~v an ~ty ~bo
 
   and gterm2lp state ({ CAst.loc; v } as x) : A.Term.t =
   debug Pp.(fun () ->
@@ -443,7 +448,7 @@ let gterm2lpast ~pattern ~language state glob =
       let t = gterm2lp state t in
       let c_ty = gterm2lp state c_ty in
       let id = Id.of_string "self" in
-      let name = Names.Name.Name id in
+      let _state, name = mk_qvar_annot state (Names.Name.Name id) in
       let self = A.Term.mkBound ~loc ~language (name_of_id id) in
       in_elpiast_let ~loc name ~bo:t ~ty:c_ty self
 

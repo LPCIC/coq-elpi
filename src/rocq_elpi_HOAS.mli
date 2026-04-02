@@ -200,15 +200,16 @@ val in_elpiast_poly_gr : loc:Ast.Loc.t -> Names.GlobRef.t -> Ast.Term.t -> Ast.T
 val in_elpiast_poly_gr_instance : loc:Ast.Loc.t -> Names.GlobRef.t -> UVars.Instance.t -> Ast.Term.t
 val in_elpiast_flex_sort : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t
 val in_elpiast_sort : loc:Ast.Loc.t -> state -> Sorts.t -> Ast.Term.t
-val in_elpiast_prod : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
-val in_elpiast_lam : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
-val in_elpiast_let : loc:Ast.Loc.t -> Names.Name.t -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_prod : loc:Ast.Loc.t -> annot_name -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_lam : loc:Ast.Loc.t -> annot_name -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_let : loc:Ast.Loc.t -> annot_name -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t -> Ast.Term.t
 val in_elpiast_appl : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t list -> Ast.Term.t
 val in_elpiast_match : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t list -> Ast.Term.t
-val in_elpiast_fix : loc:Ast.Loc.t -> Names.Name.t -> int -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_fix : loc:Ast.Loc.t -> annot_name -> int -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val mk_qvar_annot : State.t -> Names.Name.t -> State.t * annot_name
 val in_elpiast_name : loc:Ast.Loc.t -> annot_name -> Ast.Term.t
-val in_elpiast_decl : loc:Ast.Loc.t -> v:Ast.Term.t -> Names.Name.t -> ty:Ast.Term.t -> Ast.Term.t
-val in_elpiast_def : loc:Ast.Loc.t -> v:Ast.Term.t -> Names.Name.t -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t
+val in_elpiast_decl : loc:Ast.Loc.t -> v:Ast.Term.t -> annot_name -> ty:Ast.Term.t -> Ast.Term.t
+val in_elpiast_def : loc:Ast.Loc.t -> v:Ast.Term.t -> annot_name -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t
 
 val in_coq_name : depth:int -> State.t -> term -> State.t * annot_name
 val is_coq_name : depth:int -> term -> bool
