@@ -10,7 +10,7 @@
 *)
 
 From elpi Require elpi.
-Require Arith ZArith Psatz List ssreflect.
+From Stdlib Require Arith ZArith Psatz List ssreflect.
 
 Import elpi.
 Import Arith ZArith Psatz List ssreflect.

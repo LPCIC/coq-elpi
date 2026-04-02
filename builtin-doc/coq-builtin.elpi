@@ -1676,7 +1676,7 @@ external func coq.ltac.collect-simple-goals term -> list goal,
 % Note that each TACTIC EXTEND block can have many entries and their
 % numbering
 % starts from 0. Also, each block has a name, "Lia" in this case.
-%     
+% 
 % When the diagnostic is (error Msg), then GL is not set.
 % 
 % Supported attributes:

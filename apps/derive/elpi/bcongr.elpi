@@ -20,7 +20,7 @@ func bo-args term, term, term, list arg -> term.
 bo-args (prod N S T) K1 K2 Hs (fun `x` S x\ fun `y` S y\ fun `b` {{bool}} b\ R x y b) :- !,
   @pi-decl `x` S x\
   @pi-decl `y` S y\
-  @pi-decl `b` {{ Coq.Init.Datatypes.bool }} b\
+  @pi-decl `b` {{ Corelib.Init.Datatypes.bool }} b\
   @pi-decl Hn (TH x y b) h\
   do! [
     TH x y b = {{ lib:elpi.reflect (lib:@elpi.eq lp:S lp:x lp:y) lp:b }},

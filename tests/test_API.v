@@ -60,7 +60,7 @@ Elpi Query lp:{{
   coq.locate "nat"                    (indt GR),
   coq.locate "Datatypes.nat"          (indt GR),
   coq.locate "Init.Datatypes.nat"     (indt GR),
-  coq.locate "Coq.Init.Datatypes.nat" (indt GR).
+  coq.locate "Corelib.Init.Datatypes.nat" (indt GR).
 }}.
 
 Fail Elpi Query lp:{{

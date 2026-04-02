@@ -1,5 +1,5 @@
 From elpi Require Import elpi.
-Require Import Arith ZArith List FunctionalExtensionality.
+From Stdlib Require Import Arith ZArith List FunctionalExtensionality.
 
 Axiom map2 : (nat -> nat -> nat) -> list nat -> list nat -> list nat.
 

@@ -12,8 +12,9 @@ intro E.
 assumption.
 Qed.
 
-Require Vector.
-Require Import ssreflect Arith.
+From Stdlib Require Vector.
+From Corelib Require Import ssreflect.
+From Stdlib Require Import Arith.
 
 Elpi derive.projK Vector.t.
 
