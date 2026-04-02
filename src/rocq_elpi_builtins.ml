@@ -546,13 +546,33 @@ let abbreviation_declare = Abbreviation.declare
 let for_scheme = function
 | GlobRef.ConstRef c -> c
 | _ -> U.type_error "Register Scheme: expecing a constant."
-let lookup_scheme_opt k ind =
-  try Some (GlobRef.ConstRef (DeclareScheme.lookup_scheme k ind))
-  with Not_found -> None
+let lookup_scheme_opt k gr =
+  match gr with
+  | GlobRef.IndRef ind ->
+    (try Some (GlobRef.ConstRef (DeclareScheme.lookup_scheme k ind))
+     with Not_found -> None)
+  | _ -> None
+[%%elif coq = "9.2"]
+let for_scheme gr = gr
+let lookup_scheme_opt k gr =
+  match gr with
+  | GlobRef.IndRef ind -> DeclareScheme.lookup_scheme_opt k ind
+  | _ -> None
 [%%else]
 let for_scheme gr = gr
-let lookup_scheme_opt k ind =
-  DeclareScheme.lookup_scheme_opt k ind
+let lookup_scheme_opt k gr =
+  DeclareScheme.lookup_scheme_opt k gr
+[%%endif]
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let declare_scheme_for local k x gr =
+  let ind = match x with
+    | GlobRef.IndRef i -> i
+    | _ -> U.type_error "Register_scheme: expecting an inductive" in
+  DeclareScheme.declare_scheme local k (ind, for_scheme gr)
+[%%else]
+let declare_scheme_for local k x gr =
+  DeclareScheme.declare_scheme local k (x, for_scheme gr)
 [%%endif]
 
 let cs_pattern =
@@ -4627,11 +4647,7 @@ Supported attributes:
         state, (), []
       | Scheme(x,k) ->
         let k = string_of_scheme_kind k in
-         let ind =
-          match x with
-          | GlobRef.IndRef i -> i
-          | _ -> U.type_error "Register_scheme: expecting an inductive" in
-        declare_scheme local k (ind,for_scheme gr);
+        declare_scheme_for local k x gr;
         state, (), []
       )),
   DocAbove);
@@ -4642,11 +4658,7 @@ Supported attributes:
     Out(option gref, "Scheme",
     Easy "looks up the scheme of the given kind for GR. Returns none if GR is not an inductive or no such scheme is registered."))),
   (fun k gr _ ~depth ->
-    let k = string_of_scheme_kind k in
-    match gr with
-    | GlobRef.IndRef ind ->
-      !: (lookup_scheme_opt k ind)
-    | _ -> !: None)),
+    !: (lookup_scheme_opt (string_of_scheme_kind k) gr))),
   DocAbove);
 
   LPDoc "-- Extra Dependencies -----------------------------------------------";
