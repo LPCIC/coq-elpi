@@ -546,8 +546,13 @@ let abbreviation_declare = Abbreviation.declare
 let for_scheme = function
 | GlobRef.ConstRef c -> c
 | _ -> U.type_error "Register Scheme: expecing a constant."
+let lookup_scheme_opt k ind =
+  try Some (GlobRef.ConstRef (DeclareScheme.lookup_scheme k ind))
+  with Not_found -> None
 [%%else]
 let for_scheme gr = gr
+let lookup_scheme_opt k ind =
+  DeclareScheme.lookup_scheme_opt k ind
 [%%endif]
 
 let cs_pattern =
@@ -4629,6 +4634,19 @@ Supported attributes:
         declare_scheme local k (ind,for_scheme gr);
         state, (), []
       )),
+  DocAbove);
+
+  MLCode(Pred("coq.env.scheme",
+    In(scheme_kind, "Kind",
+    In(gref, "GR",
+    Out(option gref, "Scheme",
+    Easy "looks up the scheme of the given kind for GR. Returns none if GR is not an inductive or no such scheme is registered."))),
+  (fun k gr _ ~depth ->
+    let k = string_of_scheme_kind k in
+    match gr with
+    | GlobRef.IndRef ind ->
+      !: (lookup_scheme_opt k ind)
+    | _ -> !: None)),
   DocAbove);
 
   LPDoc "-- Extra Dependencies -----------------------------------------------";
