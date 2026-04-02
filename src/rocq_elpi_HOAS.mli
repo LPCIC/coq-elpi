@@ -226,6 +226,7 @@ val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.abbreviation Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t
 val collect_term_variables : depth:int -> term -> Names.Id.t list
+val subst_cdata : Mod_subst.substitution -> Elpi.API.RawOpaqueData.t -> Elpi.API.RawOpaqueData.t
 type pstring = Pstring.t
 type primitive_value =
   | Uint63 of Uint63.t
