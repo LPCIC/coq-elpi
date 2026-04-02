@@ -1895,6 +1895,12 @@ external symbol coq.register.scheme : gref -> coq.register.scheme-kind ->
 % Scheme)
 external func coq.register gref, coq.register.
 
+% [coq.env.scheme Kind GR Scheme] looks up the scheme of the given kind for
+% GR. Returns none if GR is not an inductive or no such scheme is
+% registered.
+external func coq.env.scheme coq.register.scheme-kind, 
+                            gref -> option gref.
+
 % -- Extra Dependencies -----------------------------------------------
 
 % [coq.extra-dep Identifier FileName] Resolve the file name of an extra

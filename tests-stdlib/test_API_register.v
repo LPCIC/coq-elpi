@@ -26,3 +26,23 @@ intros p q H.
 injection H.
 apply id.
 Qed.
+
+Elpi Query lp:{{
+  coq.env.scheme coq.register.scheme.eq_dec {{:gref T}} (some GR),
+  coq.say "eq_dec scheme for T:" GR.
+}}.
+
+Elpi Query lp:{{
+  coq.env.scheme coq.register.scheme.ind_dep {{:gref nat}} (some GR),
+  coq.say "ind_dep scheme for nat:" GR.
+}}.
+
+Elpi Query lp:{{
+  coq.env.scheme coq.register.scheme.rect_dep {{:gref nat}} (some GR),
+  coq.say "rect_dep scheme for nat:" GR.
+}}.
+
+(* non-inductive gref returns none *)
+Elpi Query lp:{{
+  coq.env.scheme coq.register.scheme.ind_dep {{:gref T_dec}} none.
+}}.
