@@ -644,6 +644,23 @@ let inductiveina ~loc x = A.mkOpaque ~loc (inductiveino x)
 let constantina ~loc x = A.mkOpaque ~loc (constantino x)
 let constructorina ~loc x = A.mkOpaque ~loc (constructorino x)
 
+let subst_cdata subst c =
+  if isconstant c then
+    match constantout c with
+    | Variable _ -> c
+    | Constant k ->
+      let k' = Mod_subst.subst_constant subst k in
+      if k == k' then c else constantino (Constant k')
+  else if isinductive c then
+    let i = inductiveout c in
+    let i' = Mod_subst.subst_ind subst i in
+    if i == i' then c else inductiveino i'
+  else if isconstructor c then
+    let k = constructorout c in
+    let k' = Mod_subst.subst_constructor subst k in
+    if k == k' then c else constructorino k'
+  else c
+
 let compare_instances x y =
   let qx, ux = UVars.Instance.to_array x
   and qy, uy = UVars.Instance.to_array y in

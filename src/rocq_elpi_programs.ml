@@ -8,16 +8,16 @@ module EP = API.Parse
 
 open Rocq_elpi_utils
 type program_name = Loc.t * qualified_name
-type cunit = Full of Names.KerName.t * EC.compilation_unit | Signature of EC.compilation_unit_signature
-let name_of_cunit = function Full(_,u) -> EC.compilation_unit_name u | Signature s -> EC.compilation_unit_signature_name s
+type cunit = Full of Names.KerName.t * EC.compilation_unit | Signature of Names.KerName.t * EC.compilation_unit_signature
+let name_of_cunit = function Full(_,u) -> EC.compilation_unit_name u | Signature(_,s) -> EC.compilation_unit_signature_name s
 type what = Code | SignatureOnly
 let pp_cunit fmt = function
   | Full (kn,u) -> Format.fprintf fmt "Full(%s,%s)" Names.KerName.(debug_to_string kn) (EC.compilation_unit_name u)
-  | Signature s -> Format.fprintf fmt "Signature %s" (EC.compilation_unit_signature_name s)
+  | Signature(kn,s) -> Format.fprintf fmt "Signature(%s,%s)" Names.KerName.(debug_to_string kn) (EC.compilation_unit_signature_name s)
 let eq_cunit x y =
   match x,y with
   | Full(k1,_), Full(k2,_) -> Names.KerName.equal k1 k2
-  | Signature s1, Signature s2 -> EC.compilation_unit_signature_name s1 = EC.compilation_unit_signature_name s2 && EC.compilation_unit_signature_digest s1 = EC.compilation_unit_signature_digest s2
+  | Signature(k1,_), Signature(k2,_) -> Names.KerName.equal k1 k2
   | _ -> false
 
 [%%if coq = "9.0"]
@@ -46,14 +46,34 @@ and src_db_header = {
   dast : cunit;
 }
 
+let subst_cunit subst = function
+  | Full (kn, cu) as orig ->
+    let kn' = Mod_subst.subst_kn subst kn in
+    let cu' = EC.map_compilation_unit (Rocq_elpi_HOAS.subst_cdata subst) cu in
+    if kn == kn' && cu == cu' then orig else Full (kn', cu')
+  | Signature (kn, cu) as orig ->
+    let kn' = Mod_subst.subst_kn subst kn in
+    if kn == kn' then orig  else Signature (kn', cu)
+
+let subst_src subst = function
+  | File ({ fname; fast } as f) ->
+    let fast' = subst_cunit subst fast in
+    if fast == fast' then File f else File { fname; fast = fast' }
+  | DatabaseBody n -> DatabaseBody n
+  | DatabaseHeader ({ dast } as h) ->
+    let dast' = subst_cunit subst dast in
+    if dast == dast' then DatabaseHeader h else DatabaseHeader { dast = dast' }
+
 let alpha = 65599
 let combine_hash h1 h2 = h1 * alpha + h2
 
-let hash_cunit = function | Full (kn,_) -> Names.KerName.hash kn | Signature s -> Hashtbl.hash s (* TODO *)
+let hash_cunit = function
+  | Full (kn,_) -> Names.KerName.hash kn
+  | Signature (kn,_) -> Names.KerName.hash kn + 1
 let compare_cunit a b =
   match a,b with
   | Full(kn1,_), Full(kn2,_) -> Names.KerName.compare kn1 kn2
-  | Signature s1, Signature s2 -> if Hashtbl.hash s1 == Hashtbl.hash s2 then 0 else -1 (* BUG *)
+  | Signature(kn1,_), Signature(kn2,_) -> Names.KerName.compare kn1 kn2
   | Full _, Signature _ -> -1
   | Signature _, Full _ -> +1
 
@@ -296,30 +316,30 @@ module SourcesStorage(S : Stage) = struct
     declare_object @@ (superglobal_object_nodischarge "elpi-programs-names"
     ~cache:(fun (name,nature) ->
       program_name := SLMap.add name nature !program_name)
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+    ~subst:(Some (fun (_,x) -> x)))
 
   let declare_program name nature =
     let obj = in_program_name (name,nature) in
     Lib.add_leaf obj
-        
+
   let db_name : SLSet.t ref = Summary.ref  ~name:("elpi-dbs") SLSet.empty
   let file_name : SLSet.t ref = Summary.ref  ~name:("elpi-files") SLSet.empty
   let db_exists name = SLSet.mem name !db_name
   let file_exists name = SLSet.mem name !file_name
-  
+
   let in_db_name : qualified_name -> Libobject.obj =
     let open Libobject in
     declare_object @@
       (superglobal_object_nodischarge "elpi-db-names"
           ~cache:(fun name -> db_name := SLSet.add name !db_name)
-          ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+          ~subst:(Some (fun (_,x) -> x)))
 
   let in_file_name : qualified_name -> Libobject.obj =
     let open Libobject in
     declare_object @@
       (superglobal_object_nodischarge "elpi-file-names"
           ~cache:(fun name -> file_name := SLSet.add name !file_name)
-          ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+          ~subst:(Some (fun (_,x) -> x)))
         
   let declare_db program =
     ignore @@ Lib.add_leaf (in_db_name program)
@@ -371,7 +391,7 @@ let in_source : Names.Id.t -> EC.compilation_unit * EC.flags -> Libobject.obj =
   in
   let import _ (_, s as o) = cache o in
   declare_named_object @@ { (default_object "ELPI-UNITS") with
-    subst_function =(fun _ -> CErrors.user_err Pp.(str"elpi: No functors"));
+    subst_function = (fun (_,o) -> o); (* Keep classification, subst unreachable *)
     load_function  = import;
     cache_function  = cache;
     open_function = my_filtered_open import;
@@ -402,13 +422,13 @@ let unit_from_ast ?error_header ~elpi ~flags ~base ~loc ast =
 
 let unit_signature_from_ast ~elpi ~flags ~base ~loc ast =
   try 
-    let _kn, u = source_cache_lookup (cc_flags ()) (EC.scoped_program_digest ast) in
-    Signature (EC.signature u)
+    let kn, u = source_cache_lookup (cc_flags ()) (EC.scoped_program_digest ast) in
+    Signature (kn,EC.signature u)
   with Not_found ->
   handle_elpi_compiler_errors ~loc (fun () ->
     let u = EC.unit ~elpi ~flags ~base ast in
-    let _kn, u = intern u flags in
-    Signature (EC.signature u))
+    let kn, u = intern u flags in
+    Signature (kn,EC.signature u))
         
 let unit_from_plugin ?error_header ~elpi ~base ~loc builtins ~flags : cunit =
   handle_elpi_compiler_errors ~loc (fun () ->
@@ -420,7 +440,7 @@ let assemble_unit ~loc base u =
   handle_elpi_compiler_errors ~loc (fun () ->
     match u with
     | Full(_, u) -> EC.extend ~base ~flags:(cc_flags ()) u
-    | Signature s -> EC.extend_signature ~base ~flags:(cc_flags ()) s)
+    | Signature(_, s) -> EC.extend_signature ~base ~flags:(cc_flags ()) s)
     
 let assemble_units ~base ~loc units =
   List.fold_left (assemble_unit ~loc) base units
@@ -518,7 +538,8 @@ let get ?(fail_if_not_exists=false) p =
     ~cache:(fun (name,src_ast,from) ->
       program_src :=
         SLMap.add name (append_to_prog from name src_ast) !program_src)
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+    ~subst:(Some (fun (subst, (name, src_ast, from)) ->
+      (name, subst_src subst src_ast, from)))
   
   
   let init_program name ~loc:_ ul =
@@ -567,7 +588,7 @@ let get ?(fail_if_not_exists=false) p =
         (s.scope = Rocq_elpi_utils.Global && is_inside_current_library kn) ||
         s.scope = Rocq_elpi_utils.SuperGlobal then cache o in
     declare_named_object @@ { (default_object "ELPI-DB") with
-      classify_function = (fun { scope; program; _ } ->
+      classify_function = (fun { scope; _ } ->
         match scope with
         | Rocq_elpi_utils.Local -> Dispose
         | Rocq_elpi_utils.Regular -> Substitute
@@ -575,7 +596,8 @@ let get ?(fail_if_not_exists=false) p =
         | Rocq_elpi_utils.SuperGlobal -> Keep);
       load_function  = load;
       cache_function  = cache;
-      subst_function = (fun (_,o) -> o);
+      subst_function = (fun (subst, ({ code; _ } as o)) ->
+        { o with code = List.map (subst_cunit subst) code });
       open_function = my_simple_open cache;
       discharge_function = (fun (({ scope; program; vars; } as o)) ->
         if scope = Rocq_elpi_utils.Local || (List.exists (fun x -> is_in_section (Names.GlobRef.VarRef x)) vars) then None
@@ -646,7 +668,7 @@ let get ?(fail_if_not_exists=false) p =
 
   let command_base_signature ~loc =
     command_init () |> List.map (function
-    | File { fast = Full(_,u) } -> Signature (EC.signature u) 
+    | File { fast = Full(kn,u) } -> Signature (kn,EC.signature u) 
     | _ -> assert false)
 
   let init_db qualid ~loc (sloc,s) =
