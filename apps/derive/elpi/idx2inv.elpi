@@ -17,7 +17,7 @@ params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :- coq.safe-dest-a
   compute-fix-ty Ty T Ti N FixTy,
   compute-fix-clause Ty T Ti N Prove,
   compute-fix-clause Ty T Ti {calc (N + 1)} Prove1,
-  @pi-decl `rec` Ty f\ Prove f => Prove1 f => compute-fix-bo Ty T Ti (FixBo f).
+  @pi-decl `rec` Ty f\ Prove f =!=> Prove1 f =!=> compute-fix-bo Ty T Ti (FixBo f).
 params (inductive _ _ Arity _) T Ti Bo :-
   coq.arity->term Arity Ty,
   compute-fix-bo Ty T Ti Bo.

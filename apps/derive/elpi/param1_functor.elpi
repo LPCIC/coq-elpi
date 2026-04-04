@@ -100,7 +100,7 @@ bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :- !,
   @pi-decl `rec` Fty f\
       mk-rec-clause A1 Ity1 Ity2 f (C f),
       mk-rec-clause-app A1 Ity1 Ity2 f (D f),
-      (D f) => (C f) => bo-idx A1 Ity1 Ity2 0 Recno Ps (Bo f) Fty.
+      (D f) =!=> (C f) =!=> bo-idx A1 Ity1 Ity2 0 Recno Ps (Bo f) Fty.
 
 bo-params N Lno Ity1 Ity2 {{ forall (a : lp:T1) (p : a -> Type), lp:(Rty1 a p) }}
                           {{ forall (a : _) (p : a -> Type), lp:(Rty2 a p) }}
@@ -111,7 +111,7 @@ bo-params N Lno Ity1 Ity2 {{ forall (a : lp:T1) (p : a -> Type), lp:(Rty1 a p) }
   pi a pa pb f\ sigma Ity1A Ity2A \
     coq.mk-app Ity1 [a,pa] Ity1A,
     coq.mk-app Ity2 [a,pb] Ity2A,
-    Clause pa pb f =>
+    Clause pa pb f =!=>
     decl a `a` {{ Type }} =>
     decl pa `pa` {{ lp:a -> Type }} =>
     decl pb `pb` {{ lp:a -> Type }} =>
