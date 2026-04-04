@@ -5,7 +5,7 @@
 [![Nix master](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml)
 [![DOC](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml)
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users.20.26.20devs)
-<img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/logo.png" alt="Rocq-Elpi logo" width="25%" />
+<img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/rocqy-elpi.png" alt="Rocq-Elpi logo" width="25%" />
 
 <h1 tabindex="-1" class="heading-element" dir="auto" style="width: 60%">Rocq-Elpi</h1>
 
