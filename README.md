@@ -7,9 +7,11 @@
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users.20.26.20devs)
 <img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/rocqy-elpi.png" alt="Rocq-Elpi logo" width="25%" />
 
-<h1 tabindex="-1" class="heading-element" dir="auto" style="width: 60%">Rocq-Elpi</h1>
+### Rocq-Elpi
 
 [Rocq](https://github.com/coq/coq) plugin embedding [Elpi](https://github.com/LPCIC/elpi).
+
+<br/>
 
 ## What is Elpi
 [Elpi](https://github.com/LPCIC/elpi) provides an easy-to-embed implementation
