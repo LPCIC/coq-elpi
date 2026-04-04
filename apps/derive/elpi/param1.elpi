@@ -152,8 +152,10 @@ dispatch (const GR) Prefix Clauses :- !, do! [
 ].
 
 func prefix-indc string, constructor -> pair constructor id.
-prefix-indc Prefix K (pr K NewName) :-
-  coq.gref->id (indc K) Name, NewName is Prefix ^ Name.
+prefix-indc Prefix K (pr K FNewName) :-
+  coq.gref->id (indc K) Name,
+  NewName is Prefix ^ Name,
+  coq.ensure-fresh-global-id NewName FNewName.
 
 dispatch (indt GR) Prefix Clauses :- !, do! [
   Ind = global (indt GR),

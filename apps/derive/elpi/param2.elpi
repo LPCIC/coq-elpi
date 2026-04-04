@@ -124,9 +124,10 @@ param-indt GR IsInd Lno Luno Ty Knames Ktypes
 ].
 
 func rename-indc string, constructor -> pair constructor id.
-rename-indc Suffix GR (pr GR NameR) :-
+rename-indc Suffix GR (pr GR FNameR) :-
   coq.gref->id (indc GR) Name,
-  NameR is Name ^ Suffix.
+  NameR is Name ^ Suffix,
+  coq.ensure-fresh-global-id NameR FNameR.
 
 func param-indc term, term -> term.
 param-indc K T TRK :- !,
