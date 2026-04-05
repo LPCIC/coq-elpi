@@ -840,9 +840,7 @@ let cache_program (proof,nature,p,q) =
     CErrors.user_err Pp.(str "elpi: Only commands and tactics can be exported")
 
 let subst_program = function
-  | _, (_, Command _,_,_) -> CErrors.user_err Pp.(str"elpi: No functors yet")
-  | _, (_, Tactic,_,_ as x) -> x
-  | _, (_, Program _,_,_) -> assert false
+  | _, x -> x (* qualified_names and nature: no GRefs to substitute *)
 
 let in_exported_program : proof option * nature * qualified_name * qualified_name -> Libobject.obj =
   let open Libobject in

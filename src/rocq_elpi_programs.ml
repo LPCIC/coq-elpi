@@ -47,6 +47,25 @@ and src_db_header = {
   dast : cunit;
 }
 
+let subst_cunit subst = function
+  | Full (kn, cu) ->
+    let kn' = Mod_subst.subst_kn subst kn in
+    let cu' = EC.map_compilation_unit (Rocq_elpi_HOAS.subst_cdata subst) cu in
+    if kn == kn' && cu == cu' then Full (kn, cu) else Full (kn', cu')
+  | Signature s -> Signature s
+
+let subst_src subst = function
+  | File ({ fname; fast } as f) ->
+    let fast' = subst_cunit subst fast in
+    if fast == fast' then File f else File { fname; fast = fast' }
+  | EmbeddedString ({ sast } as s) ->
+    let sast' = subst_cunit subst sast in
+    if sast == sast' then EmbeddedString s else EmbeddedString { sast = sast' }
+  | DatabaseBody n -> DatabaseBody n
+  | DatabaseHeader ({ dast } as h) ->
+    let dast' = subst_cunit subst dast in
+    if dast == dast' then DatabaseHeader h else DatabaseHeader { dast = dast' }
+
 let alpha = 65599
 let combine_hash h1 h2 = h1 * alpha + h2
 
@@ -289,30 +308,30 @@ module SourcesStorage(S : Stage) = struct
     declare_object @@ (superglobal_object_nodischarge "elpi-programs-names"
     ~cache:(fun (name,nature) ->
       program_name := SLMap.add name nature !program_name)
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+    ~subst:None)
 
   let declare_program name nature =
     let obj = in_program_name (name,nature) in
     Lib.add_leaf obj
-        
+
   let db_name : SLSet.t ref = Summary.ref  ~name:("elpi-dbs") SLSet.empty
   let file_name : SLSet.t ref = Summary.ref  ~name:("elpi-files") SLSet.empty
   let db_exists name = SLSet.mem name !db_name
   let file_exists name = SLSet.mem name !file_name
-  
+
   let in_db_name : qualified_name -> Libobject.obj =
     let open Libobject in
     declare_object @@
       (superglobal_object_nodischarge "elpi-db-names"
           ~cache:(fun name -> db_name := SLSet.add name !db_name)
-          ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+          ~subst:None)
 
   let in_file_name : qualified_name -> Libobject.obj =
     let open Libobject in
     declare_object @@
       (superglobal_object_nodischarge "elpi-file-names"
           ~cache:(fun name -> file_name := SLSet.add name !file_name)
-          ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet"))))
+          ~subst:None)
         
   let declare_db program =
     ignore @@ Lib.add_leaf (in_db_name program)
@@ -364,7 +383,7 @@ let in_source : Names.Id.t -> string option * EC.compilation_unit * EC.flags -> 
   in
   let import _ (_, s as o) = cache o in
   declare_named_object @@ { (default_object "ELPI-UNITS") with
-    subst_function =(fun _ -> CErrors.user_err Pp.(str"elpi: No functors"));
+    subst_function = (fun (_,o) -> o); (* Keep classification, subst unreachable *)
     load_function  = import;
     cache_function  = cache;
     open_function = my_filtered_open import;
@@ -522,7 +541,8 @@ let get ?(fail_if_not_exists=false) p =
     ~cache:(fun (name,src_ast,from) ->
       program_src :=
         SLMap.add name (append_to_prog from name src_ast) !program_src)
-    ~subst:(Some (fun _ -> CErrors.user_err Pp.(str"elpi: No functors yet")))
+    ~subst:(Some (fun (subst, (name, src_ast, from)) ->
+      (name, subst_src subst src_ast, from)))
   
   
   let init_program name ~loc:_ ul =
@@ -571,7 +591,7 @@ let get ?(fail_if_not_exists=false) p =
         (s.scope = Rocq_elpi_utils.Global && is_inside_current_library kn) ||
         s.scope = Rocq_elpi_utils.SuperGlobal then cache o in
     declare_named_object @@ { (default_object "ELPI-DB") with
-      classify_function = (fun { scope; program; _ } ->
+      classify_function = (fun { scope; _ } ->
         match scope with
         | Rocq_elpi_utils.Local -> Dispose
         | Rocq_elpi_utils.Regular -> Substitute
@@ -579,7 +599,8 @@ let get ?(fail_if_not_exists=false) p =
         | Rocq_elpi_utils.SuperGlobal -> Keep);
       load_function  = load;
       cache_function  = cache;
-      subst_function = (fun (_,o) -> o);
+      subst_function = (fun (subst, ({ code; _ } as o)) ->
+        { o with code = List.map (subst_cunit subst) code });
       open_function = my_simple_open cache;
       discharge_function = (fun (({ scope; program; vars; } as o)) ->
         if scope = Rocq_elpi_utils.Local || (List.exists (fun x -> is_in_section (Names.GlobRef.VarRef x)) vars) then None
