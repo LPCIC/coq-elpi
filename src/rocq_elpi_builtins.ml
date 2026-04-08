@@ -1956,6 +1956,12 @@ let declare_scheme_aux local ref k gr =
   declare_scheme local k (ref,for_scheme gr)
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1"]
+let mis_is_recursive { Declarations.mind_recargs } =
+  Rtree.is_infinite Declareops.eq_recarg mind_recargs
+[%%else]
+let mis_is_recursive = Inductiveops.mis_is_recursive
+[%%endif]
 
 let coq_rest_builtins =
   let open API.BuiltIn in
@@ -2166,8 +2172,8 @@ regarded as not non-informative).|})),
   (fun i ~depth {env} _ state ->
       let mind, indbo = Inductive.lookup_mind_specif env i in
       match mind.Declarations.mind_packets with
-      | [| { Declarations.mind_recargs } |] ->
-           if Rtree.is_infinite Declareops.eq_recarg mind_recargs then ()
+      | [| mip |] ->
+           if mis_is_recursive mip then ()
            else raise No_clause
       | _ -> assert false
     )),
