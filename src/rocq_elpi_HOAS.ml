@@ -2126,6 +2126,17 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
   | E.App(c,name,[s;t]) when lamc == c || prodc == c ->
       let state, name = in_coq_fresh_annot_name ~depth ~coq_ctx depth state name in
       let state, s, gl1 = aux ~depth state ~on_ty:true s in
+      (* Infer binder relevance from the type's sort.  Without this,
+         relevance is hardcoded to Relevant, which is wrong for binders
+         whose type lives in SProp (e.g. from the Prop→SProp parametricity
+         mapping).  Fall back to Relevant on any error. *)
+      let name =
+        try
+          let sigma = get_sigma state in
+          let sort = Retyping.get_sort_of coq_ctx.env sigma s in
+          let r = EC.ESorts.relevance_of_sort sort in
+          { name with Context.binder_relevance = r }
+        with _ -> name in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(name,s)) coq_ctx in
       let state, t, gl2 = aux_lam coq_ctx ~depth state t in
       if lamc == c then state, EC.mkLambda (name,s,t), gl1 @ gl2
@@ -2134,6 +2145,13 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let state, name = in_coq_fresh_annot_name ~depth ~coq_ctx depth state name in
       let state, s, gl1 = aux ~depth state ~on_ty:true s in
       let state, b, gl2 = aux ~depth state b in
+      let name =
+        try
+          let sigma = get_sigma state in
+          let sort = Retyping.get_sort_of coq_ctx.env sigma s in
+          let r = EC.ESorts.relevance_of_sort sort in
+          { name with Context.binder_relevance = r }
+        with _ -> name in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalDef(name,b,s)) coq_ctx in
       let state, t, gl3 = aux_lam coq_ctx ~depth state t in
       if EC.eq_constr (get_sigma state) t (EC.mkRel 1) then
