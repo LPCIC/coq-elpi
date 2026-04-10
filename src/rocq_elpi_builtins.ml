@@ -1963,6 +1963,14 @@ let mis_is_recursive { Declarations.mind_recargs } =
 let mis_is_recursive = Inductiveops.mis_is_recursive
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let default_flags_of _ ts =
+  Evarconv.default_flags_of ts
+[%%else]
+let default_flags_of sigma ts =
+  Evarconv.default_flags_of sigma ts
+[%%endif]
+
 let coq_rest_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -3825,7 +3833,7 @@ Universe constraints are put in the constraint store.|})))),
            let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL ty ety in
            sigma, ?: None +! B.mkOK
        | NoData ->
-           let flags = Evarconv.default_flags_of TransparentState.full in
+           let flags = default_flags_of sigma TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
            sigma, !: ty +! B.mkOK
        in let sigma = List.fold_left (fun sigma conv_pb -> Evd.add_conv_pb conv_pb sigma) sigma conv_pbs in
@@ -3859,7 +3867,7 @@ Universe constraints are put in the constraint store.|})))),
            let sigma = Evarconv.unify proof_context.env sigma ~with_ho:true Conversion.CUMUL (EConstr.mkSort s) (EConstr.mkSort (EConstr.ESorts.make es)) in
            sigma, !: es +! B.mkOK
        | NoData ->
-           let flags = Evarconv.default_flags_of TransparentState.full in
+           let flags = default_flags_of sigma TransparentState.full in
            let sigma = Evarconv.solve_unif_constraints_with_heuristics ~flags ~with_ho:true proof_context.env sigma in
            sigma, !: (EConstr.ESorts.kind sigma s) +! B.mkOK
        in let sigma = List.fold_left (fun sigma conv_pb -> Evd.add_conv_pb conv_pb sigma) sigma conv_pbs in
