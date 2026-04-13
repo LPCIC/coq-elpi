@@ -64,8 +64,8 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive  *)
-Elpi Accumulate derive File eqbOK.
 Elpi Accumulate derive Db derive.eqbOK.db.
+Elpi Accumulate derive File eqbOK.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqbOK" "eqbcorrect".

@@ -25,8 +25,8 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File invert.
 Elpi Accumulate derive Db derive.invert.db.
+Elpi Accumulate derive File invert.
 
 #[synterp] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "invert" (cl\ cl = []) true).

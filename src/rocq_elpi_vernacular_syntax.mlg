@@ -235,28 +235,28 @@ VERNAC COMMAND EXTEND ElpiAccumulate CLASSIFIED AS SIDEFF
      EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:Code (List.map snd ids) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "File" "Signature" ne_qualified_name_list(ids) ] SYNTERP AS atts {
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
-     EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~what:Signature (List.map snd ids);
+     EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~what:SignatureOnly (List.map snd ids);
      atts
    } -> {
-     EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~what:Signature (List.map snd ids) }
+     EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~what:SignatureOnly (List.map snd ids) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Files" "Signature" ne_qualified_name_list(ids) ] SYNTERP AS atts {
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
-     EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~what:Signature (List.map snd ids);
+     EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~what:SignatureOnly (List.map snd ids);
      atts
    } -> {
-     EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~what:Signature (List.map snd ids) }
+     EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~what:SignatureOnly (List.map snd ids) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "File" "Signature" ne_qualified_name_list(ids) ] SYNTERP AS atts {
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
-     EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:Signature (List.map snd ids);
+     EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:SignatureOnly (List.map snd ids);
      atts
    } -> {
-     EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:Signature (List.map snd ids) }
+     EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:SignatureOnly (List.map snd ids) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) qualified_name(p) "Files" "Signature" ne_qualified_name_list(ids) ] SYNTERP AS atts {
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
-     EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:Signature (List.map snd ids);
+     EV.Synterp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:SignatureOnly (List.map snd ids);
      atts
    } -> {
-     EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:Signature (List.map snd ids) }
+     EV.Interp.accumulate_extra_deps ~atts ~loc:gloc ~program:(snd p) ~what:SignatureOnly (List.map snd ids) }
 | #[ atts = any_attribute ] [ "Elpi" "Accumulate" ghost(gloc) "Plugin" string(s) ] SYNTERP AS atts {
      let atts = validate_attributes scope_and_skip_and_synterp_attributes atts in
      EV.Synterp.accumulate_plugin ~atts ~loc:gloc s;

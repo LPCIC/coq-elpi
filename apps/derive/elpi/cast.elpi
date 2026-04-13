@@ -13,14 +13,14 @@ func arity list term, list term -> term.
 arity [] _ (sort (typ U)) :- coq.univ.new U.
 arity [V|VS] Acc (prod `x` T R) :-
   coq.mk-app V {rev Acc} T,
-  pi x\ arity VS [x|Acc] (R x).
+  @pi-decl `x` T x\ arity VS [x|Acc] (R x).
 
 :index (1)
 func args list term, list term -> term.
 args [] [X|_] X.
 args [V|VS] Acc (fun `c` S R) :-
   coq.mk-app V {rev Acc} S,
-  pi c\ args VS [c|Acc] (R c).
+  @pi-decl `x` S c\ args VS [c|Acc] (R c).
 
 func arg int, term, term, term, list term, list term, list term -> list term.
 arg _ _ _ _ _ [] _ [].
@@ -40,22 +40,22 @@ args-ty E X Y Ps [] [_|Acc] R :-
   coq.mk-app V [X|CastedVars] R.
 args-ty E X Y Ps [V|VS] Acc (prod `c` S R) :-
   coq.mk-app V {rev Acc} S,
-  pi c\ args-ty E X Y Ps VS [c|Acc] (R c).
+  @pi-decl `c` S c\ args-ty E X Y Ps VS [c|Acc] (R c).
 
 func body int, int, list term -> term.
 body I J V (fun Name T R) :- I > 0, !,
   coq.name-suffix `A` {calc (J - I)} Name,
   I1 is I - 1,
   arity {rev V} [] T,
-  pi x\ body I1 J [x|V] (R x).
+  @pi-decl Name T x\ body I1 J [x|V] (R x).
 body 0 _ V R :-
   rev V [A|Rest],
   Ety = (x\y\ {{ @eq lp:A lp:x lp:y }}),
   R = {{ fun (x y : lp:A) (e : lp:(Ety x y)) => lp:(Bo x y e) }},
-  pi x y e\ coq.build-match e (Ety x y)
-               (rty  A Rest x)
-               (body-branch Rest x)
-               (Bo x y e).
+  @pi-decl `x` A x\
+  @pi-decl `y` A y\
+  @pi-decl `e` (Ety x y) e\
+    coq.build-match e (Ety x y) (rty  A Rest x) (body-branch Rest x) (Bo x y e).
 
 func rty term, list term, term, term, list term, list term -> term.
 rty  A Rest X _ [Y,E] _ R :-    args-ty E X Y [A|Rest] Rest [Y] R.

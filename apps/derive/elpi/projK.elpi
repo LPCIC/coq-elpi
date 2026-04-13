@@ -75,7 +75,7 @@ func body-default % makes lambdas for all default arguments + the projected
 body-default (prod N T F) J OJ IT Args K (fun N T B) :- !,
   mask-for T Args Mask,
   J1 is J + 1,
-  pi x\ sigma Def\
+  @pi-decl N T x\ sigma Def\
     if (J = OJ)
       (Def = [default-output J Mask Args x T])
       (Def = []),
@@ -85,7 +85,7 @@ body-default X J OJ IT Args K F :- whd1 X X1, !,
   body-default X1 J OJ IT Args K F.
 
 body-default _ _ J IT _ K (fun `i` IT B) :- !,
-  pi i\ coq.build-match i IT (body-ty J) (body-branch J K) (B i).
+  @pi-decl `i` IT i\ coq.build-match i IT (body-ty J) (body-branch J K) (B i).
 
 func body-param % makes lambdas for all parameters and indexes
   term, % arity of the inductive type
@@ -100,11 +100,11 @@ body-param (sort _) KTy IT 0 J K R :- !,
   body-default KTy 0 J IT [] K R.
 
 body-param (prod N T F) KTy IT 0 J K (fun N T B) :- !,
-  pi x\ body-param (F x) KTy {coq.mk-app IT [x]} 0 J K (B x).
+  @pi-decl N T x\ body-param (F x) KTy {coq.mk-app IT [x]} 0 J K (B x).
 
 body-param (prod N T F) (prod _ _ FK) IT Pno J K (fun N T B) :- !,
   Pno1 is Pno - 1,
-  pi x\ body-param (F x) (FK x) {coq.mk-app IT [x]} Pno1 J K (B x).
+  @pi-decl N T x\ body-param (F x) (FK x) {coq.mk-app IT [x]} Pno1 J K (B x).
 
 body-param (prod _ _ _ as X) KTy IT N J K R :- whd1 KTy KTy1, !,
   body-param X KTy1 IT N J K R.

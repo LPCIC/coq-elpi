@@ -45,8 +45,8 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File induction.
 Elpi Accumulate derive Db derive.induction.db.
+Elpi Accumulate derive File induction.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "induction" "param1_functor".
