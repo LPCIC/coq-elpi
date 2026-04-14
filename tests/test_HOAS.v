@@ -694,3 +694,33 @@ Elpi Query lp:{{
   .
 
 }}.
+
+(* mfix: mutual fixpoints *)
+
+Fixpoint myeven (n : nat) : bool :=
+  match n with O => true | S n' => myodd n' end
+with myodd (n : nat) : bool :=
+  match n with O => false | S n' => myeven n' end.
+
+Fixpoint f3_0 (n : nat) : nat :=
+  match n with O => 0 | S n' => f3_1 n' end
+with f3_1 (n : nat) : nat :=
+  match n with O => 1 | S n' => f3_2 n' end
+with f3_2 (n : nat) : nat :=
+  match n with O => 2 | S n' => f3_0 n' end.
+
+Elpi Command test_mfix.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  coq.term->gref T (const C),
+  coq.env.const C (some Body) _Ty,
+  std.assert! (Body = mfix _ _ _) "expected mfix",
+  coq.elaborate-skeleton Body ETy _ ok,
+  coq.say {coq.gref->string (const C)} ":" {coq.term->string ETy}.
+}}.
+
+Elpi test_mfix (myeven).
+Elpi test_mfix (myodd).
+Elpi test_mfix (f3_0).
+Elpi test_mfix (f3_1).
+Elpi test_mfix (f3_2).
