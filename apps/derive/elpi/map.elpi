@@ -100,7 +100,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2) Ps R :-
   pi a b f\ sigma Ity1A Ity2A \
     coq.mk-app Ity1 [a] Ity1A,
     coq.mk-app Ity2 [b] Ity2A,
-    Clause a b f =>
+    Clause a b f =!=>
     decl a A1 Sty1 =>
     decl b A2 Sty2 =>
     decl f Af (FAB a b) =>

@@ -135,7 +135,7 @@ run-solver G Name :-
 func coq.sealed-goal->string sealed-goal -> string.
 coq.sealed-goal->string (nabla G) R :- pi x\  coq.sealed-goal->string (G x) R.
 coq.sealed-goal->string (seal (goal Ctx _ Ty _ _)) R :-
-  Ctx => (std.map {std.rev Ctx} coq.ctx->string L, coq.term->string Ty G, R is "Lemma foo " ^ {std.string.concat "\n" L} ^ "\n :\n" ^ G ^ ".").
+  Ctx =!=> (std.map {std.rev Ctx} coq.ctx->string L, coq.term->string Ty G, R is "Lemma foo " ^ {std.string.concat "\n" L} ^ "\n :\n" ^ G ^ ".").
 
 func coq.ctx->string prop -> string.
 coq.ctx->string (decl X _ Ty) R :- R is "(" ^ {coq.term->string X} ^ " : " ^ {coq.term->string Ty} ^ ")".

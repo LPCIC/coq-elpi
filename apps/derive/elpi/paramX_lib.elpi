@@ -27,7 +27,7 @@ mk-trivial-match -1 P RArgs F Match :- std.do! [
 func mk-trivial-match.rty list term, term,  term, list term, list term -> term.
 mk-trivial-match.rty Args P _ Vars _ R :- std.do! [
   std.map2 Args Vars (x\y\r\ r = copy x y) Subst,
-  Subst => copy P R,
+  Subst =!=> copy P R,
 ].
 
 func mk-trivial-match.branch int, list term, list term, term,  term, term, list term, list term -> term.
@@ -37,7 +37,7 @@ mk-trivial-match.branch Lno Args OtherArgs F K KTy Vars _ R1 :- std.do! [
   std.drop Lno KTyArgs IdxVals,
   std.map2 Args IdxVals (x\y\r\ r = copy x y) Subst,
   (R = let `K` KTy KArgs x\ {coq.mk-app F {std.append OtherArgs [x]}}),
-  Subst => copy R R1,
+  Subst =!=> copy R R1,
 ].
 
 
