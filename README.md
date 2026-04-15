@@ -5,20 +5,16 @@
 [![Nix master](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml)
 [![DOC](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml)
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users.20.26.20devs)
-<img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/rocqy-elpi.png" alt="Rocq-Elpi logo" width="25%" />
+<img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/rocqy-elpi.png" alt="Rocq-Elpi logo" width="35%" />
 
 ### Rocq-Elpi
 
 [Rocq](https://github.com/coq/coq) plugin embedding [Elpi](https://github.com/LPCIC/elpi).
 
-<br/>
-
-## What is Elpi
 [Elpi](https://github.com/LPCIC/elpi) provides an easy-to-embed implementation
 of a dialect of λProlog, a programming language well suited to manipulate
 abstract syntax trees containing binders and unification variables.
 
-## What is Rocq-Elpi
 Rocq-Elpi provides a Rocq plugin that lets one define new commands and tactics in
 Elpi. For that purpose it provides an embedding of Rocq's terms into λProlog
 using the Higher-Order Abstract Syntax approach
