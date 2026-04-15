@@ -939,29 +939,43 @@ let in_elpi_fix name rno ty bo =
 let in_elpiast_fix ~loc n rno ty bo =
   A.mkAppGlobal ~loc ~hdloc:loc fixc (in_elpiast_name ~loc n) [A.mkOpaque ~loc @@ CD.int.cino rno; ty; A.mkLam ~loc (name_of_name ~loc n) bo]
 
-let mfixdefc = E.Constants.declare_global_symbol "mfix-def"
-let mfixc    = E.Constants.declare_global_symbol "mfix"
-
-let in_elpi_mfix_def name rno ty =
-  E.mkApp mfixdefc (in_elpi_name name) [CD.of_int rno; ty]
-
-let in_elpi_mfix defs focus_idx bodies =
-  let body_list = U.list_to_lp_list bodies in
-  let wrapped = List.fold_left (fun acc _def -> E.mkLam acc) body_list defs in
-  E.mkApp mfixc (U.list_to_lp_list defs) [CD.of_int focus_idx; wrapped]
+let mfixc     = E.Constants.declare_global_symbol "mfix"
+let mbodyc    = E.Constants.declare_global_symbol "mbody"
+let mpairc    = E.Constants.declare_global_symbol "mpair"
 
 let in_elpiast_mfix ~loc names_rnos_tys focus_idx bodies =
-  let defs, lam_names_rev = List.fold_left (fun (defs, lns) (n, rno, ty) ->
-    let def = A.mkAppGlobal ~loc ~hdloc:loc mfixdefc
-      (in_elpiast_name ~loc n) [A.mkOpaque ~loc @@ CD.int.cino rno; ty] in
-    let ln = name_of_name ~loc n in
-    (def :: defs, ln :: lns)) ([], []) names_rnos_tys in
-  let defs = List.rev defs in
-  let body_list = A.list_to_lp_list ~loc bodies in
-  let wrapped = List.fold_left (fun acc nm ->
-    A.mkLam ~loc nm acc) body_list lam_names_rev in
-  A.mkAppGlobal ~loc ~hdloc:loc mfixc (A.list_to_lp_list ~loc defs)
-    [A.mkOpaque ~loc @@ CD.int.cino focus_idx; wrapped]
+  assert (List.length names_rnos_tys = List.length bodies);
+  let bvar name =
+    let n = match name with
+      | Names.Name.Name id -> API.Ast.Name.from_string (Names.Id.to_string id)
+      | Names.Name.Anonymous -> API.Ast.Name.from_string "_" in
+    A.mkBound ~loc ~language:!coq_language n in
+  (* Build mbody [mpair f0 bo0, ...] f_focus *)
+  let pairs = List.map2 (fun (name,_,_) bo ->
+    A.mkAppGlobal ~loc ~hdloc:loc mpairc (bvar name) [bo]
+  ) names_rnos_tys bodies in
+  let (fn,_,_) = List.nth names_rnos_tys focus_idx in
+  let inner = A.mkAppGlobal ~loc ~hdloc:loc mbodyc
+    (A.list_to_lp_list ~loc pairs) [bvar fn] in
+  (* Wrap with mfix nodes from inside out *)
+  List.fold_right (fun (name, rno, ty) acc ->
+    A.mkAppGlobal ~loc ~hdloc:loc mfixc (in_elpiast_name ~loc name)
+      [A.mkOpaque ~loc @@ CD.int.cino rno; ty;
+       A.mkLam ~loc (name_of_name ~loc name) acc]
+  ) names_rnos_tys inner
+
+let in_elpi_mfix ~depth names_rnos_tys focus_idx bodies =
+  assert (List.length names_rnos_tys = List.length bodies);
+  (* Build mbody [mpair f0 bo0, ...] f_focus *)
+  let pairs = List.mapi (fun i bo ->
+    E.mkApp mpairc (E.mkConst (depth + i)) [bo]
+  ) bodies in
+  let inner = E.mkApp mbodyc (U.list_to_lp_list pairs)
+    [E.mkConst (depth + focus_idx)] in
+  (* Wrap with mfix nodes from inside out *)
+  List.fold_right (fun (name, rno, ty) acc ->
+    E.mkApp mfixc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam acc]
+  ) names_rnos_tys inner
 
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
@@ -1684,16 +1698,12 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
          let state, bo = aux ~depth:(depth+1) env state bo in
          state, in_elpi_fix name.Context.binder_name rarg typ bo
-    | C.Proj(p,_,t) ->
-         let state, t = aux ~depth env state t in
-         let state, p = in_elpi_primitive ~depth state (Projection p) in
-         state, in_elpi_app ~depth p [|t|]
     | C.Fix((rargs, focus_idx),(names, typs, bos)) ->
          let n = Array.length names in
          let state, elpi_typs =
            CArray.fold_left_map (aux ~depth env) state typs in
-         let defs = Array.to_list (Array.init n (fun i ->
-           in_elpi_mfix_def names.(i).Context.binder_name rargs.(i) elpi_typs.(i))) in
+         let names_rnos_tys = Array.to_list (Array.init n (fun i ->
+           (names.(i).Context.binder_name, rargs.(i), elpi_typs.(i)))) in
          let envn = Array.fold_left (fun env i ->
            EConstr.push_rel
              Context.Rel.Declaration.(LocalAssum(names.(i), typs.(i))) env
@@ -1701,7 +1711,11 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, elpi_bos =
            CArray.fold_left_map (aux ~depth:(depth+n) envn) state bos in
          state,
-         in_elpi_mfix defs focus_idx (Array.to_list elpi_bos)
+         in_elpi_mfix ~depth names_rnos_tys focus_idx (Array.to_list elpi_bos)
+    | C.Proj(p,_,t) ->
+         let state, t = aux ~depth env state t in
+         let state, p = in_elpi_primitive ~depth state (Projection p) in
+         state, in_elpi_app ~depth p [|t|]
     | C.CoFix _ -> nYI "HOAS for cofix"
     | x -> in_elpi_primitive_value ~depth state x
   in
@@ -2306,64 +2320,72 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         | _ -> err Pp.(str"Not an int: " ++ str (P.Debug.show_term rno)) in
       state, EC.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|])), gl1 @ gl2
 
-  | E.App(c,defs_lp,[focus_lp;bodies_lam]) when mfixc == c ->
-      let focus_idx =
-        match E.look ~depth focus_lp with
-        | E.CData n when CD.is_int n -> CD.to_int n
-        | _ -> err Pp.(str"mfix: focus not an int: " ++
-                       str (P.Debug.show_term focus_lp)) in
-      let defs_list = U.lp_list_to_list ~depth defs_lp in
-      let n = List.length defs_list in
-      let parse_def d =
-        match E.look ~depth d with
-        | E.App(dc, name_lp, [rno_lp; ty_lp]) when dc == mfixdefc ->
-          (name_lp, rno_lp, ty_lp)
-        | _ -> err Pp.(str"mfix: bad def: " ++ str (P.Debug.show_term d))
+ (* mfix *)
+  | E.App(c,name_lp,[rno_lp;ty_lp;rest_lam]) when mfixc == c ->
+      let base_depth = depth in
+      let rec collect_mfix ~depth state coq_ctx name_lp rno_lp ty_lp rest_lam
+                           defs gls_acc =
+        let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name_lp in
+        (* coq_ctx evolves at each iteration *)
+        let state, ty, gl =
+          lp2constr ~calldepth syntactic_constraints coq_ctx
+            ~depth state ~on_ty:true ty_lp in
+        let rno =
+          match E.look ~depth rno_lp with
+          | E.CData n when CD.is_int n -> CD.to_int n
+          | _ -> err Pp.(str"Not an int: " ++ str (P.Debug.show_term rno_lp)) in
+        let coq_ctx = push_coq_ctx_local depth
+          (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
+        let defs = (name, ty, rno) :: defs in
+        let gls_acc = gl @ gls_acc in
+        match E.look ~depth rest_lam with
+        | E.Lam body ->
+          let depth = depth + 1 in
+          (match E.look ~depth body with
+           | E.App(c2,name2,[rno2;ty2;rest2]) when mfixc == c2 ->
+             collect_mfix ~depth state coq_ctx name2 rno2 ty2 rest2
+               defs gls_acc
+           | E.App(c2,pairs_lp,[focus_lp]) when mbodyc == c2 ->
+             finish_mfix ~depth state coq_ctx (List.rev defs)
+               pairs_lp focus_lp gls_acc
+           | _ -> err Pp.(str"mfix: expected mfix or mbody inside mfix body"))
+        | _ -> err Pp.(str"mfix: expected lambda in mfix body")
+      and finish_mfix ~depth state coq_ctx defs pairs_lp focus_lp gls_acc =
+        let n = List.length defs in
+        let pair_list = U.lp_list_to_list ~depth pairs_lp in
+        if List.length pair_list <> n then
+          err Pp.(str"mfix: expected " ++ int n ++ str" body pairs, got " ++
+                  int (List.length pair_list));
+        let body_terms = List.map (fun p ->
+          match E.look ~depth p with
+          | E.App(pc, _fi, [bi]) when pc == mpairc -> bi
+          | _ -> err Pp.(str"mfix: bad mpair: " ++
+                         str (P.Debug.show_term p))
+        ) pair_list in
+        let state, coq_bodies, gls_bos =
+          List.fold_left (fun (state, bos, gls) bo_lp ->
+            let state, bo, gl =
+              lp2constr ~calldepth syntactic_constraints coq_ctx
+                ~depth state bo_lp in
+            (state, bo :: bos, gl @ gls)
+          ) (state, [], []) body_terms
+        in
+        let coq_bodies = List.rev coq_bodies in
+        let focus_idx =
+          match E.look ~depth focus_lp with
+          | E.Const k ->
+            let idx = k - base_depth in
+            if idx >= 0 && idx < n then idx
+            else err Pp.(str"mfix: focus variable out of range")
+          | _ -> err Pp.(str"mfix: focus not a bound variable: " ++
+                         str (P.Debug.show_term focus_lp))
+        in
+        let names, typs, rnos = CArray.split3 (Array.of_list defs) in
+        state,
+        EC.mkFix ((rnos, focus_idx),(names, typs, Array.of_list coq_bodies)),
+        gls_acc @ gls_bos
       in
-      let parsed_defs = List.map parse_def defs_list in
-      let state, names_typs_rnos, gls_defs, coq_ctx, _i =
-        List.fold_left (fun (state, acc, gls, coq_ctx, i) (name_lp, rno_lp, ty_lp) ->
-          let d = depth + i in
-          let name = in_coq_fresh_annot_name ~depth:d ~coq_ctx d name_lp in
-          let state, ty, gl = aux ~depth state ~on_ty:true ty_lp in
-          let rno =
-            match E.look ~depth rno_lp with
-            | E.CData n when CD.is_int n -> CD.to_int n
-            | _ -> err Pp.(str"mfix: rno not an int") in
-          let coq_ctx = push_coq_ctx_local d
-            (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
-          (state, (name, ty, rno) :: acc, gl @ gls, coq_ctx, i + 1)
-        ) (state, [], [], coq_ctx, 0) parsed_defs
-      in
-      let names_typs_rnos = List.rev names_typs_rnos in
-      let rec unwrap_lams k d t =
-        if k = 0 then t
-        else match E.look ~depth:d t with
-          | E.Lam t -> unwrap_lams (k - 1) (d + 1) t
-          | _ -> err Pp.(str"mfix: expected " ++ int n ++
-                         str" lambdas, got fewer")
-      in
-      let bodies_list_term = unwrap_lams n depth bodies_lam in
-      let body_terms = U.lp_list_to_list ~depth:(depth+n) bodies_list_term in
-      if List.length body_terms <> n then
-        err Pp.(str"mfix: expected " ++ int n ++ str" bodies, got " ++
-                int (List.length body_terms));
-      let state, coq_bodies, gls_bos =
-        List.fold_left (fun (state, bos, gls) bo_lp ->
-          let state, bo, gl =
-            lp2constr ~calldepth syntactic_constraints coq_ctx
-              ~depth:(depth+n) state bo_lp in
-          (state, bo :: bos, gl @ gls)
-        ) (state, [], []) body_terms
-      in
-      let coq_bodies = List.rev coq_bodies in
-      let names_arr = Array.of_list (List.map (fun (n,_,_) -> n) names_typs_rnos) in
-      let typs_arr = Array.of_list (List.map (fun (_,t,_) -> t) names_typs_rnos) in
-      let rnos_arr = Array.of_list (List.map (fun (_,_,r) -> r) names_typs_rnos) in
-      let bos_arr = Array.of_list coq_bodies in
-      state,
-      EC.mkFix ((rnos_arr, focus_idx),(names_arr, typs_arr, bos_arr)),
-      gls_defs @ gls_bos
+      collect_mfix ~depth state coq_ctx name_lp rno_lp ty_lp rest_lam [] []
 
   | E.App(c,v,[]) when primitivec == c ->
       let state, v, gls = primitive_value.API.Conversion.readback ~depth state v in

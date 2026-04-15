@@ -714,7 +714,7 @@ Elpi Accumulate lp:{{
 main [trm T] :-
   coq.term->gref T (const C),
   coq.env.const C (some Body) _Ty,
-  std.assert! (Body = mfix _ _ _) "expected mfix",
+  std.assert! (Body = mfix _ _ _ _) "expected mfix",
   coq.elaborate-skeleton Body ETy _ ok,
   coq.say {coq.gref->string (const C)} ":" {coq.term->string ETy}.
 }}.
@@ -724,3 +724,19 @@ Elpi test_mfix (myodd).
 Elpi test_mfix (f3_0).
 Elpi test_mfix (f3_1).
 Elpi test_mfix (f3_2).
+
+Elpi Command test_mfix_copy.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  coq.term->gref T (const C),
+  coq.env.const C (some Body) _Ty,
+  copy Body Body1,
+  std.assert! (Body = Body1) "copy of mfix changed the term",
+  coq.say "copy ok for" {coq.gref->string (const C)}.
+}}.
+
+Elpi test_mfix_copy (myeven).
+Elpi test_mfix_copy (myodd).
+Elpi test_mfix_copy (f3_0).
+Elpi test_mfix_copy (f3_1).
+Elpi test_mfix_copy (f3_2).
