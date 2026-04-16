@@ -759,3 +759,35 @@ main _ :-
 }}.
 
 Elpi test_mfix_outer_ref.
+
+Elpi Query lp:{{
+
+  @pi-decl `x` {{nat}} x\ sigma Term Stack Reduct\
+    whd {{ myeven }} [{{ S lp:x }}] Term Stack,
+    unwind Term Stack Reduct,
+    std.assert! (Reduct =
+      {{ fix xx (n : nat) : bool :=
+            match n with O => true | S n' => yy n' end
+          with yy (n : nat) : bool :=
+            match n with O => false | S n' => xx n' end
+          for yy lp:x }}
+    ) "bad reduction",
+    coq.unify-eq Reduct {{ myodd lp:x }} ok
+
+}}.
+
+Elpi Query lp:{{
+
+  @pi-decl `x` {{nat}} x\ sigma Term Stack Reduct\
+    whd {{ myeven }} [{{ lp:x }}] Term Stack,
+    unwind Term Stack Reduct,
+    std.assert! (Reduct =
+      {{ fix xx (n : nat) : bool :=
+            match n with O => true | S n' => yy n' end
+          with yy (n : nat) : bool :=
+            match n with O => false | S n' => xx n' end
+          for xx lp:x }}
+    ) "bad reduction",
+    coq.unify-eq Reduct {{ myeven lp:x }} ok
+
+}}.
