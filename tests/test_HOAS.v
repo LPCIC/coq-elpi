@@ -740,3 +740,22 @@ Elpi test_mfix_copy (myodd).
 Elpi test_mfix_copy (f3_0).
 Elpi test_mfix_copy (f3_1).
 Elpi test_mfix_copy (f3_2).
+
+(* Regression: second mfix component's type references an outer binder.
+   lp2constr must read each type in the ctx *before* self-refs are pushed,
+   otherwise the outer Rel is shifted and mkFix fails with unbound Rel. *)
+Elpi Command test_mfix_outer_ref.
+Elpi Accumulate lp:{{
+main _ :-
+  T = fun `B` (sort (typ _)) (bv\
+        fun `default` bv (dv\
+          mfix `f` (prod `n` {{ nat }} (_\ bv)) (fv\
+            mfix `g` (prod `n` {{ nat }} (_\ bv)) (gv\
+              mbody [
+                mpair 0 (fun `n` {{ nat }} (_\ dv)),
+                mpair 0 (fun `n` {{ nat }} (_\ dv))
+              ] 0)))),
+  coq.typecheck T _ ok.
+}}.
+
+Elpi test_mfix_outer_ref.

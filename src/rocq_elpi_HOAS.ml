@@ -2317,11 +2317,13 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
 
  (* mfix *)
   | E.App(c,name_lp,[ty_lp;rest_lam]) when mfixc == c ->
+      (* mkFix's types live in outer_ctx (no self-refs); bodies use extended ctx. *)
+      let outer_ctx = coq_ctx in
       let rec collect_mfix ~depth state coq_ctx name_lp ty_lp rest_lam
                            defs gls_acc =
         let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name_lp in
         let state, ty, gl =
-          lp2constr ~calldepth syntactic_constraints coq_ctx
+          lp2constr ~calldepth syntactic_constraints outer_ctx
             ~depth state ~on_ty:true ty_lp in
         let coq_ctx = push_coq_ctx_local depth
           (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
