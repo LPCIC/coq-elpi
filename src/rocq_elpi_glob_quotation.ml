@@ -576,7 +576,32 @@ let gterm2lpast ~pattern ~language state glob =
       let bo = glob_intros tctx bo in
       under_binder ~loc (Name.Name name) ty None bo state ~k:(fun name t state ->
         in_elpiast_fix ~loc name rno ty (gterm2lp state bo))
-  | GRec _ -> nYI "(glob)HOAS mutual/non-struct fix"
+  | GRec(GFix(rnos,focus_idx),names,tctxs,tys,bos) ->
+      let n = Array.length names in
+      let tys = Array.map2 glob_intros_prod tctxs tys in
+      let elpi_tys = Array.map (gterm2lp state) tys in
+      let bos = Array.map2 glob_intros tctxs bos in
+      (* Introduce all fixpoint names into scope *)
+      let state, actual_names = Array.fold_left (fun (state, acc) i ->
+        let id = names.(i) in
+        let { taken } = get_glob_env state in
+        let id =
+          if Names.Id.Set.mem id taken then
+            Names.Id.of_string_soft (Format.asprintf "_elpi_renamed_%s_%d"
+              (Id.to_string id) (Names.Id.Set.cardinal taken))
+          else id in
+        let state = push_glob_ctx state id
+          (Some (mk_decl state ~loc id ~ty:elpi_tys.(i))) in
+        (state, id :: acc)
+      ) (state, []) (Array.init n Fun.id) in
+      let actual_names = List.rev actual_names in
+      let names_rnos_tys = List.mapi (fun i id ->
+        (Names.Name.Name id,
+         (match rnos.(i) with Some r -> r | None -> 0),
+         elpi_tys.(i))) actual_names in
+      let elpi_bos = Array.to_list (Array.map (gterm2lp state) bos) in
+      in_elpiast_mfix ~loc names_rnos_tys focus_idx elpi_bos
+  | GRec _ -> nYI "(glob)HOAS non-struct fix/cofix"
   | GInt i -> in_elpiast_primitive ~loc (Uint63 i)
   | GFloat f -> in_elpiast_primitive ~loc (Float64 f)
   | GString s -> in_elpiast_primitive ~loc (Pstring s)
