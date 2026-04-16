@@ -8,13 +8,15 @@ module EP = API.Parse
 
 open Rocq_elpi_utils
 type program_name = Loc.t * qualified_name
-type cunit = Full of Names.KerName.t * EC.compilation_unit | Signature of EC.compilation_unit_signature
+type cunit = Full of Names.KerName.t * EC.compilation_unit | Signature of Names.KerName.t * EC.compilation_unit
 
-let pp_cunit fmt = function | Full (kn,_) -> Format.fprintf fmt "%s" Names.KerName.(debug_to_string kn) | Signature _ -> Format.fprintf fmt "sig"
+let pp_cunit fmt = function
+  | Full (kn,_) -> Format.fprintf fmt "%s" Names.KerName.(debug_to_string kn)
+  | Signature (kn,_) -> Format.fprintf fmt "sig:%s" Names.KerName.(debug_to_string kn)
 let eq_cunit x y =
   match x,y with
   | Full(k1,_), Full(k2,_) -> Names.KerName.equal k1 k2
-  | Signature s1, Signature s2 -> Hashtbl.hash s1 == Hashtbl.hash s2 (* BUG *)
+  | Signature(k1,_), Signature(k2,_) -> Names.KerName.equal k1 k2
   | _ -> false
 
 [%%if coq = "9.0"]
@@ -52,7 +54,10 @@ let subst_cunit subst = function
     let kn' = Mod_subst.subst_kn subst kn in
     let cu' = EC.map_compilation_unit (Rocq_elpi_HOAS.subst_cdata subst) cu in
     if kn == kn' && cu == cu' then Full (kn, cu) else Full (kn', cu')
-  | Signature s -> Signature s
+  | Signature (kn, cu) ->
+    let kn' = Mod_subst.subst_kn subst kn in
+    let cu' = EC.map_compilation_unit (Rocq_elpi_HOAS.subst_cdata subst) cu in
+    if kn == kn' && cu == cu' then Signature (kn, cu) else Signature (kn', cu')
 
 let subst_src subst = function
   | File ({ fname; fast } as f) ->
@@ -69,11 +74,13 @@ let subst_src subst = function
 let alpha = 65599
 let combine_hash h1 h2 = h1 * alpha + h2
 
-let hash_cunit = function | Full (kn,_) -> Names.KerName.hash kn | Signature s -> Hashtbl.hash s (* TODO *)
+let hash_cunit = function
+  | Full (kn,_) -> Names.KerName.hash kn
+  | Signature (kn,_) -> Names.KerName.hash kn
 let compare_cunit a b =
   match a,b with
   | Full(kn1,_), Full(kn2,_) -> Names.KerName.compare kn1 kn2
-  | Signature s1, Signature s2 -> if Hashtbl.hash s1 == Hashtbl.hash s2 then 0 else -1 (* BUG *)
+  | Signature(kn1,_), Signature(kn2,_) -> Names.KerName.compare kn1 kn2
   | Full _, Signature _ -> -1
   | Signature _, Full _ -> +1
 
@@ -406,8 +413,8 @@ let intern_unit u =
   let kn, u = intern u in
   Full(kn,u)
 let intern_unit_signature u =
-  let _kn, u = intern u in
-  Signature (EC.signature u)
+  let kn, u = intern u in
+  Signature (kn, u)
   
 (* Source files can be large, and loaded multiple times since many entry point
    can be implemented in the same file. We share (in memory) the parsed file. *)
@@ -448,7 +455,7 @@ let unit_signature_from_file ~elpi ~base ~loc x : cunit =
   let hash = Digest.(to_hex @@ file (EP.resolve_file ~elpi ~unit:x ())) in
   try
     let kn, u = source_cache_lookup flags hash in
-    Signature (EC.signature u)
+    Signature (kn, u)
   with Not_found ->
     handle_elpi_compiler_errors ~loc (fun () ->
       let ast = EP.program ~elpi ~files:[x] in
@@ -480,7 +487,7 @@ let assemble_units ~base ~loc units =
     handle_elpi_compiler_errors ~loc (fun () ->
       match u with
       | Full(_, u) -> EC.extend ~base ~flags:(cc_flags ()) u
-      | Signature s -> EC.extend_signature ~base ~flags:(cc_flags ()) s))
+      | Signature (_, u) -> EC.extend_signature ~base ~flags:(cc_flags ()) (EC.signature u)))
     base units
 let extend_w_units = assemble_units
 let program_src : program SLMap.t ref =
@@ -664,8 +671,8 @@ let get ?(fail_if_not_exists=false) p =
   let db_init_base ~loc =
     let elpi = ensure_initialized () in
     match command_init () with
-    | File { fast = Full(_,base) } ->
-        let base = Signature (EC.signature base) in
+    | File { fast = Full(kn,base) } ->
+        let base = Signature (kn, base) in
         base, extend_w_units ~loc ~base:EC.(empty_base ~elpi) [base]
     | _ -> assert false
 

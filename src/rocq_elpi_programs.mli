@@ -5,7 +5,7 @@
 open Elpi.API
 open Rocq_elpi_utils
 
-type cunit = Full of  Names.KerName.t * Compile.compilation_unit | Signature of Compile.compilation_unit_signature
+type cunit = Full of  Names.KerName.t * Compile.compilation_unit | Signature of Names.KerName.t * Compile.compilation_unit
 type program_name = Loc.t * qualified_name
 
 type src =
