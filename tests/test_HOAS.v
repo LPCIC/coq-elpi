@@ -714,7 +714,7 @@ Elpi Accumulate lp:{{
 main [trm T] :-
   coq.term->gref T (const C),
   coq.env.const C (some Body) _Ty,
-  std.assert! (Body = mfix _ _ _) "expected mfix",
+  std.assert! (Body = mfix-call _ _) "expected mfix-call",
   coq.elaborate-skeleton Body ETy _ ok,
   coq.say {coq.gref->string (const C)} ":" {coq.term->string ETy}.
 }}.
@@ -741,20 +741,20 @@ Elpi test_mfix_copy (f3_0).
 Elpi test_mfix_copy (f3_1).
 Elpi test_mfix_copy (f3_2).
 
-(* Regression: second mfix component's type references an outer binder.
-   lp2constr must read each type in the ctx *before* self-refs are pushed,
-   otherwise the outer Rel is shifted and mkFix fails with unbound Rel. *)
+(* mfix component types must be read in the outer context, 
+   before self-refs are pushed. *)
 Elpi Command test_mfix_outer_ref.
 Elpi Accumulate lp:{{
 main _ :-
   T = fun `B` (sort (typ _)) (bv\
         fun `default` bv (dv\
-          mfix `f` (prod `n` {{ nat }} (_\ bv)) (fv\
-            mfix `g` (prod `n` {{ nat }} (_\ bv)) (gv\
-              mbody [
-                mpair 0 (fun `n` {{ nat }} (_\ dv)),
-                mpair 0 (fun `n` {{ nat }} (_\ dv))
-              ] 0)))),
+          mfix-call 0
+            (mfix-ty `f` 0 (prod `n` {{ nat }} (_\ bv)) (fv\
+              mfix-ty `g` 0 (prod `n` {{ nat }} (_\ bv)) (gv\
+                mfix-body [
+                  fun `n` {{ nat }} (_\ dv),
+                  fun `n` {{ nat }} (_\ dv)
+                ]))))),
   coq.typecheck T _ ok.
 }}.
 
@@ -789,5 +789,86 @@ Elpi Query lp:{{
           for xx lp:x }}
     ) "bad reduction",
     coq.unify-eq Reduct {{ myeven lp:x }} ok
+
+}}.
+
+Elpi Query lp:{{
+
+  @pi-decl `x` {{nat}} x\ sigma Term Stack Reduct\
+    whd {{ f3_0 }} [{{ lp:x }}] Term Stack,
+    unwind Term Stack Reduct,
+    std.assert! (Reduct =
+      {{ fix xx (n : nat) : nat :=
+            match n with O => 0 | S n' => yy n' end
+          with yy (n : nat) : nat :=
+            match n with O => 1 | S n' => zz n' end
+          with zz (n : nat) : nat :=
+            match n with O => 2 | S n' => xx n' end
+          for xx lp:x }}
+    ) "bad reduction",
+    coq.unify-eq Reduct {{ f3_0 lp:x }} ok
+
+}}.
+
+Elpi Query lp:{{
+
+  @pi-decl `x` {{nat}} x\ sigma Term Stack Reduct\
+    whd {{ f3_1 }} [{{ S lp:x }}] Term Stack,
+    unwind Term Stack Reduct,
+    std.assert! (Reduct =
+      {{ fix xx (n : nat) : nat :=
+            match n with O => 0 | S n' => yy n' end
+          with yy (n : nat) : nat :=
+            match n with O => 1 | S n' => zz n' end
+          with zz (n : nat) : nat :=
+            match n with O => 2 | S n' => xx n' end
+          for zz lp:x }}
+    ) "bad reduction",
+    coq.unify-eq Reduct {{ f3_2 lp:x }} ok
+
+}}.
+
+Elpi Query lp:{{
+
+  @pi-decl `x` {{nat}} x\ sigma Term Stack Reduct\
+    whd {{ f3_2 }} [{{ S lp:x }}] Term Stack,
+    unwind Term Stack Reduct,
+    std.assert! (Reduct =
+      {{ fix xx (n : nat) : nat :=
+            match n with O => 0 | S n' => yy n' end
+          with yy (n : nat) : nat :=
+            match n with O => 1 | S n' => zz n' end
+          with zz (n : nat) : nat :=
+            match n with O => 2 | S n' => xx n' end
+          for xx lp:x }}
+    ) "bad reduction",
+    coq.unify-eq Reduct {{ f3_0 lp:x }} ok
+
+}}.
+
+Elpi Query lp:{{
+
+  sigma Term Stack Reduct\
+    whd {{ f3_0 3 }} [] Term Stack,
+    unwind Term Stack Reduct,
+    coq.unify-eq Reduct {{ 0 }} ok
+
+}}.
+
+Elpi Query lp:{{
+
+  sigma Term Stack Reduct\
+    whd {{ f3_1 3 }} [] Term Stack,
+    unwind Term Stack Reduct,
+    coq.unify-eq Reduct {{ 1 }} ok
+
+}}.
+
+Elpi Query lp:{{
+
+  sigma Term Stack Reduct\
+    whd {{ f3_2 3 }} [] Term Stack,
+    unwind Term Stack Reduct,
+    coq.unify-eq Reduct {{ 2 }} ok
 
 }}.

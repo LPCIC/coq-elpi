@@ -45,28 +45,23 @@ whd (match A _ L) C X XC :- whd-indc A GR KA, !,
   whd {match-red GR KA L C} X XC.
 whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
   whd {fix-red F Fix LA GR KA RA} X XC.
-whd (mfix _ _ _ as MF) C X XC :- mk-mfixes MF 0 L, whd-mfix MF L C X XC, !.
+whd (mfix-call Fno MF) C X XC :-
+  mfix-ty-rno Fno MF N, nth-stack N C LA A RA, whd-indc A GR KA, !,
+  whd-mfix MF MF 0 Fno LA GR KA RA X XC.
 whd N C X XC :- name N, def N _ _ V, !, cache-whd N VN V, whd VN C X XC.
 whd X C X C.
 
-func whd-mfix term, list term, stack -> term, stack.
-whd-mfix (mfix _ _ F) [D|Ds] C X XC :- whd-mfix (F D) Ds C X XC.
-whd-mfix (mbody Bs N) [] C X XC :-
-  std.nth N Bs (mpair Rno B),
-  nth-stack Rno C _LA A _RA, whd-indc A _GR _KA,
-  whd B C X XC.
+func mfix-ty-rno int, mfix-block -> int.
+mfix-ty-rno 0 (mfix-ty _ Rno _ _) Rno :- !.
+mfix-ty-rno N (mfix-ty _ _ _ F) Rno :- pi x\ mfix-ty-rno {calc (N - 1)} (F x) Rno.
 
-% Build the n recursive self-references (one per mutual component)
-func mk-mfixes term, int -> list term.
-mk-mfixes (mfix N T F) Fixes R1 :-
-  (pi x\ mk-mfixes (F x) {calc (1 + Fixes)} (R x)),
-  mk-mfix N T R R1.
-mk-mfixes (mbody L _) Fixes R :-
-  std.map {std.iota Fixes} (x\r\r = mbody L x) R.
-
-func mk-mfix name, term, (term -> list term) -> list term.
-mk-mfix _ _ (_\[]) [] :- !.
-mk-mfix N T (x\[F x|FS x]) [mfix N T F|Next] :- !, mk-mfix N T (x\FS x) Next.
+func whd-mfix mfix-block, mfix-block, int, int, stack, constructor, stack, stack -> term, stack.
+whd-mfix (mfix-ty _ _ _ F) MF Cur Fixno LA K KA RA X XC :-
+  whd-mfix (F (mfix-call Cur MF)) MF {calc (Cur + 1)} Fixno LA K KA RA X XC.
+whd-mfix (mfix-body Bs) _ _ Fixno LA K KA RA X XC :-
+  append LA [{coq.mk-app (global (indc K)) KA}|RA] ArgsWRedRecNo,
+  std.nth Fixno Bs B,
+  whd B ArgsWRedRecNo X XC.
 
 % assert A reduces to a constructor
 whd-indc A GR KA :- whd A [] VA C, !, not(var VA), (VA = global (indc GR); VA = pglobal (indc GR) _), !, KA = C.
