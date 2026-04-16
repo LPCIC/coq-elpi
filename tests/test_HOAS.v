@@ -714,7 +714,7 @@ Elpi Accumulate lp:{{
 main [trm T] :-
   coq.term->gref T (const C),
   coq.env.const C (some Body) _Ty,
-  std.assert! (Body = mfix _ _ _ _) "expected mfix",
+  std.assert! (Body = mfix _ _ _) "expected mfix",
   coq.elaborate-skeleton Body ETy _ ok,
   coq.say {coq.gref->string (const C)} ":" {coq.term->string ETy}.
 }}.

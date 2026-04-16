@@ -214,11 +214,11 @@ external symbol app     : list term -> term.                   % app [hd|args]
 external symbol match   : term -> term -> list term -> term.   % match t p [branch])
 external symbol fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
 
-external symbol mfix  : name -> int -> term -> (term -> term) -> term. % mfix name rno ty rest
+external symbol mfix  : name -> term -> (term -> term) -> term. % mfix name ty rest
 
 kind mpair type.
-external symbol mpair : term -> term -> mpair.                          % mpair f body
-external symbol mbody : list mpair -> term -> term.                     % mbody defs focused
+external symbol mpair : int -> term -> mpair.                   % mpair recno body
+external symbol mbody : list mpair -> int -> term.              % mbody defs focused
 
 external symbol primitive : primitive-value -> term.
 
