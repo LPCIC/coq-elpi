@@ -56,20 +56,16 @@ whd (match A _ L) C X XC :- whd-indc A GR KA, !,
   whd {match-red GR KA L C} X XC.
 whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
   whd {fix-red F Fix LA GR KA RA} X XC.
-whd (mfix-call Fno MF) C X XC :-
-  mfix-ty-rno Fno MF N, nth-stack N C LA A RA, whd-indc A GR KA, !,
+whd (mfix Fno N MF) C X XC :-
+  nth-stack N C LA A RA, whd-indc A GR KA, !,
   whd-mfix MF MF 0 Fno LA GR KA RA X XC.
 whd N C X XC :- name N, def N _ _ V, !, cache-whd N VN V, whd VN C X XC.
 whd X C X C.
 
-func mfix-ty-rno int, mfix-block -> int.
-mfix-ty-rno 0 (mfix-ty _ Rno _ _) Rno :- !.
-mfix-ty-rno N (mfix-ty _ _ _ F) Rno :- pi x\ mfix-ty-rno {calc (N - 1)} (F x) Rno.
-
 func whd-mfix mfix-block, mfix-block, int, int, stack, constructor, stack, stack -> term, stack.
-whd-mfix (mfix-ty _ _ _ F) MF Cur Fixno LA K KA RA X XC :-
-  whd-mfix (F (mfix-call Cur MF)) MF {calc (Cur + 1)} Fixno LA K KA RA X XC.
-whd-mfix (mfix-body Bs) _ _ Fixno LA K KA RA X XC :-
+whd-mfix (mfix-ty _ Rno _ F) MF Cur Fixno LA K KA RA X XC :-
+  whd-mfix (F (mfix Cur Rno MF)) MF {calc (Cur + 1)} Fixno LA K KA RA X XC.
+whd-mfix (mfix-bo Bs) _ _ Fixno LA K KA RA X XC :-
   append LA [{coq.mk-app (global (indc K)) KA}|RA] ArgsWRedRecNo,
   std.nth Fixno Bs B,
   whd B ArgsWRedRecNo X XC.

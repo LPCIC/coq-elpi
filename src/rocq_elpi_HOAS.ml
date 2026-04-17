@@ -939,29 +939,29 @@ let in_elpi_fix name rno ty bo =
 let in_elpiast_fix ~loc n rno ty bo =
   A.mkAppGlobal ~loc ~hdloc:loc fixc (in_elpiast_name ~loc n) [A.mkOpaque ~loc @@ CD.int.cino rno; ty; A.mkLam ~loc (name_of_name ~loc n) bo]
 
-let mfix_callc = E.Constants.declare_global_symbol "mfix-call"
+let mfixc = E.Constants.declare_global_symbol "mfix"
 let mfix_tyc   = E.Constants.declare_global_symbol "mfix-ty"
-let mfix_bodyc = E.Constants.declare_global_symbol "mfix-body"
+let mfix_boc = E.Constants.declare_global_symbol "mfix-bo"
 
 let in_elpiast_mfix ~loc names_rnos_tys focus_idx bodies =
   assert (List.length names_rnos_tys = List.length bodies);
-  let inner = A.mkAppGlobal ~loc ~hdloc:loc mfix_bodyc
+  let inner = A.mkAppGlobal ~loc ~hdloc:loc mfix_boc
     (A.list_to_lp_list ~loc bodies) [] in
   let block = List.fold_right (fun (name, rno, ty) acc ->
     A.mkAppGlobal ~loc ~hdloc:loc mfix_tyc (in_elpiast_name ~loc name)
       [A.mkOpaque ~loc @@ CD.int.cino rno; ty;
        A.mkLam ~loc (name_of_name ~loc name) acc]
   ) names_rnos_tys inner in
-  A.mkAppGlobal ~loc ~hdloc:loc mfix_callc
-    (A.mkOpaque ~loc @@ CD.int.cino focus_idx) [block]
+  A.mkAppGlobal ~loc ~hdloc:loc mfixc
+    (A.mkOpaque ~loc @@ CD.int.cino focus_idx) [A.mkOpaque ~loc @@ CD.int.cino (List.nth names_rnos_tys focus_idx |> fun (_,x,_) -> x);block]
 
 let in_elpi_mfix names_rnos_tys focus_idx bodies =
   assert (List.length names_rnos_tys = List.length bodies);
-  let inner = E.mkApp mfix_bodyc (U.list_to_lp_list bodies) [] in
+  let inner = E.mkApp mfix_boc (U.list_to_lp_list bodies) [] in
   let block = List.fold_right (fun (name, rno, ty) acc ->
     E.mkApp mfix_tyc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam acc]
   ) names_rnos_tys inner in
-  E.mkApp mfix_callc (CD.of_int focus_idx) [block]
+  E.mkApp mfixc (CD.of_int focus_idx) [CD.of_int (List.nth names_rnos_tys focus_idx |> fun (_,x,_) -> x); block]
 
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
@@ -2307,7 +2307,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       state, EC.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|])), gl1 @ gl2
 
  (* mfix *)
-  | E.App(c,focus_lp,[block_lp]) when mfix_callc == c ->
+  | E.App(c,focus_lp,[rno;block_lp]) when mfixc == c ->
       (* mkFix's types live in outer_ctx (no self-refs); bodies use extended ctx. *)
       let outer_ctx = coq_ctx in
       let int_of ~ctx lp =
@@ -2332,9 +2332,9 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
            | E.Lam body ->
              collect_ty ~depth:(depth+1) state coq_ctx body defs gls_acc
            | _ -> err Pp.(str"mfix: expected lambda in mfix-ty body"))
-        | E.App(c2,bodies_lp,[]) when mfix_bodyc == c2 ->
+        | E.App(c2,bodies_lp,[]) when mfix_boc == c2 ->
           finish_mfix ~depth state coq_ctx (List.rev defs) bodies_lp gls_acc
-        | _ -> err Pp.(str"mfix: expected mfix-ty or mfix-body, got: " ++
+        | _ -> err Pp.(str"mfix: expected mfix-ty or mfix-bo, got: " ++
                        str (P.Debug.show_term node))
       and finish_mfix ~depth state coq_ctx defs bodies_lp gls_acc =
         let n = List.length defs in
