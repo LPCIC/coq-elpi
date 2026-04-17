@@ -213,8 +213,13 @@ external symbol let     : name -> term -> term -> (term -> term) -> term. % let 
 external symbol app     : list term -> term.                   % app [hd|args]
 external symbol match   : term -> term -> list term -> term.   % match t p [branch])
 external symbol fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+external symbol mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno
 
 external symbol primitive : primitive-value -> term.
+
+kind mfix-block type.
+external symbol mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
+external symbol mfix-bo : list term -> mfix-block.
 
 % NYI
 %type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
