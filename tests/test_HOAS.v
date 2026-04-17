@@ -714,7 +714,7 @@ Elpi Accumulate lp:{{
 main [trm T] :-
   coq.term->gref T (const C),
   coq.env.const C (some Body) _Ty,
-  std.assert! (Body = mfix-call _ _) "expected mfix-call",
+  std.assert! (Body = mfix _ _ _) "expected mfix",
   coq.elaborate-skeleton Body ETy _ ok,
   coq.say {coq.gref->string (const C)} ":" {coq.term->string ETy}.
 }}.
@@ -748,10 +748,10 @@ Elpi Accumulate lp:{{
 main _ :-
   T = fun `B` (sort (typ _)) (bv\
         fun `default` bv (dv\
-          mfix-call 0
+          mfix 0 0
             (mfix-ty `f` 0 (prod `n` {{ nat }} (_\ bv)) (fv\
               mfix-ty `g` 0 (prod `n` {{ nat }} (_\ bv)) (gv\
-                mfix-body [
+                mfix-bo [
                   fun `n` {{ nat }} (_\ dv),
                   fun `n` {{ nat }} (_\ dv)
                 ]))))),
