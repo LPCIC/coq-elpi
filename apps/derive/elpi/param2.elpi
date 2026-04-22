@@ -117,7 +117,8 @@ func param-indt inductive, bool, int, int, term, list term, list term -> inducti
 param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
   LnoR is 3 * Lno, LunoR is 3 * Luno,
-  param (global (indt GR)) (global (indt GR)) (global (indt NameR)) => do! [
+  coq.env.global (indt GR) I,
+  param I I (global (indt NameR)) => do! [
     param Ty _ TyR,
     map2 Knames Ktypes param-indc KtypesR
   ]
@@ -195,13 +196,13 @@ dispatch (const GR as C) Suffix Clauses :- do! [
 ].
 
 dispatch (indt I as GR) Suffix Clauses :- do! [
-  Ind = global GR,
+  coq.env.global GR Ind,
   coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
   NameR is {coq.gref->id GR} ^ Suffix,
   coq.ensure-fresh-global-id NameR FNameR,
   map Knames (rename-indc Suffix) KnamesR,
 
-  std.map Knames (k\r\ r = global (indc k)) Ks,
+  std.map Knames (k\r\ coq.env.global (indc k) r) Ks,
   pi new_name\ sigma KtypesR TyR\ (
       (param-indt I IsInd Lno Luno Ty Ks Ktypes
  	    	 new_name IsIndR LnoR LunoR TyR KtypesR),
@@ -239,7 +240,8 @@ main T _ Clauses :-
 
 func main_register gref, gref.
 main_register I R :-
-  GI = global I, GR = global R,
+  coq.env.global I GI,
+  coq.env.global R GR,
   C1 = (param GI GI GR :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
   C2 = (paramR GI GI GR :- !),
