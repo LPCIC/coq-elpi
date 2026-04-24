@@ -72,6 +72,16 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !, do! [
           fix NR RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR)
 ].
 
+:name "param:gref"
+param T U TR :- 
+  coq.env.global GRT T, !, 
+  derive.param2.dispatch-gref GRT U TR.
+
+:name "paramR:gref"
+paramR T U R :- 
+  coq.env.global GRT T, !, 
+  derive.param2.dispatch-gref GRT U TR.
+
 namespace derive.param2 {
 
 func names12R name -> name, name, name.
@@ -141,6 +151,20 @@ rename (prod _ T P) [some Ni|LN] (prod Nn T P') :- !,
 rename (prod N T P) [none|LN] (prod N T P') :- !,
   pi x\ rename (P x) LN (P' x).
 rename T _ T :- !.
+
+% helper to lift undeclared grefs to terms.
+func global-gref gref, gref -> term.
+global-gref (const _) GRR TR :- !,
+  coq.env.global GRR TR.
+% GRR is the yet undeclared param translation of _GT.
+global-gref _GT GRR (global GRR) :- !.
+
+% queries param.gref and lifts answer to terms.
+func dispatch-gref gref -> term,term.
+dispatch-gref GRT U TR :-
+  param.gref GRT GRU GRR,
+  coq.env.global GRU U,
+  global-gref GRT GRR TR.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Class storage functions: %
