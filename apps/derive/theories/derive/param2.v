@@ -21,11 +21,23 @@ Register store_param as param2.store_param.
 Elpi Db derive.param2.db lp:{{
     :index(3)
     func param term -> term, term.
+    func param.gref gref -> gref, gref.
     type paramR term -> term -> term -> prop.
     pred param-done i:gref.
 }}.
 #[superglobal] Elpi Accumulate derive.param2.db lp:{{
 
+    :name "param:gref"
+    param T U (global GRR) :- 
+      coq.env.global GRT T, !, 
+      param.gref GRT GRU GRR,
+      coq.env.global GRU U.
+    % coq.env.global cannot be used since while deriving param the global 
+    % reference is not defined and thus cannot be located.
+    param T U (pglobal GRR _) :- 
+      coq.env.global GRT T, !, 
+      param.gref GRT GRU GRR,
+      coq.env.global GRU U.
     :name "param:fail"
     param X _ _ :-
       M is "derive.param2: No binary parametricity translation for " ^
@@ -33,6 +45,12 @@ Elpi Db derive.param2.db lp:{{
       stop M.
     
     
+    :name "paramR:gref"
+    paramR T U R :- 
+      coq.env.global GRT T, !, 
+      param.gref GRT GRU GRR,
+      coq.env.global GRU U,
+      coq.env.global GRR R.
     :name "paramR:fail"
     paramR T T1 TR :-
       M is "derive.param2: No binary parametricity translation linking " ^
@@ -81,4 +99,3 @@ Elpi Accumulate derive lp:{{
 derivation T N ff (derive "param2" (derive.param2.main T N) (param-done T)).
 
 }}.
-
