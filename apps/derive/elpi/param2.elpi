@@ -72,6 +72,16 @@ param (fix N Rno T F as Fix) Fix1 FixR :- !, do! [
           fix NR RnoR (TRsubst f f1) xR\ EtaFixBody f f1 xR)
 ].
 
+:name "param:gref"
+param T U TR :- 
+  coq.env.global GRT T, !, 
+  derive.param2.dispatch-gref GRT U TR.
+
+:name "paramR:gref"
+paramR T U R :- 
+  coq.env.global GRT T, !, 
+  derive.param2.dispatch-gref GRT U TR.
+
 namespace derive.param2 {
 
 func names12R name -> name, name, name.
@@ -117,16 +127,17 @@ func param-indt inductive, bool, int, int, term, list term, list term -> inducti
 param-indt GR IsInd Lno Luno Ty Knames Ktypes
  	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
   LnoR is 3 * Lno, LunoR is 3 * Luno,
-  param (global (indt GR)) (global (indt GR)) (global (indt NameR)) => do! [
+  param.gref (indt GR) (indt GR) (indt NameR) => do! [
     param Ty _ TyR,
     map2 Knames Ktypes param-indc KtypesR
   ]
 ].
 
 func rename-indc string, constructor -> pair constructor id.
-rename-indc Suffix GR (pr GR NameR) :-
+rename-indc Suffix GR (pr GR FNameR) :-
   coq.gref->id (indc GR) Name,
-  NameR is Name ^ Suffix.
+  NameR is Name ^ Suffix,
+  coq.ensure-fresh-global-id NameR FNameR.
 
 func param-indc term, term -> term.
 param-indc K T TRK :- !,
@@ -140,6 +151,20 @@ rename (prod _ T P) [some Ni|LN] (prod Nn T P') :- !,
 rename (prod N T P) [none|LN] (prod N T P') :- !,
   pi x\ rename (P x) LN (P' x).
 rename T _ T :- !.
+
+% helper to lift undeclared grefs to terms.
+func global-gref gref, gref -> term.
+global-gref (const _) GRR TR :- !,
+  coq.env.global GRR TR.
+% GRR is the yet undeclared param translation of _GT.
+global-gref _GT GRR (global GRR) :- !.
+
+% queries param.gref and lifts answer to terms.
+func dispatch-gref gref -> term,term.
+dispatch-gref GRT U TR :-
+  param.gref GRT GRU GRR,
+  coq.env.global GRU U,
+  global-gref GRT GRR TR.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Class storage functions: %
@@ -158,7 +183,8 @@ store-param N X X1 XR :- !,
 func store-param-indc string, constructor, constructor.
 store-param-indc Suffix K KR :-
   store-param {calc ({coq.gref->id (indc K)} ^ Suffix)}
-    (global (indc K)) (global (indc K)) (global (indc KR)).
+    {coq.env.global (indc K)} {coq.env.global (indc K)} 
+    {coq.env.global (indc KR)}.
 
 %%%%%%%%%%%%%%%%%%%%%%%
 % toplevel predicates %
@@ -167,11 +193,10 @@ store-param-indc Suffix K KR :-
 :index (1)
 func dispatch gref, string -> list prop.
 
-dispatch (const GR as C) Suffix Clauses :- do! [
-  Term = global C,
+dispatch ((const GR) as C) Suffix Clauses :- do! [
+  coq.env.global C Term,
   NameR is {coq.gref->id C} ^ Suffix,
   coq.env.const GR (some X) Ty,
-
   param Ty _ TyR,
   coq.mk-app TyR [Term, Term] TyRTermTerm,
   % coq.typecheck is needed to add universe constraints
@@ -184,24 +209,22 @@ dispatch (const GR as C) Suffix Clauses :- do! [
   coq.ensure-fresh-global-id NameR FNameR,
   coq.env.add-const FNameR XR TyRTermTerm _ TermR,
 
-  store-param NameR Term Term (global (const TermR)),
+  store-param NameR Term Term {coq.env.global (const TermR)},
 
-  C1 = (param Term Term (global (const TermR)) :- !),
+  C1 = (param.gref C C (const TermR) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
-  C2 = (paramR Term Term (global (const TermR)) :- !),
-  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C2),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done C)),
-  Clauses = [param-done C, C1, C2]
+  Clauses = [param-done C, C1]
 ].
 
 dispatch (indt I as GR) Suffix Clauses :- do! [
-  Ind = global GR,
+  coq.env.global GR Ind,
   coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
   NameR is {coq.gref->id GR} ^ Suffix,
   coq.ensure-fresh-global-id NameR FNameR,
   map Knames (rename-indc Suffix) KnamesR,
 
-  std.map Knames (k\r\ r = global (indc k)) Ks,
+  std.map Knames (k\r\ coq.env.global (indc k) r) Ks,
   pi new_name\ sigma KtypesR TyR\ (
       (param-indt I IsInd Lno Luno Ty Ks Ktypes
  	    	 new_name IsIndR LnoR LunoR TyR KtypesR),
@@ -213,21 +236,20 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
 
   coq.env.add-indt DeclR GRR,
 
-  store-param NameR Ind Ind (global (indt GRR)),
+  
+  store-param NameR Ind Ind  {coq.env.global (indt GRR)}, 
   coq.env.indt GRR _ _ _ _ RealNamesR _,
 
   forall2 Knames RealNamesR (store-param-indc Suffix),
 
-  C1 = (param Ind Ind (global (indt GRR)) :- !),
+  C1 = (param.gref GR GR (indt GRR) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
-  C2 = (paramR Ind Ind (global (indt GRR)) :- !),
-  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C2),
-  map2 Knames RealNamesR (a\ b\ r\ r = (param (global (indc a)) (global (indc a)) (global (indc b)) :- !)) CK,
+  map2 Knames RealNamesR (a\ b\ r\ r = (param.gref (indc a) (indc a) (indc b) :- !)) CK,
   forall CK (c\
     coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") c)),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done GR)),
 
- Clauses = [param-done GR,C1,C2|CK]
+ Clauses = [param-done GR,C1|CK]
  ].
 
 dispatch (indc _) _ _ :-
@@ -239,11 +261,8 @@ main T _ Clauses :-
 
 func main_register gref, gref.
 main_register I R :-
-  GI = global I, GR = global R,
-  C1 = (param GI GI GR :- !),
+  C1 = (param.gref I I R :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
-  C2 = (paramR GI GI GR :- !),
-  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "paramR:fail") C2),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done I)).
 
 }

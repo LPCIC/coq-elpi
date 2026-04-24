@@ -21,6 +21,7 @@ Register store_param as param2.store_param.
 Elpi Db derive.param2.db lp:{{
     :index(3)
     func param term -> term, term.
+    func param.gref gref -> gref, gref.
     type paramR term -> term -> term -> prop.
     pred param-done i:gref.
 }}.
@@ -31,7 +32,6 @@ Elpi Db derive.param2.db lp:{{
       M is "derive.param2: No binary parametricity translation for " ^
               {coq.term->string X},
       stop M.
-    
     
     :name "paramR:fail"
     paramR T T1 TR :-
@@ -81,4 +81,3 @@ Elpi Accumulate derive lp:{{
 derivation T N ff (derive "param2" (derive.param2.main T N) (param-done T)).
 
 }}.
-
