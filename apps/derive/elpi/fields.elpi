@@ -26,20 +26,20 @@ main I Prefix AllCL :- std.do! [
 
   box (global (indt I)) KS FI CLB,
 
-  (CLB ==> fields_t.main FI (global (indt I)) Body_t),
+  (CLB =!=> fields_t.main FI (global (indt I)) Body_t),
   std.assert-ok! (coq.typecheck Body_t Ty_t) "derive.fields generates illtyped fields_t",
   Name_t is Prefix ^ "fields_t",
   coq.ensure-fresh-global-id Name_t FName_t,
   coq.env.add-const FName_t Body_t Ty_t ff Fields_t, 
 
-  (CLB ==> fields.main FI (global (indt I)) (global (const Fields_t)) (global (const Tag)) BodySkel),
+  (CLB =!=> fields.main FI (global (indt I)) (global (const Fields_t)) (global (const Tag)) BodySkel),
   % we elaborate only for primitive records...
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "derive.fields generates illtyped fields",
   Name is Prefix ^ "fields",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName Body Ty ff Fields, 
 
-  (CLB ==> construct.main FI (global (indt I)) Fields_t Body_c),
+  (CLB =!=> construct.main FI (global (indt I)) Fields_t Body_c),
   std.assert-ok! (coq.typecheck Body_c Ty_c) "derive.fields generates illtyped construct",
   Name_c is Prefix ^ "construct",
   coq.ensure-fresh-global-id Name_c FName_c,

@@ -43,8 +43,8 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File param1_congr.
 Elpi Accumulate derive Db derive.param1.congr.db.
+Elpi Accumulate derive File param1_congr.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "param1_congr" "param1".

@@ -40,8 +40,8 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File projK.
 Elpi Accumulate derive Db derive.projK.db.
+Elpi Accumulate derive File projK.
 
 #[synterp] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "projK" (cl\ cl = []) true).

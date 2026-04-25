@@ -30,9 +30,9 @@ func box-for constructor -> inductive, constructor.
 Elpi Command derive.fields.
 Elpi Accumulate Db Header derive.eqType.db.
 Elpi Accumulate Db Header derive.tag.db.
+Elpi Accumulate File eqType.
 Elpi Accumulate Db Header derive.fields.db.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File eqType.
 Elpi Accumulate File fields.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.tag.db.
@@ -53,8 +53,8 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File fields.
 Elpi Accumulate derive Db derive.fields.db.
+Elpi Accumulate derive File fields.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "fields" "tag".

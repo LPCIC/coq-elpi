@@ -16,7 +16,6 @@ type query =
   | Fun of (Elpi.API.Data.state -> Elpi.API.Data.state * Elpi.API.RawData.term * Elpi.API.Conversion.extra_goals)
 
 type atts = ((clause_scope * (Str.regexp list option * Str.regexp list option)) * phase option)
-type what = Code | Signature
 
 module type Common = sig
 

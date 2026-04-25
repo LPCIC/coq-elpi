@@ -72,8 +72,8 @@ Elpi Accumulate lp:{{
 
 (* hook into derive *)
 Elpi Accumulate derive File derive_hook.
-Elpi Accumulate derive File eqcorrect.
 Elpi Accumulate derive Db derive.eqcorrect.db.
+Elpi Accumulate derive File eqcorrect.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "eqcorrect" "induction".

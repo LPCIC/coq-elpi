@@ -138,6 +138,7 @@ let warn_impl = CWarnings.create ~name:"elpi.implication-precedence" ~category:e
 let warn_linear = CWarnings.create ~name:"elpi.linear-variable" ~category:elpi_tc_cat (fun x -> x)
 let warn_missing_types = CWarnings.create ~name:"elpi.missing-types" ~category:elpi_tc_cat (fun x -> x)
 let warn_flex_clause = CWarnings.create ~name:"elpi.flex-clause" ~category:elpi_tc_cat (fun x -> x)
+let warn_nested_accumulate = CWarnings.create ~default:CWarnings.AsError ~name:"elpi.nested-accumulate" ~category:elpi_depr_cat (fun x -> x)
 
 let () = API.Setup.set_warn (fun ?loc ~id x ->
   let loc = Option.map to_coq_loc loc in
@@ -146,7 +147,8 @@ let () = API.Setup.set_warn (fun ?loc ~id x ->
   | API.Setup.ImplicationPrecedence -> warn_impl ?loc msg
   | LinearVariable -> warn_linear ?loc msg
   | UndeclaredGlobal -> warn_missing_types ?loc msg
-  | FlexClause -> warn_flex_clause ?loc msg)
+  | FlexClause -> warn_flex_clause ?loc msg
+  | NestedAccumulate -> warn_nested_accumulate ?loc msg)
 let () = API.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let () = API.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let nYI s = err Pp.(str "Not Yet Implemented: " ++ str s)
