@@ -20,8 +20,14 @@ Register store_param as param2.store_param.
    its parametricity translation *)
 Elpi Db derive.param2.db lp:{{
     :index(3)
+    % param (t : T) is a function that returns t' and tr such that tr : [| T |] t t'
     func param term -> term, term.
+
+    % param.gref implements param for global references.
+    % It is introduced to handle param on universe polymorphic definitions
     func param.gref gref -> gref, gref.
+
+    % a database to store triples t, t', tr, such that tr : [| T |] t t'.
     type paramR term -> term -> term -> prop.
     pred param-done i:gref.
 }}.
