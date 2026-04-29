@@ -55,6 +55,7 @@ Elpi Accumulate lp:{{
 }}. 
 
 Elpi Command derive.param2.register.
+Elpi Accumulate File paramX.
 Elpi Accumulate Db Header derive.param2.db.
 Elpi Accumulate File param2.
 Elpi Accumulate Db derive.param2.db.
@@ -68,6 +69,7 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
+Elpi Accumulate derive File paramX.
 Elpi Accumulate derive Db Header derive.param2.db.
 Elpi Accumulate derive File param2.
 Elpi Accumulate derive Db derive.param2.db.

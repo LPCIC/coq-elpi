@@ -6,19 +6,17 @@ open Elpi.API
 open Rocq_elpi_utils
 
 type cunit = Full of  Names.KerName.t * Compile.compilation_unit | Signature of Compile.compilation_unit_signature
+val name_of_cunit : cunit -> string
 type program_name = Loc.t * qualified_name
+type what = Code | SignatureOnly
 
 type src =
   | File of src_file
-  | EmbeddedString of src_string
   | DatabaseBody of qualified_name
   | DatabaseHeader of src_db_header
 and src_file = {
   fname : string;
   fast : cunit;
-}
-and src_string = {
-  sast : cunit;
 }
 and src_db_header = {
   dast : cunit;
@@ -79,14 +77,7 @@ module type Programs = sig
 
   val debug_vars : Compile.StrSet.t ref
   val cc_flags : unit -> Compile.flags
-  val unit_from_file   : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string -> cunit
-  val unit_signature_from_file   : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string -> cunit
-  val unit_from_string : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> Ast.Loc.t -> string -> cunit
-  val ast_from_string  : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Digest.t * Compile.scoped_program
-  val unit_from_ast    : ?error_header:string -> elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Compile.scoped_program -> cunit
-  val unit_signature_from_ast    : elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string option -> Compile.scoped_program -> cunit
-  val unit_from_plugin : ?error_header:string -> elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> string -> Setup.builtins -> cunit
-  val extend_w_units   : base:Compile.program -> loc:Loc.t -> cunit list -> Compile.program
+  val unit_from_ast    : ?error_header:string -> elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> Compile.scoped_program -> cunit
   val parse_goal       : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Ast.query
 
   val db_exists : qualified_name -> bool
@@ -96,23 +87,34 @@ module type Programs = sig
   val declare_file : program_name -> unit
   val get_nature : qualified_name -> nature
 
-  val init_program : program_name -> loc:Loc.t -> src list -> unit
-  val init_db : program_name -> loc:Loc.t -> (Ast.Loc.t * string) -> unit
-  val init_file : program_name -> Digest.t * Compile.scoped_program -> unit
+  val init_program : program_name -> loc:Loc.t -> (Ast.Loc.t * string) -> unit
+  val init_command : program_name -> loc:Loc.t -> unit
+  val init_tactic  : program_name -> loc:Loc.t -> unit
+  val init_db      : program_name -> loc:Loc.t -> (Ast.Loc.t * string) -> unit
+  val init_file    : program_name -> loc:Loc.t -> (Ast.Loc.t * string) -> unit
 
-  val header_of_db : qualified_name -> cunit list
-  val ast_of_file : qualified_name -> Digest.t * Compile.scoped_program
+  val ast_of_elpifile : qualified_name -> Compile.scoped_program list
 
-  val accumulate : loc:Loc.t -> qualified_name -> src list -> unit
-  val accumulate_to_db : qualified_name -> cunit list -> Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
+  type db_header
+  val header_of_db : qualified_name -> db_header
+
+  val accumulate_file_to_program     : loc:Loc.t -> program:qualified_name -> what:what -> file:string -> unit
+  val accumulate_ast_to_program      : loc:Loc.t -> program:qualified_name -> what:what -> ast:Compile.scoped_program -> unit
+  val accumulate_string_to_program   : loc:Loc.t -> program:qualified_name -> code:(Ast.Loc.t * string) -> unit
+  val accumulate_plugin_to_program   : loc:Loc.t -> program:qualified_name -> plugin:Elpi.API.Setup.builtins -> unit
+  val accumulate_db_to_program       : loc:Loc.t -> program:qualified_name -> db:qualified_name -> unit
+  val accumulate_header_to_program   : loc:Loc.t -> program:qualified_name -> header:db_header -> unit
+
+  val accumulate_file_to_db   : loc:Loc.t -> db:qualified_name -> what:what -> file:string -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_ast_to_db    : loc:Loc.t -> db:qualified_name -> what:what -> ast:Compile.scoped_program -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_string_to_db : loc:Loc.t -> db:qualified_name -> code:(Ast.Loc.t * string) -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_units_to_db  : loc:Loc.t -> db:qualified_name -> units:cunit list -> secvars:Names.Id.t list -> scope:Rocq_elpi_utils.clause_scope -> unit
+  val accumulate_header_to_db : loc:Loc.t -> db:qualified_name -> header:db_header -> scope:Rocq_elpi_utils.clause_scope -> unit
 
   val load_command : loc:Loc.t -> string -> unit
   val load_tactic : loc:Loc.t -> string -> unit
 
   val ensure_initialized : unit -> Setup.elpi
-
-  val tactic_init : unit -> src
-  val command_init : unit -> src
 
   val code : ?even_if_empty:bool -> qualified_name -> Chunk.t Code.t option
 
