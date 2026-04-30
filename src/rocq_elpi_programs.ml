@@ -434,7 +434,6 @@ let private__units_from_file ~elpi ~base ~loc x : cunit list =
     let flags = cc_flags () in
     let ast = EP.program ~elpi ~file:x in
     let ast = EC.scope_ast ~elpi ast in
-    let loc = Loc.initial Loc.ToplevelInput in
     let _, units_rev =
       List.fold_left (fun (base,acc) ast ->
         let u = unit_from_ast ~elpi ~flags ~base ~loc ast in
@@ -448,7 +447,6 @@ let private__units_from_string ~elpi ~base ~loc xloc x : cunit list =
     let flags = cc_flags () in
     let ast = EP.program_from ~elpi ~loc:xloc ~digest:(Digest.string x) (Lexing.from_string x) in
     let ast = EC.scope_ast ~elpi ast in
-    let loc = Loc.initial Loc.ToplevelInput in
     let _, units_rev =
       List.fold_left (fun (base,acc) ast ->
         let u = unit_from_ast ~elpi ~flags ~base ~loc ast in
