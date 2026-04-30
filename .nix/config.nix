@@ -14,7 +14,7 @@ let master = [
     "trakt"
   ];
   rocq-common-bundles = {
-    rocq-elpi.override.elpi-version = "v3.6.1";
+    rocq-elpi.override.elpi-version = "v3.7.1";
     hierarchy-builder.override.version = "master";
     rocq-elpi-tests.job = true;
     rocq-elpi-tests-stdlib.job = true;
@@ -22,7 +22,7 @@ let master = [
   coq-common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
-    coq-elpi.override.elpi-version = "v3.6.1";
+    coq-elpi.override.elpi-version = "v3.7.1";
 
     mathcomp-boot.job = true;
     mathcomp-fingroup.job = true;
@@ -103,12 +103,12 @@ let master = [
     }; };
 
     "coq-master-min-elpi" = { rocqPackages = rocq-common-bundles // {
-      rocq-elpi.override.elpi-version = "v3.6.1";
+      rocq-elpi.override.elpi-version = "v3.7.1";
       rocq-core.override.version = "master";
       stdlib.override.version = "master";
       bignums.override.version = "master";
     }; coqPackages = coq-common-bundles // {
-      coq-elpi.override.elpi-version = "v3.6.1";
+      coq-elpi.override.elpi-version = "v3.7.1";
       coq.override.version = "master";
       stdlib.override.version = "master";
       bignums.override.version = "master";
