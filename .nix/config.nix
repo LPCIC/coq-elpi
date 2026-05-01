@@ -1,20 +1,25 @@
 with builtins; with (import <nixpkgs> {}).lib;
-let master = [
+let
+  default-elpi-version = "3.7.1";
+  min-elpi-version = "3.7.1";
+  master = [
     "coqeal"
     "hierarchy-builder"
+    "ITree"
     "mathcomp"
     "mathcomp-algebra-tactics"
     "mathcomp-analysis"
     "mathcomp-bigenough"
     "mathcomp-finmap"
     "mathcomp-real-closed"
+    "mathcomp-word"
     "mathcomp-zify"
     "multinomials"
     "odd-order"
     "trakt"
   ];
   rocq-common-bundles = {
-    rocq-elpi.override.elpi-version = "v3.6.1";
+    rocq-elpi.override.elpi-version = default-elpi-version;
     hierarchy-builder.override.version = "master";
     rocq-elpi-tests.job = true;
     rocq-elpi-tests-stdlib.job = true;
@@ -22,7 +27,8 @@ let master = [
   coq-common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
-    coq-elpi.override.elpi-version = "v3.6.1";
+    coq-elpi.override.elpi-version = default-elpi-version;
+    jasmin.override.version = "main";
 
     mathcomp-boot.job = true;
     mathcomp-fingroup.job = true;
@@ -52,6 +58,8 @@ let master = [
     interval.job = false;
     QuickChick.job = false;
     vcfloat.job = false;
+
+    ITree.job = false;  # only a dependency of jasmin
 }; in
 {
   format = "1.0.0";
@@ -77,21 +85,18 @@ let master = [
 
     "rocq-9.2" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "9.2";
-      bignums.job = false;  # Stdlib not released yet
-      coqeal.job = false;  # Stdlib not released yet
-      mathcomp-reals-stdlib.job = false;  # Stdlib not released yet
-      mathcomp-analysis-stdlib.job = false;  # Stdlib not released yet
-      mathcomp-zify.job = false;  # Stdlib not released yet
-      mathcomp-algebra-tactics.job = false;  # Stdlib not released yet
-      rocq-elpi-tests-stdlib.job = false;  # Stdlib not released yet
-      stdlib.job = false;  # Stdlib not released yet
-      trakt.job = false;  # Stdlib not released yet
+      coqeal.job = false;  # MathComp not released yet
+      mathcomp-reals-stdlib.job = false;  # MathComp not released yet
+      mathcomp-analysis-stdlib.job = false;  # MathComp not released yet
+      mathcomp-zify.job = false;  # MathComp not released yet
+      mathcomp-algebra-tactics.job = false;  # MathComp not released yet
+      jasmin.job = false;  # MathComp not released yet
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.2";
       hierarchy-builder.override.version = "master";
     }; };
 
-    "coq-master" = { rocqPackages = rocq-common-bundles // {
+    "rocq-master" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "master";
       bignums.override.version = "master";
       stdlib.override.version = "master";
@@ -100,22 +105,25 @@ let master = [
       bignums.override.version = "master";
       stdlib.override.version = "master";
       hierarchy-builder.override.version = "master";
+      jasmin.job = false;
     }; };
 
-    "coq-master-min-elpi" = { rocqPackages = rocq-common-bundles // {
-      rocq-elpi.override.elpi-version = "v3.6.1";
+  } // optionalAttrs (min-elpi-version != default-elpi-version) {
+    "rocq-master-min-elpi" = { rocqPackages = rocq-common-bundles // {
+      rocq-elpi.override.elpi-version = min-elpi-version;
       rocq-core.override.version = "master";
-      stdlib.override.version = "master";
       bignums.override.version = "master";
+      stdlib.override.version = "master";
     }; coqPackages = coq-common-bundles // {
-      coq-elpi.override.elpi-version = "v3.6.1";
+      coq-elpi.override.elpi-version = min-elpi-version;
       coq.override.version = "master";
-      stdlib.override.version = "master";
       bignums.override.version = "master";
-      trakt.job = false;
+      stdlib.override.version = "master";
+      hierarchy-builder.override.version = "master";
+      jasmin.job = false;
     }; };
-
   };
+
 
   cachix.coq = {};
   cachix.math-comp = {};
