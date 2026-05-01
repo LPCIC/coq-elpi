@@ -65,18 +65,6 @@ coq.safe-dest-app (app [X|XS]) HD AllArgs :- !,
   coq.safe-dest-app X HD ARGS, append ARGS XS AllArgs.
 coq.safe-dest-app X X [].
 
-:index (_ 1)
-func coq.mk-app term, list term -> term.
-coq.mk-app HD [] HD :- !.
-coq.mk-app (app L) Args R :- !, append L Args LArgs, R = app LArgs.
-coq.mk-app (fun _ _ F) [A|Args] R :- !, coq.mk-app (F A) Args R.
-coq.mk-app (let _ _ A F) Args R :- !, coq.mk-app (F A) Args R.
-coq.mk-app HD Args (app [HD|Args]).
-
-func coq.mk-app-uvar any, list term -> term.
-coq.mk-app-uvar HD [] HD :- !.
-coq.mk-app-uvar ((uvar as K) : term) [A|Args] R :- !, unsafe-cast K K', coq.mk-app-uvar (K' A) Args R.
-
 % coq.mk-eta n Ty T: performs up to n (when >= 0) eta expasion of T
 % according to its type Ty. If n < 0 it makes as many step as
 % products in Ty. There be dragons if T has not type Ty.
@@ -90,7 +78,7 @@ coq.mk-eta N (prod Name Ty P) B           (fun Name Ty B1) :- !, N1 is N - 1,
 coq.mk-eta _ _ B B :- !.
 
 func coq.saturate term, term -> term.
-coq.saturate Ty T O :- coq.reduction.lazy.whd Ty (prod N Src Tgt), !,
+coq.saturate Ty T O :- whd Ty [] (prod N Src Tgt) [], !,
   coq.mk-app T [Hole_] R,
   @pi-decl N Src x\ coq.saturate (Tgt x) R O.
 coq.saturate _ X X.
@@ -521,7 +509,7 @@ coq.fresh-type (sort (typ U)) :- coq.univ.new U.
 
 func coq.sort? term -> .
 coq.sort? (sort _) :- !.
-coq.sort? T :- coq.reduction.lazy.whd T T1, not(T == T1), coq.sort? T1.
+coq.sort? T :- whd1 T T1, coq.sort? T1.
 
 % Map the term under a spine of fun nodes
 func coq.map-under-fun term,
@@ -566,8 +554,7 @@ func coq.build-match
   (func term, term, list term, list term -> term)
   -> term. % match T (.. MkRty) [ .. MkBranch K1, .. MkBranch K2, ..]
 coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
-  coq.reduction.lazy.whd Tty HDArgs,
-  coq.safe-dest-app HDArgs HD Args,
+  whd Tty [] HD Args,
   if2 (HD = global (indt GR)) true
       (HD = pglobal (indt GR) I) true
       fail,
@@ -579,19 +566,10 @@ coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   coq.bind-ind-arity-no-let IndtLArgs ArityArgs RtyF Rty,
   % Bs
   map Kt (coq.subst-prod LArgs) KtArgs,
-  map KtArgs coq.build-match.hd-beta-zeta-reduce KtArgsNorm,
+  map KtArgs hd-beta-zeta-reduce KtArgsNorm,
   map KtArgsNorm coq.prod->fun KtArgsLam,
   map Kn (k\r\ sigma K\ coq.env.global (indc k) K, coq.mk-app K LArgs r) KnArgs,
   map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
-
-func coq.build-match.hd-beta-zeta-reduce term -> term.
-coq.build-match.hd-beta-zeta-reduce T T1 :-
-  coq.safe-dest-app T (fun _ _ F) [A|AS], !,
-  coq.build-match.hd-beta-zeta-reduce {coq.mk-app (F A) AS} T1.
-coq.build-match.hd-beta-zeta-reduce T T1 :-
-  coq.safe-dest-app T (let _ _ B F) AS, !,
-  coq.build-match.hd-beta-zeta-reduce {coq.mk-app (F B) AS} T1.
-coq.build-match.hd-beta-zeta-reduce T T.
 
 % XXX the list of arguments are often needed in reverse order
 :functional
@@ -635,7 +613,7 @@ coq.bind-ind-parameters.aux I (prod N T F) Vs Ts K (fun N T G) :- I > 0, !, J is
 coq.bind-ind-parameters.aux I (let N T B F) Vs Ts K (fun N T G) :- I > 0, !, J is I - 1,
   @pi-def N T B x\
     coq.bind-ind-parameters.aux J (F x) [x|Vs] [T|Ts] K (G x).
-coq.bind-ind-parameters.aux I T Vs Ts K O :- I > 0, coq.reduction.lazy.whd T T', not(T == T'), !,
+coq.bind-ind-parameters.aux I T Vs Ts K O :- I > 0, whd1 T T', !,
   coq.bind-ind-parameters.aux I T' Vs Ts K O.
 
 % coq.with-TC Class Instance->Clause Code: runs Code under a context augmented with
