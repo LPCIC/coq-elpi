@@ -3,6 +3,7 @@ From elpi.apps Require Import derive.param2.
 Set Uniform Inductive Parameters.
 
 Elpi derive.param2 unit.
+Elpi derive.param2 unit.
 Elpi derive.param2 nat.
 Elpi derive.param2 list.
 
@@ -105,3 +106,18 @@ Elpi derive.param2 fb.
 Inductive Acc {A : Type} (R : A -> A -> Prop) | (x : A) : Prop :=
     Acc_intro : (forall y : A, R y x -> Acc y) -> Acc x.
 Elpi derive.param2 Acc.
+
+Set Universe Polymorphism.
+Inductive Nat := 
+| O' 
+| S' (n : Nat).
+Elpi derive.param2 Nat.
+
+Definition Wrap := nat.
+Definition WrapR := nat_R.
+Elpi derive.param2.register "Wrap" "WrapR".
+
+Definition Wrap2Wrap := Wrap -> Wrap.
+Elpi derive.param2 Wrap2Wrap.
+
+Unset Universe Polymorphism.
