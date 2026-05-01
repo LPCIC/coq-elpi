@@ -105,3 +105,7 @@ Elpi derive.param2 fb.
 Inductive Acc {A : Type} (R : A -> A -> Prop) | (x : A) : Prop :=
     Acc_intro : (forall y : A, R y x -> Acc y) -> Acc x.
 Elpi derive.param2 Acc.
+
+Definition fi T := fix g (s : list T) := tt.
+
+Elpi derive.param2 fi.
