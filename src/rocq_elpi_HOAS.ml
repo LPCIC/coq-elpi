@@ -2302,27 +2302,19 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let state, ty, gl1 = aux ~depth state ~on_ty:true ty in
       let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
       let state, bo, gl2 = aux_lam coq_ctx ~depth state bo in
-      let rno =
-        match E.look ~depth rno with
-        | E.CData n when CD.is_int n -> CD.to_int n
-        | _ -> err Pp.(str"Not an int: " ++ str (P.Debug.show_term rno)) in
+      let rno = lp2int ~depth ~ctx:"fix" rno in
       state, EC.mkFix (([|rno|],0),([|name|],[|ty|],[|bo|])), gl1 @ gl2
 
  (* mfix *)
   | E.App(c,focus_lp,[rno;block_lp]) when mfixc == c ->
       (* mkFix's types live in outer_ctx (no self-refs); bodies use extended ctx. *)
       let outer_ctx = coq_ctx in
-      let int_of ~ctx lp = (* TODO: share with fix *)
-        match E.look ~depth lp with
-        | E.CData n when CD.is_int n -> CD.to_int n
-        | _ -> err Pp.(str"mfix: " ++ str ctx ++ str" not an int: " ++
-                       str (P.Debug.show_term lp)) in
-      let focus_idx = int_of ~ctx:"focus" focus_lp in
+      let focus_idx = lp2int ~depth ~ctx:"mfix focus" focus_lp in
       let rec collect_ty ~depth state coq_ctx node defs gls_acc =
         match E.look ~depth node with
         | E.App(c2,name_lp,[rno_lp; ty_lp; rest_lam]) when mfix_tyc == c2 ->
           let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name_lp in
-          let rno = int_of ~ctx:"mfix-ty rno" rno_lp in
+          let rno = lp2int ~depth ~ctx:"mfix-ty rno" rno_lp in
           let state, ty, gl =
             lp2constr ~calldepth syntactic_constraints outer_ctx
               ~depth state ~on_ty:true ty_lp in
@@ -2469,6 +2461,12 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
        err Pp.(str "out of place lambda: "++
                str (pp2string P.(term depth) t))
   | _ -> err Pp.(str"Not a HOAS term:" ++ str (P.Debug.show_term t))
+
+and lp2int ~depth ~ctx lp =
+  match E.look ~depth lp with
+  | E.CData n when CD.is_int n -> CD.to_int n
+  | _ -> err Pp.(str"lp2constr: " ++ str ctx ++ str" not an int: " ++
+                  str (P.Debug.show_term lp))
 
 (* Evar info out of thin air: the user wrote an X that was never encountered by
    type checking (of) hence we craft a tower ?1 : ?2 : Type and link X with ?1 *)
