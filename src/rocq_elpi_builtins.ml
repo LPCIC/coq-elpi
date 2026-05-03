@@ -673,11 +673,18 @@ let get_instance env class_gr inst_gr : type_class_instance =
 
 let warning_tc_hints = CWarnings.create ~name:"elpi.TC.hints" ~category:elpi_cat Pp.str
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let hints_map_all env ~secvars tc db =
+  Hints.Hint_db.map_all ~secvars tc db
+[%%else]
+let hints_map_all env ~secvars tc db =
+  Hints.Hint_db.map_all env ~secvars tc db
+[%%endif]
 
 let get_instances (env: Environ.env) (sigma: Evd.evar_map) tc : type_class_instance list =
   let hint_db = Hints.searchtable_map "typeclass_instances" in
   let secvars : Names.Id.Pred.t = Names.Id.Pred.full in
-  let full_hints = Hints.Hint_db.map_all ~secvars:secvars tc hint_db in
+  let full_hints = hints_map_all env ~secvars:secvars tc hint_db in
   (* let hint_asts = List.map Hints.FullHint.repr full_hints in  *)
   let hints = List.filter_map (fun (e : Hints.FullHint.t) -> match Hints.FullHint.repr e with
     | Hints.Res_pf a | ERes_pf a | Give_exact a -> Some a (* Respectively Hint Apply | EApply | Exact *)
