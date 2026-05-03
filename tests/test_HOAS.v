@@ -766,9 +766,9 @@ Elpi Query lp:{{
     whd {{ myeven }} [{{ S lp:x }}] Term Stack,
     unwind Term Stack Reduct,
     std.assert! (Reduct =
-      {{ fix xx (n : nat) : bool :=
+      {{ fix xx (n : nat) {struct n} : bool :=
             match n with O => true | S n' => yy n' end
-          with yy (n : nat) : bool :=
+          with yy (n : nat) {struct n} : bool :=
             match n with O => false | S n' => xx n' end
           for yy lp:x }}
     ) "bad reduction",
@@ -782,9 +782,9 @@ Elpi Query lp:{{
     whd {{ myeven }} [{{ lp:x }}] Term Stack,
     unwind Term Stack Reduct,
     std.assert! (Reduct =
-      {{ fix xx (n : nat) : bool :=
+      {{ fix xx (n : nat)  {struct n}: bool :=
             match n with O => true | S n' => yy n' end
-          with yy (n : nat) : bool :=
+          with yy (n : nat)  {struct n}: bool :=
             match n with O => false | S n' => xx n' end
           for xx lp:x }}
     ) "bad reduction",
@@ -798,11 +798,11 @@ Elpi Query lp:{{
     whd {{ f3_0 }} [{{ lp:x }}] Term Stack,
     unwind Term Stack Reduct,
     std.assert! (Reduct =
-      {{ fix xx (n : nat) : nat :=
+      {{ fix xx (n : nat)  {struct n}: nat :=
             match n with O => 0 | S n' => yy n' end
-          with yy (n : nat) : nat :=
+          with yy (n : nat)  {struct n}: nat :=
             match n with O => 1 | S n' => zz n' end
-          with zz (n : nat) : nat :=
+          with zz (n : nat) {struct n} : nat :=
             match n with O => 2 | S n' => xx n' end
           for xx lp:x }}
     ) "bad reduction",
@@ -816,11 +816,11 @@ Elpi Query lp:{{
     whd {{ f3_1 }} [{{ S lp:x }}] Term Stack,
     unwind Term Stack Reduct,
     std.assert! (Reduct =
-      {{ fix xx (n : nat) : nat :=
+      {{ fix xx (n : nat)  {struct n}: nat :=
             match n with O => 0 | S n' => yy n' end
-          with yy (n : nat) : nat :=
+          with yy (n : nat)  {struct n}: nat :=
             match n with O => 1 | S n' => zz n' end
-          with zz (n : nat) : nat :=
+          with zz (n : nat)  {struct n}: nat :=
             match n with O => 2 | S n' => xx n' end
           for zz lp:x }}
     ) "bad reduction",
@@ -834,11 +834,11 @@ Elpi Query lp:{{
     whd {{ f3_2 }} [{{ S lp:x }}] Term Stack,
     unwind Term Stack Reduct,
     std.assert! (Reduct =
-      {{ fix xx (n : nat) : nat :=
+      {{ fix xx (n : nat)  {struct n}: nat :=
             match n with O => 0 | S n' => yy n' end
-          with yy (n : nat) : nat :=
+          with yy (n : nat)  {struct n}: nat :=
             match n with O => 1 | S n' => zz n' end
-          with zz (n : nat) : nat :=
+          with zz (n : nat) {struct n} : nat :=
             match n with O => 2 | S n' => xx n' end
           for xx lp:x }}
     ) "bad reduction",
@@ -870,5 +870,23 @@ Elpi Query lp:{{
     whd {{ f3_2 3 }} [] Term Stack,
     unwind Term Stack Reduct,
     coq.unify-eq Reduct {{ 2 }} ok
+
+}}.
+
+Elpi Query lp:{{
+
+  T = {{
+
+    fun x : nat =>
+      fix x (n : nat)  {struct n}: nat :=
+            match n with O => 0 | S n' => y n' end
+          with y (n : nat)  {struct n}: nat :=
+            match n with O => 1 | S n' => x n' end
+          for x
+
+  }},
+  coq.say {coq.term->string T},
+  std.assert-ok! (coq.typecheck T _) "illtyped"
+
 
 }}.

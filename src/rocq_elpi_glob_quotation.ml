@@ -155,7 +155,7 @@ let rec rename_glob_vars l c = DAst.map_with_loc (fun ?loc -> function
   | _ -> DAst.get (Glob_ops.map_glob_constr (rename_glob_vars l) c)
   ) c
 
-let under_glob_ctx name ~tyast ~k t state =
+let under_glob_ctx1 name ~tyast ~k t state =
   match name with
   | Names.Name.Anonymous -> k name t state
   | Names.Name.Name id ->
@@ -170,6 +170,26 @@ let under_glob_ctx name ~tyast ~k t state =
       let state = push_glob_ctx state id (Some (tyast id)) in
       k (Names.Name.Name id) t state
   
+let rec under_glob_ctxn names ~tyasts ~k ts state acc =
+  match names, tyasts with
+  | [], [] -> k (List.rev acc) ts state
+  | name :: names, tyast :: tyasts ->
+    begin match name with
+    | Names.Name.Anonymous -> under_glob_ctxn names ~tyasts ~k ts state acc
+    | Names.Name.Name id ->
+      (* let () = Printf.eprintf " intro %s\n" (Id.to_string id) in *)
+        let { taken } = get_glob_env state in
+        let ts, id =
+          if Names.Id.Set.mem id taken then
+            let new_id = Names.Id.of_string_soft (Format.asprintf "_elpi_renamed_%s_%d" (Id.to_string id) (Names.Id.Set.cardinal taken)) in
+            (* let () = Printf.eprintf "%s -> %s\n" (Id.to_string id) (Id.to_string new_id) in *)
+            List.map (rename_glob_vars [id,new_id]) ts, new_id
+          else ts, id in
+        let state = push_glob_ctx state id (Some (tyast id)) in
+        under_glob_ctxn names ~tyasts ~k ts state (Names.Name.Name id::acc)
+    end
+  | _ -> assert false
+
 (* Set by the parser that declares an ARGUMENT EXTEND to Coq *)
 let get_ctx, set_ctx, _update_ctx =
   let bound_vars =
@@ -332,7 +352,10 @@ let gterm2lpast ~pattern ~language state glob =
             prlist_with_sep spc Id.print (Environ.named_context env |> Termops.ids_of_named_context));
 
   and under_binder ~loc name ty bo state t ~k =
-    under_glob_ctx name ~tyast:(mk_tyast ~loc ~ty ~bo) ~k state t
+    under_glob_ctx1 name ~tyast:(mk_tyast ~loc ~ty ~bo) ~k state t
+
+  and under_binders ~loc names tys bos state ts ~k =
+    under_glob_ctxn names ~tyasts:(List.map2 (fun ty bo -> mk_tyast ~loc ~ty ~bo) tys bos) ~k state ts []
             
   and mk_tyast ~loc ~ty ~bo id =
     match bo with
@@ -572,35 +595,22 @@ let gterm2lpast ~pattern ~language state glob =
 
   | GRec(GFix([|Some rno|],0),[|name|],[|tctx|],[|ty|],[|bo|]) ->
       let ty = glob_intros_prod tctx ty in
-      let  ty = gterm2lp state ty in
+      let ty = gterm2lp state ty in
       let bo = glob_intros tctx bo in
       under_binder ~loc (Name.Name name) ty None bo state ~k:(fun name t state ->
         in_elpiast_fix ~loc name rno ty (gterm2lp state bo))
   | GRec(GFix(rnos,focus_idx),names,tctxs,tys,bos) ->
-      let n = Array.length names in
+      let n_fix = Array.length names in
+      let names = Array.map (fun x -> Name.Name x) names |> Array.to_list in
       let tys = Array.map2 glob_intros_prod tctxs tys in
-      let elpi_tys = Array.map (gterm2lp state) tys in
-      let bos = Array.map2 glob_intros tctxs bos in
-      (* Introduce all fixpoint names into scope *)
-      let state, actual_names = Array.fold_left (fun (state, acc) i ->
-        let id = names.(i) in
-        let { taken } = get_glob_env state in
-        let id =
-          if Names.Id.Set.mem id taken then
-            Names.Id.of_string_soft (Format.asprintf "_elpi_renamed_%s_%d"
-              (Id.to_string id) (Names.Id.Set.cardinal taken))
-          else id in
-        let state = push_glob_ctx state id
-          (Some (mk_decl state ~loc id ~ty:elpi_tys.(i))) in
-        (state, id :: acc)
-      ) (state, []) (Array.init n Fun.id) in
-      let actual_names = List.rev actual_names in
-      let names_rnos_tys = List.mapi (fun i id ->
-        (Names.Name.Name id,
-         (match rnos.(i) with Some r -> r | None -> 0),
-         elpi_tys.(i))) actual_names in
-      let elpi_bos = Array.to_list (Array.map (gterm2lp state) bos) in
-      in_elpiast_mfix ~loc names_rnos_tys focus_idx elpi_bos
+      let tys = Array.map (gterm2lp state) tys |> Array.to_list in
+      let bos = Array.map2 glob_intros tctxs bos |> Array.to_list in
+      under_binders ~loc names tys (List.init n_fix (fun _ -> None)) bos state ~k:(fun actual_names bos state ->
+      let names_rnos_tys = CList.map3 (fun rno name ty ->
+        (name, (match rno with Some r -> r | None -> nYI "(glob)HOAS non-struct fix/cofix"), ty))
+        (Array.to_list rnos) actual_names tys in
+      let bos = List.map (gterm2lp state) bos in
+      in_elpiast_mfix ~loc names_rnos_tys focus_idx bos)
   | GRec _ -> nYI "(glob)HOAS non-struct fix/cofix"
   | GInt i -> in_elpiast_primitive ~loc (Uint63 i)
   | GFloat f -> in_elpiast_primitive ~loc (Float64 f)
