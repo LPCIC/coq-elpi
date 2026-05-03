@@ -944,24 +944,28 @@ let mfix_tyc   = E.Constants.declare_global_symbol "mfix-ty"
 let mfix_boc = E.Constants.declare_global_symbol "mfix-bo"
 
 let in_elpiast_mfix ~loc names_rnos_tys focus_idx bodies =
-  assert (List.length names_rnos_tys = List.length bodies);
-  let inner = A.mkAppGlobal ~loc ~hdloc:loc mfix_boc
-    (A.list_to_lp_list ~loc bodies) [] in
-  let block = List.fold_right (fun (name, rno, ty) acc ->
-    A.mkAppGlobal ~loc ~hdloc:loc mfix_tyc (in_elpiast_name ~loc name)
-      [A.mkOpaque ~loc @@ CD.int.cino rno; ty;
-       A.mkLam ~loc (name_of_name ~loc name) acc]
-  ) names_rnos_tys inner in
+  (* assert (List.length names_rnos_tys = List.length bodies); *)
+  let focus_recno = (List.nth names_rnos_tys focus_idx |> fun (_,x,_) -> x) in
+  let inner = A.mkAppGlobal ~loc ~hdloc:loc mfix_boc (A.list_to_lp_list ~loc bodies) [] in
+  let block =
+    List.fold_right (fun (name, rno, ty) acc ->
+      A.mkAppGlobal ~loc ~hdloc:loc mfix_tyc (in_elpiast_name ~loc name)
+        [A.mkOpaque ~loc @@ CD.int.cino rno; ty;
+         A.mkLam ~loc (name_of_name ~loc name) acc])
+      names_rnos_tys inner in
   A.mkAppGlobal ~loc ~hdloc:loc mfixc
-    (A.mkOpaque ~loc @@ CD.int.cino focus_idx) [A.mkOpaque ~loc @@ CD.int.cino (List.nth names_rnos_tys focus_idx |> fun (_,x,_) -> x);block]
+    (A.mkOpaque ~loc @@ CD.int.cino focus_idx)
+    [A.mkOpaque ~loc @@ CD.int.cino focus_recno;block]
 
 let in_elpi_mfix names_rnos_tys focus_idx bodies =
-  assert (List.length names_rnos_tys = List.length bodies);
+  (* assert (List.length names_rnos_tys = List.length bodies); *)
   let inner = E.mkApp mfix_boc (U.list_to_lp_list bodies) [] in
-  let block = List.fold_right (fun (name, rno, ty) acc ->
-    E.mkApp mfix_tyc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam acc]
-  ) names_rnos_tys inner in
-  E.mkApp mfixc (CD.of_int focus_idx) [CD.of_int (List.nth names_rnos_tys focus_idx |> fun (_,x,_) -> x); block]
+  let focus_recno = List.nth names_rnos_tys focus_idx |> fun (_,x,_) -> x in
+  let block =
+    List.fold_right (fun (name, rno, ty) acc ->
+      E.mkApp mfix_tyc (in_elpi_name name) [CD.of_int rno; ty; E.mkLam acc])
+    names_rnos_tys inner in
+  E.mkApp mfixc (CD.of_int focus_idx) [CD.of_int focus_recno; block]
 
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
@@ -1684,20 +1688,18 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
          let state, bo = aux ~depth:(depth+1) env state bo in
          state, in_elpi_fix name.Context.binder_name rarg typ bo
-    | C.Fix((rargs, focus_idx),(names, typs, bos)) ->
-         let n = Array.length names in
-         let state, elpi_typs =
-           CArray.fold_left_map (aux ~depth env) state typs in
-         let names_rnos_tys = Array.to_list (Array.init n (fun i ->
-           (names.(i).Context.binder_name, rargs.(i), elpi_typs.(i)))) in
-         let envn = Array.fold_left (fun env i ->
-           EConstr.push_rel
-             Context.Rel.Declaration.(LocalAssum(names.(i), typs.(i))) env
-         ) env (Array.init n Fun.id) in
-         let state, elpi_bos =
-           CArray.fold_left_map (aux ~depth:(depth+n) envn) state bos in
-         state,
-         in_elpi_mfix names_rnos_tys focus_idx (Array.to_list elpi_bos)
+    | C.Fix((rargs, focus_idx),(names, tys, bos)) ->
+         let names = Array.to_list names in
+         let tys = Array.to_list tys in
+         let rargs = Array.to_list rargs in
+         let (n,state,env), names_rnos_tys =
+           CList.fold_left_map (fun (n,state,env) ((name,rno),typ0) ->
+             let state,typ = aux ~depth:(depth+n) env state typ0 in
+             let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
+             (n+1,state,env), (name.Context.binder_name, rno, typ))
+           (0,state,env) (List.combine (List.combine names rargs) tys) in
+         let state, bos = CArray.fold_left_map (aux ~depth:(depth+n) env) state bos in
+         state, in_elpi_mfix names_rnos_tys focus_idx (Array.to_list bos)
     | C.Proj(p,_,t) ->
          let state, t = aux ~depth env state t in
          let state, p = in_elpi_primitive ~depth state (Projection p) in
@@ -2310,7 +2312,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
   | E.App(c,focus_lp,[rno;block_lp]) when mfixc == c ->
       (* mkFix's types live in outer_ctx (no self-refs); bodies use extended ctx. *)
       let outer_ctx = coq_ctx in
-      let int_of ~ctx lp =
+      let int_of ~ctx lp = (* TODO: share with fix *)
         match E.look ~depth lp with
         | E.CData n when CD.is_int n -> CD.to_int n
         | _ -> err Pp.(str"mfix: " ++ str ctx ++ str" not an int: " ++
