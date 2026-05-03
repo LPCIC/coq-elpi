@@ -2,7 +2,7 @@
 [![Nix 9.0](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-rocq-9.0.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-rocq-9.0.yml)
 [![Nix 9.1](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-rocq-9.1.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-rocq-9.1.yml)
 [![Nix 9.1](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-rocq-9.2.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-rocq-9.2.yml)
-[![Nix master](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-coq-master.yml)
+[![Nix master](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-rocq-master.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/nix-action-rocq-master.yml)
 [![DOC](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml/badge.svg)](https://github.com/LPCIC/coq-elpi/actions/workflows/doc.yml)
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://coq.zulipchat.com/#narrow/stream/253928-Elpi-users.20.26.20devs)
 <img align="right" src="https://github.com/LPCIC/coq-elpi/raw/master/etc/rocqy-elpi.png" alt="Rocq-Elpi logo" width="35%" />
