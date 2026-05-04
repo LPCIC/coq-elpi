@@ -185,6 +185,7 @@ val in_elpi_let : Name.t -> term -> term -> term -> term
 val in_elpi_appl : depth:int -> term -> term list -> term
 val in_elpi_match : term -> term -> term list -> term
 val in_elpi_fix : Name.t -> int -> term -> term -> term
+val in_elpi_mfix : (Names.Name.t * int * term) list -> int -> term list -> term
 val in_elpi_name : Name.t -> term
 
 val set_coq : Elpi.API.Ast.Scope.language -> unit
@@ -203,6 +204,7 @@ val in_elpiast_let : loc:Ast.Loc.t -> Names.Name.t -> ty:Ast.Term.t -> bo:Ast.Te
 val in_elpiast_appl : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t list -> Ast.Term.t
 val in_elpiast_match : loc:Ast.Loc.t -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t list -> Ast.Term.t
 val in_elpiast_fix : loc:Ast.Loc.t -> Names.Name.t -> int -> Ast.Term.t -> Ast.Term.t -> Ast.Term.t
+val in_elpiast_mfix : loc:Ast.Loc.t -> (Names.Name.t * int * Ast.Term.t) list -> int -> Ast.Term.t list -> Ast.Term.t
 val in_elpiast_name : loc:Ast.Loc.t -> Names.Name.t -> Ast.Term.t
 val in_elpiast_decl : loc:Ast.Loc.t -> v:Ast.Term.t -> Names.Name.t -> ty:Ast.Term.t -> Ast.Term.t
 val in_elpiast_def : loc:Ast.Loc.t -> v:Ast.Term.t -> Names.Name.t -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t

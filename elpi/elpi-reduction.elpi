@@ -56,8 +56,19 @@ whd (match A _ L) C X XC :- whd-indc A GR KA, !,
   whd {match-red GR KA L C} X XC.
 whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
   whd {fix-red F Fix LA GR KA RA} X XC.
+whd (mfix Fno N MF) C X XC :-
+  nth-stack N C LA A RA, whd-indc A GR KA, !,
+  whd-mfix MF MF 0 Fno LA GR KA RA X XC.
 whd N C X XC :- name N, def N _ _ V, !, cache-whd N VN V, whd VN C X XC.
 whd X C X C.
+
+func whd-mfix mfix-block, mfix-block, int, int, stack, constructor, stack, stack -> term, stack.
+whd-mfix (mfix-ty _ Rno _ F) MF Cur Fixno LA K KA RA X XC :-
+  whd-mfix (F (mfix Cur Rno MF)) MF {calc (Cur + 1)} Fixno LA K KA RA X XC.
+whd-mfix (mfix-bo Bs) _ _ Fixno LA K KA RA X XC :-
+  append LA [{coq.mk-app (global (indc K)) KA}|RA] ArgsWRedRecNo,
+  std.nth Fixno Bs B,
+  whd B ArgsWRedRecNo X XC.
 
 % assert A reduces to a constructor
 whd-indc A GR KA :- whd A [] VA C, !, not(var VA), (VA = global (indc GR); VA = pglobal (indc GR) _), !, KA = C.

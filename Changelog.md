@@ -1,5 +1,20 @@
 # UNRELEASED
 
+Requires Elpi 3.7.1 and Rocq 9.0, 9.1 or 9.2.
+
+### Elpi
+- Change `accumulate` in Elpi code is now fully supported. There is
+  no difference between `Elpi Accumulate file.` and
+  `Elpi Accumulate lp:{{ accumulate "file". }}.` since Elpi 3.7
+  exposes accumulated files via the API. Applications with complex
+  file hierarchies can `Accumulate` root files and have each file
+  accumulate its dependencies, so that dependencies are written inside .elpi files, rather than inside the .v files that use them.
+  Example [commit](https://github.com/rocq-community/trocq/commit/df9af6e16ccd5e819b6f625321b2f909a39f20ac)
+  [commit](https://github.com/math-comp/hierarchy-builder/pull/590/changes/0156bcc1f524e1c8df7e3045f65d5de5846f6ea7) 
+
+### HOAS
+- New `mfix` (with `mfix-ty` and `mfix-bo`) for mutual fixpoints
+
 ### Plugins
 - New `xml` plugin containing minimal bindings to `xml-light`, see
   [apps/xml](apps/xml/) for the doc.
