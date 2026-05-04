@@ -2,6 +2,6 @@
  (package rocq-elpi-tests-stdlib)
  (name elpi_examples_stdlib)
  (plugins rocq-elpi.elpi)
- (theories elpi Stdlib))
+ (theories elpi micromega_plugin Stdlib))  ; we need micromega_plugin because dune doesn't handle transitive dependencies
 
 ; (include_subdirs qualified)
