@@ -10,10 +10,6 @@ all:
 	$(call dune,build) builtin-doc
 .PHONY: all
 
-dune-files:
-	echo "no longer doing anything"
-.PHONE: dune-files
-
 build-core:
 	$(call dune,build) theories
 	$(call dune,build) builtin-doc
