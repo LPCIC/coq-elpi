@@ -26,7 +26,6 @@ depends: [
 ]
 build: [
   ["dune" "subst"] {dev}
-  [make "dune-files"]
   [
     "etc/with-rocq-wrap.sh" {!coq-core:installed}
     "dune"
