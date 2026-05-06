@@ -236,8 +236,8 @@ let of_coq_definition ~loc ~atts name udecl def =
   match def with
   | Vernacexpr.DefineBody(bl,red,c,ty) ->
       EA.Cmd.(ConstantDecl { name = snd name; atts; udecl; typ = (bl,ty); red; body = Some c })
-  | Vernacexpr.ProveBody _ ->
-      CErrors.user_err ~loc Pp.(str"syntax error: missing Definition body")
+  | Vernacexpr.ProveBody(bl,ty) ->
+      EA.Cmd.(ConstantDecl { name = snd name; atts; udecl; typ = (bl,Some ty); red = None; body = None })
 
 }
 
@@ -314,6 +314,10 @@ GLOB_PRINTED BY { fun _ _ _ -> EA.Cmd.pp_glob env sigma }
 
 | [ "Definition" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts:[] name udecl def }
 | [ "#[" attributes(atts) "]" "Definition" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts name udecl def }
+
+| [ "Lemma" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts:[] name udecl def }
+| [ "#[" attributes(atts) "]" "Lemma" qualified_name(name) univ_decl_opt(udecl) def_body(def) ] -> { of_coq_definition ~loc ~atts name udecl def }
+
 
 | [ "Axiom" qualified_name(name) univ_decl_opt(udecl) telescope(typ) colon_constr(t) ] -> {
       EA.Cmd.(ConstantDecl { name = snd name; atts = []; udecl; typ = (typ,Some t); red = None; body = None }) }

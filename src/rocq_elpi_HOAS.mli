@@ -89,6 +89,7 @@ val get_options : depth:int -> hyps -> State.t -> options
 val default_options : unit -> options
 val upcast : [> `Options ] conv_context -> full conv_context
 
+val set_initial_sigma : State.t -> Evd.evar_map -> State.t
 val get_current_env_sigma : depth:int ->
   Data.hyps -> constraints -> State.t -> State.t * full conv_context * Evd.evar_map * Conversion.extra_goals
 val set_current_sigma : depth:int -> State.t -> Evd.evar_map -> State.t * Conversion.extra_goals
@@ -163,6 +164,7 @@ val in_elpi_indtdecl_inductive : State.t -> Declarations.recursivity_kind -> Nam
 val in_elpi_indtdecl_constructor : Names.Name.t -> term -> term
 
 val sealed_goal2lp : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
+val sealed_maybe_solved_goal2lp : depth:int -> State.t -> Evar.t -> State.t * term * Conversion.extra_goals
 val lp2goal : depth:int -> hyps -> constraints -> State.t -> term -> 
   State.t * (full conv_context * Evar.t * term list) * Conversion.extra_goals
 
@@ -352,6 +354,7 @@ val txtgoals2query :
 
 val tclSOLUTION2EVD : eta_contract_solution:bool -> Evd.evar_map -> Elpi.API.Data.solution -> Evar.t list -> unit Proofview.tactic
 val solution2evd : eta_contract_solution:bool -> Evd.evar_map -> Elpi.API.Data.solution -> Evar.Set.t -> Evd.evar_map * Evar.t list * Evar.t list
+val sealed_goals2ev : depth:int -> constraints -> state -> Elpi.API.Data.pretty_printer_context -> term -> Evar.t list option
 
 val show_coq_engine : ?with_univs:bool -> State.t -> string
 val show_coq_elpi_engine_mapping : State.t -> string

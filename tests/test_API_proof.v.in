@@ -2,29 +2,77 @@ From elpi Require Import elpi.
 
 Elpi Command lemma.
 Elpi Accumulate lp:{{
-  main-interp-proof [str S, str ":", trm T] _ T S.
+  main-interp-proof [str S, str ":", trm T] _ P GL S :-
+    coq.typecheck P T ok,
+    coq.ltac.collect-goals P GL _.
 }}.
 
 #[proof="begin"]
 Elpi Export lemma.
 
+Elpi Command lemma_ctx.
+Elpi Accumulate lp:{{
+  main-interp-proof [const-decl S none (parameter ID _ TY p\arity (A p))] _ (fun N TY P) GL S  :-
+    std.map {coq.env.section-variables} (x\coq.gref->id (const x)) LID,
+    std.assert! (not(std.mem LID ID)) "name collision",
+    coq.id->name ID N,
+    @pi-parameter ID TY p\
+    coq.typecheck (P p) (A p) ok,
+    coq.ltac.collect-goals (P p) GL _.
+  main-interp-proof [const-decl S (some (fun _ _ P)) (parameter ID _ TY p\arity (A p))] _ (fun N TY P) GL S  :-
+    std.map {coq.env.section-variables} (x\coq.gref->id (const x)) LID,
+    std.assert! (not(std.mem LID ID)) "name collision",
+    coq.id->name ID N,
+    @pi-parameter ID TY p\
+    coq.typecheck (P p) (A p) ok,
+    coq.ltac.collect-goals (P p) GL _.
+
+}}.
+
+#[proof="begin"]
+Elpi Export lemma_ctx.
+
+
 Elpi Command qed.
 Elpi Accumulate lp:{{
-  main-interp-qed _ _ IT S :-
+  main-interp-qed _ _ _ [seal (goal _ IT _ _ _)] S :-
     if (var S) (S = "xx") true,
+    if (not(ground_term IT)) (coq.error "not finished") true,
     coq.env.add-const S IT _ _ _.
+  main-interp-qed _ _ P [] S :-
+        coq.env.add-const S P _ _ _.
 }}.
+
 
 #[proof="end"]
 Elpi Export qed.
 
+Elpi Command qed_ctx.
+Elpi Accumulate lp:{{
+  main-interp-qed _ _ P _ S :-
+    if (var S) (S = "xx") true,
+    coq.env.add-const S P _ _ _.
+}}.
+
+
+#[proof="end"]
+Elpi Export qed_ctx.
+
+
+
 Fail qed.
 
 lemma it : (True).
+Proof.
 exact I.
 qed.
 
 Succeed Print it.
+
+lemma it2 : (True).
+Proof.
+Fail qed.
+Abort.
 
 lemma it2 : (True /\ _).
 Succeed Show. (* yes! *)
@@ -35,17 +83,47 @@ qed.
 
 Succeed Print it2.
 
+lemma_ctx Lemma it3 x : x + 0 = x.
+auto.
+qed_ctx.
+
+Succeed Print it3.
+
+Axiom plus_comm : forall x y : nat, x + y = y + x.
+
+lemma_ctx Lemma it4 x : x + 0 = x := @eq_trans _ _ (0+x) _ _ _.
+- now rewrite plus_comm.
+- now rewrite plus_n_O.
+qed_ctx.
+
+Succeed Print it4.
+
+lemma_ctx Lemma it5 (x : nat) : x = x := eq_refl _.
+qed_ctx.
+
+Succeed Print it5.
+
+Section A.
+Variable x : nat.
+Fail lemma_ctx Lemma it6 (x : nat) : x = x := eq_refl _.
+End A.
+
+
 Lemma foo : True.
 trivial.
 qed.
 
+Succeed Print foo.
+
 lemma foo2 : (True).
 trivial.
-Qed.
+Fail Qed. Abort.
 
 Elpi Command lemma_if.
 Elpi Accumulate lp:{{
-  main-interp-proof [str S, str ":", trm T] _ T S. /* 9.1 */
+  main-interp-proof [str S, str ":", trm T] _ P GL S :- /* 9.1 */
+    coq.typecheck P T ok,
+    coq.ltac.collect-goals P GL _.
   main _.
 }}.
 

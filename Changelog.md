@@ -4,6 +4,15 @@
 - New `xml` plugin containing minimal bindings to `xml-light`, see
   [apps/xml](apps/xml/) for the doc.
 
+### API
+- Change `main-interp-proof` and `main-interp-qed` changed type to better chain
+  with `coq.ltac.collect-goals`. It is now easy to take a term, extract from it
+  missing subterms and start a proof with goals for these holes, and finally
+  recover the full term at proof end time. Finally, one cannot close a proof
+  stated in Elpi with a regular `Qed` anymore.
+- New argument `const-decl` can now be introduces by the `Lemma` keyword,
+  and not just by `Definition`.
+
 
 # [3.3.1] 12/03/2026
 
