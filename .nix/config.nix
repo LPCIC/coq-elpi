@@ -3,14 +3,16 @@ let
   default-elpi-version = "3.7.1";
   min-elpi-version = "3.7.1";
   master = [
-    "coqeal"
     "hierarchy-builder"
-    "ITree"
     "mathcomp"
-    "mathcomp-algebra-tactics"
     "mathcomp-analysis"
     "mathcomp-bigenough"
     "mathcomp-finmap"
+  ];
+  coq-master = [
+    "coqeal"
+    "ITree"
+    "mathcomp-algebra-tactics"
     "mathcomp-real-closed"
     "mathcomp-word"
     "mathcomp-zify"
@@ -18,22 +20,16 @@ let
     "odd-order"
     "trakt"
   ];
-  rocq-common-bundles = {
-    rocq-elpi.override.elpi-version = default-elpi-version;
-    hierarchy-builder.override.version = "master";
-    rocq-elpi-tests.job = true;
-    rocq-elpi-tests-stdlib.job = true;
-  };
-  coq-common-bundles = listToAttrs (forEach master (p:
+  rocq-common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
-    coq-elpi.override.elpi-version = default-elpi-version;
-    jasmin.override.version = "main";
+    rocq-elpi.override.elpi-version = default-elpi-version;
+    rocq-elpi-tests.job = true;
+    rocq-elpi-tests-stdlib.job = true;
 
     mathcomp-boot.job = true;
     mathcomp-fingroup.job = true;
     mathcomp-order.job = true;
-    mathcomp-ssreflect.job = true;
     mathcomp-algebra.job = true;
     mathcomp-solvable.job = true;
     mathcomp-field.job = true;
@@ -43,6 +39,12 @@ let
     mathcomp-experimental-reals.job = true;
     mathcomp-reals-stdlib.job = true;
     mathcomp-analysis-stdlib.job = true;
+  };
+  coq-common-bundles = listToAttrs (forEach (master ++ coq-master) (p:
+    { name = p; value.override.version = "master"; }))
+  // {
+    coq-elpi.override.elpi-version = default-elpi-version;
+    jasmin.override.version = "main";
 
     bignums.job = true;
     stdlib.job = true;
@@ -59,6 +61,10 @@ let
     QuickChick.job = false;
     vcfloat.job = false;
 
+    autosubst.job = false;
+
+    ConCert.job = false;
+
     ITree.job = false;  # only a dependency of jasmin
 }; in
 {
@@ -72,7 +78,6 @@ let
       rocq-core.override.version = "9.0";
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.0";
-      hierarchy-builder.override.version = "master";
       odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
     }; };
 
@@ -80,7 +85,6 @@ let
       rocq-core.override.version = "9.1";
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.1";
-      hierarchy-builder.override.version = "master";
     }; };
 
     "rocq-9.2" = { rocqPackages = rocq-common-bundles // {
@@ -93,7 +97,6 @@ let
       jasmin.job = false;  # MathComp not released yet
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.2";
-      hierarchy-builder.override.version = "master";
     }; };
 
     "rocq-master" = { rocqPackages = rocq-common-bundles // {
@@ -104,7 +107,6 @@ let
       coq.override.version = "master";
       bignums.override.version = "master";
       stdlib.override.version = "master";
-      hierarchy-builder.override.version = "master";
       jasmin.job = false;
     }; };
 
@@ -119,7 +121,6 @@ let
       coq.override.version = "master";
       bignums.override.version = "master";
       stdlib.override.version = "master";
-      hierarchy-builder.override.version = "master";
       jasmin.job = false;
     }; };
   };
