@@ -79,6 +79,7 @@ let
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.0";
       odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
+      trakt.job = false;  # broken
     }; };
 
     "rocq-9.1" = { rocqPackages = rocq-common-bundles // {
@@ -101,6 +102,8 @@ let
 
     "rocq-master" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "master";
+      micromega-plugin.override.version = "master";
+      micromega-plugin.job = false;
       bignums.override.version = "master";
       stdlib.override.version = "master";
     }; coqPackages = coq-common-bundles // {
