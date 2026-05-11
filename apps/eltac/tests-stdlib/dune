@@ -1,6 +1,6 @@
 (coq.theory
  (package rocq-elpi-tests-stdlib)
  (name elpi_apps_eltac_tests_stdlib)
- (theories elpi elpi.apps.eltac Stdlib))
+ (theories elpi elpi.apps.eltac micromega_plugin Stdlib))  ; we need micromega_plugin because dune doesn't handle transitive dependencies
 
 (include_subdirs qualified)

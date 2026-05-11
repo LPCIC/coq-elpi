@@ -3,12 +3,12 @@ From Stdlib Require Import ZArith Lia.
 
 (* we test we can call ML tactics *)
 
-Elpi Tactic xlia.
+Elpi Tactic mp_lia.
 Elpi Accumulate lp:{{
-  solve G GL :- coq.ltac.call-mltac "rocq-runtime.plugins.micromega" "Lia" 0 G GL ok.
+  solve G GL :- coq.ltac.call-mltac "micromega-plugin.plugin" "Lia" 0 G GL ok.
 }}.
 Tactic Notation "mylia" :=
-  Zify.zify; elpi xlia ltac_tactic:(zchecker).
+  Zify.zify; elpi mp_lia ltac_tactic:(zchecker).
 
 Open Scope Z.
 
