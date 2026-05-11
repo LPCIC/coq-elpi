@@ -25,7 +25,7 @@ body K _ Vars Tys R :-
 
 func main-K string, term, term, constructor -> prop.
 main-K Prefix Ity Arity GRK Clause :-
-  K = (global (indc GRK)),
+  coq.env.global (indc GRK) K,
   coq.bind-ind-arity Ity Arity (body K) TSek,
   std.assert-ok! (coq.elaborate-skeleton TSek Ty T) "derive.isK generates illtyped term",
   Name is Prefix ^ {coq.gref->id (indc GRK)},
@@ -34,7 +34,7 @@ main-K Prefix Ity Arity GRK Clause :-
 
 func main inductive, string -> list prop.
 main GR Prefix Clauses :-
-  T = global (indt GR),
+  coq.env.global (indt GR) T,
   coq.env.indt GR _ _ _ Arity Kn _,
   map Kn (main-K Prefix T Arity) Clauses,
   forall Clauses (c\ coq.elpi.accumulate _ "derive.isK.db" (clause _ (before "isK-db:fail") c)).
