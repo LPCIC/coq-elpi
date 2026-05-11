@@ -14,7 +14,12 @@ ty _ _ _ {{ bool }}.
 % true, else we say false.
 :index (1)
 func branch term, term, term, list term, list term -> term.
-branch K KParams _ _ _ {{ true }} :- coq.safe-dest-app KParams K _, !.
+branch K1 KParams _ _ _ {{ true }} :-
+  coq.safe-dest-app KParams K2 _,
+  coq.env.global (indc GRK1) K1,
+  coq.env.global (indc GRK2) K2,
+  GRK1 = GRK2,
+  !.
 branch _ _ _ _ _ {{ false }}.
 
 func body term, term, list term, list term -> term.
