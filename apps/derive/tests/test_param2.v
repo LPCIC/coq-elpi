@@ -3,6 +3,7 @@ From elpi.apps Require Import derive.param2.
 Set Uniform Inductive Parameters.
 
 Elpi derive.param2 unit.
+Elpi derive.param2 unit.
 Elpi derive.param2 nat.
 Elpi derive.param2 list.
 
@@ -109,3 +110,18 @@ Elpi derive.param2 Acc.
 Definition fi T := fix g (s : list T) := tt.
 
 Elpi derive.param2 fi.
+
+Set Universe Polymorphism.
+Inductive Nat := 
+| O' 
+| S' (n : Nat).
+Elpi derive.param2 Nat.
+
+Definition Wrap := nat.
+Definition WrapR := nat_R.
+Elpi derive.param2.register "Wrap" "WrapR".
+
+Definition Wrap2Wrap := Wrap -> Wrap.
+Elpi derive.param2 Wrap2Wrap.
+
+Unset Universe Polymorphism.
