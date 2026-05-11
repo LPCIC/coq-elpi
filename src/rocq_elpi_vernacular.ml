@@ -167,7 +167,7 @@ let elpi_fails program_name =
     "Please report this inconvenience to the authors of the program."
   ]))
    
-let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi_builtins_synterp.SynterpAction.RZipper.zipper * API.State.t * ET.term API.Setup.StrMap.t * _ =
+let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi_builtins_synterp.SynterpAction.RZipper.zipper * API.State.t * ET.term API.Setup.StrMap.t * _ * _=
   match run ~loc program_ast query_ast
   with
   | API.Execute.Failure -> elpi_fails program_name
@@ -223,7 +223,8 @@ let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi
       API.State.get Rocq_elpi_builtins_synterp.SynterpAction.read state),
     state,
     assignments,
-    constraints
+    constraints,
+    pp_ctx
   ;;
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
@@ -241,7 +242,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   P.get_and_compile ~loc ~even_if_empty:true program |> Option.map (fun (base, _) ->
     let query_ast = Ast (st_setup base, P.parse_goal ~loc ~elpi qloc query) in
     run_and_print ~print:true ~loc program base query_ast |>
-    (fun (x,y,_,_,_) -> x,y))
+    (fun (x,y,_,_,_,_) -> x,y))
 
   let accumulate_extra_dep ~loc ~program ~scope ~what file =
     if P.db_exists program then
@@ -493,7 +494,7 @@ module Synterp = struct
         let state = API.State.set Rocq_elpi_builtins_synterp.invocation_site_loc_synterp state loc in
         state, q, gls in
       try
-        let relocate, synterplog, _, _, _ = run_and_print ~loc ~print:false name program (Fun query) in
+        let relocate, synterplog, _, _, _,_ = run_and_print ~loc ~print:false name program (Fun query) in
         initial_synterp_state, synterplog, relocate "NewData"
       with Rocq_elpi_builtins_synterp.SynterpAction.Error x -> err x)
 
@@ -531,10 +532,10 @@ module Interp = struct
   [%%endif]
 
   
-  let run_program ~loc name ~main ~atts ~syndata args more_args =
+  let run_program ~loc name ~main ~atts ~syndata ?sigma args more_args =
     get_and_compile ~loc name |> Option.map (fun (program, raw_args) ->
       let env = Global.env () in
-      let sigma = Evd.from_env env in
+      let sigma = match sigma with Some x -> x | None -> Evd.from_env env in
       let args = args
         |> List.map (Rocq_elpi_arg_HOAS.Cmd.glob (empty_glob_sign env))
         |> List.map (Rocq_elpi_arg_HOAS.Cmd.interp (Ltac_plugin.Tacinterp.default_ist ()) env sigma)
@@ -547,6 +548,7 @@ module Interp = struct
           Rocq_elpi_builtins_synterp.SynterpAction.RZipper.empty
         | Some (initial_synterp_state,log) -> initial_synterp_state, log in
       let query state =
+        let state = Rocq_elpi_HOAS.set_initial_sigma state sigma in
         let depth = 0 in
         let state, args, gls = EU.map_acc
           (Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:program ~raw:raw_args
@@ -554,26 +556,27 @@ module Interp = struct
           state args in
         let loc = Rocq_elpi_utils.of_coq_loc loc in
 
-        let state, more_args = more_args |> List.fold_left_map (fun state f ->
+        let state, more_args_gls = more_args |> List.fold_left_map (fun state f ->
           match f ~target:program ~depth state with
-          | Stdlib.Result.Ok (s,x) -> s,x
+          | Stdlib.Result.Ok (s,x,gl) -> s,(x,gl)
           | Stdlib.Result.Error s -> err Pp.(str"Data returned by the synterp phase cannot be passed to the interp phase due to unknown symbol: " ++ str s)) state in
+        let more_args, more_gls = List.split more_args_gls in
           
         let state, q = atts2impl loc Summary.Stage.Interp ~depth state atts (main args more_args) in
         let state = API.State.set Rocq_elpi_builtins.base state (Some program) in
         let state = API.State.set Rocq_elpi_builtins.tactic_mode state false in
         let state = API.State.set Rocq_elpi_builtins_synterp.invocation_site_loc state loc in
         let state = API.State.set Rocq_elpi_builtins_synterp.SynterpAction.read state synterplog in
-        state, q, gls in
+        state, q, gls @ List.concat more_gls in
       let final_synterp_state = Vernacstate.Synterp.freeze () in
       Vernacstate.Synterp.unfreeze initial_synterp_state;
       try begin
         try 
-            let relocate, synterp_left, state, assignments, csts = run_and_print ~loc ~print:false name program (Fun query) in
+            let relocate, synterp_left, state, assignments, csts, ppctx = run_and_print ~loc ~print:false name program (Fun query) in
             match Rocq_elpi_builtins_synterp.SynterpAction.RZipper.is_empty synterp_left with
             | `Empty ->
                 Vernacstate.Synterp.unfreeze final_synterp_state;
-                relocate, state, assignments, csts
+                relocate, state, assignments, csts, ppctx
             | `Group g ->
                 let g = Rocq_elpi_builtins_synterp.SynterpAction.Tree.group_name g in
                 err Pp.(strbrk"The execution phase did not consume all the parse time actions. Next in the queue is group " ++ str g)
@@ -604,72 +607,88 @@ module Interp = struct
 
 let stash = Summary.ref ~local:true ~name:"elpi:proof_stash" None
 let set_stash x = stash := Some x
-let get_stash def =
+let get_stash ~default_name =
   match !stash with
-  | None -> (fun ~target ~depth -> Ok(API.RawOpaqueData.of_string (Names.Id.to_string def)))
+  | None -> (fun ~target ~depth -> Ok(API.RawOpaqueData.of_string (Names.Id.to_string default_name))), [], None
   | Some x -> stash := None; x
-
-let lemma_counter = ref 0
 
 [%%if coq = "9.0"]
 let compat_typ sigma typ = EConstr.to_constr ~abort_on_undefined_evars:false sigma typ
+let void () = UnivGen.constr_of_monomorphic_global (Global.env ()) (Rocqlib.lib_ref "core.False.type")
 [%%else]
 let compat_typ _sigma typ = typ
+let void () = EConstr.of_constr @@ UnivGen.constr_of_monomorphic_global (Global.env ()) (Rocqlib.lib_ref "core.False.type")
 [%%endif]
 
 let run_program_open_proof ~loc name ~atts ~syndata args : Declare.Proof.t =
   let syn, syndata =
     match syndata with
-    | None -> (fun ~target ~depth s -> Ok(s, ET.mkDiscard)), None
-    | Some(x,y,f) -> (fun ~target ~depth s -> f ~target ~depth |> Result.map (fun x -> s,x)), (Some(x,y)) in
-  let ty ~target:_ ~depth state =  
-    let state, ek = API.FlexibleData.Elpi.make ~name:"Statement" state in
+    | None -> (fun ~target ~depth s -> Ok(s, ET.mkDiscard, [])), None
+    | Some(x,y,f) -> (fun ~target ~depth s -> f ~target ~depth |> Result.map (fun x -> s,x,[])), (Some(x,y)) in
+  let goals ~target:_ ~depth state =  
+    let state, ek = API.FlexibleData.Elpi.make ~name:"GoalsList" state in
     let data = ET.mkUnifVar ek ~args:[] state in
-    Ok(state, data) in
+    Ok(state, data, []) in
+  let root ~target:_ ~depth state =  
+    let state, ek = API.FlexibleData.Elpi.make ~name:"RootTerm" state in
+    let data = ET.mkUnifVar ek ~args:[] state in
+    Ok(state, data,[]) in
   let data ~target:_ ~depth state =  
     let state, ek = API.FlexibleData.Elpi.make ~name:"Data" state in
     let data = ET.mkUnifVar ek ~args:[] state in
-    Ok(state, data) in
-  (run_program ~loc name ~main:main_begin_proof ~atts ~syndata args [syn;ty;data]) |> (function
+    Ok(state, data,[]) in
+  (run_program ~loc name ~main:main_begin_proof ~atts ~syndata args [syn;root;goals;data]) |> (function
     | None -> err Pp.(str"This program did not open a proof")
-    | Some (relocate, state, assignments, constraints) ->
-       let sigma = Rocq_elpi_HOAS.get_sigma state in
-       let typ =
+    | Some (relocate, state, assignments, constraints, pp_ctx) ->
+      let goals =
         try
-          let t = API.Setup.StrMap.find "Statement" assignments in
-          let state, t, _ = Rocq_elpi_builtins.closed_term.readback ~depth:0
-            Rocq_elpi_HOAS.(empty_conv_context ~options:(default_options()) state) constraints state t in
-          Some t
-        with Not_found | Elpi.API.Conversion.TypeErr _ -> None in
-       let data = relocate "Data" in
-       set_stash data;
-      match typ with
-      | None -> assert false (* only in synterp this is None *)
-      | Some typ ->
-          let info = Declare.Info.make () in
-          let name =
-            try
-              let t = API.Setup.StrMap.find "Data" assignments in
-              let _, t, _ = API.BuiltInData.string.readback ~depth:0 state t in
-              Names.Id.of_string t
-            with Not_found | Elpi.API.Conversion.TypeErr _ ->
-              incr lemma_counter;
-              Names.Id.of_string (Format.asprintf "elpi_lemma_%d" !lemma_counter) in
-          let cinfo = Declare.CInfo.make ~name ~typ:(compat_typ sigma typ) () in        
-          Declare.Proof.start_definition ~info ~cinfo sigma)
+          let sigma = Rocq_elpi_HOAS.get_sigma state in
+          let t = API.Setup.StrMap.find "GoalsList" assignments in
+          match Rocq_elpi_HOAS.sealed_goals2ev ~depth:0 constraints state pp_ctx t with
+          | None -> Evd.undefined_map sigma |> Evar.Map.bindings |> List.map fst
+          | Some evs -> evs
+        with Not_found | Elpi.API.Conversion.TypeErr _ -> [] in
+        let state, root =
+          try
+            let t = API.Setup.StrMap.find "RootTerm" assignments in
+            let state, t, _ = Rocq_elpi_HOAS.lp2constr ~depth:0 Rocq_elpi_HOAS.(upcast @@ empty_conv_context ~options:(default_options()) state)  constraints state t in
+            state, Some t
+          with Not_found | Elpi.API.Conversion.TypeErr _ -> state, None in
+        let data = relocate "Data" in
+        set_stash (data,goals,root);
+        let info = Declare.Info.make () in
+        let name =
+          Names.Id.of_string_soft (Format.asprintf "This lemma must be closed by an Elpi command, i.e. not Qed or Defined") in
+        let cinfo = Declare.CInfo.make ~name ~typ:(void ()) () in
+        let tac =
+          let goals = List.map Proofview_monad.with_empty_state goals in
+          Proofview.Unsafe.tclSETGOALS goals in
+        let sigma = Rocq_elpi_HOAS.get_sigma state in
+        Declare.Proof.start_definition ~info ~cinfo sigma |>
+        Declare.Proof.map ~f:(fun p -> Proof.run_tactic (Global.env ()) tac p |> fun (p,_,_) -> p))
 
 let run_program_close_proof ~loc name ~atts ~syndata args ~lemma =
   let syn, syndata =
     match syndata with
-    | None -> (fun ~target ~depth s -> Ok(s, ET.mkDiscard)), None
-    | Some(x,y,f) -> (fun ~target ~depth s -> f ~target ~depth |> Result.map (fun x -> s,x)), (Some(x,y)) in
-  let p = Declare.Proof.get lemma |> Proof.partial_proof |> List.hd in (* all of them *)
-  let proof ~target:_ ~depth state =
-    let state, p, _ = Rocq_elpi_builtins.closed_term.embed
-      Rocq_elpi_HOAS.(empty_conv_context ~options:(default_options ()) state) Elpi.API.RawData.no_constraints ~depth state p in
-    Ok(state, p) in
-  let data ~target ~depth state = get_stash (Declare.Proof.get_name lemma) ~target ~depth |> Result.map (fun x -> state,x) in
-  (run_program ~loc name ~main:main_end_proof ~atts ~syndata args [syn;proof;data]) |> (function
+    | None -> (fun ~target ~depth s -> Ok(s, ET.mkDiscard, [])), None
+    | Some(x,y,f) -> (fun ~target ~depth s -> f ~target ~depth |> Result.map (fun x -> s,x,[])), (Some(x,y)) in
+  let data, goals, root = get_stash ~default_name:(Declare.Proof.get_name lemma) in
+  let sigma = Declare.Proof.(get lemma) |> fun x -> Proof.(data x).Proof.sigma in
+  let goals ~target:_ ~depth state =
+    let state, l, gls = EU.map_acc (Rocq_elpi_HOAS.sealed_maybe_solved_goal2lp ~depth) state goals in
+    let l = EU.list_to_lp_list l in
+    Ok(state, l, gls) in
+  let root ~target:_ ~depth state =
+    match root with
+    | None ->
+      let p = Declare.Proof.get lemma |> Proof.partial_proof |> List.hd in
+      let state, r, gls = Rocq_elpi_HOAS.constr2lp ~calldepth:0 Rocq_elpi_HOAS.(upcast @@ empty_conv_context ~options:(default_options()) state) ET.no_constraints ~depth state p in
+      Ok(state,r, gls)
+    | Some root ->
+      let state, r, gls = Rocq_elpi_HOAS.constr2lp ~calldepth:0 Rocq_elpi_HOAS.(upcast @@ empty_conv_context ~options:(default_options()) state) ET.no_constraints ~depth state root in
+      Ok(state, r, gls) in
+  let data ~target ~depth state = data ~target ~depth |> Result.map (fun x -> state,x,[]) in
+  (run_program ~loc name ~main:main_end_proof ~atts ~syndata ~sigma args [syn;root;goals;data]) |> (function
   | None -> err Pp.(str"This program did not colse the proof")
   | Some _ -> ()
   )
@@ -677,8 +696,8 @@ let run_program_close_proof ~loc name ~atts ~syndata args ~lemma =
 let run_program ~loc name ~atts ~syndata args =
   let syn, syndata =
     match syndata with
-    | None -> (fun ~target ~depth s -> Ok(s, ET.mkDiscard)), None
-    | Some(x,y,f) -> (fun ~target ~depth s -> f ~target ~depth |> Result.map (fun x -> s,x) ), (Some(x,y)) in
+    | None -> (fun ~target ~depth s -> Ok(s, ET.mkDiscard,[])), None
+    | Some(x,y,f) -> (fun ~target ~depth s -> f ~target ~depth |> Result.map (fun x -> s,x,[]) ), (Some(x,y)) in
   let _ : _ option = run_program ~loc name ~main:main_or_main_interp ~atts ~syndata args [syn] in
   ()
 

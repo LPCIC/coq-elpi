@@ -27,19 +27,33 @@ external pred main-interp i:list argument, i:any.
 external pred main-synterp i:list argument, o:any.
 
 % Commands starting/closing proofs have to use the following entrypoints.
-% By convention with Coq's Lemma/Qed the data passed between these two
-% is an id (the name of the lemma). One is not expected to follow this
-% convention if he does not want to be compatible with standard proof commands.
+% The minimal working snippet is:
+%
+%    main-interp-proof [trm P] _ P GL _ :-
+%      coq.typecheck P _ ok, coq.ltac.collect-goals P GL _.
+%    main-interp-qed _ _ P _GL _ :-
+%      coq.env.add-const "it" P _ _ _.
+%
+% Where GL are the goals to prove, and _GL (unused here) are the same goals
+% with their current proof. The term P can be used as the root proof term,
+% where GL are missing pieces. One is not obliged to use P as is, i.e. he
+% can inspect _GL and declare each proof independenlty, or combine these proofs
+% as he likes and ignore P completely. When a main-interp-qed is used to end
+% a proof stated by a standard Rocq Lemma/Definition statement, the data from
+% the proof opening command is the lemma name, _GL is the empty list and P the
+% proof term.
 external pred main-interp-proof
-  i:list argument, % arguments passed to the command
-  i:any,  % data from the parsing phase (defaults to _)
-  o:term, % the statement to prove (not necessarily ground)
-  o:any.  % data for the corresponding proof-closing command
+  i:list argument,    % arguments passed to the command
+  i:any,              % data from the parsing phase (defaults to _)
+  o:term,             % proof data for the corresponding proof-closing command
+  o:list sealed-goal, % the sequents to prove
+  o:any.              % any data for the corresponding proof-closing command
 external pred main-interp-qed
-  i:list argument, % arguments passed to the command
-  i:any,  % data from the parsing phase (defaults to _)
-  i:term, % proof term
-  i:any.  % data from the corresponding proof-opening command
+  i:list argument,    % arguments passed to the command
+  i:any,              % data from the parsing phase (defaults to _)
+  i:term,             % proof data from the corresponding proof-opening command
+  i:list sealed-goal, % the sequents from the corresponding proof-opening command, but with proofs
+  i:any.              % any data from the corresponding proof-opening command
 
 pred usage.
 external func attributes -> list attribute.
