@@ -10,9 +10,12 @@ namespace ltac {
 func discriminate? term, inductive -> list term, constructor, term, term.
 discriminate? Ty GR Args GRA A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
-  whd T [] (global (indt GR)) Args,
-  whd A [] (global (indc GRA)) _,
-  whd B [] (global (indc GRB)) _,
+  whd T [] IT Args,
+  whd A [] KA _,
+  whd B [] KB _,
+  coq.env.global (indt GR) IT,
+  coq.env.global (indc GRA) KA,
+  coq.env.global (indc GRB) KB,
   not(GRA = GRB)
 ].
 
@@ -23,7 +26,7 @@ pred discriminate! i:term, i:term, o:term, i:inductive, i:list term, i:construct
 discriminate! H G PG GR Args GRA A B :- do! [
   isK-db GRA IsKA,
   coq.mk-app IsKA Args IsKAArgs,
-  Eq_isKA_isKB = app[{{lib:elpi.derive.eq_f}},app[global (indt GR)|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
+  Eq_isKA_isKB = app[{{lib:elpi.derive.eq_f}},app[{coq.env.global (indt GR)}|Args],{{lib:elpi.bool}},IsKAArgs,A,B,H],
   PG = app[{{lib:elpi.bool_discr}},Eq_isKA_isKB,G]
 ].
 
