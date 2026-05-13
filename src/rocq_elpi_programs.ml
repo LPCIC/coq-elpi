@@ -472,8 +472,13 @@ let file_name_src : API.Compile.scoped_program list SLMap.t ref =
 let elpi = Stdlib.ref None
 
 let ensure_initialized =
-  let init = lazy (let e = S.init () in elpi := Some e; e) in
-  fun () -> Lazy.force init
+  fun () ->
+    match !elpi with
+    | Some x -> x
+    | None ->
+        let e = S.init () in
+        elpi := Some e;
+        e
 
 let get ?(fail_if_not_exists=false) p =
   let _elpi = ensure_initialized () in
