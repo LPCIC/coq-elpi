@@ -1,6 +1,6 @@
 (* Binary parametricity translation.
 
-   license: GNU Lesser General Public License Version 2.1 or later           
+   license: GNU Lesser General Public License Version 2.1 or later
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param2.elpi" as param2.
@@ -48,13 +48,13 @@ Elpi Db derive.param2.db lp:{{
       global-gref GRT GRR TR.
 
     :name "param:gref"
-    param T U TR :- 
-      coq.env.global GRT T, !, 
+    param T U TR :-
+      coq.env.global GRT T, !,
       dispatch-gref GRT U TR.
 
     :name "paramR:gref"
-    paramR T U TR :- 
-      coq.env.global GRT T, !, 
+    paramR T U TR :-
+      coq.env.global GRT T, !,
       dispatch-gref GRT U TR.
 
     :name "param:fail"
@@ -62,14 +62,14 @@ Elpi Db derive.param2.db lp:{{
       M is "derive.param2: No binary parametricity translation for " ^
               {coq.term->string X},
       stop M.
-    
+
     :name "paramR:fail"
     paramR T T1 TR :-
       M is "derive.param2: No binary parametricity translation linking " ^
               {coq.term->string T} ^ " and " ^ {coq.term->string T1} ^ " and " ^ {coq.term->string TR},
       stop M.
 }}.
-    
+
 
 Elpi Command derive.param2.
 Elpi Accumulate File derive_hook.
@@ -82,7 +82,7 @@ Elpi Accumulate lp:{{
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.param2 <object name>".
-}}. 
+}}.
 
 Elpi Command derive.param2.register.
 Elpi Accumulate File paramX.

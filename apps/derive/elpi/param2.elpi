@@ -163,7 +163,7 @@ store-param N X X1 XR :- !,
 func store-param-indc string, constructor, constructor.
 store-param-indc Suffix K KR :-
   store-param {calc ({coq.gref->id (indc K)} ^ Suffix)}
-    {coq.env.global (indc K)} {coq.env.global (indc K)} 
+    {coq.env.global (indc K)} {coq.env.global (indc K)}
     {coq.env.global (indc KR)}.
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -216,8 +216,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
 
   coq.env.add-indt DeclR GRR,
 
-  
-  store-param NameR Ind Ind  {coq.env.global (indt GRR)}, 
+  store-param NameR Ind Ind  {coq.env.global (indt GRR)},
   coq.env.indt GRR _ _ _ _ RealNamesR _,
 
   forall2 Knames RealNamesR (store-param-indc Suffix),

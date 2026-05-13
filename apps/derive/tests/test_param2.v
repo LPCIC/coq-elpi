@@ -112,8 +112,8 @@ Definition fi T := fix g (s : list T) := tt.
 Elpi derive.param2 fi.
 
 Set Universe Polymorphism.
-Inductive Nat := 
-| O' 
+Inductive Nat :=
+| O'
 | S' (n : Nat).
 Elpi derive.param2 Nat.
 
