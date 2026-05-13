@@ -82,4 +82,16 @@ Redirect "tmp" Check pa_record_is_Build_pa_record : forall A, pa_record A -> boo
 Redirect "tmp" Check pr_record_is_Build_pr_record : forall A, pr_record A -> bool.
 Redirect "tmp" Check enum_is_E1 : enum -> bool.
 
+Set Universe Polymorphism.
+Module UnivPoly.
+Inductive I := TT.
+Elpi derive.isK I.
 
+Inductive Wrap := K : I -> Wrap.
+Elpi derive.isK Wrap.
+
+Inductive List (A : Type) := Nil | Cons : A -> List A -> List A.
+Elpi derive.isK List.
+End UnivPoly.
+
+Unset Universe Polymorphism.
