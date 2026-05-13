@@ -133,6 +133,13 @@ namespace tc {
       }
     }
 
+    namespace univ-poly {
+      constraint solve-poly univ-poly {
+        rule solve-poly \ (univ-poly A B) <=> (coq.unify-eq T1 T2 ok).
+        rule \ solve-poly.
+      }
+    }
+
     namespace unif-eq {
       func unif-eq term, term.
       unif-eq T1 (uvar as T2) :- !, declare_constraint (unif-eq T1 T2) [_,T2].
@@ -154,5 +161,11 @@ namespace tc {
 
     func solve-llam.
     solve-llam :- declare_constraint solve-llam [_].
+
+    func univ-poly term, term ->.
+
+    func solve-poly.
+    solve-poly :- declare_constraint solve-poly [_].
+
   }
 }

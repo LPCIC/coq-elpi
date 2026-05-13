@@ -33,8 +33,9 @@ namespace tc {
     if-true print-post-process-goal (coq.say "[TC] the post-process goal list is" PostProcess), !,
     tc.time-it tc.oTC-time-instance-search (
       do PostProcess, Q,
-      tc.link.solve-eta, % Trigger eta links
-      tc.link.solve-llam % Trigger llam links
+      tc.link.solve-eta,  % Trigger eta links
+      tc.link.solve-llam, % Trigger llam links
+      tc.link.solve-poly % Trigger univ links
     ) "instance search".
 
   pred solve-aux i:goal, o:list sealed-goal.

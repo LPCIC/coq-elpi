@@ -381,7 +381,7 @@ namespace tc {
         std.append L2 L1 L3.
 
       pred unif-univ-constraint term, term.
-      unif-univ-constraint T1 T2 :- coq.unify-eq T1 T2 ok.
+      unif-univ-constraint T1 T2 :- declare_constraint (tc.link.univ-poly T1 T2) [_].
 
       decompile-problematic-term (pglobal P Q as T) L (pglobal P Q' as T') L' :-
         L' = [unif-univ-constraint T T' | L].
