@@ -141,7 +141,7 @@ for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
 
 func main inductive, string -> list prop.
 main GR Prefix Clauses :- do! [
-  T = global (indt GR),
+  coq.env.global (indt GR) T,
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,
   map2 Kn Kt (for-K Prefix Paramsno Arity T) ClausesList,
   flatten ClausesList Clauses

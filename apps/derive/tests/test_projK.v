@@ -75,3 +75,18 @@ Redirect "tmp" Check projBuild_fo_record1 : peano -> unit -> fo_record -> peano.
 Redirect "tmp" Check projBuild_fo_record2 : peano -> unit -> fo_record -> unit.
 Redirect "tmp" Check projBuild_pa_record2 : forall A, peano -> A -> pa_record A -> A.
 Redirect "tmp" Check projBuild_pr_record2 : forall A, peano -> A -> pr_record A -> A.
+
+Set Universe Polymorphism.
+Unset Universe Minimization ToSet.
+Module UnivPoly.
+Inductive I := TT.
+Elpi derive.projK I.
+
+Inductive Wrap := K : I -> Wrap.
+Elpi derive.projK Wrap.
+
+Inductive List (A : Type) := Nil | Cons : A -> List A -> List A.
+Elpi derive.projK List.
+End UnivPoly.
+
+Unset Universe Polymorphism.
