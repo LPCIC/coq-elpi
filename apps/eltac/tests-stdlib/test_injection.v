@@ -30,3 +30,16 @@ split.
 rewrite -[v2](projT2_eq Esigv12) /=.
 by rewrite (UIP_nat _ _ (projT1_eq Esigv12) (eq_refl n)).
 Qed.
+
+Set Universe Polymorphism.
+Unset Universe Minimization ToSet.
+Module UnivPoly.
+  Inductive List (A : Type) := Nil | Cons (a : A) (ls : List).
+  Elpi derive.projK List.
+  Goal forall (u1 u2 : unit), (Cons u1 (Nil _) = Cons u2 (Nil _)) -> u1 = u2.
+    intros u1 u2 e.
+    eltac.injection (e).
+  Abort.
+
+End UnivPoly.
+Unset Universe Polymorphism.
