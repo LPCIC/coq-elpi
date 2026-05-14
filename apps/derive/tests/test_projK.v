@@ -79,14 +79,16 @@ Redirect "tmp" Check projBuild_pr_record2 : forall A, peano -> A -> pr_record A 
 Set Universe Polymorphism.
 Unset Universe Minimization ToSet.
 Module UnivPoly.
-Inductive I := TT.
-Elpi derive.projK I.
 
-Inductive Wrap := K : I -> Wrap.
+Inductive Wrap := K : bool -> Wrap.
 Elpi derive.projK Wrap.
+Redirect "tmp" Compute (eq_refl (projK1 false (K true))) : true = true.
 
 Inductive List (A : Type) := Nil | Cons : A -> List A -> List A.
 Elpi derive.projK List.
+
+Inductive Prod (A B : Type) := c : A -> B -> Prod A B.
+Elpi derive.projK Prod.
 End UnivPoly.
 
 Unset Universe Polymorphism.
