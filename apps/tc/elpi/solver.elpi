@@ -30,10 +30,12 @@ namespace tc {
   solve-under-context Ty Proof :-
     tc.time-it tc.oTC-time-compile-goal (build-query-from-goal Ty Proof Q PostProcess) "build query", !,
     if-true print-compiled-goal (coq.say "[TC] the compiled goal is" Q), !,
+    if-true print-post-process-goal (coq.say "[TC] the post-process goal list is" PostProcess), !,
     tc.time-it tc.oTC-time-instance-search (
       do PostProcess, Q,
-      tc.link.solve-eta, % Trigger eta links
-      tc.link.solve-llam % Trigger llam links
+      tc.link.solve-eta,  % Trigger eta links
+      tc.link.solve-llam, % Trigger llam links
+      tc.link.solve-poly % Trigger univ links
     ) "instance search".
 
   pred solve-aux i:goal, o:list sealed-goal.
@@ -65,5 +67,6 @@ namespace tc {
   pred print-goal.          % Print the goal in HOAS
   pred print-goal-pp.       % Print the goal with coq pp
   pred print-compiled-goal.
+  pred print-post-process-goal.
 
 }
