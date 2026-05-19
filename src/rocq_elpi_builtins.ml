@@ -2783,6 +2783,10 @@ denote the same x as before.|};
   MLCode(Pred("coq.env.end-section",
     Full(unit_ctx, "end the current section *E*"),
   (fun ~depth _ _ -> grab_global_env_drop_sigma "coq.env.end-section" (fun state ->
+    let { section } = empty_conv_context ~options:(default_options ()) state in
+    let state = State.update clauses_for_later_interp state (List.filter (fun (_, _, vars, _) ->
+      not (List.exists (fun v -> List.mem v section) vars)
+    )) in
      let state, _ = Rocq_elpi_builtins_synterp.SynterpAction.pop_EndSection () state in
      state, (), []))),
   DocAbove);
