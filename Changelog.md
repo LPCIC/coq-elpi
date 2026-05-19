@@ -27,6 +27,7 @@ Requires Elpi 3.7.1 and Rocq 9.0, 9.1 or 9.2.
   started in Elpi with a regular `Qed` anymore.
 - New argument `const-decl` can now be introduces by the `Lemma` keyword,
   and not just by `Definition`.
+- New `coq.scheme` to query registered schemes
 
 
 # [3.3.1] 12/03/2026
