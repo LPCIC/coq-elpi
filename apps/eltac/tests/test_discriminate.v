@@ -21,4 +21,21 @@ Fail eltac.discriminate (F).
 eltac.discriminate (H).
 Qed.
 
+Set Universe Polymorphism.
+Inductive Bool := TT | FF.
+Elpi derive.isK Bool.
 
+Goal (TT = FF) -> False.
+intros p.
+eltac.discriminate (p).
+Abort.
+
+Inductive Nat := O' | S' : Nat -> Nat.
+Elpi derive.isK Nat.
+
+Goal forall (n : Nat), (S' n = O') -> False.
+intros n p.
+eltac.discriminate (p).
+Abort.
+
+Unset Universe Polymorphism.
