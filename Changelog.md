@@ -15,6 +15,9 @@ Requires Elpi 3.7.1 and Rocq 9.0, 9.1 or 9.2.
 ### HOAS
 - New `mfix` (with `mfix-ty` and `mfix-bo`) for mutual fixpoints
 
+### Vernac
+- New support for functors and module types: gref are substituted inside rules
+
 ### Plugins
 - New `xml` plugin containing minimal bindings to `xml-light`, see
   [apps/xml](apps/xml/) for the doc.
