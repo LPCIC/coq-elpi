@@ -19,7 +19,7 @@ type proof =
 let push_name x = function
   | Names.Name.Name id ->
       let decl = Context.Named.Declaration.LocalAssum (Context.make_annot id Sorts.Relevant, Constr.mkProp) in
-      { x with Genintern.genv = Environ.push_named decl x.Genintern.genv }
+      { x with Genintern.genv = push_named decl x.Genintern.genv }
   | _ -> x
 
 let push_gdecl (name,_,_,_,_) x = push_name x name

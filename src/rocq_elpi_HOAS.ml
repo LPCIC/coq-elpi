@@ -1526,7 +1526,7 @@ let push_coq_ctx_proof i (e,h) coq_ctx =
   coq_ctx with
   proof = e :: coq_ctx.proof;
   proof_len = 1 + coq_ctx.proof_len;
-  env = EConstr.push_named e coq_ctx.env;
+  env = push_named (EConstr.Unsafe.to_named_decl e) coq_ctx.env;
   db2name = Int.Map.add i id coq_ctx.db2name;
   name2db = Names.Id.Map.add id i coq_ctx.name2db;
   names = Id.Set.add id coq_ctx.names;

@@ -894,3 +894,9 @@ let is_sync_anomaly = function
 [%%else]
 let is_sync_anomaly = CErrors.is_sync_anomaly
 [%%endif]
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let push_named = Environ.push_named
+[%%else]
+let push_named = Environ.push_named ProofVar
+[%%endif]
