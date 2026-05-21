@@ -43,6 +43,7 @@
 
 (package
  (name rocq-elpi-xml)
+ (allow_empty)
  (synopsis "Xml-light bindings for rocq-elpi")
  (description "DThis package provides basic support for reading xml files from Elpi programs running in Rocq")
  (depends rocq-elpi yojson))
@@ -61,6 +62,7 @@
 
 (package
  (name rocq-elpi-xml-tests)
+ (allow_empty)
  (synopsis "Technical package to run tests")
  (description "Do not install")
  (depends rocq-elpi))
