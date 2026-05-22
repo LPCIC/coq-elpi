@@ -3374,7 +3374,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
             | E.CData name when CD.is_string name ->
               let name = Id.of_string (CD.to_string name) in
               let state, params, impls, ty, gls = readback_arity ~depth coq_ctx constraints state ty in
-              (state, gls :: extra), (name, ty, params, impls)
+              (state, gls :: extra), (name, ty, params, List.rev impls)
             | _ -> err Pp.(str"@gref expected: "  ++
                  str (pp2string P.(term depth) name))
             end
