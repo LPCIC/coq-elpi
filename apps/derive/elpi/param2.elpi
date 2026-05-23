@@ -133,30 +133,9 @@ param-match (fun N T B) P1 PRM :-
                        fun NR {coq.subst-fun [x,x1] TR} xR\
 		       BR x x1 xR z z1).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% translation of inductive types %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-func param-indt inductive, bool, int, int, term, list term, list term -> inductive, bool, int, int, term, list term.
-param-indt GR IsInd Lno Luno Ty Knames Ktypes
- 	   NameR IsInd LnoR LunoR TyR KtypesR :- do! [
-  LnoR is 3 * Lno, LunoR is 3 * Luno,
-  param.gref (indt GR) (indt GR) (indt NameR) => do! [
-    param Ty _ TyR,
-    map2 Knames Ktypes param-indc KtypesR
-  ]
-].
-
-func rename-indc string, constructor -> pair constructor id.
-rename-indc Suffix GR (pr GR FNameR) :-
-  coq.gref->id (indc GR) Name,
-  NameR is Name ^ Suffix,
-  coq.ensure-fresh-global-id NameR FNameR.
-
-func param-indc term, term -> term.
-param-indc K T TRK :- !,
-  coq.env.global N K, coq.arguments.name N LN, rename T LN Tn,
-  param Tn _ TR, coq.subst-fun [K, K] TR TRK.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% translation of inductive declarations %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % helper to improve name hints
 func rename term, list (option id) -> term.
@@ -646,40 +625,6 @@ dispatch (indt I as GR) Suffix Clauses :- !,
   coq.elpi.accumulate _ "derive.param2.db" (clause _ _ CD),
 
   Clauses = [CD, C1|CK].
-
-dispatch (indt I as GR) Suffix Clauses :- do! [
-  coq.env.global GR Ind,
-  coq.env.indt I IsInd Lno Luno Ty Knames Ktypes,
-  NameR is {coq.gref->id GR} ^ Suffix,
-  coq.ensure-fresh-global-id NameR FNameR,
-  map Knames (rename-indc Suffix) KnamesR,
-
-  std.map Knames (k\r\ coq.env.global (indc k) r) Ks,
-  pi new_name\ sigma KtypesR TyR\ (
-      (param-indt I IsInd Lno Luno Ty Ks Ktypes
- 	    	 new_name IsIndR LnoR LunoR TyR KtypesR),
-    coq.build-indt-decl
-      (pr new_name FNameR) IsIndR LnoR LunoR {coq.subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
-  ),
-
-  std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param2 generates illtyped term",
-
-  coq.env.add-indt DeclR GRR,
-
-  store-param NameR Ind Ind  {coq.env.global (indt GRR)},
-  coq.env.indt GRR _ _ _ _ RealNamesR _,
-
-  forall2 Knames RealNamesR (store-param-indc Suffix),
-
-  C1 = (param.gref GR GR (indt GRR) :- !),
-  coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
-  map2 Knames RealNamesR (a\ b\ r\ r = (param.gref (indc a) (indc a) (indc b) :- !)) CK,
-  forall CK (c\
-    coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") c)),
-  coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done GR)),
-
- Clauses = [param-done GR,C1|CK]
- ].
 
 dispatch (indc _) _ _ :-
   coq.error "derive.param2: cannot translate a constructor".
