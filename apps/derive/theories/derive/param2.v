@@ -33,19 +33,12 @@ Elpi Db derive.param2.db lp:{{
 }}.
 #[superglobal] Elpi Accumulate derive.param2.db lp:{{
 
-    % helper to lift undeclared grefs to terms.
-    func global-gref gref, gref -> term.
-    global-gref (const _) GRR TR :- !,
-      coq.env.global GRR TR.
-    % GRR is the yet undeclared param translation of _GT.
-    global-gref _GT GRR (global GRR) :- !.
-
     % queries param.gref and lifts answer to terms.
     func dispatch-gref gref -> term,term.
     dispatch-gref GRT U TR :-
       param.gref GRT GRU GRR,
       coq.env.global GRU U,
-      global-gref GRT GRR TR.
+      coq.env.global GRR TR.
 
     :name "param:gref"
     param T U TR :-
