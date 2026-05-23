@@ -325,7 +325,10 @@ func dispatch gref, string -> list prop.
 dispatch ((const GR) as C) Suffix Clauses :- do! [
   coq.env.global C Term,
   NameR is {coq.gref->id C} ^ Suffix,
-  coq.env.const GR (some X) Ty,
+  coq.env.const GR OBo Ty,
+  (OBo = (some X) ;
+   std.fatal-error-w-data "Cannot translate local constant without body" GR),
+
   param Ty _ TyR,
   coq.mk-app TyR [Term, Term] TyRTermTerm,
   % coq.typecheck is needed to add universe constraints
