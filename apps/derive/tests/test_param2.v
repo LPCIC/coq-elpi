@@ -125,3 +125,7 @@ Definition Wrap2Wrap := Wrap -> Wrap.
 Elpi derive.param2 Wrap2Wrap.
 
 Unset Universe Polymorphism.
+
+Inductive RenamedParam (n : nat) := renamedParam (_ : unit).
+Arguments renamedParam m t : rename.
+Elpi derive.param2 RenamedParam.

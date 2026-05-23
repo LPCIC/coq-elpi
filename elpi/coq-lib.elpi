@@ -245,6 +245,54 @@ coq.build-indt-decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (paramete
 coq.build-indt-decl-aux _ _ _ _ _ _ _ _ _ :- !,
   fatal-error "coq.build-indt-decl-aux: invalid declaration".
 
+% [coq.indt-unif->indt-nonunif I O] takes an inductive declaration I which may
+% contain uniform parameters (i.e. be headed by the `parameter` constructor),
+% and returns in O the inductive declaration obtained by pushing the uniform
+% parameters into the arities of the inductive and the constructors.
+%
+% In rocq-elpi's encoding this makes them non-uniform parameters, but beware
+% that when passed to coq.env.add-indt, Rocq reassigns the uniformity of
+% parameters as it sees fit, so reading back the declaration of an inductive
+% added with coq.env.add-indt might give you an inductive with uniform
+% parameters anyway.
+%
+% This function is meant to be applied to inductives, not records.
+func coq.indt-unif->indt-nonunif indt-decl -> indt-decl.
+coq.indt-unif->indt-nonunif (parameter N Expl Ty RestI) (inductive IN IsInd IA Cs) :-
+  % Reparameterize the inductive and constructors' arities by a fresh variable
+  % standing for this parameter
+  (pi p\
+    coq.indt-unif->indt-nonunif (RestI p) (inductive IN IsInd (InnerIA p) (InnerCs p))),
+
+  % This way the continuation of the new arity is already abstracted over the parameter
+  IA = parameter N Expl Ty InnerIA,
+
+  % InnerCs is parameterized by two terms: first standing for the current
+  % parameter, second standing for the inductive already applied to this
+  % parameter. This makes it have the type (term -> term -> list constructor).
+  % Since we want to bind the current parameter in each constructor
+  % individually, we need to push those two arguments inside the list. The shape
+  % of the list doesn't depend on these arguments, so we can map over it under
+  % binders, and then only allow the elements of the list to refer to the fresh
+  % variables, but not the list itself.
+  % We end up with the more useful (InnerCsList : list (term -> term -> constructor)).
+  (pi sI sP\ map (InnerCs sP sI) (i\ o\ o sP sI = i) InnerCsList),
+
+  % Abstract over the inductive we're producing. In the constructor arities,
+  % this variable is supposed to be applied to the inner parameters.
+  (pi i\
+    map InnerCsList
+      (ic\ oc\ sigma cname carr\
+        % Decompose the inner constructor; the name doesn't depend on the terms
+        (pi sP sI\ ic sP sI = constructor cname (carr sP sI)),
+        % Add the parameter to the constructor, instantiating the arguments as expected
+        oc = constructor cname (parameter N Expl Ty a\ carr a (app [i, a])))
+      (Cs i)).
+
+coq.indt-unif->indt-nonunif (inductive _ _ _ _ as I) I.
+coq.indt-unif->indt-nonunif (record _ _ _ _) _ :-
+  coq.error "coq.indt-unif->indt-nonunif does not support record types".
+
 :index (_ 1)
 func coq.rename-arity
   (func id -> id),
