@@ -2188,7 +2188,7 @@ let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial
         let names = Id.Set.add (Context.binder_name id) names in
         (i,id,d,t,e) :: ctx_entries_names names (i - 1)
   in
-    ctx_entries_names Id.Set.empty (depth-1) |>
+    ctx_entries_names initial_coq_ctx.names (depth-1) |>
     List.rev |> (* we need to readback the context from top to bottom *)
     build_ctx_entry initial_coq_ctx state []
 
