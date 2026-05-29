@@ -90,6 +90,12 @@ Elpi derive.isK I.
 Inductive Wrap := K : I -> Wrap.
 Elpi derive.isK Wrap.
 
+Inductive Prod (A B : Type) := PR : A -> B -> Prod A B.
+Elpi derive.isK Prod.
+
+Inductive Sum (A B : Type) := InL : A -> Sum A B | InR : B -> Sum A B.
+Elpi derive.isK Sum.
+
 Inductive List (A : Type) := Nil | Cons : A -> List A -> List A.
 Elpi derive.isK List.
 End UnivPoly.
