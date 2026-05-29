@@ -112,8 +112,8 @@ Definition fi T := fix g (s : list T) := tt.
 Elpi derive.param2 fi.
 
 Set Universe Polymorphism.
-Inductive Nat := 
-| O' 
+Inductive Nat :=
+| O'
 | S' (n : Nat).
 Elpi derive.param2 Nat.
 
@@ -125,3 +125,28 @@ Definition Wrap2Wrap := Wrap -> Wrap.
 Elpi derive.param2 Wrap2Wrap.
 
 Unset Universe Polymorphism.
+
+Inductive RenamedParam (n : nat) := renamedParam (_ : unit).
+Arguments renamedParam m t : rename.
+Elpi derive.param2 RenamedParam.
+
+Record Box (A : Type) :=
+  mkBox {
+      unbox : A
+    }.
+Elpi derive.param2 Box.
+
+Definition box := mkBox.
+Elpi derive.param2 box.
+
+Set Primitive Projections.
+Record BoxP (A : Type) :=
+  mkBoxP {
+      unboxP : A
+    }.
+Elpi derive.param2 BoxP.
+
+Definition boxP := mkBoxP.
+Elpi derive.param2 boxP.
+
+Unset Primitive Projections.
