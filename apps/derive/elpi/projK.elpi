@@ -34,7 +34,7 @@ sigT-close [N|Mask] Ctx Ty {{ @sigT lp:S lp:P }} :-
 func body-branch int, constructor, term, term, list term, list term -> term.
 body-branch J K  K1 _ VS TS R :-
   default-output J Mask DfltCtx Dflt DfltTy, !,
-  if (coq.safe-dest-app K1 (global (indc K)) _)
+  if (coq.safe-dest-app K1 K1HD _, coq.env.global (indc K) K1HD)
      (nth J VS X, nth J TS XT, zip VS TS Ctx, Args = VS)
      (X = Dflt, XT = DfltTy, Ctx = DfltCtx, map DfltCtx fst Args),
   exT-close Mask Ctx Args X XT R _RT.
@@ -119,7 +119,8 @@ func allK-projs string, int, int, int, term, term, constructor, term -> list pro
 
 allK-projs _ J J _ _ _ _ _ [] :- !.
 
-allK-projs Prefix J JN Paramsno Arity IT K KTy Clauses :- do! [
+allK-projs Prefix J JN Paramsno Arity ITy K KTy Clauses :- do! [
+  (@dropunivs! => coq.elaborate-skeleton ITy _ IT ok),
   body-param Arity KTy IT Paramsno J K RSkel,
   J1 is J + 1,
   Name is Prefix ^ {coq.gref->id (indc K)} ^ {any->string J1},
@@ -141,7 +142,7 @@ for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
 
 func main inductive, string -> list prop.
 main GR Prefix Clauses :- do! [
-  T = global (indt GR),
+  coq.env.global (indt GR) T,
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,
   map2 Kn Kt (for-K Prefix Paramsno Arity T) ClausesList,
   flatten ClausesList Clauses

@@ -12,9 +12,9 @@ arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
   I is J + 1,
   if (projK-db GRK I Proj) (do! [
       drop Pno KArgs Defaults,
-      coq.mk-app Proj {append TyArgs Defaults} Projector,
-      coq.mk-app (global (indt GR)) TyArgs Ty,
-      coq.typecheck Projector (prod _ _ _\Ty2) ok, % FIXME whd
+      coq.mk-app Proj {append TyArgs Defaults} ProjectorSkel,
+      coq.mk-app {coq.env.global (indt GR)} TyArgs Ty,
+      coq.elaborate-skeleton ProjectorSkel (prod _ _ _\Ty2) Projector ok, % FIXME whd
       coq.mk-app EQF [Ty,Ty2,Projector,A,B,H] P,
       R = [P|RS]
   ]) (R = RS),
@@ -29,9 +29,12 @@ pred injection? i:term,
   o:inductive, o:list term, o:constructor, o:list term, o:term, o:term.
 injection? Ty GR TyArgs GRK KArgs A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
-  whd T  [] (global (indt GR)) TyArgs,
-  whd A  [] (global (indc GRK)) KArgs,
-  whd B  [] (global (indc GRB)) _,
+  whd T  [] IndT TyArgs,
+  whd A  [] K KArgs,
+  whd B  [] KB _,
+  coq.env.global (indt GR) IndT,
+  coq.env.global (indc GRK) K,
+  coq.env.global (indc GRB) KB,
   GRK = GRB
 ].
 
