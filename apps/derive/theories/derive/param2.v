@@ -42,13 +42,13 @@ Elpi Db derive.param2.db lp:{{
 
     :name "param:gref"
     param T U TR :-
-      coq.env.global GRT T,
-      dispatch-gref GRT U TR, !.
+      coq.env.global GRT T, !,
+      dispatch-gref GRT U TR.
 
     :name "paramR:gref"
     paramR T U TR :-
-      coq.env.global GRT T,
-      dispatch-gref GRT U TR, !.
+      coq.env.global GRT T, !,
+      dispatch-gref GRT U TR.
 
     :name "param:fail"
     param X _ _ :-
