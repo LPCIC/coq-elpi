@@ -76,6 +76,8 @@ let
 
     "rocq-9.0" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "9.0";
+      micromega-plugin.override.version = "master";  # to be removed at some point
+      micromega-plugin.job = false;
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.0";
       odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
@@ -84,12 +86,16 @@ let
 
     "rocq-9.1" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "9.1";
+      micromega-plugin.override.version = "master";  # to be removed at some point
+      micromega-plugin.job = false;
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.1";
     }; };
 
     "rocq-9.2" = { rocqPackages = rocq-common-bundles // {
       rocq-core.override.version = "9.2";
+      micromega-plugin.override.version = "master";  # to be removed at some point
+      micromega-plugin.job = false;
       coqeal.job = false;  # MathComp not released yet
       mathcomp-reals-stdlib.job = false;  # MathComp not released yet
       mathcomp-analysis-stdlib.job = false;  # MathComp not released yet
