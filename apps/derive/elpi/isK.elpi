@@ -32,7 +32,7 @@ func main-K string, term, term, constructor -> prop.
 main-K Prefix Ity Arity GRK Clause :-
   coq.env.global (indc GRK) K,
   coq.bind-ind-arity Ity Arity (body K) TSek,
-  std.assert-ok! (coq.elaborate-skeleton TSek Ty T) "derive.isK generates illtyped term",
+  (@keepunivs! => std.assert-ok! (coq.elaborate-skeleton TSek Ty T) "derive.isK generates illtyped term"),
   Name is Prefix ^ {coq.gref->id (indc GRK)},
   coq.env.add-const Name T Ty _ IsK,
   Clause = (isK-db GRK (global (const IsK)) :- !).
