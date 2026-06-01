@@ -93,3 +93,5 @@ val gr2path: Names.GlobRef.t -> string list
 val eta_contract : Environ.env -> Evd.evar_map -> EConstr.t -> EConstr.t
 
 val is_sync_anomaly : exn -> bool
+
+val push_named : Constr.named_declaration -> Environ.env -> Environ.env

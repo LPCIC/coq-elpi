@@ -1526,7 +1526,7 @@ let push_coq_ctx_proof i (e,h) coq_ctx =
   coq_ctx with
   proof = e :: coq_ctx.proof;
   proof_len = 1 + coq_ctx.proof_len;
-  env = EConstr.push_named e coq_ctx.env;
+  env = push_named (EConstr.Unsafe.to_named_decl e) coq_ctx.env;
   db2name = Int.Map.add i id coq_ctx.db2name;
   name2db = Names.Id.Map.add id i coq_ctx.name2db;
   names = Id.Set.add id coq_ctx.names;
@@ -2188,7 +2188,7 @@ let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial
         let names = Id.Set.add (Context.binder_name id) names in
         (i,id,d,t,e) :: ctx_entries_names names (i - 1)
   in
-    ctx_entries_names Id.Set.empty (depth-1) |>
+    ctx_entries_names initial_coq_ctx.names (depth-1) |>
     List.rev |> (* we need to readback the context from top to bottom *)
     build_ctx_entry initial_coq_ctx state []
 

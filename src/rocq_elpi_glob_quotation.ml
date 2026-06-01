@@ -60,7 +60,7 @@ let push_glob_ctx state name ctxast =
   S.update glob_ctx state (ensure_some (fun { env; bound; bound_list; section; hyps; taken } ->
     assert(not(Names.Id.Set.mem name taken));
     let d = Context.Named.Declaration.LocalAssum(Context.make_annot name Sorts.Relevant,Constr.mkProp) in
-    let env = Environ.push_named d env in
+    let env = push_named d env in
     let bound = Names.Id.Set.add (*Environ.push_named_context_val*) name bound in
     let bound_list = name :: bound_list in
     let hyps = match ctxast with Some h -> h :: hyps | None -> hyps in

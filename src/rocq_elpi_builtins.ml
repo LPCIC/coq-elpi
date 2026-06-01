@@ -112,6 +112,7 @@ let extern_constr_flagged () = Constrextern.extern_constr
 let pr_constr_expr_n_flagged () = Ppconstr.pr_constr_expr_n
 let pr_econstr_env_flagged () = Printer.pr_econstr_env
 let pr_named_decl_flagged () = Printer.pr_named_decl
+let pr_named_context_flagged () = Printer.pr_named_context
 let empty_extern_env () = Constrextern.empty_extern_env
 [%%else]
 let flags_of_pp_options o =
@@ -145,14 +146,25 @@ let pr_econstr_env_flagged flags env sigma c =
   Printer.pr_econstr_env ~flags env sigma c
 let pr_named_decl_flagged flags env sigma d =
   Printer.pr_named_decl ~flags env sigma d
+let pr_named_context_flagged flags env sigma d =
+  Printer.pr_named_context ~flags env sigma d
 let empty_extern_env () = Constrextern.empty_extern_env ~flags:(PrintingFlags.Extern.current())
 [%%endif]
 
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 let pr_named_context_of options env sigma =
   let make_decl_list env d pps =
     with_pp_options options.pp (fun flags -> pr_named_decl_flagged flags env sigma d) :: pps in
   let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
   Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl))
+[%%else]
+let pr_named_context_of options env sigma =
+  let make_decl_list env status d pps =
+    with_pp_options options.pp (fun flags -> pr_named_decl_flagged flags env sigma (Some status) d) :: pps in
+  let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
+  Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl))
+[%%endif]
 
 let with_no_tc ~no_tc f sigma =
   if no_tc then
@@ -342,6 +354,7 @@ let goal_embed ~depth _ csts state { caller = tac; proof_context; evar; tac_args
     match Rocq_elpi_HOAS.goal2lp ~depth csts state proof_context evar with
     | Result.Ok (st, r, gl) -> st,r,gl
     | Result.Error env ->
+        let env = EConstr.Unsafe.to_named_context env in
         let old_env = proof_context.env in
         let msg =
           Pp.string_of_ppcmds
@@ -351,7 +364,7 @@ let goal_embed ~depth _ csts state { caller = tac; proof_context; evar; tac_args
             ++ fnl () ++ str "Input context:" ++ fnl ()
             ++ pr_named_context_of proof_context.options old_env (get_sigma state)
             ++ fnl () ++ str "Output context:" ++ fnl ()
-            ++ pr_named_context_of proof_context.options (Environ.reset_with_named_context (EConstr.val_of_named_context env) old_env) (get_sigma state))
+            ++ with_pp_options proof_context.options.pp (fun flags -> pr_named_context_flagged flags old_env (get_sigma state) env))
         in
         U.type_error msg
 
@@ -4634,13 +4647,9 @@ Supported attributes:
 - @holes! (default: false, prints evars as _)|}))),
   (fun { proof_context; evar } _ ~depth _ _ state ->
      let sigma = get_sigma state in
-     let pr_named_context_of flags env sigma =
-        let make_decl_list env d pps = pr_named_decl_flagged flags env sigma d :: pps in
-        let psl = List.rev (Environ.fold_named_context make_decl_list env ~init:[]) in
-        Pp.(v 0 (prlist_with_sep (fun _ -> ws 2) (fun x -> x) psl)) in
      let s = Pp.(repr @@ with_pp_options proof_context.options.pp (fun flags ->
         v 0 @@
-        pr_named_context_of flags proof_context.env sigma ++ cut () ++
+        pr_named_context_of proof_context.options proof_context.env sigma ++ cut () ++
         str "======================" ++ cut () ++
         pr_econstr_env_flagged flags proof_context.env sigma
           Evd.(evar_concl @@ find_undefined sigma evar))) in
