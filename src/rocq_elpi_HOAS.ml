@@ -3753,14 +3753,23 @@ let find_structure env ind = Structures.Structure.find env ind
 [%%endif]
 
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let get_template_instance mind uinst = uinst
+[%%else]
+let get_template_instance mind uinst = match mind.Declarations.mind_template with
+| None -> uinst
+| Some templ -> templ.template_defaults
+[%%endif]
+
 let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),(i_impls,k_impls)) =
   let { Declarations.mind_params_ctxt;
         mind_finite = kind;
         mind_nparams = allparamsno;
         mind_nparams_rec = paramsno;
       } = mind in
+  let t_uinst = get_template_instance mind uinst in
   let ntyps = Array.length mind.mind_packets in
-  let mind_params_ctxt = Vars.subst_instance_context uinst mind_params_ctxt in
+  let mind_params_ctxt = Vars.subst_instance_context t_uinst mind_params_ctxt in
   let allparams = List.map EConstr.of_rel_decl mind_params_ctxt in
   let allparams = safe_combine2_impls allparams i_impls ~default2:Glob_term.Explicit |> param2ctx in
   let nuparamsno = allparamsno - paramsno in
@@ -3770,7 +3779,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,(mind,ind),
         mind_nf_lc = constructor_types;
       } = ind in
   let mind_record = mind_record (mind,ind) in
-  let constructor_types = constructor_types |> Array.map (fun (ctx,ty) -> Vars.subst_instance_context uinst ctx, Vars.subst_instance_constr uinst ty) in
+  let constructor_types = constructor_types |> Array.map (fun (ctx,ty) -> Vars.subst_instance_context t_uinst ctx, Vars.subst_instance_constr t_uinst ty) in
   let arity_w_params = Inductive.type_of_inductive ((mind,ind),uinst) in
   let sigma = get_sigma state in
   let drop_nparams_from_term n x =
