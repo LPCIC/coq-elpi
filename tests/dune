@@ -1,0 +1,15 @@
+(coq.theory
+ (name elpi.ext.tests)
+ (package rocq-elpi-ext-tests)
+ (theories elpi elpi.ext))
+
+; work around missing dune support for Extra Dependency 
+; https://github.com/ocaml/dune/pull/9591
+(rule
+ (target dummy.v)
+ (action
+  (with-stdout-to %{target}
+   (progn
+     (run rocq_elpi_shafile %{deps})))))
+
+(include_subdirs qualified)

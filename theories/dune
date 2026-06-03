@@ -1,0 +1,7 @@
+(coq.theory
+ (name elpi.ext)
+ (theories elpi_elpi elpi)
+ (plugins rocq-elpi-ext.elpi_ext_plugin)
+ (package rocq-elpi-ext))
+
+(include_subdirs qualified)
