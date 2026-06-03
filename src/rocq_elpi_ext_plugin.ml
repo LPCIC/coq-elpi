@@ -26,14 +26,15 @@ let mynat_ = API.(AlgebraicData.declare {
 ]
 } |> ContextualConversion.(!<))
 
-let builtins =
-  API.BuiltIn.declare ~file_name:"ext.elpi" [
-    MLData mynat_;
-      MLCode(Pred("add1",
+let add1 = API.BuiltIn.MLCode(Pred("add1",
     In(mynat_, "mynat",
     Out(mynat_, "mynat",
     Easy("AAA"))),
     fun a _ ~depth -> (), Some (MyS a)),
-    DocAbove
-  );
+    DocAbove)
+
+let builtins =
+  API.BuiltIn.declare ~file_name:"ext.elpi" [
+  MLData mynat_;
+  add1
 ]
