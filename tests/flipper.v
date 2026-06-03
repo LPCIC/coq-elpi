@@ -11,5 +11,6 @@ Elpi Accumulate  lp:{{
 }}.
 
 Elpi Query  lp:{{
-  encode {{3}} X.
+  encode {{0}} X,
+  add1 X Z.
 }}.
