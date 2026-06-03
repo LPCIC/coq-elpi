@@ -50,10 +50,10 @@ Inductive S1 (x : F1) := | D1.
 Elpi derive.eqType.ast S1.
 
 
-Inductive S2 (x : F1) := | D2 : S1 x -> S2.
+Inductive S2 (x : F1) := | D2 : S1 x -> S2 x.
 Elpi derive.eqType.ast S2.
 
-Inductive S3 (f : peano -> peano) := | D3 x : f x = x -> S3.
+Inductive S3 (f : peano -> peano) := | D3 x : f x = x -> S3 f.
 Elpi derive.eqType.ast S3.
 
 
