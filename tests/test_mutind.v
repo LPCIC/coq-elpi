@@ -66,22 +66,30 @@ main _ :-
   std.assert-ok! (coq.typecheck-indt-decl Even2Decl) "even2 declaration illtyped",
   coq.env.add-indt Even2Decl _.
 }}.
-Elpi test_mutind.
+Module Generated.
+  Elpi test_mutind.
+End Generated.
 
-Check tree2 : Type.
-Check forest2 : Type.
-Check node2 : forest2 -> tree2.
-Check empty2 : forest2.
-Check cons2 : tree2 -> forest2 -> forest2.
+Universe tree2_u ptree2_arg_u ptree2_u even2_u.
 
-Check ptree2 : Type -> Type.
-Check pforest2 : Type -> Type.
-Check pnode2 : forall A, A -> pforest2 A -> ptree2 A.
-Check pempty2 : forall A, pforest2 A.
-Check pcons2 : forall A, ptree2 A -> pforest2 A -> pforest2 A.
+Module Type GeneratedMutualInductives.
+  Inductive tree2 : Type@{tree2_u} :=
+  | node2 (f : forest2)
+  with forest2 : Type@{tree2_u} :=
+  | empty2
+  | cons2 (t : tree2) (f : forest2).
 
-Check even2 : nat -> Type.
-Check odd2 : nat -> Type.
-Check evenO2 : even2 0.
-Check evenS2 : forall n, odd2 n -> even2 (S n).
-Check oddS2 : forall n, even2 n -> odd2 (S n).
+  Inductive ptree2 (A : Type@{ptree2_arg_u}) : Type@{ptree2_u} :=
+  | pnode2 (x : A) (f : pforest2 A)
+  with pforest2 (A : Type@{ptree2_arg_u}) : Type@{ptree2_u} :=
+  | pempty2
+  | pcons2 (t : ptree2 A) (f : pforest2 A).
+
+  Inductive even2 : nat -> Type@{even2_u} :=
+  | evenO2 : even2 0
+  | evenS2 n : odd2 n -> even2 (S n)
+  with odd2 : nat -> Type@{even2_u} :=
+  | oddS2 n : even2 n -> odd2 (S n).
+End GeneratedMutualInductives.
+
+Module GeneratedMatches <: GeneratedMutualInductives := Generated.
