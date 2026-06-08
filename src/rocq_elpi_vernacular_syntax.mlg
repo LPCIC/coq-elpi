@@ -80,15 +80,6 @@ let warning_legacy_accumulate_gen =
 let warning_legacy_accumulate ?loc () = warning_legacy_accumulate_gen ?loc true
 let warning_legacy_accumulate2 ?loc () = warning_legacy_accumulate_gen ?loc false
 
-let lib_ref id =
-  let id = String.concat "." (snd id) in
-  try Rocqlib.lib_ref id
-  with Rocqlib.NotFoundRef _ ->
-    CErrors.user_err
-      Pp.(str "Global reference not found: lib:" ++ str id
-          ++ str " (you may need to require some .v file with \
-                  `Register ... as " ++ str id ++ str ".`).")
-
 [%%if coq = "9.0" || coq = "9.1"]
 let lookahead_lib_colon kwstate strm =
   match Gramlib.LStream.peek_nth kwstate 0 strm with
@@ -143,14 +134,9 @@ GRAMMAR EXTEND Gram
 
   term: LEVEL "0"
     [ [ lookahead_lib_colon;IDENT "lib"; ":"; id = qualified_name -> {
-          let ref = lib_ref id in
-          let path = Nametab.path_of_global ref in
-          CAst.make ~loc Constrexpr.(CRef (Libnames.qualid_of_path ~loc:(fst id) path,None)) }
+          Rocq_elpi_vernacular.lib_ref ~loc ~expl:false id }
       | lookahead_lib_colon;IDENT "lib"; ":"; "@"; id = qualified_name -> {
-          let ref = lib_ref id in
-          let path = Nametab.path_of_global ref in
-          let f = Libnames.qualid_of_path ~loc:(fst id) path in
-          CAst.make ~loc Constrexpr.(CAppExpl((f,None),[])) } ] ]
+          Rocq_elpi_vernacular.lib_ref ~loc ~expl:true id } ] ]
   ;
 END
 
