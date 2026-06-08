@@ -2093,7 +2093,7 @@ Supported attributes:
       Inductive.type_of_inductive (ind,uinst)
       |> EConstr.of_constr) in
     let knames = if_keep knames (fun () ->
-      CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args) (fun k -> i,k+1))) in
+      CList.(init (Array.length Declarations.(indbo.mind_consnames)) (fun k -> i,k+1))) in
     let ktypes = if_keep ktypes (fun () ->
       Inductive.type_of_constructors (i,uinst) ind
       |> CArray.map_to_list EConstr.of_constr) in
@@ -2108,15 +2108,17 @@ Supported attributes:
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)|}))),
   (fun i _ ~depth { env; options } _ state  ->
-     let mind, indbo = lookup_inductive env i in
+     let mind, _indbo = lookup_inductive env i in
      let uinst, state, extra_goals = handle_uinst_option_for_inductive ~depth options i state in
-     let knames = CList.(init Declarations.(indbo.mind_nb_constant + indbo.mind_nb_args) (fun k -> GlobRef.ConstructRef(i,k+1))) in
-     let k_impls = List.map (fun x -> Impargs.extract_impargs_data (Impargs.implicits_of_global x)) knames in
      let hd x = match x with [] -> [] | (_,x) :: _ -> List.map implicit_kind_of_status x in
-     let k_impls = List.map hd k_impls in
-     let i_impls = Impargs.extract_impargs_data @@ Impargs.implicits_of_global (GlobRef.IndRef i) in
-     let i_impls = hd i_impls in
-     state, !: (fst i, uinst, (mind,indbo), (i_impls,k_impls)), extra_goals)),
+     let packets = Array.to_list mind.Declarations.mind_packets in
+     let i_impls = List.mapi (fun indno _ ->
+       Impargs.extract_impargs_data (Impargs.implicits_of_global (GlobRef.IndRef (fst i, indno))) |> hd) packets in
+     let k_impls = List.mapi (fun indno indbo ->
+       let ind = (fst i, indno) in
+       let knames = CList.(init (Array.length Declarations.(indbo.mind_consnames)) (fun k -> GlobRef.ConstructRef(ind,k+1))) in
+       List.map (fun x -> Impargs.extract_impargs_data (Impargs.implicits_of_global x) |> hd) knames) packets in
+     state, !: (fst i, uinst, mind, (i_impls,k_impls)), extra_goals)),
   DocNext);
 
   MLCode(Pred("coq.env.indc->indt",
@@ -2202,12 +2204,9 @@ regarded as not non-informative).|})),
     In(inductive, "Ind",
     Read(global, "checks if Ind is recursive")),
   (fun i ~depth {env} _ state ->
-      let mind, indbo = Inductive.lookup_mind_specif env i in
-      match mind.Declarations.mind_packets with
-      | [| mip |] ->
-           if mis_is_recursive mip then ()
-           else raise No_clause
-      | _ -> assert false
+      let _, indbo = Inductive.lookup_mind_specif env i in
+      if mis_is_recursive indbo then ()
+      else raise No_clause
     )),
   DocAbove);
 
@@ -2619,16 +2618,17 @@ Supported attributes:
        let univ_binders = univ_binder_compat_820 (uentry', ubinders) univ_binders in
        declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim me univ_binders ind_impls in
      let ind = mind, 0 in
-     let id, cids = match me.Entries.mind_entry_inds with
-       | [ { Entries.mind_entry_typename = id; mind_entry_consnames = cids }] -> id, cids
-       | _ -> assert false
-       in
      let lid_of id = CAst.make ~loc:(to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state) id in
      begin match record_info with
      | None -> (* regular inductive *)
-        Dumpglob.dump_definition (lid_of id) false "ind";
-        List.iter (fun x -> Dumpglob.dump_definition (lid_of x) false "constr") cids
+        List.iter (fun { Entries.mind_entry_typename = id; mind_entry_consnames = cids; _ } ->
+          Dumpglob.dump_definition (lid_of id) false "ind";
+          List.iter (fun x -> Dumpglob.dump_definition (lid_of x) false "constr") cids)
+          me.Entries.mind_entry_inds
      | Some (primitive,field_specs) -> (* record: projection... *)
+         let id = match me.Entries.mind_entry_inds with
+           | [ { Entries.mind_entry_typename = id; _ } ] -> id
+           | _ -> assert false in
          let names, flags =
            List.(split (map lp2record_field_spec field_specs))
          in

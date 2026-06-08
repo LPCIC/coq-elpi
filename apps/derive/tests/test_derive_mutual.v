@@ -24,7 +24,7 @@ Module MutualUnsupported.
   | empty
   | cons (t : tree) (f : forest).
 
-  Fail #[only(map)] derive tree.
+  #[only(map)] derive tree.
   Fail #[only(lens)] derive tree.
   Fail #[only(lens_laws)] derive tree.
   Fail #[only(param1)] derive tree.
@@ -33,7 +33,7 @@ Module MutualUnsupported.
   Fail #[only(param1_functor)] derive tree.
   Fail #[only(param2)] derive tree.
   Fail #[only(induction)] derive tree.
-  Fail #[only(tag)] derive tree.
+  #[only(tag)] derive tree.
   Fail #[only(fields)] derive tree.
   Fail #[only(eqb)] derive tree.
   Fail #[only(eqbcorrect)] derive tree.
@@ -56,7 +56,7 @@ Module ParametrizedMutualUnsupported.
   Fail #[only(param1_functor)] derive ptree.
   Fail #[only(param2)] derive ptree.
   Fail #[only(induction)] derive ptree.
-  Fail #[only(tag)] derive ptree.
+  #[only(tag)] derive ptree.
   Fail #[only(fields)] derive ptree.
   Fail #[only(eqb)] derive ptree.
   Fail #[only(eqbcorrect)] derive ptree.
@@ -70,7 +70,7 @@ Module IndexedMutualUnsupported.
   with odd : nat -> Type :=
   | oddS n : even n -> odd (S n).
 
-  Fail #[only(map)] derive even.
+  #[only(map)] derive even.
   Fail #[only(lens)] derive even.
   Fail #[only(lens_laws)] derive even.
   Fail #[only(param1)] derive even.
@@ -79,7 +79,7 @@ Module IndexedMutualUnsupported.
   Fail #[only(param1_functor)] derive even.
   Fail #[only(param2)] derive even.
   Fail #[only(induction)] derive even.
-  Fail #[only(tag)] derive even.
+  #[only(tag)] derive even.
   Fail #[only(fields)] derive even.
   Fail #[only(eqb)] derive even.
   Fail #[only(eqbcorrect)] derive even.

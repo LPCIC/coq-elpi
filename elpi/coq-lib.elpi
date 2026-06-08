@@ -133,9 +133,16 @@ copy-indt-decl (parameter ID I Ty D) (parameter ID I Ty1 D1) :-
 copy-indt-decl (inductive ID CO A D) (inductive ID CO A1 D1) :-
   copy-arity A A1,
   @pi-inductive ID A1 i\ std.map (D i) copy-constructor (D1 i).
+copy-indt-decl (minductive ID CO A D) (minductive ID CO A1 D1) :-
+  copy-arity A A1,
+  @pi-inductive ID A1 i\ copy-indt-decl (D i) (D1 i).
+copy-indt-decl (mblock Bs) (mblock Bs1) :- map Bs copy-constructor-block Bs1.
 copy-indt-decl (record ID T IDK F) (record ID T1 IDK F1) :-
   copy T T1,
   copy-fields F F1.
+
+func copy-constructor-block list indc-decl -> list indc-decl.
+copy-constructor-block Ks Ks1 :- map Ks copy-constructor Ks1.
 
 func copy-fields record-decl -> record-decl.
 copy-fields end-record end-record.
@@ -331,9 +338,25 @@ coq.rename-indt-decl RP RI RK (inductive ID Ind A In) (inductive ID1 Ind A1 Out)
   coq.arity->term A TY,
   @pi-decl Name TY i\
     std.map (In i) (coq.rename-indt-decl.aux RP RI RK) (Out i).
+coq.rename-indt-decl RP RI RK (minductive ID Ind A In) (minductive ID1 Ind A1 Out) :-
+  RI ID ID1,
+  coq.rename-arity RP A A1,
+  coq.id->name ID Name,
+  coq.arity->term A TY,
+  @pi-decl Name TY i\
+    coq.rename-indt-decl RP RI RK (In i) (Out i).
+coq.rename-indt-decl RP RI RK (mblock Blocks) (mblock Blocks1) :-
+  map Blocks (coq.rename-indt-decl.block RP RI RK) Blocks1.
 coq.rename-indt-decl _ RI RK (record ID A KID F) (record ID1 A KID1 F) :-
   RI ID ID1,
   RK KID KID1.
+
+func coq.rename-indt-decl.block
+  (func id -> id),
+  (func id -> id),
+  (func id -> id),
+  list indc-decl -> list indc-decl.
+coq.rename-indt-decl.block RP RI RK Ks Ks1 :- map Ks (coq.rename-indt-decl.aux RP RI RK) Ks1.
 
 func coq.rename-indt-decl.aux
   (func id -> id),
@@ -378,6 +401,10 @@ coq.typecheck-indt-decl (inductive ID _ Arity KDecl) Diag :- do-ok! Diag [
   coq.typecheck-indt-arity Arity A NUPNO,
   d\ @pi-parameter ID A i\ forall-ok (KDecl i) (coq.typecheck-indt-decl-c i A NUPNO) d
 ].
+coq.typecheck-indt-decl (minductive ID _ Arity Rest) Diag :- do-ok! Diag [
+  coq.typecheck-indt-arity Arity A NUPNO,
+  d\ @pi-parameter ID A i\ coq.typecheck-indt-decl-mutual [pr i (pr A NUPNO)] (Rest i) d
+].
 coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- do-ok! Diag [
   coq.typecheck-ty A _,
   d\ @pi-parameter ID A i\ do-ok! d [
@@ -385,6 +412,24 @@ coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- do-ok! Diag [
     coq.typecheck-indt-decl-c i A 0 (constructor "fields" (arity (K i)))
   ]
 ].
+
+func coq.typecheck-indt-decl-mutual list (pair term (pair term int)), indt-decl -> diagnostic.
+coq.typecheck-indt-decl-mutual Acc (minductive ID _ Arity Rest) Diag :- !, do-ok! Diag [
+  coq.typecheck-indt-arity Arity A NUPNO,
+  d\ @pi-parameter ID A i\ coq.typecheck-indt-decl-mutual [pr i (pr A NUPNO)|Acc] (Rest i) d
+].
+coq.typecheck-indt-decl-mutual Acc (mblock Blocks) Diag :- !,
+  rev Acc Infos,
+  coq.typecheck-indt-decl-blocks Infos Blocks Diag.
+coq.typecheck-indt-decl-mutual _ _ (error "minductive/mblock expected") :- !.
+
+func coq.typecheck-indt-decl-blocks list (pair term (pair term int)), list (list indc-decl) -> diagnostic.
+coq.typecheck-indt-decl-blocks [] [] ok :- !.
+coq.typecheck-indt-decl-blocks [pr I (pr A NUPNO)|Infos] [Ks|Blocks] Diag :- !, do-ok! Diag [
+  forall-ok Ks (coq.typecheck-indt-decl-c I A NUPNO),
+  d\ coq.typecheck-indt-decl-blocks Infos Blocks d
+].
+coq.typecheck-indt-decl-blocks _ _ (error "mblock constructor block count mismatch") :- !.
 
 func coq.typecheck-indc-arity arity, int -> term, sort, diagnostic.
 coq.typecheck-indc-arity A 0 T S Diag :- !,
@@ -439,11 +484,42 @@ coq.elaborate-indt-decl-skeleton (inductive ID I Arity KDecl) (inductive ID I Ar
        d\ @pi-parameter ID A1 i\ map-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i Arity1 NUPNO) (KDecl1 i) d
   ]
 ].
+coq.elaborate-indt-decl-skeleton (minductive ID I Arity Rest) (minductive ID I Arity1 Rest1) Diag :- do-ok! Diag [
+  coq.elaborate-arity-skeleton Arity _ Arity1,
+  lift-ok (coq.arity->nparams Arity1 NUPNO) "",
+  d\ coq.arity->term Arity1 A1, do-ok! d [
+       coq.typecheck-indt-decl.heuristic-var-type A1,
+       d\ @pi-parameter ID A1 i\ coq.elaborate-indt-decl-skeleton-mutual [pr i (pr Arity1 NUPNO)] (Rest i) (Rest1 i) d
+  ]
+].
 coq.elaborate-indt-decl-skeleton (record ID A IDK FDecl) (record ID A1 IDK FDecl1) Diag :- do-ok! Diag [
   coq.elaborate-ty-skeleton A _ A1,
   lift-ok (A1 = sort U) "record type is not a sort",
   d\ @pi-parameter ID A1 i\ coq.elaborate-indt-decl-skeleton-fields U FDecl FDecl1 d
 ].
+
+:index (_ 1)
+func coq.elaborate-indt-decl-skeleton-mutual list (pair term (pair arity int)), indt-decl -> indt-decl, diagnostic.
+coq.elaborate-indt-decl-skeleton-mutual Acc (minductive ID I Arity Rest) (minductive ID I Arity1 Rest1) Diag :- !, do-ok! Diag [
+  coq.elaborate-arity-skeleton Arity _ Arity1,
+  lift-ok (coq.arity->nparams Arity1 NUPNO) "",
+  d\ coq.arity->term Arity1 A1, do-ok! d [
+       coq.typecheck-indt-decl.heuristic-var-type A1,
+       d\ @pi-parameter ID A1 i\ coq.elaborate-indt-decl-skeleton-mutual [pr i (pr Arity1 NUPNO)|Acc] (Rest i) (Rest1 i) d
+  ]
+].
+coq.elaborate-indt-decl-skeleton-mutual Acc (mblock Blocks) (mblock Blocks1) Diag :- !,
+  rev Acc Infos,
+  coq.elaborate-indt-decl-skeleton-blocks Infos Blocks Blocks1 Diag.
+coq.elaborate-indt-decl-skeleton-mutual _ _ _ (error "minductive/mblock expected") :- !.
+
+func coq.elaborate-indt-decl-skeleton-blocks list (pair term (pair arity int)), list (list indc-decl) -> list (list indc-decl), diagnostic.
+coq.elaborate-indt-decl-skeleton-blocks [] [] [] ok :- !.
+coq.elaborate-indt-decl-skeleton-blocks [pr I (pr Arity NUPNO)|Infos] [Ks|Blocks] [Ks1|Blocks1] Diag :- !, do-ok! Diag [
+  map-ok Ks (coq.elaborate-indt-decl-skeleton-c I Arity NUPNO) Ks1,
+  d\ coq.elaborate-indt-decl-skeleton-blocks Infos Blocks Blocks1 d
+].
+coq.elaborate-indt-decl-skeleton-blocks _ _ _ (error "mblock constructor block count mismatch") :- !.
 
 :index (_ 1)
 func coq.elaborate-indt-decl-skeleton-fields sort, record-decl -> record-decl, diagnostic.

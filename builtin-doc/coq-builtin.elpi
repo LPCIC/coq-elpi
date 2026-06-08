@@ -128,6 +128,8 @@ external symbol arity       : term -> arity.
 
 external symbol parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
 external symbol inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+external symbol minductive  : id -> bool -> arity -> (term -> indt-decl) -> indt-decl. % one type of a mutual block
+external symbol mblock      : list (list indc-decl) -> indt-decl. % constructor blocks for minductive declarations
 external symbol record      : id -> term -> id -> record-decl -> indt-decl.
 
 external symbol constructor : id -> arity -> indc-decl.
