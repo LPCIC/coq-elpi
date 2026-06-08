@@ -862,3 +862,25 @@ let export_command ~atts:proof ?as_ p =
   let nature = Rocq_elpi_programs.Synterp.get_nature p in
   Lib.add_leaf (in_exported_program (proof,nature,p,q))
 
+let libref_tag = GenConstr.create "elpi-libref"
+
+let lib_ref ?loc ~expl qid = CAst.make ?loc @@ Constrexpr.CGenarg (Raw (libref_tag, (expl,qid)))
+
+let intern_libref ?loc ist (expl,qid) =
+  let id = String.concat "." (snd qid) in
+  let gr = try Rocqlib.lib_ref id
+    with Rocqlib.NotFoundRef _ ->
+      CErrors.user_err ?loc
+        Pp.(str "Global reference not found: lib:" ++ str id
+            ++ str " (you may need to require some .v file with \
+                    `Register ... as " ++ str id ++ str ".`).")
+  in
+  let c = DAst.make ?loc @@ Glob_term.GRef (gr, None) in
+  let info = { Genintern.passthrough_impls = not expl } in
+  c, info
+
+let () =
+  Genintern.register_intern_constr_gen libref_tag intern_libref
+
+let () =
+  Genintern.register_intern_pat_gen libref_tag intern_libref
