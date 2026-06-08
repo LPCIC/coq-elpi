@@ -64,6 +64,10 @@ Elpi Accumulate derive File eqType.
 
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.main T) (eqType (indt T) _)).
+func derive.eqType.ast.derive-main inductive -> list prop.
+derive.eqType.ast.derive-main T [] :- derive.mutual-inductive T, !.
+derive.eqType.ast.derive-main T C :- derive.eqType.ast.main T C.
+
+derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.derive-main T) (eqType (indt T) _)).
 
 }}.

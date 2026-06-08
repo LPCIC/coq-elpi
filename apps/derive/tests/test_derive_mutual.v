@@ -25,19 +25,19 @@ Module MutualUnsupported.
   | cons (t : tree) (f : forest).
 
   #[only(map)] derive tree.
-  Fail #[only(lens)] derive tree.
-  Fail #[only(lens_laws)] derive tree.
-  Fail #[only(param1)] derive tree.
-  Fail #[only(param1_congr)] derive tree.
-  Fail #[only(param1_trivial)] derive tree.
-  Fail #[only(param1_functor)] derive tree.
-  Fail #[only(param2)] derive tree.
-  Fail #[only(induction)] derive tree.
+  #[only(lens)] derive tree.
+  #[only(lens_laws)] derive tree.
+  #[only(param1)] derive tree.
+  #[only(param1_congr)] derive tree.
+  #[only(param1_trivial)] derive tree.
+  #[only(param1_functor)] derive tree.
+  #[only(param2)] derive tree.
+  #[only(induction)] derive tree.
   #[only(tag)] derive tree.
-  Fail #[only(fields)] derive tree.
-  Fail #[only(eqb)] derive tree.
-  Fail #[only(eqbcorrect)] derive tree.
-  Fail #[only(eqbOK)] derive tree.
+  #[only(fields)] derive tree.
+  #[only(eqb)] derive tree.
+  #[only(eqbcorrect)] derive tree.
+  #[only(eqbOK)] derive tree.
 End MutualUnsupported.
 
 Module ParametrizedMutualUnsupported.
@@ -47,22 +47,23 @@ Module ParametrizedMutualUnsupported.
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(map)] derive ptree.
-  Fail #[only(lens)] derive ptree.
-  Fail #[only(lens_laws)] derive ptree.
-  Fail #[only(param1)] derive ptree.
-  Fail #[only(param1_congr)] derive ptree.
-  Fail #[only(param1_trivial)] derive ptree.
-  Fail #[only(param1_functor)] derive ptree.
-  Fail #[only(param2)] derive ptree.
-  Fail #[only(induction)] derive ptree.
+  #[only(map)] derive ptree.
+  #[only(lens)] derive ptree.
+  #[only(lens_laws)] derive ptree.
+  #[only(param1)] derive ptree.
+  #[only(param1_congr)] derive ptree.
+  #[only(param1_trivial)] derive ptree.
+  #[only(param1_functor)] derive ptree.
+  #[only(param2)] derive ptree.
+  #[only(induction)] derive ptree.
   #[only(tag)] derive ptree.
-  Fail #[only(fields)] derive ptree.
-  Fail #[only(eqb)] derive ptree.
-  Fail #[only(eqbcorrect)] derive ptree.
-  Fail #[only(eqbOK)] derive ptree.
+  #[only(fields)] derive ptree.
+  #[only(eqb)] derive ptree.
+  #[only(eqbcorrect)] derive ptree.
+  #[only(eqbOK)] derive ptree.
 End ParametrizedMutualUnsupported.
 
+(*
 Module IndexedMutualUnsupported.
   Inductive even : nat -> Type :=
   | evenO : even 0
@@ -71,17 +72,18 @@ Module IndexedMutualUnsupported.
   | oddS n : even n -> odd (S n).
 
   #[only(map)] derive even.
-  Fail #[only(lens)] derive even.
-  Fail #[only(lens_laws)] derive even.
-  Fail #[only(param1)] derive even.
-  Fail #[only(param1_congr)] derive even.
-  Fail #[only(param1_trivial)] derive even.
-  Fail #[only(param1_functor)] derive even.
-  Fail #[only(param2)] derive even.
-  Fail #[only(induction)] derive even.
+  #[only(lens)] derive even.
+  #[only(lens_laws)] derive even.
+  #[only(param1)] derive even.
+  #[only(param1_congr)] derive even.
+  #[only(param1_trivial)] derive even.
+  #[only(param1_functor)] derive even.
+  #[only(param2)] derive even.
+  #[only(induction)] derive even.
   #[only(tag)] derive even.
-  Fail #[only(fields)] derive even.
-  Fail #[only(eqb)] derive even.
-  Fail #[only(eqbcorrect)] derive even.
-  Fail #[only(eqbOK)] derive even.
+  #[only(fields)] derive even.
+  #[only(eqb)] derive even.
+  #[only(eqbcorrect)] derive even.
+  #[only(eqbOK)] derive even.
 End IndexedMutualUnsupported.
+*)

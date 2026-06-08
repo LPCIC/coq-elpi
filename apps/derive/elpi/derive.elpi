@@ -9,6 +9,14 @@ exists-indc I P :-
   coq.env.indt I _ _ _ _ KL _,
   std.exists! KL P.
 
+func mutual-indt-decl indt-decl ->.
+mutual-indt-decl (parameter ID _ Ty F) :- !,
+  @pi-parameter ID Ty x\ mutual-indt-decl (F x).
+mutual-indt-decl (minductive _ _ _ _).
+
+func mutual-inductive inductive ->.
+mutual-inductive I :- coq.env.recursive? I, coq.env.indt-decl I D, mutual-indt-decl D.
+
 func if-verbose (func) ->.
 if-verbose P :- (get-option "verbose" tt ; get-option "recursive" tt), !, P.
 if-verbose _.

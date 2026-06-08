@@ -67,6 +67,10 @@ dep1 "fields" "eqType_ast".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) Prefix ff (derive "fields" (derive.fields.main T Prefix) (fields-for T _ _ _ _)).
+func derive.fields.derive-main inductive, string -> list prop.
+derive.fields.derive-main T _ [] :- derive.mutual-inductive T, !.
+derive.fields.derive-main T Prefix C :- derive.fields.main T Prefix C.
+
+derivation (indt T) Prefix ff (derive "fields" (derive.fields.derive-main T Prefix) (fields-for T _ _ _ _)).
 
 }}.

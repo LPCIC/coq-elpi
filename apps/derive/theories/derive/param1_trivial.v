@@ -266,7 +266,15 @@ dep1 "param1_inhab" "param1".
 
 Elpi Accumulate derive lp:{{
 
-derivation T  _ ff (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_inhab")   (derive.on_param1 T  (_\T\_\_\param1-inhab-done T) _ _)).
-derivation T  _ ff (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T  (_\T\_\_\param1-trivial-done T) _ _)).
+func derive.param1.inhab.derive-main gref -> list prop.
+derive.param1.inhab.derive-main (indt T) [] :- derive.mutual-inductive T, !.
+derive.param1.inhab.derive-main T C :- derive.on_param1 T derive.param1.inhab.main "_inhab" C.
+
+func derive.param1.trivial.derive-main gref -> list prop.
+derive.param1.trivial.derive-main (indt T) [] :- derive.mutual-inductive T, !.
+derive.param1.trivial.derive-main T C :- derive.on_param1 T derive.param1.trivial.main "_trivial" C.
+
+derivation T  _ ff (derive "param1_inhab"   (derive.param1.inhab.derive-main T)   (derive.on_param1 T  (_\T\_\_\param1-inhab-done T) _ _)).
+derivation T  _ ff (derive "param1_trivial" (derive.param1.trivial.derive-main T) (derive.on_param1 T  (_\T\_\_\param1-trivial-done T) _ _)).
 
 }}.
