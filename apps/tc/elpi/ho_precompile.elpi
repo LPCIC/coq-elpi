@@ -9,6 +9,13 @@ namespace tc {
       % Tells if the current name stands for a uvar
       pred is-uvar o:term.
 
+      func maybe-projection-aux i:term.
+      maybe-projection-aux (primitive _).
+      maybe-projection-aux (global (const H)) :- coq.env.projection? H _.
+
+      func maybe-projection i:term.
+      maybe-projection T :- coq.safe-dest-app T H _, maybe-projection-aux H.
+
       :index (_ _ 1)
       func may-contract-to list term, term, term ->.
       may-contract-to _ N N :- !.
@@ -113,6 +120,7 @@ namespace tc {
       precompile-aux _ (global _ as C) A C A :- !.
       precompile-aux _ (pglobal _ _ as C) A C A :- !.
       precompile-aux _ (sort _ as C) A C A :- !.
+      precompile-aux _ T A (tc.maybe-proj T X) (s A) :- maybe-projection T, !, free-var X.
 
       % Detect maybe-eta term
       % TODO: should I precompile also the type of the fun and put it in the output term
@@ -240,6 +248,7 @@ namespace tc {
       precompile-aux (global _ as C) A C A :- !.
       precompile-aux (pglobal _ _ as C) A C A :- !.
       precompile-aux (sort _ as C) A C A :- !.
+      precompile-aux T A (tc.maybe-proj T S) A :- maybe-projection T, !, names S.
 
       % Detect maybe-eta term
       precompile-aux (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty' B') Scope) M :-
