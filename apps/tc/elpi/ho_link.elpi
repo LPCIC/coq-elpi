@@ -133,6 +133,15 @@ namespace tc {
       }
     }
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Projection LINK                                                          %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    namespace proj {
+      func proj term, term ->.
+      proj T (uvar as V) :- !, declare_constraint (proj T V) [_,V].
+      proj T R :- coq.unify-eq T R ok.
+    }
+
     namespace unif-eq {
       func unif-eq term, term.
       unif-eq T1 (uvar as T2) :- !, declare_constraint (unif-eq T1 T2) [_,T2].
@@ -154,5 +163,12 @@ namespace tc {
 
     func solve-llam.
     solve-llam :- declare_constraint solve-llam [_].
+
+    func proj term, term ->.
+    proj A B :- proj.proj A B.
+
+    func solve-proj.
+    solve-proj :- declare_constraint solve-proj [_].
+
   }
 }

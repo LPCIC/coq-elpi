@@ -23,6 +23,9 @@ namespace tc {
         decompile-term-aux (uvar as X) L X L :- !.
         decompile-term-aux (primitive _ as P) L P L :- !.
 
+        decompile-term-aux (tc.maybe-proj T S) (pr [X|XS] L1) X (pr XS [NL|L1]) :- !,
+          name Y X S, NL = tc.link.proj T X.
+
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
           decompile-term-aux T (pr XS L1) T' (pr XS' L2), 
@@ -119,6 +122,7 @@ namespace tc {
       % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
       func clean-term term -> term.
       clean-term A B :-
+        (pi t s r \ copy (tc.maybe-proj t s) t :- !) =>
         (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
         (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
@@ -348,6 +352,10 @@ namespace tc {
       func decompile-problematic-term term, list prop -> term, list prop.
       decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
         prune V S, !, fold-map T L T' L2.
+
+      decompile-problematic-term (tc.maybe-proj A S) L X [NL|L] :- !,
+        prune X S,
+        NL = link.proj A X.
 
       decompile-problematic-term (tc.prod-range T _) A T' A' :- !,
         fold-map T A T' A'.

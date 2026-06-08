@@ -100,6 +100,7 @@ Elpi Db tc.db lp:{{
     func link.eta term, term ->.
     func link.llam term, term ->.
     func link.unif-eq term, term ->.
+    func link.proj term, term ->.
 
   }
 }}.
