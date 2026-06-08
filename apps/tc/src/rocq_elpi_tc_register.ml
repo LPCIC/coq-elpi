@@ -23,17 +23,7 @@ let mode2str = function
     List.fold_left (fun acc e -> acc ^ " " ^ pp_mode e) (pp_mode x) xs
 
 
-
-let mode2str = function
-  | None | Some [] -> ""
-  | Some (x::xs) -> 
-    let pp_mode = Hints.string_of_mode in
-    List.fold_left (fun acc e -> acc ^ " " ^ pp_mode e) (pp_mode x) xs
-
-
 (* Returns the elpi term representing the type class received in argument *)
-let observer_class m (x : Typeclasses.typeclass) : Rocq_elpi_arg_HOAS.Cmd.raw list = 
-  [Cmd.String "new_class"; gref2elpi_term x.cl_impl; Cmd.String (mode2str m)]
 let observer_class m (x : Typeclasses.typeclass) : Rocq_elpi_arg_HOAS.Cmd.raw list = 
   [Cmd.String "new_class"; gref2elpi_term x.cl_impl; Cmd.String (mode2str m)]
 
@@ -73,10 +63,8 @@ let observer_instance ({locality; instance; info; class_name} : instance) : Rocq
   ]
 
 let class_runner f m cl =
-let class_runner f m cl =
   let actions = [
     observer_coercion false; 
-    observer_class m; 
     observer_class m; 
     observer_coercion true; 
     (* observer_default_instance *)
@@ -86,7 +74,6 @@ let class_runner f m cl =
 let observer_class =
   Libobject.declare_object @@
     Libobject.local_object "TC_HACK_OBSERVER_CLASSES"
-      ~cache:(fun (run,m,cl) -> class_runner run m cl)
       ~cache:(fun (run,m,cl) -> class_runner run m cl)
       ~discharge:(fun x -> Some x)
 
@@ -106,8 +93,8 @@ let observer_evt ((loc, name, atts) : loc_name_atts) (x : Event.t) =
   let open Rocq_elpi_vernacular in
   let run_program e = Interp.run_program ~loc name ~syndata:None ~atts e in 
   match x with  
-  | Event.NewClass (omode, cl) -> Lib.add_leaf (inObservation (run_program,omode,cl)) 
-  | Event.NewInstance inst -> Lib.add_leaf (inObservation1 (run_program,inst))
+  | Event.NewClass cl -> Lib.add_leaf (observer_class_disp run_program cl) 
+  | Event.NewInstance inst -> Lib.add_leaf (observer_instance (run_program,inst))
 
 module StringMap = Map.Make(String)
 
