@@ -221,12 +221,19 @@ coq.upoly-decl-cumul.complete-constraints.aux (covariant V) CS :- coq.univ.varia
 coq.upoly-decl-cumul.complete-constraints.aux (invariant V) CS :- coq.univ.variable.constraints V CS.
 coq.upoly-decl-cumul.complete-constraints.aux (irrelevant V) CS :- coq.univ.variable.constraints V CS.
 
+kind coq.mindt-spec type.
+type coq.mindt-spec inductive -> id -> bool -> term -> list (pair constructor id) -> list term -> coq.mindt-spec.
+
 :index (1)
 func coq.build-indt-decl
   (pair inductive id), bool, int, int, term, list (pair constructor id), list term -> indt-decl.
 
 coq.build-indt-decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
   coq.build-indt-decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
+
+func coq.build-mindt-decl list coq.mindt-spec, int, int -> indt-decl.
+coq.build-mindt-decl Specs Pno UPno Decl :-
+  coq.build-mindt-decl-aux Specs Pno UPno [] Decl.
 
 func coq.build-indt-decl-aux
   pair inductive id, bool, int, int, term, list (pair constructor id), list term, list term -> indt-decl.
@@ -307,6 +314,55 @@ coq.indt-unif->indt-nonunif (parameter N Expl Ty RestI) (inductive IN IsInd IA C
 coq.indt-unif->indt-nonunif (inductive _ _ _ _ as I) I.
 coq.indt-unif->indt-nonunif (record _ _ _ _) _ :-
   coq.error "coq.indt-unif->indt-nonunif does not support record types".
+
+func coq.build-mindt-decl-aux list coq.mindt-spec, int, int, list term -> indt-decl.
+coq.build-mindt-decl-aux Specs 0 0 Params Decl :- !,
+  rev Params ParamsR,
+  coq.build-mindt-decl-binders Specs Specs ParamsR [] Decl.
+coq.build-mindt-decl-aux ([coq.mindt-spec _ _ _ (prod N S _) _ _|_] as Specs) Pno UPno Params (parameter NS explicit S Res) :- Pno > 0, UPno > 0, !,
+  coq.name->id N NS,
+  Pno1 is Pno - 1,
+  UPno1 is UPno - 1,
+  pi p\
+    std.map Specs (coq.build-mindt-decl-subst-param p) Specs1,
+    coq.build-mindt-decl-aux Specs1 Pno1 UPno1 [p|Params] (Res p).
+:name "coq.build-mindt-decl-aux:fail"
+coq.build-mindt-decl-aux _ _ _ _ _ :- !,
+  fatal-error "coq.build-mindt-decl-aux: invalid mutual declaration".
+
+func coq.build-mindt-decl-subst-param term, coq.mindt-spec -> coq.mindt-spec.
+coq.build-mindt-decl-subst-param P (coq.mindt-spec GR ID IsInd (prod _ _ T) Kns Ktys) (coq.mindt-spec GR ID IsInd (T P) Kns Ktys1) :- !,
+  std.map Ktys (coq.subst-prod [P]) Ktys1.
+coq.build-mindt-decl-subst-param _ _ _ :- !,
+  fatal-error "coq.build-mindt-decl-subst-param: parameter mismatch".
+
+func coq.build-mindt-decl-binders list coq.mindt-spec, list coq.mindt-spec, list term, list (pair inductive term) -> indt-decl.
+coq.build-mindt-decl-binders All [] ParamsR Acc (mblock Blocks) :- !,
+  rev Acc Pairs,
+  std.map All (coq.build-mindt-decl-block Pairs ParamsR) Blocks.
+coq.build-mindt-decl-binders All [coq.mindt-spec GR ID IsInd Ty _ _|Rest] ParamsR Acc (minductive ID IsInd Arity More) :- !,
+  coq.term->arity Ty 0 Arity,
+  @pi-inductive ID Arity i\
+    coq.build-mindt-decl-binders All Rest ParamsR [pr GR i|Acc] (More i).
+
+func coq.build-mindt-decl-block list (pair inductive term), list term, coq.mindt-spec -> list indc-decl.
+coq.build-mindt-decl-block Pairs ParamsR (coq.mindt-spec _ _ _ _ Kns Ktys) Block :-
+  coq.build-mindt-decl-copy-clauses Pairs ParamsR Sub,
+  std.map2 Kns Ktys (gr_name\ ty\ res\ sigma tmp name ar\
+    (Sub ==> copy ty tmp),
+    coq.term->arity tmp 0 ar,
+    gr_name = pr _ name,
+    res = constructor name ar) Block.
+
+func coq.build-mindt-decl-copy-clauses list (pair inductive term), list term -> list prop.
+coq.build-mindt-decl-copy-clauses [] _ [].
+coq.build-mindt-decl-copy-clauses [pr GR I|Rest] ParamsR [
+    (pi l rest r\ copy (app[global (indt GR)|l]) r :- !, std.append ParamsR rest l, coq.mk-app I rest r, !),
+    (pi l rest r ui\ copy (app[pglobal (indt GR) ui|l]) r :- !, std.append ParamsR rest l, coq.mk-app I rest r, !),
+    (copy (global (indt GR)) I :- !),
+    (pi ui\ copy (pglobal (indt GR) ui) I :- !)
+  | More] :-
+  coq.build-mindt-decl-copy-clauses Rest ParamsR More.
 
 :index (_ 1)
 func coq.rename-arity

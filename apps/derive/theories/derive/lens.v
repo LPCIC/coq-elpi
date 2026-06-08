@@ -58,5 +58,9 @@ Elpi Accumulate derive File lens.
 }}.
 
 Elpi Accumulate derive lp:{{
-  derivation (indt T) Prefix ff (derive "lens" (derive.lens.main T N) (lens-db T _ _)) :- N is Prefix ^ "_".
+  func derive.lens.derive-main inductive, string -> list prop.
+  derive.lens.derive-main T _ [] :- derive.mutual-inductive T, !.
+  derive.lens.derive-main T N C :- derive.lens.main T N C.
+
+  derivation (indt T) Prefix ff (derive "lens" (derive.lens.derive-main T N) (lens-db T _ _)) :- N is Prefix ^ "_".
 }}.

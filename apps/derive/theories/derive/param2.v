@@ -110,6 +110,12 @@ Elpi Accumulate derive Db derive.param2.db.
 
 Elpi Accumulate derive lp:{{
 
-derivation T N ff (derive "param2" (derive.param2.main T N) (param-done T)).
+func derive.param2.derive-main gref, string -> list prop.
+derive.param2.derive-main (indt T) _ [] :- derive.mutual-inductive T, !.
+derive.param2.derive-main T N C :- derive.param2.main T N C.
+
+derivation (indt T) N ff (derive "param2" (derive.param2.derive-main (indt T) N) (param-done (indt T))).
+derivation (const T) N ff (derive "param2" (derive.param2.derive-main (const T) N) (param-done (const T))).
+derivation (indc T) N ff (derive "param2" (derive.param2.derive-main (indc T) N) (param-done (indc T))).
 
 }}.

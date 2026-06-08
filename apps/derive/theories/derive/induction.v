@@ -58,6 +58,10 @@ dep1 "induction" "param1_functor".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) N ff (derive "induction" (derive.induction.main T N) (induction-db T _)).
+func derive.induction.derive-main inductive, string -> list prop.
+derive.induction.derive-main T _ [] :- derive.mutual-inductive T, !.
+derive.induction.derive-main T N C :- derive.induction.main T N C.
+
+derivation (indt T) N ff (derive "induction" (derive.induction.derive-main T N) (induction-db T _)).
 
 }}.

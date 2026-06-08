@@ -4,7 +4,10 @@
 
 % Author: Cyril Cohen
 
-shorten std.{forall, forall2, do!, rev, map2, map}.
+shorten std.{forall, forall2, do!, rev, map2, map, append}.
+
+kind derive.param1.raw-mindt-spec type.
+type derive.param1.raw-mindt-spec inductive -> id -> bool -> int -> int -> term -> list constructor -> list (pair constructor id) -> list term -> id -> derive.param1.raw-mindt-spec.
 
 :before "subst-fun:fail"
 coq.subst-fun XS T TXS :- !, coq.mk-app T XS TXS.
@@ -156,6 +159,128 @@ prefix-indc Prefix K (pr K FNewName) :-
   coq.gref->id (indc K) Name,
   NewName is Prefix ^ Name,
   coq.ensure-fresh-global-id NewName FNewName.
+
+func mutual-indt-decl indt-decl ->.
+mutual-indt-decl (parameter ID _ Ty F) :- !,
+  @pi-parameter ID Ty x\ mutual-indt-decl (F x).
+mutual-indt-decl (minductive _ _ _ _).
+
+func mutual-ids indt-decl -> list id.
+mutual-ids (parameter ID _ Ty F) IDs :- !,
+  @pi-parameter ID Ty x\ mutual-ids (F x) IDs.
+mutual-ids (minductive ID _ Arity Rest) [ID|IDs] :- !,
+  @pi-inductive ID Arity i\ mutual-ids (Rest i) IDs.
+mutual-ids (mblock _) [].
+
+func id->indt id -> inductive.
+id->indt ID GR :- coq.locate ID (indt GR).
+
+func raw-mutual-spec string, inductive -> derive.param1.raw-mindt-spec.
+raw-mutual-spec Prefix GR (derive.param1.raw-mindt-spec GR ID IsInd Lno Luno Ty KNames KNamesR KTypes FNewName) :-
+  coq.env.indt GR IsInd Lno Luno Ty KNames KTypes,
+  coq.gref->id (indt GR) ID,
+  std.map KNames (prefix-indc Prefix) KNamesR,
+  NewName is Prefix ^ ID,
+  coq.ensure-fresh-global-id NewName FNewName.
+
+func raw-mutual-spec-lno derive.param1.raw-mindt-spec -> int.
+raw-mutual-spec-lno (derive.param1.raw-mindt-spec _ _ _ Lno _ _ _ _ _ _) Lno.
+
+func raw-mutual-spec-luno derive.param1.raw-mindt-spec -> int.
+raw-mutual-spec-luno (derive.param1.raw-mindt-spec _ _ _ _ Luno _ _ _ _ _) Luno.
+
+func raw-mutual-spec-clause derive.param1.raw-mindt-spec, inductive -> prop.
+raw-mutual-spec-clause (derive.param1.raw-mindt-spec GR _ _ _ _ _ _ _ _ _) NewGR
+  (reali (global (indt GR)) (global (indt NewGR)) :- !).
+
+func translate-mutual-spec derive.param1.raw-mindt-spec, inductive -> coq.mindt-spec.
+translate-mutual-spec (derive.param1.raw-mindt-spec GR _ IsInd _ _ Ty KNames KNamesR KTypes FNewName) NewGR
+    (coq.mindt-spec NewGR FNewName IsInd TyOut KNamesR KTypesR) :-
+  Ind = global (indt GR),
+  reali Ty TyR,
+  coq.subst-fun [Ind] TyR TyOut,
+  map2 KNames KTypes (k\ ty\ r\ sigma tyr\
+    reali ty tyr,
+    coq.subst-fun [global (indc k)] tyr r) KTypesR.
+
+func dispatch-mutual-gen list derive.param1.raw-mindt-spec, list derive.param1.raw-mindt-spec, list inductive, int -> list prop.
+dispatch-mutual-gen All [] Acc LnoR Clauses :- !,
+  rev Acc NewGRs,
+  dispatch-mutual-do All NewGRs LnoR Clauses.
+dispatch-mutual-gen All [_|Rest] Acc LnoR Clauses :-
+  pi newGR\ dispatch-mutual-gen All Rest [newGR|Acc] LnoR Clauses.
+
+func reali-store-mutual-indt (pair derive.param1.raw-mindt-spec inductive) -> prop.
+reali-store-mutual-indt (pr (derive.param1.raw-mindt-spec GR _ _ _ _ _ _ _ _ FNewName) RealGR) P :-
+  P = reali-store FNewName (global (indt GR)) (global (indt RealGR)).
+
+func reali-store-mutual-indcs string, list constructor, list constructor -> list prop.
+reali-store-mutual-indcs _ [] [] [].
+reali-store-mutual-indcs Prefix [K|KS] [KR|KRS] [P|Rest] :-
+  N is Prefix ^ {coq.gref->id (indc K)},
+  P = reali-store N (global (indc K)) (global (indc KR)),
+  reali-store-mutual-indcs Prefix KS KRS Rest.
+
+func mutual-stores list derive.param1.raw-mindt-spec, list inductive -> list prop.
+mutual-stores [] [] [].
+mutual-stores [derive.param1.raw-mindt-spec _ _ _ _ _ _ KNames _ _ FNewName|Raws] [RealGR|RealGRs] Stores :-
+  coq.env.indt RealGR _ _ _ _ RealKNames _,
+  Prefix1 is FNewName ^ "_",
+  reali-store-mutual-indcs Prefix1 KNames RealKNames StoreKs,
+  mutual-stores Raws RealGRs Rest,
+  append StoreKs Rest Stores.
+
+func mutual-clauses list derive.param1.raw-mindt-spec, list inductive -> list prop.
+mutual-clauses [] [] [].
+mutual-clauses [derive.param1.raw-mindt-spec GR _ _ _ _ _ KNames _ _ _|Raws] [RealGR|RealGRs] Clauses :-
+  coq.env.indt RealGR _ _ _ _ RealKNames _,
+  map2 KNames RealKNames (a\ b\ r\ r = (reali (global (indc a)) (global (indc b)) :- !)) CK,
+  This = [
+    reali-done (indt GR),
+    (reali (global (indt GR)) (global (indt RealGR)) :- !),
+    (realiR (global (indt GR)) (global (indt RealGR)) :- !)
+    | CK],
+  mutual-clauses Raws RealGRs Rest,
+  append This Rest Clauses.
+
+func accumulate-param1-clause prop ->.
+accumulate-param1-clause (reali-done _ as C) :- !,
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ _ C).
+accumulate-param1-clause ((realiR _ _ :- !) as C) :- !,
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C).
+accumulate-param1-clause C :-
+  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C).
+
+func dispatch-mutual-do list derive.param1.raw-mindt-spec, list inductive, int -> list prop.
+dispatch-mutual-do Raws NewGRs LnoR Clauses :- std.do! [
+  map2 Raws NewGRs raw-mutual-spec-clause Assumps,
+  Assumps =!=> map2 Raws NewGRs translate-mutual-spec Specs,
+  coq.build-mindt-decl Specs LnoR LnoR DeclR,
+  std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped mutual inductive",
+  coq.env.add-indt DeclR _,
+  std.map Specs (s\r\ sigma name\ s = coq.mindt-spec _ name _ _ _ _, coq.locate name (indt r)) RealGRs,
+  map {std.zip Raws RealGRs} reali-store-mutual-indt StoreInds,
+  mutual-stores Raws RealGRs StoreKs,
+  forall StoreInds (p\ p),
+  forall StoreKs (p\ p),
+  mutual-clauses Raws RealGRs Clauses1,
+  forall Clauses1 accumulate-param1-clause,
+  Clauses = Clauses1
+].
+
+dispatch (indt GR) Prefix Clauses :- coq.env.recursive? GR, coq.env.indt-decl GR Decl, mutual-indt-decl Decl, !, do! [
+  mutual-ids Decl IDs,
+  map IDs id->indt GRS,
+  map GRS (raw-mutual-spec Prefix) Raws,
+  Raws = [FirstRaw|_],
+  raw-mutual-spec-lno FirstRaw Lno,
+  raw-mutual-spec-luno FirstRaw Luno,
+  std.assert! (Lno = Luno) "derive.param1: Non-uniform parameters not supported",
+  if (Lno = 0)
+    (dispatch-mutual-gen Raws Raws [] 0 Clauses)
+    (Clauses = [reali-done (indt GR)],
+     coq.elpi.accumulate _ "derive.param1.db" (clause _ _ (reali-done (indt GR))))
+].
 
 dispatch (indt GR) Prefix Clauses :- !, do! [
   Ind = global (indt GR),

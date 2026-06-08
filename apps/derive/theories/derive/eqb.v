@@ -79,7 +79,11 @@ dep1 "eqb" "fields".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T)  Prefix ff (derive "eqb" (derive.eqb.main (indt T) Prefix) (eqb-done (indt T))).
-derivation (const C) Prefix ff (derive "eqb_alias" (derive.eqb.main (const C) Prefix) (eqb-done (const C))).
+func derive.eqb.derive-main gref, string -> list prop.
+derive.eqb.derive-main (indt T) _ [] :- derive.mutual-inductive T, !.
+derive.eqb.derive-main T Prefix C :- derive.eqb.main T Prefix C.
+
+derivation (indt T)  Prefix ff (derive "eqb" (derive.eqb.derive-main (indt T) Prefix) (eqb-done (indt T))).
+derivation (const C) Prefix ff (derive "eqb_alias" (derive.eqb.derive-main (const C) Prefix) (eqb-done (const C))).
 
 }}.

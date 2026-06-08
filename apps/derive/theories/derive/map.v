@@ -41,5 +41,9 @@ Elpi Accumulate derive File map.
 }}.
 
 Elpi Accumulate derive lp:{{
-  derivation (indt T) N ff (derive "map" (derive.map.main T N) (map-done T)).
+  func derive.map.derive-main inductive, string -> list prop.
+  derive.map.derive-main T _ [] :- derive.mutual-inductive T, coq.env.indt T _ Lno _ _ _ _, Lno > 0, !.
+  derive.map.derive-main T N C :- derive.map.main T N C.
+
+  derivation (indt T) N ff (derive "map" (derive.map.derive-main T N) (map-done T)).
 }}.
