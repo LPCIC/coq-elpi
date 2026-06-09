@@ -1050,6 +1050,11 @@ kind upoly-decl-cumul type.
       Rocq_elpi_builtins_synterp.coq_synterp_builtins
     end
 
+let warn_mul_paths =
+  CWarnings.create_category ~from:[ elpi_cat ] ~name:"elpi.multiple-paths-cat" ()
+let warn_mul_paths = CWarnings.create ~name:"elpi.multiple-paths" ~category:warn_mul_paths (fun x -> x)
+
+
 let resolve_file_path ~must_exist ~allow_absolute ~only_elpi file =
   (* Handle absolute paths, as bound by "Extra Dependency". *)
   if allow_absolute && not (Filename.is_relative file) then
@@ -1097,7 +1102,6 @@ let resolve_file_path ~must_exist ~allow_absolute ~only_elpi file =
     else List.filter (fun p -> Sys.file_exists (mk_file_path p)) loadpath in
   let loadpath =
     match loadpath with
-    | p :: [] -> p
     | []      ->
         let msg =
           "No loadpath found with logical name " ^
@@ -1105,18 +1109,21 @@ let resolve_file_path ~must_exist ~allow_absolute ~only_elpi file =
           ", cannot resolve file reference " ^ file ^ "."
         in
         CErrors.user_err (Pp.str msg)
-    | ps      ->
-        let msg =
-          "Multiple loadpaths found with logical name " ^
-          Names.DirPath.to_string logpath ^
-          ", while resolving file reference " ^ file ^ ":\n" ^
-          String.concat "\n" (List.map (fun lp ->
-            Printf.sprintf "- %s -> %s"
-              (Names.DirPath.to_string (Loadpath.logical lp))
-              (Loadpath.physical lp)
-          ) ps)
-        in
-        CErrors.user_err (Pp.str msg)
+    | (p :: xs) as ps      ->
+        (if xs <> [] then
+          let msg =
+            Format.sprintf
+            "Multiple loadpaths found with logical name %s, while resolving file reference %s:\n%s\nThe chosen path is the first in the list"
+            (Names.DirPath.to_string logpath) 
+            file
+            (String.concat "\n" (List.map (fun lp ->
+              Printf.sprintf "- %s -> %s"
+                (Names.DirPath.to_string (Loadpath.logical lp))
+                (Loadpath.physical lp)
+            ) ps))
+          in
+          warn_mul_paths (Pp.str msg));
+        p
   in
   (* Assemble the file path. *)
   let resolved = mk_file_path loadpath in
