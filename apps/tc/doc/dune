@@ -13,4 +13,4 @@
  (files
   tc-builtin.elpi)
  (section doc)
- (package rocq-elpi-tc))
+ (package rocq-elpi-typeclasses))

@@ -36,7 +36,7 @@
   (ocaml-lsp-server :with-dev-setup)))
 
 (package
- (name rocq-elpi-tc)
+ (name rocq-elpi-typeclasses)
  (synopsis "TC bindings for rocq-elpi")
  (description "This package provides a typeclass solver written in Elpi for Rocq")
  (depends rocq-elpi))
