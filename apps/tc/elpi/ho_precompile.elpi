@@ -6,33 +6,19 @@ namespace tc {
     maybe-projection (app [primitive _ | _]).
     maybe-projection (app [global (const H) | _]) :- coq.env.projection? H _.
 
-    func reducers coq.redflag, coq.redflag -> coq.redflags.
-    reducers R1 R2 R :-
-      coq.redflags.add coq.redflags.nored [R1, R2, coq.redflags.fix, coq.redflags.beta, coq.redflags.match] R.
-
-    func reducerPC projection, constant -> coq.redflags.
-    reducerPC P C R :-
-      reducers (coq.redflags.proj P) (coq.redflags.const C) R.
-    
-    func reducerCC constant, constant -> coq.redflags.
-    reducerCC C1 C2 R :-
-      reducers (coq.redflags.const C1) (coq.redflags.const C2) R.
-
-    func proj-reducer-help coq.redflags, term -> term.
-    proj-reducer-help R T T' :- 
-      (@redflags! R => coq.reduction.cbv.norm T T'), 
-      not (same_term T T').
+    func const-args constant -> list term.
+    const-args C L :- coq.env.const-body C (some (app[_|L])).
 
     % tries to reduce the term wrt to its head-projection
     % here we take into account a projector applied to a single argument
     % the argument should be a constant
     func proj-reducer term -> term.
-    proj-reducer (app [primitive (proj P _N), global (const C)] as T) T' :-
-      reducerPC P C R, proj-reducer-help R T T'.
-    proj-reducer (app [global (const C1), global (const C2)] as T) T' :-
-      % before reducing, we check that C1 is a projection
-      coq.env.projection? C1 _,
-      reducerCC C1 C2 R, proj-reducer-help R T T'.
+    proj-reducer (app [primitive (proj P N), global (const C)] as T) T' :- 
+      const-args C L, !, std.nth N L T'.
+    proj-reducer (app [global (const P), global (const C)] as T) T' :-
+      coq.env.projection? P N, const-args C L, !,
+      std.nth N L T'.
+    proj-reducer T T.
 
 
     namespace instance {
@@ -139,6 +125,11 @@ namespace tc {
       get-range-arity _ Ty _ (r-ar z N) :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
       get-range-arity B _ T N :- !, get-range-arity-aux B T N. 
 
+      func work-proj term, nat -> term, nat.
+      work-proj (app[H, V] as T) A T' A' :- is-uvar V, !,
+        free-var X, T' = tc.maybe-proj T X, A' = s A.
+      work-proj T A T' A :- proj-reducer T T'.
+
       :index (_ 1)
       func precompile-aux positivity, term, nat -> term, nat.
       precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
@@ -148,13 +139,7 @@ namespace tc {
       :name "precomp-proj-inst"
       precompile-aux _ T A T' A' :-
         maybe-projection T, !,
-        % try to reduce the projection, if the reduction suceeds, then we return the
-        % reduced term
-        if (proj-reducer T T') 
-           (A' = A)
-           % otherwise we tag the problematic subterm
-           (free-var X, T' = (tc.maybe-proj T X), A' = s A)
-        .
+        work-proj T A T' A'.
 
       % Detect maybe-eta term
       % TODO: should I precompile also the type of the fun and put it in the output term
@@ -277,6 +262,11 @@ namespace tc {
       split-pf [X|Xs] Old [X|Ys] L :- name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
       split-pf Xs _ [] Xs.
 
+      func work-proj term -> term.
+      work-proj (app[H, (uvar as V)] as T) T' :- !,
+        free-var X, T' = tc.maybe-proj T X.
+      work-proj T T' :- proj-reducer T T'.
+
       func precompile-aux term, list term -> term, list term.
       precompile-aux X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
       precompile-aux (global _ as C) A C A :- !.
@@ -287,10 +277,7 @@ namespace tc {
         maybe-projection T, !,
         % try to reduce the projection, if the reduction suceeds, then we return the
         % reduced term
-        if (proj-reducer T T') 
-           true
-           % otherwise we tag the problematic subterm
-           (names X, T' = (tc.maybe-proj T X)).
+       work-proj T T'.
         
 
       % Detect maybe-eta term
