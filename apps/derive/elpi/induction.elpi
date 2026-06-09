@@ -211,20 +211,126 @@ mutual-induction-type N ([S|_] as Specs) Focus (prod A TA R) :- N > 0, !,
     std.map Specs (mutual-spec-apply-param a) Specs1,
     mutual-induction-type M Specs1 Focus (R a).
 
-func add-mutual-induction-axioms list derive.induction.mutual-spec, list derive.induction.mutual-spec, inductive, string, int, int -> list prop.
-add-mutual-induction-axioms _ [] _ _ _ _ [] :- !.
-add-mutual-induction-axioms All [S|SS] Selected Prefix Lno Focus [Clause|CS] :- std.do! [
+func arity-recno term, int -> int.
+arity-recno (prod _ _ T) N R :- !,
+  pi x\ arity-recno (T x) {calc (N + 1)} R.
+arity-recno (sort _) N N :- !.
+arity-recno X N R :- whd1 X X1, !, arity-recno X1 N R.
+arity-recno _ _ _ :- stop "derive.induction: mutual indexed data types not supported".
+
+func mutual-induction-fix-ty derive.induction.mutual-spec, term -> term, int.
+mutual-induction-fix-ty (derive.induction.mutual-spec _ _ IsT Arity _ _) P Ty Recno :-
+  conclusion-mutual Arity IsT P Ty,
+  arity-recno Arity 0 Recno.
+
+func rec-call list term, list term, term, term -> term.
+rec-call [IsT|_] [F|_] S X R :-
+  coq.safe-dest-app S HD Args,
+  same_term HD IsT, !,
+  std.append Args [X] ArgsX,
+  coq.mk-app F ArgsX R.
+rec-call [_|IS] [_|FS] S X R :- rec-call IS FS S X R.
+
+func mutual-branch-args list term, list term, list term, list term, list term -> list term.
+mutual-branch-args _ _ [] [] Acc Args :- !, std.rev Acc Args.
+mutual-branch-args IsTs Fs [V|VS] [VT|VTS] Acc Args :-
+  if (rec-call IsTs Fs VT V IH)
+     (mutual-branch-args IsTs Fs VS VTS [IH,V|Acc] Args)
+     (mutual-branch-args IsTs Fs VS VTS [V|Acc] Args).
+
+func branch-mutual list term, list term, term, term, list term, list term -> term.
+branch-mutual IsTs Fs K _ Vars Tys R :-
+  induction-hyp-db K IH,
+  mutual-branch-args IsTs Fs Vars Tys [] Args,
+  coq.mk-app IH Args R.
+
+func oty-mutual list term, list term, term, list term, list term -> term.
+oty-mutual IsTs Ps _ _ Tys R :-
+  last Tys ProofTy,
+  pred-app IsTs Ps ProofTy R.
+
+func mutual-induction-fix-body list term, list term, list term, derive.induction.mutual-spec -> term.
+mutual-induction-fix-body IsTs Ps Fs (derive.induction.mutual-spec _ _GRR IsT Arity _ _) Body :-
+  mutual-induction-fix-body.aux IsTs Ps Fs IsT Arity [] Body.
+
+func mutual-induction-fix-body.aux list term, list term, list term, term, term, list term -> term.
+mutual-induction-fix-body.aux IsTs Ps Fs IsT (prod N S T) RevArgs (fun N S R) :- !,
+  @pi-decl N S x\ mutual-induction-fix-body.aux IsTs Ps Fs IsT (T x) [x|RevArgs] (R x).
+mutual-induction-fix-body.aux IsTs Ps Fs IsT (sort _) RevArgs (fun `H` IsTArgs Bo) :- !,
+  std.rev RevArgs Args,
+  coq.mk-app IsT Args IsTArgs,
+  @pi-decl `H` IsTArgs h\
+    coq.build-match h IsTArgs (oty-mutual IsTs Ps) (branch-mutual IsTs Fs) (Bo h).
+mutual-induction-fix-body.aux _ _ _ _ _ _ _ :- stop "derive.induction: mutual indexed data types not supported".
+
+func mutual-induction-mfix-aux list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, list term, list term -> mfix-block.
+mutual-induction-mfix-aux All [] AllPs [] RevF (mfix-bo Bodies) :- !,
+  std.rev RevF Fs,
+  collect-terms All IsTs _ _,
+  std.map All (mutual-induction-fix-body IsTs AllPs Fs) Bodies.
+mutual-induction-mfix-aux All [S|SS] AllPs [P|PS] PsRevF (mfix-ty N Recno Ty Rest) :-
+  S = derive.induction.mutual-spec _ GRR _ _ _ _,
+  ID is {coq.gref->id (indt GRR)} ^ "_induction_rec",
+  coq.id->name ID N,
+  mutual-induction-fix-ty S P Ty Recno,
+  @pi-decl N Ty f\ mutual-induction-mfix-aux All SS AllPs PS [f|PsRevF] (Rest f).
+
+func mutual-induction-mfix list derive.induction.mutual-spec, list term, int -> term.
+mutual-induction-mfix Specs Ps Focus (mfix Focus Recno Block) :-
+  std.nth Focus Specs S,
+  std.nth Focus Ps P,
+  mutual-induction-fix-ty S P _ Recno,
+  mutual-induction-mfix-aux Specs Specs Ps Ps [] Block.
+
+func add-hyps-body list term, list term, list term, list term, list derive.induction.mutual-spec, list term, int -> term.
+add-hyps-body _ _ [] [] All Ps Focus R :- !,
+  mutual-induction-mfix All Ps Focus R.
+add-hyps-body IsTs Ps [Kc|KS] [KT|KTS] All AllPs Focus (fun HN HTy R) :-
+  hyp-mutual IsTs Ps KT HTy,
+  coq.term->gref Kc GRK,
+  coq.name-suffix `H` {coq.gref->id GRK} HN,
+  @pi-decl HN HTy h\
+    induction-hyp-db Kc h =!=>
+      add-hyps-body IsTs Ps KS KTS All AllPs Focus (R h).
+
+func mutual-induction-term-base list derive.induction.mutual-spec, int -> term.
+mutual-induction-term-base Specs Focus R :-
+  mutual-induction-term-motives Specs Specs [] Focus R.
+
+func mutual-induction-term-motives list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, int -> term.
+mutual-induction-term-motives All [] RevPs Focus R :- !,
+  std.rev RevPs Ps,
+  collect-terms All IsTs KAll KTAll,
+  add-hyps-body IsTs Ps KAll KTAll All Ps Focus R.
+mutual-induction-term-motives All [S|SS] RevPs Focus (fun `P` PTy R) :-
+  S = derive.induction.mutual-spec _ _ _ Arity _ _,
+  truncated-predicate-ty Arity PTy,
+  @pi-decl `P` PTy p\ mutual-induction-term-motives All SS [p|RevPs] Focus (R p).
+
+func mutual-induction-term int, list derive.induction.mutual-spec, int -> term.
+mutual-induction-term 0 Specs Focus R :- !, mutual-induction-term-base Specs Focus R.
+mutual-induction-term N ([S|_] as Specs) Focus (fun A TA R) :- N > 0, !,
+  mutual-spec-arity S (prod A TA _),
+  M is N - 1,
+  @pi-decl A TA a\
+    std.map Specs (mutual-spec-apply-param a) Specs1,
+    mutual-induction-term M Specs1 Focus (R a).
+
+func add-mutual-induction-consts list derive.induction.mutual-spec, list derive.induction.mutual-spec, inductive, string, int, int -> list prop.
+add-mutual-induction-consts _ [] _ _ _ _ [] :- !.
+add-mutual-induction-consts All [S|SS] Selected Prefix Lno Focus [Clause|CS] :- std.do! [
   S = derive.induction.mutual-spec GR _ _ _ _ _,
-  mutual-induction-type Lno All Focus Ty,
+  mutual-induction-term Lno All Focus R,
+  std.assert-ok! (coq.typecheck R Ty) "derive.induction generates illtyped mutual term",
   if (GR = Selected)
     (Name is Prefix ^ "induction")
     (Name is {coq.gref->id (indt GR)} ^ "_induction"),
   coq.ensure-fresh-global-id Name FName,
-  coq.env.add-axiom FName Ty I,
+  coq.env.add-const FName R Ty @transparent! I,
   Clause = (induction-db GR (global (const I)) :- !),
   coq.elpi.accumulate _ "derive.induction.db" (clause _ (before "induction-db:fail") Clause),
   Focus1 is Focus + 1,
-  add-mutual-induction-axioms All SS Selected Prefix Lno Focus1 CS
+  add-mutual-induction-consts All SS Selected Prefix Lno Focus1 CS
 ].
 
 func main-mutual inductive, list inductive, string -> list prop.
@@ -235,7 +341,7 @@ main-mutual Selected GRS Prefix Clauses :- std.do! [
   coq.env.indt FirstGRR _ Lno Luno _ _ _,
   assert! (Lno = Luno) "derive.induction: Non-uniform parameters not supported",
   if (coq.env.informative? FirstGRR) (Informative = [informative]) (Informative = []),
-  Informative =!=> add-mutual-induction-axioms Specs Specs Selected Prefix Lno 0 Clauses
+  Informative =!=> add-mutual-induction-consts Specs Specs Selected Prefix Lno 0 Clauses
 ].
 
 func main inductive, string -> list prop.

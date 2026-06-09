@@ -258,20 +258,6 @@ body-mutual-params-ty N S Ty :- N > 0, !,
       body-mutual-params-ty M S1 (Rest a).
 body-mutual-params-ty _ _ _ :- stop "derive.param1_trivial: wrong mutual shape".
 
-func add-mutual-trivial-axioms list derive.param1.trivial.mutual-spec, list derive.param1.trivial.mutual-spec, string, int, int -> list prop.
-add-mutual-trivial-axioms _ [] _ _ _ [].
-add-mutual-trivial-axioms All [S|SS] Suffix Lno Focus [Clause,param1-trivial-done (indt GRR)|CS] :- std.do! [
-  S = derive.param1.trivial.mutual-spec GRR IsT _,
-  body-mutual-params-ty Lno S Ty,
-  Name is {coq.gref->id (indt GRR)} ^ Suffix,
-  coq.env.add-axiom Name Ty Cst,
-  Clause = (param1-trivial-db IsT (global (const Cst))),
-  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
-  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done (indt GRR))),
-  Focus1 is Focus + 1,
-  add-mutual-trivial-axioms All SS Suffix Lno Focus1 CS
-].
-
 func add-mutual-trivial-consts list derive.param1.trivial.mutual-spec, list derive.param1.trivial.mutual-spec, string, int, int -> list prop.
 add-mutual-trivial-consts _ [] _ _ _ [].
 add-mutual-trivial-consts All [S|SS] Suffix Lno Focus [Clause,param1-trivial-done (indt GRR)|CS] :- std.do! [
@@ -301,7 +287,7 @@ main-mutual GRS Suffix Clauses :- std.do! [
   assert! (LnoIs = Luno) "derive.param1_trivial: Non-uniform parameters not supported",
   mutual-lno GRS FirstGRR Lno,
   if (Lno > 0)
-     (add-mutual-trivial-axioms Specs Specs Suffix Lno 0 Clauses)
+     (stop "derive.param1_trivial: parameterized mutual blocks are not supported without axioms")
      (add-mutual-trivial-consts Specs Specs Suffix Lno 0 Clauses)
 ].
 
