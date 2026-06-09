@@ -135,12 +135,21 @@ namespace tc {
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     namespace proj {
       func proj term, term ->.
-      proj T (uvar as V) :- !, get-vars B Vars, declare_constraint (proj T V) [_,V|Vars].
+      proj T V :- var V, !, get-vars T Vars, declare_constraint (proj T V) [_,V|Vars].
       :name "proj-unif"
       proj T R :- coq.unify-eq T R ok.
 
-      constraint solve-proj proj {
-        rule solve-proj \ (proj A B) <=> (coq.unify-eq A B ok).
+      func force-unify list prop, term, term ->.
+      :name "force-proj"
+      % If B is a variale we launch elpi unification
+      force-unify _ A B :- var B, !, A = B.
+      force-unify Ctx A B :- Ctx => coq.unify-eq A B ok. 
+
+
+      constraint decl def ?- solve-proj proj {
+        % TODO: should add a dedup constraint
+        rule solve-proj \ (Ctx ?- proj A B) <=> (force-unify Ctx A B).
+        % rule solve-proj \ (Ctx ?- proj A B) <=> (A = B).
         rule \ solve-proj.
       }
     }
