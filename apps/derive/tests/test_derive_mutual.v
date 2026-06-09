@@ -525,6 +525,14 @@ Module MutualMap <: MutualMapExpected.
   | cons (t : tree) (f : forest).
 
   #[only(map)] derive tree.
+
+  Example tree_map_computes :
+    tree_map (node (cons (node empty) empty)) = node (cons (node empty) empty).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_map_computes :
+    forest_map (cons (node empty) empty) = cons (node empty) empty.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualMap.
 
 Module MutualLens <: MutualLensExpected.
@@ -555,6 +563,19 @@ Module MutualParam1 <: MutualParam1Expected.
   | cons (t : tree) (f : forest).
 
   #[only(param1)] derive tree.
+
+  Example is_tree_match_computes :
+    (match is_node empty is_empty with
+     | is_node f _ => node f
+     end) = node empty.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example is_forest_match_computes :
+    (match is_cons (node empty) (is_node empty is_empty) empty is_empty with
+     | is_empty => empty
+     | is_cons t _ f _ => cons t f
+     end) = cons (node empty) empty.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualParam1.
 
 Module MutualParam1Congr <: MutualParam1CongrExpected.
@@ -565,6 +586,15 @@ Module MutualParam1Congr <: MutualParam1CongrExpected.
   | cons (t : tree) (f : forest).
 
   #[only(param1_congr)] derive tree.
+
+  Example congr_is_node_computes :
+    congr_is_node empty is_empty is_empty eq_refl = eq_refl.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example congr_is_cons_computes :
+    congr_is_cons (node empty) (is_node empty is_empty) (is_node empty is_empty)
+      eq_refl empty is_empty is_empty eq_refl = eq_refl.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualParam1Congr.
 
 Module MutualParam1Trivial <: MutualParam1TrivialExpected.
@@ -575,6 +605,24 @@ Module MutualParam1Trivial <: MutualParam1TrivialExpected.
   | cons (t : tree) (f : forest).
 
   #[only(param1_trivial)] derive tree.
+
+  Example is_tree_inhab_computes :
+    is_tree_inhab (node empty) = is_node empty is_empty.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example is_forest_inhab_computes :
+    is_forest_inhab (cons (node empty) empty) =
+    is_cons (node empty) (is_node empty is_empty) empty is_empty.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example is_tree_trivial_witness_computes :
+    projT1 (is_tree_trivial (node empty)) = is_node empty is_empty.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example is_forest_trivial_witness_computes :
+    projT1 (is_forest_trivial (cons (node empty) empty)) =
+    is_cons (node empty) (is_node empty is_empty) empty is_empty.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualParam1Trivial.
 
 Module MutualParam1Functor <: MutualParam1FunctorExpected.
@@ -585,6 +633,16 @@ Module MutualParam1Functor <: MutualParam1FunctorExpected.
   | cons (t : tree) (f : forest).
 
   #[only(param1_functor)] derive tree.
+
+  Example is_tree_functor_computes :
+    is_tree_functor (node empty) (is_node empty is_empty) = is_node empty is_empty.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example is_forest_functor_computes :
+    is_forest_functor (cons (node empty) empty)
+      (is_cons (node empty) (is_node empty is_empty) empty is_empty) =
+    is_cons (node empty) (is_node empty is_empty) empty is_empty.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualParam1Functor.
 
 Module MutualParam2 <: MutualParam2Expected.
@@ -595,6 +653,20 @@ Module MutualParam2 <: MutualParam2Expected.
   | cons (t : tree) (f : forest).
 
   #[only(param2)] derive tree.
+
+  Example tree_R_match_computes :
+    (match node_R empty empty empty_R with
+     | node_R f1 _ _ => node f1
+     end) = node empty.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_R_match_computes :
+    (match cons_R (node empty) (node empty) (node_R empty empty empty_R)
+             empty empty empty_R with
+     | empty_R => empty
+     | cons_R t1 _ _ f1 _ _ => cons t1 f1
+     end) = cons (node empty) empty.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualParam2.
 
 Module MutualInduction <: MutualInductionExpected.
@@ -615,6 +687,15 @@ Module MutualTag <: MutualTagExpected.
   | cons (t : tree) (f : forest).
 
   #[only(tag)] derive tree.
+
+  Example tree_tag_computes : tree_tag (node empty) = xH.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_tag_empty_computes : forest_tag empty = xH.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_tag_cons_computes : forest_tag (cons (node empty) empty) = xO xH.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualTag.
 
 Module MutualFields <: MutualFieldsExpected.
@@ -625,6 +706,15 @@ Module MutualFields <: MutualFieldsExpected.
   | cons (t : tree) (f : forest).
 
   #[only(fields)] derive tree.
+
+  Example tree_construct_computes :
+    tree_construct (tree_tag (node empty)) (tree_fields (node empty)) = Some (node empty).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_construct_computes :
+    forest_construct (forest_tag (cons (node empty) empty))
+      (forest_fields (cons (node empty) empty)) = Some (cons (node empty) empty).
+  Proof. vm_compute. reflexivity. Qed.
 End MutualFields.
 
 Module MutualEqb <: MutualEqbExpected.
@@ -635,6 +725,22 @@ Module MutualEqb <: MutualEqbExpected.
   | cons (t : tree) (f : forest).
 
   #[only(eqb)] derive tree.
+
+  Example tree_eqb_computes_equal :
+    tree_eqb (node empty) (node empty) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example tree_eqb_computes_different :
+    tree_eqb (node empty) (node (cons (node empty) empty)) = false.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_eqb_computes_equal :
+    forest_eqb (cons (node empty) empty) (cons (node empty) empty) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_eqb_computes_different :
+    forest_eqb empty (cons (node empty) empty) = false.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualEqb.
 
 Module MutualEqbCorrect <: MutualEqbCorrectExpected.
@@ -706,6 +812,25 @@ Module ParametrizedMutualParam1 <: ParametrizedMutualParam1Expected.
   | pcons (t : ptree A) (f : pforest A).
 
   #[only(param1)] derive ptree.
+
+  Example is_ptree_match_computes :
+    (match is_pnode nat (fun _ => unit) 2 tt (pempty nat)
+             (is_pempty nat (fun _ => unit))
+       in is_ptree A _ _ return ptree A with
+     | is_pnode A _ x _ f _ => pnode A x f
+     end) = pnode nat 2 (pempty nat).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example is_pforest_match_computes :
+    (match is_pcons nat (fun _ => unit) (pnode nat 2 (pempty nat))
+             (is_pnode nat (fun _ => unit) 2 tt (pempty nat)
+               (is_pempty nat (fun _ => unit)))
+             (pempty nat) (is_pempty nat (fun _ => unit))
+       in is_pforest A _ _ return pforest A with
+     | is_pempty A _ => pempty A
+     | is_pcons A _ t _ f _ => pcons A t f
+     end) = pcons nat (pnode nat 2 (pempty nat)) (pempty nat).
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam1.
 
 Module ParametrizedMutualParam1Congr <: ParametrizedMutualParam1CongrExpected.
@@ -716,6 +841,22 @@ Module ParametrizedMutualParam1Congr <: ParametrizedMutualParam1CongrExpected.
   | pcons (t : ptree A) (f : pforest A).
 
   #[only(param1_congr)] derive ptree.
+
+  Example congr_is_pnode_computes :
+    congr_is_pnode nat (fun _ => unit) 2 tt tt eq_refl
+      (pempty nat) (is_pempty nat (fun _ => unit))
+      (is_pempty nat (fun _ => unit)) eq_refl = eq_refl.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example congr_is_pcons_computes :
+    congr_is_pcons nat (fun _ => unit) (pnode nat 2 (pempty nat))
+      (is_pnode nat (fun _ => unit) 2 tt (pempty nat)
+        (is_pempty nat (fun _ => unit)))
+      (is_pnode nat (fun _ => unit) 2 tt (pempty nat)
+        (is_pempty nat (fun _ => unit))) eq_refl
+      (pempty nat) (is_pempty nat (fun _ => unit))
+      (is_pempty nat (fun _ => unit)) eq_refl = eq_refl.
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam1Congr.
 
 Module ParametrizedMutualParam1Trivial <: ParametrizedMutualParam1TrivialExpected.
@@ -761,6 +902,27 @@ Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
   | pcons (t : ptree A) (f : pforest A).
 
   #[only(param2)] derive ptree.
+
+  Definition nat_eq_relation := fun x y : nat => x = y.
+  Definition pnode_R_example :=
+    pnode_R nat nat nat_eq_relation 2 2 eq_refl
+      (pempty nat) (pempty nat) (pempty_R nat nat nat_eq_relation).
+
+  Example ptree_R_match_computes :
+    (match pnode_R_example in ptree_R A1 _ _ _ _ return ptree A1 with
+     | pnode_R A1 _ _ x1 _ _ f1 _ _ => pnode A1 x1 f1
+     end) = pnode nat 2 (pempty nat).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_R_match_computes :
+    (match pcons_R nat nat nat_eq_relation
+             (pnode nat 2 (pempty nat)) (pnode nat 2 (pempty nat)) pnode_R_example
+             (pempty nat) (pempty nat) (pempty_R nat nat nat_eq_relation)
+       in pforest_R A1 _ _ _ _ return pforest A1 with
+     | pempty_R A1 _ _ => pempty A1
+     | pcons_R A1 _ _ t1 _ _ f1 _ _ => pcons A1 t1 f1
+     end) = pcons nat (pnode nat 2 (pempty nat)) (pempty nat).
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam2.
 
 Module ParametrizedMutualInduction <: ParametrizedMutualInductionExpected.
@@ -781,6 +943,17 @@ Module ParametrizedMutualTag <: ParametrizedMutualTagExpected.
   | pcons (t : ptree A) (f : pforest A).
 
   #[only(tag)] derive ptree.
+
+  Example ptree_tag_computes :
+    ptree_tag nat (pnode nat 2 (pempty nat)) = xH.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_tag_empty_computes : pforest_tag nat (pempty nat) = xH.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_tag_cons_computes :
+    pforest_tag nat (pcons nat (pnode nat 2 (pempty nat)) (pempty nat)) = xO xH.
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualTag.
 
 Module ParametrizedMutualFields <: ParametrizedMutualFieldsExpected.
@@ -791,6 +964,18 @@ Module ParametrizedMutualFields <: ParametrizedMutualFieldsExpected.
   | pcons (t : ptree A) (f : pforest A).
 
   #[only(fields)] derive ptree.
+
+  Example ptree_construct_computes :
+    ptree_construct nat (ptree_tag nat (pnode nat 2 (pempty nat)))
+      (ptree_fields nat (pnode nat 2 (pempty nat))) = Some (pnode nat 2 (pempty nat)).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_construct_computes :
+    pforest_construct nat
+      (pforest_tag nat (pcons nat (pnode nat 2 (pempty nat)) (pempty nat)))
+      (pforest_fields nat (pcons nat (pnode nat 2 (pempty nat)) (pempty nat))) =
+    Some (pcons nat (pnode nat 2 (pempty nat)) (pempty nat)).
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualFields.
 
 Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
