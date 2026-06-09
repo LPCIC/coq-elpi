@@ -328,6 +328,143 @@ Module Type ParametrizedMutualEqbOKExpected.
       forall x y : ptree A, {x = y} + {x <> y}.
 End ParametrizedMutualEqbOKExpected.
 
+Module Type TripleMutualBase.
+  Inductive alpha : Type :=
+  | alpha0
+  | alpha1 (b : beta)
+  with beta : Type :=
+  | beta0
+  | beta1 (g : gamma)
+  with gamma : Type :=
+  | gamma0
+  | gamma1 (a : alpha) (b : beta).
+End TripleMutualBase.
+
+Module Type TripleMutualMapExpected.
+  Include TripleMutualBase.
+  Parameter alpha_map : alpha -> alpha.
+  Parameter beta_map : beta -> beta.
+  Parameter gamma_map : gamma -> gamma.
+End TripleMutualMapExpected.
+
+Module Type TripleMutualEqbExpected.
+  Include TripleMutualBase.
+  Parameter alpha_tag : alpha -> BinNums.positive.
+  Parameter beta_tag : beta -> BinNums.positive.
+  Parameter gamma_tag : gamma -> BinNums.positive.
+  Parameter alpha_fields_t : BinNums.positive -> Type.
+  Parameter beta_fields_t : BinNums.positive -> Type.
+  Parameter gamma_fields_t : BinNums.positive -> Type.
+  Parameter alpha_fields : forall i : alpha, alpha_fields_t (alpha_tag i).
+  Parameter beta_fields : forall i : beta, beta_fields_t (beta_tag i).
+  Parameter gamma_fields : forall i : gamma, gamma_fields_t (gamma_tag i).
+  Parameter alpha_eqb_fields :
+    (alpha -> alpha -> bool) ->
+    forall x : BinNums.positive, alpha_fields_t x -> alpha_fields_t x -> bool.
+  Parameter beta_eqb_fields :
+    (beta -> beta -> bool) ->
+    forall x : BinNums.positive, beta_fields_t x -> beta_fields_t x -> bool.
+  Parameter gamma_eqb_fields :
+    (gamma -> gamma -> bool) ->
+    forall x : BinNums.positive, gamma_fields_t x -> gamma_fields_t x -> bool.
+  Parameter alpha_eqb : alpha -> alpha -> bool.
+  Parameter beta_eqb : beta -> beta -> bool.
+  Parameter gamma_eqb : gamma -> gamma -> bool.
+End TripleMutualEqbExpected.
+
+Module Type TripleMutualEqbOKExpected.
+  Include TripleMutualEqbExpected.
+  Parameter alpha_eqb_correct : forall x : alpha, eqb_correct_on alpha_eqb x.
+  Parameter beta_eqb_correct : forall x : beta, eqb_correct_on beta_eqb x.
+  Parameter gamma_eqb_correct : forall x : gamma, eqb_correct_on gamma_eqb x.
+  Parameter alpha_eqb_refl : forall x : alpha, eqb_refl_on alpha_eqb x.
+  Parameter beta_eqb_refl : forall x : beta, eqb_refl_on beta_eqb x.
+  Parameter gamma_eqb_refl : forall x : gamma, eqb_refl_on gamma_eqb x.
+  Parameter alpha_eqb_OK :
+    forall x1 x2 : alpha, reflect (x1 = x2) (alpha_eqb x1 x2).
+  Parameter beta_eqb_OK :
+    forall x1 x2 : beta, reflect (x1 = x2) (beta_eqb x1 x2).
+  Parameter gamma_eqb_OK :
+    forall x1 x2 : gamma, reflect (x1 = x2) (gamma_eqb x1 x2).
+  Parameter alpha_eqb_OK_sumbool : forall x y : alpha, {x = y} + {x <> y}.
+  Parameter beta_eqb_OK_sumbool : forall x y : beta, {x = y} + {x <> y}.
+  Parameter gamma_eqb_OK_sumbool : forall x y : gamma, {x = y} + {x <> y}.
+End TripleMutualEqbOKExpected.
+
+Module Type ParametrizedTripleMutualBase.
+  Inductive palpha (A : Type) : Type :=
+  | palpha0
+  | palpha1 (x : A) (b : pbeta A)
+  with pbeta (A : Type) : Type :=
+  | pbeta0
+  | pbeta1 (g : pgamma A)
+  with pgamma (A : Type) : Type :=
+  | pgamma0
+  | pgamma1 (a : palpha A) (b : pbeta A).
+End ParametrizedTripleMutualBase.
+
+Module Type ParametrizedTripleMutualEqbExpected.
+  Include ParametrizedTripleMutualBase.
+  Parameter palpha_eqb :
+    forall A : Type, (A -> A -> bool) -> palpha A -> palpha A -> bool.
+  Parameter pbeta_eqb :
+    forall A : Type, (A -> A -> bool) -> pbeta A -> pbeta A -> bool.
+  Parameter pgamma_eqb :
+    forall A : Type, (A -> A -> bool) -> pgamma A -> pgamma A -> bool.
+End ParametrizedTripleMutualEqbExpected.
+
+Module Type ParametrizedTripleMutualEqbOKExpected.
+  Include ParametrizedTripleMutualEqbExpected.
+  Parameter palpha_eqb_correct :
+    forall (A : Type) (eqA : A -> A -> bool),
+      eqb_correct eqA ->
+      forall x : palpha A, eqb_correct_on (palpha_eqb A eqA) x.
+  Parameter pbeta_eqb_correct :
+    forall (A : Type) (eqA : A -> A -> bool),
+      eqb_correct eqA ->
+      forall x : pbeta A, eqb_correct_on (pbeta_eqb A eqA) x.
+  Parameter pgamma_eqb_correct :
+    forall (A : Type) (eqA : A -> A -> bool),
+      eqb_correct eqA ->
+      forall x : pgamma A, eqb_correct_on (pgamma_eqb A eqA) x.
+  Parameter palpha_eqb_refl :
+    forall (A : Type) (eqA : A -> A -> bool),
+      eqb_reflexive eqA ->
+      forall x : palpha A, eqb_refl_on (palpha_eqb A eqA) x.
+  Parameter pbeta_eqb_refl :
+    forall (A : Type) (eqA : A -> A -> bool),
+      eqb_reflexive eqA ->
+      forall x : pbeta A, eqb_refl_on (pbeta_eqb A eqA) x.
+  Parameter pgamma_eqb_refl :
+    forall (A : Type) (eqA : A -> A -> bool),
+      eqb_reflexive eqA ->
+      forall x : pgamma A, eqb_refl_on (pgamma_eqb A eqA) x.
+  Parameter palpha_eqb_OK :
+    forall (A : Type) (eqA : A -> A -> bool),
+      (forall x1 x2 : A, reflect (x1 = x2) (eqA x1 x2)) ->
+      forall x1 x2 : palpha A, reflect (x1 = x2) (palpha_eqb A eqA x1 x2).
+  Parameter pbeta_eqb_OK :
+    forall (A : Type) (eqA : A -> A -> bool),
+      (forall x1 x2 : A, reflect (x1 = x2) (eqA x1 x2)) ->
+      forall x1 x2 : pbeta A, reflect (x1 = x2) (pbeta_eqb A eqA x1 x2).
+  Parameter pgamma_eqb_OK :
+    forall (A : Type) (eqA : A -> A -> bool),
+      (forall x1 x2 : A, reflect (x1 = x2) (eqA x1 x2)) ->
+      forall x1 x2 : pgamma A, reflect (x1 = x2) (pgamma_eqb A eqA x1 x2).
+  Parameter palpha_eqb_OK_sumbool :
+    forall A : Type,
+      (forall x1 x2 : A, {x1 = x2} + {x1 <> x2}) ->
+      forall x y : palpha A, {x = y} + {x <> y}.
+  Parameter pbeta_eqb_OK_sumbool :
+    forall A : Type,
+      (forall x1 x2 : A, {x1 = x2} + {x1 <> x2}) ->
+      forall x y : pbeta A, {x = y} + {x <> y}.
+  Parameter pgamma_eqb_OK_sumbool :
+    forall A : Type,
+      (forall x1 x2 : A, {x1 = x2} + {x1 <> x2}) ->
+      forall x y : pgamma A, {x = y} + {x <> y}.
+End ParametrizedTripleMutualEqbOKExpected.
+
 Module MutualMap <: MutualMapExpected.
   Inductive tree : Type :=
   | node (f : forest)
@@ -607,3 +744,87 @@ Module ParametrizedMutualEqbOK <: ParametrizedMutualEqbOKExpected.
 
   #[only(eqbOK)] derive ptree.
 End ParametrizedMutualEqbOK.
+
+Module TripleMutualMapFromGamma <: TripleMutualMapExpected.
+  Inductive alpha : Type :=
+  | alpha0
+  | alpha1 (b : beta)
+  with beta : Type :=
+  | beta0
+  | beta1 (g : gamma)
+  with gamma : Type :=
+  | gamma0
+  | gamma1 (a : alpha) (b : beta).
+
+  #[only(map)] derive gamma.
+End TripleMutualMapFromGamma.
+
+Module TripleMutualEqbFromAlpha <: TripleMutualEqbExpected.
+  Inductive alpha : Type :=
+  | alpha0
+  | alpha1 (b : beta)
+  with beta : Type :=
+  | beta0
+  | beta1 (g : gamma)
+  with gamma : Type :=
+  | gamma0
+  | gamma1 (a : alpha) (b : beta).
+
+  #[only(eqb)] derive alpha.
+End TripleMutualEqbFromAlpha.
+
+Module TripleMutualEqbFromBeta <: TripleMutualEqbExpected.
+  Inductive alpha : Type :=
+  | alpha0
+  | alpha1 (b : beta)
+  with beta : Type :=
+  | beta0
+  | beta1 (g : gamma)
+  with gamma : Type :=
+  | gamma0
+  | gamma1 (a : alpha) (b : beta).
+
+  #[only(eqb)] derive beta.
+End TripleMutualEqbFromBeta.
+
+Module TripleMutualEqbFromGamma <: TripleMutualEqbExpected.
+  Inductive alpha : Type :=
+  | alpha0
+  | alpha1 (b : beta)
+  with beta : Type :=
+  | beta0
+  | beta1 (g : gamma)
+  with gamma : Type :=
+  | gamma0
+  | gamma1 (a : alpha) (b : beta).
+
+  #[only(eqb)] derive gamma.
+End TripleMutualEqbFromGamma.
+
+Module TripleMutualEqbOKFromBeta <: TripleMutualEqbOKExpected.
+  Inductive alpha : Type :=
+  | alpha0
+  | alpha1 (b : beta)
+  with beta : Type :=
+  | beta0
+  | beta1 (g : gamma)
+  with gamma : Type :=
+  | gamma0
+  | gamma1 (a : alpha) (b : beta).
+
+  #[only(eqbOK)] derive beta.
+End TripleMutualEqbOKFromBeta.
+
+Module ParametrizedTripleMutualEqbOKFromBeta <: ParametrizedTripleMutualEqbOKExpected.
+  Inductive palpha (A : Type) : Type :=
+  | palpha0
+  | palpha1 (x : A) (b : pbeta A)
+  with pbeta (A : Type) : Type :=
+  | pbeta0
+  | pbeta1 (g : pgamma A)
+  with pgamma (A : Type) : Type :=
+  | pgamma0
+  | pgamma1 (a : palpha A) (b : pbeta A).
+
+  #[only(eqbOK)] derive pbeta.
+End ParametrizedTripleMutualEqbOKFromBeta.

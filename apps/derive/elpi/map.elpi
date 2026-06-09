@@ -197,7 +197,7 @@ mutual-map-ty N Lno S Ty :- N = Lno, !,
   S = derive.map.mutual-spec _ Ity1 Ity2 _ _,
   Ty = prod `_` Ity1 (_\ Ity2).
 mutual-map-ty N Lno S Ty :- N < Lno,
-  S = derive.map.mutual-spec _ Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2), !,
+  S = derive.map.mutual-spec _ _Ity1 _Ity2 (prod A Sty1 _Rty1) (prod _ Sty2 _Rty2), !,
   coq.name-suffix A 1 A1,
   coq.name-suffix A 2 A2,
   coq.name-suffix A "f" Af,
@@ -226,15 +226,15 @@ add-mutual-map-axioms [S|SS] Prefix Lno [map-done GR,Clause|CS] :- std.do! [
   add-mutual-map-axioms SS Prefix Lno CS
 ].
 
-func main-mutual list inductive, string -> list prop.
-main-mutual [] _ [].
-main-mutual ([First|_] as GRS) Prefix C :- std.do! [
+func main-mutual inductive, list inductive, string -> list prop.
+main-mutual _ [] _ [] :- !.
+main-mutual Selected GRS Prefix C :- std.do! [
   std.map GRS mutual-spec Specs,
   Specs = [S|_],
   mutual-spec-ind S FirstGR,
   coq.env.indt FirstGR _ Lno Luno _ _ _,
   assert! (Lno = Luno) "derive.map: Non-uniform parameters not supported",
-  std.map Specs (s\c\ sigma gr p\ mutual-spec-ind s gr, mutual-prefix First Prefix gr p, add-mutual-map-axioms [s] p Lno c) CS,
+  std.map Specs (s\c\ sigma gr p\ mutual-spec-ind s gr, mutual-prefix Selected Prefix gr p, add-mutual-map-axioms [s] p Lno c) CS,
   std.flatten CS C
 ].
 

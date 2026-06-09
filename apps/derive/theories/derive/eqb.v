@@ -82,7 +82,7 @@ Elpi Accumulate derive lp:{{
 func derive.eqb.derive-main gref, string -> list prop.
 derive.eqb.derive-main (indt T) Prefix C :- derive.mutual-inductive T, !,
   derive.mutual-inductives T TS,
-  derive.eqb.mutual.main TS Prefix C.
+  derive.eqb.mutual.main T TS Prefix C.
 derive.eqb.derive-main T Prefix C :- derive.eqb.main T Prefix C.
 
 derivation (indt T)  Prefix ff (derive "eqb" (derive.eqb.derive-main (indt T) Prefix) (eqb-done (indt T))).

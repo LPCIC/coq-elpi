@@ -74,10 +74,10 @@ add-one I Prefix [Clause, ClauseC, ClauseR] :- std.do! [
   std.forall [Clause,ClauseC,ClauseR] (x\coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ x))
 ].
 
-func main list inductive, string -> list prop.
-main [] _ [].
-main ([First|_] as IS) Prefix CL :-
-  std.map IS (i\c\ sigma p\ mutual-prefix First Prefix i p, add-one i p c) CLS,
+func main inductive, list inductive, string -> list prop.
+main _ [] _ [] :- !.
+main Selected IS Prefix CL :-
+  std.map IS (i\c\ sigma p\ mutual-prefix Selected Prefix i p, add-one i p c) CLS,
   std.flatten CLS CL.
 
 }
