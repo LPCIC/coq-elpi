@@ -1,9 +1,6 @@
 namespace tc {
   namespace link {
-    func get-vars term -> list term.
-    get-vars T R :-
-      (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
-        fold-map T [] _ R.
+    shorten tc.{get-vars}.
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ETA LINK                                                                 %
