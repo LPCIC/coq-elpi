@@ -61,7 +61,7 @@ Elpi Accumulate derive lp:{{
 func derive.induction.derive-main inductive, string -> list prop.
 derive.induction.derive-main T N C :- derive.mutual-inductive T, !,
   derive.mutual-inductives T TS,
-  derive.induction.main-mutual TS N C.
+  derive.induction.main-mutual T TS N C.
 derive.induction.derive-main T N C :- derive.induction.main T N C.
 
 derivation (indt T) N ff (derive "induction" (derive.induction.derive-main T N) (induction-db T _)).
