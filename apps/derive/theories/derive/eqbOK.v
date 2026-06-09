@@ -64,19 +64,19 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive  *)
-Elpi Accumulate derive Db derive.eqbOK.db.
-Elpi Accumulate derive File eqbOK.
+#[superglobal] Elpi Accumulate derive Db derive.eqbOK.db.
+#[superglobal] Elpi Accumulate derive File eqbOK.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "eqbOK" "eqbcorrect".
 dep1 "eqbOK_alias" "eqbcorrect_alias".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "eqbOK" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T) Prefix ff (derive "eqbOK" (derive.eqbOK.main (indt T) Prefix) (eqbok-for (indt T) _)).
 derivation (const T) Prefix ff (derive "eqbOK_alias" (derive.eqbOK.main (const T) Prefix) (eqbok-for (const T) _)).

@@ -55,14 +55,14 @@ main [str S] :-
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.eqType.db.
-Elpi Accumulate derive File eqType.
+#[superglobal] Elpi Accumulate derive Db derive.eqType.db.
+#[superglobal] Elpi Accumulate derive File eqType.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "eqType_ast" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
   
 derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.main T) (eqType (indt T) _)).
 

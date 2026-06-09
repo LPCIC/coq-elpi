@@ -154,7 +154,7 @@ Definition is_true_inhab b (H : is_bool b) p : is_is_true b H p :=
 Register is_true_inhab as elpi.derive.is_true_inhab.
 
 
-Elpi Accumulate derive.param1.trivial.db lp:{{
+#[superglobal] Elpi Accumulate derive.param1.trivial.db lp:{{
 
   :before "param1:inhab:start"
   param1-inhab-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_inhab }}.
@@ -222,7 +222,7 @@ Definition is_true_trivial b (H : is_bool b) : trivial (lib:elpi.is_true b) (is_
 Register is_true_trivial as elpi.derive.is_true_trivial.
 
 
-Elpi Accumulate derive.param1.trivial.db lp:{{
+#[superglobal] Elpi Accumulate derive.param1.trivial.db lp:{{
 
   :before "param1:trivial:start"
   param1-trivial-db {{ lib:elpi.derive.is_uint63 }} {{ lib:elpi.derive.is_uint63_trivial }}.
@@ -249,22 +249,22 @@ Elpi Accumulate derive.param1.trivial.db lp:{{
 }}.
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.param1.trivial.db.
-Elpi Accumulate derive File param1_inhab.
-Elpi Accumulate derive File param1_trivial.
+#[superglobal] Elpi Accumulate derive Db derive.param1.trivial.db.
+#[superglobal] Elpi Accumulate derive File param1_inhab.
+#[superglobal] Elpi Accumulate derive File param1_trivial.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "param1_trivial" "param1_inhab".
 dep1 "param1_trivial" "param1_congr".
 dep1 "param1_inhab" "param1".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "param1_inhab" (cl\ cl = []) true).
   derivation _ _ (derive "param1_trivial" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation T  _ ff (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_inhab")   (derive.on_param1 T  (_\T\_\_\param1-inhab-done T) _ _)).
 derivation T  _ ff (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T  (_\T\_\_\param1-trivial-done T) _ _)).

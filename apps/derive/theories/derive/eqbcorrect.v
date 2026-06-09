@@ -112,21 +112,21 @@ Elpi Accumulate lp:{{
 }}.
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.eqbcorrect.db.
-Elpi Accumulate derive File eqbcorrect.
+#[superglobal] Elpi Accumulate derive Db derive.eqbcorrect.db.
+#[superglobal] Elpi Accumulate derive File eqbcorrect.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "eqbcorrect" "eqb".
 dep1 "eqbcorrect" "induction".
 dep1 "eqbcorrect" "param1_inhab".
 dep1 "eqbcorrect_alias" "eqb_alias".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "eqbcorrect" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T) Prefix ff (derive "eqbcorrect" (derive.eqbcorrect.main (indt T) Prefix) (eqcorrect-for (indt T) _ _)).
 derivation (const C) Prefix ff (derive "eqbcorrect_alias" (derive.eqbcorrect.main (const C) Prefix) (eqcorrect-for (const C) _ _)).
