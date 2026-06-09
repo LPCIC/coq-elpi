@@ -677,6 +677,25 @@ Module MutualInduction <: MutualInductionExpected.
   | cons (t : tree) (f : forest).
 
   #[only(induction)] derive tree.
+
+  Example tree_induction_computes :
+    tree_induction
+      (fun _ => nat) (fun _ => nat)
+      (fun _ _ q => S q)
+      0
+      (fun _ _ pt _ _ qf => S (pt + qf))
+      (node empty) (is_node empty is_empty) = 1.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_induction_computes :
+    forest_induction
+      (fun _ => nat) (fun _ => nat)
+      (fun _ _ q => S q)
+      0
+      (fun _ _ pt _ _ qf => S (pt + qf))
+      (cons (node empty) empty)
+      (is_cons (node empty) (is_node empty is_empty) empty is_empty) = 2.
+  Proof. vm_compute. reflexivity. Qed.
 End MutualInduction.
 
 Module MutualTag <: MutualTagExpected.
@@ -751,6 +770,25 @@ Module MutualEqbCorrect <: MutualEqbCorrectExpected.
   | cons (t : tree) (f : forest).
 
   #[only(eqbcorrect)] derive tree.
+
+  Ltac transparent_function c :=
+    let t := eval cbv delta [c] in c in
+    lazymatch t with
+    | fun _ => _ => idtac
+    | _ => fail 1 "expected" c "to unfold to a function"
+    end.
+
+  Example tree_eqb_refl_is_transparent : True.
+  Proof. transparent_function tree_eqb_refl. exact I. Qed.
+
+  Example forest_eqb_refl_is_transparent : True.
+  Proof. transparent_function forest_eqb_refl. exact I. Qed.
+
+  Example tree_eqb_correct_is_transparent : True.
+  Proof. transparent_function tree_eqb_correct. exact I. Qed.
+
+  Example forest_eqb_correct_is_transparent : True.
+  Proof. transparent_function forest_eqb_correct. exact I. Qed.
 End MutualEqbCorrect.
 
 Module MutualEqbOK <: MutualEqbOKExpected.
@@ -859,39 +897,24 @@ Module ParametrizedMutualParam1Congr <: ParametrizedMutualParam1CongrExpected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam1Congr.
 
-Module ParametrizedMutualParam1Trivial <: ParametrizedMutualParam1TrivialExpected.
+Module ParametrizedMutualParam1Trivial.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(param1_trivial)] derive ptree.
-
-  Example is_ptree_inhab_computes :
-    is_ptree_inhab nat (fun _ => unit) (fun _ => tt) (pnode nat 2 (pempty nat)) =
-    is_pnode nat (fun _ => unit) 2 tt (pempty nat)
-      (is_pempty nat (fun _ => unit)).
-  Proof. vm_compute. reflexivity. Qed.
-
-  Example is_pforest_inhab_computes :
-    is_pforest_inhab nat (fun _ => unit) (fun _ => tt)
-      (pcons nat (pnode nat 2 (pempty nat)) (pempty nat)) =
-    is_pcons nat (fun _ => unit) (pnode nat 2 (pempty nat))
-      (is_pnode nat (fun _ => unit) 2 tt (pempty nat)
-        (is_pempty nat (fun _ => unit)))
-      (pempty nat) (is_pempty nat (fun _ => unit)).
-  Proof. vm_compute. reflexivity. Qed.
+  Fail #[only(param1_trivial)] derive ptree.
 End ParametrizedMutualParam1Trivial.
 
-Module ParametrizedMutualParam1Functor <: ParametrizedMutualParam1FunctorExpected.
+Module ParametrizedMutualParam1Functor.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(param1_functor)] derive ptree.
+  Fail #[only(param1_functor)] derive ptree.
 End ParametrizedMutualParam1Functor.
 
 Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
@@ -925,14 +948,14 @@ Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam2.
 
-Module ParametrizedMutualInduction <: ParametrizedMutualInductionExpected.
+Module ParametrizedMutualInduction.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(induction)] derive ptree.
+  Fail #[only(induction)] derive ptree.
 End ParametrizedMutualInduction.
 
 Module ParametrizedMutualTag <: ParametrizedMutualTagExpected.
@@ -1008,24 +1031,24 @@ Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualEqb.
 
-Module ParametrizedMutualEqbCorrect <: ParametrizedMutualEqbCorrectExpected.
+Module ParametrizedMutualEqbCorrect.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(eqbcorrect)] derive ptree.
+  Fail #[only(eqbcorrect)] derive ptree.
 End ParametrizedMutualEqbCorrect.
 
-Module ParametrizedMutualEqbOK <: ParametrizedMutualEqbOKExpected.
+Module ParametrizedMutualEqbOK.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(eqbOK)] derive ptree.
+  Fail #[only(eqbOK)] derive ptree.
 End ParametrizedMutualEqbOK.
 
 Module TripleMutualMapFromGamma <: TripleMutualMapExpected.
@@ -1122,7 +1145,7 @@ Module TripleMutualEqbOKFromBeta <: TripleMutualEqbOKExpected.
   Proof. vm_compute. reflexivity. Qed.
 End TripleMutualEqbOKFromBeta.
 
-Module ParametrizedTripleMutualEqbOKFromBeta <: ParametrizedTripleMutualEqbOKExpected.
+Module ParametrizedTripleMutualEqbOKFromBeta.
   Inductive palpha (A : Type) : Type :=
   | palpha0
   | palpha1 (x : A) (b : pbeta A)
@@ -1133,19 +1156,5 @@ Module ParametrizedTripleMutualEqbOKFromBeta <: ParametrizedTripleMutualEqbOKExp
   | pgamma0
   | pgamma1 (a : palpha A) (b : pbeta A).
 
-  #[only(eqbOK)] derive pbeta.
-
-  Example palpha_eqb_computes_equal :
-    palpha_eqb nat Nat.eqb (palpha1 nat 2 (pbeta0 nat)) (palpha1 nat 2 (pbeta0 nat)) = true.
-  Proof. vm_compute. reflexivity. Qed.
-
-  Example pbeta_eqb_computes_different :
-    pbeta_eqb nat Nat.eqb (pbeta1 nat (pgamma0 nat)) (pbeta0 nat) = false.
-  Proof. vm_compute. reflexivity. Qed.
-
-  Example pgamma_eqb_computes_different :
-    pgamma_eqb nat Nat.eqb
-      (pgamma1 nat (palpha1 nat 2 (pbeta0 nat)) (pbeta0 nat))
-      (pgamma1 nat (palpha1 nat 3 (pbeta0 nat)) (pbeta0 nat)) = false.
-  Proof. vm_compute. reflexivity. Qed.
+  Fail #[only(eqbOK)] derive pbeta.
 End ParametrizedTripleMutualEqbOKFromBeta.

@@ -321,19 +321,6 @@ body-mutual-params-ty N S Ty :- N > 0, !,
       body-mutual-params-ty M S1 (Rest a).
 body-mutual-params-ty _ _ _ :- stop "derive.param1_functor: wrong mutual shape".
 
-func add-mutual-functor-axioms list derive.param1.functor.mutual-spec, list derive.param1.functor.mutual-spec, string, int, int -> list prop.
-add-mutual-functor-axioms _ [] _ _ _ [].
-add-mutual-functor-axioms All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- std.do! [
-  S = derive.param1.functor.mutual-spec GRR T T Arity _,
-  body-mutual-params-ty Lno S Ty,
-  Name is {coq.gref->id (indt GRR)} ^ Suffix,
-  coq.env.add-axiom Name Ty Funct,
-  mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause1 GRR [] Clause2,
-  std.forall [Clause1,Clause2] (x\coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ x)),
-  Focus1 is Focus + 1,
-  add-mutual-functor-axioms All SS Suffix Lno Focus1 CS
-].
-
 func add-mutual-functor-consts list derive.param1.functor.mutual-spec, list derive.param1.functor.mutual-spec, string, int, int -> list prop.
 add-mutual-functor-consts _ [] _ _ _ [].
 add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- std.do! [
@@ -362,7 +349,7 @@ main-mutual GRS Suffix C :- std.do! [
   assert! (LnoIs = Luno) "derive.param1.functor: Non-uniform parameters not supported",
   mutual-lno GRS FirstGRR Lno,
   if (Lno > 0)
-     (add-mutual-functor-axioms Specs Specs Suffix Lno 0 C)
+     (stop "derive.param1_functor: parameterized mutual blocks are not supported without axioms")
      (add-mutual-functor-consts Specs Specs Suffix Lno 0 C)
 ].
 
