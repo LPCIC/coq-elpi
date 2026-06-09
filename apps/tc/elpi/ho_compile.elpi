@@ -292,6 +292,7 @@ namespace tc {
 
       func context goal-ctx -> list prop.
       context [] [].
+      % if the hyp is for a TC we compile before its insertion in the context
       context [X | Xs] [Clause | ResTl] :-
         (decl Var _ Ty = X; def Var _ Ty _ = X),
         tc.is-instance-term Ty, !,
