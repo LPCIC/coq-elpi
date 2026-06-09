@@ -170,6 +170,75 @@ mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
   mk-clause N Lno Ity1 Ity2 X1 Todo Map C.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+kind derive.map.mutual-spec type.
+type derive.map.mutual-spec inductive -> term -> term -> term -> term -> derive.map.mutual-spec.
+
+func mutual-spec inductive -> derive.map.mutual-spec.
+mutual-spec GR (derive.map.mutual-spec GR T T Arity Arity) :-
+  T = global (indt GR),
+  coq.env.indt GR _ _ _ Arity _ _.
+
+func mutual-spec-ind derive.map.mutual-spec -> inductive.
+mutual-spec-ind (derive.map.mutual-spec GR _ _ _ _) GR.
+
+func mutual-spec-arity1 derive.map.mutual-spec -> term.
+mutual-spec-arity1 (derive.map.mutual-spec _ _ _ A _) A.
+
+func mutual-spec-apply-param term, term, derive.map.mutual-spec -> derive.map.mutual-spec.
+mutual-spec-apply-param A B (derive.map.mutual-spec GR Ity1 Ity2 (prod _ _ F1) (prod _ _ F2))
+    (derive.map.mutual-spec GR Ity1A Ity2B (F1 A) (F2 B)) :- !,
+  coq.mk-app Ity1 [A] Ity1A,
+  coq.mk-app Ity2 [B] Ity2B.
+mutual-spec-apply-param _ _ _ _ :- stop "derive.map: mutual parameter mismatch".
+
+func mutual-map-ty int, int, derive.map.mutual-spec -> term.
+mutual-map-ty N Lno S Ty :- N = Lno, !,
+  S = derive.map.mutual-spec _ Ity1 Ity2 _ _,
+  Ty = prod `_` Ity1 (_\ Ity2).
+mutual-map-ty N Lno S Ty :- N < Lno,
+  S = derive.map.mutual-spec _ Ity1 Ity2 (prod A Sty1 Rty1) (prod _ Sty2 Rty2), !,
+  coq.name-suffix A 1 A1,
+  coq.name-suffix A 2 A2,
+  coq.name-suffix A "f" Af,
+  N1 is N + 1,
+  Ty = prod A1 Sty1 (a\ prod A2 Sty2 (b\ prod Af {{ lp:a -> lp:b }} (f\ Rest a b f))),
+  pi a b f\ sigma S1\
+    mutual-spec-apply-param a b S S1,
+    mutual-map-ty N1 Lno S1 (Rest a b f).
+mutual-map-ty _ _ _ _ :- stop "derive.map: mutual indexed data types not supported".
+
+func mutual-prefix inductive, string, inductive -> string.
+mutual-prefix First Prefix T Prefix :- First = T, !.
+mutual-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+func add-mutual-map-axioms list derive.map.mutual-spec, string, int -> list prop.
+add-mutual-map-axioms [] _ _ [].
+add-mutual-map-axioms [S|SS] Prefix Lno [map-done GR,Clause|CS] :- std.do! [
+  S = derive.map.mutual-spec GR T T Arity _,
+  mutual-map-ty 0 Lno S Ty,
+  Name is Prefix ^ "map",
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-axiom FName Ty Funct,
+  mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
+  coq.elpi.accumulate _ "derive.map.db" (clause _ _ Clause),
+  coq.elpi.accumulate _ "derive.map.db" (clause _ _ (map-done GR)),
+  add-mutual-map-axioms SS Prefix Lno CS
+].
+
+func main-mutual list inductive, string -> list prop.
+main-mutual [] _ [].
+main-mutual ([First|_] as GRS) Prefix C :- std.do! [
+  std.map GRS mutual-spec Specs,
+  Specs = [S|_],
+  mutual-spec-ind S FirstGR,
+  coq.env.indt FirstGR _ Lno Luno _ _ _,
+  assert! (Lno = Luno) "derive.map: Non-uniform parameters not supported",
+  std.map Specs (s\c\ sigma gr p\ mutual-spec-ind s gr, mutual-prefix First Prefix gr p, add-mutual-map-axioms [s] p Lno c) CS,
+  std.flatten CS C
+].
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 func main inductive, string -> list prop.
 main GR Prefix C :- do! [
   T = global (indt GR),

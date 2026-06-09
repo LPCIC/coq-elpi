@@ -129,7 +129,9 @@ dep1 "eqbcorrect_alias" "eqb_alias".
 Elpi Accumulate derive lp:{{
 
 func derive.eqbcorrect.derive-main gref, string -> list prop.
-derive.eqbcorrect.derive-main (indt T) _ [] :- derive.mutual-inductive T, !.
+derive.eqbcorrect.derive-main (indt T) Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.eqbcorrect.mutual.main TS Prefix C.
 derive.eqbcorrect.derive-main T Prefix C :- derive.eqbcorrect.main T Prefix C.
 
 derivation (indt T) Prefix ff (derive "eqbcorrect" (derive.eqbcorrect.derive-main (indt T) Prefix) (eqcorrect-for (indt T) _ _)).

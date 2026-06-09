@@ -117,6 +117,127 @@ params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+kind derive.induction.mutual-spec type.
+type derive.induction.mutual-spec inductive -> term -> term -> list term -> list term -> derive.induction.mutual-spec.
+
+func mutual-spec inductive -> derive.induction.mutual-spec.
+mutual-spec GR (derive.induction.mutual-spec GRR (global (indt GRR)) Arity K KT) :-
+  reali (global (indt GR)) (global (indt GRR)),
+  coq.env.indt GRR _ _ _ Arity KGR KT,
+  std.map KGR (k\r\ r = global (indc k)) K.
+
+func mutual-spec-ind derive.induction.mutual-spec -> inductive.
+mutual-spec-ind (derive.induction.mutual-spec GRR _ _ _ _) GRR.
+
+func mutual-spec-arity derive.induction.mutual-spec -> term.
+mutual-spec-arity (derive.induction.mutual-spec _ _ Arity _ _) Arity.
+
+func mutual-spec-apply-param term, derive.induction.mutual-spec -> derive.induction.mutual-spec.
+mutual-spec-apply-param A (derive.induction.mutual-spec GRR IsT (prod _ _ F) K KT)
+    (derive.induction.mutual-spec GRR IsTA (F A) KA KTA) :- !,
+  coq.mk-app IsT [A] IsTA,
+  map K (k\ coq.mk-app k [A]) KA,
+  map KT (coq.subst-prod [A]) KTA.
+mutual-spec-apply-param _ _ _ :- stop "derive.induction: mutual parameter mismatch".
+
+func pred-app list term, list term, term -> term.
+pred-app [IsT|_] [P|_] T R :-
+  coq.safe-dest-app T HD Args,
+  same_term HD IsT, !,
+  coq.mk-app P Args R.
+pred-app [_|IS] [_|PS] T R :- pred-app IS PS T R.
+
+func hyp-mutual list term, list term, term -> term.
+hyp-mutual IsTs Ps (prod N S T) (prod N S R) :- !,
+  @pi-decl N S x\
+    if (pred-app IsTs Ps S IH)
+      (R x = prod `IH` IH (ih\ R1 x ih),
+       @pi-decl `IH` IH ih\ hyp-mutual IsTs Ps (T x) (R1 x ih))
+      (hyp-mutual IsTs Ps (T x) (R x)).
+hyp-mutual IsTs Ps S R :- pred-app IsTs Ps S R, !.
+hyp-mutual _ _ S S.
+
+func conclusion-mutual term, term, term -> term.
+conclusion-mutual Arity IsT P Ty :- conclusion-mutual.aux Arity IsT P [] Ty.
+func conclusion-mutual.aux term, term, term, list term -> term.
+conclusion-mutual.aux (prod N S T) IsT P RevArgs (prod N S R) :- !,
+  @pi-decl N S x\ conclusion-mutual.aux (T x) IsT P [x|RevArgs] (R x).
+conclusion-mutual.aux (sort _) IsT P RevArgs (prod `H` IsTArgs _\ PArgs) :- !,
+  std.rev RevArgs Args,
+  coq.mk-app IsT Args IsTArgs,
+  coq.mk-app P Args PArgs.
+conclusion-mutual.aux _ _ _ _ _ :- stop "derive.induction: mutual indexed data types not supported".
+
+func add-hyps list term, list term, list term, list term, term -> term.
+add-hyps _ _ [] [] K K.
+add-hyps IsTs Ps [Kc|KS] [KT|KTS] K Ty :-
+  hyp-mutual IsTs Ps KT HTy,
+  coq.term->gref Kc GRK,
+  coq.name-suffix `H` {coq.gref->id GRK} HN,
+  Ty = prod HN HTy R,
+  @pi-decl HN HTy h\ add-hyps IsTs Ps KS KTS K (R h).
+
+func collect-terms list derive.induction.mutual-spec -> list term, list term, list term.
+collect-terms [] [] [] [].
+collect-terms [derive.induction.mutual-spec _ IsT _ K KT|SS] [IsT|IS] KAll KTAll :-
+  collect-terms SS IS KRest KTRest,
+  std.append K KRest KAll,
+  std.append KT KTRest KTAll.
+
+func mutual-induction-type-base list derive.induction.mutual-spec, int -> term.
+mutual-induction-type-base Specs Focus Ty :-
+  mutual-induction-type-motives Specs Specs [] Focus Ty.
+
+func mutual-induction-type-motives list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, int -> term.
+mutual-induction-type-motives All [] RevPs Focus Ty :- !,
+  std.rev RevPs Ps,
+  collect-terms All IsTs KAll KTAll,
+  std.nth Focus All S,
+  S = derive.induction.mutual-spec _ IsT Arity _ _,
+  std.nth Focus Ps P,
+  conclusion-mutual Arity IsT P Conclusion,
+  add-hyps IsTs Ps KAll KTAll Conclusion Ty.
+mutual-induction-type-motives All [S|SS] RevPs Focus (prod `P` PTy R) :-
+  S = derive.induction.mutual-spec _ _ Arity _ _,
+  truncated-predicate-ty Arity PTy,
+  @pi-decl `P` PTy p\ mutual-induction-type-motives All SS [p|RevPs] Focus (R p).
+
+func mutual-induction-type int, list derive.induction.mutual-spec, int -> term.
+mutual-induction-type 0 Specs Focus Ty :- !, mutual-induction-type-base Specs Focus Ty.
+mutual-induction-type N ([S|_] as Specs) Focus (prod A TA R) :- N > 0, !,
+  mutual-spec-arity S (prod A TA _),
+  M is N - 1,
+  @pi-decl A TA a\
+    std.map Specs (mutual-spec-apply-param a) Specs1,
+    mutual-induction-type M Specs1 Focus (R a).
+
+func add-mutual-induction-axioms list derive.induction.mutual-spec, list derive.induction.mutual-spec, string, int, int -> list prop.
+add-mutual-induction-axioms _ [] _ _ _ [].
+add-mutual-induction-axioms All [S|SS] Prefix Lno Focus [Clause|CS] :- std.do! [
+  S = derive.induction.mutual-spec GRR _ _ _ _,
+  mutual-induction-type Lno All Focus Ty,
+  if (Focus = 0)
+    (Name is Prefix ^ "induction")
+    (Name is {coq.gref->id (indt GRR)} ^ "_induction"),
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-axiom FName Ty I,
+  Clause = (induction-db GRR (global (const I)) :- !),
+  coq.elpi.accumulate _ "derive.induction.db" (clause _ (before "induction-db:fail") Clause),
+  Focus1 is Focus + 1,
+  add-mutual-induction-axioms All SS Prefix Lno Focus1 CS
+].
+
+func main-mutual list inductive, string -> list prop.
+main-mutual GRS Prefix Clauses :- std.do! [
+  std.map GRS mutual-spec Specs,
+  Specs = [First|_],
+  mutual-spec-ind First FirstGRR,
+  coq.env.indt FirstGRR _ Lno Luno _ _ _,
+  assert! (Lno = Luno) "derive.induction: Non-uniform parameters not supported",
+  if (coq.env.informative? FirstGRR) (Informative = [informative]) (Informative = []),
+  Informative =!=> add-mutual-induction-axioms Specs Specs Prefix Lno 0 Clauses
+].
+
 func main inductive, string -> list prop.
 main GR Prefix [Clause] :- do! [
   T = global (indt GR),

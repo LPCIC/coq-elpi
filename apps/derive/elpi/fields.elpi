@@ -59,9 +59,15 @@ main I Prefix AllCL :- std.do! [
 % ----------------------------------------------------------------------
 
 :index (1)
+func type-param-domain term -> term.
+type-param-domain I Ty :-
+  std.assert-ok! (coq.typecheck I ITy) "derive.fields: illtyped type parameter head",
+  ITy = prod _ Ty _.
+
 func fields_t.main eqb.eqType, term -> term.
-fields_t.main (eqb.type-param F) I {{ fun p : Type => lp:(R p) }} :- !,
-  @pi-trm `p` {{ Type }} x\p\
+fields_t.main (eqb.type-param F) I (fun `p` Ty R) :- !,
+  type-param-domain I Ty,
+  @pi-trm `p` Ty x\p\
     fields_t.main (F x) {coq.mk-app I [p]} (R p).
   
 fields_t.main (eqb.value-param TY F) I {{ fun p : lp:Ty => lp:(R p) }} :- !,
@@ -86,8 +92,9 @@ fields_t.k Params (eqb.constructor K _) T :-
 
 % ----------------------------------------------------------------------
 func fields.main eqb.eqType, term, term, term -> term.
-fields.main (eqb.type-param F) I F_t Tag {{ fun p : Type => lp:(R p) }} :- !,
-  @pi-trm `p` {{ Type }} x\p\
+fields.main (eqb.type-param F) I F_t Tag (fun `p` Ty R) :- !,
+  type-param-domain I Ty,
+  @pi-trm `p` Ty x\p\
     fields.main (F x) {coq.mk-app I [p]} {coq.mk-app F_t [p]} {coq.mk-app Tag [p]} (R p).
 
 fields.main (eqb.value-param TY F) I F_t Tag {{ fun p : lp:Ty => lp:(R p) }} :- !,
@@ -136,9 +143,10 @@ kind box-spec type.
 
 func box.aux eqb.eqType, term -> list box-spec.
 box.aux (eqb.type-param F) I L :-
-  (@pi-trm `p` {{ Type }} x\y\
+  type-param-domain I Ty,
+  (@pi-trm `p` Ty x\y\
     box.aux (F x) {coq.mk-app I [y]} (L1 y)),
-  distribute L1 (f\r\ sigma U\ r = parameter "A" explicit (sort (typ U)) f) L.
+  distribute L1 (f\r\ r = parameter "A" explicit Ty f) L.
 
 box.aux (eqb.value-param TY F) I L :-
   feqb.trm->term TY Ty,
@@ -180,8 +188,9 @@ distribute (x\ [same-box K| XS x]) F [same-box K|R] :- distribute XS F R.
 % ----------------------------------------------------------------------
 :index(1)
 func construct.main eqb.eqType, term, constant -> term.
-construct.main (eqb.type-param F) I F_t {{ fun p : Type => lp:(R p) }} :-
-  @pi-trm `p` {{ Type }} x\p\
+construct.main (eqb.type-param F) I F_t (fun `p` Ty R) :-
+  type-param-domain I Ty,
+  @pi-trm `p` Ty x\p\
     construct.main (F x) {coq.mk-app I [p]} F_t (R p).
 
 construct.main (eqb.value-param TY F) I F_t {{ fun p : lp:Ty => lp:(R p) }} :-

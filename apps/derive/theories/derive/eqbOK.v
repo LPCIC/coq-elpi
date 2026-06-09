@@ -78,8 +78,15 @@ dep1 "eqbOK_alias" "eqbcorrect_alias".
 
 Elpi Accumulate derive lp:{{
 
+func derive.eqbOK.prefix inductive, string, inductive -> string.
+derive.eqbOK.prefix First Prefix T Prefix :- First = T, !.
+derive.eqbOK.prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
 func derive.eqbOK.derive-main gref, string -> list prop.
-derive.eqbOK.derive-main (indt T) _ [] :- derive.mutual-inductive T, !.
+derive.eqbOK.derive-main (indt T) Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p\ derive.eqbOK.prefix T Prefix t p, derive.eqbOK.main (indt t) p c) CS,
+  std.flatten CS C.
 derive.eqbOK.derive-main T Prefix C :- derive.eqbOK.main T Prefix C.
 
 derivation (indt T) Prefix ff (derive "eqbOK" (derive.eqbOK.derive-main (indt T) Prefix) (eqbok-for (indt T) _)).

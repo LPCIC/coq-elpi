@@ -55,7 +55,9 @@ dep1 "param1_functor" "param1".
 Elpi Accumulate derive lp:{{
 
 func derive.param1.functor.derive-main inductive -> list prop.
-derive.param1.functor.derive-main T [] :- derive.mutual-inductive T, !.
+derive.param1.functor.derive-main T C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.param1.functor.main-mutual TS "_functor" C.
 derive.param1.functor.derive-main T C :- derive.on_param1 (indt T) derive.param1.functor.main "_functor" C.
 
 derivation (indt T) _ ff (derive "param1_functor" (derive.param1.functor.derive-main T) (derive.on_param1 (indt T) (_\T\_\_\sigma I\ T = indt I, param1-functor-for I _ _) _ _)).

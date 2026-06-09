@@ -57,7 +57,10 @@ dep1 "param1_congr" "param1".
 Elpi Accumulate derive lp:{{
 
 func derive.param1.congr.derive-main gref -> list prop.
-derive.param1.congr.derive-main (indt T) [] :- derive.mutual-inductive T, !.
+derive.param1.congr.derive-main (indt T) C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ derive.on_param1 (indt t) derive.param1.congr.main "congr_" c) CS,
+  std.flatten CS C.
 derive.param1.congr.derive-main T C :- derive.on_param1 T derive.param1.congr.main "congr_" C.
 
 derivation T _ ff (derive "param1_congr" (derive.param1.congr.derive-main T) (derive.on_param1 T (_\T\_\_\param1-congr-done T) _ _)).
