@@ -23,8 +23,9 @@ namespace tc {
         decompile-term-aux (uvar as X) L X L :- !.
         decompile-term-aux (primitive _ as P) L P L :- !.
 
-        decompile-term-aux (tc.maybe-proj T S) (pr [X|XS] L1) X (pr XS [NL|L1]) :- !,
-          name Y X S, NL = tc.link.proj T X.
+        :name "decompile-inst-maybe-proj"
+        decompile-term-aux (tc.maybe-proj T S) (pr [X|XS] L1) Y (pr XS [NL|L1]) :- !,
+          name Y X S, NL = tc.link.proj T Y.
 
         decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
           name Y X S,
