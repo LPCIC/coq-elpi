@@ -162,10 +162,10 @@ let hash = function
   | Snoc { hash } -> hash
   | Snoc_db { hash } -> hash
 
-let cache = function
+let rec cache = function
   | Base _ -> true
   | Snoc { cacheme } -> cacheme
-  | Snoc_db _ -> false
+  | Snoc_db { prev } -> cache prev
 
 let snoc ?cache:ocache source prev =
 let hash = combine_hash (hash prev) (hash_cunit source) in
@@ -612,6 +612,31 @@ let get ?(fail_if_not_exists=false) p =
     let sources,_,_,_,_,_ = get_db n in
     sources
 
+  let rec program_code_closure_hash_seen seen (src : (cunit, qualified_name) Code.t) =
+    match src with
+    | Code.Base { base } -> hash_cunit base
+    | Code.Snoc { prev; source } ->
+        combine_hash (program_code_closure_hash_seen seen prev) (hash_cunit source)
+    | Code.Snoc_db { prev; chunks } ->
+        combine_hash (program_code_closure_hash_seen seen prev) (db_closure_hash_seen seen chunks)
+  and db_code_closure_hash_seen seen (src : (cunit list, qualified_name) Code.t) =
+    match src with
+    | Code.Base { base } -> hash_list hash_cunit 0 base
+    | Code.Snoc { prev; source } ->
+        combine_hash (db_code_closure_hash_seen seen prev) (hash_cunit source)
+    | Code.Snoc_db { prev; chunks } ->
+        combine_hash (db_code_closure_hash_seen seen prev) (db_closure_hash_seen seen chunks)
+  and db_closure_hash_seen seen name =
+    if SLSet.mem name seen then Hashtbl.hash name else
+    match SLMap.find_opt name !db_name_src with
+    | None -> Hashtbl.hash name
+    | Some { sources_rev; _ } ->
+        let seen = SLSet.add name seen in
+        combine_hash (Hashtbl.hash name) (db_code_closure_hash_seen seen sources_rev)
+
+  let program_code_closure_hash src = program_code_closure_hash_seen SLSet.empty src
+  let db_code_closure_hash src = db_code_closure_hash_seen SLSet.empty src
+
   let code ?(even_if_empty=false) n : (cunit, qualified_name) Code.t option =
     let _,_,_,_,_,sources, empty = get n in
     if empty && not even_if_empty then None else sources
@@ -872,9 +897,54 @@ module Visited = struct
   let mem_unit u visited = mem_cunit u visited.units visited.signatures
   let add_db n visited = { visited with dbs = SLSet.add n visited.dbs }
   let mem_db n visited = SLSet.mem n visited.dbs
+  let equal x y =
+    Names.KNset.equal x.units y.units &&
+    Names.KNset.equal x.signatures y.signatures &&
+    SLSet.equal x.dbs y.dbs
+  let hash_knset s =
+    Names.KNset.fold (fun kn acc -> combine_hash acc (Names.KerName.hash kn)) s 0
+  let hash_dbset s =
+    SLSet.fold (fun db acc -> combine_hash acc (Hashtbl.hash db)) s 0
+  let hash v =
+    combine_hash
+      (combine_hash (hash_knset v.units) (hash_knset v.signatures))
+      (hash_dbset v.dbs)
 end
 
+type compile_ctx = {
+  base : EC.program;
+  visited : Visited.t;
+  ctx_hash : int;
+}
+
+let empty_compile_ctx () =
+  let elpi = ensure_initialized () in
+  { base = EC.empty_base ~elpi; visited = Visited.empty; ctx_hash = 0 }
+
+let extend_unseen_unit ~loc ctx u =
+  if Visited.mem_unit u ctx.visited then ctx
+  else
+    { base = extend_with_unit ~base:ctx.base ~loc u;
+      visited = Visited.add_unit u ctx.visited;
+      ctx_hash = combine_hash ctx.ctx_hash (hash_cunit u) }
+
+let extend_unseen_units ~loc ctx units =
+  List.fold_left (extend_unseen_unit ~loc) ctx units
+
+let mark_unseen_db ctx db_name =
+  if Visited.mem_db db_name ctx.visited then None
+  else Some { ctx with visited = Visited.add_db db_name ctx.visited }
+
 (* Units are marshalable, but programs are not *)
+
+type 'src compiler_cache_entry = {
+  input_hash : int;
+  input_visited : Visited.t;
+  output_hash : int;
+  output_visited : Visited.t;
+  output_program : EC.program;
+  cached_source : 'src;
+}
 
 let compiler_cache_code = Summary.ref ~local:true
   ~name:("elpi-compiler-cache-code")
@@ -887,7 +957,7 @@ let programs_tip = Summary.ref ~local:true
   ~name:("elpi-compiler-cache-gc")
   SLMap.empty
 
-(* lookup/cache for hash h shifted over base b *)
+(* lookup/cache for hash h shifted over a compilation context *)
 
 type cache_stats = { lookups : int; hits : int }
 let cache_stats = ref { lookups = 0; hits = 0 }
@@ -908,87 +978,107 @@ let () = at_exit (fun () ->
     str(Format.asprintf "Compiler cache: lookups=%d, hits=%d\n" lookups hits))
 )
 
-let lookup b h src r cmp pp =
-  let h = combine_hash b h in
-  let visited, p, src' = find_with_stats h !r in
-  if cmp src src' then visited, p else
-    let () = Format.eprintf "@[%a@]%!" pp src in
-    let () = Format.eprintf "@[%a@]%!" pp src' in
-    assert false
+let cache_key ctx h =
+  combine_hash (combine_hash ctx.ctx_hash (Visited.hash ctx.visited)) h
 
-let cache b h visited prog src r =
-  let h = combine_hash b h in
-  r := Int.Map.add h (visited, prog, src) !r;
-  visited, prog
+let lookup ctx h src r cmp _pp =
+  let entry = find_with_stats (cache_key ctx h) !r in
+  if entry.input_hash = ctx.ctx_hash &&
+     Visited.equal entry.input_visited ctx.visited &&
+     cmp src entry.cached_source then
+    { base = entry.output_program;
+      visited = entry.output_visited;
+      ctx_hash = entry.output_hash }
+  else
+    raise Not_found
+
+let cache input h output src r =
+  r := Int.Map.add (cache_key input h)
+    { input_hash = input.ctx_hash;
+      input_visited = input.visited;
+      output_hash = output.ctx_hash;
+      output_visited = output.visited;
+      output_program = output.base;
+      cached_source = src }
+    !r;
+  output
+
+let uncache input h r =
+  r := Int.Map.remove (cache_key input h) !r
 
 let eq_cunits = List.equal eq_cunit
 let pp_ignore _ _ = ()
-let lookup_code b h src : Visited.t * EC.program = lookup b h src compiler_cache_code (Code.eq eq_cunit eq_cunit eq_qualified_name) (Code.pp pp_ignore pp_qualified_name)
-let lookup_chunk b h src : Visited.t * EC.program = lookup b h src compiler_cache_chunk (Code.eq eq_cunit eq_cunits eq_qualified_name) (Code.pp pp_ignore pp_qualified_name)
-let cache_code b h (visited : Visited.t) (prog : EC.program) src : Visited.t * EC.program = cache b h visited prog src compiler_cache_code
-let cache_chunk b h (visited : Visited.t) (prog : EC.program) src : Visited.t * EC.program = cache b h visited prog src compiler_cache_chunk
+let lookup_code ctx h src : compile_ctx =
+  lookup ctx h src compiler_cache_code
+    (Code.eq eq_cunit eq_cunit eq_qualified_name)
+    (Code.pp pp_ignore pp_qualified_name)
+let lookup_chunk ctx h src : compile_ctx =
+  lookup ctx h src compiler_cache_chunk
+    (Code.eq eq_cunit eq_cunits eq_qualified_name)
+    (Code.pp pp_ignore pp_qualified_name)
+let cache_code ctx h output src : compile_ctx = cache ctx h output src compiler_cache_code
+let cache_chunk ctx h output src : compile_ctx = cache ctx h output src compiler_cache_chunk
+let uncache_code ctx h = uncache ctx h compiler_cache_code
 
-let extend_unseen_unit ~loc ~base visited u =
-  if Visited.mem_unit u visited then base, visited
-  else extend_with_unit ~base ~loc u, Visited.add_unit u visited
-
-let extend_unseen_units ~loc ~base visited units =
-  List.fold_left (fun (base, visited) u ->
-    extend_unseen_unit ~loc ~base visited u) (base, visited) units
-
-let rec compile_code ~loc (src : (cunit, qualified_name) Code.t) : Visited.t * EC.program =
-  let h = Code.hash src in
+let rec compile_code ~loc ctx (src : (cunit, qualified_name) Code.t) : compile_ctx =
+  let h = program_code_closure_hash src in
   try
     if not (Code.cache src) then raise Not_found;
-    lookup_code 0 h src
+    lookup_code ctx h src
   with Not_found ->
-  match src with
-  | Code.Base { base = u } ->
-      let elpi = ensure_initialized () in
-      let base = EC.empty_base ~elpi in
-      let prog = extend_with_unit ~base ~loc u in
-      cache_code 0 h (Visited.add_unit u Visited.empty) prog src
-  | Code.Snoc { prev; source } ->
-      let visited, base = compile_code ~loc prev in
-      let base, visited = extend_unseen_unit ~loc ~base visited source in
-      if Code.cache src then cache_code 0 h visited base src else visited, base
-  | Code.Snoc_db { prev; chunks = db_name } ->
-      let visited, base = compile_code ~loc prev in
-      compile_db_name ~loc ~visited ~base db_name
-and compile_db_name ~loc ~visited ~base db_name =
-  if Visited.mem_db db_name visited then visited, base
-  else
-    match db_code_raw db_name with
-    | None -> CErrors.user_err Pp.(str "Unknown Db " ++ pr_qualified_name db_name)
-    | Some src ->
-        let visited = Visited.add_db db_name visited in
-        compile_db_code ~loc ~visited ~base src
-and compile_db_code ~loc ~visited ~base (src : (cunit list, qualified_name) Code.t) : Visited.t * EC.program =
-  match src with
-  | Code.Base { base = units } ->
-      let base, visited = extend_unseen_units ~loc ~base visited units in
-      visited, base
-  | Code.Snoc { prev; source } ->
-      let visited, base = compile_db_code ~loc ~visited ~base prev in
-      let base, visited = extend_unseen_unit ~loc ~base visited source in
-      visited, base
-  | Code.Snoc_db { prev; chunks = db_name } ->
-      let visited, base = compile_db_code ~loc ~visited ~base prev in
-      compile_db_name ~loc ~visited ~base db_name
+    let output =
+      match src with
+      | Code.Base { base = u } ->
+          extend_unseen_unit ~loc ctx u
+      | Code.Snoc { prev; source } ->
+          compile_code ~loc ctx prev
+          |> fun ctx -> extend_unseen_unit ~loc ctx source
+      | Code.Snoc_db { prev; chunks = db_name } ->
+          compile_code ~loc ctx prev
+          |> fun ctx -> compile_db_name ~loc ctx db_name
+    in
+    if Code.cache src then cache_code ctx h output src else output
+and compile_db_name ~loc ctx db_name =
+  match mark_unseen_db ctx db_name with
+  | None -> ctx
+  | Some ctx ->
+      match db_code_raw db_name with
+      | None -> CErrors.user_err Pp.(str "Unknown Db " ++ pr_qualified_name db_name)
+      | Some src -> compile_db_code ~loc ctx src
+and compile_db_code ~loc ctx (src : (cunit list, qualified_name) Code.t) : compile_ctx =
+  let h = db_code_closure_hash src in
+  try
+    if not (Code.cache src) then raise Not_found;
+    lookup_chunk ctx h src
+  with Not_found ->
+    let output =
+      match src with
+      | Code.Base { base = units } ->
+          extend_unseen_units ~loc ctx units
+      | Code.Snoc { prev; source } ->
+          compile_db_code ~loc ctx prev
+          |> fun ctx -> extend_unseen_unit ~loc ctx source
+      | Code.Snoc_db { prev; chunks = db_name } ->
+          compile_db_code ~loc ctx prev
+          |> fun ctx -> compile_db_name ~loc ctx db_name
+    in
+    if Code.cache src then cache_chunk ctx h output src else output
 
 let compile ~loc src =
-  compile_code ~loc src |> snd
+  (compile_code ~loc (empty_compile_ctx ()) src).base
 
 let compile_db ~loc src =
-  let elpi = ensure_initialized () in
-  let base = EC.empty_base ~elpi in
-  compile_db_code ~loc ~visited:Visited.empty ~base src |> snd
+  (compile_db_code ~loc (empty_compile_ctx ()) src).base
 
 let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
   let t = Unix.gettimeofday () in
   let res = code ?even_if_empty name |> Option.map (fun src ->
-    let prog = compile ~loc src in
-    let new_hash = Code.hash src in
+    let input = empty_compile_ctx () in
+    let prog = (compile_code ~loc input src).base in
+    let new_hash = program_code_closure_hash src in
+    (match SLMap.find_opt name !programs_tip with
+    | Some old_hash when old_hash <> new_hash -> uncache_code input old_hash
+    | _ -> ());
     programs_tip := SLMap.add name new_hash !programs_tip;
     let raw_args =
       match get_nature name with
