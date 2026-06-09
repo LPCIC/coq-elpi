@@ -43,18 +43,18 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.param1.congr.db.
-Elpi Accumulate derive File param1_congr.
+#[superglobal] Elpi Accumulate derive Db derive.param1.congr.db.
+#[superglobal] Elpi Accumulate derive File param1_congr.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "param1_congr" "param1".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "param1_congr" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation T _ ff (derive "param1_congr" (derive.on_param1 T derive.param1.congr.main "congr_") (derive.on_param1 T (_\T\_\_\param1-congr-done T) _ _)).
 

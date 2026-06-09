@@ -44,19 +44,19 @@ Elpi Accumulate lp:{{
 
   
 (* hook into derive *)
-Elpi Accumulate derive Db derive.eqOK.db.
-Elpi Accumulate derive File eqOK.
+#[superglobal] Elpi Accumulate derive Db derive.eqOK.db.
+#[superglobal] Elpi Accumulate derive File eqOK.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "eqOK" "eqcorrect".
 dep1 "eqOK" "param1_trivial".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "eqOK" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T) Prefix ff (derive "eqOK" (derive.eqOK.main T N) (eqOK-done T)) :- N is Prefix ^ "eq_OK".
 

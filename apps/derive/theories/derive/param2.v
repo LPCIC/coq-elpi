@@ -99,16 +99,16 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File paramX.
-Elpi Accumulate derive Db Header derive.param2.db.
-Elpi Accumulate derive File param2.
-Elpi Accumulate derive Db derive.param2.db.
+#[superglobal] Elpi Accumulate derive File paramX.
+#[superglobal] Elpi Accumulate derive Db Header derive.param2.db.
+#[superglobal] Elpi Accumulate derive File param2.
+#[superglobal] Elpi Accumulate derive Db derive.param2.db.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "param2" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation T N ff (derive "param2" (derive.param2.main T N) (param-done T)).
 

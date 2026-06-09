@@ -250,20 +250,18 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     (fun (x,y,_,_,_,_) -> x,y))
 
   let accumulate_extra_dep ~loc ~program ~scope ~what file =
-    if P.db_exists program then begin
-      warn_scope_not_regular ~loc scope;
-      P.accumulate_file_to_db ~loc ~db:program ~scope:SuperGlobal ~what ~file
-    end else begin
+    if P.db_exists program then
+      P.accumulate_file_to_db ~loc ~db:program ~scope ~what ~file
+    else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_file_to_program ~loc ~program ~what ~file
     end
 
     
   let accumulate_elpifile ~loc ~program ~scope ~what ast =
-    if P.db_exists program then begin
-      warn_scope_not_regular ~loc scope;
-      P.accumulate_ast_to_db ~loc ~db:program ~what ~ast ~scope:SuperGlobal
-    end else begin
+    if P.db_exists program then
+      P.accumulate_ast_to_db ~loc ~db:program ~what ~ast ~scope
+    else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_ast_to_program ~loc ~program ~what ~ast
     end
@@ -313,10 +311,9 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
 
   let accumulate_file ~loc ~program ~scope file =
     let what = Rocq_elpi_programs.Code in
-    if P.db_exists program then begin
-      warn_scope_not_regular ~loc scope;
-      P.accumulate_file_to_db ~loc ~db:program ~file ~scope:SuperGlobal ~what
-    end else begin
+    if P.db_exists program then
+      P.accumulate_file_to_db ~loc ~db:program ~file ~scope ~what
+    else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_file_to_program ~loc ~program ~file ~what
     end
@@ -325,10 +322,9 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let accumulate_files ~atts:((scope,only),ph) ~loc ?program s = skip ~only ~ph (accumulate_files ~loc ?program ~scope) s
   
   let accumulate_string ~loc ?(program=current_program()) ~scope code =
-    if P.db_exists program then begin
-      warn_scope_not_regular ~loc scope;
-      P.accumulate_string_to_db ~loc ~db:program ~code ~scope:SuperGlobal
-    end else begin
+    if P.db_exists program then
+      P.accumulate_string_to_db ~loc ~db:program ~code ~scope
+    else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_string_to_program ~loc ~program ~code
     end
@@ -337,10 +333,9 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   
   
   let accumulate_db ~loc ?(program=current_program()) ~scope db =
-    if P.db_exists program then begin
-      warn_scope_not_regular ~loc scope;
-      P.accumulate_db_to_db ~loc ~db:program ~source:db ~scope:SuperGlobal
-    end else begin
+    if P.db_exists program then
+      P.accumulate_db_to_db ~loc ~db:program ~source:db ~scope
+    else begin
       warn_scope_not_regular ~loc scope;
       P.accumulate_db_to_program ~loc ~program ~db
     end
@@ -350,10 +345,9 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
   let accumulate_db_header ~loc ?(program=current_program()) ~scope name =
     if P.db_exists name then
       let header = P.header_of_db name in
-      if P.db_exists program then begin
-        warn_scope_not_regular ~loc scope;
-        P.accumulate_header_to_db ~loc ~db:program ~header ~scope:SuperGlobal
-      end else
+      if P.db_exists program then
+        P.accumulate_header_to_db ~loc ~db:program ~header ~scope
+      else
         let () = warn_scope_not_regular ~loc scope in
         P.accumulate_header_to_program ~loc ~program ~header
         (* let units = List.map (fun dast -> DatabaseHeader { dast }) units in *)
@@ -362,8 +356,7 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     skip ~only ~ph (accumulate_db_header ~loc ?program ~scope) name
   
   let accumulate_to_db ~loc db code ~scope idl =
-    warn_scope_not_regular ~loc scope;
-    P.accumulate_string_to_db_with_secvars ~loc ~code ~db ~scope:SuperGlobal ~secvars:idl
+    P.accumulate_string_to_db_with_secvars ~loc ~code ~db ~scope ~secvars:idl
   let accumulate_to_db ~atts:((scope,only),ph) ~loc db sloc idl = skip ~only ~ph (accumulate_to_db ~loc db sloc ~scope) idl
   
 

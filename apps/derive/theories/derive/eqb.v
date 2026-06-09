@@ -66,18 +66,18 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.eqb.db.
-Elpi Accumulate derive File eqb.
+#[superglobal] Elpi Accumulate derive Db derive.eqb.db.
+#[superglobal] Elpi Accumulate derive File eqb.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "eqb" "fields".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "eqb" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T)  Prefix ff (derive "eqb" (derive.eqb.main (indt T) Prefix) (eqb-done (indt T))).
 derivation (const C) Prefix ff (derive "eqb_alias" (derive.eqb.main (const C) Prefix) (eqb-done (const C))).

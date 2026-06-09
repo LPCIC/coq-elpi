@@ -59,14 +59,14 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.eq.db.
-Elpi Accumulate derive File eq.
+#[superglobal] Elpi Accumulate derive Db derive.eq.db.
+#[superglobal] Elpi Accumulate derive File eq.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "eq" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
   
 derivation (indt T) Prefix ff (derive "eq" (derive.eq.main T N) (eq-for T _)) :- N is Prefix ^ "eq".
 

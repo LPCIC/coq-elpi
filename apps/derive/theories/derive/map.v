@@ -33,13 +33,13 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.map.db.
-Elpi Accumulate derive File map.
+#[superglobal] Elpi Accumulate derive Db derive.map.db.
+#[superglobal] Elpi Accumulate derive File map.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "map" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
   derivation (indt T) N ff (derive "map" (derive.map.main T N) (map-done T)).
 }}.

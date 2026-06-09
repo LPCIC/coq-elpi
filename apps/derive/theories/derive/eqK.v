@@ -66,20 +66,20 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.eqK.db.
-Elpi Accumulate derive File discriminate.
-Elpi Accumulate derive File eqK.
+#[superglobal] Elpi Accumulate derive Db derive.eqK.db.
+#[superglobal] Elpi Accumulate derive File discriminate.
+#[superglobal] Elpi Accumulate derive File eqK.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "eqK" "bcongr".
 dep1 "eqK" "isK".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "eqK" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T) Prefix ff (derive "eqK" (derive.eqK.main T N) (derive.exists-indc T (K\ eqK-db K _))) :- N is Prefix ^ "eq_axiom_".
 

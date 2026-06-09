@@ -84,11 +84,11 @@ Elpi Accumulate derive lp:{{/*(*/
   get_name (record N _ _ _) N.
 /*)*/}}.
 
-#[synterp] Elpi Accumulate derive File derive_synterp_hook.
-#[synterp] Elpi Accumulate derive File derive_synterp.
+#[synterp,superglobal] Elpi Accumulate derive File derive_synterp_hook.
+#[synterp,superglobal] Elpi Accumulate derive File derive_synterp.
 
-Elpi Accumulate derive File derive_hook.
-Elpi Accumulate derive File derive.
+#[superglobal] Elpi Accumulate derive File derive_hook.
+#[superglobal] Elpi Accumulate derive File derive.
 
 
 
