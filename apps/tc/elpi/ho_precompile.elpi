@@ -2,19 +2,44 @@ namespace tc {
   shorten tc.{r-ar, range-arity}.
 
   namespace precomp {
+    func maybe-projection i:term.
+    maybe-projection (app [primitive _ | _]).
+    maybe-projection (app [global (const H) | _]) :- coq.env.projection? H _.
+
+    func reducers coq.redflag, coq.redflag -> coq.redflags.
+    reducers R1 R2 R :-
+      coq.redflags.add coq.redflags.nored [R1, R2, coq.redflags.fix, coq.redflags.beta, coq.redflags.match] R.
+
+    func reducerPC projection, constant -> coq.redflags.
+    reducerPC P C R :-
+      reducers (coq.redflags.proj P) (coq.redflags.const C) R.
+    
+    func reducerCC constant, constant -> coq.redflags.
+    reducerCC C1 C2 R :-
+      reducers (coq.redflags.const C1) (coq.redflags.const C2) R.
+
+    func proj-reducer-help coq.redflags, term -> term.
+    proj-reducer-help R T T' :- 
+      (@redflags! R => coq.reduction.cbv.norm T T'), 
+      not (same_term T T').
+
+    % tries to reduce the term wrt to its head-projection
+    % here we take into account a projector applied to a single argument
+    % the argument should be a constant
+    func proj-reducer term -> term.
+    proj-reducer (app [primitive (proj P _N), global (const C)] as T) T' :-
+      reducerPC P C R, proj-reducer-help R T T'.
+    proj-reducer (app [global (const C1), global (const C2)] as T) T' :-
+      % before reducing, we check that C1 is a projection
+      coq.env.projection? C1 _,
+      reducerCC C1 C2 R, proj-reducer-help R T T'.
+
 
     namespace instance {
       % Tells if the current name is a bound variables
       pred is-name o:term.
       % Tells if the current name stands for a uvar
       pred is-uvar o:term.
-
-      func maybe-projection-aux i:term.
-      maybe-projection-aux (primitive _).
-      maybe-projection-aux (global (const H)) :- coq.env.projection? H _.
-
-      func maybe-projection i:term.
-      maybe-projection T :- coq.safe-dest-app T H _, maybe-projection-aux H.
 
       :index (_ _ 1)
       func may-contract-to list term, term, term ->.
@@ -120,7 +145,16 @@ namespace tc {
       precompile-aux _ (global _ as C) A C A :- !.
       precompile-aux _ (pglobal _ _ as C) A C A :- !.
       precompile-aux _ (sort _ as C) A C A :- !.
-      precompile-aux _ T A (tc.maybe-proj T X) (s A) :- maybe-projection T, !, free-var X.
+      :name "precomp-proj-inst"
+      precompile-aux _ T A T' A' :-
+        maybe-projection T, !,
+        % try to reduce the projection, if the reduction suceeds, then we return the
+        % reduced term
+        if (proj-reducer T T') 
+           (A' = A)
+           % otherwise we tag the problematic subterm
+           (free-var X, T' = (tc.maybe-proj T X), A' = s A)
+        .
 
       % Detect maybe-eta term
       % TODO: should I precompile also the type of the fun and put it in the output term
@@ -248,7 +282,16 @@ namespace tc {
       precompile-aux (global _ as C) A C A :- !.
       precompile-aux (pglobal _ _ as C) A C A :- !.
       precompile-aux (sort _ as C) A C A :- !.
-      precompile-aux T A (tc.maybe-proj T S) A :- maybe-projection T, !, names S.
+      :name "precomp-proj-goal"
+      precompile-aux T A T' A :- 
+        maybe-projection T, !,
+        % try to reduce the projection, if the reduction suceeds, then we return the
+        % reduced term
+        if (proj-reducer T T') 
+           true
+           % otherwise we tag the problematic subterm
+           (names X, T' = (tc.maybe-proj T X)).
+        
 
       % Detect maybe-eta term
       precompile-aux (fun Name Ty B as T) N (tc.maybe-eta-tm (fun Name Ty' B') Scope) M :-

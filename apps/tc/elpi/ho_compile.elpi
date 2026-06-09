@@ -355,7 +355,7 @@ namespace tc {
 
       decompile-problematic-term (tc.maybe-proj A S) L X [NL|L] :- !,
         prune X S,
-        NL = link.proj A X.
+        NL = tc.link.proj A X.
 
       decompile-problematic-term (tc.prod-range T _) A T' A' :- !,
         fold-map T A T' A'.

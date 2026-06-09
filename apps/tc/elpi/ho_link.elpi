@@ -138,8 +138,14 @@ namespace tc {
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     namespace proj {
       func proj term, term ->.
-      proj T (uvar as V) :- !, declare_constraint (proj T V) [_,V].
+      proj T (uvar as V) :- !, get-vars B Vars, declare_constraint (proj T V) [_,V|Vars].
+      :name "proj-unif"
       proj T R :- coq.unify-eq T R ok.
+
+      constraint solve-proj proj {
+        rule solve-proj \ (proj A B) <=> (coq.unify-eq A B ok).
+        rule \ solve-proj.
+      }
     }
 
     namespace unif-eq {
