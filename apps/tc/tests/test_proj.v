@@ -29,7 +29,7 @@ Module m1.
   }}.
 
   (* reducing the projection statically *)
-  Instance inst_red: C (car c). now constructor. Qed.
+  Local Instance inst_red: C (car c). now constructor. Qed.
 
   Elpi Accumulate TC.Compiler lp:{{
     % removing the previous expected (best should be that the previous rule is local to the module)
@@ -52,9 +52,26 @@ Module m2.
   }}.
 
   (* cannot reduce the projection: c is quantified *)
-  Instance inst c: C (car c). now constructor. Qed.
+  Local Instance inst c: C (car c). now constructor. Qed.
 
   (* need to use the chr *)
   Goal C nat. apply _. Qed.
   Goal C (car c). apply _. Qed.
 End m2.
+
+
+Module m3.
+  Elpi Accumulate TC.Compiler lp:{{
+    % TODO: here I am doing to weak check, should make the previous Accumulate succeeds
+    :after "x" expected-rule (tc-C X _) :- !, name X.
+  }}.
+
+  (* cannot reduce the projection: c is quantified *)
+  Instance inst X: C X. now constructor. Qed.
+
+  (* need to use the chr *)
+  Goal C nat. apply _. Qed.
+  Goal C (car c). apply _. Qed.
+  (* with local instance for c *)
+  Goal forall x, C (car x). apply _. Qed.
+End m3.
