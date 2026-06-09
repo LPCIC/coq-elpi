@@ -36,6 +36,12 @@
   (ocaml-lsp-server :with-dev-setup)))
 
 (package
+ (name rocq-elpi-tc)
+ (synopsis "TC bindings for rocq-elpi")
+ (description "This package provides a typeclass solver written in Elpi for Rocq")
+ (depends rocq-elpi))
+
+(package
  (name rocq-elpi-json)
  (synopsis "Yojson bindings for rocq-elpi")
  (description "This package provides basic support for reading and writing json files from Elpi programs running in Rocq")
