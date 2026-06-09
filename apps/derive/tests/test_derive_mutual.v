@@ -122,7 +122,9 @@ End MutualTagExpected.
 
 Module Type MutualFieldsExpected.
   Include MutualTagExpected.
-  Record box_tree_node : Type := Box_tree_node { Box_tree_node_0 : forest }.
+  Universe box_tree_node_u.
+  Constraint Set < box_tree_node_u.
+  Record box_tree_node : Type@{box_tree_node_u} := Box_tree_node { Box_tree_node_0 : forest }.
   Parameter tree_fields_t : BinNums.positive -> Type.
   Parameter tree_fields : forall i : tree, tree_fields_t (tree_tag i).
   Parameter tree_construct :
@@ -178,13 +180,14 @@ End ParametrizedMutualLensLawsExpected.
 
 Module Type ParametrizedMutualParam1Expected.
   Include ParametrizedMutualBase.
-  Inductive is_ptree (A : Type) (PA : A -> Type) : ptree A -> Type :=
-  | is_pnode (x : A) (Px : PA x) (f : pforest A)
-      (Pf : is_pforest A PA f) : is_ptree A PA (@pnode A x f)
-  with is_pforest (A : Type) (PA : A -> Type) : pforest A -> Type :=
-  | is_pempty : is_pforest A PA (@pempty A)
-  | is_pcons (t : ptree A) (Pt : is_ptree A PA t)
-      (f : pforest A) (Pf : is_pforest A PA f) :
+  Universe is_ptree_u0 is_ptree_u1 is_ptree_u2 is_ptree_u3 is_ptree_u4 is_ptree_u5 is_ptree_u6.
+  Inductive is_ptree : forall A : Type, (A -> Type@{is_ptree_u0}) -> ptree A -> Type@{is_ptree_u1} :=
+  | is_pnode : forall A (PA : A -> Type@{is_ptree_u2}) (x : A), PA x ->
+      forall f : pforest A, is_pforest A PA f -> is_ptree A PA (@pnode A x f)
+  with is_pforest : forall A : Type, (A -> Type@{is_ptree_u3}) -> pforest A -> Type@{is_ptree_u4} :=
+  | is_pempty : forall A (PA : A -> Type@{is_ptree_u5}), is_pforest A PA (@pempty A)
+  | is_pcons : forall A (PA : A -> Type@{is_ptree_u6}) (t : ptree A), is_ptree A PA t ->
+      forall f : pforest A, is_pforest A PA f ->
       is_pforest A PA (@pcons A t f).
   Parameter reali_is_ptree : reali_db ptree is_ptree.
   Parameter reali_is_pforest : reali_db pforest is_pforest.
@@ -233,19 +236,18 @@ End ParametrizedMutualParam1FunctorExpected.
 
 Module Type ParametrizedMutualParam2Expected.
   Include ParametrizedMutualBase.
-  Inductive ptree_R (A1 A2 : Type) (A_R : A1 -> A2 -> Type) :
-      ptree A1 -> ptree A2 -> Type :=
-  | pnode_R (x1 : A1) (x2 : A2) (xR : A_R x1 x2)
-      (f1 : pforest A1) (f2 : pforest A2)
-      (fR : pforest_R A1 A2 A_R f1 f2) :
+  Universe ptree_R_arg_u ptree_R_u0 ptree_R_u1.
+  Inductive ptree_R : forall A1 A2 : Type@{ptree_R_arg_u}, (A1 -> A2 -> Type@{ptree_R_arg_u}) -> ptree A1 -> ptree A2 -> Type@{ptree_R_u0} :=
+  | pnode_R : forall A1 A2 (A_R : A1 -> A2 -> Type@{ptree_R_arg_u}) (x1 : A1) (x2 : A2),
+      A_R x1 x2 -> forall (f1 : pforest A1) (f2 : pforest A2),
+      pforest_R A1 A2 A_R f1 f2 ->
       ptree_R A1 A2 A_R (@pnode A1 x1 f1) (@pnode A2 x2 f2)
-  with pforest_R (A1 A2 : Type) (A_R : A1 -> A2 -> Type) :
-      pforest A1 -> pforest A2 -> Type :=
-  | pempty_R : pforest_R A1 A2 A_R (@pempty A1) (@pempty A2)
-  | pcons_R (t1 : ptree A1) (t2 : ptree A2)
-      (tR : ptree_R A1 A2 A_R t1 t2)
-      (f1 : pforest A1) (f2 : pforest A2)
-      (fR : pforest_R A1 A2 A_R f1 f2) :
+  with pforest_R : forall A1 A2 : Type@{ptree_R_arg_u}, (A1 -> A2 -> Type@{ptree_R_arg_u}) -> pforest A1 -> pforest A2 -> Type@{ptree_R_u1} :=
+  | pempty_R : forall A1 A2 (A_R : A1 -> A2 -> Type@{ptree_R_arg_u}),
+      pforest_R A1 A2 A_R (@pempty A1) (@pempty A2)
+  | pcons_R : forall A1 A2 (A_R : A1 -> A2 -> Type@{ptree_R_arg_u}) (t1 : ptree A1) (t2 : ptree A2),
+      ptree_R A1 A2 A_R t1 t2 -> forall (f1 : pforest A1) (f2 : pforest A2),
+      pforest_R A1 A2 A_R f1 f2 ->
       pforest_R A1 A2 A_R (@pcons A1 t1 f1) (@pcons A2 t2 f2).
   Parameter param_ptree_R : param_db ptree ptree ptree_R.
   Parameter param_pforest_R : param_db pforest pforest pforest_R.
@@ -257,13 +259,14 @@ End ParametrizedMutualParam2Expected.
 Module Type ParametrizedMutualInductionExpected.
   Include ParametrizedMutualParam1FunctorExpected.
   Parameter ptree_induction :
-    forall A (PA : A -> Type) (P : ptree A -> Type) (Q : pforest A -> Type),
-      (forall x, PA x -> forall f (Pf : is_pforest A PA f),
-        Q f -> P (@pnode A x f)) ->
-      Q (@pempty A) ->
-      (forall t (Pt : is_ptree A PA t), P t ->
-       forall f (Pf : is_pforest A PA f), Q f -> Q (@pcons A t f)) ->
-      forall t, is_ptree A PA t -> P t.
+    forall (P : forall A : Type, (A -> Type) -> ptree A -> Type)
+           (Q : forall A : Type, (A -> Type) -> pforest A -> Type),
+      (forall A (PA : A -> Type) (x : A), PA x ->
+       forall f, is_pforest A PA f -> Q A PA f -> P A PA (@pnode A x f)) ->
+      (forall A (PA : A -> Type), Q A PA (@pempty A)) ->
+      (forall A (PA : A -> Type) (t : ptree A), is_ptree A PA t -> P A PA t ->
+       forall f, is_pforest A PA f -> Q A PA f -> Q A PA (@pcons A t f)) ->
+      forall A (PA : A -> Type) t, is_ptree A PA t -> P A PA t.
 End ParametrizedMutualInductionExpected.
 
 Module Type ParametrizedMutualTagExpected.
@@ -273,7 +276,9 @@ End ParametrizedMutualTagExpected.
 
 Module Type ParametrizedMutualFieldsExpected.
   Include ParametrizedMutualTagExpected.
-  Record box_ptree_pnode (A : Type) : Type := Box_ptree_pnode {
+  Universe box_ptree_pnode_u.
+  Constraint Set < box_ptree_pnode_u.
+  Record box_ptree_pnode (A : Type) : Type@{box_ptree_pnode_u} := Box_ptree_pnode {
     Box_ptree_pnode_0 : A;
     Box_ptree_pnode_1 : pforest A;
   }.

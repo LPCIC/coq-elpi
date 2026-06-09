@@ -17,6 +17,19 @@ mutual-indt-decl (minductive _ _ _ _).
 func mutual-inductive inductive ->.
 mutual-inductive I :- coq.env.recursive? I, coq.env.indt-decl I D, mutual-indt-decl D.
 
+func mutual-ids indt-decl -> list id.
+mutual-ids (parameter ID _ Ty F) IDs :- !,
+  @pi-parameter ID Ty x\ mutual-ids (F x) IDs.
+mutual-ids (minductive ID _ Arity Rest) [ID|IDs] :- !,
+  @pi-inductive ID Arity i\ mutual-ids (Rest i) IDs.
+mutual-ids (mblock _) [].
+
+func id->indt id -> inductive.
+id->indt ID GR :- coq.locate ID (indt GR).
+
+func mutual-inductives inductive -> list inductive.
+mutual-inductives I GRS :- coq.env.indt-decl I D, mutual-ids D IDs, std.map IDs id->indt GRS.
+
 func if-verbose (func) ->.
 if-verbose P :- (get-option "verbose" tt ; get-option "recursive" tt), !, P.
 if-verbose _.

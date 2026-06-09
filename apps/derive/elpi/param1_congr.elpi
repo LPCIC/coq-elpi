@@ -49,10 +49,28 @@ main-k Prefix Lno K KT Clause :- do! [
   Clause = param1-congr-db K (global (const Cst))
 ].
 
+func mutual-indt-decl indt-decl ->.
+mutual-indt-decl (parameter ID _ Ty F) :- !,
+  @pi-parameter ID Ty x\ mutual-indt-decl (F x).
+mutual-indt-decl (minductive _ _ _ _).
+
+func mutual-inductive inductive ->.
+mutual-inductive I :- coq.env.recursive? I, coq.env.indt-decl I D, mutual-indt-decl D.
+
+func translated-lno gref, gref -> int.
+translated-lno (indt _Orig) (indt IsGR) Lno :-
+  coq.env.indt IsGR _ LnoIs _ _ _ _, LnoIs > 0, !,
+  Lno = LnoIs.
+translated-lno (indt Orig) (indt _) Lno :- mutual-inductive Orig, !,
+  coq.env.indt Orig _ OrigLno _ _ _ _,
+  Lno is 2 * OrigLno.
+translated-lno _ _ 0 :- !.
+
 func main gref, gref, string -> list prop.
-main _ (indt GR) Prefix Clauses2 :-
+main Orig (indt GR) Prefix Clauses2 :-
   
-  coq.env.indt GR _ Lno _ _ K KT,
+  coq.env.indt GR _ _ _ _ K KT,
+  translated-lno Orig (indt GR) Lno,
   map2-filter K KT (main-k Prefix Lno) Clauses,
   Clauses2 = [param1-congr-done (indt GR)|Clauses],
   forall Clauses2

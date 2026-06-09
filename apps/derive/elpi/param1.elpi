@@ -198,17 +198,17 @@ translate-mutual-spec (derive.param1.raw-mindt-spec GR _ IsInd _ _ Ty KNames KNa
     (coq.mindt-spec NewGR FNewName IsInd TyOut KNamesR KTypesR) :-
   Ind = global (indt GR),
   reali Ty TyR,
-  coq.subst-fun [Ind] TyR TyOut,
+  coq.mk-app TyR [Ind] TyOut,
   map2 KNames KTypes (k\ ty\ r\ sigma tyr\
     reali ty tyr,
-    coq.subst-fun [global (indc k)] tyr r) KTypesR.
+    coq.mk-app tyr [global (indc k)] r) KTypesR.
 
-func dispatch-mutual-gen list derive.param1.raw-mindt-spec, list derive.param1.raw-mindt-spec, list inductive, int -> list prop.
-dispatch-mutual-gen All [] Acc LnoR Clauses :- !,
+func dispatch-mutual-gen list derive.param1.raw-mindt-spec, list derive.param1.raw-mindt-spec, list inductive -> list prop.
+dispatch-mutual-gen All [] Acc Clauses :- !,
   rev Acc NewGRs,
-  dispatch-mutual-do All NewGRs LnoR Clauses.
-dispatch-mutual-gen All [_|Rest] Acc LnoR Clauses :-
-  pi newGR\ dispatch-mutual-gen All Rest [newGR|Acc] LnoR Clauses.
+  dispatch-mutual-do All NewGRs Clauses.
+dispatch-mutual-gen All [_|Rest] Acc Clauses :-
+  pi newGR\ dispatch-mutual-gen All Rest [newGR|Acc] Clauses.
 
 func reali-store-mutual-indt (pair derive.param1.raw-mindt-spec inductive) -> prop.
 reali-store-mutual-indt (pr (derive.param1.raw-mindt-spec GR _ _ _ _ _ _ _ _ FNewName) RealGR) P :-
@@ -251,11 +251,12 @@ accumulate-param1-clause ((realiR _ _ :- !) as C) :- !,
 accumulate-param1-clause C :-
   coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C).
 
-func dispatch-mutual-do list derive.param1.raw-mindt-spec, list inductive, int -> list prop.
-dispatch-mutual-do Raws NewGRs LnoR Clauses :- std.do! [
+func dispatch-mutual-do list derive.param1.raw-mindt-spec, list inductive -> list prop.
+dispatch-mutual-do Raws NewGRs Clauses :- std.do! [
   map2 Raws NewGRs raw-mutual-spec-clause Assumps,
-  Assumps =!=> map2 Raws NewGRs translate-mutual-spec Specs,
-  coq.build-mindt-decl Specs LnoR LnoR DeclR,
+  Assumps =!=> (
+    map2 Raws NewGRs translate-mutual-spec Specs,
+    coq.build-mindt-decl Specs 0 0 DeclR),
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped mutual inductive",
   coq.env.add-indt DeclR _,
   std.map Specs (s\r\ sigma name\ s = coq.mindt-spec _ name _ _ _ _, coq.locate name (indt r)) RealGRs,
@@ -276,10 +277,7 @@ dispatch (indt GR) Prefix Clauses :- coq.env.recursive? GR, coq.env.indt-decl GR
   raw-mutual-spec-lno FirstRaw Lno,
   raw-mutual-spec-luno FirstRaw Luno,
   std.assert! (Lno = Luno) "derive.param1: Non-uniform parameters not supported",
-  if (Lno = 0)
-    (dispatch-mutual-gen Raws Raws [] 0 Clauses)
-    (Clauses = [reali-done (indt GR)],
-     coq.elpi.accumulate _ "derive.param1.db" (clause _ _ (reali-done (indt GR))))
+  dispatch-mutual-gen Raws Raws [] Clauses
 ].
 
 dispatch (indt GR) Prefix Clauses :- !, do! [
