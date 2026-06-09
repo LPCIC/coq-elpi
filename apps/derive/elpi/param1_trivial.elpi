@@ -171,7 +171,7 @@ mutual-trivial-mfix-aux All [] AllWs [] RevF (mfix-bo Bodies) :- !,
   Clauses =!=> std.map2 All AllWs mutual-trivial-eq-body Bodies.
 mutual-trivial-mfix-aux All [S|SS] AllWs [W|WS] RevF (mfix-ty N 1 Ty Rest) :-
   S = derive.param1.trivial.mutual-spec GRR _ _,
-  coq.gref->id (indt GRR) ID,
+  ID is {coq.gref->id (indt GRR)} ^ "_trivial_rec",
   coq.id->name ID N,
   mutual-trivial-eq-ty S W Ty,
   @pi-decl N Ty f\ mutual-trivial-mfix-aux All SS AllWs WS [f|RevF] (Rest f).

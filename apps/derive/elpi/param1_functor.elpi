@@ -261,7 +261,7 @@ mutual-functor-mfix-aux All [] RevF (mfix-bo Bodies) :- !,
   Clauses =!=> std.map All mutual-functor-body Bodies.
 mutual-functor-mfix-aux All [S|SS] RevF (mfix-ty N Recno Ty Rest) :-
   S = derive.param1.functor.mutual-spec GRR _ _ _ _,
-  coq.gref->id (indt GRR) ID,
+  ID is {coq.gref->id (indt GRR)} ^ "_functor_rec",
   coq.id->name ID N,
   mutual-functor-ty S Ty Recno,
   @pi-decl N Ty f\ mutual-functor-mfix-aux All SS [f|RevF] (Rest f).

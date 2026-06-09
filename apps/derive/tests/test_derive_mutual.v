@@ -2,7 +2,7 @@
    each standard derivation is tested independently.  Each derive call below
    lives in its own module and is checked against a signature documenting the
    Coq definitions that derivation is expected to add. *)
-From Corelib Require Import BinNums ssrbool.
+From Corelib Require Import BinNums Nat ssrbool.
 From elpi.apps Require Import
   derive
   derive.map
@@ -31,6 +31,7 @@ End MutualBase.
 Module Type MutualMapExpected.
   Include MutualBase.
   Parameter tree_map : tree -> tree.
+  Parameter forest_map : forest -> forest.
 End MutualMapExpected.
 
 Module Type MutualLensExpected.
@@ -118,6 +119,7 @@ End MutualInductionExpected.
 Module Type MutualTagExpected.
   Include MutualBase.
   Parameter tree_tag : tree -> BinNums.positive.
+  Parameter forest_tag : forest -> BinNums.positive.
 End MutualTagExpected.
 
 Module Type MutualFieldsExpected.
@@ -131,6 +133,12 @@ Module Type MutualFieldsExpected.
     forall p : BinNums.positive, tree_fields_t p -> option tree.
   Parameter tree_constructP :
     forall i : tree, tree_construct (tree_tag i) (tree_fields i) = Some i.
+  Parameter forest_fields_t : BinNums.positive -> Type.
+  Parameter forest_fields : forall i : forest, forest_fields_t (forest_tag i).
+  Parameter forest_construct :
+    forall p : BinNums.positive, forest_fields_t p -> option forest.
+  Parameter forest_constructP :
+    forall i : forest, forest_construct (forest_tag i) (forest_fields i) = Some i.
 End MutualFieldsExpected.
 
 Module Type MutualEqbExpected.
@@ -139,12 +147,18 @@ Module Type MutualEqbExpected.
     (tree -> tree -> bool) ->
     forall x : BinNums.positive, tree_fields_t x -> tree_fields_t x -> bool.
   Parameter tree_eqb : tree -> tree -> bool.
+  Parameter forest_eqb_fields :
+    (forest -> forest -> bool) ->
+    forall x : BinNums.positive, forest_fields_t x -> forest_fields_t x -> bool.
+  Parameter forest_eqb : forest -> forest -> bool.
 End MutualEqbExpected.
 
 Module Type MutualEqbCorrectExpected.
   Include MutualEqbExpected.
   Parameter tree_eqb_correct : forall x : tree, eqb_correct_on tree_eqb x.
+  Parameter forest_eqb_correct : forall x : forest, eqb_correct_on forest_eqb x.
   Parameter tree_eqb_refl : forall x : tree, eqb_refl_on tree_eqb x.
+  Parameter forest_eqb_refl : forall x : forest, eqb_refl_on forest_eqb x.
 End MutualEqbCorrectExpected.
 
 Module Type MutualEqbOKExpected.
@@ -152,6 +166,9 @@ Module Type MutualEqbOKExpected.
   Parameter tree_eqb_OK :
     forall x1 x2 : tree, reflect (x1 = x2) (tree_eqb x1 x2).
   Parameter tree_eqb_OK_sumbool : forall x y : tree, {x = y} + {x <> y}.
+  Parameter forest_eqb_OK :
+    forall x1 x2 : forest, reflect (x1 = x2) (forest_eqb x1 x2).
+  Parameter forest_eqb_OK_sumbool : forall x y : forest, {x = y} + {x <> y}.
 End MutualEqbOKExpected.
 
 Module Type ParametrizedMutualBase.
@@ -166,6 +183,8 @@ Module Type ParametrizedMutualMapExpected.
   Include ParametrizedMutualBase.
   Parameter ptree_map :
     forall A1 A2 : Type, (A1 -> A2) -> ptree A1 -> ptree A2.
+  Parameter pforest_map :
+    forall A1 A2 : Type, (A1 -> A2) -> pforest A1 -> pforest A2.
 End ParametrizedMutualMapExpected.
 
 Module Type ParametrizedMutualLensExpected.
@@ -272,6 +291,7 @@ End ParametrizedMutualInductionExpected.
 Module Type ParametrizedMutualTagExpected.
   Include ParametrizedMutualBase.
   Parameter ptree_tag : forall A : Type, ptree A -> BinNums.positive.
+  Parameter pforest_tag : forall A : Type, pforest A -> BinNums.positive.
 End ParametrizedMutualTagExpected.
 
 Module Type ParametrizedMutualFieldsExpected.
@@ -291,6 +311,15 @@ Module Type ParametrizedMutualFieldsExpected.
   Parameter ptree_constructP :
     forall (A : Type) (i : ptree A),
       ptree_construct A (ptree_tag A i) (ptree_fields A i) = Some i.
+  Parameter pforest_fields_t : Type -> BinNums.positive -> Type.
+  Parameter pforest_fields :
+    forall (A : Type) (i : pforest A), pforest_fields_t A (pforest_tag A i).
+  Parameter pforest_construct :
+    forall A : Type, forall p : BinNums.positive,
+      pforest_fields_t A p -> option (pforest A).
+  Parameter pforest_constructP :
+    forall (A : Type) (i : pforest A),
+      pforest_construct A (pforest_tag A i) (pforest_fields A i) = Some i.
 End ParametrizedMutualFieldsExpected.
 
 Module Type ParametrizedMutualEqbExpected.
@@ -302,6 +331,13 @@ Module Type ParametrizedMutualEqbExpected.
         ptree_fields_t A x -> ptree_fields_t A x -> bool.
   Parameter ptree_eqb :
     forall A : Type, (A -> A -> bool) -> ptree A -> ptree A -> bool.
+  Parameter pforest_eqb_fields :
+    forall A : Type, (A -> A -> bool) ->
+      (pforest A -> pforest A -> bool) ->
+      forall x : BinNums.positive,
+        pforest_fields_t A x -> pforest_fields_t A x -> bool.
+  Parameter pforest_eqb :
+    forall A : Type, (A -> A -> bool) -> pforest A -> pforest A -> bool.
 End ParametrizedMutualEqbExpected.
 
 Module Type ParametrizedMutualEqbCorrectExpected.
@@ -314,6 +350,14 @@ Module Type ParametrizedMutualEqbCorrectExpected.
     forall (A : Type) (eqA : A -> A -> bool),
       eqb_reflexive eqA ->
       forall x : ptree A, eqb_refl_on (ptree_eqb A eqA) x.
+  Parameter pforest_eqb_correct :
+    forall (A : Type) (eqA : A -> A -> bool),
+      eqb_correct eqA ->
+      forall x : pforest A, eqb_correct_on (pforest_eqb A eqA) x.
+  Parameter pforest_eqb_refl :
+    forall (A : Type) (eqA : A -> A -> bool),
+      eqb_reflexive eqA ->
+      forall x : pforest A, eqb_refl_on (pforest_eqb A eqA) x.
 End ParametrizedMutualEqbCorrectExpected.
 
 Module Type ParametrizedMutualEqbOKExpected.
@@ -326,6 +370,14 @@ Module Type ParametrizedMutualEqbOKExpected.
     forall A : Type,
       (forall x1 x2 : A, {x1 = x2} + {x1 <> x2}) ->
       forall x y : ptree A, {x = y} + {x <> y}.
+  Parameter pforest_eqb_OK :
+    forall (A : Type) (eqA : A -> A -> bool),
+      (forall x1 x2 : A, reflect (x1 = x2) (eqA x1 x2)) ->
+      forall x1 x2 : pforest A, reflect (x1 = x2) (pforest_eqb A eqA x1 x2).
+  Parameter pforest_eqb_OK_sumbool :
+    forall A : Type,
+      (forall x1 x2 : A, {x1 = x2} + {x1 <> x2}) ->
+      forall x y : pforest A, {x = y} + {x <> y}.
 End ParametrizedMutualEqbOKExpected.
 
 Module Type TripleMutualBase.
@@ -613,6 +665,17 @@ Module ParametrizedMutualMap <: ParametrizedMutualMapExpected.
   | pcons (t : ptree A) (f : pforest A).
 
   #[only(map)] derive ptree.
+
+  Example ptree_map_computes :
+    ptree_map nat bool Nat.even (pnode nat 2 (pempty nat)) =
+    pnode bool true (pempty bool).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_map_computes :
+    pforest_map nat bool Nat.even
+      (pcons nat (pnode nat 3 (pempty nat)) (pempty nat)) =
+    pcons bool (pnode bool false (pempty bool)) (pempty bool).
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualMap.
 
 Module ParametrizedMutualLens <: ParametrizedMutualLensExpected.
@@ -663,6 +726,21 @@ Module ParametrizedMutualParam1Trivial <: ParametrizedMutualParam1TrivialExpecte
   | pcons (t : ptree A) (f : pforest A).
 
   #[only(param1_trivial)] derive ptree.
+
+  Example is_ptree_inhab_computes :
+    is_ptree_inhab nat (fun _ => unit) (fun _ => tt) (pnode nat 2 (pempty nat)) =
+    is_pnode nat (fun _ => unit) 2 tt (pempty nat)
+      (is_pempty nat (fun _ => unit)).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example is_pforest_inhab_computes :
+    is_pforest_inhab nat (fun _ => unit) (fun _ => tt)
+      (pcons nat (pnode nat 2 (pempty nat)) (pempty nat)) =
+    is_pcons nat (fun _ => unit) (pnode nat 2 (pempty nat))
+      (is_pnode nat (fun _ => unit) 2 tt (pempty nat)
+        (is_pempty nat (fun _ => unit)))
+      (pempty nat) (is_pempty nat (fun _ => unit)).
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam1Trivial.
 
 Module ParametrizedMutualParam1Functor <: ParametrizedMutualParam1FunctorExpected.
@@ -723,6 +801,26 @@ Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
   | pcons (t : ptree A) (f : pforest A).
 
   #[only(eqb)] derive ptree.
+
+  Example ptree_eqb_computes_equal :
+    ptree_eqb nat Nat.eqb (pnode nat 2 (pempty nat)) (pnode nat 2 (pempty nat)) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example ptree_eqb_computes_different :
+    ptree_eqb nat Nat.eqb (pnode nat 2 (pempty nat)) (pnode nat 3 (pempty nat)) = false.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_eqb_computes_equal :
+    pforest_eqb nat Nat.eqb
+      (pcons nat (pnode nat 2 (pempty nat)) (pempty nat))
+      (pcons nat (pnode nat 2 (pempty nat)) (pempty nat)) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_eqb_computes_different :
+    pforest_eqb nat Nat.eqb
+      (pcons nat (pnode nat 2 (pempty nat)) (pempty nat))
+      (pcons nat (pnode nat 3 (pempty nat)) (pempty nat)) = false.
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualEqb.
 
 Module ParametrizedMutualEqbCorrect <: ParametrizedMutualEqbCorrectExpected.
@@ -851,4 +949,18 @@ Module ParametrizedTripleMutualEqbOKFromBeta <: ParametrizedTripleMutualEqbOKExp
   | pgamma1 (a : palpha A) (b : pbeta A).
 
   #[only(eqbOK)] derive pbeta.
+
+  Example palpha_eqb_computes_equal :
+    palpha_eqb nat Nat.eqb (palpha1 nat 2 (pbeta0 nat)) (palpha1 nat 2 (pbeta0 nat)) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pbeta_eqb_computes_different :
+    pbeta_eqb nat Nat.eqb (pbeta1 nat (pgamma0 nat)) (pbeta0 nat) = false.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pgamma_eqb_computes_different :
+    pgamma_eqb nat Nat.eqb
+      (pgamma1 nat (palpha1 nat 2 (pbeta0 nat)) (pbeta0 nat))
+      (pgamma1 nat (palpha1 nat 3 (pbeta0 nat)) (pbeta0 nat)) = false.
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedTripleMutualEqbOKFromBeta.

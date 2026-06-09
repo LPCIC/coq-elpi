@@ -16,6 +16,12 @@ map-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
 
 namespace derive.map {
 
+pred param-map-db i:term, i:term, o:term.
+
+func not-indt-app term ->.
+not-indt-app (app [global (indt _)|_]) :- !, fail.
+not-indt-app _.
+
 % Building the body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pred bo-idx
@@ -59,6 +65,10 @@ bo-k-args ParamsRev K _ Args Tys R :-
 
 pred bo-k-args.aux i:term, i:list term, i:list term, i:term, o:term.
 bo-k-args.aux R [] [] _ R :- coq.typecheck R _ ok.
+bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
+  param-map-db T S F, !,
+  coq.mk-app F [A] FA,
+  bo-k-args.aux {coq.mk-app K [FA]} As Ts (Ty FA) R.
 bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   map-db T S F,
   coq.mk-app F [A] FA,
@@ -212,30 +222,96 @@ func mutual-prefix inductive, string, inductive -> string.
 mutual-prefix First Prefix T Prefix :- First = T, !.
 mutual-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
 
-func add-mutual-map-axioms list derive.map.mutual-spec, string, int -> list prop.
-add-mutual-map-axioms [] _ _ [] :- !.
-add-mutual-map-axioms [S|SS] Prefix 0 [map-done GR,Clause|CS] :- !, std.do! [
+func mutual-map-clause derive.map.mutual-spec, term -> prop.
+mutual-map-clause (derive.map.mutual-spec _ Ity1 Ity2 _ _) F (map-db Ity1 Ity2 F).
+
+func mutual-map-body list term, derive.map.mutual-spec -> term.
+mutual-map-body _ (derive.map.mutual-spec _ Ity1 Ity2 Arity _) Body :-
+  coq.safe-dest-app Ity2 _ Params,
+  std.rev Params ParamsRev,
+  std.assert! (bo-idx Arity Ity1 Ity2 0 _ ParamsRev Body _) "derive.map: failed to generate mutual map body".
+
+func mutual-map-mfix-aux list derive.map.mutual-spec, list derive.map.mutual-spec, list term, list term -> mfix-block.
+mutual-map-mfix-aux All [] Ps RevF (mfix-bo Bodies) :- !,
+  std.rev RevF Funs,
+  std.map2 All Funs mutual-map-clause Clauses,
+  Clauses =!=> std.map All (mutual-map-body Ps) Bodies.
+mutual-map-mfix-aux All [S|SS] Ps RevF (mfix-ty N 0 Ty Rest) :-
+  S = derive.map.mutual-spec GR _ _ _ _,
+  ID is {coq.gref->id (indt GR)} ^ "_map_rec",
+  coq.id->name ID N,
+  mutual-map-ty 0 0 S Ty,
+  @pi-decl N Ty f\ mutual-map-mfix-aux All SS Ps [f|RevF] (Rest f).
+
+func mutual-map-mfix list derive.map.mutual-spec, list term, int -> term.
+mutual-map-mfix Specs Ps Focus (mfix Focus 0 Block) :-
+  mutual-map-mfix-aux Specs Specs Ps [] Block.
+
+func body-mutual-params int, int, list derive.map.mutual-spec, int, list term -> term.
+body-mutual-params Lno Lno Specs Focus Ps R :- !,
+  mutual-map-mfix Specs Ps Focus R.
+body-mutual-params N Lno ([S|_] as Specs) Focus Ps R :- N < Lno,
+  S = derive.map.mutual-spec _ _ _ (prod A Sty1 _) (prod _ Sty2 _),
+  coq.sort? Sty1, !,
+  coq.name-suffix A 1 A1,
+  coq.name-suffix A 2 A2,
+  coq.name-suffix A "f" Af,
+  N1 is N + 1,
+  R = (fun A1 Sty1 a\ fun A2 Sty2 b\ fun Af (prod `_` a (_\ b)) f\ Bo a b f),
+  pi a b f\ sigma Specs1\
+    std.map Specs (mutual-spec-apply-param a b) Specs1,
+    decl a A1 Sty1 =>
+    decl b A2 Sty2 =>
+    decl f Af (prod `_` a (_\ b)) =>
+    (pi x y\ param-map-db x y f :- not-indt-app x, same_term x a, same_term y b) =>
+      body-mutual-params N1 Lno Specs1 Focus [b|Ps] (Bo a b f).
+body-mutual-params N Lno ([S|_] as Specs) Focus Ps R :- N < Lno,
+  S = derive.map.mutual-spec _ _ _ (prod A Sty1 _Rty1) (prod _ Sty2 _Rty2), !,
+  coq.name-suffix A 1 A1,
+  coq.name-suffix A 2 A2,
+  coq.name-suffix A "f" Af,
+  N1 is N + 1,
+  (pi a b f\ std.assert! (mk-map-ty a Sty1 b Sty2 (FAB a b) f _ (Clause a b f)) "derive.map: failed to generate parameter map clause"),
+  R = (fun A1 Sty1 a\ fun A2 Sty2 b\ fun Af (FAB a b) f\ Bo a b f),
+  pi a b f\ sigma Specs1\
+    std.map Specs (mutual-spec-apply-param a b) Specs1,
+    Clause a b f =>
+    decl a A1 Sty1 =>
+    decl b A2 Sty2 =>
+    decl f Af (FAB a b) =>
+      body-mutual-params N1 Lno Specs1 Focus [b|Ps] (Bo a b f).
+body-mutual-params _ _ _ _ _ _ :- stop "derive.map: mutual indexed data types not supported".
+
+func add-mutual-map-consts inductive, list derive.map.mutual-spec, list derive.map.mutual-spec, string, int, int -> list prop.
+add-mutual-map-consts _ _ [] _ _ _ [] :- !.
+add-mutual-map-consts Selected All [S|SS] Prefix 0 Focus [map-done GR,Clause|CS] :- !, std.do! [
   S = derive.map.mutual-spec GR T T Arity _,
   R = fun `x` T (x\ x),
   std.assert-ok! (coq.typecheck R Ty) "derive.map generates illtyped mutual identity term",
-  Name is Prefix ^ "map",
+  mutual-prefix Selected Prefix GR P,
+  Name is P ^ "map",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName R Ty @transparent! Funct,
   mk-clause 0 0 T T Arity [] (global (const Funct)) Clause,
   coq.elpi.accumulate _ "derive.map.db" (clause _ _ Clause),
   coq.elpi.accumulate _ "derive.map.db" (clause _ _ (map-done GR)),
-  add-mutual-map-axioms SS Prefix 0 CS
+  Focus1 is Focus + 1,
+  add-mutual-map-consts Selected All SS Prefix 0 Focus1 CS
 ].
-add-mutual-map-axioms [S|SS] Prefix Lno [map-done GR,Clause|CS] :- std.do! [
+add-mutual-map-consts Selected All [S|SS] Prefix Lno Focus [map-done GR,Clause|CS] :- std.do! [
   S = derive.map.mutual-spec GR T T Arity _,
-  mutual-map-ty 0 Lno S Ty,
-  Name is Prefix ^ "map",
+  body-mutual-params 0 Lno All Focus [] RSkel,
+  std.assert-ok! (coq.typecheck RSkel Ty) "derive.map generates illtyped mutual term",
+  R = RSkel,
+  mutual-prefix Selected Prefix GR P,
+  Name is P ^ "map",
   coq.ensure-fresh-global-id Name FName,
-  coq.env.add-axiom FName Ty Funct,
+  coq.env.add-const FName R Ty @transparent! Funct,
   mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
   coq.elpi.accumulate _ "derive.map.db" (clause _ _ Clause),
   coq.elpi.accumulate _ "derive.map.db" (clause _ _ (map-done GR)),
-  add-mutual-map-axioms SS Prefix Lno CS
+  Focus1 is Focus + 1,
+  add-mutual-map-consts Selected All SS Prefix Lno Focus1 CS
 ].
 
 func main-mutual inductive, list inductive, string -> list prop.
@@ -246,8 +322,7 @@ main-mutual Selected GRS Prefix C :- std.do! [
   mutual-spec-ind S FirstGR,
   coq.env.indt FirstGR _ Lno Luno _ _ _,
   assert! (Lno = Luno) "derive.map: Non-uniform parameters not supported",
-  std.map Specs (s\c\ sigma gr p\ mutual-spec-ind s gr, mutual-prefix Selected Prefix gr p, add-mutual-map-axioms [s] p Lno c) CS,
-  std.flatten CS C
+  add-mutual-map-consts Selected Specs Specs Prefix Lno 0 C
 ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
