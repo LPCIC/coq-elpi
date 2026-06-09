@@ -166,7 +166,7 @@ mutual-inhab-mfix-aux All [] RevF (mfix-bo Bodies) :- !,
   Clauses =!=> map All mutual-inhab-body Bodies.
 mutual-inhab-mfix-aux All [S|SS] RevF (mfix-ty N 0 Ty Rest) :-
   S = derive.param1.inhab.mutual-spec _ GRR _ _ _ _ _,
-  coq.gref->id (indt GRR) ID,
+  ID is {coq.gref->id (indt GRR)} ^ "_inhab_rec",
   coq.id->name ID N,
   mutual-inhab-ty S Ty,
   @pi-decl N Ty f\ mutual-inhab-mfix-aux All SS [f|RevF] (Rest f).
@@ -228,26 +228,13 @@ body-mutual-params-ty N S Ty :- N > 0, !,
       body-mutual-params-ty M S1 (Rest a).
 body-mutual-params-ty _ _ _ :- stop "derive.param1_inhab: wrong mutual shape".
 
-func add-mutual-inhab-axioms list derive.param1.inhab.mutual-spec, list derive.param1.inhab.mutual-spec, string, int, int -> list prop.
-add-mutual-inhab-axioms _ [] _ _ _ [].
-add-mutual-inhab-axioms All [S|SS] Suffix Lno Focus [ClauseW, param1-inhab-done (indt GRR)|CS] :- std.do! [
-  S = derive.param1.inhab.mutual-spec _ GRR IsT _ _ _ _,
-  body-mutual-params-ty Lno S Ty,
-  Name is {coq.gref->id (indt GRR)} ^ Suffix,
-  coq.env.add-axiom Name Ty Witness,
-  ClauseW = (param1-inhab-db IsT (global (const Witness))),
-  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ ClauseW),
-  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-inhab-done (indt GRR))),
-  Focus1 is Focus + 1,
-  add-mutual-inhab-axioms All SS Suffix Lno Focus1 CS
-].
-
 func add-mutual-inhab-consts list derive.param1.inhab.mutual-spec, list derive.param1.inhab.mutual-spec, string, int, int -> list prop.
 add-mutual-inhab-consts _ [] _ _ _ [].
 add-mutual-inhab-consts All [S|SS] Suffix Lno Focus [ClauseW, param1-inhab-done (indt GRR)|CS] :- std.do! [
   S = derive.param1.inhab.mutual-spec _ GRR IsT _ _ _ _,
   body-mutual-params Lno All Focus RSkel,
-  std.assert-ok! (coq.elaborate-skeleton RSkel RT R) "derive.param1_inhab generates illtyped mutual term",
+  std.assert-ok! (coq.typecheck RSkel RT) "derive.param1_inhab generates illtyped mutual term",
+  R = RSkel,
   Name is {coq.gref->id (indt GRR)} ^ Suffix,
   coq.env.add-const Name R RT @transparent! Witness,
   ClauseW = (param1-inhab-db IsT (global (const Witness))),
@@ -271,9 +258,7 @@ main-mutual GRS Suffix Clauses :- std.do! [
   assert! (Ind = tt) "derive.param1_inhab: Coinductive types are not supported",
   assert! (LnoIs = Luno) "derive.param1_inhab: Non-uniform parameters not supported",
   mutual-lno GRS FirstGRR Lno,
-  if (Lno > 0)
-     (add-mutual-inhab-axioms Specs Specs Suffix Lno 0 Clauses)
-     (add-mutual-inhab-consts Specs Specs Suffix Lno 0 Clauses)
+  add-mutual-inhab-consts Specs Specs Suffix Lno 0 Clauses
 ].
 
 func main gref, gref, string -> list prop.
