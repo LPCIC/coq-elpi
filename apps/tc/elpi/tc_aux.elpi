@@ -3,6 +3,11 @@
 
 namespace tc {
 
+  func get-vars term -> list term.
+  get-vars T R :-
+    (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
+      fold-map T [] _ R.
+
   namespace lettify {
     func replace-args term, list term, list term, (func term -> term) -> term.
     replace-args Hd []     L K R :- std.rev L L1, K (app [Hd|L1]) R.
