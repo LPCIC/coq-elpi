@@ -22,6 +22,30 @@ let eq_cunit x y =
 let kn_of_cunit = function
   | Full (kn,_) | Signature (kn,_) -> kn
 
+let mem_cunit u full_units signature_units =
+  match u with
+  | Full (kn,_) -> Names.KNset.mem kn full_units
+  | Signature (kn,_) ->
+      Names.KNset.mem kn full_units || Names.KNset.mem kn signature_units
+
+let add_cunit u full_units signature_units =
+  match u with
+  | Full (kn,_) ->
+      Names.KNset.add kn full_units, Names.KNset.remove kn signature_units
+  | Signature (kn,_) ->
+      if Names.KNset.mem kn full_units then full_units, signature_units
+      else full_units, Names.KNset.add kn signature_units
+
+let mem_file_cunit fname u files full_units signature_units =
+  match u with
+  | Full _ -> CString.Set.mem fname files || mem_cunit u full_units signature_units
+  | Signature _ -> mem_cunit u full_units signature_units
+
+let add_file_cunit fname u files full_units signature_units =
+  let full_units, signature_units = add_cunit u full_units signature_units in
+  let files = match u with Full _ -> CString.Set.add fname files | Signature _ -> files in
+  files, full_units, signature_units
+
 [%%if coq = "9.0"]
 let my_filtered_open = Libobject.simple_open
 let my_simple_open ?cat f = my_filtered_open ?cat (fun i v -> if Int.equal i 1 then f v)
@@ -181,6 +205,7 @@ end
 type db = {
   sources_rev : (cunit list, qualified_name) Code.t;
   units : Names.KNset.t;
+  signatures : Names.KNset.t;
   files : CString.Set.t;
   dbs : SLSet.t;
 }
@@ -191,6 +216,7 @@ type program = {
   sources_rev : (cunit, qualified_name) Code.t;
   files : CString.Set.t;
   units : Names.KNset.t;
+  signatures : Names.KNset.t;
   dbs : SLSet.t;
   empty : bool; (* it is empty, if it only contains default code *)
 }
@@ -522,32 +548,38 @@ let get ?(fail_if_not_exists=false) p =
   let _elpi = ensure_initialized () in
   let nature = get_nature p in
   try
-  let { sources_rev; files; units; dbs; empty } = SLMap.find p !program_src in
-  files, units, dbs, Some nature, Some sources_rev, empty
+  let { sources_rev; files; units; signatures; dbs; empty } = SLMap.find p !program_src in
+  files, units, signatures, dbs, Some nature, Some sources_rev, empty
   with Not_found ->
   if fail_if_not_exists then
     CErrors.user_err
       Pp.(str "No Elpi Program named " ++ pr_qualified_name p)
   else
-    CString.Set.empty, Names.KNset.empty, SLSet.empty, None, None, true
+    CString.Set.empty, Names.KNset.empty, Names.KNset.empty, SLSet.empty, None, None, true
 
   let append_to_prog from name src =
-    let files, units, dbs, _, prog, empty = get name in
-    let files, units, dbs, prog =
+    let files, units, signatures, dbs, _, prog, empty = get name in
+    let files, units, signatures, dbs, prog =
       match src with
       (* undup *)
-      | File { fname; fast = u } when CString.Set.mem fname files || Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, prog
-      | EmbeddedString { sast = u } when Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, prog
-      | DatabaseHeader { dast = u } when Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, prog
-      | DatabaseBody n  when SLSet.mem n dbs -> files, units, dbs, prog
+      | File { fname; fast = u } when mem_file_cunit fname u files units signatures -> files, units, signatures, dbs, prog
+      | EmbeddedString { sast = u } when mem_cunit u units signatures -> files, units, signatures, dbs, prog
+      | DatabaseHeader { dast = u } when mem_cunit u units signatures -> files, units, signatures, dbs, prog
+      | DatabaseBody n  when SLSet.mem n dbs -> files, units, signatures, dbs, prog
       (* add *)
-      | File { fname; fast = u } -> CString.Set.add fname files, Names.KNset.add (kn_of_cunit u) units, dbs, Some (Code.snoc_opt u prog)
-      | EmbeddedString { sast = u } -> files, Names.KNset.add (kn_of_cunit u) units, dbs, Some (Code.snoc_opt u prog)
-      | DatabaseHeader { dast = u } -> files, Names.KNset.add (kn_of_cunit u) units, dbs, Some (Code.snoc_opt u prog)
-      | DatabaseBody n -> files, units, SLSet.add n dbs, Some (Code.snoc_db_opt Hashtbl.hash n prog)
+      | File { fname; fast = u } ->
+          let files, units, signatures = add_file_cunit fname u files units signatures in
+          files, units, signatures, dbs, Some (Code.snoc_opt u prog)
+      | EmbeddedString { sast = u } ->
+          let units, signatures = add_cunit u units signatures in
+          files, units, signatures, dbs, Some (Code.snoc_opt u prog)
+      | DatabaseHeader { dast = u } ->
+          let units, signatures = add_cunit u units signatures in
+          files, units, signatures, dbs, Some (Code.snoc_opt u prog)
+      | DatabaseBody n -> files, units, signatures, SLSet.add n dbs, Some (Code.snoc_db_opt Hashtbl.hash n prog)
       in
     let prog = Option.get prog in
-    { files; units; dbs; sources_rev = prog; empty = empty && from = Initialization }
+    { files; units; signatures; dbs; sources_rev = prog; empty = empty && from = Initialization }
   
   let in_program : qualified_name * src * from -> Libobject.obj =
     let open Libobject in
@@ -571,43 +603,49 @@ let get ?(fail_if_not_exists=false) p =
 
   let get_db name =
     match SLMap.find_opt name !db_name_src with
-    | Some {sources_rev; units; files; dbs} ->
-      Some sources_rev, units, files, dbs, false
+    | Some {sources_rev; units; signatures; files; dbs} ->
+      Some sources_rev, units, signatures, files, dbs, false
     | None ->
-      None, Names.KNset.empty, CString.Set.empty, SLSet.empty, true
+      None, Names.KNset.empty, Names.KNset.empty, CString.Set.empty, SLSet.empty, true
 
   let db_code_raw n : (cunit list, qualified_name) Code.t option =
-    let sources,_,_,_,_ = get_db n in
+    let sources,_,_,_,_,_ = get_db n in
     sources
 
   let code ?(even_if_empty=false) n : (cunit, qualified_name) Code.t option =
-    let _,_,_,_,sources, empty = get n in
+    let _,_,_,_,_,sources, empty = get n in
     if empty && not even_if_empty then None else sources
 
   let initialize_db name ~base =
-    let (sources_rev, units, files, dbs, empty) = get_db name in
-    if not empty then {sources_rev=Option.get sources_rev; units; files; dbs} else
-    let units = List.fold_left (fun units u -> Names.KNset.add (kn_of_cunit u) units) units base in
+    let (sources_rev, units, signatures, files, dbs, empty) = get_db name in
+    if not empty then {sources_rev=Option.get sources_rev; units; signatures; files; dbs} else
+    let units, signatures = List.fold_left (fun (units, signatures) u -> add_cunit u units signatures) (units, signatures) base in
     let sources_rev = Code.Base { hash = hash_list hash_cunit 0 base; base } in
-    {sources_rev; units; files; dbs}
+    {sources_rev; units; signatures; files; dbs}
 
   let append_to_db name (src : src) =
-    let (code, units, files, dbs, _) = get_db name in
+    let (code, units, signatures, files, dbs, _) = get_db name in
     let code = Option.get code in
-    let (files, units, dbs, code) =
+    let (files, units, signatures, dbs, code) =
       match src with
-      | File { fname; fast = u } when CString.Set.mem fname files || Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, code
-      | EmbeddedString { sast = u } when Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, code
-      | DatabaseHeader { dast = u } when Names.KNset.mem (kn_of_cunit u) units -> files, units, dbs, code
-      | DatabaseBody n when SLSet.mem n dbs -> files, units, dbs, code
-      | File { fname; fast = u } -> CString.Set.add fname files, Names.KNset.add (kn_of_cunit u) units, dbs, Code.snoc u code
-      | EmbeddedString { sast = u } -> files, Names.KNset.add (kn_of_cunit u) units, dbs, Code.snoc u code
-      | DatabaseHeader { dast = u } -> files, Names.KNset.add (kn_of_cunit u) units, dbs, Code.snoc u code
+      | File { fname; fast = u } when mem_file_cunit fname u files units signatures -> files, units, signatures, dbs, code
+      | EmbeddedString { sast = u } when mem_cunit u units signatures -> files, units, signatures, dbs, code
+      | DatabaseHeader { dast = u } when mem_cunit u units signatures -> files, units, signatures, dbs, code
+      | DatabaseBody n when SLSet.mem n dbs -> files, units, signatures, dbs, code
+      | File { fname; fast = u } ->
+          let files, units, signatures = add_file_cunit fname u files units signatures in
+          files, units, signatures, dbs, Code.snoc u code
+      | EmbeddedString { sast = u } ->
+          let units, signatures = add_cunit u units signatures in
+          files, units, signatures, dbs, Code.snoc u code
+      | DatabaseHeader { dast = u } ->
+          let units, signatures = add_cunit u units signatures in
+          files, units, signatures, dbs, Code.snoc u code
       | DatabaseBody n ->
         assert (not (eq_qualified_name n name));
-        files, units, SLSet.add n dbs, Code.snoc_db Hashtbl.hash n code
+        files, units, signatures, SLSet.add n dbs, Code.snoc_db Hashtbl.hash n code
     in
-    {sources_rev=code; units; files; dbs}
+    {sources_rev=code; units; signatures; files; dbs}
         
   let is_inside_current_library kn =
     Names.DirPath.equal
@@ -789,7 +827,9 @@ let get ?(fail_if_not_exists=false) p =
   let stage = stage
 
   let db_inspect name =
-    try Names.KNset.cardinal (SLMap.find name !db_name_src).units
+    try
+      let db = SLMap.find name !db_name_src in
+      Names.KNset.cardinal db.units + Names.KNset.cardinal db.signatures
   with Not_found -> -1
     
   let unit_from_ast ?error_header ~elpi ~base ~loc ast =
@@ -802,14 +842,16 @@ let unit_from_plugin ?error_header ~elpi ~base ~loc builtins =
   unit_from_plugin ?error_header ~elpi ~base ~loc builtins ~flags:(cc_flags ())
 
 module Visited = struct
-  module Set = Names.KNset
   type t = {
-    units : Set.t;
+    units : Names.KNset.t;
+    signatures : Names.KNset.t;
     dbs : SLSet.t;
   }
-  let empty = { units = Set.empty; dbs = SLSet.empty }
-  let add_unit u visited = { visited with units = Set.add (kn_of_cunit u) visited.units }
-  let mem_unit u visited = Set.mem (kn_of_cunit u) visited.units
+  let empty = { units = Names.KNset.empty; signatures = Names.KNset.empty; dbs = SLSet.empty }
+  let add_unit u visited =
+    let units, signatures = add_cunit u visited.units visited.signatures in
+    { visited with units; signatures }
+  let mem_unit u visited = mem_cunit u visited.units visited.signatures
   let add_db n visited = { visited with dbs = SLSet.add n visited.dbs }
   let mem_db n visited = SLSet.mem n visited.dbs
 end
