@@ -741,7 +741,22 @@ Elpi test_mfix_copy (f3_0).
 Elpi test_mfix_copy (f3_1).
 Elpi test_mfix_copy (f3_2).
 
-(* mfix component types must be read in the outer context, 
+(* constr2lp must read all mutual-fixpoint component types in the
+   original outer context, before pushing any self-reference. *)
+Elpi Command test_mfix_constr2lp_outer_ref.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  copy T T1,
+  std.assert-ok! (coq.typecheck T1 _) "copy of mfix under binders is illtyped".
+}}.
+
+Elpi test_mfix_constr2lp_outer_ref
+  (fun (B : Type) (d : B) =>
+     fix f (n : nat) {struct n} : B := d
+     with g (n : nat) {struct n} : B := d
+     for f).
+
+(* mfix component types must be read in the outer context,
    before self-refs are pushed. *)
 Elpi Command test_mfix_outer_ref.
 Elpi Accumulate lp:{{
