@@ -757,6 +757,17 @@ Module TripleMutualMapFromGamma <: TripleMutualMapExpected.
   | gamma1 (a : alpha) (b : beta).
 
   #[only(map)] derive gamma.
+
+  Example alpha_map_computes :
+    alpha_map (alpha1 (beta1 gamma0)) = alpha1 (beta1 gamma0).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example beta_map_computes : beta_map (beta1 gamma0) = beta1 gamma0.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example gamma_map_computes :
+    gamma_map (gamma1 (alpha1 beta0) beta0) = gamma1 (alpha1 beta0) beta0.
+  Proof. vm_compute. reflexivity. Qed.
 End TripleMutualMapFromGamma.
 
 Module TripleMutualEqbFromAlpha <: TripleMutualEqbExpected.
@@ -813,6 +824,19 @@ Module TripleMutualEqbOKFromBeta <: TripleMutualEqbOKExpected.
   | gamma1 (a : alpha) (b : beta).
 
   #[only(eqbOK)] derive beta.
+
+  Example alpha_eqb_computes_equal : alpha_eqb (alpha1 beta0) (alpha1 beta0) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example alpha_eqb_computes_different : alpha_eqb alpha0 (alpha1 beta0) = false.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example beta_eqb_computes_equal : beta_eqb (beta1 gamma0) (beta1 gamma0) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example gamma_eqb_computes_different :
+    gamma_eqb (gamma1 alpha0 beta0) (gamma1 (alpha1 beta0) beta0) = false.
+  Proof. vm_compute. reflexivity. Qed.
 End TripleMutualEqbOKFromBeta.
 
 Module ParametrizedTripleMutualEqbOKFromBeta <: ParametrizedTripleMutualEqbOKExpected.

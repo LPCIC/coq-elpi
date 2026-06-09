@@ -213,7 +213,19 @@ mutual-prefix First Prefix T Prefix :- First = T, !.
 mutual-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
 
 func add-mutual-map-axioms list derive.map.mutual-spec, string, int -> list prop.
-add-mutual-map-axioms [] _ _ [].
+add-mutual-map-axioms [] _ _ [] :- !.
+add-mutual-map-axioms [S|SS] Prefix 0 [map-done GR,Clause|CS] :- !, std.do! [
+  S = derive.map.mutual-spec GR T T Arity _,
+  R = fun `x` T (x\ x),
+  std.assert-ok! (coq.typecheck R Ty) "derive.map generates illtyped mutual identity term",
+  Name is Prefix ^ "map",
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName R Ty @transparent! Funct,
+  mk-clause 0 0 T T Arity [] (global (const Funct)) Clause,
+  coq.elpi.accumulate _ "derive.map.db" (clause _ _ Clause),
+  coq.elpi.accumulate _ "derive.map.db" (clause _ _ (map-done GR)),
+  add-mutual-map-axioms SS Prefix 0 CS
+].
 add-mutual-map-axioms [S|SS] Prefix Lno [map-done GR,Clause|CS] :- std.do! [
   S = derive.map.mutual-spec GR T T Arity _,
   mutual-map-ty 0 Lno S Ty,
