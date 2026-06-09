@@ -623,6 +623,24 @@ let get ?(fail_if_not_exists=false) p =
     let sources_rev = Code.Base { hash = hash_list hash_cunit 0 base; base } in
     {sources_rev; units; signatures; files; dbs}
 
+  let db_depends_on source target =
+    let rec aux seen name =
+      eq_qualified_name name target ||
+      if SLSet.mem name seen then false else
+      match SLMap.find_opt name !db_name_src with
+      | None -> false
+      | Some { dbs; _ } ->
+          let seen = SLSet.add name seen in
+          SLSet.exists (aux seen) dbs
+    in
+    aux SLSet.empty source
+
+  let check_db_dependency_acyclic ~target ~source =
+    if db_depends_on source target then
+      CErrors.user_err Pp.(str "Cannot accumulate Db " ++ pr_qualified_name source ++
+        str " into Db " ++ pr_qualified_name target ++
+        str ": this would create a cyclic Db dependency")
+
   let append_to_db name (src : src) =
     let (code, units, signatures, files, dbs, _) = get_db name in
     let code = Option.get code in
@@ -642,7 +660,7 @@ let get ?(fail_if_not_exists=false) p =
           let units, signatures = add_cunit u units signatures in
           files, units, signatures, dbs, Code.snoc u code
       | DatabaseBody n ->
-        assert (not (eq_qualified_name n name));
+        check_db_dependency_acyclic ~target:name ~source:n;
         files, units, signatures, SLSet.add n dbs, Code.snoc_db Hashtbl.hash n code
     in
     {sources_rev=code; units; signatures; files; dbs}
@@ -1088,10 +1106,11 @@ let asts_from_string ~loc (sloc,s) : EC.scoped_program list =
 
   let accumulate_db_to_db ~loc ~db ~source ~scope =
     handle_elpi_compiler_errors ~loc begin fun () ->
-      if db_exists source then
+      if db_exists source then begin
+        check_db_dependency_acyclic ~target:db ~source;
         let header = header_of_db source |> List.map (fun dast -> DatabaseHeader { dast }) in
         accumulate_to_db' { program = db; code = header @ [DatabaseBody source]; vars = []; scope }
-      else
+      end else
         CErrors.user_err Pp.(str "Db " ++ pr_qualified_name source ++ str" not found")
     end
 
