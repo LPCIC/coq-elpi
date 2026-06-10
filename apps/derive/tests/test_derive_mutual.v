@@ -785,6 +785,18 @@ Module NonRecursiveMutualEqb.
   Proof. vm_compute. reflexivity. Qed.
 End NonRecursiveMutualEqb.
 
+Module ValueParamMutualEqb.
+  Inductive a (n : nat) : Type :=
+  | ak (b0 : b n)
+  with b (n : nat) : Type :=
+  | bk (a0 : a n).
+
+  #[only(eqb)] derive a.
+
+  Definition a_eqb_has_expected_type : forall n m : nat, a n -> a m -> bool := a_eqb.
+  Definition b_eqb_has_expected_type : forall n m : nat, b n -> b m -> bool := b_eqb.
+End ValueParamMutualEqb.
+
 Module MutualEqbCorrect <: MutualEqbCorrectExpected.
   Inductive tree : Type :=
   | node (f : forest)
