@@ -674,16 +674,31 @@ coq.arity->implicits (parameter Id I Ty F) [I|Is] :-
   @pi-parameter Id Ty x\ coq.arity->implicits (F x) Is.
 coq.arity->implicits (arity _) [].
 
-% Get impargs setting from an indt-decl
-func coq.indt-decl->implicits indt-decl -> list implicit_kind, list (list implicit_kind).
-coq.indt-decl->implicits (parameter Id I Ty F) [I|Is] R :-
-  @pi-parameter Id Ty x\ coq.indt-decl->implicits (F x) Is R1,
-  std.map R1 (l\r\r = [I|l]) R.
-coq.indt-decl->implicits (record _ _ _ _) [] [[]].
-coq.indt-decl->implicits (inductive Id _ A Ks) Is R :-
+func coq.constructor-block->implicits list indc-decl -> list (list implicit_kind).
+coq.constructor-block->implicits Ks R :-
+  std.map Ks (c\i\sigma a\ c = constructor _ a, coq.arity->implicits a i) R.
+
+% Get impargs settings from all inductives in an indt-decl, and from their
+% constructor blocks, in declaration order.
+func coq.indt-decl->implicits-all indt-decl -> list (list implicit_kind), list (list (list implicit_kind)).
+coq.indt-decl->implicits-all (parameter Id I Ty F) Inds1 Ks1 :-
+  @pi-parameter Id Ty x\ coq.indt-decl->implicits-all (F x) Inds Ks,
+  std.map Inds (l\r\ r = [I|l]) Inds1,
+  std.map Ks (b\r\ std.map b (l\r\ r = [I|l]) r) Ks1.
+coq.indt-decl->implicits-all (record _ _ _ _) [[]] [[[]]].
+coq.indt-decl->implicits-all (inductive Id _ A Ks) [Is] [R] :-
   coq.arity->implicits A Is,
-  @pi-inductive Id A x\
-    std.map (Ks x) (c\i\sigma a\c = constructor _ a,coq.arity->implicits a i) R.
+  @pi-inductive Id A x\ coq.constructor-block->implicits (Ks x) R.
+coq.indt-decl->implicits-all (minductive Id _ A Rest) [Is|Inds] Ks :-
+  coq.arity->implicits A Is,
+  @pi-inductive Id A x\ coq.indt-decl->implicits-all (Rest x) Inds Ks.
+coq.indt-decl->implicits-all (mblock Ks) [] R :-
+  std.map Ks coq.constructor-block->implicits R.
+
+% Get impargs setting from the first inductive in an indt-decl.
+func coq.indt-decl->implicits indt-decl -> list implicit_kind, list (list implicit_kind).
+coq.indt-decl->implicits D Is Ks :-
+  coq.indt-decl->implicits-all D [Is|_] [Ks|_].
 
 % Check if some implicits are set
 func coq.any-implicit? list implicit_kind ->.
