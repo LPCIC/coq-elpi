@@ -3,6 +3,8 @@
    lives in its own module and is checked against a signature documenting the
    Coq definitions that derivation is expected to add. *)
 From Corelib Require Import BinNums Nat ssrbool.
+From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook_for_mutual_wrapper_test.
+From elpi.apps.derive.elpi Extra Dependency "derive.elpi" as derive_core_for_mutual_wrapper_test.
 From elpi.apps Require Import
   derive
   derive.map
@@ -19,6 +21,34 @@ From elpi.apps Require Import
   derive.eqb
   derive.eqbcorrect
   derive.eqbOK.
+
+Elpi Command derive_mutual_wrapper_test.
+#[synterp] Elpi Accumulate lp:{{
+  main _ :- coq.env.begin-module "wleft" none, coq.env.end-module _.
+}}.
+Elpi Accumulate File derive_hook_for_mutual_wrapper_test.
+Elpi Accumulate File derive_core_for_mutual_wrapper_test.
+Elpi Accumulate lp:{{
+  derivation (indt _) _ ff (derive "noop" (cl\ cl = []) true).
+
+  main _ :-
+    D = (parameter "A" maximal {{ Type }} a\
+      (minductive "wleft" tt (arity {{ Type }}) l\
+      (minductive "wright" tt (arity {{ Type }}) r\
+        (mblock [
+          [constructor "wleftK" (arity {{ lp:a -> lp:l }})],
+          [constructor "wrightK" (arity {{ lp:a -> lp:r }})]
+        ])))),
+    get-option "module" "" ==> derive.decl+main "wleft" D.
+}}.
+
+Module WrapperMutualDeclaration.
+  Elpi derive_mutual_wrapper_test.
+
+  Check wright : Type.
+  Check wleftK 0 : wleft.
+  Check wrightK true : wright.
+End WrapperMutualDeclaration.
 
 Module Type MutualBase.
   Inductive tree : Type :=
