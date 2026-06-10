@@ -897,24 +897,24 @@ Module ParametrizedMutualParam1Congr <: ParametrizedMutualParam1CongrExpected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam1Congr.
 
-Module ParametrizedMutualParam1Trivial.
+Module ParametrizedMutualParam1Trivial <: ParametrizedMutualParam1TrivialExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(param1_trivial)] derive ptree.
+  #[only(param1_trivial)] derive ptree.
 End ParametrizedMutualParam1Trivial.
 
-Module ParametrizedMutualParam1Functor.
+Module ParametrizedMutualParam1Functor <: ParametrizedMutualParam1FunctorExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(param1_functor)] derive ptree.
+  #[only(param1_functor)] derive ptree.
 End ParametrizedMutualParam1Functor.
 
 Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
@@ -948,14 +948,14 @@ Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam2.
 
-Module ParametrizedMutualInduction.
+Module ParametrizedMutualInduction <: ParametrizedMutualInductionExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(induction)] derive ptree.
+  #[only(induction)] derive ptree.
 End ParametrizedMutualInduction.
 
 Module ParametrizedMutualTag <: ParametrizedMutualTagExpected.

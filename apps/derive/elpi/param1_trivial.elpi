@@ -262,10 +262,13 @@ func add-mutual-trivial-consts list derive.param1.trivial.mutual-spec, list deri
 add-mutual-trivial-consts _ [] _ _ _ [].
 add-mutual-trivial-consts All [S|SS] Suffix Lno Focus [Clause,param1-trivial-done (indt GRR)|CS] :- std.do! [
   S = derive.param1.trivial.mutual-spec GRR IsT _,
-  body-mutual-params Lno All Focus R,
-  std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped mutual term",
   Name is {coq.gref->id (indt GRR)} ^ Suffix,
-  coq.env.add-const Name R RT @transparent! Cst,
+  if (Lno > 0)
+     (body-mutual-params-ty Lno S RT,
+      coq.env.add-axiom Name RT Cst)
+     (body-mutual-params Lno All Focus R,
+      std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped mutual term",
+      coq.env.add-const Name R RT @transparent! Cst),
   Clause = (param1-trivial-db IsT (global (const Cst))),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done (indt GRR))),
@@ -286,9 +289,7 @@ main-mutual GRS Suffix Clauses :- std.do! [
   coq.env.indt FirstGRR _ LnoIs Luno _ _ _,
   assert! (LnoIs = Luno) "derive.param1_trivial: Non-uniform parameters not supported",
   mutual-lno GRS FirstGRR Lno,
-  if (Lno > 0)
-     (stop "derive.param1_trivial: parameterized mutual blocks are not supported without axioms")
-     (add-mutual-trivial-consts Specs Specs Suffix Lno 0 Clauses)
+  add-mutual-trivial-consts Specs Specs Suffix Lno 0 Clauses
 ].
 
 func main gref, gref, string -> list prop.
