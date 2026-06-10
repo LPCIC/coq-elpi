@@ -23,7 +23,7 @@ pred config  o:term,            o:term,               o:term,                 o:
 namespace mutual {
 
 func correct-ty eqb.eqType, list term, term -> term.
-correct-ty (eqb.type-param F) PI EQB {{ forall (p : Type) (eqp : p -> p -> bool), eqb_correct eqp -> lp:(R p eqp) }} :- !,
+correct-ty (eqb.type-param F) PI EQB {{ forall (p : Type) (eqp : p -> p -> bool), @eqb_correct p eqp -> lp:(R p eqp) }} :- !,
   @pi-trm `p` {{ Type }} y\p\
   @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
     correct-ty (F y) [p|PI] {coq.mk-app EQB [p,eqp]} (R p eqp).
@@ -36,7 +36,7 @@ correct-ty (eqb.inductive Ind _) PI EQB {{ forall x : lp:I, @eqb_correct_on lp:I
   coq.mk-app (global (indt Ind)) {std.rev PI} I.
 
 func refl-ty eqb.eqType, list term, term -> term.
-refl-ty (eqb.type-param F) PI EQB {{ forall (p : Type) (eqp : p -> p -> bool), eqb_reflexive eqp -> lp:(R p eqp) }} :- !,
+refl-ty (eqb.type-param F) PI EQB {{ forall (p : Type) (eqp : p -> p -> bool), @eqb_reflexive p eqp -> lp:(R p eqp) }} :- !,
   @pi-trm `p` {{ Type }} y\p\
   @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
     refl-ty (F y) [p|PI] {coq.mk-app EQB [p,eqp]} (R p eqp).
@@ -48,11 +48,77 @@ refl-ty (eqb.value-param TY F) PI EQB {{ forall (x y : lp:Ty), lp:(R x y) }} :- 
 refl-ty (eqb.inductive Ind _) PI EQB {{ forall x : lp:I, @eqb_refl_on lp:I lp:EQB x }} :-
   coq.mk-app (global (indt Ind)) {std.rev PI} I.
 
+func aux-ty term, eqb.eqType, list term, list term, term -> term.
+aux-ty Pred_on (eqb.type-param F) PI RealiArgs EQB {{ forall (p : Type) (eqp : p -> p -> bool), lp:(R p eqp) }} :- !,
+  @pi-trm `p` {{ Type }} y\p\
+  @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
+    sigma RealiArgs1\ sigma EQB1\ std.do! [
+      std.append RealiArgs [p,{{ lp:Pred_on lp:p lp:eqp }}] RealiArgs1,
+      coq.mk-app EQB [p,eqp] EQB1,
+      aux-ty Pred_on (F y) [p|PI] RealiArgs1 EQB1 (R p eqp)
+    ].
+aux-ty Pred_on (eqb.value-param TY F) PI RealiArgs EQB {{ forall (x : lp:Ty) (px : lp:TR x), lp:(R x px) }} :- !,
+  feqb.trm->term TY Ty,
+  mk-reali Ty TR,
+  @pi-trm `x` Ty xx\x\
+  @pi-decl `px` {{ lp:TR lp:x }} px\
+    sigma RealiArgs1\ sigma EQB1\ std.do! [
+      std.append RealiArgs [x,px] RealiArgs1,
+      coq.mk-app EQB [x,x] EQB1,
+      aux-ty Pred_on (F xx) [x|PI] RealiArgs1 EQB1 (R x px)
+    ].
+aux-ty Pred_on (eqb.inductive Ind _) PI RealiArgs EQB {{ forall x : lp:I, lp:IRR x -> lp:Pred_on lp:I lp:EQB x }} :-
+  coq.mk-app (global (indt Ind)) {std.rev PI} I,
+  mk-reali (global (indt Ind)) IR,
+  coq.mk-app IR RealiArgs IRR.
+
 func mutual-prefix inductive, string, inductive -> string.
 mutual-prefix First Prefix T Prefix :- First = T, !.
 mutual-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
 
 func add-one list inductive, list eqb.eqType, list term, inductive, string -> list prop.
+add-one _MutualInds _MutualFIs _MutualRealis I Prefix [Clause, ClauseC, ClauseR] :-
+  std.assert! (eqType (indt I) FI) "this inductive is not supported",
+  has-params? FI,
+  !,
+  std.do! [
+  EqbName is Prefix ^ "eqb",
+  coq.locate EqbName (const EqbC),
+  EQB = (global (const EqbC) : term),
+
+  (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+    correct-ty FI [] EQB CTy),
+  std.assert-ok! (coq.typecheck CTy _) "derive.eqbcorrect: mutual correct axiom type is illtyped",
+  CName is Prefix ^ "eqb_correct",
+  coq.ensure-fresh-global-id CName FCName,
+  coq.env.add-axiom FCName CTy Correct,
+
+  (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+    aux-ty {{ @eqb_correct_on }} FI [] [] EQB CTAux),
+  std.assert-ok! (coq.typecheck CTAux _) "derive.eqbcorrect: mutual correct aux axiom type is illtyped",
+  CNameAux is Prefix ^ "eqb_correct_aux",
+  coq.ensure-fresh-global-id CNameAux FCNameAux,
+  coq.env.add-axiom FCNameAux CTAux CorrectAux,
+
+  (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+    refl-ty FI [] EQB RTy),
+  std.assert-ok! (coq.typecheck RTy _) "derive.eqbcorrect: mutual refl axiom type is illtyped",
+  RName is Prefix ^ "eqb_refl",
+  coq.ensure-fresh-global-id RName FRName,
+  coq.env.add-axiom FRName RTy Refl,
+
+  (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+    aux-ty {{ @eqb_refl_on }} FI [] [] EQB RTAux),
+  std.assert-ok! (coq.typecheck RTAux _) "derive.eqbcorrect: mutual refl aux axiom type is illtyped",
+  RNameAux is Prefix ^ "eqb_refl_aux",
+  coq.ensure-fresh-global-id RNameAux FRNameAux,
+  coq.env.add-axiom FRNameAux RTAux ReflAux,
+
+  Clause = eqcorrect-for (indt I) Correct Refl,
+  ClauseC = correct-lemma-for (global (indt I)) (global (const CorrectAux)),
+  ClauseR = refl-lemma-for (global (indt I)) (global (const ReflAux)),
+  std.forall [Clause,ClauseC,ClauseR] (x\coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ x))
+].
 add-one _MutualInds MutualFIs MutualRealis I Prefix [Clause, ClauseC, ClauseR] :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
   std.assert! (induction-db I Indu) "call derive.induction before",
