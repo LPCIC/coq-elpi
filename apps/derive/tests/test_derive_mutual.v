@@ -905,17 +905,14 @@ Module NonRecursiveMutualParam2.
   Check circle_R : shape_R circle circle.
 End NonRecursiveMutualParam2.
 
-Module ValueParamMutualEqb.
+Module ValueParamMutualEqbUnsupported.
   Inductive a (n : nat) : Type :=
   | ak (b0 : b n)
   with b (n : nat) : Type :=
   | bk (a0 : a n).
 
-  #[only(eqb)] derive a.
-
-  Definition a_eqb_has_expected_type : forall n m : nat, a n -> a m -> bool := a_eqb.
-  Definition b_eqb_has_expected_type : forall n m : nat, b n -> b m -> bool := b_eqb.
-End ValueParamMutualEqb.
+  Fail #[only(eqb)] derive a.
+End ValueParamMutualEqbUnsupported.
 
 Module MutualEqbCorrect <: MutualEqbCorrectExpected.
   Inductive tree : Type :=
@@ -1118,25 +1115,25 @@ Module ParametrizedMutualParam1Congr <: ParametrizedMutualParam1CongrExpected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam1Congr.
 
-Module ParametrizedMutualParam1Trivial <: ParametrizedMutualParam1TrivialExpected.
+Module ParametrizedMutualParam1TrivialUnsupported.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(param1_trivial)] derive ptree.
-End ParametrizedMutualParam1Trivial.
+  Fail #[only(param1_trivial)] derive ptree.
+End ParametrizedMutualParam1TrivialUnsupported.
 
-Module ParametrizedMutualParam1Functor <: ParametrizedMutualParam1FunctorExpected.
+Module ParametrizedMutualParam1FunctorUnsupported.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(param1_functor)] derive ptree.
-End ParametrizedMutualParam1Functor.
+  Fail #[only(param1_functor)] derive ptree.
+End ParametrizedMutualParam1FunctorUnsupported.
 
 Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
   Inductive ptree (A : Type) : Type :=
@@ -1169,15 +1166,15 @@ Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam2.
 
-Module ParametrizedMutualInduction <: ParametrizedMutualInductionExpected.
+Module ParametrizedMutualInductionUnsupported.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(induction)] derive ptree.
-End ParametrizedMutualInduction.
+  Fail #[only(induction)] derive ptree.
+End ParametrizedMutualInductionUnsupported.
 
 Module ParametrizedMutualTag <: ParametrizedMutualTagExpected.
   Inductive ptree (A : Type) : Type :=
@@ -1252,25 +1249,25 @@ Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualEqb.
 
-Module ParametrizedMutualEqbCorrect <: ParametrizedMutualEqbCorrectExpected.
+Module ParametrizedMutualEqbCorrectUnsupported.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(eqbcorrect)] derive ptree.
-End ParametrizedMutualEqbCorrect.
+  Fail #[only(eqbcorrect)] derive ptree.
+End ParametrizedMutualEqbCorrectUnsupported.
 
-Module ParametrizedMutualEqbOK <: ParametrizedMutualEqbOKExpected.
+Module ParametrizedMutualEqbOKUnsupported.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  #[only(eqbOK)] derive ptree.
-End ParametrizedMutualEqbOK.
+  Fail #[only(eqbOK)] derive ptree.
+End ParametrizedMutualEqbOKUnsupported.
 
 Module ParametrizedMutualIsK <: ParametrizedMutualIsKExpected.
   Inductive ptree (A : Type) : Type :=
@@ -1443,7 +1440,7 @@ Module TripleMutualEqbOKFromBeta <: TripleMutualEqbOKExpected.
   Proof. vm_compute. reflexivity. Qed.
 End TripleMutualEqbOKFromBeta.
 
-Module ParametrizedTripleMutualEqbOKFromBeta.
+Module ParametrizedTripleMutualEqbOKFromBetaUnsupported.
   Inductive palpha (A : Type) : Type :=
   | palpha0
   | palpha1 (x : A) (b : pbeta A)
@@ -1454,18 +1451,5 @@ Module ParametrizedTripleMutualEqbOKFromBeta.
   | pgamma0
   | pgamma1 (a : palpha A) (b : pbeta A).
 
-  #[only(eqbOK)] derive pbeta.
-
-  Example palpha_eqb_computes_equal :
-    palpha_eqb nat Nat.eqb (palpha1 nat 2 (pbeta0 nat)) (palpha1 nat 2 (pbeta0 nat)) = true.
-  Proof. vm_compute. reflexivity. Qed.
-
-  Example pbeta_eqb_computes_equal :
-    pbeta_eqb nat Nat.eqb (pbeta1 nat (pgamma0 nat)) (pbeta1 nat (pgamma0 nat)) = true.
-  Proof. vm_compute. reflexivity. Qed.
-
-  Example pgamma_eqb_computes_different :
-    pgamma_eqb nat Nat.eqb (pgamma1 nat (palpha0 nat) (pbeta0 nat))
-      (pgamma1 nat (palpha1 nat 3 (pbeta0 nat)) (pbeta0 nat)) = false.
-  Proof. vm_compute. reflexivity. Qed.
-End ParametrizedTripleMutualEqbOKFromBeta.
+  Fail #[only(eqbOK)] derive pbeta.
+End ParametrizedTripleMutualEqbOKFromBetaUnsupported.

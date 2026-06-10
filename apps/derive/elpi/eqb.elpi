@@ -208,47 +208,14 @@ type-param1-eqbf-ty I EqbfTy :-
     coq.mk-app FT [p] (Fields p).
 
 func add-one-param1 inductive, string -> list prop.
-add-one-param1 I Prefix CL :- std.do! [
-  type-param1-eqbf-ty I EqbfTy,
-  Name is Prefix ^ "eqb_fields",
-  coq.ensure-fresh-global-id Name FName,
-  coq.env.add-axiom FName EqbfTy C,
-  EQBF = (global (const C) : term),
-  type-param1-eqb-ty I EqbTy,
-  Name1 is Prefix ^ "eqb",
-  coq.ensure-fresh-global-id Name1 FName1,
-  coq.env.add-axiom FName1 EqbTy C1,
-  EQB = (global (const C1) : term),
-  IHead = global (indt I),
-  CL1 = (pi a ea ela\ eqb-fields (app [IHead, a]) (app [IHead, a]) (app [EQBF, a, ea, ela]) :- [eqb-for a a ea, eqb-for (app [IHead, a]) (app [IHead, a]) ela]),
-  CL2 = (pi a ea\ eqb-for (app [IHead, a]) (app [IHead, a]) (app [EQB, a, ea]) :- [eqb-for a a ea]),
-  CL = [CL1,CL2,eqb-done (indt I)],
-  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ CL1),
-  coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") CL2),
-  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done (indt I)))
-].
+add-one-param1 I _ _ :-
+  coq.error "derive.eqb: mutual eqb generation for this parameterized shape still needs to be implemented" (indt I).
 
 func add-one inductive, string -> list prop.
 add-one I Prefix CL :- eqType (indt I) (eqb.type-param _), coq.env.indt I _ 1 _ _ _ _, !, add-one-param1 I Prefix CL.
-add-one I Prefix CL :- std.do! [
-  std.assert! (eqType (indt I) FI) "this inductive is not supported",
-  eqbf-ty FI FI [] [] EqbfTy,
-  Name is Prefix ^ "eqb_fields",
-  coq.ensure-fresh-global-id Name FName,
-  coq.env.add-axiom FName EqbfTy C,
-  EQBF = (global (const C) : term),
-  eqb-ty FI FI [] [] EqbTy,
-  Name1 is Prefix ^ "eqb",
-  coq.ensure-fresh-global-id Name1 FName1,
-  coq.env.add-axiom FName1 EqbTy C1,
-  EQB = (global (const C1) : term),
-  derive.eqb.eqbf.do-clause FI FI [] [] EQBF [] CL1,
-  derive.eqb.eqb.do-clause FI FI [] [] EQB [] CL2,
-  CL = [CL1,CL2,eqb-done (indt I)],
-  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ CL1),
-  coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") CL2),
-  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done (indt I)))
-].
+add-one I _ _ :-
+  std.assert! (eqType (indt I) _) "this inductive is not supported",
+  coq.error "derive.eqb: mutual eqb generation for this shape still needs to be implemented" (indt I).
 
 func main inductive, list inductive, string -> list prop.
 main _ [] _ [] :- !.

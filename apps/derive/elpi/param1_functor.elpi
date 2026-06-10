@@ -327,8 +327,7 @@ add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- s
   S = derive.param1.functor.mutual-spec GRR T T Arity _,
   Name is {coq.gref->id (indt GRR)} ^ Suffix,
   if (Lno > 0)
-     (body-mutual-params-ty Lno S Rty,
-      coq.env.add-axiom Name Rty Funct)
+     (coq.error "derive.param1_functor: mutual functor generation for parameterized mutual inductives still needs to be implemented" (indt GRR))
      (body-mutual-params Lno All Focus R,
       std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped mutual term",
       coq.env.add-const Name R Rty @transparent! Funct),

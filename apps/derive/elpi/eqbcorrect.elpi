@@ -77,48 +77,11 @@ mutual-prefix First Prefix T Prefix :- First = T, !.
 mutual-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
 
 func add-one list inductive, list eqb.eqType, list term, inductive, string -> list prop.
-add-one _MutualInds _MutualFIs _MutualRealis I Prefix [Clause, ClauseC, ClauseR] :-
+add-one _MutualInds _MutualFIs _MutualRealis I _ _ :-
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
   has-params? FI,
   !,
-  std.do! [
-  EqbName is Prefix ^ "eqb",
-  coq.locate EqbName (const EqbC),
-  EQB = (global (const EqbC) : term),
-
-  (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
-    correct-ty FI [] EQB CTy),
-  std.assert-ok! (coq.typecheck CTy _) "derive.eqbcorrect: mutual correct axiom type is illtyped",
-  CName is Prefix ^ "eqb_correct",
-  coq.ensure-fresh-global-id CName FCName,
-  coq.env.add-axiom FCName CTy Correct,
-
-  (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
-    aux-ty {{ @eqb_correct_on }} FI [] [] EQB CTAux),
-  std.assert-ok! (coq.typecheck CTAux _) "derive.eqbcorrect: mutual correct aux axiom type is illtyped",
-  CNameAux is Prefix ^ "eqb_correct_aux",
-  coq.ensure-fresh-global-id CNameAux FCNameAux,
-  coq.env.add-axiom FCNameAux CTAux CorrectAux,
-
-  (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
-    refl-ty FI [] EQB RTy),
-  std.assert-ok! (coq.typecheck RTy _) "derive.eqbcorrect: mutual refl axiom type is illtyped",
-  RName is Prefix ^ "eqb_refl",
-  coq.ensure-fresh-global-id RName FRName,
-  coq.env.add-axiom FRName RTy Refl,
-
-  (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
-    aux-ty {{ @eqb_refl_on }} FI [] [] EQB RTAux),
-  std.assert-ok! (coq.typecheck RTAux _) "derive.eqbcorrect: mutual refl aux axiom type is illtyped",
-  RNameAux is Prefix ^ "eqb_refl_aux",
-  coq.ensure-fresh-global-id RNameAux FRNameAux,
-  coq.env.add-axiom FRNameAux RTAux ReflAux,
-
-  Clause = eqcorrect-for (indt I) Correct Refl,
-  ClauseC = correct-lemma-for (global (indt I)) (global (const CorrectAux)),
-  ClauseR = refl-lemma-for (global (indt I)) (global (const ReflAux)),
-  std.forall [Clause,ClauseC,ClauseR] (x\coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ x))
-].
+  coq.error "derive.eqbcorrect: mutual correctness/reflexivity proofs for parameterized mutual inductives still need to be implemented" (indt I).
 add-one _MutualInds MutualFIs MutualRealis I Prefix [Clause, ClauseC, ClauseR] :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
   std.assert! (induction-db I Indu) "call derive.induction before",
