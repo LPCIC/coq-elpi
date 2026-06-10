@@ -421,8 +421,7 @@ dispatch-mutual-do Raws NewGRs LnoR Clauses :- std.do! [
 :index (1)
 func dispatch gref, string -> list prop.
 
-dispatch (indt GR) Suffix Clauses :- coq.env.indt-decl GR Decl, mutual-ids Decl IDs, std.length IDs N, N > 1, !, std.do! [
-  std.map IDs id->indt GRS,
+dispatch (indt GR) Suffix Clauses :- coq.env.mutual-inductives GR GRS, std.length GRS N, N > 1, !, std.do! [
   map GRS (raw-mutual-spec Suffix) Raws,
   Raws = [FirstRaw|_],
   raw-mutual-spec-lno FirstRaw Lno,
