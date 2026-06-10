@@ -264,8 +264,7 @@ add-mutual-trivial-consts All [S|SS] Suffix Lno Focus [Clause,param1-trivial-don
   S = derive.param1.trivial.mutual-spec GRR IsT _,
   Name is {coq.gref->id (indt GRR)} ^ Suffix,
   if (Lno > 0)
-     (body-mutual-params-ty Lno S RT,
-      coq.env.add-axiom Name RT Cst)
+     (coq.error "derive.param1_trivial: mutual triviality generation for parameterized mutual inductives still needs to be implemented" (indt GRR))
      (body-mutual-params Lno All Focus R,
       std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped mutual term",
       coq.env.add-const Name R RT @transparent! Cst),
