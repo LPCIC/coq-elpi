@@ -132,7 +132,7 @@ main (indt I) Prefix CLs :- std.do! [
   std.assert-ok! (coq.typecheck R Ty) "derive.eqbcorrect: common/correct generates ill typed term", 
   Name is Prefix ^ "eqb_correct",
   coq.ensure-fresh-global-id Name FName,
-  coq.env.add-const FName R Ty @opaque! Correct,
+  coq.env.add-const FName R Ty @transparent! Correct,
 
   if (has-params? FI) (
 
@@ -142,7 +142,7 @@ main (indt I) Prefix CLs :- std.do! [
     std.assert-ok! (coq.typecheck Rx Tyx) "derive.eqbcorrect: common-aux/corect generates ill typed term", 
     Namex is Prefix ^ "eqb_correct_aux",
     coq.ensure-fresh-global-id Namex FNamex,
-    coq.env.add-const FNamex Rx Tyx @opaque! Correctx,
+    coq.env.add-const FNamex Rx Tyx @transparent! Correctx,
     CL_CORRECT = [correct-lemma-for (global (indt I)) (global (const Correctx))]
 
   ) (CL_CORRECT = [correct-lemma-for (global (indt I)) (global (const Correct))]),
@@ -155,7 +155,7 @@ main (indt I) Prefix CLs :- std.do! [
   std.assert-ok! (coq.typecheck Rr Tyr) "derive.eqbcorrect: common/refl generates ill typed term", 
   Namer is Prefix ^ "eqb_refl",
   coq.ensure-fresh-global-id Namer FNamer,
-  coq.env.add-const FNamer Rr Tyr @opaque! Refl,
+  coq.env.add-const FNamer Rr Tyr @transparent! Refl,
 
   if (has-params? FI) (
 
@@ -165,7 +165,7 @@ main (indt I) Prefix CLs :- std.do! [
     std.assert-ok! (coq.typecheck Rrx Tyrx) "derive.eqbcorrect: common-aux/refl generates ill typed term", 
     Namerx is Prefix ^ "eqb_refl_aux",
     coq.ensure-fresh-global-id Namerx FNamerx,
-    coq.env.add-const FNamerx Rrx Tyrx @opaque! Reflx,
+    coq.env.add-const FNamerx Rrx Tyrx @transparent! Reflx,
     CL_REFL = [refl-lemma-for (global (indt I)) (global (const Reflx))]
 
   ) (CL_REFL = [refl-lemma-for (global (indt I)) (global (const Refl))]),
