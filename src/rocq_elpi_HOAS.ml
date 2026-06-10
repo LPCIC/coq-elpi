@@ -2354,6 +2354,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       (* mkFix's types live in outer_ctx (no self-refs); bodies use extended ctx. *)
       let outer_ctx = coq_ctx in
       let focus_idx = lp2int ~depth ~ctx:"mfix focus" focus_lp in
+      let top_rno = lp2int ~depth ~ctx:"mfix rno" rno in
       let rec collect_ty ~depth state coq_ctx node defs gls_acc =
         match E.look ~depth node with
         | E.App(c2,name_lp,[rno_lp; ty_lp; rest_lam]) when mfix_tyc == c2 ->
@@ -2378,6 +2379,10 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         let n = List.length defs in
         if focus_idx < 0 || focus_idx >= n then
           err Pp.(str"mfix: focus index out of range: " ++ int focus_idx);
+        let _, focus_rno, _ = List.nth defs focus_idx in
+        if top_rno <> focus_rno then
+          err Pp.(str"mfix: top-level rno " ++ int top_rno ++
+                  str" does not match focused component rno " ++ int focus_rno);
         let body_list = U.lp_list_to_list ~depth bodies_lp in
         if List.length body_list <> n then
           err Pp.(str"mfix: expected " ++ int n ++ str" bodies, got " ++

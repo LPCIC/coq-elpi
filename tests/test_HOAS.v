@@ -791,6 +791,24 @@ main _ :-
 
 Elpi test_mfix_outer_ref.
 
+(* lp2constr must reject a mfix whose top-level recarg disagrees with
+   the focused component's recarg.  Elpi reduction reads the top-level
+   recarg, while Coq fixpoints store recargs per component. *)
+Elpi Command test_mfix_bad_top_rno.
+Elpi Accumulate lp:{{
+main _ :-
+  T = mfix 0 1
+        (mfix-ty `f` 0 (prod `n` {{ nat }} (_\ {{ nat }})) (fv\
+          mfix-ty `g` 0 (prod `n` {{ nat }} (_\ {{ nat }})) (gv\
+            mfix-bo [
+              fun `n` {{ nat }} (_\ {{ O }}),
+              fun `n` {{ nat }} (_\ {{ O }})
+            ]))),
+  coq.typecheck T _ ok.
+}}.
+
+Fail Elpi test_mfix_bad_top_rno.
+
 Elpi Query lp:{{
 
   @pi-decl `x` {{nat}} x\ sigma Term Stack Reduct\
