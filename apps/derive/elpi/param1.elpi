@@ -160,11 +160,6 @@ prefix-indc Prefix K (pr K FNewName) :-
   NewName is Prefix ^ Name,
   coq.ensure-fresh-global-id NewName FNewName.
 
-func mutual-indt-decl indt-decl ->.
-mutual-indt-decl (parameter ID _ Ty F) :- !,
-  @pi-parameter ID Ty x\ mutual-indt-decl (F x).
-mutual-indt-decl (minductive _ _ _ _).
-
 func mutual-ids indt-decl -> list id.
 mutual-ids (parameter ID _ Ty F) IDs :- !,
   @pi-parameter ID Ty x\ mutual-ids (F x) IDs.
@@ -269,8 +264,7 @@ dispatch-mutual-do Raws NewGRs Clauses :- std.do! [
   Clauses = Clauses1
 ].
 
-dispatch (indt GR) Prefix Clauses :- coq.env.recursive? GR, coq.env.indt-decl GR Decl, mutual-indt-decl Decl, !, do! [
-  mutual-ids Decl IDs,
+dispatch (indt GR) Prefix Clauses :- coq.env.indt-decl GR Decl, mutual-ids Decl IDs, std.length IDs N, N > 1, !, do! [
   map IDs id->indt GRS,
   map GRS (raw-mutual-spec Prefix) Raws,
   Raws = [FirstRaw|_],
