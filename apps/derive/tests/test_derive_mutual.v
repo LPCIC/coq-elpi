@@ -1252,24 +1252,24 @@ Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualEqb.
 
-Module ParametrizedMutualEqbCorrect.
+Module ParametrizedMutualEqbCorrect <: ParametrizedMutualEqbCorrectExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(eqbcorrect)] derive ptree.
+  #[only(eqbcorrect)] derive ptree.
 End ParametrizedMutualEqbCorrect.
 
-Module ParametrizedMutualEqbOK.
+Module ParametrizedMutualEqbOK <: ParametrizedMutualEqbOKExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(eqbOK)] derive ptree.
+  #[only(eqbOK)] derive ptree.
 End ParametrizedMutualEqbOK.
 
 Module ParametrizedMutualIsK <: ParametrizedMutualIsKExpected.
@@ -1454,5 +1454,18 @@ Module ParametrizedTripleMutualEqbOKFromBeta.
   | pgamma0
   | pgamma1 (a : palpha A) (b : pbeta A).
 
-  Fail #[only(eqbOK)] derive pbeta.
+  #[only(eqbOK)] derive pbeta.
+
+  Example palpha_eqb_computes_equal :
+    palpha_eqb nat Nat.eqb (palpha1 nat 2 (pbeta0 nat)) (palpha1 nat 2 (pbeta0 nat)) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pbeta_eqb_computes_equal :
+    pbeta_eqb nat Nat.eqb (pbeta1 nat (pgamma0 nat)) (pbeta1 nat (pgamma0 nat)) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pgamma_eqb_computes_different :
+    pgamma_eqb nat Nat.eqb (pgamma1 nat (palpha0 nat) (pbeta0 nat))
+      (pgamma1 nat (palpha1 nat 3 (pbeta0 nat)) (pbeta0 nat)) = false.
+  Proof. vm_compute. reflexivity. Qed.
 End ParametrizedTripleMutualEqbOKFromBeta.

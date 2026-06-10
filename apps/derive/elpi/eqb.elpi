@@ -27,7 +27,9 @@ derive.eqb.main (indt I) Prefix CL :- std.do! [
   derive.eqb.eqbf.do-clause FI FI [] [] EQBF [] CL1,
   derive.eqb.eqb.do-clause FI FI [] [] EQB [] CL2,
   CL = [CL1,CL2,eqb-done (indt I)],
-  std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ x)),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ CL1),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") CL2),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done (indt I))),
 ].
 derive.eqb.main (const C) Prefix CL :- std.do! [
   coq.env.const C (some T) _,
@@ -156,7 +158,7 @@ add-mutual-eqb-consts Selected All [S|SS] Prefix Focus [pr I C|Cs] [Clause, eqb-
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName R Ty @transparent! C,
   derive.eqb.eqb.do-clause FI FI [] [] (global (const C)) [] Clause,
-  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ Clause),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") Clause),
   coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done (indt I))),
   Focus1 is Focus + 1,
   add-mutual-eqb-consts Selected All SS Prefix Focus1 Cs CLs
@@ -221,7 +223,9 @@ add-one-param1 I Prefix CL :- std.do! [
   CL1 = (pi a ea ela\ eqb-fields (app [IHead, a]) (app [IHead, a]) (app [EQBF, a, ea, ela]) :- [eqb-for a a ea, eqb-for (app [IHead, a]) (app [IHead, a]) ela]),
   CL2 = (pi a ea\ eqb-for (app [IHead, a]) (app [IHead, a]) (app [EQB, a, ea]) :- [eqb-for a a ea]),
   CL = [CL1,CL2,eqb-done (indt I)],
-  std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ x))
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ CL1),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") CL2),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done (indt I)))
 ].
 
 func add-one inductive, string -> list prop.
@@ -241,7 +245,9 @@ add-one I Prefix CL :- std.do! [
   derive.eqb.eqbf.do-clause FI FI [] [] EQBF [] CL1,
   derive.eqb.eqb.do-clause FI FI [] [] EQB [] CL2,
   CL = [CL1,CL2,eqb-done (indt I)],
-  std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ x))
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ CL1),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") CL2),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done (indt I)))
 ].
 
 func main inductive, list inductive, string -> list prop.
