@@ -762,6 +762,29 @@ Module MutualEqb <: MutualEqbExpected.
   Proof. vm_compute. reflexivity. Qed.
 End MutualEqb.
 
+Module NonRecursiveMutualEqb.
+  Inductive color : Type :=
+  | red
+  | blue
+  with shape : Type :=
+  | circle
+  | square.
+
+  #[only(eqb)] derive color.
+
+  Example color_eqb_computes_equal : color_eqb red red = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example color_eqb_computes_different : color_eqb red blue = false.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example shape_eqb_computes_equal : shape_eqb circle circle = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example shape_eqb_computes_different : shape_eqb circle square = false.
+  Proof. vm_compute. reflexivity. Qed.
+End NonRecursiveMutualEqb.
+
 Module MutualEqbCorrect <: MutualEqbCorrectExpected.
   Inductive tree : Type :=
   | node (f : forest)

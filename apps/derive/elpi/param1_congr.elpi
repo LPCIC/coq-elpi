@@ -49,13 +49,16 @@ main-k Prefix Lno K KT Clause :- do! [
   Clause = param1-congr-db K (global (const Cst))
 ].
 
-func mutual-indt-decl indt-decl ->.
-mutual-indt-decl (parameter ID _ Ty F) :- !,
-  @pi-parameter ID Ty x\ mutual-indt-decl (F x).
-mutual-indt-decl (minductive _ _ _ _).
+func mutual-indt-count indt-decl -> int.
+mutual-indt-count (parameter ID _ Ty F) N :- !,
+  @pi-parameter ID Ty x\ mutual-indt-count (F x) N.
+mutual-indt-count (minductive ID _ Arity Rest) N :- !,
+  @pi-inductive ID Arity i\ mutual-indt-count (Rest i) M,
+  N is M + 1.
+mutual-indt-count (mblock _) 0.
 
 func mutual-inductive inductive ->.
-mutual-inductive I :- coq.env.recursive? I, coq.env.indt-decl I D, mutual-indt-decl D.
+mutual-inductive I :- coq.env.indt-decl I D, mutual-indt-count D N, N > 1.
 
 func translated-lno gref, gref -> int.
 translated-lno (indt _Orig) (indt IsGR) Lno :-

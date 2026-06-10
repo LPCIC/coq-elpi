@@ -9,20 +9,18 @@ exists-indc I P :-
   coq.env.indt I _ _ _ _ KL _,
   std.exists! KL P.
 
-func mutual-indt-decl indt-decl ->.
-mutual-indt-decl (parameter ID _ Ty F) :- !,
-  @pi-parameter ID Ty x\ mutual-indt-decl (F x).
-mutual-indt-decl (minductive _ _ _ _).
-
-func mutual-inductive inductive ->.
-mutual-inductive I :- coq.env.recursive? I, coq.env.indt-decl I D, mutual-indt-decl D.
-
 func mutual-ids indt-decl -> list id.
 mutual-ids (parameter ID _ Ty F) IDs :- !,
   @pi-parameter ID Ty x\ mutual-ids (F x) IDs.
 mutual-ids (minductive ID _ Arity Rest) [ID|IDs] :- !,
   @pi-inductive ID Arity i\ mutual-ids (Rest i) IDs.
 mutual-ids (mblock _) [].
+
+func mutual-indt-decl indt-decl ->.
+mutual-indt-decl D :- mutual-ids D IDs, std.length IDs N, N > 1.
+
+func mutual-inductive inductive ->.
+mutual-inductive I :- coq.env.indt-decl I D, mutual-indt-decl D.
 
 func id->indt id -> inductive.
 id->indt ID GR :- coq.locate ID (indt GR).
