@@ -74,6 +74,8 @@ namespace tc {
       coq.env.const R O Ty,
       coq.safe-dest-app Ty _ TyAg,
       proj-reducer-aux R P N O TyAg T.
+    proj-reducer P _ Ag X T :- name X, !, build-proj-term P Ag X T.
+
     % proj-reducer P _ Ag R T :- build-proj-term P Ag R T.
 
 
