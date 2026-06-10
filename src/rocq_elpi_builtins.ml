@@ -2151,6 +2151,15 @@ Supported attributes:
      state, !: (fst i, uinst, mind, (i_impls,k_impls)), extra_goals)),
   DocNext);
 
+  MLCode(Pred("coq.env.mutual-inductives",
+    In(inductive, "reference to an inductive type",
+    Out(list inductive, "Inductives",
+    Read(global, "lists all inductive types in the same mutual block, in declaration order"))),
+  (fun i _ ~depth { env } _ _state ->
+     let mind, _indbo = lookup_inductive env i in
+     !: CList.(init (Array.length Declarations.(mind.mind_packets)) (fun k -> fst i, k)))),
+  DocAbove);
+
   MLCode(Pred("coq.env.indc->indt",
     In(constructor,"K",
     Out(inductive,"I",

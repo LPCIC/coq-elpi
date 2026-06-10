@@ -49,6 +49,8 @@ Requires Elpi 3.7.1 and Rocq 9.0, 9.1 or 9.2.
 - New argument `const-decl` can now be introduces by the `Lemma` keyword,
   and not just by `Definition`.
 - New `coq.scheme` to query registered schemes
+- New `coq.env.mutual-inductives` to list the inductive types in the same
+  mutual block without reifying the full inductive declaration
 
 
 # [3.3.1] 12/03/2026

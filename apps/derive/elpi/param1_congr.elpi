@@ -58,7 +58,7 @@ mutual-indt-count (minductive ID _ Arity Rest) N :- !,
 mutual-indt-count (mblock _) 0.
 
 func mutual-inductive inductive ->.
-mutual-inductive I :- coq.env.indt-decl I D, mutual-indt-count D N, N > 1.
+mutual-inductive I :- coq.env.mutual-inductives I GRS, std.length GRS N, N > 1.
 
 func translated-lno gref, gref -> int.
 translated-lno (indt _Orig) (indt IsGR) Lno :-

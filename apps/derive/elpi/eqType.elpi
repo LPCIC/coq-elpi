@@ -4,15 +4,9 @@
 
 namespace derive.eqType.ast {
 
-func mutual-indt-decl indt-decl ->.
-mutual-indt-decl (parameter ID _ Ty F) :- !,
-  @pi-parameter ID Ty x\ mutual-indt-decl (F x).
-mutual-indt-decl (minductive _ _ _ _).
-
 func translate-indt inductive -> eqb.eqType, diagnostic.
 translate-indt I O D :-
-  coq.env.indt-decl I Decl,
-  mutual-indt-decl Decl, !,
+  coq.env.mutual-inductives I GRS, std.length GRS N, N > 1, !,
   coq.env.indt I _ Lno _ Arity KN KT,
   translate-param-arity Lno Arity I KN KT O D.
 translate-indt I O D :-

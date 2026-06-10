@@ -264,8 +264,7 @@ dispatch-mutual-do Raws NewGRs Clauses :- std.do! [
   Clauses = Clauses1
 ].
 
-dispatch (indt GR) Prefix Clauses :- coq.env.indt-decl GR Decl, mutual-ids Decl IDs, std.length IDs N, N > 1, !, do! [
-  map IDs id->indt GRS,
+dispatch (indt GR) Prefix Clauses :- coq.env.mutual-inductives GR GRS, std.length GRS N, N > 1, !, do! [
   map GRS (raw-mutual-spec Prefix) Raws,
   Raws = [FirstRaw|_],
   raw-mutual-spec-lno FirstRaw Lno,

@@ -20,13 +20,13 @@ func mutual-indt-decl indt-decl ->.
 mutual-indt-decl D :- mutual-ids D IDs, std.length IDs N, N > 1.
 
 func mutual-inductive inductive ->.
-mutual-inductive I :- coq.env.indt-decl I D, mutual-indt-decl D.
+mutual-inductive I :- coq.env.mutual-inductives I GRS, std.length GRS N, N > 1.
 
 func id->indt id -> inductive.
 id->indt ID GR :- coq.locate ID (indt GR).
 
 func mutual-inductives inductive -> list inductive.
-mutual-inductives I GRS :- coq.env.indt-decl I D, mutual-ids D IDs, std.map IDs id->indt GRS.
+mutual-inductives I GRS :- coq.env.mutual-inductives I GRS.
 
 func if-verbose (func) ->.
 if-verbose P :- (get-option "verbose" tt ; get-option "recursive" tt), !, P.
