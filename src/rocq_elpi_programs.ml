@@ -1050,9 +1050,7 @@ kind upoly-decl-cumul type.
       Rocq_elpi_builtins_synterp.coq_synterp_builtins
     end
 
-let warn_mul_paths =
-  CWarnings.create_category ~from:[ elpi_cat ] ~name:"elpi.multiple-paths-cat" ()
-let warn_mul_paths = CWarnings.create ~name:"elpi.multiple-paths" ~category:warn_mul_paths (fun x -> x)
+let warn_mul_paths = CWarnings.create ~name:"elpi.multiple-paths" (fun x -> x)
 
 
 let resolve_file_path ~must_exist ~allow_absolute ~only_elpi file =
