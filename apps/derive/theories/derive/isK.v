@@ -49,7 +49,18 @@ Elpi Accumulate derive File isK.
 }}.
 
 Elpi Accumulate derive lp:{{
+
+func derive.isK.prefix inductive, string, inductive -> string.
+derive.isK.prefix First Prefix T Prefix :- First = T, !.
+derive.isK.prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+func derive.isK.derive-main inductive, string -> list prop.
+derive.isK.derive-main T Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p n\ derive.isK.prefix T Prefix t p, n is p ^ "isk_", derive.isK.main t n c) CS,
+  std.flatten CS C.
+derive.isK.derive-main T Prefix C :- N is Prefix ^ "isk_", derive.isK.main T N C.
   
-derivation (indt T) Prefix ff (derive "isK" (derive.isK.main T N) (derive.exists-indc T (K\ isK-db K _))) :- N is Prefix ^ "isk_".
+derivation (indt T) Prefix ff (derive "isK" (derive.isK.derive-main T Prefix) (derive.exists-indc T (K\ isK-db K _))).
 
 }}.

@@ -69,7 +69,18 @@ dep1 "bcongr" "projK".
 }}.
 
 Elpi Accumulate derive lp:{{
+
+func derive.bcongr.prefix inductive, string, inductive -> string.
+derive.bcongr.prefix First Prefix T Prefix :- First = T, !.
+derive.bcongr.prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+func derive.bcongr.derive-main inductive, string -> list prop.
+derive.bcongr.derive-main T Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p\ derive.bcongr.prefix T Prefix t p, derive.bcongr.main t p c) CS,
+  std.flatten CS C.
+derive.bcongr.derive-main T Prefix C :- derive.bcongr.main T Prefix C.
   
-derivation (indt T) N ff (derive "bcongr" (derive.bcongr.main T N) (derive.exists-indc T (K\bcongr-db K _))).
+derivation (indt T) N ff (derive "bcongr" (derive.bcongr.derive-main T N) (derive.exists-indc T (K\bcongr-db K _))).
 
 }}.

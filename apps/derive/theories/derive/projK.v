@@ -48,7 +48,18 @@ Elpi Accumulate derive File projK.
 }}.
 
 Elpi Accumulate derive lp:{{
+
+func derive.projK.prefix inductive, string, inductive -> string.
+derive.projK.prefix First Prefix T Prefix :- First = T, !.
+derive.projK.prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+func derive.projK.derive-main inductive, string -> list prop.
+derive.projK.derive-main T Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p n\ derive.projK.prefix T Prefix t p, n is p ^ "getk_", derive.projK.main t n c) CS,
+  std.flatten CS C.
+derive.projK.derive-main T Prefix C :- N is Prefix ^ "getk_", derive.projK.main T N C.
   
-derivation (indt T) Prefix ff (derive "projK" (derive.projK.main T N) (derive.exists-indc T (K\ projK-db K _ _))) :- N is Prefix ^ "getk_".
+derivation (indt T) Prefix ff (derive "projK" (derive.projK.derive-main T Prefix) (derive.exists-indc T (K\ projK-db K _ _))).
 
 }}.
