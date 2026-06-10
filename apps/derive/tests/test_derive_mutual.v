@@ -1657,6 +1657,334 @@ Module Type ParametrizedMutualParam1CongrExpected.
   end.
 End ParametrizedMutualParam1CongrExpected.
 
+Module Type ParametrizedMutualParam1FunctorExpected.
+  Include ParametrizedMutualParam1Expected.
+  Definition is_ptree_functor : forall (A : Type) (PA PB : A -> Type),
+       (forall x : A, PA x -> PB x) ->
+       forall x : ptree A, is_ptree A PA x -> is_ptree A PB x :=
+  fun (A : Type) (PA PB : A -> Type) (f : forall x : A, PA x -> PB x)
+      (x : ptree A) (H : is_ptree A PA x) =>
+  (fix is_ptree_functor_rec (A0 : Type) (PA0 : A0 -> Type)
+       (x : ptree A0) (Hx : is_ptree A0 PA0 x) {struct Hx} :
+       forall PB0 : A0 -> Type,
+       (forall x : A0, PA0 x -> PB0 x) -> is_ptree A0 PB0 x :=
+     match Hx in is_ptree A1 PA1 x0 return
+       forall PB1 : A1 -> Type,
+       (forall x : A1, PA1 x -> PB1 x) -> is_ptree A1 PB1 x0 with
+     | is_pnode A1 PA1 x0 Px p Pf =>
+         fun PB1 f1 => is_pnode A1 PB1 x0 (f1 x0 Px) p
+           (is_pforest_functor_rec A1 PA1 p Pf PB1 f1)
+     end
+   with is_pforest_functor_rec (A0 : Type) (PA0 : A0 -> Type)
+       (x : pforest A0) (Hx : is_pforest A0 PA0 x) {struct Hx} :
+       forall PB0 : A0 -> Type,
+       (forall x : A0, PA0 x -> PB0 x) -> is_pforest A0 PB0 x :=
+     match Hx in is_pforest A1 PA1 x0 return
+       forall PB1 : A1 -> Type,
+       (forall x : A1, PA1 x -> PB1 x) -> is_pforest A1 PB1 x0 with
+     | is_pempty A1 PA1 => fun PB1 _ => is_pempty A1 PB1
+     | is_pcons A1 PA1 t Pt p Pf =>
+         fun PB1 f1 => is_pcons A1 PB1 t
+           (is_ptree_functor_rec A1 PA1 t Pt PB1 f1) p
+           (is_pforest_functor_rec A1 PA1 p Pf PB1 f1)
+     end
+   for is_ptree_functor_rec) A PA x H PB f.
+  Definition is_pforest_functor : forall (A : Type) (PA PB : A -> Type),
+       (forall x : A, PA x -> PB x) ->
+       forall x : pforest A, is_pforest A PA x -> is_pforest A PB x :=
+  fun (A : Type) (PA PB : A -> Type) (f : forall x : A, PA x -> PB x)
+      (x : pforest A) (H : is_pforest A PA x) =>
+  (fix is_ptree_functor_rec (A0 : Type) (PA0 : A0 -> Type)
+       (x : ptree A0) (Hx : is_ptree A0 PA0 x) {struct Hx} :
+       forall PB0 : A0 -> Type,
+       (forall x : A0, PA0 x -> PB0 x) -> is_ptree A0 PB0 x :=
+     match Hx in is_ptree A1 PA1 x0 return
+       forall PB1 : A1 -> Type,
+       (forall x : A1, PA1 x -> PB1 x) -> is_ptree A1 PB1 x0 with
+     | is_pnode A1 PA1 x0 Px p Pf =>
+         fun PB1 f1 => is_pnode A1 PB1 x0 (f1 x0 Px) p
+           (is_pforest_functor_rec A1 PA1 p Pf PB1 f1)
+     end
+   with is_pforest_functor_rec (A0 : Type) (PA0 : A0 -> Type)
+       (x : pforest A0) (Hx : is_pforest A0 PA0 x) {struct Hx} :
+       forall PB0 : A0 -> Type,
+       (forall x : A0, PA0 x -> PB0 x) -> is_pforest A0 PB0 x :=
+     match Hx in is_pforest A1 PA1 x0 return
+       forall PB1 : A1 -> Type,
+       (forall x : A1, PA1 x -> PB1 x) -> is_pforest A1 PB1 x0 with
+     | is_pempty A1 PA1 => fun PB1 _ => is_pempty A1 PB1
+     | is_pcons A1 PA1 t Pt p Pf =>
+         fun PB1 f1 => is_pcons A1 PB1 t
+           (is_ptree_functor_rec A1 PA1 t Pt PB1 f1) p
+           (is_pforest_functor_rec A1 PA1 p Pf PB1 f1)
+     end
+   for is_pforest_functor_rec) A PA x H PB f.
+End ParametrizedMutualParam1FunctorExpected.
+
+Module Type ParametrizedMutualParam1TrivialExpected.
+  Include ParametrizedMutualParam1CongrExpected.
+  Definition is_ptree_inhab : forall (A : Type) (PA : A -> Type),
+       param1.trivial A PA -> forall x : ptree A, is_ptree A PA x :=
+  fun (A : Type) (PA : A -> Type) (HPA : param1.trivial A PA)
+      (x : ptree A) =>
+  (fix is_ptree_inhab_rec (A0 : Type) (x : ptree A0) {struct x} :
+       forall PA0 : A0 -> Type, param1.trivial A0 PA0 -> is_ptree A0 PA0 x :=
+     match x return forall PA1 : A0 -> Type,
+       param1.trivial A0 PA1 -> is_ptree A0 PA1 x with
+     | pnode _ x0 f => fun PA1 HPA1 =>
+         is_pnode A0 PA1 x0 (param1.trivial_full A0 PA1 HPA1 x0) f
+           (is_pforest_inhab_rec A0 f PA1 HPA1)
+     end
+   with is_pforest_inhab_rec (A0 : Type) (x : pforest A0) {struct x} :
+       forall PA0 : A0 -> Type, param1.trivial A0 PA0 -> is_pforest A0 PA0 x :=
+     match x return forall PA1 : A0 -> Type,
+       param1.trivial A0 PA1 -> is_pforest A0 PA1 x with
+     | pempty _ => fun PA1 _ => is_pempty A0 PA1
+     | pcons _ t f => fun PA1 HPA1 =>
+         is_pcons A0 PA1 t (is_ptree_inhab_rec A0 t PA1 HPA1) f
+           (is_pforest_inhab_rec A0 f PA1 HPA1)
+     end
+   for is_ptree_inhab_rec) A x PA HPA.
+  Definition is_pforest_inhab : forall (A : Type) (PA : A -> Type),
+       param1.trivial A PA -> forall x : pforest A, is_pforest A PA x :=
+  fun (A : Type) (PA : A -> Type) (HPA : param1.trivial A PA)
+      (x : pforest A) =>
+  (fix is_ptree_inhab_rec (A0 : Type) (x : ptree A0) {struct x} :
+       forall PA0 : A0 -> Type, param1.trivial A0 PA0 -> is_ptree A0 PA0 x :=
+     match x return forall PA1 : A0 -> Type,
+       param1.trivial A0 PA1 -> is_ptree A0 PA1 x with
+     | pnode _ x0 f => fun PA1 HPA1 =>
+         is_pnode A0 PA1 x0 (param1.trivial_full A0 PA1 HPA1 x0) f
+           (is_pforest_inhab_rec A0 f PA1 HPA1)
+     end
+   with is_pforest_inhab_rec (A0 : Type) (x : pforest A0) {struct x} :
+       forall PA0 : A0 -> Type, param1.trivial A0 PA0 -> is_pforest A0 PA0 x :=
+     match x return forall PA1 : A0 -> Type,
+       param1.trivial A0 PA1 -> is_pforest A0 PA1 x with
+     | pempty _ => fun PA1 _ => is_pempty A0 PA1
+     | pcons _ t f => fun PA1 HPA1 =>
+         is_pcons A0 PA1 t (is_ptree_inhab_rec A0 t PA1 HPA1) f
+           (is_pforest_inhab_rec A0 f PA1 HPA1)
+     end
+   for is_pforest_inhab_rec) A x PA HPA.
+  Definition is_ptree_trivial : forall (A : Type) (PA : A -> Type),
+       param1.trivial A PA ->
+       forall x : ptree A,
+       {u : is_ptree A PA x & forall v : is_ptree A PA x, u = v} :=
+  fun (A : Type) (PA : A -> Type) (HPA : param1.trivial A PA) (x : ptree A) =>
+    param1.contracts (ptree A) (is_ptree A PA) x (is_ptree_inhab A PA HPA x)
+      ((fix is_ptree_trivial_rec (A0 : Type) (PA0 : A0 -> Type)
+            (HPA0 : param1.trivial A0 PA0) (x0 : ptree A0)
+            (y : is_ptree A0 PA0 x0) {struct y} :
+            is_ptree_inhab A0 PA0 HPA0 x0 = y :=
+          match y in is_ptree A1 PA1 x1 return
+            forall HPA1 : param1.trivial A1 PA1,
+            is_ptree_inhab A1 PA1 HPA1 x1 = y with
+          | is_pnode A1 PA1 x1 Px f Pf =>
+              fun HPA1 =>
+              match param1.trivial_uniq A1 PA1 HPA1 x1 Px in _ = Px' return
+                is_pnode A1 PA1 x1 (param1.trivial_full A1 PA1 HPA1 x1) f
+                  (is_pforest_inhab A1 PA1 HPA1 f) =
+                is_pnode A1 PA1 x1 Px' f Pf with
+              | eq_refl =>
+                  match is_pforest_trivial_rec A1 PA1 HPA1 f Pf in _ = Pf' return
+                    is_pnode A1 PA1 x1 (param1.trivial_full A1 PA1 HPA1 x1) f
+                      (is_pforest_inhab A1 PA1 HPA1 f) =
+                    is_pnode A1 PA1 x1 (param1.trivial_full A1 PA1 HPA1 x1) f Pf' with
+                  | eq_refl => eq_refl
+                  end
+              end
+          end HPA0
+        with is_pforest_trivial_rec (A0 : Type) (PA0 : A0 -> Type)
+            (HPA0 : param1.trivial A0 PA0) (x0 : pforest A0)
+            (y : is_pforest A0 PA0 x0) {struct y} :
+            is_pforest_inhab A0 PA0 HPA0 x0 = y :=
+          match y in is_pforest A1 PA1 x1 return
+            forall HPA1 : param1.trivial A1 PA1,
+            is_pforest_inhab A1 PA1 HPA1 x1 = y with
+          | is_pempty A1 PA1 => fun _ => eq_refl
+          | is_pcons A1 PA1 t Pt f Pf =>
+              fun HPA1 =>
+              match is_ptree_trivial_rec A1 PA1 HPA1 t Pt in _ = Pt' return
+                is_pcons A1 PA1 t (is_ptree_inhab A1 PA1 HPA1 t) f
+                  (is_pforest_inhab A1 PA1 HPA1 f) =
+                is_pcons A1 PA1 t Pt' f Pf with
+              | eq_refl =>
+                  match is_pforest_trivial_rec A1 PA1 HPA1 f Pf in _ = Pf' return
+                    is_pcons A1 PA1 t (is_ptree_inhab A1 PA1 HPA1 t) f
+                      (is_pforest_inhab A1 PA1 HPA1 f) =
+                    is_pcons A1 PA1 t (is_ptree_inhab A1 PA1 HPA1 t) f Pf' with
+                  | eq_refl => eq_refl
+                  end
+              end
+          end HPA0
+        for is_ptree_trivial_rec) A PA HPA x).
+  Definition is_pforest_trivial : forall (A : Type) (PA : A -> Type),
+       param1.trivial A PA ->
+       forall x : pforest A,
+       {u : is_pforest A PA x & forall v : is_pforest A PA x, u = v} :=
+  fun (A : Type) (PA : A -> Type) (HPA : param1.trivial A PA) (x : pforest A) =>
+    param1.contracts (pforest A) (is_pforest A PA) x (is_pforest_inhab A PA HPA x)
+      ((fix is_ptree_trivial_rec (A0 : Type) (PA0 : A0 -> Type)
+            (HPA0 : param1.trivial A0 PA0) (x0 : ptree A0)
+            (y : is_ptree A0 PA0 x0) {struct y} :
+            is_ptree_inhab A0 PA0 HPA0 x0 = y :=
+          match y in is_ptree A1 PA1 x1 return
+            forall HPA1 : param1.trivial A1 PA1,
+            is_ptree_inhab A1 PA1 HPA1 x1 = y with
+          | is_pnode A1 PA1 x1 Px f Pf =>
+              fun HPA1 =>
+              match param1.trivial_uniq A1 PA1 HPA1 x1 Px in _ = Px' return
+                is_pnode A1 PA1 x1 (param1.trivial_full A1 PA1 HPA1 x1) f
+                  (is_pforest_inhab A1 PA1 HPA1 f) =
+                is_pnode A1 PA1 x1 Px' f Pf with
+              | eq_refl =>
+                  match is_pforest_trivial_rec A1 PA1 HPA1 f Pf in _ = Pf' return
+                    is_pnode A1 PA1 x1 (param1.trivial_full A1 PA1 HPA1 x1) f
+                      (is_pforest_inhab A1 PA1 HPA1 f) =
+                    is_pnode A1 PA1 x1 (param1.trivial_full A1 PA1 HPA1 x1) f Pf' with
+                  | eq_refl => eq_refl
+                  end
+              end
+          end HPA0
+        with is_pforest_trivial_rec (A0 : Type) (PA0 : A0 -> Type)
+            (HPA0 : param1.trivial A0 PA0) (x0 : pforest A0)
+            (y : is_pforest A0 PA0 x0) {struct y} :
+            is_pforest_inhab A0 PA0 HPA0 x0 = y :=
+          match y in is_pforest A1 PA1 x1 return
+            forall HPA1 : param1.trivial A1 PA1,
+            is_pforest_inhab A1 PA1 HPA1 x1 = y with
+          | is_pempty A1 PA1 => fun _ => eq_refl
+          | is_pcons A1 PA1 t Pt f Pf =>
+              fun HPA1 =>
+              match is_ptree_trivial_rec A1 PA1 HPA1 t Pt in _ = Pt' return
+                is_pcons A1 PA1 t (is_ptree_inhab A1 PA1 HPA1 t) f
+                  (is_pforest_inhab A1 PA1 HPA1 f) =
+                is_pcons A1 PA1 t Pt' f Pf with
+              | eq_refl =>
+                  match is_pforest_trivial_rec A1 PA1 HPA1 f Pf in _ = Pf' return
+                    is_pcons A1 PA1 t (is_ptree_inhab A1 PA1 HPA1 t) f
+                      (is_pforest_inhab A1 PA1 HPA1 f) =
+                    is_pcons A1 PA1 t (is_ptree_inhab A1 PA1 HPA1 t) f Pf' with
+                  | eq_refl => eq_refl
+                  end
+              end
+          end HPA0
+        for is_pforest_trivial_rec) A PA HPA x).
+End ParametrizedMutualParam1TrivialExpected.
+
+Module Type ParametrizedMutualInductionExpected.
+  Include ParametrizedMutualParam1FunctorExpected.
+  Definition ptree_induction : forall (A : Type) (PA : A -> Type)
+         (P : ptree A -> Type) (P0 : pforest A -> Type),
+       (forall (x : A), PA x -> forall f : pforest A,
+        is_pforest A PA f -> P0 f -> P (pnode A x f)) ->
+       P0 (pempty A) ->
+       (forall t : ptree A, is_ptree A PA t -> P t -> forall f : pforest A,
+        is_pforest A PA f -> P0 f -> P0 (pcons A t f)) ->
+       forall s1 : ptree A, is_ptree A PA s1 -> P s1 :=
+  fun (A : Type) (PA : A -> Type) (P : ptree A -> Type) (P0 : pforest A -> Type)
+      His_pnode His_pempty His_pcons s H =>
+  (fix is_ptree_induction_rec (A0 : Type) (PA0 : A0 -> Type)
+       (P1 : ptree A0 -> Type) (P2 : pforest A0 -> Type)
+       (Hnode : forall (x : A0), PA0 x -> forall f : pforest A0,
+        is_pforest A0 PA0 f -> P2 f -> P1 (pnode A0 x f))
+       (Hempty : P2 (pempty A0))
+       (Hcons : forall t : ptree A0, is_ptree A0 PA0 t -> P1 t -> forall f : pforest A0,
+        is_pforest A0 PA0 f -> P2 f -> P2 (pcons A0 t f))
+       (s1 : ptree A0) (H1 : is_ptree A0 PA0 s1) {struct H1} : P1 s1 :=
+     match H1 in is_ptree A1 PA1 s2 return
+       forall (P1' : ptree A1 -> Type) (P2' : pforest A1 -> Type),
+       (forall (x : A1), PA1 x -> forall f : pforest A1,
+        is_pforest A1 PA1 f -> P2' f -> P1' (pnode A1 x f)) ->
+       P2' (pempty A1) ->
+       (forall t : ptree A1, is_ptree A1 PA1 t -> P1' t -> forall f : pforest A1,
+        is_pforest A1 PA1 f -> P2' f -> P2' (pcons A1 t f)) ->
+       P1' s2 with
+     | is_pnode A1 PA1 x Px f Pf =>
+         fun P1' P2' Hnode' Hempty' Hcons' =>
+           Hnode' x Px f Pf
+             (is_pforest_induction_rec A1 PA1 P1' P2' Hnode' Hempty' Hcons' f Pf)
+     end P1 P2 Hnode Hempty Hcons
+   with is_pforest_induction_rec (A0 : Type) (PA0 : A0 -> Type)
+       (P1 : ptree A0 -> Type) (P2 : pforest A0 -> Type)
+       (Hnode : forall (x : A0), PA0 x -> forall f : pforest A0,
+        is_pforest A0 PA0 f -> P2 f -> P1 (pnode A0 x f))
+       (Hempty : P2 (pempty A0))
+       (Hcons : forall t : ptree A0, is_ptree A0 PA0 t -> P1 t -> forall f : pforest A0,
+        is_pforest A0 PA0 f -> P2 f -> P2 (pcons A0 t f))
+       (s1 : pforest A0) (H1 : is_pforest A0 PA0 s1) {struct H1} : P2 s1 :=
+     match H1 in is_pforest A1 PA1 s2 return
+       forall (P1' : ptree A1 -> Type) (P2' : pforest A1 -> Type),
+       (forall (x : A1), PA1 x -> forall f : pforest A1,
+        is_pforest A1 PA1 f -> P2' f -> P1' (pnode A1 x f)) ->
+       P2' (pempty A1) ->
+       (forall t : ptree A1, is_ptree A1 PA1 t -> P1' t -> forall f : pforest A1,
+        is_pforest A1 PA1 f -> P2' f -> P2' (pcons A1 t f)) ->
+       P2' s2 with
+     | is_pempty A1 PA1 => fun _ P2' _ Hempty' _ => Hempty'
+     | is_pcons A1 PA1 t Pt f Pf =>
+         fun P1' P2' Hnode' Hempty' Hcons' =>
+           Hcons' t Pt (is_ptree_induction_rec A1 PA1 P1' P2' Hnode' Hempty' Hcons' t Pt)
+             f Pf (is_pforest_induction_rec A1 PA1 P1' P2' Hnode' Hempty' Hcons' f Pf)
+     end P1 P2 Hnode Hempty Hcons
+   for is_ptree_induction_rec) A PA P P0 His_pnode His_pempty His_pcons s H.
+  Definition pforest_induction : forall (A : Type) (PA : A -> Type)
+         (P : ptree A -> Type) (P0 : pforest A -> Type),
+       (forall (x : A), PA x -> forall f : pforest A,
+        is_pforest A PA f -> P0 f -> P (pnode A x f)) ->
+       P0 (pempty A) ->
+       (forall t : ptree A, is_ptree A PA t -> P t -> forall f : pforest A,
+        is_pforest A PA f -> P0 f -> P0 (pcons A t f)) ->
+       forall s1 : pforest A, is_pforest A PA s1 -> P0 s1 :=
+  fun (A : Type) (PA : A -> Type) (P : ptree A -> Type) (P0 : pforest A -> Type)
+      His_pnode His_pempty His_pcons s H =>
+  (fix is_ptree_induction_rec (A0 : Type) (PA0 : A0 -> Type)
+       (P1 : ptree A0 -> Type) (P2 : pforest A0 -> Type)
+       (Hnode : forall (x : A0), PA0 x -> forall f : pforest A0,
+        is_pforest A0 PA0 f -> P2 f -> P1 (pnode A0 x f))
+       (Hempty : P2 (pempty A0))
+       (Hcons : forall t : ptree A0, is_ptree A0 PA0 t -> P1 t -> forall f : pforest A0,
+        is_pforest A0 PA0 f -> P2 f -> P2 (pcons A0 t f))
+       (s1 : ptree A0) (H1 : is_ptree A0 PA0 s1) {struct H1} : P1 s1 :=
+     match H1 in is_ptree A1 PA1 s2 return
+       forall (P1' : ptree A1 -> Type) (P2' : pforest A1 -> Type),
+       (forall (x : A1), PA1 x -> forall f : pforest A1,
+        is_pforest A1 PA1 f -> P2' f -> P1' (pnode A1 x f)) ->
+       P2' (pempty A1) ->
+       (forall t : ptree A1, is_ptree A1 PA1 t -> P1' t -> forall f : pforest A1,
+        is_pforest A1 PA1 f -> P2' f -> P2' (pcons A1 t f)) ->
+       P1' s2 with
+     | is_pnode A1 PA1 x Px f Pf =>
+         fun P1' P2' Hnode' Hempty' Hcons' =>
+           Hnode' x Px f Pf
+             (is_pforest_induction_rec A1 PA1 P1' P2' Hnode' Hempty' Hcons' f Pf)
+     end P1 P2 Hnode Hempty Hcons
+   with is_pforest_induction_rec (A0 : Type) (PA0 : A0 -> Type)
+       (P1 : ptree A0 -> Type) (P2 : pforest A0 -> Type)
+       (Hnode : forall (x : A0), PA0 x -> forall f : pforest A0,
+        is_pforest A0 PA0 f -> P2 f -> P1 (pnode A0 x f))
+       (Hempty : P2 (pempty A0))
+       (Hcons : forall t : ptree A0, is_ptree A0 PA0 t -> P1 t -> forall f : pforest A0,
+        is_pforest A0 PA0 f -> P2 f -> P2 (pcons A0 t f))
+       (s1 : pforest A0) (H1 : is_pforest A0 PA0 s1) {struct H1} : P2 s1 :=
+     match H1 in is_pforest A1 PA1 s2 return
+       forall (P1' : ptree A1 -> Type) (P2' : pforest A1 -> Type),
+       (forall (x : A1), PA1 x -> forall f : pforest A1,
+        is_pforest A1 PA1 f -> P2' f -> P1' (pnode A1 x f)) ->
+       P2' (pempty A1) ->
+       (forall t : ptree A1, is_ptree A1 PA1 t -> P1' t -> forall f : pforest A1,
+        is_pforest A1 PA1 f -> P2' f -> P2' (pcons A1 t f)) ->
+       P2' s2 with
+     | is_pempty A1 PA1 => fun _ P2' _ Hempty' _ => Hempty'
+     | is_pcons A1 PA1 t Pt f Pf =>
+         fun P1' P2' Hnode' Hempty' Hcons' =>
+           Hcons' t Pt (is_ptree_induction_rec A1 PA1 P1' P2' Hnode' Hempty' Hcons' t Pt)
+             f Pf (is_pforest_induction_rec A1 PA1 P1' P2' Hnode' Hempty' Hcons' f Pf)
+     end P1 P2 Hnode Hempty Hcons
+   for is_pforest_induction_rec) A PA P P0 His_pnode His_pempty His_pcons s H.
+End ParametrizedMutualInductionExpected.
+
 Module Type ParametrizedMutualParam2Expected.
   Include ParametrizedMutualBase.
   Universe ptree_R_arg_u ptree_R_u0 ptree_R_u1.
@@ -2150,6 +2478,136 @@ Module Type ParametrizedMutualEqbExpected.
   | BinNums.xH => fun _ _ : box_pforest_pempty p => true
   end.
 End ParametrizedMutualEqbExpected.
+
+Module Type ParametrizedMutualEqbCorrectExpected.
+  Include ParametrizedMutualEqbExpected.
+  Definition ptree_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_correct eqA ->
+       forall x : ptree A, eqb_core_defs.eqb_correct_on (ptree_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix ptree_correct (x : ptree A) :
+              eqb_core_defs.eqb_correct_on (ptree_eqb A eqA) x := _
+            with pforest_correct (x : pforest A) :
+              eqb_core_defs.eqb_correct_on (pforest_eqb A eqA) x := _
+            for ptree_correct).
+    - intros y H.
+      destruct x as [x f]; destruct y as [y f']; cbn [ptree_eqb pforest_eqb eqb_core_defs.eqb_body] in H.
+      apply andb_prop in H as [Hx H].
+      apply andb_prop in H as [Hf _].
+      f_equal.
+      + exact (HeqA x y Hx).
+      + exact (pforest_correct f f' Hf).
+    - intros y H.
+      destruct x as [|t f]; destruct y as [|t' f']; cbn [ptree_eqb pforest_eqb eqb_core_defs.eqb_body] in H; try discriminate.
+      + reflexivity.
+      + apply andb_prop in H as [Ht H].
+        apply andb_prop in H as [Hf _].
+        f_equal.
+        * exact (ptree_correct t t' Ht).
+        * exact (pforest_correct f f' Hf).
+  Defined.
+  Definition pforest_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_correct eqA ->
+       forall x : pforest A, eqb_core_defs.eqb_correct_on (pforest_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix ptree_correct (x : ptree A) :
+              eqb_core_defs.eqb_correct_on (ptree_eqb A eqA) x := _
+            with pforest_correct (x : pforest A) :
+              eqb_core_defs.eqb_correct_on (pforest_eqb A eqA) x := _
+            for pforest_correct).
+    - intros y H.
+      destruct x as [x f]; destruct y as [y f']; cbn [ptree_eqb pforest_eqb eqb_core_defs.eqb_body] in H.
+      apply andb_prop in H as [Hx H].
+      apply andb_prop in H as [Hf _].
+      f_equal.
+      + exact (HeqA x y Hx).
+      + exact (pforest_correct f f' Hf).
+    - intros y H.
+      destruct x as [|t f]; destruct y as [|t' f']; cbn [ptree_eqb pforest_eqb eqb_core_defs.eqb_body] in H; try discriminate.
+      + reflexivity.
+      + apply andb_prop in H as [Ht H].
+        apply andb_prop in H as [Hf _].
+        f_equal.
+        * exact (ptree_correct t t' Ht).
+        * exact (pforest_correct f f' Hf).
+  Defined.
+  Definition ptree_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_reflexive eqA ->
+       forall x : ptree A, eqb_core_defs.eqb_refl_on (ptree_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix ptree_refl (x : ptree A) :
+              eqb_core_defs.eqb_refl_on (ptree_eqb A eqA) x := _
+            with pforest_refl (x : pforest A) :
+              eqb_core_defs.eqb_refl_on (pforest_eqb A eqA) x := _
+            for ptree_refl).
+    - destruct x as [x f].
+      change (eqA x x && (pforest_eqb A eqA f f && true) = true).
+      rewrite (HeqA x). rewrite (pforest_refl f). reflexivity.
+    - destruct x as [|t f].
+      + reflexivity.
+      + change (ptree_eqb A eqA t t && (pforest_eqb A eqA f f && true) = true).
+        rewrite (ptree_refl t). rewrite (pforest_refl f). reflexivity.
+  Defined.
+  Definition pforest_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_reflexive eqA ->
+       forall x : pforest A, eqb_core_defs.eqb_refl_on (pforest_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix ptree_refl (x : ptree A) :
+              eqb_core_defs.eqb_refl_on (ptree_eqb A eqA) x := _
+            with pforest_refl (x : pforest A) :
+              eqb_core_defs.eqb_refl_on (pforest_eqb A eqA) x := _
+            for pforest_refl).
+    - destruct x as [x f].
+      change (eqA x x && (pforest_eqb A eqA f f && true) = true).
+      rewrite (HeqA x). rewrite (pforest_refl f). reflexivity.
+    - destruct x as [|t f].
+      + reflexivity.
+      + change (ptree_eqb A eqA t t && (pforest_eqb A eqA f f && true) = true).
+        rewrite (ptree_refl t). rewrite (pforest_refl f). reflexivity.
+  Defined.
+End ParametrizedMutualEqbCorrectExpected.
+
+Module Type ParametrizedMutualEqbOKExpected.
+  Include ParametrizedMutualEqbCorrectExpected.
+  Definition ptree_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+       (forall x y : A, reflect (x = y) (eqA x y)) ->
+       forall x y : ptree A, reflect (x = y) (ptree_eqb A eqA x y) :=
+  fun (A : Type) (eqA : A -> A -> bool)
+      (heqA : forall x y : A, reflect (x = y) (eqA x y)) =>
+    eqb_core_defs.iffP2
+      (ptree_eqb_correct A eqA
+        (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
+      (ptree_eqb_refl A eqA
+        (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
+  Definition pforest_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+       (forall x y : A, reflect (x = y) (eqA x y)) ->
+       forall x y : pforest A, reflect (x = y) (pforest_eqb A eqA x y) :=
+  fun (A : Type) (eqA : A -> A -> bool)
+      (heqA : forall x y : A, reflect (x = y) (eqA x y)) =>
+    eqb_core_defs.iffP2
+      (pforest_eqb_correct A eqA
+        (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
+      (pforest_eqb_refl A eqA
+        (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
+  Definition ptree_eqb_OK_sumbool : forall A : Type,
+       (forall x y : A, {x = y} + {x <> y}) ->
+       forall x y : ptree A, {x = y} + {x <> y} :=
+  fun (A : Type) (heqA : forall x y : A, {x = y} + {x <> y}) =>
+    eqbOK.reflect_dec (ptree A) (ptree_eqb A (eqbOK.eqb_of_dec A heqA))
+      (ptree_eqb_OK A (eqbOK.eqb_of_dec A heqA)
+        (eqbOK.dec_reflect A heqA)).
+  Definition pforest_eqb_OK_sumbool : forall A : Type,
+       (forall x y : A, {x = y} + {x <> y}) ->
+       forall x y : pforest A, {x = y} + {x <> y} :=
+  fun (A : Type) (heqA : forall x y : A, {x = y} + {x <> y}) =>
+    eqbOK.reflect_dec (pforest A) (pforest_eqb A (eqbOK.eqb_of_dec A heqA))
+      (pforest_eqb_OK A (eqbOK.eqb_of_dec A heqA)
+        (eqbOK.dec_reflect A heqA)).
+End ParametrizedMutualEqbOKExpected.
 
 Module Type ParametrizedMutualIsKExpected.
   Include ParametrizedMutualBase.
@@ -4774,6 +5232,119 @@ Module NonRecursiveMutualParam2.
   Check circle_R : shape_R circle circle.
 End NonRecursiveMutualParam2.
 
+Module Type ValueParamMutualBase.
+  Inductive a (n : nat) : Type :=
+  | ak (b0 : b n)
+  with b (n : nat) : Type :=
+  | bk (a0 : a n).
+End ValueParamMutualBase.
+
+Module Type ValueParamMutualEqbExpected.
+  Include ValueParamMutualBase.
+  Definition a_tag : forall n : nat, a n -> BinNums.positive :=
+  fun (n : nat) (i : a n) =>
+  match i with
+  | ak _ _ => BinNums.xH
+  end.
+  Definition b_tag : forall n : nat, b n -> BinNums.positive :=
+  fun (n : nat) (i : b n) =>
+  match i with
+  | bk _ _ => BinNums.xH
+  end.
+  Record box_a_ak (n : nat) : Type := Box_a_ak { Box_a_ak_0 : b n }.
+  Record box_b_bk (n : nat) : Type := Box_b_bk { Box_b_bk_0 : a n }.
+  Definition a_fields_t : nat -> BinNums.positive -> Type :=
+  fun n _ => box_a_ak n.
+  Definition b_fields_t : nat -> BinNums.positive -> Type :=
+  fun n _ => box_b_bk n.
+  Definition a_fields : forall (n : nat) (i : a n), a_fields_t n (a_tag n i) :=
+  fun (n : nat) (i : a n) =>
+  match i as i0 return a_fields_t n (a_tag n i0) with
+  | ak _ b0 => {| Box_a_ak_0 := b0 |}
+  end.
+  Definition b_fields : forall (n : nat) (i : b n), b_fields_t n (b_tag n i) :=
+  fun (n : nat) (i : b n) =>
+  match i as i0 return b_fields_t n (b_tag n i0) with
+  | bk _ a0 => {| Box_b_bk_0 := a0 |}
+  end.
+  Definition a_construct : forall n : nat, BinNums.positive -> a_fields_t n BinNums.xH -> option (a n) :=
+  fun (n : nat) (_ : BinNums.positive) (bx : box_a_ak n) =>
+  match bx with
+  | {| Box_a_ak_0 := b0 |} => Some (ak n b0)
+  end.
+  Definition b_construct : forall n : nat, BinNums.positive -> b_fields_t n BinNums.xH -> option (b n) :=
+  fun (n : nat) (_ : BinNums.positive) (bx : box_b_bk n) =>
+  match bx with
+  | {| Box_b_bk_0 := a0 |} => Some (bk n a0)
+  end.
+  Definition a_constructP : forall (n : nat) (i : a n),
+       a_construct n (a_tag n i) (a_fields n i) = Some i :=
+  fun (n : nat) (i : a n) =>
+  match i as i0 return a_construct n (a_tag n i0) (a_fields n i0) = Some i0 with
+  | ak _ _ => eq_refl
+  end.
+  Definition b_constructP : forall (n : nat) (i : b n),
+       b_construct n (b_tag n i) (b_fields n i) = Some i :=
+  fun (n : nat) (i : b n) =>
+  match i as i0 return b_construct n (b_tag n i0) (b_fields n i0) = Some i0 with
+  | bk _ _ => eq_refl
+  end.
+  Definition a_eqb : forall n m : nat, a n -> a m -> bool :=
+  fix a_eqb_rec (n m : nat) (x : a n) (y : a m) {struct x} : bool :=
+    match x with
+    | ak _ bx =>
+        match y with
+        | ak _ by0 => b_eqb_rec n m bx by0
+        end
+    end
+  with b_eqb_rec (n m : nat) (x : b n) (y : b m) {struct x} : bool :=
+    match x with
+    | bk _ ax =>
+        match y with
+        | bk _ ay => a_eqb_rec n m ax ay
+        end
+    end
+  for a_eqb_rec.
+  Definition b_eqb : forall n m : nat, b n -> b m -> bool :=
+  fix a_eqb_rec (n m : nat) (x : a n) (y : a m) {struct x} : bool :=
+    match x with
+    | ak _ bx =>
+        match y with
+        | ak _ by0 => b_eqb_rec n m bx by0
+        end
+    end
+  with b_eqb_rec (n m : nat) (x : b n) (y : b m) {struct x} : bool :=
+    match x with
+    | bk _ ax =>
+        match y with
+        | bk _ ay => a_eqb_rec n m ax ay
+        end
+    end
+  for b_eqb_rec.
+  Definition a_eqb_fields : forall n m : nat,
+       (a n -> a m -> bool) ->
+       BinNums.positive -> box_a_ak n -> box_a_ak m -> bool :=
+  fun (n m : nat) (_ : a n -> a m -> bool) (_ : BinNums.positive)
+      (x : box_a_ak n) (y : box_a_ak m) =>
+  match x with
+  | {| Box_a_ak_0 := bx |} =>
+      match y with
+      | {| Box_a_ak_0 := by0 |} => b_eqb n m bx by0
+      end
+  end.
+  Definition b_eqb_fields : forall n m : nat,
+       (b n -> b m -> bool) ->
+       BinNums.positive -> box_b_bk n -> box_b_bk m -> bool :=
+  fun (n m : nat) (_ : b n -> b m -> bool) (_ : BinNums.positive)
+      (x : box_b_bk n) (y : box_b_bk m) =>
+  match x with
+  | {| Box_b_bk_0 := ax |} =>
+      match y with
+      | {| Box_b_bk_0 := ay |} => a_eqb n m ax ay
+      end
+  end.
+End ValueParamMutualEqbExpected.
+
 Module ValueParamMutualEqbUnsupported.
   Inductive a (n : nat) : Type :=
   | ak (b0 : b n)
@@ -5308,6 +5879,292 @@ Module TripleMutualEqbOKFromBeta <: TripleMutualEqbOKExpected.
     gamma_eqb (gamma1 alpha0 beta0) (gamma1 (alpha1 beta0) beta0) = false.
   Proof. vm_compute. reflexivity. Qed.
 End TripleMutualEqbOKFromBeta.
+
+Module Type ParametrizedTripleMutualEqbOKExpected.
+  Include ParametrizedTripleMutualBase.
+  Definition palpha_eqb : forall A : Type,
+       (A -> A -> bool) -> palpha A -> palpha A -> bool :=
+  fun (A : Type) (eqA : A -> A -> bool) =>
+  fix palpha_eqb_rec (x y : palpha A) {struct x} : bool :=
+    match x with
+    | palpha0 _ =>
+        match y with
+        | palpha0 _ => true
+        | palpha1 _ _ _ => false
+        end
+    | palpha1 _ x0 b0 =>
+        match y with
+        | palpha0 _ => false
+        | palpha1 _ x1 b1 => (eqA x0 x1 && pbeta_eqb_rec b0 b1)%bool
+        end
+    end
+  with pbeta_eqb_rec (x y : pbeta A) {struct x} : bool :=
+    match x with
+    | pbeta0 _ =>
+        match y with
+        | pbeta0 _ => true
+        | pbeta1 _ _ => false
+        end
+    | pbeta1 _ g0 =>
+        match y with
+        | pbeta0 _ => false
+        | pbeta1 _ g1 => pgamma_eqb_rec g0 g1
+        end
+    end
+  with pgamma_eqb_rec (x y : pgamma A) {struct x} : bool :=
+    match x with
+    | pgamma0 _ =>
+        match y with
+        | pgamma0 _ => true
+        | pgamma1 _ _ _ => false
+        end
+    | pgamma1 _ a0 b0 =>
+        match y with
+        | pgamma0 _ => false
+        | pgamma1 _ a1 b1 => (palpha_eqb_rec a0 a1 && pbeta_eqb_rec b0 b1)%bool
+        end
+    end
+  for palpha_eqb_rec.
+  Definition pbeta_eqb : forall A : Type,
+       (A -> A -> bool) -> pbeta A -> pbeta A -> bool :=
+  fun (A : Type) (eqA : A -> A -> bool) =>
+  fix palpha_eqb_rec (x y : palpha A) {struct x} : bool :=
+    match x with
+    | palpha0 _ =>
+        match y with
+        | palpha0 _ => true
+        | palpha1 _ _ _ => false
+        end
+    | palpha1 _ x0 b0 =>
+        match y with
+        | palpha0 _ => false
+        | palpha1 _ x1 b1 => (eqA x0 x1 && pbeta_eqb_rec b0 b1)%bool
+        end
+    end
+  with pbeta_eqb_rec (x y : pbeta A) {struct x} : bool :=
+    match x with
+    | pbeta0 _ =>
+        match y with
+        | pbeta0 _ => true
+        | pbeta1 _ _ => false
+        end
+    | pbeta1 _ g0 =>
+        match y with
+        | pbeta0 _ => false
+        | pbeta1 _ g1 => pgamma_eqb_rec g0 g1
+        end
+    end
+  with pgamma_eqb_rec (x y : pgamma A) {struct x} : bool :=
+    match x with
+    | pgamma0 _ =>
+        match y with
+        | pgamma0 _ => true
+        | pgamma1 _ _ _ => false
+        end
+    | pgamma1 _ a0 b0 =>
+        match y with
+        | pgamma0 _ => false
+        | pgamma1 _ a1 b1 => (palpha_eqb_rec a0 a1 && pbeta_eqb_rec b0 b1)%bool
+        end
+    end
+  for pbeta_eqb_rec.
+  Definition pgamma_eqb : forall A : Type,
+       (A -> A -> bool) -> pgamma A -> pgamma A -> bool :=
+  fun (A : Type) (eqA : A -> A -> bool) =>
+  fix palpha_eqb_rec (x y : palpha A) {struct x} : bool :=
+    match x with
+    | palpha0 _ =>
+        match y with
+        | palpha0 _ => true
+        | palpha1 _ _ _ => false
+        end
+    | palpha1 _ x0 b0 =>
+        match y with
+        | palpha0 _ => false
+        | palpha1 _ x1 b1 => (eqA x0 x1 && pbeta_eqb_rec b0 b1)%bool
+        end
+    end
+  with pbeta_eqb_rec (x y : pbeta A) {struct x} : bool :=
+    match x with
+    | pbeta0 _ =>
+        match y with
+        | pbeta0 _ => true
+        | pbeta1 _ _ => false
+        end
+    | pbeta1 _ g0 =>
+        match y with
+        | pbeta0 _ => false
+        | pbeta1 _ g1 => pgamma_eqb_rec g0 g1
+        end
+    end
+  with pgamma_eqb_rec (x y : pgamma A) {struct x} : bool :=
+    match x with
+    | pgamma0 _ =>
+        match y with
+        | pgamma0 _ => true
+        | pgamma1 _ _ _ => false
+        end
+    | pgamma1 _ a0 b0 =>
+        match y with
+        | pgamma0 _ => false
+        | pgamma1 _ a1 b1 => (palpha_eqb_rec a0 a1 && pbeta_eqb_rec b0 b1)%bool
+        end
+    end
+  for pgamma_eqb_rec.
+  Definition palpha_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_correct eqA ->
+       forall x : palpha A, eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix alpha_correct (x : palpha A) : eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x := _
+            with beta_correct (x : pbeta A) : eqb_core_defs.eqb_correct_on (pbeta_eqb A eqA) x := _
+            with gamma_correct (x : pgamma A) : eqb_core_defs.eqb_correct_on (pgamma_eqb A eqA) x := _
+            for alpha_correct).
+    - intros y H. destruct x as [|x0 b0]; destruct y as [|x1 b1]; cbn in H; try discriminate.
+      + reflexivity.
+      + apply andb_prop in H as [Hx Hb]. f_equal; [exact (HeqA x0 x1 Hx)|exact (beta_correct b0 b1 Hb)].
+    - intros y H. destruct x as [|g0]; destruct y as [|g1]; cbn in H; try discriminate.
+      + reflexivity.
+      + f_equal. exact (gamma_correct g0 g1 H).
+    - intros y H. destruct x as [|a0 b0]; destruct y as [|a1 b1]; cbn in H; try discriminate.
+      + reflexivity.
+      + apply andb_prop in H as [Ha Hb]. f_equal; [exact (alpha_correct a0 a1 Ha)|exact (beta_correct b0 b1 Hb)].
+  Defined.
+  Definition pbeta_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_correct eqA ->
+       forall x : pbeta A, eqb_core_defs.eqb_correct_on (pbeta_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix alpha_correct (x : palpha A) : eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x := _
+            with beta_correct (x : pbeta A) : eqb_core_defs.eqb_correct_on (pbeta_eqb A eqA) x := _
+            with gamma_correct (x : pgamma A) : eqb_core_defs.eqb_correct_on (pgamma_eqb A eqA) x := _
+            for beta_correct).
+    - intros y H. destruct x as [|x0 b0]; destruct y as [|x1 b1]; cbn in H; try discriminate.
+      + reflexivity.
+      + apply andb_prop in H as [Hx Hb]. f_equal; [exact (HeqA x0 x1 Hx)|exact (beta_correct b0 b1 Hb)].
+    - intros y H. destruct x as [|g0]; destruct y as [|g1]; cbn in H; try discriminate.
+      + reflexivity.
+      + f_equal. exact (gamma_correct g0 g1 H).
+    - intros y H. destruct x as [|a0 b0]; destruct y as [|a1 b1]; cbn in H; try discriminate.
+      + reflexivity.
+      + apply andb_prop in H as [Ha Hb]. f_equal; [exact (alpha_correct a0 a1 Ha)|exact (beta_correct b0 b1 Hb)].
+  Defined.
+  Definition pgamma_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_correct eqA ->
+       forall x : pgamma A, eqb_core_defs.eqb_correct_on (pgamma_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix alpha_correct (x : palpha A) : eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x := _
+            with beta_correct (x : pbeta A) : eqb_core_defs.eqb_correct_on (pbeta_eqb A eqA) x := _
+            with gamma_correct (x : pgamma A) : eqb_core_defs.eqb_correct_on (pgamma_eqb A eqA) x := _
+            for gamma_correct).
+    - intros y H. destruct x as [|x0 b0]; destruct y as [|x1 b1]; cbn in H; try discriminate.
+      + reflexivity.
+      + apply andb_prop in H as [Hx Hb]. f_equal; [exact (HeqA x0 x1 Hx)|exact (beta_correct b0 b1 Hb)].
+    - intros y H. destruct x as [|g0]; destruct y as [|g1]; cbn in H; try discriminate.
+      + reflexivity.
+      + f_equal. exact (gamma_correct g0 g1 H).
+    - intros y H. destruct x as [|a0 b0]; destruct y as [|a1 b1]; cbn in H; try discriminate.
+      + reflexivity.
+      + apply andb_prop in H as [Ha Hb]. f_equal; [exact (alpha_correct a0 a1 Ha)|exact (beta_correct b0 b1 Hb)].
+  Defined.
+  Definition palpha_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_reflexive eqA ->
+       forall x : palpha A, eqb_core_defs.eqb_refl_on (palpha_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix alpha_refl (x : palpha A) : eqb_core_defs.eqb_refl_on (palpha_eqb A eqA) x := _
+            with beta_refl (x : pbeta A) : eqb_core_defs.eqb_refl_on (pbeta_eqb A eqA) x := _
+            with gamma_refl (x : pgamma A) : eqb_core_defs.eqb_refl_on (pgamma_eqb A eqA) x := _
+            for alpha_refl).
+    - destruct x as [|x0 b0].
+      + reflexivity.
+      + change (eqA x0 x0 && pbeta_eqb A eqA b0 b0 = true).
+        rewrite (HeqA x0). rewrite (beta_refl b0). reflexivity.
+    - destruct x as [|g0].
+      + reflexivity.
+      + change (pgamma_eqb A eqA g0 g0 = true). exact (gamma_refl g0).
+    - destruct x as [|a0 b0].
+      + reflexivity.
+      + change (palpha_eqb A eqA a0 a0 && pbeta_eqb A eqA b0 b0 = true).
+        rewrite (alpha_refl a0). rewrite (beta_refl b0). reflexivity.
+  Defined.
+  Definition pbeta_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_reflexive eqA ->
+       forall x : pbeta A, eqb_core_defs.eqb_refl_on (pbeta_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix alpha_refl (x : palpha A) : eqb_core_defs.eqb_refl_on (palpha_eqb A eqA) x := _
+            with beta_refl (x : pbeta A) : eqb_core_defs.eqb_refl_on (pbeta_eqb A eqA) x := _
+            with gamma_refl (x : pgamma A) : eqb_core_defs.eqb_refl_on (pgamma_eqb A eqA) x := _
+            for beta_refl).
+    - destruct x as [|x0 b0].
+      + reflexivity.
+      + change (eqA x0 x0 && pbeta_eqb A eqA b0 b0 = true).
+        rewrite (HeqA x0). rewrite (beta_refl b0). reflexivity.
+    - destruct x as [|g0].
+      + reflexivity.
+      + change (pgamma_eqb A eqA g0 g0 = true). exact (gamma_refl g0).
+    - destruct x as [|a0 b0].
+      + reflexivity.
+      + change (palpha_eqb A eqA a0 a0 && pbeta_eqb A eqA b0 b0 = true).
+        rewrite (alpha_refl a0). rewrite (beta_refl b0). reflexivity.
+  Defined.
+  Definition pgamma_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+       eqb_core_defs.eqb_reflexive eqA ->
+       forall x : pgamma A, eqb_core_defs.eqb_refl_on (pgamma_eqb A eqA) x.
+  Proof.
+    intros A eqA HeqA.
+    refine (fix alpha_refl (x : palpha A) : eqb_core_defs.eqb_refl_on (palpha_eqb A eqA) x := _
+            with beta_refl (x : pbeta A) : eqb_core_defs.eqb_refl_on (pbeta_eqb A eqA) x := _
+            with gamma_refl (x : pgamma A) : eqb_core_defs.eqb_refl_on (pgamma_eqb A eqA) x := _
+            for gamma_refl).
+    - destruct x as [|x0 b0].
+      + reflexivity.
+      + change (eqA x0 x0 && pbeta_eqb A eqA b0 b0 = true).
+        rewrite (HeqA x0). rewrite (beta_refl b0). reflexivity.
+    - destruct x as [|g0].
+      + reflexivity.
+      + change (pgamma_eqb A eqA g0 g0 = true). exact (gamma_refl g0).
+    - destruct x as [|a0 b0].
+      + reflexivity.
+      + change (palpha_eqb A eqA a0 a0 && pbeta_eqb A eqA b0 b0 = true).
+        rewrite (alpha_refl a0). rewrite (beta_refl b0). reflexivity.
+  Defined.
+  Definition palpha_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+       (forall x y : A, reflect (x = y) (eqA x y)) ->
+       forall x y : palpha A, reflect (x = y) (palpha_eqb A eqA x y) :=
+  fun A eqA heqA => eqb_core_defs.iffP2
+    (palpha_eqb_correct A eqA (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
+    (palpha_eqb_refl A eqA (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
+  Definition pbeta_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+       (forall x y : A, reflect (x = y) (eqA x y)) ->
+       forall x y : pbeta A, reflect (x = y) (pbeta_eqb A eqA x y) :=
+  fun A eqA heqA => eqb_core_defs.iffP2
+    (pbeta_eqb_correct A eqA (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
+    (pbeta_eqb_refl A eqA (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
+  Definition pgamma_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+       (forall x y : A, reflect (x = y) (eqA x y)) ->
+       forall x y : pgamma A, reflect (x = y) (pgamma_eqb A eqA x y) :=
+  fun A eqA heqA => eqb_core_defs.iffP2
+    (pgamma_eqb_correct A eqA (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
+    (pgamma_eqb_refl A eqA (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
+  Definition palpha_eqb_OK_sumbool : forall A : Type,
+       (forall x y : A, {x = y} + {x <> y}) ->
+       forall x y : palpha A, {x = y} + {x <> y} :=
+  fun A heqA => eqbOK.reflect_dec (palpha A) (palpha_eqb A (eqbOK.eqb_of_dec A heqA))
+    (palpha_eqb_OK A (eqbOK.eqb_of_dec A heqA) (eqbOK.dec_reflect A heqA)).
+  Definition pbeta_eqb_OK_sumbool : forall A : Type,
+       (forall x y : A, {x = y} + {x <> y}) ->
+       forall x y : pbeta A, {x = y} + {x <> y} :=
+  fun A heqA => eqbOK.reflect_dec (pbeta A) (pbeta_eqb A (eqbOK.eqb_of_dec A heqA))
+    (pbeta_eqb_OK A (eqbOK.eqb_of_dec A heqA) (eqbOK.dec_reflect A heqA)).
+  Definition pgamma_eqb_OK_sumbool : forall A : Type,
+       (forall x y : A, {x = y} + {x <> y}) ->
+       forall x y : pgamma A, {x = y} + {x <> y} :=
+  fun A heqA => eqbOK.reflect_dec (pgamma A) (pgamma_eqb A (eqbOK.eqb_of_dec A heqA))
+    (pgamma_eqb_OK A (eqbOK.eqb_of_dec A heqA) (eqbOK.dec_reflect A heqA)).
+End ParametrizedTripleMutualEqbOKExpected.
 
 Module ParametrizedTripleMutualEqbOKFromBetaUnsupported.
   Inductive palpha (A : Type) : Type :=
