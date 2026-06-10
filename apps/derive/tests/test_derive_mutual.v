@@ -815,6 +815,38 @@ Module NonRecursiveMutualEqb.
   Proof. vm_compute. reflexivity. Qed.
 End NonRecursiveMutualEqb.
 
+Module NonRecursiveMutualParam1.
+  Inductive color : Type :=
+  | red
+  | blue
+  with shape : Type :=
+  | circle
+  | square.
+
+  #[only(param1)] derive color.
+
+  Check is_color : color -> Type.
+  Check is_shape : shape -> Type.
+  Check is_red : is_color red.
+  Check is_circle : is_shape circle.
+End NonRecursiveMutualParam1.
+
+Module NonRecursiveMutualParam2.
+  Inductive color : Type :=
+  | red
+  | blue
+  with shape : Type :=
+  | circle
+  | square.
+
+  #[only(param2)] derive color.
+
+  Check color_R : color -> color -> Set.
+  Check shape_R : shape -> shape -> Set.
+  Check red_R : color_R red red.
+  Check circle_R : shape_R circle circle.
+End NonRecursiveMutualParam2.
+
 Module ValueParamMutualEqb.
   Inductive a (n : nat) : Type :=
   | ak (b0 : b n)
