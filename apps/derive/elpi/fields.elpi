@@ -49,7 +49,7 @@ main I Prefix AllCL :- std.do! [
   std.assert-ok! (coq.elaborate-skeleton Body_PSkel Ty_P Body_P) "derive.fields generates illtyped constructP",
   Name_P is Prefix ^ "constructP",
   coq.ensure-fresh-global-id Name_P FName_P,
-  coq.env.add-const FName_P Body_P Ty_P @opaque! ConstructP, 
+  coq.env.add-const FName_P Body_P Ty_P @transparent! ConstructP, 
 
   AllCL = [fields-for I Fields_t Fields Construct ConstructP|CLB],
   std.forall AllCL (x\ coq.elpi.accumulate _ "derive.fields.db" (clause _ _ x)),
