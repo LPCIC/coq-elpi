@@ -20,7 +20,10 @@ From elpi.apps Require Import
   derive.fields
   derive.eqb
   derive.eqbcorrect
-  derive.eqbOK.
+  derive.eqbOK
+  derive.isK
+  derive.projK
+  derive.bcongr.
 
 Elpi Command derive_mutual_wrapper_test.
 #[synterp] Elpi Accumulate lp:{{
@@ -200,6 +203,31 @@ Module Type MutualEqbOKExpected.
     forall x1 x2 : forest, reflect (x1 = x2) (forest_eqb x1 x2).
   Parameter forest_eqb_OK_sumbool : forall x y : forest, {x = y} + {x <> y}.
 End MutualEqbOKExpected.
+
+Module Type MutualIsKExpected.
+  Include MutualBase.
+  Parameter tree_isk_node : tree -> bool.
+  Parameter forest_isk_empty : forest -> bool.
+  Parameter forest_isk_cons : forest -> bool.
+End MutualIsKExpected.
+
+Module Type MutualProjKExpected.
+  Include MutualBase.
+  Parameter tree_getk_node1 : forest -> tree -> forest.
+  Parameter forest_getk_cons1 : tree -> forest -> forest -> tree.
+  Parameter forest_getk_cons2 : tree -> forest -> forest -> forest.
+End MutualProjKExpected.
+
+Module Type MutualBcongrExpected.
+  Include MutualProjKExpected.
+  Parameter tree_bcongr_node :
+    forall x y b, reflect (x = y) b -> reflect (node x = node y) b.
+  Parameter forest_bcongr_empty : reflect (empty = empty) true.
+  Parameter forest_bcongr_cons :
+    forall x y b, reflect (x = y) b ->
+    forall x0 y0 b0, reflect (x0 = y0) b0 ->
+      reflect (cons x x0 = cons y y0) (b && b0).
+End MutualBcongrExpected.
 
 Module Type ParametrizedMutualBase.
   Inductive ptree (A : Type) : Type :=
@@ -409,6 +437,36 @@ Module Type ParametrizedMutualEqbOKExpected.
       (forall x1 x2 : A, {x1 = x2} + {x1 <> x2}) ->
       forall x y : pforest A, {x = y} + {x <> y}.
 End ParametrizedMutualEqbOKExpected.
+
+Module Type ParametrizedMutualIsKExpected.
+  Include ParametrizedMutualBase.
+  Parameter ptree_isk_pnode : forall A : Type, ptree A -> bool.
+  Parameter pforest_isk_pempty : forall A : Type, pforest A -> bool.
+  Parameter pforest_isk_pcons : forall A : Type, pforest A -> bool.
+End ParametrizedMutualIsKExpected.
+
+Module Type ParametrizedMutualProjKExpected.
+  Include ParametrizedMutualBase.
+  Parameter ptree_getk_pnode1 : forall A : Type, A -> pforest A -> ptree A -> A.
+  Parameter ptree_getk_pnode2 : forall A : Type, A -> pforest A -> ptree A -> pforest A.
+  Parameter pforest_getk_pcons1 :
+    forall A : Type, ptree A -> pforest A -> pforest A -> ptree A.
+  Parameter pforest_getk_pcons2 :
+    forall A : Type, ptree A -> pforest A -> pforest A -> pforest A.
+End ParametrizedMutualProjKExpected.
+
+Module Type ParametrizedMutualBcongrExpected.
+  Include ParametrizedMutualProjKExpected.
+  Parameter ptree_bcongr_pnode :
+    forall A x y b, reflect (x = y) b ->
+    forall x0 y0 b0, reflect (x0 = y0) b0 ->
+      reflect (pnode A x x0 = pnode A y y0) (b && b0).
+  Parameter pforest_bcongr_pempty : forall A : Type, reflect (pempty A = pempty A) true.
+  Parameter pforest_bcongr_pcons :
+    forall A x y b, reflect (x = y) b ->
+    forall x0 y0 b0, reflect (x0 = y0) b0 ->
+      reflect (pcons A x x0 = pcons A y y0) (b && b0).
+End ParametrizedMutualBcongrExpected.
 
 Module Type TripleMutualBase.
   Inductive alpha : Type :=
@@ -898,6 +956,72 @@ Module MutualEqbOK <: MutualEqbOKExpected.
   #[only(eqbOK)] derive tree.
 End MutualEqbOK.
 
+Module MutualIsK <: MutualIsKExpected.
+  Inductive tree : Type :=
+  | node (f : forest)
+  with forest : Type :=
+  | empty
+  | cons (t : tree) (f : forest).
+
+  #[only(isK)] derive tree.
+
+  Example tree_isk_node_computes : tree_isk_node (node empty) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_isk_empty_computes : forest_isk_empty empty = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_isk_cons_computes : forest_isk_cons (cons (node empty) empty) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_isk_empty_rejects_cons : forest_isk_empty (cons (node empty) empty) = false.
+  Proof. vm_compute. reflexivity. Qed.
+End MutualIsK.
+
+Module MutualProjK <: MutualProjKExpected.
+  Inductive tree : Type :=
+  | node (f : forest)
+  with forest : Type :=
+  | empty
+  | cons (t : tree) (f : forest).
+
+  #[only(projK)] derive tree.
+
+  Example tree_getk_node1_computes :
+    tree_getk_node1 empty (node (cons (node empty) empty)) = cons (node empty) empty.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_getk_cons1_computes :
+    forest_getk_cons1 (node empty) empty (cons (node empty) empty) = node empty.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example forest_getk_cons2_computes :
+    forest_getk_cons2 (node empty) empty (cons (node empty) (cons (node empty) empty)) =
+    cons (node empty) empty.
+  Proof. vm_compute. reflexivity. Qed.
+End MutualProjK.
+
+Module MutualBcongr <: MutualBcongrExpected.
+  Inductive tree : Type :=
+  | node (f : forest)
+  with forest : Type :=
+  | empty
+  | cons (t : tree) (f : forest).
+
+  #[only(bcongr)] derive tree.
+
+  Example tree_bcongr_node_works :
+    reflect (node empty = node empty) true.
+  Proof. exact (tree_bcongr_node empty empty true (ReflectT _ eq_refl)). Qed.
+
+  Example forest_bcongr_cons_works :
+    reflect (cons (node empty) empty = cons (node empty) empty) true.
+  Proof.
+    exact (forest_bcongr_cons (node empty) (node empty) true (ReflectT _ eq_refl)
+             empty empty true (ReflectT _ eq_refl)).
+  Qed.
+End MutualBcongr.
+
 Module ParametrizedMutualMap <: ParametrizedMutualMapExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
@@ -1147,6 +1271,83 @@ Module ParametrizedMutualEqbOK.
 
   Fail #[only(eqbOK)] derive ptree.
 End ParametrizedMutualEqbOK.
+
+Module ParametrizedMutualIsK <: ParametrizedMutualIsKExpected.
+  Inductive ptree (A : Type) : Type :=
+  | pnode (x : A) (f : pforest A)
+  with pforest (A : Type) : Type :=
+  | pempty
+  | pcons (t : ptree A) (f : pforest A).
+
+  #[only(isK)] derive ptree.
+
+  Example ptree_isk_pnode_computes :
+    ptree_isk_pnode nat (pnode nat 2 (pempty nat)) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_isk_pempty_computes : pforest_isk_pempty nat (pempty nat) = true.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_isk_pcons_computes :
+    pforest_isk_pcons nat (pcons nat (pnode nat 2 (pempty nat)) (pempty nat)) = true.
+  Proof. vm_compute. reflexivity. Qed.
+End ParametrizedMutualIsK.
+
+Module ParametrizedMutualProjK <: ParametrizedMutualProjKExpected.
+  Inductive ptree (A : Type) : Type :=
+  | pnode (x : A) (f : pforest A)
+  with pforest (A : Type) : Type :=
+  | pempty
+  | pcons (t : ptree A) (f : pforest A).
+
+  #[only(projK)] derive ptree.
+
+  Example ptree_getk_pnode1_computes :
+    ptree_getk_pnode1 nat 0 (pempty nat) (pnode nat 2 (pempty nat)) = 2.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example ptree_getk_pnode2_computes :
+    ptree_getk_pnode2 nat 0 (pempty nat) (pnode nat 2 (pcons nat (pnode nat 3 (pempty nat)) (pempty nat))) =
+    pcons nat (pnode nat 3 (pempty nat)) (pempty nat).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_getk_pcons1_computes :
+    pforest_getk_pcons1 nat (pnode nat 0 (pempty nat)) (pempty nat)
+      (pcons nat (pnode nat 2 (pempty nat)) (pempty nat)) = pnode nat 2 (pempty nat).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example pforest_getk_pcons2_computes :
+    pforest_getk_pcons2 nat (pnode nat 0 (pempty nat)) (pempty nat)
+      (pcons nat (pnode nat 2 (pempty nat)) (pcons nat (pnode nat 3 (pempty nat)) (pempty nat))) =
+    pcons nat (pnode nat 3 (pempty nat)) (pempty nat).
+  Proof. vm_compute. reflexivity. Qed.
+End ParametrizedMutualProjK.
+
+Module ParametrizedMutualBcongr <: ParametrizedMutualBcongrExpected.
+  Inductive ptree (A : Type) : Type :=
+  | pnode (x : A) (f : pforest A)
+  with pforest (A : Type) : Type :=
+  | pempty
+  | pcons (t : ptree A) (f : pforest A).
+
+  #[only(bcongr)] derive ptree.
+
+  Example ptree_bcongr_pnode_works :
+    reflect (pnode nat 2 (pempty nat) = pnode nat 2 (pempty nat)) true.
+  Proof.
+    exact (ptree_bcongr_pnode nat 2 2 true (ReflectT _ eq_refl)
+             (pempty nat) (pempty nat) true (ReflectT _ eq_refl)).
+  Qed.
+
+  Example pforest_bcongr_pcons_works :
+    reflect (pcons nat (pnode nat 2 (pempty nat)) (pempty nat) =
+             pcons nat (pnode nat 2 (pempty nat)) (pempty nat)) true.
+  Proof.
+    exact (pforest_bcongr_pcons nat
+             (pnode nat 2 (pempty nat)) (pnode nat 2 (pempty nat)) true (ReflectT _ eq_refl)
+             (pempty nat) (pempty nat) true (ReflectT _ eq_refl)).
+  Qed.
+End ParametrizedMutualBcongr.
 
 Module TripleMutualMapFromGamma <: TripleMutualMapExpected.
   Inductive alpha : Type :=
