@@ -1,6 +1,7 @@
 (rocq.theory
- (package rocq-elpi-tests-stdlib)
  (name elpi_apps_tc_tests_stdlib)
+ (package rocq-elpi-tests-stdlib)
+ (generate_project_file)
  (flags :standard -async-proofs-cache force)
  (theories elpi elpi.apps.tc elpi.apps.tc.tests Stdlib))
 

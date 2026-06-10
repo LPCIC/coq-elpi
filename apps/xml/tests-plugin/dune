@@ -1,6 +1,7 @@
 (rocq.theory
  (name elpi.xml.tests)
  (package rocq-elpi-xml-tests)
+ (generate_project_file)
  (theories elpi elpi.xml))
 
 ; work around missing dune support for Extra Dependency 
