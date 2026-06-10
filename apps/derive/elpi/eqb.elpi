@@ -43,36 +43,41 @@ derive.eqb.main (const C) Prefix CL :- std.do! [
 
 namespace derive.eqb.mutual {
 
-func eqb-ty eqb.eqType, list term -> term.
-eqb-ty (eqb.type-param F) PI {{ forall (p : Type) (eqp : p -> p -> bool), lp:(R p eqp) }} :- !,
+func eqb-ty eqb.eqType, eqb.eqType, list term, list term -> term.
+eqb-ty (eqb.type-param FI) (eqb.type-param FJ) PI PJ {{ forall (p : Type) (eqp : p -> p -> bool), lp:(R p eqp) }} :- !,
   @pi-trm `p` {{ Type }} y\p\
   @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
-    eqb-ty (F y) [p|PI] (R p eqp).
-eqb-ty (eqb.value-param TY F) PI {{ forall (x y : lp:Ty), lp:(R x y) }} :- !,
-  feqb.trm->term TY Ty,
-  @pi-trm `x` Ty xx\x\
-  @pi-trm `y` Ty yy\y\
-    eqb-ty (F xx) [x|PI] (R x y).
-eqb-ty (eqb.inductive Ind _) PI {{ lp:I -> lp:I -> bool }} :-
-  coq.env.global (indt Ind) IndT,
-  coq.mk-app IndT {std.rev PI} I.
-
-func eqbf-ty eqb.eqType, list term -> term.
-eqbf-ty (eqb.type-param F) PI {{ forall (p : Type) (eqp : p -> p -> bool), lp:(R p eqp) }} :- !,
-  @pi-trm `p` {{ Type }} y\p\
-  @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
-    eqbf-ty (F y) [p|PI] (R p eqp).
-eqbf-ty (eqb.value-param TY F) PI {{ forall (x y : lp:Ty), lp:(R x y) }} :- !,
-  feqb.trm->term TY Ty,
-  @pi-trm `x` Ty xx\x\
-  @pi-trm `y` Ty yy\y\
-    eqbf-ty (F xx) [x|PI] (R x y).
-eqbf-ty (eqb.inductive Ind _) PI {{ (lp:I -> lp:I -> bool) -> forall x : lib:elpi.derive.positive, lp:Fields x -> lp:Fields x -> bool }} :-
+    eqb-ty (FI y) (FJ y) [p|PI] [p|PJ] (R p eqp).
+eqb-ty (eqb.value-param TYI FI) (eqb.value-param TYJ FJ) PI PJ {{ forall (x : lp:TI) (y : lp:TJ), lp:(R x y) }} :- !,
+  feqb.trm->term TYI TI,
+  feqb.trm->term TYJ TJ,
+  @pi-trm `x` TI xx\x\
+  @pi-trm `y` TJ yy\y\
+    eqb-ty (FI xx) (FJ yy) [x|PI] [y|PJ] (R x y).
+eqb-ty (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ {{ lp:I -> lp:J -> bool }} :-
   coq.env.global (indt Ind) IndT,
   coq.mk-app IndT {std.rev PI} I,
+  coq.mk-app IndT {std.rev PJ} J.
+
+func eqbf-ty eqb.eqType, eqb.eqType, list term, list term -> term.
+eqbf-ty (eqb.type-param FI) (eqb.type-param FJ) PI PJ {{ forall (p : Type) (eqp : p -> p -> bool), lp:(R p eqp) }} :- !,
+  @pi-trm `p` {{ Type }} y\p\
+  @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
+    eqbf-ty (FI y) (FJ y) [p|PI] [p|PJ] (R p eqp).
+eqbf-ty (eqb.value-param TYI FI) (eqb.value-param TYJ FJ) PI PJ {{ forall (x : lp:TI) (y : lp:TJ), lp:(R x y) }} :- !,
+  feqb.trm->term TYI TI,
+  feqb.trm->term TYJ TJ,
+  @pi-trm `x` TI xx\x\
+  @pi-trm `y` TJ yy\y\
+    eqbf-ty (FI xx) (FJ yy) [x|PI] [y|PJ] (R x y).
+eqbf-ty (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ {{ (lp:I -> lp:J -> bool) -> forall x : lib:elpi.derive.positive, lp:FieldsI x -> lp:FieldsJ x -> bool }} :-
+  coq.env.global (indt Ind) IndT,
+  coq.mk-app IndT {std.rev PI} I,
+  coq.mk-app IndT {std.rev PJ} J,
   std.assert! (fields-for Ind F_t _ _ _) "derive.eqb: run derive.fields before",
   coq.env.global (const F_t) FT,
-  coq.mk-app FT {std.rev PI} Fields.
+  coq.mk-app FT {std.rev PI} FieldsI,
+  coq.mk-app FT {std.rev PJ} FieldsJ.
 
 func mutual-prefix inductive, string, inductive -> string.
 mutual-prefix First Prefix T Prefix :- First = T, !.
@@ -220,15 +225,15 @@ add-one-param1 I Prefix CL :- std.do! [
 ].
 
 func add-one inductive, string -> list prop.
-add-one I Prefix CL :- coq.env.indt I _ 1 _ _ _ _, !, add-one-param1 I Prefix CL.
+add-one I Prefix CL :- eqType (indt I) (eqb.type-param _), coq.env.indt I _ 1 _ _ _ _, !, add-one-param1 I Prefix CL.
 add-one I Prefix CL :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
-  eqbf-ty FI [] EqbfTy,
+  eqbf-ty FI FI [] [] EqbfTy,
   Name is Prefix ^ "eqb_fields",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-axiom FName EqbfTy C,
   EQBF = (global (const C) : term),
-  eqb-ty FI [] EqbTy,
+  eqb-ty FI FI [] [] EqbTy,
   Name1 is Prefix ^ "eqb",
   coq.ensure-fresh-global-id Name1 FName1,
   coq.env.add-axiom FName1 EqbTy C1,
