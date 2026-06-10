@@ -1,5 +1,6 @@
 (rocq.theory
  (name elpi.tests)
+ (generate_project_file)
  (plugins rocq-elpi.elpi)
  (theories elpi))
 

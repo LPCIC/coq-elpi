@@ -1,6 +1,7 @@
 (rocq.theory
  (name elpi_elpi) ; FIXME
- (package rocq-elpi))
+ (package rocq-elpi)
+ (generate_project_file))
 
 (rule
  (target dummy.v)
