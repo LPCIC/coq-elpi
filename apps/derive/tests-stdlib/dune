@@ -1,6 +1,7 @@
 (rocq.theory
- (package rocq-elpi-tests-stdlib)
  (name elpi_apps_derive_tests_stdlib)
+ (package rocq-elpi-tests-stdlib)
+ (generate_project_file)
  (flags :standard -w -default-output-directory)
  (theories elpi elpi.apps.derive elpi.apps.derive.tests Stdlib))
 

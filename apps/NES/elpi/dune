@@ -1,6 +1,7 @@
 (rocq.theory
  (name elpi.apps.NES.elpi)
  (package rocq-elpi)
+ (generate_project_file)
  (theories elpi))
 
 (rule

@@ -1,6 +1,7 @@
 (rocq.theory
- (package rocq-elpi)
  (name elpi_examples)
+ (package rocq-elpi)
+ (generate_project_file)
  (plugins rocq-elpi.elpi)
  (theories elpi))
 

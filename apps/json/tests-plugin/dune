@@ -1,6 +1,7 @@
 (rocq.theory
  (name elpi.json.tests)
  (package rocq-elpi-json-tests)
+ (generate_project_file)
  (theories elpi elpi.json))
 
 ; work around missing dune support for Extra Dependency 

@@ -1,5 +1,6 @@
 (rocq.theory
  (name elpi.apps.NES.examples)
+ (generate_project_file)
  (theories elpi elpi.apps.NES))
 
 (include_subdirs qualified)

@@ -1,8 +1,9 @@
 (rocq.theory
  (name elpi.apps.tc)
  (package rocq-elpi)
- (theories elpi elpi.apps.tc.elpi)
+ (generate_project_file)
  (flags -w -all -w -elpi)
+ (theories elpi elpi.apps.tc.elpi)
  (plugins rocq-elpi.tc))
 
 (include_subdirs qualified)

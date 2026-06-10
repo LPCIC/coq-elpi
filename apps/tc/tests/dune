@@ -1,7 +1,8 @@
 (rocq.theory
  (name elpi.apps.tc.tests)
- (flags :standard -async-proofs-cache force)
  (package rocq-elpi-tests)
+ (generate_project_file)
+ (flags :standard -async-proofs-cache force)
  (theories elpi elpi.apps.tc))
 
 (include_subdirs qualified)

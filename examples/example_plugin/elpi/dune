@@ -5,6 +5,7 @@
   ; the rocq files in this folder (theories)
   ; will use the plugin defined in src
  (plugins myExtension.plugin)
+ (generate_project_file)
  (package myExtension))
 
 (include_subdirs qualified)

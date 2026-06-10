@@ -1,5 +1,6 @@
 (rocq.theory
  (name elpi.apps.derive.examples)
+ (generate_project_file)
  (theories elpi elpi.apps.derive))
 
 (include_subdirs qualified)

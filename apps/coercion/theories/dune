@@ -1,6 +1,7 @@
 (rocq.theory
  (name elpi.apps.coercion)
  (package rocq-elpi)
+ (generate_project_file)
  (theories elpi)
  (plugins rocq-elpi.coercion))
 

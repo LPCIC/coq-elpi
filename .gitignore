@@ -63,3 +63,5 @@ apps/coercion/src/dune
 apps/cs/src/dune
 apps/tc/src/dune
 src/dune
+
+_RocqProject
