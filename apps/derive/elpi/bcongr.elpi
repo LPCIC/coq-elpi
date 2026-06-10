@@ -114,7 +114,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
   std.assert-ok! (coq.typecheck R RT) "derive.bcongr generates illtyped term",
   Name is Prefix ^ "bcongr_" ^ {coq.gref->id (indc K)},
   coq.ensure-fresh-global-id Name FName,
-  coq.env.add-const FName R RT @transparent! Cong,
+  coq.env.add-const FName R RT @opaque! Cong,
 
   % we register it as a clause
   Clause = (bcongr-db K (global (const Cong)) :- !),

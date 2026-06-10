@@ -61,13 +61,13 @@ main (indt I) Prefix [CL] :- std.do! [
 
   std.assert-ok! (coq.typecheck Breflect Treflect) "eqbOK generates illtyped term", 
   coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
-  coq.env.add-const Namerf Breflect Treflect @transparent! Reflect,
+  coq.env.add-const Namerf Breflect Treflect @opaque! Reflect,
 
 
   add-sumbool FI (global (const Reflect)) Breflect_sb,
   std.assert-ok! (coq.typecheck Breflect_sb Treflect_sb) "eqbOK generates illtyped term", 
   coq.ensure-fresh-global-id (Prefix ^ "eqb_OK_sumbool") Namerf_sb,
-  coq.env.add-const Namerf_sb Breflect_sb Treflect_sb @transparent! Reflect_sb,
+  coq.env.add-const Namerf_sb Breflect_sb Treflect_sb @opaque! Reflect_sb,
 
   CL = eqbok-for (indt I) Reflect,
 
@@ -84,7 +84,7 @@ main (const C) Prefix [CL] :- std.do! [
   std.assert-ok! (coq.typecheck Breflect _) "eqbOK generates illtyped term", 
   coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
   X = (global (const C) : term),
-  coq.env.add-const Namerf Breflect {{ forall a b : lp:X, lib:elpi.reflect (@eq lp:X a b) (lp:F a b) }} @transparent! Reflect,
+  coq.env.add-const Namerf Breflect {{ forall a b : lp:X, lib:elpi.reflect (@eq lp:X a b) (lp:F a b) }} @opaque! Reflect,
   CL = eqbok-for (const C) Reflect,
   coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
   coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ (eqType (const C) eqb.axiom)),

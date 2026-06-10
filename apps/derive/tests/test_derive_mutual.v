@@ -608,20 +608,10 @@ Module Type MutualFieldsExpected.
   | {| Box_tree_node_0 := Box_tree_node_0 |} =>
       Some (node Box_tree_node_0)
   end.
-  Definition tree_constructP : forall i : tree,
+  Parameter tree_constructP : forall i : tree,
        tree_construct (tree_tag i)
          (tree_fields i) =
-       Some i :=
-  fun i : tree =>
-  match
-    i as i0
-    return
-      tree_construct (tree_tag i0)
-        (tree_fields i0) =
-      Some i0
-  with
-  | node f => eq_refl
-  end.
+       Some i.
   Definition forest_fields_t : BinNums.positive -> Type :=
   fun p : BinNums.positive =>
   match p with
@@ -660,21 +650,10 @@ Module Type MutualFieldsExpected.
   | BinNums.xH =>
       fun _ : box_forest_empty => Some empty
   end.
-  Definition forest_constructP : forall i : forest,
+  Parameter forest_constructP : forall i : forest,
        forest_construct (forest_tag i)
          (forest_fields i) =
-       Some i :=
-  fun i : forest =>
-  match
-    i as i0
-    return
-      forest_construct (forest_tag i0)
-        (forest_fields i0) =
-      Some i0
-  with
-  | empty => eq_refl
-  | cons t f => eq_refl
-  end.
+       Some i.
 End MutualFieldsExpected.
 
 Module Type MutualEqbExpected.
@@ -1029,347 +1008,18 @@ Module Type MutualEqbCorrectExpected.
     end
   for
   is_forest_induction_rec.
-  Definition tree_eqb_correct : forall x : tree, @eqb_correct_on tree tree_eqb x :=
-  fun x : tree =>
-  let common :
-    forall (a1 : tree)
-      (_ : @eqb_fields_correct_on tree tree_tag tree_fields_t tree_fields
-             tree_construct (tree_eqb_fields tree_eqb) a1)
-      (a2 : tree)
-      (_ : Datatypes.is_true
-             (@eqb_body tree tree_tag tree_fields_t tree_fields_t tree_fields
-                (tree_eqb_fields tree_eqb) (tree_tag a1) 
-                (tree_fields a1) a2)),
-    @eq tree a1 a2 :=
-    @eqb_body_correct tree tree_tag tree_fields_t tree_fields tree_construct
-      tree_constructP (tree_eqb_fields tree_eqb)
-    in
-  let common0 :
-    forall (a1 : forest)
-      (_ : @eqb_fields_correct_on forest forest_tag forest_fields_t
-             forest_fields forest_construct (forest_eqb_fields forest_eqb) a1)
-      (a2 : forest)
-      (_ : Datatypes.is_true
-             (@eqb_body forest forest_tag forest_fields_t forest_fields_t
-                forest_fields (forest_eqb_fields forest_eqb) 
-                (forest_tag a1) (forest_fields a1) a2)),
-    @eq forest a1 a2 :=
-    @eqb_body_correct forest forest_tag forest_fields_t forest_fields
-      forest_construct forest_constructP (forest_eqb_fields forest_eqb)
-    in
-  tree_induction (@eqb_correct_on tree tree_eqb)
-    (@eqb_correct_on forest forest_eqb)
-    (fun (x0 : forest) (_ : is_forest x0)
-       (h : @eqb_correct_on forest forest_eqb x0) =>
-     common (node x0)
-       (fun x1 : tree_fields_t (tree_tag (node x0)) =>
-        match
-          x1 as i
-          return
-            (forall
-               _ : @eq bool
-                     (tree_eqb_fields tree_eqb (tree_tag (node x0))
-                        (tree_fields (node x0)) i)
-                     true,
-             @eq (option tree) (@Some tree (node x0))
-               (tree_construct (tree_tag (node x0)) i))
-        with
-        | Box_tree_node Box_tree_node_0 =>
-            @impliesP (bcons (forest_eqb x0 Box_tree_node_0) bnil)
-              (@eq (option tree) (@Some tree (node x0))
-                 (tree_construct (tree_tag (node x0))
-                    (Box_tree_node Box_tree_node_0)))
-              (fun h0 : @eq bool (forest_eqb x0 Box_tree_node_0) true =>
-               @eq_ind_r_nP (tcons forest tnil)
-                 (fun w : forest =>
-                  @eq (option tree) (@Some tree (node x0))
-                    (tree_construct (tree_tag (node x0)) (Box_tree_node w)))
-                 x0 Box_tree_node_0 (h Box_tree_node_0 h0)
-                 (@eq_refl (option tree) (@Some tree (node x0))))
-        end)
-     :
-     @eqb_correct_on tree tree_eqb (node x0))
-    (common0 empty
-       (fun x0 : forest_fields_t (forest_tag empty) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (forest_eqb_fields forest_eqb (forest_tag empty)
-                        (forest_fields empty) i)
-                     true,
-             @eq (option forest) (@Some forest empty)
-               (forest_construct (forest_tag empty) i))
-        with
-        | Box_forest_empty =>
-            @impliesP bnil
-              (@eq (option forest) (@Some forest empty)
-                 (forest_construct (forest_tag empty) Box_forest_empty))
-              (@eq_ind_r_nP tnil
-                 (@eq (option forest) (@Some forest empty)
-                    (forest_construct (forest_tag empty) Box_forest_empty))
-                 (@eq_refl (option forest) (@Some forest empty)))
-        end)
-     :
-     @eqb_correct_on forest forest_eqb empty)
-    (fun (x0 : tree) (_ : is_tree x0) (h : @eqb_correct_on tree tree_eqb x0)
-       (x1 : forest) (_ : is_forest x1)
-       (h0 : @eqb_correct_on forest forest_eqb x1) =>
-     common0 (cons x0 x1)
-       (fun x2 : forest_fields_t (forest_tag (cons x0 x1)) =>
-        match
-          x2 as i
-          return
-            (forall
-               _ : @eq bool
-                     (forest_eqb_fields forest_eqb (forest_tag (cons x0 x1))
-                        (forest_fields (cons x0 x1)) i)
-                     true,
-             @eq (option forest) (@Some forest (cons x0 x1))
-               (forest_construct (forest_tag (cons x0 x1)) i))
-        with
-        | Box_forest_cons Box_forest_cons_0 Box_forest_cons_1 =>
-            @impliesP
-              (bcons (tree_eqb x0 Box_forest_cons_0)
-                 (bcons (forest_eqb x1 Box_forest_cons_1) bnil))
-              (@eq (option forest) (@Some forest (cons x0 x1))
-                 (forest_construct (forest_tag (cons x0 x1))
-                    (Box_forest_cons Box_forest_cons_0 Box_forest_cons_1)))
-              (fun (h1 : @eq bool (tree_eqb x0 Box_forest_cons_0) true)
-                 (h2 : @eq bool (forest_eqb x1 Box_forest_cons_1) true) =>
-               @eq_ind_r_nP (tcons tree (tcons forest tnil))
-                 (fun (w : tree) (w0 : forest) =>
-                  @eq (option forest) (@Some forest (cons x0 x1))
-                    (forest_construct (forest_tag (cons x0 x1))
-                       (Box_forest_cons w w0)))
-                 x0 Box_forest_cons_0 (h Box_forest_cons_0 h1) x1
-                 Box_forest_cons_1 (h0 Box_forest_cons_1 h2)
-                 (@eq_refl (option forest) (@Some forest (cons x0 x1))))
-        end)
-     :
-     @eqb_correct_on forest forest_eqb (cons x0 x1))
-    x (is_tree_inhab x).
-  Definition forest_eqb_correct : forall x : forest, @eqb_correct_on forest forest_eqb x :=
-  fun x : forest =>
-  let common :
-    forall (a1 : tree)
-      (_ : @eqb_fields_correct_on tree tree_tag tree_fields_t tree_fields
-             tree_construct (tree_eqb_fields tree_eqb) a1)
-      (a2 : tree)
-      (_ : Datatypes.is_true
-             (@eqb_body tree tree_tag tree_fields_t tree_fields_t tree_fields
-                (tree_eqb_fields tree_eqb) (tree_tag a1) 
-                (tree_fields a1) a2)),
-    @eq tree a1 a2 :=
-    @eqb_body_correct tree tree_tag tree_fields_t tree_fields tree_construct
-      tree_constructP (tree_eqb_fields tree_eqb)
-    in
-  let common0 :
-    forall (a1 : forest)
-      (_ : @eqb_fields_correct_on forest forest_tag forest_fields_t
-             forest_fields forest_construct (forest_eqb_fields forest_eqb) a1)
-      (a2 : forest)
-      (_ : Datatypes.is_true
-             (@eqb_body forest forest_tag forest_fields_t forest_fields_t
-                forest_fields (forest_eqb_fields forest_eqb) 
-                (forest_tag a1) (forest_fields a1) a2)),
-    @eq forest a1 a2 :=
-    @eqb_body_correct forest forest_tag forest_fields_t forest_fields
-      forest_construct forest_constructP (forest_eqb_fields forest_eqb)
-    in
-  forest_induction (@eqb_correct_on tree tree_eqb)
-    (@eqb_correct_on forest forest_eqb)
-    (fun (x0 : forest) (_ : is_forest x0)
-       (h : @eqb_correct_on forest forest_eqb x0) =>
-     common (node x0)
-       (fun x1 : tree_fields_t (tree_tag (node x0)) =>
-        match
-          x1 as i
-          return
-            (forall
-               _ : @eq bool
-                     (tree_eqb_fields tree_eqb (tree_tag (node x0))
-                        (tree_fields (node x0)) i)
-                     true,
-             @eq (option tree) (@Some tree (node x0))
-               (tree_construct (tree_tag (node x0)) i))
-        with
-        | Box_tree_node Box_tree_node_0 =>
-            @impliesP (bcons (forest_eqb x0 Box_tree_node_0) bnil)
-              (@eq (option tree) (@Some tree (node x0))
-                 (tree_construct (tree_tag (node x0))
-                    (Box_tree_node Box_tree_node_0)))
-              (fun h0 : @eq bool (forest_eqb x0 Box_tree_node_0) true =>
-               @eq_ind_r_nP (tcons forest tnil)
-                 (fun w : forest =>
-                  @eq (option tree) (@Some tree (node x0))
-                    (tree_construct (tree_tag (node x0)) (Box_tree_node w)))
-                 x0 Box_tree_node_0 (h Box_tree_node_0 h0)
-                 (@eq_refl (option tree) (@Some tree (node x0))))
-        end)
-     :
-     @eqb_correct_on tree tree_eqb (node x0))
-    (common0 empty
-       (fun x0 : forest_fields_t (forest_tag empty) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (forest_eqb_fields forest_eqb (forest_tag empty)
-                        (forest_fields empty) i)
-                     true,
-             @eq (option forest) (@Some forest empty)
-               (forest_construct (forest_tag empty) i))
-        with
-        | Box_forest_empty =>
-            @impliesP bnil
-              (@eq (option forest) (@Some forest empty)
-                 (forest_construct (forest_tag empty) Box_forest_empty))
-              (@eq_ind_r_nP tnil
-                 (@eq (option forest) (@Some forest empty)
-                    (forest_construct (forest_tag empty) Box_forest_empty))
-                 (@eq_refl (option forest) (@Some forest empty)))
-        end)
-     :
-     @eqb_correct_on forest forest_eqb empty)
-    (fun (x0 : tree) (_ : is_tree x0) (h : @eqb_correct_on tree tree_eqb x0)
-       (x1 : forest) (_ : is_forest x1)
-       (h0 : @eqb_correct_on forest forest_eqb x1) =>
-     common0 (cons x0 x1)
-       (fun x2 : forest_fields_t (forest_tag (cons x0 x1)) =>
-        match
-          x2 as i
-          return
-            (forall
-               _ : @eq bool
-                     (forest_eqb_fields forest_eqb (forest_tag (cons x0 x1))
-                        (forest_fields (cons x0 x1)) i)
-                     true,
-             @eq (option forest) (@Some forest (cons x0 x1))
-               (forest_construct (forest_tag (cons x0 x1)) i))
-        with
-        | Box_forest_cons Box_forest_cons_0 Box_forest_cons_1 =>
-            @impliesP
-              (bcons (tree_eqb x0 Box_forest_cons_0)
-                 (bcons (forest_eqb x1 Box_forest_cons_1) bnil))
-              (@eq (option forest) (@Some forest (cons x0 x1))
-                 (forest_construct (forest_tag (cons x0 x1))
-                    (Box_forest_cons Box_forest_cons_0 Box_forest_cons_1)))
-              (fun (h1 : @eq bool (tree_eqb x0 Box_forest_cons_0) true)
-                 (h2 : @eq bool (forest_eqb x1 Box_forest_cons_1) true) =>
-               @eq_ind_r_nP (tcons tree (tcons forest tnil))
-                 (fun (w : tree) (w0 : forest) =>
-                  @eq (option forest) (@Some forest (cons x0 x1))
-                    (forest_construct (forest_tag (cons x0 x1))
-                       (Box_forest_cons w w0)))
-                 x0 Box_forest_cons_0 (h Box_forest_cons_0 h1) x1
-                 Box_forest_cons_1 (h0 Box_forest_cons_1 h2)
-                 (@eq_refl (option forest) (@Some forest (cons x0 x1))))
-        end)
-     :
-     @eqb_correct_on forest forest_eqb (cons x0 x1))
-    x (is_forest_inhab x).
-  Definition tree_eqb_refl : forall x : tree, @eqb_refl_on tree tree_eqb x :=
-  fun x : tree =>
-  let common :
-    forall (a : tree)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on tree tree_tag tree_fields_t tree_fields
-                (tree_eqb_fields tree_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body tree tree_tag tree_fields_t tree_fields_t tree_fields
-         (tree_eqb_fields tree_eqb) (tree_tag a) (tree_fields a) a) :=
-    @eqb_body_refl tree tree_tag tree_fields_t tree_fields tree_construct
-      tree_constructP (tree_eqb_fields tree_eqb)
-    in
-  let common0 :
-    forall (a : forest)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on forest forest_tag forest_fields_t
-                forest_fields (forest_eqb_fields forest_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body forest forest_tag forest_fields_t forest_fields_t
-         forest_fields (forest_eqb_fields forest_eqb) 
-         (forest_tag a) (forest_fields a) a) :=
-    @eqb_body_refl forest forest_tag forest_fields_t forest_fields
-      forest_construct forest_constructP (forest_eqb_fields forest_eqb)
-    in
-  tree_induction (@eqb_refl_on tree tree_eqb) (@eqb_refl_on forest forest_eqb)
-    (fun (x0 : forest) (_ : is_forest x0)
-       (h : @eqb_refl_on forest forest_eqb x0) =>
-     common (node x0) (eqb_refl_statementP (bcons (forest_eqb x0 x0) bnil) h)
-     :
-     @eqb_refl_on tree tree_eqb (node x0))
-    (common0 empty (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on forest forest_eqb empty)
-    (fun (x0 : tree) (_ : is_tree x0) (h : @eqb_refl_on tree tree_eqb x0)
-       (x1 : forest) (_ : is_forest x1)
-       (h0 : @eqb_refl_on forest forest_eqb x1) =>
-     common0 (cons x0 x1)
-       (eqb_refl_statementP
-          (bcons (forest_eqb x1 x1) (bcons (tree_eqb x0 x0) bnil)) h0 h)
-     :
-     @eqb_refl_on forest forest_eqb (cons x0 x1))
-    x (is_tree_inhab x).
-  Definition forest_eqb_refl : forall x : forest, @eqb_refl_on forest forest_eqb x :=
-  fun x : forest =>
-  let common :
-    forall (a : tree)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on tree tree_tag tree_fields_t tree_fields
-                (tree_eqb_fields tree_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body tree tree_tag tree_fields_t tree_fields_t tree_fields
-         (tree_eqb_fields tree_eqb) (tree_tag a) (tree_fields a) a) :=
-    @eqb_body_refl tree tree_tag tree_fields_t tree_fields tree_construct
-      tree_constructP (tree_eqb_fields tree_eqb)
-    in
-  let common0 :
-    forall (a : forest)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on forest forest_tag forest_fields_t
-                forest_fields (forest_eqb_fields forest_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body forest forest_tag forest_fields_t forest_fields_t
-         forest_fields (forest_eqb_fields forest_eqb) 
-         (forest_tag a) (forest_fields a) a) :=
-    @eqb_body_refl forest forest_tag forest_fields_t forest_fields
-      forest_construct forest_constructP (forest_eqb_fields forest_eqb)
-    in
-  forest_induction (@eqb_refl_on tree tree_eqb)
-    (@eqb_refl_on forest forest_eqb)
-    (fun (x0 : forest) (_ : is_forest x0)
-       (h : @eqb_refl_on forest forest_eqb x0) =>
-     common (node x0) (eqb_refl_statementP (bcons (forest_eqb x0 x0) bnil) h)
-     :
-     @eqb_refl_on tree tree_eqb (node x0))
-    (common0 empty (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on forest forest_eqb empty)
-    (fun (x0 : tree) (_ : is_tree x0) (h : @eqb_refl_on tree tree_eqb x0)
-       (x1 : forest) (_ : is_forest x1)
-       (h0 : @eqb_refl_on forest forest_eqb x1) =>
-     common0 (cons x0 x1)
-       (eqb_refl_statementP
-          (bcons (forest_eqb x1 x1) (bcons (tree_eqb x0 x0) bnil)) h0 h)
-     :
-     @eqb_refl_on forest forest_eqb (cons x0 x1))
-    x (is_forest_inhab x).
+  Parameter tree_eqb_correct : forall x : tree, @eqb_correct_on tree tree_eqb x.
+  Parameter forest_eqb_correct : forall x : forest, @eqb_correct_on forest forest_eqb x.
+  Parameter tree_eqb_refl : forall x : tree, @eqb_refl_on tree tree_eqb x.
+  Parameter forest_eqb_refl : forall x : forest, @eqb_refl_on forest forest_eqb x.
 End MutualEqbCorrectExpected.
 
 Module Type MutualEqbOKExpected.
   Include MutualEqbCorrectExpected.
-  Definition tree_eqb_OK : forall x1 x2 : tree, reflect (@eq tree x1 x2) (tree_eqb x1 x2) :=
-  @iffP2 tree tree_eqb tree_eqb_correct tree_eqb_refl.
-  Definition forest_eqb_OK : forall x1 x2 : forest, reflect (@eq forest x1 x2) (forest_eqb x1 x2) :=
-  @iffP2 forest forest_eqb forest_eqb_correct forest_eqb_refl.
-  Definition tree_eqb_OK_sumbool : forall x y : tree, sumbool (@eq tree x y) (not (@eq tree x y)) :=
-  reflect_dec tree tree_eqb tree_eqb_OK.
-  Definition forest_eqb_OK_sumbool : forall x y : forest, sumbool (@eq forest x y) (not (@eq forest x y)) :=
-  reflect_dec forest forest_eqb forest_eqb_OK.
+  Parameter tree_eqb_OK : forall x1 x2 : tree, reflect (@eq tree x1 x2) (tree_eqb x1 x2).
+  Parameter forest_eqb_OK : forall x1 x2 : forest, reflect (@eq forest x1 x2) (forest_eqb x1 x2).
+  Parameter tree_eqb_OK_sumbool : forall x y : tree, sumbool (@eq tree x y) (not (@eq tree x y)).
+  Parameter forest_eqb_OK_sumbool : forall x y : forest, sumbool (@eq forest x y) (not (@eq forest x y)).
 End MutualEqbOKExpected.
 
 Module Type MutualIsKExpected.
@@ -1417,84 +1067,15 @@ End MutualProjKExpected.
 
 Module Type MutualBcongrExpected.
   Include MutualProjKExpected.
-  Definition tree_bcongr_node : forall (x y : forest) (b : bool),
+  Parameter tree_bcongr_node : forall (x y : forest) (b : bool),
        reflect (x = y) b ->
-       reflect (node x = node y) b :=
-  fun (x y : forest) (b : bool) (h : reflect (x = y) b) =>
-  match
-    h in reflect _ H
-    return reflect (node x = node y) H
-  with
-  | ReflectT _ x0 =>
-      match
-        x0 in _ = H
-        return reflect (node x = node H) true
-      with
-      | eq_refl => ReflectT (node x = node x) eq_refl
-      end
-  | ReflectF _ x0 =>
-      ReflectF (node x = node y)
-        (fun h0 : node x = node y =>
-         x0
-           (bcongr.eq_f tree forest
-              (tree_getk_node1 x) (node x)
-              (node y) h0))
-  end.
-  Definition forest_bcongr_empty : reflect (empty = empty) true :=
-  ReflectT (empty = empty) eq_refl.
-  Definition forest_bcongr_cons : forall (x y : tree) (b : bool),
+       reflect (node x = node y) b.
+  Parameter forest_bcongr_empty : reflect (empty = empty) true.
+  Parameter forest_bcongr_cons : forall (x y : tree) (b : bool),
        reflect (x = y) b ->
        forall (x0 y0 : forest) (b0 : bool),
        reflect (x0 = y0) b0 ->
-       reflect (cons x x0 = cons y y0) (b && b0) :=
-  fun (x y : tree) (b : bool) (h : reflect (x = y) b)
-    (x0 y0 : forest) (b0 : bool) (h0 : reflect (x0 = y0) b0) =>
-  match
-    h in reflect _ H
-    return reflect (cons x x0 = cons y y0) (H && b0)
-  with
-  | ReflectT _ x1 =>
-      match
-        x1 in _ = H
-        return
-          reflect (cons x x0 = cons H y0)
-            (true && b0)
-      with
-      | eq_refl =>
-          match
-            h0 in reflect _ H
-            return
-              reflect (cons x x0 = cons x y0)
-                (true && H)
-          with
-          | ReflectT _ x2 =>
-              match
-                x2 in _ = H
-                return
-                  reflect (cons x x0 = cons x H)
-                    (true && true)
-              with
-              | eq_refl =>
-                  ReflectT (cons x x0 = cons x x0)
-                    eq_refl
-              end
-          | ReflectF _ x2 =>
-              ReflectF (cons x x0 = cons x y0)
-                (fun h1 : cons x x0 = cons x y0 =>
-                 x2
-                   (bcongr.eq_f forest forest
-                      (forest_getk_cons2 x x0)
-                      (cons x x0) (cons x y0) h1))
-          end
-      end
-  | ReflectF _ x1 =>
-      ReflectF (cons x x0 = cons y y0)
-        (fun h1 : cons x x0 = cons y y0 =>
-         x1
-           (bcongr.eq_f forest tree
-              (forest_getk_cons1 x x0) 
-              (cons x x0) (cons y y0) h1))
-  end.
+       reflect (cons x x0 = cons y y0) (b && b0).
 End MutualBcongrExpected.
 
 Module Type ParametrizedMutualBase.
@@ -2080,22 +1661,11 @@ Module Type ParametrizedMutualFieldsExpected.
       Some
         (pnode p Box_ptree_pnode_0 Box_ptree_pnode_1)
   end.
-  Definition ptree_constructP : forall (A : Type) (i : ptree A),
+  Parameter ptree_constructP : forall (A : Type) (i : ptree A),
        ptree_construct A
          (ptree_tag A i)
          (ptree_fields A i) =
-       Some i :=
-  fun (A : Type) (i : ptree A) =>
-  match
-    i as i0
-    return
-      ptree_construct A
-        (ptree_tag A i0)
-        (ptree_fields A i0) =
-      Some i0
-  with
-  | pnode _ x f => eq_refl
-  end.
+       Some i.
   Definition pforest_fields_t : Type -> BinNums.positive -> Type :=
   fun (p : Type) (p0 : BinNums.positive) =>
   match p0 with
@@ -2146,23 +1716,11 @@ Module Type ParametrizedMutualFieldsExpected.
       fun _ : box_pforest_pempty p =>
       Some (pempty p)
   end.
-  Definition pforest_constructP : forall (A : Type) (i : pforest A),
+  Parameter pforest_constructP : forall (A : Type) (i : pforest A),
        pforest_construct A
          (pforest_tag A i)
          (pforest_fields A i) =
-       Some i :=
-  fun (A : Type) (i : pforest A) =>
-  match
-    i as i0
-    return
-      pforest_construct A
-        (pforest_tag A i0)
-        (pforest_fields A i0) =
-      Some i0
-  with
-  | pempty _ => eq_refl
-  | pcons _ t f => eq_refl
-  end.
+       Some i.
 End ParametrizedMutualFieldsExpected.
 
 Module Type ParametrizedMutualEqbExpected.
@@ -2481,132 +2039,34 @@ End ParametrizedMutualEqbExpected.
 
 Module Type ParametrizedMutualEqbCorrectExpected.
   Include ParametrizedMutualEqbExpected.
-  Definition ptree_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter ptree_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_correct eqA ->
        forall x : ptree A, eqb_core_defs.eqb_correct_on (ptree_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix ptree_correct (x : ptree A) :
-              eqb_core_defs.eqb_correct_on (ptree_eqb A eqA) x := _
-            with pforest_correct (x : pforest A) :
-              eqb_core_defs.eqb_correct_on (pforest_eqb A eqA) x := _
-            for ptree_correct).
-    - intros y H.
-      destruct x as [x f]; destruct y as [y f']; cbn [ptree_eqb pforest_eqb eqb_core_defs.eqb_body] in H.
-      apply andb_prop in H as [Hx H].
-      apply andb_prop in H as [Hf _].
-      f_equal.
-      + exact (HeqA x y Hx).
-      + exact (pforest_correct f f' Hf).
-    - intros y H.
-      destruct x as [|t f]; destruct y as [|t' f']; cbn [ptree_eqb pforest_eqb eqb_core_defs.eqb_body] in H; try discriminate.
-      + reflexivity.
-      + apply andb_prop in H as [Ht H].
-        apply andb_prop in H as [Hf _].
-        f_equal.
-        * exact (ptree_correct t t' Ht).
-        * exact (pforest_correct f f' Hf).
-  Defined.
-  Definition pforest_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter pforest_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_correct eqA ->
        forall x : pforest A, eqb_core_defs.eqb_correct_on (pforest_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix ptree_correct (x : ptree A) :
-              eqb_core_defs.eqb_correct_on (ptree_eqb A eqA) x := _
-            with pforest_correct (x : pforest A) :
-              eqb_core_defs.eqb_correct_on (pforest_eqb A eqA) x := _
-            for pforest_correct).
-    - intros y H.
-      destruct x as [x f]; destruct y as [y f']; cbn [ptree_eqb pforest_eqb eqb_core_defs.eqb_body] in H.
-      apply andb_prop in H as [Hx H].
-      apply andb_prop in H as [Hf _].
-      f_equal.
-      + exact (HeqA x y Hx).
-      + exact (pforest_correct f f' Hf).
-    - intros y H.
-      destruct x as [|t f]; destruct y as [|t' f']; cbn [ptree_eqb pforest_eqb eqb_core_defs.eqb_body] in H; try discriminate.
-      + reflexivity.
-      + apply andb_prop in H as [Ht H].
-        apply andb_prop in H as [Hf _].
-        f_equal.
-        * exact (ptree_correct t t' Ht).
-        * exact (pforest_correct f f' Hf).
-  Defined.
-  Definition ptree_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter ptree_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_reflexive eqA ->
        forall x : ptree A, eqb_core_defs.eqb_refl_on (ptree_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix ptree_refl (x : ptree A) :
-              eqb_core_defs.eqb_refl_on (ptree_eqb A eqA) x := _
-            with pforest_refl (x : pforest A) :
-              eqb_core_defs.eqb_refl_on (pforest_eqb A eqA) x := _
-            for ptree_refl).
-    - destruct x as [x f].
-      change (eqA x x && (pforest_eqb A eqA f f && true) = true).
-      rewrite (HeqA x). rewrite (pforest_refl f). reflexivity.
-    - destruct x as [|t f].
-      + reflexivity.
-      + change (ptree_eqb A eqA t t && (pforest_eqb A eqA f f && true) = true).
-        rewrite (ptree_refl t). rewrite (pforest_refl f). reflexivity.
-  Defined.
-  Definition pforest_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter pforest_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_reflexive eqA ->
        forall x : pforest A, eqb_core_defs.eqb_refl_on (pforest_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix ptree_refl (x : ptree A) :
-              eqb_core_defs.eqb_refl_on (ptree_eqb A eqA) x := _
-            with pforest_refl (x : pforest A) :
-              eqb_core_defs.eqb_refl_on (pforest_eqb A eqA) x := _
-            for pforest_refl).
-    - destruct x as [x f].
-      change (eqA x x && (pforest_eqb A eqA f f && true) = true).
-      rewrite (HeqA x). rewrite (pforest_refl f). reflexivity.
-    - destruct x as [|t f].
-      + reflexivity.
-      + change (ptree_eqb A eqA t t && (pforest_eqb A eqA f f && true) = true).
-        rewrite (ptree_refl t). rewrite (pforest_refl f). reflexivity.
-  Defined.
 End ParametrizedMutualEqbCorrectExpected.
 
 Module Type ParametrizedMutualEqbOKExpected.
   Include ParametrizedMutualEqbCorrectExpected.
-  Definition ptree_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter ptree_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
        (forall x y : A, reflect (x = y) (eqA x y)) ->
-       forall x y : ptree A, reflect (x = y) (ptree_eqb A eqA x y) :=
-  fun (A : Type) (eqA : A -> A -> bool)
-      (heqA : forall x y : A, reflect (x = y) (eqA x y)) =>
-    eqb_core_defs.iffP2
-      (ptree_eqb_correct A eqA
-        (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
-      (ptree_eqb_refl A eqA
-        (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
-  Definition pforest_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+       forall x y : ptree A, reflect (x = y) (ptree_eqb A eqA x y).
+  Parameter pforest_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
        (forall x y : A, reflect (x = y) (eqA x y)) ->
-       forall x y : pforest A, reflect (x = y) (pforest_eqb A eqA x y) :=
-  fun (A : Type) (eqA : A -> A -> bool)
-      (heqA : forall x y : A, reflect (x = y) (eqA x y)) =>
-    eqb_core_defs.iffP2
-      (pforest_eqb_correct A eqA
-        (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
-      (pforest_eqb_refl A eqA
-        (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
-  Definition ptree_eqb_OK_sumbool : forall A : Type,
+       forall x y : pforest A, reflect (x = y) (pforest_eqb A eqA x y).
+  Parameter ptree_eqb_OK_sumbool : forall A : Type,
        (forall x y : A, {x = y} + {x <> y}) ->
-       forall x y : ptree A, {x = y} + {x <> y} :=
-  fun (A : Type) (heqA : forall x y : A, {x = y} + {x <> y}) =>
-    eqbOK.reflect_dec (ptree A) (ptree_eqb A (eqbOK.eqb_of_dec A heqA))
-      (ptree_eqb_OK A (eqbOK.eqb_of_dec A heqA)
-        (eqbOK.dec_reflect A heqA)).
-  Definition pforest_eqb_OK_sumbool : forall A : Type,
+       forall x y : ptree A, {x = y} + {x <> y}.
+  Parameter pforest_eqb_OK_sumbool : forall A : Type,
        (forall x y : A, {x = y} + {x <> y}) ->
-       forall x y : pforest A, {x = y} + {x <> y} :=
-  fun (A : Type) (heqA : forall x y : A, {x = y} + {x <> y}) =>
-    eqbOK.reflect_dec (pforest A) (pforest_eqb A (eqbOK.eqb_of_dec A heqA))
-      (pforest_eqb_OK A (eqbOK.eqb_of_dec A heqA)
-        (eqbOK.dec_reflect A heqA)).
+       forall x y : pforest A, {x = y} + {x <> y}.
 End ParametrizedMutualEqbOKExpected.
 
 Module Type ParametrizedMutualIsKExpected.
@@ -2674,177 +2134,27 @@ End ParametrizedMutualProjKExpected.
 
 Module Type ParametrizedMutualBcongrExpected.
   Include ParametrizedMutualProjKExpected.
-  Definition ptree_bcongr_pnode : forall (A : Type) (x y : A) (b : bool),
+  Parameter ptree_bcongr_pnode : forall (A : Type) (x y : A) (b : bool),
        reflect (x = y) b ->
        forall (x0 y0 : pforest A) (b0 : bool),
        reflect (x0 = y0) b0 ->
        reflect
          (pnode A x x0 =
           pnode A y y0)
-         (b && b0) :=
-  fun (A : Type) (x y : A) (b : bool) (h : reflect (x = y) b)
-    (x0 y0 : pforest A) (b0 : bool)
-    (h0 : reflect (x0 = y0) b0) =>
-  match
-    h in reflect _ H
-    return
-      reflect
-        (pnode A x x0 =
-         pnode A y y0)
-        (H && b0)
-  with
-  | ReflectT _ x1 =>
-      match
-        x1 in _ = H
-        return
-          reflect
-            (pnode A x x0 =
-             pnode A H y0)
-            (true && b0)
-      with
-      | eq_refl =>
-          match
-            h0 in reflect _ H
-            return
-              reflect
-                (pnode A x x0 =
-                 pnode A x y0)
-                (true && H)
-          with
-          | ReflectT _ x2 =>
-              match
-                x2 in _ = H
-                return
-                  reflect
-                    (pnode A x x0 =
-                     pnode A x H)
-                    (true && true)
-              with
-              | eq_refl =>
-                  ReflectT
-                    (pnode A x x0 =
-                     pnode A x x0)
-                    eq_refl
-              end
-          | ReflectF _ x2 =>
-              ReflectF
-                (pnode A x x0 =
-                 pnode A x y0)
-                (fun
-                   h1 : pnode A x x0 =
-                        pnode A x y0 =>
-                 x2
-                   (bcongr.eq_f (ptree A)
-                      (pforest A)
-                      (ptree_getk_pnode2 A x x0)
-                      (pnode A x x0)
-                      (pnode A x y0) h1))
-          end
-      end
-  | ReflectF _ x1 =>
-      ReflectF
-        (pnode A x x0 =
-         pnode A y y0)
-        (fun
-           h1 : pnode A x x0 =
-                pnode A y y0 =>
-         x1
-           (bcongr.eq_f (ptree A) A
-              (ptree_getk_pnode1 A x x0)
-              (pnode A x x0)
-              (pnode A y y0) h1))
-  end.
-  Definition pforest_bcongr_pempty : forall A : Type,
+         (b && b0).
+  Parameter pforest_bcongr_pempty : forall A : Type,
        reflect
          (pempty A =
           pempty A)
-         true :=
-  fun A : Type =>
-  ReflectT
-    (pempty A = pempty A)
-    eq_refl.
-  Definition pforest_bcongr_pcons : forall (A : Type) (x y : ptree A) (b : bool),
+         true.
+  Parameter pforest_bcongr_pcons : forall (A : Type) (x y : ptree A) (b : bool),
        reflect (x = y) b ->
        forall (x0 y0 : pforest A) (b0 : bool),
        reflect (x0 = y0) b0 ->
        reflect
          (pcons A x x0 =
           pcons A y y0)
-         (b && b0) :=
-  fun (A : Type) (x y : ptree A) 
-    (b : bool) (h : reflect (x = y) b)
-    (x0 y0 : pforest A) (b0 : bool)
-    (h0 : reflect (x0 = y0) b0) =>
-  match
-    h in reflect _ H
-    return
-      reflect
-        (pcons A x x0 =
-         pcons A y y0)
-        (H && b0)
-  with
-  | ReflectT _ x1 =>
-      match
-        x1 in _ = H
-        return
-          reflect
-            (pcons A x x0 =
-             pcons A H y0)
-            (true && b0)
-      with
-      | eq_refl =>
-          match
-            h0 in reflect _ H
-            return
-              reflect
-                (pcons A x x0 =
-                 pcons A x y0)
-                (true && H)
-          with
-          | ReflectT _ x2 =>
-              match
-                x2 in _ = H
-                return
-                  reflect
-                    (pcons A x x0 =
-                     pcons A x H)
-                    (true && true)
-              with
-              | eq_refl =>
-                  ReflectT
-                    (pcons A x x0 =
-                     pcons A x x0)
-                    eq_refl
-              end
-          | ReflectF _ x2 =>
-              ReflectF
-                (pcons A x x0 =
-                 pcons A x y0)
-                (fun
-                   h1 : pcons A x x0 =
-                        pcons A x y0 =>
-                 x2
-                   (bcongr.eq_f (pforest A)
-                      (pforest A)
-                      (pforest_getk_pcons2 A x x0)
-                      (pcons A x x0)
-                      (pcons A x y0) h1))
-          end
-      end
-  | ReflectF _ x1 =>
-      ReflectF
-        (pcons A x x0 =
-         pcons A y y0)
-        (fun
-           h1 : pcons A x x0 =
-                pcons A y y0 =>
-         x1
-           (bcongr.eq_f (pforest A)
-              (ptree A)
-              (pforest_getk_pcons1 A x x0)
-              (pcons A x x0)
-              (pcons A y y0) h1))
-  end.
+         (b && b0).
 End ParametrizedMutualBcongrExpected.
 
 Module Type TripleMutualBase.
@@ -3045,57 +2355,21 @@ Module Type TripleMutualEqbExpected.
       fun _ : box_gamma_gamma0 =>
       Some gamma0
   end.
-  Definition alpha_constructP : forall i : alpha,
+  Parameter alpha_constructP : forall i : alpha,
        alpha_construct
          (alpha_tag i)
          (alpha_fields i) =
-       Some i :=
-  fun i : alpha =>
-  match
-    i as i0
-    return
-      alpha_construct
-        (alpha_tag i0)
-        (alpha_fields i0) =
-      Some i0
-  with
-  | alpha0 => eq_refl
-  | alpha1 b => eq_refl
-  end.
-  Definition beta_constructP : forall i : beta,
+       Some i.
+  Parameter beta_constructP : forall i : beta,
        beta_construct
          (beta_tag i)
          (beta_fields i) =
-       Some i :=
-  fun i : beta =>
-  match
-    i as i0
-    return
-      beta_construct
-        (beta_tag i0)
-        (beta_fields i0) =
-      Some i0
-  with
-  | beta0 => eq_refl
-  | beta1 g => eq_refl
-  end.
-  Definition gamma_constructP : forall i : gamma,
+       Some i.
+  Parameter gamma_constructP : forall i : gamma,
        gamma_construct
          (gamma_tag i)
          (gamma_fields i) =
-       Some i :=
-  fun i : gamma =>
-  match
-    i as i0
-    return
-      gamma_construct
-        (gamma_tag i0)
-        (gamma_fields i0) =
-      Some i0
-  with
-  | gamma0 => eq_refl
-  | gamma1 a b => eq_refl
-  end.
+       Some i.
   Definition alpha_eqb : alpha -> alpha -> bool :=
   fix alpha (x1 x2 : alpha) {struct x1} : bool :=
     match x1 with
@@ -4078,846 +3352,18 @@ Module Type TripleMutualEqbOKExpected.
     end
   for
   is_gamma_induction_rec.
-  Definition alpha_eqb_correct : forall x : alpha, @eqb_correct_on alpha alpha_eqb x :=
-  fun x : alpha =>
-  let common :
-    forall (a1 : alpha)
-      (_ : @eqb_fields_correct_on alpha alpha_tag alpha_fields_t alpha_fields
-             alpha_construct (alpha_eqb_fields alpha_eqb) a1)
-      (a2 : alpha)
-      (_ : Datatypes.is_true
-             (@eqb_body alpha alpha_tag alpha_fields_t alpha_fields_t
-                alpha_fields (alpha_eqb_fields alpha_eqb) 
-                (alpha_tag a1) (alpha_fields a1) a2)),
-    @eq alpha a1 a2 :=
-    @eqb_body_correct alpha alpha_tag alpha_fields_t alpha_fields
-      alpha_construct alpha_constructP (alpha_eqb_fields alpha_eqb)
-    in
-  let common0 :
-    forall (a1 : beta)
-      (_ : @eqb_fields_correct_on beta beta_tag beta_fields_t beta_fields
-             beta_construct (beta_eqb_fields beta_eqb) a1)
-      (a2 : beta)
-      (_ : Datatypes.is_true
-             (@eqb_body beta beta_tag beta_fields_t beta_fields_t beta_fields
-                (beta_eqb_fields beta_eqb) (beta_tag a1) 
-                (beta_fields a1) a2)),
-    @eq beta a1 a2 :=
-    @eqb_body_correct beta beta_tag beta_fields_t beta_fields beta_construct
-      beta_constructP (beta_eqb_fields beta_eqb)
-    in
-  let common1 :
-    forall (a1 : gamma)
-      (_ : @eqb_fields_correct_on gamma gamma_tag gamma_fields_t gamma_fields
-             gamma_construct (gamma_eqb_fields gamma_eqb) a1)
-      (a2 : gamma)
-      (_ : Datatypes.is_true
-             (@eqb_body gamma gamma_tag gamma_fields_t gamma_fields_t
-                gamma_fields (gamma_eqb_fields gamma_eqb) 
-                (gamma_tag a1) (gamma_fields a1) a2)),
-    @eq gamma a1 a2 :=
-    @eqb_body_correct gamma gamma_tag gamma_fields_t gamma_fields
-      gamma_construct gamma_constructP (gamma_eqb_fields gamma_eqb)
-    in
-  alpha_induction (@eqb_correct_on alpha alpha_eqb)
-    (@eqb_correct_on beta beta_eqb) (@eqb_correct_on gamma gamma_eqb)
-    (common alpha0
-       (fun x0 : alpha_fields_t (alpha_tag alpha0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (alpha_eqb_fields alpha_eqb (alpha_tag alpha0)
-                        (alpha_fields alpha0) i)
-                     true,
-             @eq (option alpha) (@Some alpha alpha0)
-               (alpha_construct (alpha_tag alpha0) i))
-        with
-        | Box_alpha_alpha0 =>
-            @impliesP bnil
-              (@eq (option alpha) (@Some alpha alpha0)
-                 (alpha_construct (alpha_tag alpha0) Box_alpha_alpha0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option alpha) (@Some alpha alpha0)
-                    (alpha_construct (alpha_tag alpha0) Box_alpha_alpha0))
-                 (@eq_refl (option alpha) (@Some alpha alpha0)))
-        end)
-     :
-     @eqb_correct_on alpha alpha_eqb alpha0)
-    (fun (x0 : beta) (_ : is_beta x0) (h : @eqb_correct_on beta beta_eqb x0) =>
-     common (alpha1 x0)
-       (fun x1 : alpha_fields_t (alpha_tag (alpha1 x0)) =>
-        match
-          x1 as i
-          return
-            (forall
-               _ : @eq bool
-                     (alpha_eqb_fields alpha_eqb (alpha_tag (alpha1 x0))
-                        (alpha_fields (alpha1 x0)) i)
-                     true,
-             @eq (option alpha) (@Some alpha (alpha1 x0))
-               (alpha_construct (alpha_tag (alpha1 x0)) i))
-        with
-        | Box_alpha_alpha1 Box_alpha_alpha1_0 =>
-            @impliesP (bcons (beta_eqb x0 Box_alpha_alpha1_0) bnil)
-              (@eq (option alpha) (@Some alpha (alpha1 x0))
-                 (alpha_construct (alpha_tag (alpha1 x0))
-                    (Box_alpha_alpha1 Box_alpha_alpha1_0)))
-              (fun h0 : @eq bool (beta_eqb x0 Box_alpha_alpha1_0) true =>
-               @eq_ind_r_nP (tcons beta tnil)
-                 (fun w : beta =>
-                  @eq (option alpha) (@Some alpha (alpha1 x0))
-                    (alpha_construct (alpha_tag (alpha1 x0))
-                       (Box_alpha_alpha1 w)))
-                 x0 Box_alpha_alpha1_0 (h Box_alpha_alpha1_0 h0)
-                 (@eq_refl (option alpha) (@Some alpha (alpha1 x0))))
-        end)
-     :
-     @eqb_correct_on alpha alpha_eqb (alpha1 x0))
-    (common0 beta0
-       (fun x0 : beta_fields_t (beta_tag beta0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (beta_eqb_fields beta_eqb (beta_tag beta0)
-                        (beta_fields beta0) i)
-                     true,
-             @eq (option beta) (@Some beta beta0)
-               (beta_construct (beta_tag beta0) i))
-        with
-        | Box_beta_beta0 =>
-            @impliesP bnil
-              (@eq (option beta) (@Some beta beta0)
-                 (beta_construct (beta_tag beta0) Box_beta_beta0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option beta) (@Some beta beta0)
-                    (beta_construct (beta_tag beta0) Box_beta_beta0))
-                 (@eq_refl (option beta) (@Some beta beta0)))
-        end)
-     :
-     @eqb_correct_on beta beta_eqb beta0)
-    (fun (x0 : gamma) (_ : is_gamma x0)
-       (h : @eqb_correct_on gamma gamma_eqb x0) =>
-     common0 (beta1 x0)
-       (fun x1 : beta_fields_t (beta_tag (beta1 x0)) =>
-        match
-          x1 as i
-          return
-            (forall
-               _ : @eq bool
-                     (beta_eqb_fields beta_eqb (beta_tag (beta1 x0))
-                        (beta_fields (beta1 x0)) i)
-                     true,
-             @eq (option beta) (@Some beta (beta1 x0))
-               (beta_construct (beta_tag (beta1 x0)) i))
-        with
-        | Box_beta_beta1 Box_beta_beta1_0 =>
-            @impliesP (bcons (gamma_eqb x0 Box_beta_beta1_0) bnil)
-              (@eq (option beta) (@Some beta (beta1 x0))
-                 (beta_construct (beta_tag (beta1 x0))
-                    (Box_beta_beta1 Box_beta_beta1_0)))
-              (fun h0 : @eq bool (gamma_eqb x0 Box_beta_beta1_0) true =>
-               @eq_ind_r_nP (tcons gamma tnil)
-                 (fun w : gamma =>
-                  @eq (option beta) (@Some beta (beta1 x0))
-                    (beta_construct (beta_tag (beta1 x0)) (Box_beta_beta1 w)))
-                 x0 Box_beta_beta1_0 (h Box_beta_beta1_0 h0)
-                 (@eq_refl (option beta) (@Some beta (beta1 x0))))
-        end)
-     :
-     @eqb_correct_on beta beta_eqb (beta1 x0))
-    (common1 gamma0
-       (fun x0 : gamma_fields_t (gamma_tag gamma0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (gamma_eqb_fields gamma_eqb (gamma_tag gamma0)
-                        (gamma_fields gamma0) i)
-                     true,
-             @eq (option gamma) (@Some gamma gamma0)
-               (gamma_construct (gamma_tag gamma0) i))
-        with
-        | Box_gamma_gamma0 =>
-            @impliesP bnil
-              (@eq (option gamma) (@Some gamma gamma0)
-                 (gamma_construct (gamma_tag gamma0) Box_gamma_gamma0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option gamma) (@Some gamma gamma0)
-                    (gamma_construct (gamma_tag gamma0) Box_gamma_gamma0))
-                 (@eq_refl (option gamma) (@Some gamma gamma0)))
-        end)
-     :
-     @eqb_correct_on gamma gamma_eqb gamma0)
-    (fun (x0 : alpha) (_ : is_alpha x0)
-       (h : @eqb_correct_on alpha alpha_eqb x0) (x1 : beta) 
-       (_ : is_beta x1) (h0 : @eqb_correct_on beta beta_eqb x1) =>
-     common1 (gamma1 x0 x1)
-       (fun x2 : gamma_fields_t (gamma_tag (gamma1 x0 x1)) =>
-        match
-          x2 as i
-          return
-            (forall
-               _ : @eq bool
-                     (gamma_eqb_fields gamma_eqb (gamma_tag (gamma1 x0 x1))
-                        (gamma_fields (gamma1 x0 x1)) i)
-                     true,
-             @eq (option gamma) (@Some gamma (gamma1 x0 x1))
-               (gamma_construct (gamma_tag (gamma1 x0 x1)) i))
-        with
-        | Box_gamma_gamma1 Box_gamma_gamma1_0 Box_gamma_gamma1_1 =>
-            @impliesP
-              (bcons (alpha_eqb x0 Box_gamma_gamma1_0)
-                 (bcons (beta_eqb x1 Box_gamma_gamma1_1) bnil))
-              (@eq (option gamma) (@Some gamma (gamma1 x0 x1))
-                 (gamma_construct (gamma_tag (gamma1 x0 x1))
-                    (Box_gamma_gamma1 Box_gamma_gamma1_0 Box_gamma_gamma1_1)))
-              (fun (h1 : @eq bool (alpha_eqb x0 Box_gamma_gamma1_0) true)
-                 (h2 : @eq bool (beta_eqb x1 Box_gamma_gamma1_1) true) =>
-               @eq_ind_r_nP (tcons alpha (tcons beta tnil))
-                 (fun (w : alpha) (w0 : beta) =>
-                  @eq (option gamma) (@Some gamma (gamma1 x0 x1))
-                    (gamma_construct (gamma_tag (gamma1 x0 x1))
-                       (Box_gamma_gamma1 w w0)))
-                 x0 Box_gamma_gamma1_0 (h Box_gamma_gamma1_0 h1) x1
-                 Box_gamma_gamma1_1 (h0 Box_gamma_gamma1_1 h2)
-                 (@eq_refl (option gamma) (@Some gamma (gamma1 x0 x1))))
-        end)
-     :
-     @eqb_correct_on gamma gamma_eqb (gamma1 x0 x1))
-    x (is_alpha_inhab x).
-  Definition beta_eqb_correct : forall x : beta, @eqb_correct_on beta beta_eqb x :=
-  fun x : beta =>
-  let common :
-    forall (a1 : alpha)
-      (_ : @eqb_fields_correct_on alpha alpha_tag alpha_fields_t alpha_fields
-             alpha_construct (alpha_eqb_fields alpha_eqb) a1)
-      (a2 : alpha)
-      (_ : Datatypes.is_true
-             (@eqb_body alpha alpha_tag alpha_fields_t alpha_fields_t
-                alpha_fields (alpha_eqb_fields alpha_eqb) 
-                (alpha_tag a1) (alpha_fields a1) a2)),
-    @eq alpha a1 a2 :=
-    @eqb_body_correct alpha alpha_tag alpha_fields_t alpha_fields
-      alpha_construct alpha_constructP (alpha_eqb_fields alpha_eqb)
-    in
-  let common0 :
-    forall (a1 : beta)
-      (_ : @eqb_fields_correct_on beta beta_tag beta_fields_t beta_fields
-             beta_construct (beta_eqb_fields beta_eqb) a1)
-      (a2 : beta)
-      (_ : Datatypes.is_true
-             (@eqb_body beta beta_tag beta_fields_t beta_fields_t beta_fields
-                (beta_eqb_fields beta_eqb) (beta_tag a1) 
-                (beta_fields a1) a2)),
-    @eq beta a1 a2 :=
-    @eqb_body_correct beta beta_tag beta_fields_t beta_fields beta_construct
-      beta_constructP (beta_eqb_fields beta_eqb)
-    in
-  let common1 :
-    forall (a1 : gamma)
-      (_ : @eqb_fields_correct_on gamma gamma_tag gamma_fields_t gamma_fields
-             gamma_construct (gamma_eqb_fields gamma_eqb) a1)
-      (a2 : gamma)
-      (_ : Datatypes.is_true
-             (@eqb_body gamma gamma_tag gamma_fields_t gamma_fields_t
-                gamma_fields (gamma_eqb_fields gamma_eqb) 
-                (gamma_tag a1) (gamma_fields a1) a2)),
-    @eq gamma a1 a2 :=
-    @eqb_body_correct gamma gamma_tag gamma_fields_t gamma_fields
-      gamma_construct gamma_constructP (gamma_eqb_fields gamma_eqb)
-    in
-  beta_induction (@eqb_correct_on alpha alpha_eqb)
-    (@eqb_correct_on beta beta_eqb) (@eqb_correct_on gamma gamma_eqb)
-    (common alpha0
-       (fun x0 : alpha_fields_t (alpha_tag alpha0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (alpha_eqb_fields alpha_eqb (alpha_tag alpha0)
-                        (alpha_fields alpha0) i)
-                     true,
-             @eq (option alpha) (@Some alpha alpha0)
-               (alpha_construct (alpha_tag alpha0) i))
-        with
-        | Box_alpha_alpha0 =>
-            @impliesP bnil
-              (@eq (option alpha) (@Some alpha alpha0)
-                 (alpha_construct (alpha_tag alpha0) Box_alpha_alpha0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option alpha) (@Some alpha alpha0)
-                    (alpha_construct (alpha_tag alpha0) Box_alpha_alpha0))
-                 (@eq_refl (option alpha) (@Some alpha alpha0)))
-        end)
-     :
-     @eqb_correct_on alpha alpha_eqb alpha0)
-    (fun (x0 : beta) (_ : is_beta x0) (h : @eqb_correct_on beta beta_eqb x0) =>
-     common (alpha1 x0)
-       (fun x1 : alpha_fields_t (alpha_tag (alpha1 x0)) =>
-        match
-          x1 as i
-          return
-            (forall
-               _ : @eq bool
-                     (alpha_eqb_fields alpha_eqb (alpha_tag (alpha1 x0))
-                        (alpha_fields (alpha1 x0)) i)
-                     true,
-             @eq (option alpha) (@Some alpha (alpha1 x0))
-               (alpha_construct (alpha_tag (alpha1 x0)) i))
-        with
-        | Box_alpha_alpha1 Box_alpha_alpha1_0 =>
-            @impliesP (bcons (beta_eqb x0 Box_alpha_alpha1_0) bnil)
-              (@eq (option alpha) (@Some alpha (alpha1 x0))
-                 (alpha_construct (alpha_tag (alpha1 x0))
-                    (Box_alpha_alpha1 Box_alpha_alpha1_0)))
-              (fun h0 : @eq bool (beta_eqb x0 Box_alpha_alpha1_0) true =>
-               @eq_ind_r_nP (tcons beta tnil)
-                 (fun w : beta =>
-                  @eq (option alpha) (@Some alpha (alpha1 x0))
-                    (alpha_construct (alpha_tag (alpha1 x0))
-                       (Box_alpha_alpha1 w)))
-                 x0 Box_alpha_alpha1_0 (h Box_alpha_alpha1_0 h0)
-                 (@eq_refl (option alpha) (@Some alpha (alpha1 x0))))
-        end)
-     :
-     @eqb_correct_on alpha alpha_eqb (alpha1 x0))
-    (common0 beta0
-       (fun x0 : beta_fields_t (beta_tag beta0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (beta_eqb_fields beta_eqb (beta_tag beta0)
-                        (beta_fields beta0) i)
-                     true,
-             @eq (option beta) (@Some beta beta0)
-               (beta_construct (beta_tag beta0) i))
-        with
-        | Box_beta_beta0 =>
-            @impliesP bnil
-              (@eq (option beta) (@Some beta beta0)
-                 (beta_construct (beta_tag beta0) Box_beta_beta0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option beta) (@Some beta beta0)
-                    (beta_construct (beta_tag beta0) Box_beta_beta0))
-                 (@eq_refl (option beta) (@Some beta beta0)))
-        end)
-     :
-     @eqb_correct_on beta beta_eqb beta0)
-    (fun (x0 : gamma) (_ : is_gamma x0)
-       (h : @eqb_correct_on gamma gamma_eqb x0) =>
-     common0 (beta1 x0)
-       (fun x1 : beta_fields_t (beta_tag (beta1 x0)) =>
-        match
-          x1 as i
-          return
-            (forall
-               _ : @eq bool
-                     (beta_eqb_fields beta_eqb (beta_tag (beta1 x0))
-                        (beta_fields (beta1 x0)) i)
-                     true,
-             @eq (option beta) (@Some beta (beta1 x0))
-               (beta_construct (beta_tag (beta1 x0)) i))
-        with
-        | Box_beta_beta1 Box_beta_beta1_0 =>
-            @impliesP (bcons (gamma_eqb x0 Box_beta_beta1_0) bnil)
-              (@eq (option beta) (@Some beta (beta1 x0))
-                 (beta_construct (beta_tag (beta1 x0))
-                    (Box_beta_beta1 Box_beta_beta1_0)))
-              (fun h0 : @eq bool (gamma_eqb x0 Box_beta_beta1_0) true =>
-               @eq_ind_r_nP (tcons gamma tnil)
-                 (fun w : gamma =>
-                  @eq (option beta) (@Some beta (beta1 x0))
-                    (beta_construct (beta_tag (beta1 x0)) (Box_beta_beta1 w)))
-                 x0 Box_beta_beta1_0 (h Box_beta_beta1_0 h0)
-                 (@eq_refl (option beta) (@Some beta (beta1 x0))))
-        end)
-     :
-     @eqb_correct_on beta beta_eqb (beta1 x0))
-    (common1 gamma0
-       (fun x0 : gamma_fields_t (gamma_tag gamma0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (gamma_eqb_fields gamma_eqb (gamma_tag gamma0)
-                        (gamma_fields gamma0) i)
-                     true,
-             @eq (option gamma) (@Some gamma gamma0)
-               (gamma_construct (gamma_tag gamma0) i))
-        with
-        | Box_gamma_gamma0 =>
-            @impliesP bnil
-              (@eq (option gamma) (@Some gamma gamma0)
-                 (gamma_construct (gamma_tag gamma0) Box_gamma_gamma0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option gamma) (@Some gamma gamma0)
-                    (gamma_construct (gamma_tag gamma0) Box_gamma_gamma0))
-                 (@eq_refl (option gamma) (@Some gamma gamma0)))
-        end)
-     :
-     @eqb_correct_on gamma gamma_eqb gamma0)
-    (fun (x0 : alpha) (_ : is_alpha x0)
-       (h : @eqb_correct_on alpha alpha_eqb x0) (x1 : beta) 
-       (_ : is_beta x1) (h0 : @eqb_correct_on beta beta_eqb x1) =>
-     common1 (gamma1 x0 x1)
-       (fun x2 : gamma_fields_t (gamma_tag (gamma1 x0 x1)) =>
-        match
-          x2 as i
-          return
-            (forall
-               _ : @eq bool
-                     (gamma_eqb_fields gamma_eqb (gamma_tag (gamma1 x0 x1))
-                        (gamma_fields (gamma1 x0 x1)) i)
-                     true,
-             @eq (option gamma) (@Some gamma (gamma1 x0 x1))
-               (gamma_construct (gamma_tag (gamma1 x0 x1)) i))
-        with
-        | Box_gamma_gamma1 Box_gamma_gamma1_0 Box_gamma_gamma1_1 =>
-            @impliesP
-              (bcons (alpha_eqb x0 Box_gamma_gamma1_0)
-                 (bcons (beta_eqb x1 Box_gamma_gamma1_1) bnil))
-              (@eq (option gamma) (@Some gamma (gamma1 x0 x1))
-                 (gamma_construct (gamma_tag (gamma1 x0 x1))
-                    (Box_gamma_gamma1 Box_gamma_gamma1_0 Box_gamma_gamma1_1)))
-              (fun (h1 : @eq bool (alpha_eqb x0 Box_gamma_gamma1_0) true)
-                 (h2 : @eq bool (beta_eqb x1 Box_gamma_gamma1_1) true) =>
-               @eq_ind_r_nP (tcons alpha (tcons beta tnil))
-                 (fun (w : alpha) (w0 : beta) =>
-                  @eq (option gamma) (@Some gamma (gamma1 x0 x1))
-                    (gamma_construct (gamma_tag (gamma1 x0 x1))
-                       (Box_gamma_gamma1 w w0)))
-                 x0 Box_gamma_gamma1_0 (h Box_gamma_gamma1_0 h1) x1
-                 Box_gamma_gamma1_1 (h0 Box_gamma_gamma1_1 h2)
-                 (@eq_refl (option gamma) (@Some gamma (gamma1 x0 x1))))
-        end)
-     :
-     @eqb_correct_on gamma gamma_eqb (gamma1 x0 x1))
-    x (is_beta_inhab x).
-  Definition gamma_eqb_correct : forall x : gamma, @eqb_correct_on gamma gamma_eqb x :=
-  fun x : gamma =>
-  let common :
-    forall (a1 : alpha)
-      (_ : @eqb_fields_correct_on alpha alpha_tag alpha_fields_t alpha_fields
-             alpha_construct (alpha_eqb_fields alpha_eqb) a1)
-      (a2 : alpha)
-      (_ : Datatypes.is_true
-             (@eqb_body alpha alpha_tag alpha_fields_t alpha_fields_t
-                alpha_fields (alpha_eqb_fields alpha_eqb) 
-                (alpha_tag a1) (alpha_fields a1) a2)),
-    @eq alpha a1 a2 :=
-    @eqb_body_correct alpha alpha_tag alpha_fields_t alpha_fields
-      alpha_construct alpha_constructP (alpha_eqb_fields alpha_eqb)
-    in
-  let common0 :
-    forall (a1 : beta)
-      (_ : @eqb_fields_correct_on beta beta_tag beta_fields_t beta_fields
-             beta_construct (beta_eqb_fields beta_eqb) a1)
-      (a2 : beta)
-      (_ : Datatypes.is_true
-             (@eqb_body beta beta_tag beta_fields_t beta_fields_t beta_fields
-                (beta_eqb_fields beta_eqb) (beta_tag a1) 
-                (beta_fields a1) a2)),
-    @eq beta a1 a2 :=
-    @eqb_body_correct beta beta_tag beta_fields_t beta_fields beta_construct
-      beta_constructP (beta_eqb_fields beta_eqb)
-    in
-  let common1 :
-    forall (a1 : gamma)
-      (_ : @eqb_fields_correct_on gamma gamma_tag gamma_fields_t gamma_fields
-             gamma_construct (gamma_eqb_fields gamma_eqb) a1)
-      (a2 : gamma)
-      (_ : Datatypes.is_true
-             (@eqb_body gamma gamma_tag gamma_fields_t gamma_fields_t
-                gamma_fields (gamma_eqb_fields gamma_eqb) 
-                (gamma_tag a1) (gamma_fields a1) a2)),
-    @eq gamma a1 a2 :=
-    @eqb_body_correct gamma gamma_tag gamma_fields_t gamma_fields
-      gamma_construct gamma_constructP (gamma_eqb_fields gamma_eqb)
-    in
-  gamma_induction (@eqb_correct_on alpha alpha_eqb)
-    (@eqb_correct_on beta beta_eqb) (@eqb_correct_on gamma gamma_eqb)
-    (common alpha0
-       (fun x0 : alpha_fields_t (alpha_tag alpha0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (alpha_eqb_fields alpha_eqb (alpha_tag alpha0)
-                        (alpha_fields alpha0) i)
-                     true,
-             @eq (option alpha) (@Some alpha alpha0)
-               (alpha_construct (alpha_tag alpha0) i))
-        with
-        | Box_alpha_alpha0 =>
-            @impliesP bnil
-              (@eq (option alpha) (@Some alpha alpha0)
-                 (alpha_construct (alpha_tag alpha0) Box_alpha_alpha0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option alpha) (@Some alpha alpha0)
-                    (alpha_construct (alpha_tag alpha0) Box_alpha_alpha0))
-                 (@eq_refl (option alpha) (@Some alpha alpha0)))
-        end)
-     :
-     @eqb_correct_on alpha alpha_eqb alpha0)
-    (fun (x0 : beta) (_ : is_beta x0) (h : @eqb_correct_on beta beta_eqb x0) =>
-     common (alpha1 x0)
-       (fun x1 : alpha_fields_t (alpha_tag (alpha1 x0)) =>
-        match
-          x1 as i
-          return
-            (forall
-               _ : @eq bool
-                     (alpha_eqb_fields alpha_eqb (alpha_tag (alpha1 x0))
-                        (alpha_fields (alpha1 x0)) i)
-                     true,
-             @eq (option alpha) (@Some alpha (alpha1 x0))
-               (alpha_construct (alpha_tag (alpha1 x0)) i))
-        with
-        | Box_alpha_alpha1 Box_alpha_alpha1_0 =>
-            @impliesP (bcons (beta_eqb x0 Box_alpha_alpha1_0) bnil)
-              (@eq (option alpha) (@Some alpha (alpha1 x0))
-                 (alpha_construct (alpha_tag (alpha1 x0))
-                    (Box_alpha_alpha1 Box_alpha_alpha1_0)))
-              (fun h0 : @eq bool (beta_eqb x0 Box_alpha_alpha1_0) true =>
-               @eq_ind_r_nP (tcons beta tnil)
-                 (fun w : beta =>
-                  @eq (option alpha) (@Some alpha (alpha1 x0))
-                    (alpha_construct (alpha_tag (alpha1 x0))
-                       (Box_alpha_alpha1 w)))
-                 x0 Box_alpha_alpha1_0 (h Box_alpha_alpha1_0 h0)
-                 (@eq_refl (option alpha) (@Some alpha (alpha1 x0))))
-        end)
-     :
-     @eqb_correct_on alpha alpha_eqb (alpha1 x0))
-    (common0 beta0
-       (fun x0 : beta_fields_t (beta_tag beta0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (beta_eqb_fields beta_eqb (beta_tag beta0)
-                        (beta_fields beta0) i)
-                     true,
-             @eq (option beta) (@Some beta beta0)
-               (beta_construct (beta_tag beta0) i))
-        with
-        | Box_beta_beta0 =>
-            @impliesP bnil
-              (@eq (option beta) (@Some beta beta0)
-                 (beta_construct (beta_tag beta0) Box_beta_beta0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option beta) (@Some beta beta0)
-                    (beta_construct (beta_tag beta0) Box_beta_beta0))
-                 (@eq_refl (option beta) (@Some beta beta0)))
-        end)
-     :
-     @eqb_correct_on beta beta_eqb beta0)
-    (fun (x0 : gamma) (_ : is_gamma x0)
-       (h : @eqb_correct_on gamma gamma_eqb x0) =>
-     common0 (beta1 x0)
-       (fun x1 : beta_fields_t (beta_tag (beta1 x0)) =>
-        match
-          x1 as i
-          return
-            (forall
-               _ : @eq bool
-                     (beta_eqb_fields beta_eqb (beta_tag (beta1 x0))
-                        (beta_fields (beta1 x0)) i)
-                     true,
-             @eq (option beta) (@Some beta (beta1 x0))
-               (beta_construct (beta_tag (beta1 x0)) i))
-        with
-        | Box_beta_beta1 Box_beta_beta1_0 =>
-            @impliesP (bcons (gamma_eqb x0 Box_beta_beta1_0) bnil)
-              (@eq (option beta) (@Some beta (beta1 x0))
-                 (beta_construct (beta_tag (beta1 x0))
-                    (Box_beta_beta1 Box_beta_beta1_0)))
-              (fun h0 : @eq bool (gamma_eqb x0 Box_beta_beta1_0) true =>
-               @eq_ind_r_nP (tcons gamma tnil)
-                 (fun w : gamma =>
-                  @eq (option beta) (@Some beta (beta1 x0))
-                    (beta_construct (beta_tag (beta1 x0)) (Box_beta_beta1 w)))
-                 x0 Box_beta_beta1_0 (h Box_beta_beta1_0 h0)
-                 (@eq_refl (option beta) (@Some beta (beta1 x0))))
-        end)
-     :
-     @eqb_correct_on beta beta_eqb (beta1 x0))
-    (common1 gamma0
-       (fun x0 : gamma_fields_t (gamma_tag gamma0) =>
-        match
-          x0 as i
-          return
-            (forall
-               _ : @eq bool
-                     (gamma_eqb_fields gamma_eqb (gamma_tag gamma0)
-                        (gamma_fields gamma0) i)
-                     true,
-             @eq (option gamma) (@Some gamma gamma0)
-               (gamma_construct (gamma_tag gamma0) i))
-        with
-        | Box_gamma_gamma0 =>
-            @impliesP bnil
-              (@eq (option gamma) (@Some gamma gamma0)
-                 (gamma_construct (gamma_tag gamma0) Box_gamma_gamma0))
-              (@eq_ind_r_nP tnil
-                 (@eq (option gamma) (@Some gamma gamma0)
-                    (gamma_construct (gamma_tag gamma0) Box_gamma_gamma0))
-                 (@eq_refl (option gamma) (@Some gamma gamma0)))
-        end)
-     :
-     @eqb_correct_on gamma gamma_eqb gamma0)
-    (fun (x0 : alpha) (_ : is_alpha x0)
-       (h : @eqb_correct_on alpha alpha_eqb x0) (x1 : beta) 
-       (_ : is_beta x1) (h0 : @eqb_correct_on beta beta_eqb x1) =>
-     common1 (gamma1 x0 x1)
-       (fun x2 : gamma_fields_t (gamma_tag (gamma1 x0 x1)) =>
-        match
-          x2 as i
-          return
-            (forall
-               _ : @eq bool
-                     (gamma_eqb_fields gamma_eqb (gamma_tag (gamma1 x0 x1))
-                        (gamma_fields (gamma1 x0 x1)) i)
-                     true,
-             @eq (option gamma) (@Some gamma (gamma1 x0 x1))
-               (gamma_construct (gamma_tag (gamma1 x0 x1)) i))
-        with
-        | Box_gamma_gamma1 Box_gamma_gamma1_0 Box_gamma_gamma1_1 =>
-            @impliesP
-              (bcons (alpha_eqb x0 Box_gamma_gamma1_0)
-                 (bcons (beta_eqb x1 Box_gamma_gamma1_1) bnil))
-              (@eq (option gamma) (@Some gamma (gamma1 x0 x1))
-                 (gamma_construct (gamma_tag (gamma1 x0 x1))
-                    (Box_gamma_gamma1 Box_gamma_gamma1_0 Box_gamma_gamma1_1)))
-              (fun (h1 : @eq bool (alpha_eqb x0 Box_gamma_gamma1_0) true)
-                 (h2 : @eq bool (beta_eqb x1 Box_gamma_gamma1_1) true) =>
-               @eq_ind_r_nP (tcons alpha (tcons beta tnil))
-                 (fun (w : alpha) (w0 : beta) =>
-                  @eq (option gamma) (@Some gamma (gamma1 x0 x1))
-                    (gamma_construct (gamma_tag (gamma1 x0 x1))
-                       (Box_gamma_gamma1 w w0)))
-                 x0 Box_gamma_gamma1_0 (h Box_gamma_gamma1_0 h1) x1
-                 Box_gamma_gamma1_1 (h0 Box_gamma_gamma1_1 h2)
-                 (@eq_refl (option gamma) (@Some gamma (gamma1 x0 x1))))
-        end)
-     :
-     @eqb_correct_on gamma gamma_eqb (gamma1 x0 x1))
-    x (is_gamma_inhab x).
-  Definition alpha_eqb_refl : forall x : alpha, @eqb_refl_on alpha alpha_eqb x :=
-  fun x : alpha =>
-  let common :
-    forall (a : alpha)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on alpha alpha_tag alpha_fields_t alpha_fields
-                (alpha_eqb_fields alpha_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body alpha alpha_tag alpha_fields_t alpha_fields_t alpha_fields
-         (alpha_eqb_fields alpha_eqb) (alpha_tag a) 
-         (alpha_fields a) a) :=
-    @eqb_body_refl alpha alpha_tag alpha_fields_t alpha_fields alpha_construct
-      alpha_constructP (alpha_eqb_fields alpha_eqb)
-    in
-  let common0 :
-    forall (a : beta)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on beta beta_tag beta_fields_t beta_fields
-                (beta_eqb_fields beta_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body beta beta_tag beta_fields_t beta_fields_t beta_fields
-         (beta_eqb_fields beta_eqb) (beta_tag a) (beta_fields a) a) :=
-    @eqb_body_refl beta beta_tag beta_fields_t beta_fields beta_construct
-      beta_constructP (beta_eqb_fields beta_eqb)
-    in
-  let common1 :
-    forall (a : gamma)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on gamma gamma_tag gamma_fields_t gamma_fields
-                (gamma_eqb_fields gamma_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body gamma gamma_tag gamma_fields_t gamma_fields_t gamma_fields
-         (gamma_eqb_fields gamma_eqb) (gamma_tag a) 
-         (gamma_fields a) a) :=
-    @eqb_body_refl gamma gamma_tag gamma_fields_t gamma_fields gamma_construct
-      gamma_constructP (gamma_eqb_fields gamma_eqb)
-    in
-  alpha_induction (@eqb_refl_on alpha alpha_eqb) (@eqb_refl_on beta beta_eqb)
-    (@eqb_refl_on gamma gamma_eqb)
-    (common alpha0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on alpha alpha_eqb alpha0)
-    (fun (x0 : beta) (_ : is_beta x0) (h : @eqb_refl_on beta beta_eqb x0) =>
-     common (alpha1 x0) (eqb_refl_statementP (bcons (beta_eqb x0 x0) bnil) h)
-     :
-     @eqb_refl_on alpha alpha_eqb (alpha1 x0))
-    (common0 beta0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on beta beta_eqb beta0)
-    (fun (x0 : gamma) (_ : is_gamma x0) (h : @eqb_refl_on gamma gamma_eqb x0) =>
-     common0 (beta1 x0) (eqb_refl_statementP (bcons (gamma_eqb x0 x0) bnil) h)
-     :
-     @eqb_refl_on beta beta_eqb (beta1 x0))
-    (common1 gamma0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on gamma gamma_eqb gamma0)
-    (fun (x0 : alpha) (_ : is_alpha x0) (h : @eqb_refl_on alpha alpha_eqb x0)
-       (x1 : beta) (_ : is_beta x1) (h0 : @eqb_refl_on beta beta_eqb x1) =>
-     common1 (gamma1 x0 x1)
-       (eqb_refl_statementP
-          (bcons (beta_eqb x1 x1) (bcons (alpha_eqb x0 x0) bnil)) h0 h)
-     :
-     @eqb_refl_on gamma gamma_eqb (gamma1 x0 x1))
-    x (is_alpha_inhab x).
-  Definition beta_eqb_refl : forall x : beta, @eqb_refl_on beta beta_eqb x :=
-  fun x : beta =>
-  let common :
-    forall (a : alpha)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on alpha alpha_tag alpha_fields_t alpha_fields
-                (alpha_eqb_fields alpha_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body alpha alpha_tag alpha_fields_t alpha_fields_t alpha_fields
-         (alpha_eqb_fields alpha_eqb) (alpha_tag a) 
-         (alpha_fields a) a) :=
-    @eqb_body_refl alpha alpha_tag alpha_fields_t alpha_fields alpha_construct
-      alpha_constructP (alpha_eqb_fields alpha_eqb)
-    in
-  let common0 :
-    forall (a : beta)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on beta beta_tag beta_fields_t beta_fields
-                (beta_eqb_fields beta_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body beta beta_tag beta_fields_t beta_fields_t beta_fields
-         (beta_eqb_fields beta_eqb) (beta_tag a) (beta_fields a) a) :=
-    @eqb_body_refl beta beta_tag beta_fields_t beta_fields beta_construct
-      beta_constructP (beta_eqb_fields beta_eqb)
-    in
-  let common1 :
-    forall (a : gamma)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on gamma gamma_tag gamma_fields_t gamma_fields
-                (gamma_eqb_fields gamma_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body gamma gamma_tag gamma_fields_t gamma_fields_t gamma_fields
-         (gamma_eqb_fields gamma_eqb) (gamma_tag a) 
-         (gamma_fields a) a) :=
-    @eqb_body_refl gamma gamma_tag gamma_fields_t gamma_fields gamma_construct
-      gamma_constructP (gamma_eqb_fields gamma_eqb)
-    in
-  beta_induction (@eqb_refl_on alpha alpha_eqb) (@eqb_refl_on beta beta_eqb)
-    (@eqb_refl_on gamma gamma_eqb)
-    (common alpha0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on alpha alpha_eqb alpha0)
-    (fun (x0 : beta) (_ : is_beta x0) (h : @eqb_refl_on beta beta_eqb x0) =>
-     common (alpha1 x0) (eqb_refl_statementP (bcons (beta_eqb x0 x0) bnil) h)
-     :
-     @eqb_refl_on alpha alpha_eqb (alpha1 x0))
-    (common0 beta0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on beta beta_eqb beta0)
-    (fun (x0 : gamma) (_ : is_gamma x0) (h : @eqb_refl_on gamma gamma_eqb x0) =>
-     common0 (beta1 x0) (eqb_refl_statementP (bcons (gamma_eqb x0 x0) bnil) h)
-     :
-     @eqb_refl_on beta beta_eqb (beta1 x0))
-    (common1 gamma0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on gamma gamma_eqb gamma0)
-    (fun (x0 : alpha) (_ : is_alpha x0) (h : @eqb_refl_on alpha alpha_eqb x0)
-       (x1 : beta) (_ : is_beta x1) (h0 : @eqb_refl_on beta beta_eqb x1) =>
-     common1 (gamma1 x0 x1)
-       (eqb_refl_statementP
-          (bcons (beta_eqb x1 x1) (bcons (alpha_eqb x0 x0) bnil)) h0 h)
-     :
-     @eqb_refl_on gamma gamma_eqb (gamma1 x0 x1))
-    x (is_beta_inhab x).
-  Definition gamma_eqb_refl : forall x : gamma, @eqb_refl_on gamma gamma_eqb x :=
-  fun x : gamma =>
-  let common :
-    forall (a : alpha)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on alpha alpha_tag alpha_fields_t alpha_fields
-                (alpha_eqb_fields alpha_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body alpha alpha_tag alpha_fields_t alpha_fields_t alpha_fields
-         (alpha_eqb_fields alpha_eqb) (alpha_tag a) 
-         (alpha_fields a) a) :=
-    @eqb_body_refl alpha alpha_tag alpha_fields_t alpha_fields alpha_construct
-      alpha_constructP (alpha_eqb_fields alpha_eqb)
-    in
-  let common0 :
-    forall (a : beta)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on beta beta_tag beta_fields_t beta_fields
-                (beta_eqb_fields beta_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body beta beta_tag beta_fields_t beta_fields_t beta_fields
-         (beta_eqb_fields beta_eqb) (beta_tag a) (beta_fields a) a) :=
-    @eqb_body_refl beta beta_tag beta_fields_t beta_fields beta_construct
-      beta_constructP (beta_eqb_fields beta_eqb)
-    in
-  let common1 :
-    forall (a : gamma)
-      (_ : Datatypes.is_true
-             (@eqb_fields_refl_on gamma gamma_tag gamma_fields_t gamma_fields
-                (gamma_eqb_fields gamma_eqb) a)),
-    Datatypes.is_true
-      (@eqb_body gamma gamma_tag gamma_fields_t gamma_fields_t gamma_fields
-         (gamma_eqb_fields gamma_eqb) (gamma_tag a) 
-         (gamma_fields a) a) :=
-    @eqb_body_refl gamma gamma_tag gamma_fields_t gamma_fields gamma_construct
-      gamma_constructP (gamma_eqb_fields gamma_eqb)
-    in
-  gamma_induction (@eqb_refl_on alpha alpha_eqb) (@eqb_refl_on beta beta_eqb)
-    (@eqb_refl_on gamma gamma_eqb)
-    (common alpha0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on alpha alpha_eqb alpha0)
-    (fun (x0 : beta) (_ : is_beta x0) (h : @eqb_refl_on beta beta_eqb x0) =>
-     common (alpha1 x0) (eqb_refl_statementP (bcons (beta_eqb x0 x0) bnil) h)
-     :
-     @eqb_refl_on alpha alpha_eqb (alpha1 x0))
-    (common0 beta0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on beta beta_eqb beta0)
-    (fun (x0 : gamma) (_ : is_gamma x0) (h : @eqb_refl_on gamma gamma_eqb x0) =>
-     common0 (beta1 x0) (eqb_refl_statementP (bcons (gamma_eqb x0 x0) bnil) h)
-     :
-     @eqb_refl_on beta beta_eqb (beta1 x0))
-    (common1 gamma0 (eqb_refl_statementP bnil)
-     :
-     @eqb_refl_on gamma gamma_eqb gamma0)
-    (fun (x0 : alpha) (_ : is_alpha x0) (h : @eqb_refl_on alpha alpha_eqb x0)
-       (x1 : beta) (_ : is_beta x1) (h0 : @eqb_refl_on beta beta_eqb x1) =>
-     common1 (gamma1 x0 x1)
-       (eqb_refl_statementP
-          (bcons (beta_eqb x1 x1) (bcons (alpha_eqb x0 x0) bnil)) h0 h)
-     :
-     @eqb_refl_on gamma gamma_eqb (gamma1 x0 x1))
-    x (is_gamma_inhab x).
-  Definition alpha_eqb_OK : forall x1 x2 : alpha, reflect (@eq alpha x1 x2) (alpha_eqb x1 x2) :=
-  @iffP2 alpha alpha_eqb alpha_eqb_correct alpha_eqb_refl.
-  Definition beta_eqb_OK : forall x1 x2 : beta, reflect (@eq beta x1 x2) (beta_eqb x1 x2) :=
-  @iffP2 beta beta_eqb beta_eqb_correct beta_eqb_refl.
-  Definition gamma_eqb_OK : forall x1 x2 : gamma, reflect (@eq gamma x1 x2) (gamma_eqb x1 x2) :=
-  @iffP2 gamma gamma_eqb gamma_eqb_correct gamma_eqb_refl.
-  Definition alpha_eqb_OK_sumbool : forall x y : alpha, sumbool (@eq alpha x y) (not (@eq alpha x y)) :=
-  reflect_dec alpha alpha_eqb alpha_eqb_OK.
-  Definition beta_eqb_OK_sumbool : forall x y : beta, sumbool (@eq beta x y) (not (@eq beta x y)) :=
-  reflect_dec beta beta_eqb beta_eqb_OK.
-  Definition gamma_eqb_OK_sumbool : forall x y : gamma, sumbool (@eq gamma x y) (not (@eq gamma x y)) :=
-  reflect_dec gamma gamma_eqb gamma_eqb_OK.
+  Parameter alpha_eqb_correct : forall x : alpha, @eqb_correct_on alpha alpha_eqb x.
+  Parameter beta_eqb_correct : forall x : beta, @eqb_correct_on beta beta_eqb x.
+  Parameter gamma_eqb_correct : forall x : gamma, @eqb_correct_on gamma gamma_eqb x.
+  Parameter alpha_eqb_refl : forall x : alpha, @eqb_refl_on alpha alpha_eqb x.
+  Parameter beta_eqb_refl : forall x : beta, @eqb_refl_on beta beta_eqb x.
+  Parameter gamma_eqb_refl : forall x : gamma, @eqb_refl_on gamma gamma_eqb x.
+  Parameter alpha_eqb_OK : forall x1 x2 : alpha, reflect (@eq alpha x1 x2) (alpha_eqb x1 x2).
+  Parameter beta_eqb_OK : forall x1 x2 : beta, reflect (@eq beta x1 x2) (beta_eqb x1 x2).
+  Parameter gamma_eqb_OK : forall x1 x2 : gamma, reflect (@eq gamma x1 x2) (gamma_eqb x1 x2).
+  Parameter alpha_eqb_OK_sumbool : forall x y : alpha, sumbool (@eq alpha x y) (not (@eq alpha x y)).
+  Parameter beta_eqb_OK_sumbool : forall x y : beta, sumbool (@eq beta x y) (not (@eq beta x y)).
+  Parameter gamma_eqb_OK_sumbool : forall x y : gamma, sumbool (@eq gamma x y) (not (@eq gamma x y)).
 End TripleMutualEqbOKExpected.
 
 Module Type ParametrizedTripleMutualBase.
@@ -5277,18 +3723,10 @@ Module Type ValueParamMutualEqbExpected.
   match bx with
   | {| Box_b_bk_0 := a0 |} => Some (bk n a0)
   end.
-  Definition a_constructP : forall (n : nat) (i : a n),
-       a_construct n (a_tag n i) (a_fields n i) = Some i :=
-  fun (n : nat) (i : a n) =>
-  match i as i0 return a_construct n (a_tag n i0) (a_fields n i0) = Some i0 with
-  | ak _ _ => eq_refl
-  end.
-  Definition b_constructP : forall (n : nat) (i : b n),
-       b_construct n (b_tag n i) (b_fields n i) = Some i :=
-  fun (n : nat) (i : b n) =>
-  match i as i0 return b_construct n (b_tag n i0) (b_fields n i0) = Some i0 with
-  | bk _ _ => eq_refl
-  end.
+  Parameter a_constructP : forall (n : nat) (i : a n),
+       a_construct n (a_tag n i) (a_fields n i) = Some i.
+  Parameter b_constructP : forall (n : nat) (i : b n),
+       b_construct n (b_tag n i) (b_fields n i) = Some i.
   Definition a_eqb : forall n m : nat, a n -> a m -> bool :=
   fix a_eqb_rec (n m : nat) (x : a n) (y : a m) {struct x} : bool :=
     match x with
@@ -6011,159 +4449,42 @@ Module Type ParametrizedTripleMutualEqbOKExpected.
         end
     end
   for pgamma_eqb_rec.
-  Definition palpha_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter palpha_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_correct eqA ->
        forall x : palpha A, eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix alpha_correct (x : palpha A) : eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x := _
-            with beta_correct (x : pbeta A) : eqb_core_defs.eqb_correct_on (pbeta_eqb A eqA) x := _
-            with gamma_correct (x : pgamma A) : eqb_core_defs.eqb_correct_on (pgamma_eqb A eqA) x := _
-            for alpha_correct).
-    - intros y H. destruct x as [|x0 b0]; destruct y as [|x1 b1]; cbn in H; try discriminate.
-      + reflexivity.
-      + apply andb_prop in H as [Hx Hb]. f_equal; [exact (HeqA x0 x1 Hx)|exact (beta_correct b0 b1 Hb)].
-    - intros y H. destruct x as [|g0]; destruct y as [|g1]; cbn in H; try discriminate.
-      + reflexivity.
-      + f_equal. exact (gamma_correct g0 g1 H).
-    - intros y H. destruct x as [|a0 b0]; destruct y as [|a1 b1]; cbn in H; try discriminate.
-      + reflexivity.
-      + apply andb_prop in H as [Ha Hb]. f_equal; [exact (alpha_correct a0 a1 Ha)|exact (beta_correct b0 b1 Hb)].
-  Defined.
-  Definition pbeta_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter pbeta_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_correct eqA ->
        forall x : pbeta A, eqb_core_defs.eqb_correct_on (pbeta_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix alpha_correct (x : palpha A) : eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x := _
-            with beta_correct (x : pbeta A) : eqb_core_defs.eqb_correct_on (pbeta_eqb A eqA) x := _
-            with gamma_correct (x : pgamma A) : eqb_core_defs.eqb_correct_on (pgamma_eqb A eqA) x := _
-            for beta_correct).
-    - intros y H. destruct x as [|x0 b0]; destruct y as [|x1 b1]; cbn in H; try discriminate.
-      + reflexivity.
-      + apply andb_prop in H as [Hx Hb]. f_equal; [exact (HeqA x0 x1 Hx)|exact (beta_correct b0 b1 Hb)].
-    - intros y H. destruct x as [|g0]; destruct y as [|g1]; cbn in H; try discriminate.
-      + reflexivity.
-      + f_equal. exact (gamma_correct g0 g1 H).
-    - intros y H. destruct x as [|a0 b0]; destruct y as [|a1 b1]; cbn in H; try discriminate.
-      + reflexivity.
-      + apply andb_prop in H as [Ha Hb]. f_equal; [exact (alpha_correct a0 a1 Ha)|exact (beta_correct b0 b1 Hb)].
-  Defined.
-  Definition pgamma_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter pgamma_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_correct eqA ->
        forall x : pgamma A, eqb_core_defs.eqb_correct_on (pgamma_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix alpha_correct (x : palpha A) : eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x := _
-            with beta_correct (x : pbeta A) : eqb_core_defs.eqb_correct_on (pbeta_eqb A eqA) x := _
-            with gamma_correct (x : pgamma A) : eqb_core_defs.eqb_correct_on (pgamma_eqb A eqA) x := _
-            for gamma_correct).
-    - intros y H. destruct x as [|x0 b0]; destruct y as [|x1 b1]; cbn in H; try discriminate.
-      + reflexivity.
-      + apply andb_prop in H as [Hx Hb]. f_equal; [exact (HeqA x0 x1 Hx)|exact (beta_correct b0 b1 Hb)].
-    - intros y H. destruct x as [|g0]; destruct y as [|g1]; cbn in H; try discriminate.
-      + reflexivity.
-      + f_equal. exact (gamma_correct g0 g1 H).
-    - intros y H. destruct x as [|a0 b0]; destruct y as [|a1 b1]; cbn in H; try discriminate.
-      + reflexivity.
-      + apply andb_prop in H as [Ha Hb]. f_equal; [exact (alpha_correct a0 a1 Ha)|exact (beta_correct b0 b1 Hb)].
-  Defined.
-  Definition palpha_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter palpha_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_reflexive eqA ->
        forall x : palpha A, eqb_core_defs.eqb_refl_on (palpha_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix alpha_refl (x : palpha A) : eqb_core_defs.eqb_refl_on (palpha_eqb A eqA) x := _
-            with beta_refl (x : pbeta A) : eqb_core_defs.eqb_refl_on (pbeta_eqb A eqA) x := _
-            with gamma_refl (x : pgamma A) : eqb_core_defs.eqb_refl_on (pgamma_eqb A eqA) x := _
-            for alpha_refl).
-    - destruct x as [|x0 b0].
-      + reflexivity.
-      + change (eqA x0 x0 && pbeta_eqb A eqA b0 b0 = true).
-        rewrite (HeqA x0). rewrite (beta_refl b0). reflexivity.
-    - destruct x as [|g0].
-      + reflexivity.
-      + change (pgamma_eqb A eqA g0 g0 = true). exact (gamma_refl g0).
-    - destruct x as [|a0 b0].
-      + reflexivity.
-      + change (palpha_eqb A eqA a0 a0 && pbeta_eqb A eqA b0 b0 = true).
-        rewrite (alpha_refl a0). rewrite (beta_refl b0). reflexivity.
-  Defined.
-  Definition pbeta_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter pbeta_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_reflexive eqA ->
        forall x : pbeta A, eqb_core_defs.eqb_refl_on (pbeta_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix alpha_refl (x : palpha A) : eqb_core_defs.eqb_refl_on (palpha_eqb A eqA) x := _
-            with beta_refl (x : pbeta A) : eqb_core_defs.eqb_refl_on (pbeta_eqb A eqA) x := _
-            with gamma_refl (x : pgamma A) : eqb_core_defs.eqb_refl_on (pgamma_eqb A eqA) x := _
-            for beta_refl).
-    - destruct x as [|x0 b0].
-      + reflexivity.
-      + change (eqA x0 x0 && pbeta_eqb A eqA b0 b0 = true).
-        rewrite (HeqA x0). rewrite (beta_refl b0). reflexivity.
-    - destruct x as [|g0].
-      + reflexivity.
-      + change (pgamma_eqb A eqA g0 g0 = true). exact (gamma_refl g0).
-    - destruct x as [|a0 b0].
-      + reflexivity.
-      + change (palpha_eqb A eqA a0 a0 && pbeta_eqb A eqA b0 b0 = true).
-        rewrite (alpha_refl a0). rewrite (beta_refl b0). reflexivity.
-  Defined.
-  Definition pgamma_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter pgamma_eqb_refl : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_reflexive eqA ->
        forall x : pgamma A, eqb_core_defs.eqb_refl_on (pgamma_eqb A eqA) x.
-  Proof.
-    intros A eqA HeqA.
-    refine (fix alpha_refl (x : palpha A) : eqb_core_defs.eqb_refl_on (palpha_eqb A eqA) x := _
-            with beta_refl (x : pbeta A) : eqb_core_defs.eqb_refl_on (pbeta_eqb A eqA) x := _
-            with gamma_refl (x : pgamma A) : eqb_core_defs.eqb_refl_on (pgamma_eqb A eqA) x := _
-            for gamma_refl).
-    - destruct x as [|x0 b0].
-      + reflexivity.
-      + change (eqA x0 x0 && pbeta_eqb A eqA b0 b0 = true).
-        rewrite (HeqA x0). rewrite (beta_refl b0). reflexivity.
-    - destruct x as [|g0].
-      + reflexivity.
-      + change (pgamma_eqb A eqA g0 g0 = true). exact (gamma_refl g0).
-    - destruct x as [|a0 b0].
-      + reflexivity.
-      + change (palpha_eqb A eqA a0 a0 && pbeta_eqb A eqA b0 b0 = true).
-        rewrite (alpha_refl a0). rewrite (beta_refl b0). reflexivity.
-  Defined.
-  Definition palpha_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+  Parameter palpha_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
        (forall x y : A, reflect (x = y) (eqA x y)) ->
-       forall x y : palpha A, reflect (x = y) (palpha_eqb A eqA x y) :=
-  fun A eqA heqA => eqb_core_defs.iffP2
-    (palpha_eqb_correct A eqA (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
-    (palpha_eqb_refl A eqA (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
-  Definition pbeta_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+       forall x y : palpha A, reflect (x = y) (palpha_eqb A eqA x y).
+  Parameter pbeta_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
        (forall x y : A, reflect (x = y) (eqA x y)) ->
-       forall x y : pbeta A, reflect (x = y) (pbeta_eqb A eqA x y) :=
-  fun A eqA heqA => eqb_core_defs.iffP2
-    (pbeta_eqb_correct A eqA (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
-    (pbeta_eqb_refl A eqA (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
-  Definition pgamma_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
+       forall x y : pbeta A, reflect (x = y) (pbeta_eqb A eqA x y).
+  Parameter pgamma_eqb_OK : forall (A : Type) (eqA : A -> A -> bool),
        (forall x y : A, reflect (x = y) (eqA x y)) ->
-       forall x y : pgamma A, reflect (x = y) (pgamma_eqb A eqA x y) :=
-  fun A eqA heqA => eqb_core_defs.iffP2
-    (pgamma_eqb_correct A eqA (fun x y h => @elimT (x = y) (eqA x y) (heqA x y) h))
-    (pgamma_eqb_refl A eqA (fun x => @introT (x = x) (eqA x x) (heqA x x) eq_refl)).
-  Definition palpha_eqb_OK_sumbool : forall A : Type,
+       forall x y : pgamma A, reflect (x = y) (pgamma_eqb A eqA x y).
+  Parameter palpha_eqb_OK_sumbool : forall A : Type,
        (forall x y : A, {x = y} + {x <> y}) ->
-       forall x y : palpha A, {x = y} + {x <> y} :=
-  fun A heqA => eqbOK.reflect_dec (palpha A) (palpha_eqb A (eqbOK.eqb_of_dec A heqA))
-    (palpha_eqb_OK A (eqbOK.eqb_of_dec A heqA) (eqbOK.dec_reflect A heqA)).
-  Definition pbeta_eqb_OK_sumbool : forall A : Type,
+       forall x y : palpha A, {x = y} + {x <> y}.
+  Parameter pbeta_eqb_OK_sumbool : forall A : Type,
        (forall x y : A, {x = y} + {x <> y}) ->
-       forall x y : pbeta A, {x = y} + {x <> y} :=
-  fun A heqA => eqbOK.reflect_dec (pbeta A) (pbeta_eqb A (eqbOK.eqb_of_dec A heqA))
-    (pbeta_eqb_OK A (eqbOK.eqb_of_dec A heqA) (eqbOK.dec_reflect A heqA)).
-  Definition pgamma_eqb_OK_sumbool : forall A : Type,
+       forall x y : pbeta A, {x = y} + {x <> y}.
+  Parameter pgamma_eqb_OK_sumbool : forall A : Type,
        (forall x y : A, {x = y} + {x <> y}) ->
-       forall x y : pgamma A, {x = y} + {x <> y} :=
-  fun A heqA => eqbOK.reflect_dec (pgamma A) (pgamma_eqb A (eqbOK.eqb_of_dec A heqA))
-    (pgamma_eqb_OK A (eqbOK.eqb_of_dec A heqA) (eqbOK.dec_reflect A heqA)).
+       forall x y : pgamma A, {x = y} + {x <> y}.
 End ParametrizedTripleMutualEqbOKExpected.
 
 Module ParametrizedTripleMutualEqbOKFromBetaUnsupported.
