@@ -325,10 +325,13 @@ func add-mutual-functor-consts list derive.param1.functor.mutual-spec, list deri
 add-mutual-functor-consts _ [] _ _ _ [].
 add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- std.do! [
   S = derive.param1.functor.mutual-spec GRR T T Arity _,
-  body-mutual-params Lno All Focus R,
-  std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped mutual term",
   Name is {coq.gref->id (indt GRR)} ^ Suffix,
-  coq.env.add-const Name R Rty @transparent! Funct,
+  if (Lno > 0)
+     (body-mutual-params-ty Lno S Rty,
+      coq.env.add-axiom Name Rty Funct)
+     (body-mutual-params Lno All Focus R,
+      std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped mutual term",
+      coq.env.add-const Name R Rty @transparent! Funct),
   mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause1 GRR [] Clause2,
   std.forall [Clause1,Clause2] (x\coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ x)),
   Focus1 is Focus + 1,
@@ -348,9 +351,7 @@ main-mutual GRS Suffix C :- std.do! [
   coq.env.indt FirstGRR _ LnoIs Luno _ _ _,
   assert! (LnoIs = Luno) "derive.param1.functor: Non-uniform parameters not supported",
   mutual-lno GRS FirstGRR Lno,
-  if (Lno > 0)
-     (stop "derive.param1_functor: parameterized mutual blocks are not supported without axioms")
-     (add-mutual-functor-consts Specs Specs Suffix Lno 0 C)
+  add-mutual-functor-consts Specs Specs Suffix Lno 0 C
 ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
