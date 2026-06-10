@@ -161,12 +161,20 @@ fold-map (prod N T F) A (prod N T1 F1) A2 :- !,
 fold-map (app L) A (app L1) A1 :- !, std.fold-map L A fold-map L1 A1.
 fold-map (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
   fold-map Ty A Ty1 A1, pi x\ fold-map (F x) A1 (F1 x) A2.
+fold-map (mfix F Rno MF) A (mfix F Rno MF1) A1 :- !,
+  fold-map-mfix-block MF A MF1 A1.
 fold-map (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
   fold-map T A T1 A1, fold-map Rty A1 Rty1 A2, std.fold-map B A2 fold-map B1 A3.
 fold-map (primitive _ as C) A C A :- !.
 fold-map (uvar M L as X) A W A1 :- var X, !, std.fold-map L A fold-map L1 A1, coq.mk-app-uvar M L1 W.
 % when used in CHR rules
 fold-map (uvar X L) A (uvar X L1) A1 :- std.fold-map L A fold-map L1 A1.
+
+func fold-map-mfix-block mfix-block, A -> mfix-block, A.
+fold-map-mfix-block (mfix-ty N Rno Ty F) A (mfix-ty N Rno Ty1 F1) A2 :- !,
+  fold-map Ty A Ty1 A1, pi x\ fold-map-mfix-block (F x) A1 (F1 x) A2.
+fold-map-mfix-block (mfix-bo Bs) A (mfix-bo Bs1) A1 :- !,
+  std.fold-map Bs A fold-map Bs1 A1.
 
 func fold-map-ctx-item prop, A -> prop, A.
 fold-map-ctx-item (decl X N T) A (decl X1 N T1) A2 :- fold-map X A X1 A1, fold-map T A1 T1 A2.

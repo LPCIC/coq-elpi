@@ -741,6 +741,22 @@ Elpi test_mfix_copy (f3_0).
 Elpi test_mfix_copy (f3_1).
 Elpi test_mfix_copy (f3_2).
 
+Elpi Command test_mfix_fold_map.
+Elpi Accumulate lp:{{
+:before "fold-map:start"
+fold-map {{ true }} A {{ false }} A :- !.
+
+main [trm T] :-
+  coq.term->gref T (const C),
+  coq.env.const C (some Body) _Ty,
+  fold-map Body [] Body1 _,
+  std.assert! (not(Body = Body1)) "fold-map did not traverse mfix bodies",
+  coq.typecheck Body1 _ ok,
+  coq.say "fold-map ok for" {coq.gref->string (const C)}.
+}}.
+
+Elpi test_mfix_fold_map (myeven).
+
 (* constr2lp must read all mutual-fixpoint component types in the
    original outer context, before pushing any self-reference. *)
 Elpi Command test_mfix_constr2lp_outer_ref.
