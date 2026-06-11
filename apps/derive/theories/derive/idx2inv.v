@@ -37,19 +37,19 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.idx2inv.db.
-Elpi Accumulate derive File idx2inv.
+#[superglobal] Elpi Accumulate derive Db derive.idx2inv.db.
+#[superglobal] Elpi Accumulate derive File idx2inv.
 Elpi Accumulate File paramX.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "idx2inv" "invert".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "idx2inv" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T) _ ff (derive "idx2inv" (derive.idx2inv.main T "_to_") (idx2inv-db T _ _ _)).
 

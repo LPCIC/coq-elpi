@@ -71,21 +71,21 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File derive_hook.
-Elpi Accumulate derive Db derive.eqcorrect.db.
-Elpi Accumulate derive File eqcorrect.
+#[superglobal] Elpi Accumulate derive File derive_hook.
+#[superglobal] Elpi Accumulate derive Db derive.eqcorrect.db.
+#[superglobal] Elpi Accumulate derive File eqcorrect.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "eqcorrect" "induction".
 dep1 "eqcorrect" "eq".
 dep1 "eqcorrect" "eqK".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "eqcorrect" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T) Prefix ff (derive "eqcorrect" (derive.eqcorrect.main T N) (eqcorrect-db (indt T) _)) :- N is Prefix ^ "eq_correct".
 

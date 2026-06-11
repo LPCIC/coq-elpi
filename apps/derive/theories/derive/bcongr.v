@@ -56,19 +56,19 @@ Elpi Accumulate lp:{{
 
       
 (* hook into derive *)
-Elpi Accumulate derive Db derive.bcongr.db.
-Elpi Accumulate derive File injection.
-Elpi Accumulate derive File bcongr.
+#[superglobal] Elpi Accumulate derive Db derive.bcongr.db.
+#[superglobal] Elpi Accumulate derive File injection.
+#[superglobal] Elpi Accumulate derive File bcongr.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "bcongr" "projK".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "bcongr" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
   
 derivation (indt T) N ff (derive "bcongr" (derive.bcongr.main T N) (derive.exists-indc T (K\bcongr-db K _))).
 

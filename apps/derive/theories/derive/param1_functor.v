@@ -41,18 +41,18 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.param1.functor.db.
-Elpi Accumulate derive File param1_functor.
+#[superglobal] Elpi Accumulate derive Db derive.param1.functor.db.
+#[superglobal] Elpi Accumulate derive File param1_functor.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "param1_functor" "param1".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "param1_functor" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T) _ ff (derive "param1_functor" (derive.on_param1 (indt T) derive.param1.functor.main "_functor") (derive.on_param1 (indt T) (_\T\_\_\sigma I\ T = indt I, param1-functor-for I _ _) _ _)).
 

@@ -45,18 +45,18 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.induction.db.
-Elpi Accumulate derive File induction.
+#[superglobal] Elpi Accumulate derive Db derive.induction.db.
+#[superglobal] Elpi Accumulate derive File induction.
 
-#[phases="both"] Elpi Accumulate derive lp:{{
+#[phases="both",superglobal] Elpi Accumulate derive lp:{{
 dep1 "induction" "param1_functor".
 }}.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "induction" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
 
 derivation (indt T) N ff (derive "induction" (derive.induction.main T N) (induction-db T _)).
 

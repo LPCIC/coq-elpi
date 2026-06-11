@@ -115,16 +115,16 @@ Register is_false as elpi.derive.is_false.
 Register is_is_true as elpi.derive.is_is_true.
 
 (* hook into derive *)
-Elpi Accumulate derive File paramX.
-Elpi Accumulate derive Db Header derive.param1.db.
-Elpi Accumulate derive File param1.
-Elpi Accumulate derive Db derive.param1.db.
+#[superglobal] Elpi Accumulate derive File paramX.
+#[superglobal] Elpi Accumulate derive Db Header derive.param1.db.
+#[superglobal] Elpi Accumulate derive File param1.
+#[superglobal] Elpi Accumulate derive Db derive.param1.db.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "param1" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
   
 func derive.on_param1 gref, (func gref, gref, string -> list prop), string -> list prop.
 derive.on_param1 GR F N C :- reali (global GR) (global P), !, F GR P N C.

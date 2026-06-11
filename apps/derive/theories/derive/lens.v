@@ -50,13 +50,13 @@ Elpi Accumulate lp:{{
 
    
 (* hook into derive *)
-Elpi Accumulate derive Db derive.lens.db.
-Elpi Accumulate derive File lens.
+#[superglobal] Elpi Accumulate derive Db derive.lens.db.
+#[superglobal] Elpi Accumulate derive File lens.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "lens" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
   derivation (indt T) Prefix ff (derive "lens" (derive.lens.main T N) (lens-db T _ _)) :- N is Prefix ^ "_".
 }}.

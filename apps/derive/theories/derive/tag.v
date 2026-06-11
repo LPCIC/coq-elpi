@@ -39,14 +39,14 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive Db derive.tag.db.
-Elpi Accumulate derive File tag.
+#[superglobal] Elpi Accumulate derive Db derive.tag.db.
+#[superglobal] Elpi Accumulate derive File tag.
 
-#[synterp] Elpi Accumulate derive lp:{{
+#[synterp,superglobal] Elpi Accumulate derive lp:{{
   derivation _ _ (derive "tag" (cl\ cl = []) true).
 }}.
 
-Elpi Accumulate derive lp:{{
+#[superglobal] Elpi Accumulate derive lp:{{
   
 derivation (indt T) Prefix ff (derive "tag" (derive.tag.main T Prefix) (tag-for T _)).
 
