@@ -24,16 +24,23 @@ Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File param1_functor.
 Elpi Accumulate lp:{{ 
+  func derive.param1.functor.standalone-main inductive, inductive, string -> list prop.
+  derive.param1.functor.standalone-main GR _IsGR Suffix C :-
+    coq.env.mutual-inductives GR TS, std.length TS N, N > 1, !,
+    derive.param1.functor.main-mutual TS Suffix C.
+  derive.param1.functor.standalone-main GR IsGR Suffix C :-
+    derive.param1.functor.main (indt GR) (indt IsGR) Suffix C.
+
   main [str I, str O] :- !,
     coq.locate I (indt IsGR),
     realiR T {coq.env.global (indt IsGR)},
     coq.env.global (indt GR) T,
-    derive.param1.functor.main (indt GR) (indt IsGR) O _.
+    derive.param1.functor.standalone-main GR IsGR O _.
   main [str I] :- !,
     coq.locate I (indt IsGR),
     realiR T {coq.env.global (indt IsGR)},
     coq.env.global (indt GR) T,
-    derive.param1.functor.main (indt GR) (indt IsGR) "_functor" _.
+    derive.param1.functor.standalone-main GR IsGR "_functor" _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.param1.functor <inductive type name> [<output suffix>]".

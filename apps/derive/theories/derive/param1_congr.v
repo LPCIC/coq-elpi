@@ -25,16 +25,26 @@ Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate File param1_congr.
 Elpi Accumulate lp:{{
+  func derive.param1.congr.standalone-main inductive, inductive, string -> list prop.
+  derive.param1.congr.standalone-main GR _IsGR Prefix C :-
+    coq.env.mutual-inductives GR TS, std.length TS N, N > 1, !,
+    std.map TS (t\c\ sigma IsT\
+      reali (global (indt t)) (global (indt IsT)),
+      derive.param1.congr.main (indt t) (indt IsT) Prefix c) CS,
+    std.flatten CS C.
+  derive.param1.congr.standalone-main GR IsGR Prefix C :-
+    derive.param1.congr.main (indt GR) (indt IsGR) Prefix C.
+
   main [str I, str O] :- !,
     coq.locate I (indt IsGR),
     realiR T {coq.env.global (indt IsGR)},
     coq.env.global (indt GR) T,
-    derive.param1.congr.main (indt GR) (indt IsGR) O _.
+    derive.param1.congr.standalone-main GR IsGR O _.
   main [str I] :- !,
     coq.locate I (indt IsGR),
     realiR T {coq.env.global (indt IsGR)},
     coq.env.global (indt GR) T,
-    derive.param1.congr.main (indt GR) (indt IsGR) "congr_" _.
+    derive.param1.congr.standalone-main GR IsGR "congr_" _.
   main _ :- usage.
 
   usage :-
