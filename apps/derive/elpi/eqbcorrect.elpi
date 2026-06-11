@@ -77,24 +77,19 @@ mutual-prefix First Prefix T Prefix :- First = T, !.
 mutual-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
 
 func add-one list inductive, list eqb.eqType, list term, inductive, string -> list prop.
-add-one _MutualInds _MutualFIs _MutualRealis I _ _ :-
-  std.assert! (eqType (indt I) FI) "this inductive is not supported",
-  has-params? FI,
-  !,
-  coq.error "derive.eqbcorrect: mutual correctness/reflexivity proofs for parameterized mutual inductives still need to be implemented" (indt I).
 add-one _MutualInds MutualFIs MutualRealis I Prefix [Clause, ClauseC, ClauseR] :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
   std.assert! (induction-db I Indu) "call derive.induction before",
 
-  (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
-    common-mutual FI [] Indu MutualFIs MutualRealis CorrectTerm),
+  std.assert! ((config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+    common-mutual FI [] Indu MutualFIs MutualRealis CorrectTerm)) "derive.eqbcorrect: failed to build mutual correct proof",
   std.assert-ok! (coq.typecheck CorrectTerm CTy) "derive.eqbcorrect: mutual correct proof is illtyped",
   CName is Prefix ^ "eqb_correct",
   coq.ensure-fresh-global-id CName FCName,
   coq.env.add-const FCName CorrectTerm CTy @transparent! Correct,
 
-  (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
-    common-mutual FI [] Indu MutualFIs MutualRealis ReflTerm),
+  std.assert! ((config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+    common-mutual FI [] Indu MutualFIs MutualRealis ReflTerm)) "derive.eqbcorrect: failed to build mutual refl proof",
   std.assert-ok! (coq.typecheck ReflTerm RTy) "derive.eqbcorrect: mutual refl proof is illtyped",
   RName is Prefix ^ "eqb_refl",
   coq.ensure-fresh-global-id RName FRName,
@@ -341,6 +336,11 @@ build-mutual-branches MutualRealis Params [eqb.inductive I Ks|Rest] K R :- std.d
   R = (let `common` CommonTy Common c\ Body c)
 ].
 
+func mutual-fis-apply-type-param eqb.trm, list eqb.eqType -> list eqb.eqType.
+mutual-fis-apply-type-param _ [] [].
+mutual-fis-apply-type-param A [eqb.type-param F|FS] [F A|FS1] :-
+  mutual-fis-apply-type-param A FS FS1.
+
 :index (1)
 func common-mutual eqb.eqType, list term, term, list eqb.eqType, list term -> term.
 common-mutual (eqb.type-param F) Params Ind MutualFIs MutualRealis O :- std.do! [
@@ -353,11 +353,11 @@ common-mutual (eqb.type-param F) Params Ind MutualFIs MutualRealis O :- std.do! 
   param1-inhab-db {{ lp:Pred_on lp:a lp:eqA }} eqAc =>
   eqb-for a a eqA =>
   reali a {{ lp:Pred_on lp:a lp:eqA }} =>
-  prove Db a {{ fun (x: lp:a) (Hx : lp:Pred_on lp:a lp:eqA x) => Hx }} => std.do! [
-    std.map MutualFIs (fi\fi1\ sigma F1\ fi = eqb.type-param F1, fi1 = F1 aa) MutualFIs1,
-    common-mutual (F aa) [a|Params]
+  prove Db a {{ fun (x: lp:a) (Hx : lp:Pred_on lp:a lp:eqA x) => Hx }} => sigma MutualFIs1\ std.do! [
+    std.assert! (mutual-fis-apply-type-param aa MutualFIs MutualFIs1) "derive.eqbcorrect: failed to apply mutual type parameter",
+    std.assert! (common-mutual (F aa) [a|Params]
       {coq.mk-app Ind [a, {{ lp:Pred_on lp:a lp:eqA }} ] }
-      MutualFIs1 MutualRealis (R a eqA eqAc)
+      MutualFIs1 MutualRealis (R a eqA eqAc)) "derive.eqbcorrect: failed after mutual type parameter"
   ]
 ].
 
