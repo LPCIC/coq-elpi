@@ -4044,15 +4044,15 @@ Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualParam2.
 
-Module ParametrizedMutualInductionUnsupported.
+Module ParametrizedMutualInduction <: ParametrizedMutualInductionExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(induction)] derive ptree.
-End ParametrizedMutualInductionUnsupported.
+  #[only(induction)] derive ptree.
+End ParametrizedMutualInduction.
 
 Module ParametrizedMutualTag <: ParametrizedMutualTagExpected.
   Inductive ptree (A : Type) : Type :=
@@ -4127,25 +4127,25 @@ Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
   Proof. vm_compute. reflexivity. Qed.
 End ParametrizedMutualEqb.
 
-Module ParametrizedMutualEqbCorrectUnsupported.
+Module ParametrizedMutualEqbCorrect <: ParametrizedMutualEqbCorrectExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(eqbcorrect)] derive ptree.
-End ParametrizedMutualEqbCorrectUnsupported.
+  #[only(eqbcorrect)] derive ptree.
+End ParametrizedMutualEqbCorrect.
 
-Module ParametrizedMutualEqbOKUnsupported.
+Module ParametrizedMutualEqbOK <: ParametrizedMutualEqbOKExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(eqbOK)] derive ptree.
-End ParametrizedMutualEqbOKUnsupported.
+  #[only(eqbOK)] derive ptree.
+End ParametrizedMutualEqbOK.
 
 Module ParametrizedMutualIsK <: ParametrizedMutualIsKExpected.
   Inductive ptree (A : Type) : Type :=
@@ -4320,135 +4320,12 @@ End TripleMutualEqbOKFromBeta.
 
 Module Type ParametrizedTripleMutualEqbOKExpected.
   Include ParametrizedTripleMutualBase.
-  Definition palpha_eqb : forall A : Type,
-       (A -> A -> bool) -> palpha A -> palpha A -> bool :=
-  fun (A : Type) (eqA : A -> A -> bool) =>
-  fix palpha_eqb_rec (x y : palpha A) {struct x} : bool :=
-    match x with
-    | palpha0 _ =>
-        match y with
-        | palpha0 _ => true
-        | palpha1 _ _ _ => false
-        end
-    | palpha1 _ x0 b0 =>
-        match y with
-        | palpha0 _ => false
-        | palpha1 _ x1 b1 => (eqA x0 x1 && pbeta_eqb_rec b0 b1)%bool
-        end
-    end
-  with pbeta_eqb_rec (x y : pbeta A) {struct x} : bool :=
-    match x with
-    | pbeta0 _ =>
-        match y with
-        | pbeta0 _ => true
-        | pbeta1 _ _ => false
-        end
-    | pbeta1 _ g0 =>
-        match y with
-        | pbeta0 _ => false
-        | pbeta1 _ g1 => pgamma_eqb_rec g0 g1
-        end
-    end
-  with pgamma_eqb_rec (x y : pgamma A) {struct x} : bool :=
-    match x with
-    | pgamma0 _ =>
-        match y with
-        | pgamma0 _ => true
-        | pgamma1 _ _ _ => false
-        end
-    | pgamma1 _ a0 b0 =>
-        match y with
-        | pgamma0 _ => false
-        | pgamma1 _ a1 b1 => (palpha_eqb_rec a0 a1 && pbeta_eqb_rec b0 b1)%bool
-        end
-    end
-  for palpha_eqb_rec.
-  Definition pbeta_eqb : forall A : Type,
-       (A -> A -> bool) -> pbeta A -> pbeta A -> bool :=
-  fun (A : Type) (eqA : A -> A -> bool) =>
-  fix palpha_eqb_rec (x y : palpha A) {struct x} : bool :=
-    match x with
-    | palpha0 _ =>
-        match y with
-        | palpha0 _ => true
-        | palpha1 _ _ _ => false
-        end
-    | palpha1 _ x0 b0 =>
-        match y with
-        | palpha0 _ => false
-        | palpha1 _ x1 b1 => (eqA x0 x1 && pbeta_eqb_rec b0 b1)%bool
-        end
-    end
-  with pbeta_eqb_rec (x y : pbeta A) {struct x} : bool :=
-    match x with
-    | pbeta0 _ =>
-        match y with
-        | pbeta0 _ => true
-        | pbeta1 _ _ => false
-        end
-    | pbeta1 _ g0 =>
-        match y with
-        | pbeta0 _ => false
-        | pbeta1 _ g1 => pgamma_eqb_rec g0 g1
-        end
-    end
-  with pgamma_eqb_rec (x y : pgamma A) {struct x} : bool :=
-    match x with
-    | pgamma0 _ =>
-        match y with
-        | pgamma0 _ => true
-        | pgamma1 _ _ _ => false
-        end
-    | pgamma1 _ a0 b0 =>
-        match y with
-        | pgamma0 _ => false
-        | pgamma1 _ a1 b1 => (palpha_eqb_rec a0 a1 && pbeta_eqb_rec b0 b1)%bool
-        end
-    end
-  for pbeta_eqb_rec.
-  Definition pgamma_eqb : forall A : Type,
-       (A -> A -> bool) -> pgamma A -> pgamma A -> bool :=
-  fun (A : Type) (eqA : A -> A -> bool) =>
-  fix palpha_eqb_rec (x y : palpha A) {struct x} : bool :=
-    match x with
-    | palpha0 _ =>
-        match y with
-        | palpha0 _ => true
-        | palpha1 _ _ _ => false
-        end
-    | palpha1 _ x0 b0 =>
-        match y with
-        | palpha0 _ => false
-        | palpha1 _ x1 b1 => (eqA x0 x1 && pbeta_eqb_rec b0 b1)%bool
-        end
-    end
-  with pbeta_eqb_rec (x y : pbeta A) {struct x} : bool :=
-    match x with
-    | pbeta0 _ =>
-        match y with
-        | pbeta0 _ => true
-        | pbeta1 _ _ => false
-        end
-    | pbeta1 _ g0 =>
-        match y with
-        | pbeta0 _ => false
-        | pbeta1 _ g1 => pgamma_eqb_rec g0 g1
-        end
-    end
-  with pgamma_eqb_rec (x y : pgamma A) {struct x} : bool :=
-    match x with
-    | pgamma0 _ =>
-        match y with
-        | pgamma0 _ => true
-        | pgamma1 _ _ _ => false
-        end
-    | pgamma1 _ a0 b0 =>
-        match y with
-        | pgamma0 _ => false
-        | pgamma1 _ a1 b1 => (palpha_eqb_rec a0 a1 && pbeta_eqb_rec b0 b1)%bool
-        end
-    end
-  for pgamma_eqb_rec.
+  Parameter palpha_eqb : forall A : Type,
+       (A -> A -> bool) -> palpha A -> palpha A -> bool.
+  Parameter pbeta_eqb : forall A : Type,
+       (A -> A -> bool) -> pbeta A -> pbeta A -> bool.
+  Parameter pgamma_eqb : forall A : Type,
+       (A -> A -> bool) -> pgamma A -> pgamma A -> bool.
   Parameter palpha_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_correct eqA ->
        forall x : palpha A, eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x.
@@ -4487,7 +4364,7 @@ Module Type ParametrizedTripleMutualEqbOKExpected.
        forall x y : pgamma A, {x = y} + {x <> y}.
 End ParametrizedTripleMutualEqbOKExpected.
 
-Module ParametrizedTripleMutualEqbOKFromBetaUnsupported.
+Module ParametrizedTripleMutualEqbOKFromBeta <: ParametrizedTripleMutualEqbOKExpected.
   Inductive palpha (A : Type) : Type :=
   | palpha0
   | palpha1 (x : A) (b : pbeta A)
@@ -4498,5 +4375,5 @@ Module ParametrizedTripleMutualEqbOKFromBetaUnsupported.
   | pgamma0
   | pgamma1 (a : palpha A) (b : pbeta A).
 
-  Fail #[only(eqbOK)] derive pbeta.
-End ParametrizedTripleMutualEqbOKFromBetaUnsupported.
+  #[only(eqbOK)] derive pbeta.
+End ParametrizedTripleMutualEqbOKFromBeta.

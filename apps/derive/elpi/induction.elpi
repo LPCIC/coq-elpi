@@ -140,10 +140,35 @@ mutual-spec-apply-param A (derive.induction.mutual-spec GR GRR IsT (prod _ _ F) 
   map KT (coq.subst-prod [A]) KTA.
 mutual-spec-apply-param _ _ _ :- stop "derive.induction: mutual parameter mismatch".
 
+func mutual-spec-apply-param2 term, term, derive.induction.mutual-spec -> derive.induction.mutual-spec.
+mutual-spec-apply-param2 A PA (derive.induction.mutual-spec GR GRR IsT (prod _ _ (a\ prod _ _ (pa\ F a pa))) K KT)
+    (derive.induction.mutual-spec GR GRR IsTAP (F A PA) KAP KTAP) :- !,
+  coq.mk-app IsT [A,PA] IsTAP,
+  map K (k\ coq.mk-app k [A,PA]) KAP,
+  map KT (coq.subst-prod [A,PA]) KTAP.
+mutual-spec-apply-param2 _ _ _ _ :- stop "derive.induction: mutual parameter mismatch".
+
+func mutual-specs-apply-param2 term, term, list derive.induction.mutual-spec -> list derive.induction.mutual-spec.
+mutual-specs-apply-param2 _ _ [] [].
+mutual-specs-apply-param2 A PA [S|SS] [S1|SS1] :-
+  mutual-spec-apply-param2 A PA S S1,
+  mutual-specs-apply-param2 A PA SS SS1.
+
+func mk-app-prefix term, list term -> term.
+mk-app-prefix (app L) Args (app AllArgs) :- !,
+  std.append L Args AllArgs.
+mk-app-prefix F Args (app [F|Args]) :- !.
+
+pred pred-prefix i:term, i:term, o:list term.
+pred-prefix IsT T Rest :-
+  coq.safe-dest-app IsT HDI IArgs,
+  coq.safe-dest-app T HD Args,
+  same_term HD HDI,
+  appendR IArgs Rest Args.
+
 func pred-app list term, list term, term -> term.
 pred-app [IsT|_] [P|_] T R :-
-  coq.safe-dest-app T HD Args,
-  same_term HD IsT, !,
+  pred-prefix IsT T Args, !,
   coq.mk-app P Args R.
 pred-app [_|IS] [_|PS] T R :- pred-app IS PS T R.
 
@@ -204,10 +229,15 @@ mutual-induction-type-motives All [S|SS] RevPs Focus (prod `P` PTy R) :-
 
 func mutual-induction-type int, list derive.induction.mutual-spec, int -> term.
 mutual-induction-type 0 Specs Focus Ty :- !, mutual-induction-type-base Specs Focus Ty.
+mutual-induction-type 2 ([S|_] as Specs) Focus (prod A TA (a\ prod P (TP a) (pa\ Rest a pa))) :-
+  mutual-spec-arity S (prod A TA (a\ prod P (TP a) _)), coq.sort? TA, !,
+  @pi-decl A TA a\ @pi-decl P (TP a) pa\ sigma Specs1\
+    mutual-specs-apply-param2 a pa Specs Specs1,
+    mutual-induction-type 0 Specs1 Focus (Rest a pa).
 mutual-induction-type N ([S|_] as Specs) Focus (prod A TA R) :- N > 0, !,
   mutual-spec-arity S (prod A TA _),
   M is N - 1,
-  @pi-decl A TA a\
+  @pi-decl A TA a\ sigma Specs1\
     std.map Specs (mutual-spec-apply-param a) Specs1,
     mutual-induction-type M Specs1 Focus (R a).
 
@@ -225,8 +255,7 @@ mutual-induction-fix-ty (derive.induction.mutual-spec _ _ IsT Arity _ _) P Ty Re
 
 func rec-call list term, list term, term, term -> term.
 rec-call [IsT|_] [F|_] S X R :-
-  coq.safe-dest-app S HD Args,
-  same_term HD IsT, !,
+  pred-prefix IsT S Args, !,
   std.append Args [X] ArgsX,
   coq.mk-app F ArgsX R.
 rec-call [_|IS] [_|FS] S X R :- rec-call IS FS S X R.
@@ -282,6 +311,214 @@ mutual-induction-mfix Specs Ps Focus (mfix Focus Recno Block) :-
   mutual-induction-fix-ty S P _ Recno,
   mutual-induction-mfix-aux Specs Specs Ps Ps [] Block.
 
+func mutual-induction-param1-recno list derive.induction.mutual-spec, int -> int.
+mutual-induction-param1-recno Specs Focus Recno :-
+  std.nth Focus Specs S,
+  S = derive.induction.mutual-spec _ _ _ Arity _ _,
+  arity-recno Arity 0 RecArity,
+  std.length Specs MotNo,
+  collect-terms Specs _ KAll _,
+  std.length KAll KNo,
+  Recno is 2 + MotNo + KNo + RecArity.
+
+func mutual-induction-param1-fix-ty list derive.induction.mutual-spec, int -> term, int.
+mutual-induction-param1-fix-ty All Focus (prod A TA (a\ prod P (TP a) (pa\ Rest a pa))) Recno :-
+  std.nth Focus All S,
+  S = derive.induction.mutual-spec _ _ _ (prod A TA (a\ prod P (TP a) _)) _ _,
+  coq.sort? TA, !,
+  @pi-decl A TA a\ @pi-decl P (TP a) pa\ sigma Specs1\
+    mutual-specs-apply-param2 a pa All Specs1,
+    mutual-induction-type-base Specs1 Focus (Rest a pa),
+    mutual-induction-param1-recno Specs1 Focus Recno.
+
+func mutual-induction-param1-rty-motives list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, list term, list term, list term, int, term -> term.
+mutual-induction-param1-rty-motives _ [] RevPs IsTs KAll KTAll _ ProofTy R :- !,
+  std.rev RevPs Ps,
+  pred-app IsTs Ps ProofTy Conclusion,
+  add-hyps IsTs Ps KAll KTAll Conclusion R.
+mutual-induction-param1-rty-motives All [S|SS] RevPs IsTs KAll KTAll Focus ProofTy (prod `P` PTy R) :-
+  S = derive.induction.mutual-spec _ _ _ Arity _ _,
+  truncated-predicate-ty Arity PTy,
+  @pi-decl `P` PTy p\ mutual-induction-param1-rty-motives All SS [p|RevPs] IsTs KAll KTAll Focus ProofTy (R p).
+
+func mutual-induction-param1-rty list derive.induction.mutual-spec, int, term, list term, list term -> term.
+mutual-induction-param1-rty All Focus _ _ Tys R :-
+  std.assert! (last Tys ProofTy) "derive.induction: failed to select parameterized match proof type",
+  std.assert! (coq.safe-dest-app ProofTy _ [A,PA|_]) "derive.induction: failed to read parameterized match proof type",
+  std.assert! (mutual-specs-apply-param2 A PA All Specs1) "derive.induction: failed to apply parameterized match params",
+  std.assert! (collect-terms Specs1 IsTs KAll KTAll) "derive.induction: failed to collect parameterized match terms",
+  std.assert! (mutual-induction-param1-rty-motives Specs1 Specs1 [] IsTs KAll KTAll Focus ProofTy R) "derive.induction: failed to build parameterized match return type".
+
+func apply-rec-funs list term, list term -> list term.
+apply-rec-funs _ [] [].
+apply-rec-funs Args [F|FS] [FA|FAS] :-
+  coq.mk-app F Args FA,
+  apply-rec-funs Args FS FAS.
+
+func branch-mutual-applied list term, list term, term, list term, list term -> term.
+branch-mutual-applied IsTs Fs K Vars Tys R :-
+  induction-hyp-db K IH,
+  mutual-branch-args IsTs Fs Vars Tys [] Args,
+  coq.mk-app IH Args R.
+
+func branch-mutual-param1-hyps term, term, list term, list term, list term, list term, list term, list term, term, list term, list term -> term.
+branch-mutual-param1-hyps A PA IsTs Ps [] [] RevHs Fs K Vars Tys R :- !,
+  std.rev RevHs Hs,
+  std.append [A,PA] Ps Args0,
+  std.append Args0 Hs Args,
+  apply-rec-funs Args Fs FsApplied,
+  branch-mutual-applied IsTs FsApplied K Vars Tys R.
+branch-mutual-param1-hyps A PA IsTs Ps [Kc|KS] [KT|KTS] RevHs Fs K Vars Tys (fun HN HTy R) :-
+  hyp-mutual IsTs Ps KT HTy,
+  coq.term->gref Kc GRK,
+  coq.name-suffix `H` {coq.gref->id GRK} HN,
+  @pi-decl HN HTy h\
+    induction-hyp-db Kc h =!=>
+      branch-mutual-param1-hyps A PA IsTs Ps KS KTS [h|RevHs] Fs K Vars Tys (R h).
+
+func branch-mutual-param1-motives term, term, list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, list term, list term, list term, list term, term, list term, list term -> term.
+branch-mutual-param1-motives A PA _All [] RevPs IsTs KAll KTAll Fs K Vars Tys R :- !,
+  std.rev RevPs Ps,
+  branch-mutual-param1-hyps A PA IsTs Ps KAll KTAll [] Fs K Vars Tys R.
+branch-mutual-param1-motives A PA All [S|SS] RevPs IsTs KAll KTAll Fs K Vars Tys (fun `P` PTy R) :-
+  S = derive.induction.mutual-spec _ _ _ Arity _ _,
+  truncated-predicate-ty Arity PTy,
+  @pi-decl `P` PTy p\ branch-mutual-param1-motives A PA All SS [p|RevPs] IsTs KAll KTAll Fs K Vars Tys (R p).
+
+func branch-mutual-param1 list derive.induction.mutual-spec, list term, term, term, list term, list term -> term.
+branch-mutual-param1 All Fs K _ [A,PA|Vars] [_T,_TP|Tys] R :- !,
+  sigma Specs1 KAP IsTs KAll KTAll\
+    std.assert! (mutual-specs-apply-param2 A PA All Specs1) "derive.induction: failed to apply parameterized branch params",
+    std.assert! (coq.mk-app K [A,PA] KAP) "derive.induction: failed to apply parameterized branch constructor",
+    std.assert! (collect-terms Specs1 IsTs KAll KTAll) "derive.induction: failed to collect parameterized branch terms",
+    std.assert! (branch-mutual-param1-motives A PA Specs1 Specs1 [] IsTs KAll KTAll Fs KAP Vars Tys R) "derive.induction: failed to build parameterized branch body".
+
+func mutual-induction-param1-fix-body-final-aux list derive.induction.mutual-spec, term, list term, list term, list term, int, term, list term -> term.
+mutual-induction-param1-fix-body-final-aux OrigAll IsT Ps Hs Fs Focus (prod N S T) RevArgs (fun N S R) :- !,
+  @pi-decl N S x\ mutual-induction-param1-fix-body-final-aux OrigAll IsT Ps Hs Fs Focus (T x) [x|RevArgs] (R x).
+mutual-induction-param1-fix-body-final-aux OrigAll IsT Ps Hs Fs Focus (sort _) RevArgs (fun `H` IsTArgs Bo) :- !,
+  std.rev RevArgs Args,
+  std.assert! (mk-app-prefix IsT Args IsTArgs) "derive.induction: failed to apply parameterized mutual fix body proof type",
+  @pi-decl `H` IsTArgs h\ sigma Match Args0\
+    std.assert! (coq.build-match h IsTArgs (mutual-induction-param1-rty OrigAll Focus) (branch-mutual-param1 OrigAll Fs) Match) "derive.induction: failed to build parameterized mutual proof match",
+    std.append Ps Hs Args0,
+    std.assert! (coq.mk-app Match Args0 (Bo h)) "derive.induction: failed to apply parameterized mutual proof match".
+mutual-induction-param1-fix-body-final-aux _ _ _ _ _ _ _ _ _ :- stop "derive.induction: mutual indexed data types not supported".
+
+func mutual-induction-param1-fix-body-final list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, list term, list term, int -> term.
+mutual-induction-param1-fix-body-final OrigAll Specs Ps Hs Fs Focus R :-
+  std.assert! (std.nth Focus Specs SF) "derive.induction: failed to select parameterized mutual fix body spec",
+  SF = derive.induction.mutual-spec _ _ IsT Arity _ _,
+  mutual-induction-param1-fix-body-final-aux OrigAll IsT Ps Hs Fs Focus Arity [] R.
+
+func mutual-induction-param1-fix-body-hyps list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, list term, list term, list term, list term, int -> term.
+mutual-induction-param1-fix-body-hyps OrigAll Specs Ps [] [] RevHs Fs Focus R :- !,
+  std.rev RevHs Hs,
+  std.assert! (mutual-induction-param1-fix-body-final OrigAll Specs Ps Hs Fs Focus R) "derive.induction: failed to build parameterized mutual fix body final match".
+mutual-induction-param1-fix-body-hyps OrigAll Specs Ps [Kc|KS] [KT|KTS] RevHs Fs Focus (fun HN HTy R) :-
+  std.assert! (collect-terms Specs IsTs _ _) "derive.induction: failed to collect parameterized mutual body terms",
+  std.assert! (hyp-mutual IsTs Ps KT HTy) "derive.induction: failed to build parameterized mutual body hypothesis type",
+  std.assert! (coq.term->gref Kc GRK) "derive.induction: failed to identify parameterized mutual body constructor",
+  coq.name-suffix `H` {coq.gref->id GRK} HN,
+  @pi-decl HN HTy h\
+    induction-hyp-db Kc h =!=>
+      std.assert! (mutual-induction-param1-fix-body-hyps OrigAll Specs Ps KS KTS [h|RevHs] Fs Focus (R h)) "derive.induction: failed to build rest parameterized mutual body hypotheses".
+
+func mutual-induction-param1-fix-body-motives list derive.induction.mutual-spec, list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, list term, int -> term.
+mutual-induction-param1-fix-body-motives OrigAll Specs [] RevPs Fs Focus R :- !,
+  std.rev RevPs Ps,
+  std.assert! (collect-terms Specs _ KAll KTAll) "derive.induction: failed to collect parameterized mutual body constructors",
+  std.assert! (mutual-induction-param1-fix-body-hyps OrigAll Specs Ps KAll KTAll [] Fs Focus R) "derive.induction: failed to build parameterized mutual body hypotheses".
+mutual-induction-param1-fix-body-motives OrigAll Specs [S|SS] RevPs Fs Focus (fun `P` PTy R) :-
+  S = derive.induction.mutual-spec _ _ _ Arity _ _,
+  std.assert! (truncated-predicate-ty Arity PTy) "derive.induction: failed to build parameterized mutual body motive type",
+  @pi-decl `P` PTy p\ std.assert! (mutual-induction-param1-fix-body-motives OrigAll Specs SS [p|RevPs] Fs Focus (R p)) "derive.induction: failed to build rest parameterized mutual body motives".
+
+func mutual-induction-param1-fix-body list derive.induction.mutual-spec, list term, int -> term.
+mutual-induction-param1-fix-body All Fs Focus (fun A TA (a\ fun P (TP a) (pa\ Rest a pa))) :-
+  std.assert! (std.nth Focus All S) "derive.induction: failed to select parameterized mutual body spec",
+  S = derive.induction.mutual-spec _ _ _ (prod A TA (a\ prod P (TP a) _)) _ _, coq.sort? TA, !,
+  @pi-decl A TA a\ @pi-decl P (TP a) pa\ sigma Specs1\
+    std.assert! (mutual-specs-apply-param2 a pa All Specs1) "derive.induction: failed to apply parameterized mutual body params",
+    std.assert! (mutual-induction-param1-fix-body-motives All Specs1 Specs1 [] Fs Focus (Rest a pa)) "derive.induction: failed to build parameterized mutual body after params".
+
+func mutual-induction-param1-bodies list derive.induction.mutual-spec, list term, list derive.induction.mutual-spec, int -> list term.
+mutual-induction-param1-bodies _ _ [] _ [].
+mutual-induction-param1-bodies All Fs [_|SS] Focus [B|BS] :-
+  std.assert! (mutual-induction-param1-fix-body All Fs Focus B) "derive.induction: failed to build one parameterized mutual fix body",
+  Focus1 is Focus + 1,
+  std.assert! (mutual-induction-param1-bodies All Fs SS Focus1 BS) "derive.induction: failed to build rest parameterized mutual fix bodies".
+
+func mutual-induction-param1-mfix-aux list derive.induction.mutual-spec, list derive.induction.mutual-spec, int, list term -> mfix-block.
+mutual-induction-param1-mfix-aux All [] _ RevF (mfix-bo Bodies) :- !,
+  std.rev RevF Fs,
+  std.assert! (mutual-induction-param1-bodies All Fs All 0 Bodies) "derive.induction: failed to build parameterized mutual fix bodies".
+mutual-induction-param1-mfix-aux All [S|SS] Focus RevF (mfix-ty N Recno Ty Rest) :-
+  S = derive.induction.mutual-spec _ GRR _ _ _ _,
+  ID is {coq.gref->id (indt GRR)} ^ "_induction_rec",
+  coq.id->name ID N,
+  std.assert! (mutual-induction-param1-fix-ty All Focus Ty Recno) "derive.induction: failed to build parameterized mutual fix type",
+  @pi-decl N Ty f\
+    Focus1 is Focus + 1,
+    std.assert! (mutual-induction-param1-mfix-aux All SS Focus1 [f|RevF] (Rest f)) "derive.induction: failed to build rest parameterized mutual fix block".
+
+func mutual-induction-param1-mfix list derive.induction.mutual-spec, int -> term.
+mutual-induction-param1-mfix Specs Focus (mfix Focus Recno Block) :-
+  std.assert! (mutual-induction-param1-fix-ty Specs Focus _ Recno) "derive.induction: failed to build selected parameterized mutual fix type",
+  std.assert! (mutual-induction-param1-mfix-aux Specs Specs 0 [] Block) "derive.induction: failed to build parameterized mutual fix block".
+
+func mutual-induction-param1-term-final-aux term, term, list derive.induction.mutual-spec, term, list term, list term, int, term, list term -> term.
+mutual-induction-param1-term-final-aux A PA OrigAll IsT Ps Hs Focus (prod N S T) RevArgs (fun N S R) :- !,
+  @pi-decl N S x\ mutual-induction-param1-term-final-aux A PA OrigAll IsT Ps Hs Focus (T x) [x|RevArgs] (R x).
+mutual-induction-param1-term-final-aux A PA OrigAll IsT Ps Hs Focus (sort _) RevArgs (fun `H` IsTArgs Bo) :- !,
+  std.rev RevArgs IndArgs,
+  std.assert! (mk-app-prefix IsT IndArgs IsTArgs) "derive.induction: failed to apply parameterized mutual proof type",
+  @pi-decl `H` IsTArgs h\ sigma Fix Args0 Args1 Args2 Args\
+    std.assert! (mutual-induction-param1-mfix OrigAll Focus Fix) "derive.induction: failed to build parameterized mutual fixpoint",
+    std.append [A,PA] Ps Args0,
+    std.append Args0 Hs Args1,
+    std.append Args1 IndArgs Args2,
+    std.append Args2 [h] Args,
+    std.assert! (coq.mk-app Fix Args (Bo h)) "derive.induction: failed to apply parameterized mutual fixpoint".
+mutual-induction-param1-term-final-aux _ _ _ _ _ _ _ _ _ _ :- stop "derive.induction: mutual indexed data types not supported".
+
+func mutual-induction-param1-term-final term, term, list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, list term, int -> term.
+mutual-induction-param1-term-final A PA OrigAll Specs Ps Hs Focus R :-
+  std.assert! (std.nth Focus Specs SF) "derive.induction: failed to select parameterized mutual final spec",
+  SF = derive.induction.mutual-spec _ _ IsT Arity _ _,
+  mutual-induction-param1-term-final-aux A PA OrigAll IsT Ps Hs Focus Arity [] R.
+
+func mutual-induction-param1-term-hyps term, term, list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, list term, list term, list term, int -> term.
+mutual-induction-param1-term-hyps A PA OrigAll Specs Ps [] [] RevHs Focus R :- !,
+  std.rev RevHs Hs,
+  std.assert! (mutual-induction-param1-term-final A PA OrigAll Specs Ps Hs Focus R) "derive.induction: failed to build parameterized mutual final application".
+mutual-induction-param1-term-hyps A PA OrigAll Specs Ps [Kc|KS] [KT|KTS] RevHs Focus (fun HN HTy R) :-
+  std.assert! (collect-terms Specs IsTs _ _) "derive.induction: failed to collect parameterized mutual terms",
+  std.assert! (hyp-mutual IsTs Ps KT HTy) "derive.induction: failed to build parameterized mutual hypothesis type",
+  std.assert! (coq.term->gref Kc GRK) "derive.induction: failed to identify parameterized mutual constructor",
+  coq.name-suffix `H` {coq.gref->id GRK} HN,
+  @pi-decl HN HTy h\
+    induction-hyp-db Kc h =!=>
+      std.assert! (mutual-induction-param1-term-hyps A PA OrigAll Specs Ps KS KTS [h|RevHs] Focus (R h)) "derive.induction: failed to build rest parameterized mutual hypotheses".
+
+func mutual-induction-param1-term-motives term, term, list derive.induction.mutual-spec, list derive.induction.mutual-spec, list derive.induction.mutual-spec, list term, int -> term.
+mutual-induction-param1-term-motives A PA OrigAll Specs [] RevPs Focus R :- !,
+  std.rev RevPs Ps,
+  std.assert! (collect-terms Specs _ KAll KTAll) "derive.induction: failed to collect parameterized mutual constructors",
+  std.assert! (mutual-induction-param1-term-hyps A PA OrigAll Specs Ps KAll KTAll [] Focus R) "derive.induction: failed to build parameterized mutual hypotheses".
+mutual-induction-param1-term-motives A PA OrigAll Specs [S|SS] RevPs Focus (fun `P` PTy R) :-
+  S = derive.induction.mutual-spec _ _ _ Arity _ _,
+  std.assert! (truncated-predicate-ty Arity PTy) "derive.induction: failed to build parameterized mutual motive type",
+  @pi-decl `P` PTy p\ std.assert! (mutual-induction-param1-term-motives A PA OrigAll Specs SS [p|RevPs] Focus (R p)) "derive.induction: failed to build rest parameterized mutual motives".
+
+func mutual-induction-param1-term list derive.induction.mutual-spec, int -> term.
+mutual-induction-param1-term All Focus (fun A TA (a\ fun P (TP a) (pa\ Rest a pa))) :-
+  std.assert! (std.nth Focus All S) "derive.induction: failed to select parameterized mutual spec",
+  S = derive.induction.mutual-spec _ _ _ (prod A TA (a\ prod P (TP a) _)) _ _, coq.sort? TA, !,
+  @pi-decl A TA a\ @pi-decl P (TP a) pa\ sigma Specs1\
+    std.assert! (mutual-specs-apply-param2 a pa All Specs1) "derive.induction: failed to apply parameterized mutual params",
+    std.assert! (mutual-induction-param1-term-motives a pa All Specs1 Specs1 [] Focus (Rest a pa)) "derive.induction: failed to build parameterized mutual term body".
+
 func add-hyps-body list term, list term, list term, list term, list derive.induction.mutual-spec, list term, int -> term.
 add-hyps-body _ _ [] [] All Ps Focus R :- !,
   mutual-induction-mfix All Ps Focus R.
@@ -309,10 +546,13 @@ mutual-induction-term-motives All [S|SS] RevPs Focus (fun `P` PTy R) :-
 
 func mutual-induction-term int, list derive.induction.mutual-spec, int -> term.
 mutual-induction-term 0 Specs Focus R :- !, mutual-induction-term-base Specs Focus R.
+mutual-induction-term 2 ([S|_] as Specs) Focus R :-
+  mutual-spec-arity S (prod _ TA _), coq.sort? TA, !,
+  std.assert! (mutual-induction-param1-term Specs Focus R) "derive.induction: failed to build parameterized mutual induction term".
 mutual-induction-term N ([S|_] as Specs) Focus (fun A TA R) :- N > 0, !,
   mutual-spec-arity S (prod A TA _),
   M is N - 1,
-  @pi-decl A TA a\
+  @pi-decl A TA a\ sigma Specs1\
     std.map Specs (mutual-spec-apply-param a) Specs1,
     mutual-induction-term M Specs1 Focus (R a).
 
@@ -333,18 +573,19 @@ add-mutual-induction-consts All [S|SS] Selected Prefix Lno Focus [Clause|CS] :- 
   add-mutual-induction-consts All SS Selected Prefix Lno Focus1 CS
 ].
 
+func mutual-lno list inductive, inductive -> int.
+mutual-lno _ FirstGRR Lno :- coq.env.indt FirstGRR _ Lno _ _ _ _, Lno > 0, !.
+mutual-lno [FirstOrig|_] _ Lno :- !, coq.env.indt FirstOrig _ OrigLno _ _ _ _, Lno is 2 * OrigLno.
+mutual-lno _ _ 0 :- !.
+
 func main-mutual inductive, list inductive, string -> list prop.
 main-mutual Selected GRS Prefix Clauses :- std.do! [
   std.map GRS mutual-spec Specs,
   Specs = [First|_],
   mutual-spec-ind First FirstGRR,
-  coq.env.indt FirstGRR _ Lno Luno _ _ _,
-  assert! (Lno = Luno) "derive.induction: Non-uniform parameters not supported",
-  GRS = [FirstOrig|_],
-  coq.env.indt FirstOrig _ OrigLno _ _ _ _,
-  if (Lno = 0, OrigLno > 0)
-     (coq.error "derive.induction: mutual induction generation for parameterized mutual inductives still needs to be implemented" (indt FirstOrig))
-     true,
+  coq.env.indt FirstGRR _ LnoIs Luno _ _ _,
+  assert! (LnoIs = Luno) "derive.induction: Non-uniform parameters not supported",
+  mutual-lno GRS FirstGRR Lno,
   if (coq.env.informative? FirstGRR) (Informative = [informative]) (Informative = []),
   Informative =!=> add-mutual-induction-consts Specs Specs Selected Prefix Lno 0 Clauses
 ].
