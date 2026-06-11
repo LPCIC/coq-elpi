@@ -25,11 +25,22 @@ Elpi Accumulate File tag.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate lp:{{
 
+  func derive.tag.standalone-prefix inductive, string, inductive -> string.
+  derive.tag.standalone-prefix First Prefix T Prefix :- First = T, !.
+  derive.tag.standalone-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+  func derive.tag.standalone-main inductive, string -> list prop.
+  derive.tag.standalone-main T Prefix C :-
+    coq.env.mutual-inductives T TS, std.length TS N, N > 1, !,
+    std.map TS (t\c\ sigma p\ derive.tag.standalone-prefix T Prefix t p, derive.tag.main t p c) CS,
+    std.flatten CS C.
+  derive.tag.standalone-main T Prefix C :- derive.tag.main T Prefix C.
+
   main [str I] :- !, 
     coq.locate I (indt GR),
     coq.gref->id (indt GR) Tname,
     Prefix is Tname ^ "_",
-    derive.tag.main GR Prefix _.
+    derive.tag.standalone-main GR Prefix _.
 
   main _ :- usage.
    

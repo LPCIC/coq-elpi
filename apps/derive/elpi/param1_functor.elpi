@@ -307,7 +307,9 @@ mutual-functor-param1-rty ItyArgs _ Vs _ R :-
     coq.mk-app HD {std.append [A,PB] Idxs} (Target PB).
 
 func mutual-functor-param1-map-rec list derive.param1.functor.mutual-spec, list term, term, term, term, term, term, term, term -> term.
-mutual-functor-param1-map-rec [derive.param1.functor.mutual-spec _ Ity _ _ _|_] [Rec|_] A PA PB F (app [Ity,A,PA|Idxs]) (app [Ity,A,PB|Idxs]) PX M :- !,
+mutual-functor-param1-map-rec [derive.param1.functor.mutual-spec _ Ity _ _ _|_] [Rec|_] A PA PB F Src Tgt PX M :-
+  coq.safe-dest-app Src Ity [A,PA|Idxs],
+  coq.safe-dest-app Tgt Ity [A,PB|Idxs], !,
   sigma RecIdx\
     coq.mk-app Rec {std.append [A,PA] Idxs} RecIdx,
     coq.mk-app RecIdx [PX,PB,F] M.
@@ -324,13 +326,14 @@ mutual-functor-param1-map-arg _ _ _ _ _ _ Src Tgt PX M :-
   coq.mk-app Map [PX] M.
 
 func mutual-functor-param1-k-args-aux list derive.param1.functor.mutual-spec, list term, term, term, term, term, term, list term, list term, term -> term.
-mutual-functor-param1-k-args-aux All Funs A PA PB F K [X,PX|Args] [_,TPA|Types] {{ forall x (px : lp:(TPB x)), lp:(Ty x px) }} R :-
-  not(same_term TPA (TPB X)), mutual-functor-param1-map-arg All Funs A PA PB F TPA (TPB X) PX MPX, !,
-  coq.mk-app K [X,MPX] KX,
-  mutual-functor-param1-k-args-aux All Funs A PA PB F KX Args Types (Ty X KX) R.
-mutual-functor-param1-k-args-aux All Funs A PA PB F K [X,PX|Args] [_,_|Types] {{ forall x px, lp:(Ty x px) }} R :- !,
-  coq.mk-app K [X,PX] KX,
-  mutual-functor-param1-k-args-aux All Funs A PA PB F KX Args Types (Ty X KX) R.
+mutual-functor-param1-k-args-aux All Funs A PA PB F K [X,PX|Args] [_,TPA|Types] (prod _ _ (x\ prod _ (TPB x) (px\ Ty x px))) R :-
+  not(same_term TPA (TPB X)),
+  mutual-functor-param1-map-arg All Funs A PA PB F TPA (TPB X) PX MPX, !,
+  coq.mk-app K [X,MPX] KXPX,
+  mutual-functor-param1-k-args-aux All Funs A PA PB F KXPX Args Types (Ty X MPX) R.
+mutual-functor-param1-k-args-aux All Funs A PA PB F K [X,PX|Args] [_,_|Types] (prod _ _ (x\ prod _ _ (px\ Ty x px))) R :- !,
+  coq.mk-app K [X,PX] KXPX,
+  mutual-functor-param1-k-args-aux All Funs A PA PB F KXPX Args Types (Ty X PX) R.
 mutual-functor-param1-k-args-aux _ _ _ _ _ _ R [] [] _ R.
 
 func mutual-functor-param1-k-args list derive.param1.functor.mutual-spec, list term, term, term, list term, list term -> term.

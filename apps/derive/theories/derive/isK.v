@@ -28,11 +28,22 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File isK.
 Elpi Accumulate lp:{{
-  main [str I,str O] :- !, coq.locate I (indt GR), derive.isK.main GR O _.
+  func derive.isK.standalone-prefix inductive, string, inductive -> string.
+  derive.isK.standalone-prefix First Prefix T Prefix :- First = T, !.
+  derive.isK.standalone-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_is_".
+
+  func derive.isK.standalone-main inductive, string -> list prop.
+  derive.isK.standalone-main T Prefix C :-
+    coq.env.mutual-inductives T TS, std.length TS N, N > 1, !,
+    std.map TS (t\c\ sigma p\ derive.isK.standalone-prefix T Prefix t p, derive.isK.main t p c) CS,
+    std.flatten CS C.
+  derive.isK.standalone-main T Prefix C :- derive.isK.main T Prefix C.
+
+  main [str I,str O] :- !, coq.locate I (indt GR), derive.isK.standalone-main GR O _.
   main [str I] :- !,
     coq.locate I (indt GR),
     Prefix is {coq.gref->id (indt GR)} ^ "_is_",
-    derive.isK.main GR Prefix _.
+    derive.isK.standalone-main GR Prefix _.
   main _ :- usage.
 
   usage :-

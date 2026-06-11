@@ -202,11 +202,25 @@ mutual-spec-apply-param A B (derive.map.mutual-spec GR Ity1 Ity2 (prod _ _ F1) (
   coq.mk-app Ity2 [B] Ity2B.
 mutual-spec-apply-param _ _ _ _ :- stop "derive.map: mutual parameter mismatch".
 
-func mutual-map-ty int, int, derive.map.mutual-spec -> term.
-mutual-map-ty N Lno S Ty :- N = Lno, !,
-  S = derive.map.mutual-spec _ Ity1 Ity2 _ _,
-  Ty = prod `_` Ity1 (_\ Ity2).
-mutual-map-ty N Lno S Ty :- N < Lno,
+func mutual-map-indexed-ty-aux term, term, term, int -> term, int.
+mutual-map-indexed-ty-aux Ity1 Ity2 (prod N S T) K (prod N S R) Recno :- !,
+  K1 is K + 1,
+  @pi-decl N S x\ sigma Ity1x Ity2x\
+    coq.mk-app Ity1 [x] Ity1x,
+    coq.mk-app Ity2 [x] Ity2x,
+    mutual-map-indexed-ty-aux Ity1x Ity2x (T x) K1 (R x) Recno.
+mutual-map-indexed-ty-aux Ity1 Ity2 (sort _) K (prod `_` Ity1 (_\ Ity2)) K :- !.
+mutual-map-indexed-ty-aux Ity1 Ity2 X K Ty Recno :- whd1 X X1, !,
+  mutual-map-indexed-ty-aux Ity1 Ity2 X1 K Ty Recno.
+
+func mutual-map-indexed-ty derive.map.mutual-spec -> term, int.
+mutual-map-indexed-ty (derive.map.mutual-spec _ Ity1 Ity2 Arity _) Ty Recno :-
+  mutual-map-indexed-ty-aux Ity1 Ity2 Arity 0 Ty Recno.
+
+func mutual-map-ty int, int, derive.map.mutual-spec -> term, int.
+mutual-map-ty N Lno S Ty Recno :- N = Lno, !,
+  mutual-map-indexed-ty S Ty Recno.
+mutual-map-ty N Lno S Ty Recno :- N < Lno,
   S = derive.map.mutual-spec _ _Ity1 _Ity2 (prod A Sty1 _Rty1) (prod _ Sty2 _Rty2), !,
   coq.name-suffix A 1 A1,
   coq.name-suffix A 2 A2,
@@ -215,8 +229,16 @@ mutual-map-ty N Lno S Ty :- N < Lno,
   Ty = prod A1 Sty1 (a\ prod A2 Sty2 (b\ prod Af {{ lp:a -> lp:b }} (f\ Rest a b f))),
   pi a b f\ sigma S1\
     mutual-spec-apply-param a b S S1,
-    mutual-map-ty N1 Lno S1 (Rest a b f).
-mutual-map-ty _ _ _ _ :- stop "derive.map: mutual indexed data types not supported".
+    mutual-map-ty N1 Lno S1 (Rest a b f) Recno.
+mutual-map-ty _ _ _ _ _ :- stop "derive.map: mutual parameter mismatch".
+
+func mutual-map-identity term, term -> term.
+mutual-map-identity Ity (prod N S T) (fun N S R) :- !,
+  @pi-decl N S x\ sigma Ityx\
+    coq.mk-app Ity [x] Ityx,
+    mutual-map-identity Ityx (T x) (R x).
+mutual-map-identity Ity (sort _) (fun `x` Ity (x\ x)) :- !.
+mutual-map-identity Ity X R :- whd1 X X1, !, mutual-map-identity Ity X1 R.
 
 func mutual-prefix inductive, string, inductive -> string.
 mutual-prefix First Prefix T Prefix :- First = T, !.
@@ -236,15 +258,17 @@ mutual-map-mfix-aux All [] Ps RevF (mfix-bo Bodies) :- !,
   std.rev RevF Funs,
   std.map2 All Funs mutual-map-clause Clauses,
   Clauses =!=> std.map All (mutual-map-body Ps) Bodies.
-mutual-map-mfix-aux All [S|SS] Ps RevF (mfix-ty N 0 Ty Rest) :-
+mutual-map-mfix-aux All [S|SS] Ps RevF (mfix-ty N Recno Ty Rest) :-
   S = derive.map.mutual-spec GR _ _ _ _,
   ID is {coq.gref->id (indt GR)} ^ "_map_rec",
   coq.id->name ID N,
-  mutual-map-ty 0 0 S Ty,
+  mutual-map-ty 0 0 S Ty Recno,
   @pi-decl N Ty f\ mutual-map-mfix-aux All SS Ps [f|RevF] (Rest f).
 
 func mutual-map-mfix list derive.map.mutual-spec, list term, int -> term.
-mutual-map-mfix Specs Ps Focus (mfix Focus 0 Block) :-
+mutual-map-mfix Specs Ps Focus (mfix Focus Recno Block) :-
+  std.nth Focus Specs S,
+  mutual-map-ty 0 0 S _ Recno,
   mutual-map-mfix-aux Specs Specs Ps [] Block.
 
 func body-mutual-params int, int, list derive.map.mutual-spec, int, list term -> term.
@@ -286,7 +310,7 @@ func add-mutual-map-consts inductive, list derive.map.mutual-spec, list derive.m
 add-mutual-map-consts _ _ [] _ _ _ [] :- !.
 add-mutual-map-consts Selected All [S|SS] Prefix 0 Focus [map-done GR,Clause|CS] :- !, std.do! [
   S = derive.map.mutual-spec GR T T Arity _,
-  R = fun `x` T (x\ x),
+  mutual-map-identity T Arity R,
   std.assert-ok! (coq.typecheck R Ty) "derive.map generates illtyped mutual identity term",
   mutual-prefix Selected Prefix GR P,
   Name is P ^ "map",

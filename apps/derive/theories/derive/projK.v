@@ -29,8 +29,19 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File projK.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.projK.main GR O _.
-  main [str I] :- !, coq.locate I (indt GR), derive.projK.main GR "proj" _.
+  func derive.projK.standalone-prefix inductive, string, inductive -> string.
+  derive.projK.standalone-prefix First Prefix T Prefix :- First = T, !.
+  derive.projK.standalone-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_getk_".
+
+  func derive.projK.standalone-main inductive, string -> list prop.
+  derive.projK.standalone-main T Prefix C :-
+    coq.env.mutual-inductives T TS, std.length TS N, N > 1, !,
+    std.map TS (t\c\ sigma p\ derive.projK.standalone-prefix T Prefix t p, derive.projK.main t p c) CS,
+    std.flatten CS C.
+  derive.projK.standalone-main T Prefix C :- derive.projK.main T Prefix C.
+
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.projK.standalone-main GR O _.
+  main [str I] :- !, coq.locate I (indt GR), derive.projK.standalone-main GR "proj" _.
   main _ :- usage.
 
   usage :-
