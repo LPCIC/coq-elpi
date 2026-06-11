@@ -4003,15 +4003,15 @@ Module ParametrizedMutualParam1TrivialUnsupported.
   Fail #[only(param1_trivial)] derive ptree.
 End ParametrizedMutualParam1TrivialUnsupported.
 
-Module ParametrizedMutualParam1FunctorUnsupported.
+Module ParametrizedMutualParam1Functor <: ParametrizedMutualParam1FunctorExpected.
   Inductive ptree (A : Type) : Type :=
   | pnode (x : A) (f : pforest A)
   with pforest (A : Type) : Type :=
   | pempty
   | pcons (t : ptree A) (f : pforest A).
 
-  Fail #[only(param1_functor)] derive ptree.
-End ParametrizedMutualParam1FunctorUnsupported.
+  #[only(param1_functor)] derive ptree.
+End ParametrizedMutualParam1Functor.
 
 Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
   Inductive ptree (A : Type) : Type :=
