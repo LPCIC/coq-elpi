@@ -4320,12 +4320,503 @@ End TripleMutualEqbOKFromBeta.
 
 Module Type ParametrizedTripleMutualEqbOKExpected.
   Include ParametrizedTripleMutualBase.
-  Parameter palpha_eqb : forall A : Type,
-       (A -> A -> bool) -> palpha A -> palpha A -> bool.
-  Parameter pbeta_eqb : forall A : Type,
-       (A -> A -> bool) -> pbeta A -> pbeta A -> bool.
-  Parameter pgamma_eqb : forall A : Type,
-       (A -> A -> bool) -> pgamma A -> pgamma A -> bool.
+  Definition palpha_tag : forall A : Type, palpha A -> positive :=
+  fun (A : Type) (i : palpha A) =>
+  match i with
+  | palpha0 _ => xH
+  | palpha1 _ _ _ => xO xH
+  end.
+  Definition pbeta_tag : forall A : Type, pbeta A -> positive :=
+  fun (A : Type) (i : pbeta A) =>
+  match i with
+  | pbeta0 _ => xH
+  | pbeta1 _ _ => xO xH
+  end.
+  Definition pgamma_tag : forall A : Type, pgamma A -> positive :=
+  fun (A : Type) (i : pgamma A) =>
+  match i with
+  | pgamma0 _ => xH
+  | pgamma1 _ _ _ => xO xH
+  end.
+  Record box_palpha_palpha0 (A : Type) : Type := Box_palpha_palpha0 {}.
+  Record box_palpha_palpha1 (A : Type) : Type := Box_palpha_palpha1 {
+    Box_palpha_palpha1_0 : A;
+    Box_palpha_palpha1_1 : pbeta A;
+  }.
+  Record box_pbeta_pbeta0 (A : Type) : Type := Box_pbeta_pbeta0 {}.
+  Record box_pbeta_pbeta1 (A : Type) : Type := Box_pbeta_pbeta1 {
+    Box_pbeta_pbeta1_0 : pgamma A;
+  }.
+  Record box_pgamma_pgamma0 (A : Type) : Type := Box_pgamma_pgamma0 {}.
+  Record box_pgamma_pgamma1 (A : Type) : Type := Box_pgamma_pgamma1 {
+    Box_pgamma_pgamma1_0 : palpha A;
+    Box_pgamma_pgamma1_1 : pbeta A;
+  }.
+  Definition palpha_fields_t : Type -> positive -> Type :=
+  fun (A : Type) (i : positive) =>
+  match i with
+  | xI _ => unit
+  | xO _ => box_palpha_palpha1 A
+  | xH => box_palpha_palpha0 A
+  end.
+  Definition pbeta_fields_t : Type -> positive -> Type :=
+  fun (A : Type) (i : positive) =>
+  match i with
+  | xI _ => unit
+  | xO _ => box_pbeta_pbeta1 A
+  | xH => box_pbeta_pbeta0 A
+  end.
+  Definition pgamma_fields_t : Type -> positive -> Type :=
+  fun (A : Type) (i : positive) =>
+  match i with
+  | xI _ => unit
+  | xO _ => box_pgamma_pgamma1 A
+  | xH => box_pgamma_pgamma0 A
+  end.
+  Definition palpha_fields :
+       forall (A : Type) (i : palpha A), palpha_fields_t A (palpha_tag A i) :=
+  fun (A : Type) (i : palpha A) =>
+  match i with
+  | palpha0 _ => Box_palpha_palpha0 A
+  | palpha1 _ x b => {| Box_palpha_palpha1_0 := x; Box_palpha_palpha1_1 := b |}
+  end.
+  Definition pbeta_fields :
+       forall (A : Type) (i : pbeta A), pbeta_fields_t A (pbeta_tag A i) :=
+  fun (A : Type) (i : pbeta A) =>
+  match i with
+  | pbeta0 _ => Box_pbeta_pbeta0 A
+  | pbeta1 _ g => {| Box_pbeta_pbeta1_0 := g |}
+  end.
+  Definition pgamma_fields :
+       forall (A : Type) (i : pgamma A), pgamma_fields_t A (pgamma_tag A i) :=
+  fun (A : Type) (i : pgamma A) =>
+  match i with
+  | pgamma0 _ => Box_pgamma_pgamma0 A
+  | pgamma1 _ a b => {| Box_pgamma_pgamma1_0 := a; Box_pgamma_pgamma1_1 := b |}
+  end.
+  Definition palpha_eqb : forall A : Type,
+       (A -> A -> bool) -> palpha A -> palpha A -> bool :=
+  fun (a : Type) (eqA : a -> a -> bool) =>
+  fix palpha (x1 x2 : palpha a) {struct x1} : bool :=
+    match x1 with
+    | palpha0 _ =>
+        eqb_body (tagB:=palpha_tag a)
+          (fields_tA:=palpha_fields_t a) (fields_tB:=palpha_fields_t a)
+          (palpha_fields a)
+          (fun x : positive =>
+           match x as i return palpha_fields_t a i -> palpha_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_palpha_palpha1 a =>
+               match a0 with
+               | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_0;
+                    Box_palpha_palpha1_1 := Box_palpha_palpha1_1 |} =>
+                   match b with
+                   | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_2;
+                        Box_palpha_palpha1_1 := Box_palpha_palpha1_3 |} =>
+                       [&& eqA Box_palpha_palpha1_0 Box_palpha_palpha1_2,
+                           pbeta Box_palpha_palpha1_1 Box_palpha_palpha1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_palpha_palpha0 a => xpredT
+           end)
+          (t1:=palpha_tag a (palpha0 a)) (Box_palpha_palpha0 a) x2
+    | palpha1 _ x b =>
+        eqb_body (tagB:=palpha_tag a)
+          (fields_tA:=palpha_fields_t a) (fields_tB:=palpha_fields_t a)
+          (palpha_fields a)
+          (fun x0 : positive =>
+           match x0 as i return palpha_fields_t a i -> palpha_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b0 : box_palpha_palpha1 a =>
+               match a0 with
+               | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_0;
+                    Box_palpha_palpha1_1 := Box_palpha_palpha1_1 |} =>
+                   match b0 with
+                   | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_2;
+                        Box_palpha_palpha1_1 := Box_palpha_palpha1_3 |} =>
+                       [&& eqA Box_palpha_palpha1_0 Box_palpha_palpha1_2,
+                           pbeta Box_palpha_palpha1_1 Box_palpha_palpha1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_palpha_palpha0 a => xpredT
+           end)
+          (t1:=palpha_tag a (palpha1 a x b))
+          {| Box_palpha_palpha1_0 := x; Box_palpha_palpha1_1 := b |} x2
+    end
+  with pbeta (x1 x2 : pbeta a) {struct x1} : bool :=
+    match x1 with
+    | pbeta0 _ =>
+        eqb_body (tagB:=pbeta_tag a)
+          (fields_tA:=pbeta_fields_t a) (fields_tB:=pbeta_fields_t a)
+          (pbeta_fields a)
+          (fun x : positive =>
+           match x as i return pbeta_fields_t a i -> pbeta_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pbeta_pbeta1 a =>
+               match a0 with
+               | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_0 |} =>
+                   match b with
+                   | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_1 |} =>
+                       pgamma Box_pbeta_pbeta1_0 Box_pbeta_pbeta1_1 && true
+                   end
+               end
+           | xH => fun _ : box_pbeta_pbeta0 a => xpredT
+           end)
+          (t1:=pbeta_tag a (pbeta0 a)) (Box_pbeta_pbeta0 a) x2
+    | pbeta1 _ g =>
+        eqb_body (tagB:=pbeta_tag a)
+          (fields_tA:=pbeta_fields_t a) (fields_tB:=pbeta_fields_t a)
+          (pbeta_fields a)
+          (fun x : positive =>
+           match x as i return pbeta_fields_t a i -> pbeta_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pbeta_pbeta1 a =>
+               match a0 with
+               | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_0 |} =>
+                   match b with
+                   | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_1 |} =>
+                       pgamma Box_pbeta_pbeta1_0 Box_pbeta_pbeta1_1 && true
+                   end
+               end
+           | xH => fun _ : box_pbeta_pbeta0 a => xpredT
+           end)
+          (t1:=pbeta_tag a (pbeta1 a g)) {| Box_pbeta_pbeta1_0 := g |} x2
+    end
+  with pgamma (x1 x2 : pgamma a) {struct x1} : bool :=
+    match x1 with
+    | pgamma0 _ =>
+        eqb_body (tagB:=pgamma_tag a)
+          (fields_tA:=pgamma_fields_t a) (fields_tB:=pgamma_fields_t a)
+          (pgamma_fields a)
+          (fun x : positive =>
+           match x as i return pgamma_fields_t a i -> pgamma_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pgamma_pgamma1 a =>
+               match a0 with
+               | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_0;
+                    Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_1 |} =>
+                   match b with
+                   | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_2;
+                        Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_3 |} =>
+                       [&& palpha Box_pgamma_pgamma1_0 Box_pgamma_pgamma1_2,
+                           pbeta Box_pgamma_pgamma1_1 Box_pgamma_pgamma1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_pgamma_pgamma0 a => xpredT
+           end)
+          (t1:=pgamma_tag a (pgamma0 a)) (Box_pgamma_pgamma0 a) x2
+    | pgamma1 _ a0 b =>
+        eqb_body (tagB:=pgamma_tag a)
+          (fields_tA:=pgamma_fields_t a) (fields_tB:=pgamma_fields_t a)
+          (pgamma_fields a)
+          (fun x : positive =>
+           match x as i return pgamma_fields_t a i -> pgamma_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a1 b0 : box_pgamma_pgamma1 a =>
+               match a1 with
+               | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_0;
+                    Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_1 |} =>
+                   match b0 with
+                   | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_2;
+                        Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_3 |} =>
+                       [&& palpha Box_pgamma_pgamma1_0 Box_pgamma_pgamma1_2,
+                           pbeta Box_pgamma_pgamma1_1 Box_pgamma_pgamma1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_pgamma_pgamma0 a => xpredT
+           end)
+          (t1:=pgamma_tag a (pgamma1 a a0 b))
+          {| Box_pgamma_pgamma1_0 := a0; Box_pgamma_pgamma1_1 := b |} x2
+    end
+  for palpha.
+  Definition pbeta_eqb : forall A : Type,
+       (A -> A -> bool) -> pbeta A -> pbeta A -> bool :=
+  fun (a : Type) (eqA : a -> a -> bool) =>
+  fix palpha (x1 x2 : palpha a) {struct x1} : bool :=
+    match x1 with
+    | palpha0 _ =>
+        eqb_body (tagB:=palpha_tag a)
+          (fields_tA:=palpha_fields_t a) (fields_tB:=palpha_fields_t a)
+          (palpha_fields a)
+          (fun x : positive =>
+           match x as i return palpha_fields_t a i -> palpha_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_palpha_palpha1 a =>
+               match a0 with
+               | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_0;
+                    Box_palpha_palpha1_1 := Box_palpha_palpha1_1 |} =>
+                   match b with
+                   | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_2;
+                        Box_palpha_palpha1_1 := Box_palpha_palpha1_3 |} =>
+                       [&& eqA Box_palpha_palpha1_0 Box_palpha_palpha1_2,
+                           pbeta Box_palpha_palpha1_1 Box_palpha_palpha1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_palpha_palpha0 a => xpredT
+           end)
+          (t1:=palpha_tag a (palpha0 a)) (Box_palpha_palpha0 a) x2
+    | palpha1 _ x b =>
+        eqb_body (tagB:=palpha_tag a)
+          (fields_tA:=palpha_fields_t a) (fields_tB:=palpha_fields_t a)
+          (palpha_fields a)
+          (fun x0 : positive =>
+           match x0 as i return palpha_fields_t a i -> palpha_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b0 : box_palpha_palpha1 a =>
+               match a0 with
+               | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_0;
+                    Box_palpha_palpha1_1 := Box_palpha_palpha1_1 |} =>
+                   match b0 with
+                   | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_2;
+                        Box_palpha_palpha1_1 := Box_palpha_palpha1_3 |} =>
+                       [&& eqA Box_palpha_palpha1_0 Box_palpha_palpha1_2,
+                           pbeta Box_palpha_palpha1_1 Box_palpha_palpha1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_palpha_palpha0 a => xpredT
+           end)
+          (t1:=palpha_tag a (palpha1 a x b))
+          {| Box_palpha_palpha1_0 := x; Box_palpha_palpha1_1 := b |} x2
+    end
+  with pbeta (x1 x2 : pbeta a) {struct x1} : bool :=
+    match x1 with
+    | pbeta0 _ =>
+        eqb_body (tagB:=pbeta_tag a)
+          (fields_tA:=pbeta_fields_t a) (fields_tB:=pbeta_fields_t a)
+          (pbeta_fields a)
+          (fun x : positive =>
+           match x as i return pbeta_fields_t a i -> pbeta_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pbeta_pbeta1 a =>
+               match a0 with
+               | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_0 |} =>
+                   match b with
+                   | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_1 |} =>
+                       pgamma Box_pbeta_pbeta1_0 Box_pbeta_pbeta1_1 && true
+                   end
+               end
+           | xH => fun _ : box_pbeta_pbeta0 a => xpredT
+           end)
+          (t1:=pbeta_tag a (pbeta0 a)) (Box_pbeta_pbeta0 a) x2
+    | pbeta1 _ g =>
+        eqb_body (tagB:=pbeta_tag a)
+          (fields_tA:=pbeta_fields_t a) (fields_tB:=pbeta_fields_t a)
+          (pbeta_fields a)
+          (fun x : positive =>
+           match x as i return pbeta_fields_t a i -> pbeta_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pbeta_pbeta1 a =>
+               match a0 with
+               | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_0 |} =>
+                   match b with
+                   | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_1 |} =>
+                       pgamma Box_pbeta_pbeta1_0 Box_pbeta_pbeta1_1 && true
+                   end
+               end
+           | xH => fun _ : box_pbeta_pbeta0 a => xpredT
+           end)
+          (t1:=pbeta_tag a (pbeta1 a g)) {| Box_pbeta_pbeta1_0 := g |} x2
+    end
+  with pgamma (x1 x2 : pgamma a) {struct x1} : bool :=
+    match x1 with
+    | pgamma0 _ =>
+        eqb_body (tagB:=pgamma_tag a)
+          (fields_tA:=pgamma_fields_t a) (fields_tB:=pgamma_fields_t a)
+          (pgamma_fields a)
+          (fun x : positive =>
+           match x as i return pgamma_fields_t a i -> pgamma_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pgamma_pgamma1 a =>
+               match a0 with
+               | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_0;
+                    Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_1 |} =>
+                   match b with
+                   | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_2;
+                        Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_3 |} =>
+                       [&& palpha Box_pgamma_pgamma1_0 Box_pgamma_pgamma1_2,
+                           pbeta Box_pgamma_pgamma1_1 Box_pgamma_pgamma1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_pgamma_pgamma0 a => xpredT
+           end)
+          (t1:=pgamma_tag a (pgamma0 a)) (Box_pgamma_pgamma0 a) x2
+    | pgamma1 _ a0 b =>
+        eqb_body (tagB:=pgamma_tag a)
+          (fields_tA:=pgamma_fields_t a) (fields_tB:=pgamma_fields_t a)
+          (pgamma_fields a)
+          (fun x : positive =>
+           match x as i return pgamma_fields_t a i -> pgamma_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a1 b0 : box_pgamma_pgamma1 a =>
+               match a1 with
+               | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_0;
+                    Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_1 |} =>
+                   match b0 with
+                   | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_2;
+                        Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_3 |} =>
+                       [&& palpha Box_pgamma_pgamma1_0 Box_pgamma_pgamma1_2,
+                           pbeta Box_pgamma_pgamma1_1 Box_pgamma_pgamma1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_pgamma_pgamma0 a => xpredT
+           end)
+          (t1:=pgamma_tag a (pgamma1 a a0 b))
+          {| Box_pgamma_pgamma1_0 := a0; Box_pgamma_pgamma1_1 := b |} x2
+    end
+  for pbeta.
+  Definition pgamma_eqb : forall A : Type,
+       (A -> A -> bool) -> pgamma A -> pgamma A -> bool :=
+  fun (a : Type) (eqA : a -> a -> bool) =>
+  fix palpha (x1 x2 : palpha a) {struct x1} : bool :=
+    match x1 with
+    | palpha0 _ =>
+        eqb_body (tagB:=palpha_tag a)
+          (fields_tA:=palpha_fields_t a) (fields_tB:=palpha_fields_t a)
+          (palpha_fields a)
+          (fun x : positive =>
+           match x as i return palpha_fields_t a i -> palpha_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_palpha_palpha1 a =>
+               match a0 with
+               | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_0;
+                    Box_palpha_palpha1_1 := Box_palpha_palpha1_1 |} =>
+                   match b with
+                   | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_2;
+                        Box_palpha_palpha1_1 := Box_palpha_palpha1_3 |} =>
+                       [&& eqA Box_palpha_palpha1_0 Box_palpha_palpha1_2,
+                           pbeta Box_palpha_palpha1_1 Box_palpha_palpha1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_palpha_palpha0 a => xpredT
+           end)
+          (t1:=palpha_tag a (palpha0 a)) (Box_palpha_palpha0 a) x2
+    | palpha1 _ x b =>
+        eqb_body (tagB:=palpha_tag a)
+          (fields_tA:=palpha_fields_t a) (fields_tB:=palpha_fields_t a)
+          (palpha_fields a)
+          (fun x0 : positive =>
+           match x0 as i return palpha_fields_t a i -> palpha_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b0 : box_palpha_palpha1 a =>
+               match a0 with
+               | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_0;
+                    Box_palpha_palpha1_1 := Box_palpha_palpha1_1 |} =>
+                   match b0 with
+                   | {| Box_palpha_palpha1_0 := Box_palpha_palpha1_2;
+                        Box_palpha_palpha1_1 := Box_palpha_palpha1_3 |} =>
+                       [&& eqA Box_palpha_palpha1_0 Box_palpha_palpha1_2,
+                           pbeta Box_palpha_palpha1_1 Box_palpha_palpha1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_palpha_palpha0 a => xpredT
+           end)
+          (t1:=palpha_tag a (palpha1 a x b))
+          {| Box_palpha_palpha1_0 := x; Box_palpha_palpha1_1 := b |} x2
+    end
+  with pbeta (x1 x2 : pbeta a) {struct x1} : bool :=
+    match x1 with
+    | pbeta0 _ =>
+        eqb_body (tagB:=pbeta_tag a)
+          (fields_tA:=pbeta_fields_t a) (fields_tB:=pbeta_fields_t a)
+          (pbeta_fields a)
+          (fun x : positive =>
+           match x as i return pbeta_fields_t a i -> pbeta_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pbeta_pbeta1 a =>
+               match a0 with
+               | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_0 |} =>
+                   match b with
+                   | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_1 |} =>
+                       pgamma Box_pbeta_pbeta1_0 Box_pbeta_pbeta1_1 && true
+                   end
+               end
+           | xH => fun _ : box_pbeta_pbeta0 a => xpredT
+           end)
+          (t1:=pbeta_tag a (pbeta0 a)) (Box_pbeta_pbeta0 a) x2
+    | pbeta1 _ g =>
+        eqb_body (tagB:=pbeta_tag a)
+          (fields_tA:=pbeta_fields_t a) (fields_tB:=pbeta_fields_t a)
+          (pbeta_fields a)
+          (fun x : positive =>
+           match x as i return pbeta_fields_t a i -> pbeta_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pbeta_pbeta1 a =>
+               match a0 with
+               | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_0 |} =>
+                   match b with
+                   | {| Box_pbeta_pbeta1_0 := Box_pbeta_pbeta1_1 |} =>
+                       pgamma Box_pbeta_pbeta1_0 Box_pbeta_pbeta1_1 && true
+                   end
+               end
+           | xH => fun _ : box_pbeta_pbeta0 a => xpredT
+           end)
+          (t1:=pbeta_tag a (pbeta1 a g)) {| Box_pbeta_pbeta1_0 := g |} x2
+    end
+  with pgamma (x1 x2 : pgamma a) {struct x1} : bool :=
+    match x1 with
+    | pgamma0 _ =>
+        eqb_body (tagB:=pgamma_tag a)
+          (fields_tA:=pgamma_fields_t a) (fields_tB:=pgamma_fields_t a)
+          (pgamma_fields a)
+          (fun x : positive =>
+           match x as i return pgamma_fields_t a i -> pgamma_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a0 b : box_pgamma_pgamma1 a =>
+               match a0 with
+               | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_0;
+                    Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_1 |} =>
+                   match b with
+                   | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_2;
+                        Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_3 |} =>
+                       [&& palpha Box_pgamma_pgamma1_0 Box_pgamma_pgamma1_2,
+                           pbeta Box_pgamma_pgamma1_1 Box_pgamma_pgamma1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_pgamma_pgamma0 a => xpredT
+           end)
+          (t1:=pgamma_tag a (pgamma0 a)) (Box_pgamma_pgamma0 a) x2
+    | pgamma1 _ a0 b =>
+        eqb_body (tagB:=pgamma_tag a)
+          (fields_tA:=pgamma_fields_t a) (fields_tB:=pgamma_fields_t a)
+          (pgamma_fields a)
+          (fun x : positive =>
+           match x as i return pgamma_fields_t a i -> pgamma_fields_t a i -> bool with
+           | xI _ => fun _ : unit => xpredT
+           | xO _ =>
+               fun a1 b0 : box_pgamma_pgamma1 a =>
+               match a1 with
+               | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_0;
+                    Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_1 |} =>
+                   match b0 with
+                   | {| Box_pgamma_pgamma1_0 := Box_pgamma_pgamma1_2;
+                        Box_pgamma_pgamma1_1 := Box_pgamma_pgamma1_3 |} =>
+                       [&& palpha Box_pgamma_pgamma1_0 Box_pgamma_pgamma1_2,
+                           pbeta Box_pgamma_pgamma1_1 Box_pgamma_pgamma1_3 & true]
+                   end
+               end
+           | xH => fun _ : box_pgamma_pgamma0 a => xpredT
+           end)
+          (t1:=pgamma_tag a (pgamma1 a a0 b))
+          {| Box_pgamma_pgamma1_0 := a0; Box_pgamma_pgamma1_1 := b |} x2
+    end
+  for pgamma.
   Parameter palpha_eqb_correct : forall (A : Type) (eqA : A -> A -> bool),
        eqb_core_defs.eqb_correct eqA ->
        forall x : palpha A, eqb_core_defs.eqb_correct_on (palpha_eqb A eqA) x.
