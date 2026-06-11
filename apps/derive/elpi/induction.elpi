@@ -340,6 +340,11 @@ main-mutual Selected GRS Prefix Clauses :- std.do! [
   mutual-spec-ind First FirstGRR,
   coq.env.indt FirstGRR _ Lno Luno _ _ _,
   assert! (Lno = Luno) "derive.induction: Non-uniform parameters not supported",
+  GRS = [FirstOrig|_],
+  coq.env.indt FirstOrig _ OrigLno _ _ _ _,
+  if (Lno = 0, OrigLno > 0)
+     (coq.error "derive.induction: mutual induction generation for parameterized mutual inductives still needs to be implemented" (indt FirstOrig))
+     true,
   if (coq.env.informative? FirstGRR) (Informative = [informative]) (Informative = []),
   Informative =!=> add-mutual-induction-consts Specs Specs Selected Prefix Lno 0 Clauses
 ].

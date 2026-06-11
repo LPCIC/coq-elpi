@@ -250,53 +250,190 @@ mutual-functor-rec-clauses [derive.param1.functor.mutual-spec _ Ity1 Ity2 Arity1
   mutual-functor-rec-clauses SS FS Rest,
   std.append [C,D] Rest Clauses.
 
-func mutual-functor-body derive.param1.functor.mutual-spec -> term.
-mutual-functor-body (derive.param1.functor.mutual-spec _ Ity1 Ity2 Arity1 _ ) Body :-
-  bo-idx Arity1 Ity1 Ity2 0 _ [] Body _.
+func mutual-functor-body list term, derive.param1.functor.mutual-spec -> term.
+mutual-functor-body Ps (derive.param1.functor.mutual-spec _ Ity1 Ity2 Arity1 _ ) Body :-
+  std.assert! (bo-idx Arity1 Ity1 Ity2 0 _ Ps Body _) "derive.param1_functor: failed to build one mutual fix body".
 
-func mutual-functor-mfix-aux list derive.param1.functor.mutual-spec, list derive.param1.functor.mutual-spec, list term -> mfix-block.
-mutual-functor-mfix-aux All [] RevF (mfix-bo Bodies) :- !,
+func mutual-functor-mfix-aux list term, list derive.param1.functor.mutual-spec, list derive.param1.functor.mutual-spec, list term -> mfix-block.
+mutual-functor-mfix-aux Ps All [] RevF (mfix-bo Bodies) :- !,
   std.rev RevF Funs,
-  mutual-functor-rec-clauses All Funs Clauses,
-  Clauses =!=> std.map All mutual-functor-body Bodies.
-mutual-functor-mfix-aux All [S|SS] RevF (mfix-ty N Recno Ty Rest) :-
+  std.assert! (mutual-functor-rec-clauses All Funs Clauses) "derive.param1_functor: failed to build mutual recursion clauses",
+  Clauses =!=> std.assert! (std.map All (mutual-functor-body Ps) Bodies) "derive.param1_functor: failed to build mutual fix bodies".
+mutual-functor-mfix-aux Ps All [S|SS] RevF (mfix-ty N Recno Ty Rest) :-
   S = derive.param1.functor.mutual-spec GRR _ _ _ _,
   ID is {coq.gref->id (indt GRR)} ^ "_functor_rec",
   coq.id->name ID N,
-  mutual-functor-ty S Ty Recno,
-  @pi-decl N Ty f\ mutual-functor-mfix-aux All SS [f|RevF] (Rest f).
+  std.assert! (mutual-functor-ty S Ty Recno) "derive.param1_functor: failed to build one mutual fix type",
+  @pi-decl N Ty f\ std.assert! (mutual-functor-mfix-aux Ps All SS [f|RevF] (Rest f)) "derive.param1_functor: failed to build rest mutual fix block".
 
-func mutual-functor-mfix list derive.param1.functor.mutual-spec, int -> term.
-mutual-functor-mfix Specs Focus (mfix Focus Recno Block) :-
+func mutual-functor-mfix list term, list derive.param1.functor.mutual-spec, int -> term.
+mutual-functor-mfix Ps Specs Focus (mfix Focus Recno Block) :-
+  std.assert! (std.nth Focus Specs S) "derive.param1_functor: failed to select mutual spec",
+  std.assert! (mutual-functor-ty S _ Recno) "derive.param1_functor: failed to build mutual fix type",
+  std.assert! (mutual-functor-mfix-aux Ps Specs Specs [] Block) "derive.param1_functor: failed to build mutual fix block".
+
+func mutual-functor-param1-fix-ty term, term, term, term, int -> term, int.
+mutual-functor-param1-fix-ty A PA Ity1 (prod N S T) K Ty Recno :- !,
+  Ty = prod N S (x\ Ty1 x),
+  pi x\ sigma Ity1x\
+    coq.mk-app Ity1 [x] Ity1x,
+    K1 is K + 1,
+    mutual-functor-param1-fix-ty A PA Ity1x (T x) K1 (Ty1 x) Recno.
+mutual-functor-param1-fix-ty A PA Ity1 (sort _) K Ty K :- !,
+  coq.safe-dest-app Ity1 HD [_A,_PA|Idxs],
+  Ty = prod `Hx` Ity1 (_\ prod `PB` {{ lp:A -> Type }} (PB\ prod `f` (Fty PB) (_\ Target PB))),
+  pi PB\
+    Fty PB = prod `z` A (z\ prod `_` (app [PA,z]) (_\ app [PB,z])),
+    coq.mk-app HD {std.append [A,PB] Idxs} (Target PB).
+mutual-functor-param1-fix-ty _ _ _ _ _ _ _ :- stop "derive.param1_functor: mutual indexed data types not supported".
+
+func mutual-functor-param1-ty derive.param1.functor.mutual-spec -> term, int.
+mutual-functor-param1-ty (derive.param1.functor.mutual-spec _ Ity1 _ Arity _) Ty Recno :-
+  Arity = prod A TA (a\ prod P (TP a) (pa\ Rest a pa)), !,
+  Ty = prod A TA (a\ prod P (TP a) (pa\ TyRest a pa)),
+  @pi-decl A TA a\ @pi-decl P (TP a) pa\ sigma Ity1AP\
+    coq.mk-app Ity1 [a,pa] Ity1AP,
+    mutual-functor-param1-fix-ty a pa Ity1AP (Rest a pa) 2 (TyRest a pa) Recno.
+
+func mutual-functor-param1-rty term, term, list term, list term -> term.
+mutual-functor-param1-rty ItyArgs _ Vs _ R :-
+  std.rev Vs [_|ArgsRev],
+  std.rev ArgsRev Args,
+  Args = [A,PA|Idxs],
+  coq.safe-dest-app ItyArgs HD _,
+  R = prod `PB` {{ lp:A -> Type }} (PB\ prod `f` (Fty PB) (_\ Target PB)),
+  pi PB\
+    Fty PB = prod `z` A (z\ prod `_` (app [PA,z]) (_\ app [PB,z])),
+    coq.mk-app HD {std.append [A,PB] Idxs} (Target PB).
+
+func mutual-functor-param1-map-rec list derive.param1.functor.mutual-spec, list term, term, term, term, term, term, term, term -> term.
+mutual-functor-param1-map-rec [derive.param1.functor.mutual-spec _ Ity _ _ _|_] [Rec|_] A PA PB F (app [Ity,A,PA|Idxs]) (app [Ity,A,PB|Idxs]) PX M :- !,
+  sigma RecIdx\
+    coq.mk-app Rec {std.append [A,PA] Idxs} RecIdx,
+    coq.mk-app RecIdx [PX,PB,F] M.
+mutual-functor-param1-map-rec [_|SS] [_|Recs] A PA PB F Src Tgt PX M :-
+  mutual-functor-param1-map-rec SS Recs A PA PB F Src Tgt PX M.
+
+func mutual-functor-param1-map-arg list derive.param1.functor.mutual-spec, list term, term, term, term, term, term, term, term -> term.
+mutual-functor-param1-map-arg _ _ _ PA PB F (app [PA,X]) (app [PB,X]) PX M :- !,
+  coq.mk-app F [X,PX] M.
+mutual-functor-param1-map-arg All Funs A PA PB F Src Tgt PX M :-
+  mutual-functor-param1-map-rec All Funs A PA PB F Src Tgt PX M, !.
+mutual-functor-param1-map-arg _ _ _ _ _ _ Src Tgt PX M :-
+  param1-functor-db Src Tgt Map,
+  coq.mk-app Map [PX] M.
+
+func mutual-functor-param1-k-args-aux list derive.param1.functor.mutual-spec, list term, term, term, term, term, term, list term, list term, term -> term.
+mutual-functor-param1-k-args-aux All Funs A PA PB F K [X,PX|Args] [_,TPA|Types] {{ forall x (px : lp:(TPB x)), lp:(Ty x px) }} R :-
+  not(same_term TPA (TPB X)), mutual-functor-param1-map-arg All Funs A PA PB F TPA (TPB X) PX MPX, !,
+  coq.mk-app K [X,MPX] KX,
+  mutual-functor-param1-k-args-aux All Funs A PA PB F KX Args Types (Ty X KX) R.
+mutual-functor-param1-k-args-aux All Funs A PA PB F K [X,PX|Args] [_,_|Types] {{ forall x px, lp:(Ty x px) }} R :- !,
+  coq.mk-app K [X,PX] KX,
+  mutual-functor-param1-k-args-aux All Funs A PA PB F KX Args Types (Ty X KX) R.
+mutual-functor-param1-k-args-aux _ _ _ _ _ _ R [] [] _ R.
+
+func mutual-functor-param1-k-args list derive.param1.functor.mutual-spec, list term, term, term, list term, list term -> term.
+mutual-functor-param1-k-args All Funs K _ Args Tys R :-
+  Args = [A,PA|RestArgs],
+  Tys = [_,_|RestTys],
+  R = fun `PB` {{ lp:A -> Type }} (PB\ fun `f` (Fty PB) (F\ Body PB F)),
+  @pi-decl `PB` {{ lp:A -> Type }} PB\ @pi-decl `f` (Fty PB) F\ sigma GR KT KAPB\
+    Fty PB = prod `z` A (z\ prod `_` (app [PA,z]) (_\ app [PB,z])),
+    coq.safe-dest-app K (global (indc GR)) _,
+    coq.env.typeof (indc GR) KTy,
+    coq.subst-prod [A,PB] KTy KT,
+    coq.mk-app K [A,PB] KAPB,
+    mutual-functor-param1-k-args-aux All Funs A PA PB F KAPB RestArgs RestTys KT (Body PB F).
+
+func mutual-functor-param1-body list derive.param1.functor.mutual-spec, list term, derive.param1.functor.mutual-spec -> term.
+mutual-functor-param1-body All Funs (derive.param1.functor.mutual-spec _ Ity1 _ Arity _) Body :-
+  Arity = prod A TA (a\ prod P (TP a) (pa\ Rest a pa)), !,
+  Body = fun A TA (a\ fun P (TP a) (pa\ BodyRest a pa)),
+  @pi-decl A TA a\ @pi-decl P (TP a) pa\ sigma Ity1AP\
+    coq.mk-app Ity1 [a,pa] Ity1AP,
+    mutual-functor-param1-body-rest All Funs Ity1AP (Rest a pa) (BodyRest a pa).
+
+func mutual-functor-param1-body-rest list derive.param1.functor.mutual-spec, list term, term, term -> term.
+mutual-functor-param1-body-rest All Funs Ity1 (prod N S T) (fun N S (x\ R x)) :- !,
+  @pi-decl N S x\ sigma Ity1x\
+    coq.mk-app Ity1 [x] Ity1x,
+    mutual-functor-param1-body-rest All Funs Ity1x (T x) (R x).
+mutual-functor-param1-body-rest All Funs Ity1 (sort _) (fun `Hx` Ity1 (Hx\ Match Hx)) :- !,
+  @pi-decl `Hx` Ity1 Hx\
+    coq.build-match Hx Ity1 (mutual-functor-param1-rty Ity1) (mutual-functor-param1-k-args All Funs) (Match Hx).
+
+func mutual-functor-param1-mfix-aux list derive.param1.functor.mutual-spec, list derive.param1.functor.mutual-spec, list term -> mfix-block.
+mutual-functor-param1-mfix-aux All [] RevF (mfix-bo Bodies) :- !,
+  std.rev RevF Funs,
+  std.map All (mutual-functor-param1-body All Funs) Bodies.
+mutual-functor-param1-mfix-aux All [S|SS] RevF (mfix-ty N Recno Ty Rest) :-
+  S = derive.param1.functor.mutual-spec GRR _ _ _ _,
+  ID is {coq.gref->id (indt GRR)} ^ "_functor_rec",
+  coq.id->name ID N,
+  mutual-functor-param1-ty S Ty Recno,
+  @pi-decl N Ty f\ mutual-functor-param1-mfix-aux All SS [f|RevF] (Rest f).
+
+func mutual-functor-param1-mfix list derive.param1.functor.mutual-spec, int -> term.
+mutual-functor-param1-mfix Specs Focus (mfix Focus Recno Block) :-
   std.nth Focus Specs S,
-  mutual-functor-ty S _ Recno,
-  mutual-functor-mfix-aux Specs Specs [] Block.
+  mutual-functor-param1-ty S _ Recno,
+  mutual-functor-param1-mfix-aux Specs Specs [] Block.
+
+func mutual-functor-param1-apply-rest term, term, term, term, term -> term.
+mutual-functor-param1-apply-rest Ity1 Fix (prod N S T) PB F (fun N S (x\ R x)) :- !,
+  @pi-decl N S x\ sigma Ity1x Fixx\
+    coq.mk-app Ity1 [x] Ity1x,
+    coq.mk-app Fix [x] Fixx,
+    mutual-functor-param1-apply-rest Ity1x Fixx (T x) PB F (R x).
+mutual-functor-param1-apply-rest Ity1 Fix (sort _) PB F (fun `Hx` Ity1 (Hx\ App Hx)) :- !,
+  pi Hx\ coq.mk-app Fix [Hx,PB,F] (App Hx).
+
+func body-mutual-param1 term, list derive.param1.functor.mutual-spec, int -> term.
+body-mutual-param1 (prod A TA (a\ prod P (TP a) (pa\ Rest a pa))) Specs Focus R :-
+  R = fun A TA (a\ fun P (TP a) (pa\ fun P (TP a) (pb\ fun `f` (Fty a pa pb) (f\ Body a pa pb f)))),
+  @pi-decl A TA a\ @pi-decl P (TP a) pa\ @pi-decl P (TP a) pb\
+    Fty a pa pb = prod `z` a (z\ prod `_` (app [pa,z]) (_\ app [pb,z])),
+    @pi-decl `f` (Fty a pa pb) f\ sigma Fix SF Ity1AP FixAP\
+      std.assert! (mutual-functor-param1-mfix Specs Focus Fix) "derive.param1_functor: failed to build param1 mutual mfix",
+      std.assert! (std.nth Focus Specs SF) "derive.param1_functor: failed to select param1 mutual spec",
+      SF = derive.param1.functor.mutual-spec _ Ity1 _ _ _,
+      std.assert! (coq.mk-app Ity1 [a,pa] Ity1AP) "derive.param1_functor: failed to apply param1 source type",
+      std.assert! (coq.mk-app Fix [a,pa] FixAP) "derive.param1_functor: failed to apply param1 mfix params",
+      std.assert! (mutual-functor-param1-apply-rest Ity1AP FixAP (Rest a pa) pb f (Body a pa pb f)) "derive.param1_functor: failed to apply param1 mutual mfix".
 
 func body-mutual-params int, list derive.param1.functor.mutual-spec, int -> term.
-body-mutual-params 0 Specs Focus R :- !, mutual-functor-mfix Specs Focus R.
-body-mutual-params N ([S|_] as Specs) Focus R :- N > 0,
+body-mutual-params 2 Specs Focus R :-
+  std.nth Focus Specs S, mutual-spec-arity1 S Arity, Arity = prod _ TA _, coq.sort? TA, !,
+  std.assert! (body-mutual-param1 Arity Specs Focus R) "derive.param1_functor: failed to build param1 mutual body".
+body-mutual-params N Specs Focus R :- body-mutual-params-aux N Specs Focus [] R.
+
+func body-mutual-params-aux int, list derive.param1.functor.mutual-spec, int, list term -> term.
+body-mutual-params-aux 0 Specs Focus Ps R :- !,
+  std.assert! (mutual-functor-mfix Ps Specs Focus R) "derive.param1_functor: failed to build mutual mfix".
+body-mutual-params-aux N ([S|_] as Specs) Focus Ps R :- N > 0,
   mutual-spec-arity1 S {{ forall (a : lp:T1) (p : a -> Type), lp:(Rty a p) }}, whd T1 [] {{ Type }} [], !,
   M is N - 2,
   pi a b f\ mk-map-ty a {{ lp:a -> Type }} b {{ lp:b -> Type }} (FAB a b) f _ (Clause a b f),
   R = {{ fun (a : Type) (pa pb : a -> Type) (f : forall x : a, pa x -> pb x) => lp:(Bo a pa pb f) }},
   pi a pa pb f\
     sigma Specs1\
-      std.map Specs (mutual-spec-apply-type-param a pa pb) Specs1,
+      std.assert! (std.map Specs (mutual-spec-apply-type-param a pa pb) Specs1) "derive.param1_functor: failed to apply mutual type parameters",
       Clause pa pb f =>
       decl a `a` {{ Type }} =>
       decl pa `pa` {{ lp:a -> Type }} =>
       decl pb `pb` {{ lp:a -> Type }} =>
       decl f `f` (FAB pa pb) =>
-        body-mutual-params M Specs1 Focus (Bo a pa pb f).
-body-mutual-params N ([S|_] as Specs) Focus R :- N > 0, !,
+        std.assert! (body-mutual-params-aux M Specs1 Focus [pb,a|Ps] (Bo a pa pb f)) "derive.param1_functor: failed after mutual type parameters".
+body-mutual-params-aux N ([S|_] as Specs) Focus Ps R :- N > 0, !,
   mutual-spec-arity1 S (prod A TA _),
   M is N - 1,
   R = (fun A TA a\ Bo a),
   @pi-decl A TA a\
     sigma Specs1\
       std.map Specs (mutual-spec-apply-param a) Specs1,
-      body-mutual-params M Specs1 Focus (Bo a).
-body-mutual-params _ _ _ _ :- stop "derive.param1_functor: wrong mutual shape".
+      body-mutual-params-aux M Specs1 Focus [a|Ps] (Bo a).
+body-mutual-params-aux _ _ _ _ _ :- stop "derive.param1_functor: wrong mutual shape".
 
 func body-mutual-params-ty int, derive.param1.functor.mutual-spec -> term.
 body-mutual-params-ty 0 S Ty :- !,
@@ -326,11 +463,9 @@ add-mutual-functor-consts _ [] _ _ _ [].
 add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- std.do! [
   S = derive.param1.functor.mutual-spec GRR T T Arity _,
   Name is {coq.gref->id (indt GRR)} ^ Suffix,
-  if (Lno > 0)
-     (coq.error "derive.param1_functor: mutual functor generation for parameterized mutual inductives still needs to be implemented" (indt GRR))
-     (body-mutual-params Lno All Focus R,
-      std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped mutual term",
-      coq.env.add-const Name R Rty @transparent! Funct),
+  std.assert! (body-mutual-params Lno All Focus R) "derive.param1_functor: failed to generate mutual term",
+  std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped mutual term",
+  coq.env.add-const Name R Rty @transparent! Funct,
   mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause1 GRR [] Clause2,
   std.forall [Clause1,Clause2] (x\coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ x)),
   Focus1 is Focus + 1,
