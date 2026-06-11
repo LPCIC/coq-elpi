@@ -70,3 +70,6 @@ val run_in_tactic : loc:Loc.t -> ?program:qualified_name -> Elpi.API.Ast.Loc.t *
 
 (* move to synterp *)
 val export_command : atts:proof option -> ?as_:qualified_name -> qualified_name -> unit
+
+(** [loc] is loc of the whole [lib:qid], then we also get the loc of just the [qid] part. *)
+val lib_ref : ?loc:Loc.t -> expl:bool -> (Loc.t * qualified_name) -> Constrexpr.constr_expr
