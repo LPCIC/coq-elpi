@@ -606,7 +606,7 @@ let cs_pattern =
           match Structures.PrimitiveProjections.find_opt cst with
           | None -> Const_cs x
           | Some p -> Proj_cs p),
-      M (fun ~ok ~ko -> function Const_cs x -> ok x | Proj_cs p -> ok (GlobRef.ConstRef (Projection.Repr.constant p)) | _ -> ko ()));
+      MS (fun ~ok ~ko p state -> match p with Const_cs x -> ok x state | Proj_cs p -> ok (GlobRef.ConstRef (get_projection_constant (get_global_env state) p)) state | _ -> ko state));
     K("cs-prod","",N,
       B Prod_cs,
       M (fun ~ok ~ko -> function Prod_cs -> ok | _ -> ko ()));
@@ -847,21 +847,21 @@ let class_ = let open Conv in let open API.AlgebraicData in let open Coercionops
      M (fun ~ok ~ko -> function CL_SORT -> ok | _ -> ko ()));
    K("grefclass","",A(gref,N),
      B ComCoercion.class_of_global,
-     M (fun ~ok ~ko -> function
-     | CL_SECVAR v -> ok (GlobRef.VarRef v)
-     | CL_CONST c -> ok (GlobRef.ConstRef c)
-     | CL_IND i -> ok (GlobRef.IndRef i)
-     | CL_PROJ p -> ok (GlobRef.ConstRef (Projection.Repr.constant p))
-     | _ -> ko ()))
+     MS (fun ~ok ~ko p state -> match p with
+     | CL_SECVAR v -> ok (GlobRef.VarRef v) state
+     | CL_CONST c -> ok (GlobRef.ConstRef c) state
+     | CL_IND i -> ok (GlobRef.IndRef i) state
+     | CL_PROJ p -> ok (GlobRef.ConstRef (get_projection_constant (get_global_env state) p)) state
+     | _ -> ko state))
 ]
 } |> CConv.(!<)
 
-let src_class_of_class = function
+let src_class_of_class env = function
   | (Coercionops.CL_FUN | Coercionops.CL_SORT) -> CErrors.anomaly Pp.(str "src_class_of_class on a non source coercion class")
   | Coercionops.CL_SECVAR v -> GlobRef.VarRef v
   | Coercionops.CL_CONST c -> GlobRef.ConstRef c
   | Coercionops.CL_IND i -> GlobRef.IndRef i
-  | Coercionops.CL_PROJ p -> GlobRef.ConstRef (Projection.Repr.constant p)
+  | Coercionops.CL_PROJ p -> GlobRef.ConstRef (get_projection_constant env p)
 
 let coercion = let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "coercion";
@@ -2868,9 +2868,9 @@ denote the same x as before.|};
       match p, c with
       | _, Data (Variable c) -> raise No_clause
       | Data p, Data (Constant c) ->
-          if Environ.QConstant.equal conv_context.env (Projection.constant p) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
+          if Environ.QConstant.equal conv_context.env (get_projection_constant conv_context.env (Projection.repr p)) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
       | NoData, NoData -> U.type_error "coq.env.primitive-projection?: got no input data"
-      | Data p, NoData -> ?: None +! (Constant (Projection.constant p)) +! Names.Projection.(arg p + npars p)
+      | Data p, NoData -> ?: None +! (Constant (get_projection_constant conv_context.env (Projection.repr p))) +! Names.Projection.(arg p + npars p)
       | NoData, Data (Constant c) ->
           (match Environ.constant_opt_value_in conv_context.env (UVars.in_punivs c) with
           | None -> raise No_clause
@@ -3410,15 +3410,15 @@ NParams can always be omitted, since it is inferred.
 
   MLCode(Pred("coq.coercion.db",
     Out(list coercion, "L",
-    Easy ("reads all declared coercions")),
-  (fun _ ~depth ->
+    Read (global, "reads all declared coercions")),
+  (fun _ ~depth { env } _ _ ->
     (* TODO: fix API in Coq *)
      let pats = Coercionops.inheritance_graph () in
      let coercions = pats |> CList.map_filter (function
        | (source,target),[c] ->
            Some(c.Coercionops.coe_value,
                 B.Given c.Coercionops.coe_param,
-                B.Given (src_class_of_class source),
+                B.Given (src_class_of_class env source),
                 B.Given target)
        | _ -> None) in
      !: coercions)),

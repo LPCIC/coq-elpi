@@ -432,6 +432,13 @@ let rec decompose accu c = match DAst.get c with
 | Glob_term.GLambda (na, _, _, _, c) -> decompose (na :: accu) c
 | _ -> List.rev accu, c
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let get_projection_constant _env p =
+  Names.Projection.Repr.constant p
+[%%else]
+let get_projection_constant env p =
+  Environ.projection_repr_constant env p
+[%%endif]
 
 module RobustExpand :
 sig
@@ -644,7 +651,7 @@ let detype ?(keepunivs = false) env sigma t =
         if Names.Projection.unfolded p then
           let open Names in
           let c = aux env c in
-          let id = Label.to_id @@ Projection.label p in
+          let id = Label.to_id @@ Constant.label @@ get_projection_constant (snd env) (Projection.repr p) in
           let nargs, parg =
             try
               let _, mip = Global.lookup_inductive (Projection.inductive p) in
@@ -667,7 +674,7 @@ let detype ?(keepunivs = false) env sigma t =
           let hole = DAst.make @@ GHole GInternalHole in
           let args = CList.make pars hole in
           DAst.make
-          @@ GApp (DAst.make @@ GRef (Names.GlobRef.ConstRef (Names.Projection.constant p), None), args @ [ aux env c ])
+          @@ GApp (DAst.make @@ GRef (Names.GlobRef.ConstRef (get_projection_constant (snd env) (Names.Projection.repr p)), None), args @ [ aux env c ])
     | Fix (((vn, _) as nvn), (names, tys, bodies)) ->
         let env, names =
           list_map_acc

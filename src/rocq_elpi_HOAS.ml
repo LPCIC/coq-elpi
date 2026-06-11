@@ -2403,7 +2403,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       | Uint63 i -> state, EC.mkInt i, gls
       | Float64 f -> state, EC.mkFloat f, gls
       | Pstring s -> state, eC_mkString s, gls
-      | Projection p -> state, EC.UnsafeMonomorphic.mkConst (Names.Projection.constant p), gls
+      | Projection p -> state, EC.UnsafeMonomorphic.mkConst (get_projection_constant (get_global_env state) (Projection.repr p)), gls
       end
 
   (* evar *)
