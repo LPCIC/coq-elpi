@@ -10,6 +10,7 @@ open Rocq_elpi_utils
 type program_name = Loc.t * qualified_name
 type cunit = Full of Names.KerName.t * EC.compilation_unit | Signature of Names.KerName.t * EC.compilation_unit_signature
 let name_of_cunit = function Full(_,u) -> EC.compilation_unit_name u | Signature(_,s) -> EC.compilation_unit_signature_name s
+let kn_of_cunit = function Full(kn,_) -> kn | Signature(kn,_) -> kn
 type what = Code | SignatureOnly
 let pp_cunit fmt = function
   | Full (kn,u) -> Format.fprintf fmt "Full(%s,%s)" Names.KerName.(debug_to_string kn) (EC.compilation_unit_name u)
@@ -566,13 +567,17 @@ let get ?(fail_if_not_exists=false) p =
   let db_code n : Chunk.t option =
     SLMap.find_opt n !db_name_src |> Option.map (fun ({ sources_rev } : db) -> sources_rev)
 
-  let append_to_db name kname c =
+  let append_to_db name c =
     try
-      let (db : db) = SLMap.find name !db_name_src in
-      if Names.KNset.mem kname db.units then db
-      else { sources_rev = Chunk.snoc c db.sources_rev; units = Names.KNset.add kname db.units }
+      let (db : db) = SLMap.find name !db_name_src  in
+      let c = List.filter (fun u -> not (Names.KNset.mem (kn_of_cunit u) db.units)) c in
+      if c = [] then db
+      else 
+        { sources_rev = Chunk.snoc c db.sources_rev;
+          units = List.fold_left (fun s u -> Names.KNset.add (kn_of_cunit u) s) db.units c }
     with Not_found ->
-      { sources_rev = Chunk.Base { hash = hash_list hash_cunit 0 c; base = List.rev c }; units = Names.KNset.singleton kname }
+      { sources_rev = Chunk.Base { hash = hash_list hash_cunit 0 c; base = List.rev c };
+        units = List.fold_left (fun s u -> Names.KNset.add (kn_of_cunit u) s) Names.KNset.empty c }
         
   let is_inside_current_library kn =
     Names.DirPath.equal
@@ -582,7 +587,7 @@ let get ?(fail_if_not_exists=false) p =
   let in_db : Names.Id.t -> snippet -> Libobject.obj =
     let open Libobject in
     let cache ((_,kn),{ program = name; code = p; _ }) =
-      db_name_src := SLMap.add name (append_to_db name kn p) !db_name_src in
+      db_name_src := SLMap.add name (append_to_db name p) !db_name_src in
     let load i ((_,kn),s as o) =
       if Int.equal i 1 ||
         (s.scope = Rocq_elpi_utils.Global && is_inside_current_library kn) ||
