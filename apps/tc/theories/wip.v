@@ -1,8 +1,9 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* --------------------------------------------------------------------------*)
 
-Declare ML Module "rocq-elpi-typeclasses.elpi_tc_plugin".
+(*
 From elpi Require Import elpi.
+Declare ML Module "rocq-elpi-typeclasses.elpi_tc_plugin".
 
 From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
 From elpi.apps.tc.elpi Extra Dependency "ho_precompile.elpi" as ho_precompile.
@@ -16,7 +17,7 @@ From elpi.apps.tc.elpi Extra Dependency "rewrite_forward.elpi" as rforward.
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
 
-(* From elpi.apps Require Import tc.
+From elpi.apps Require Import tc.
 Set Warnings "+elpi".
 
 Elpi Command AddForwardRewriting.
