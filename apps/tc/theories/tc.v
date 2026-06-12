@@ -1,6 +1,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
+From elpi Require Import elpi.
 Declare ML Module "rocq-elpi-typeclasses.elpi_tc_plugin".
 
 From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
