@@ -1,7 +1,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* --------------------------------------------------------------------------*)
 
-Declare ML Module "rocq-elpi.tc".
+Declare ML Module "rocq-elpi-typeclasses.elpi_tc_plugin".
 From elpi Require Import elpi.
 
 From elpi.apps.tc.elpi Extra Dependency "modes.elpi" as modes.
