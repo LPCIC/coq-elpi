@@ -95,3 +95,5 @@ val eta_contract : Environ.env -> Evd.evar_map -> EConstr.t -> EConstr.t
 val is_sync_anomaly : exn -> bool
 
 val push_named : Constr.named_declaration -> Environ.env -> Environ.env
+
+val get_projection_constant : Environ.env -> Names.Projection.Repr.t -> Names.Constant.t
