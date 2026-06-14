@@ -1,6 +1,7 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.eltac.tests)
  (package rocq-elpi-tests)
+ (generate_project_file)
  (theories elpi elpi.apps.eltac))
 
 (include_subdirs qualified)

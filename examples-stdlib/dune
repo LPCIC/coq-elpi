@@ -1,6 +1,7 @@
-(coq.theory
- (package rocq-elpi-tests-stdlib)
+(rocq.theory
  (name elpi_examples_stdlib)
+ (package rocq-elpi-tests-stdlib)
+ (generate_project_file)
  (plugins rocq-elpi.elpi)
  (theories elpi Stdlib))
 
