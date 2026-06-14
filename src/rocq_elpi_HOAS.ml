@@ -1200,9 +1200,13 @@ let fresh_relevance_variable state =
     let rv = EConstr.ERelevance.make rv in
     { e with sigma }, rv)
 
-let mk_coq_annot state id =
+let mk_coq_name state id =
   let state, rv = fresh_relevance_variable state in
   state, Context.make_annot (Name.Name id) rv
+
+let mk_coq_annot state id =
+  let state, rv = fresh_relevance_variable state in
+  state, Context.make_annot id rv
 
 let in_coq_name ~depth state t =
   match E.look ~depth t with
@@ -3464,7 +3468,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       let private_ind = false in
       let state, poly, cumulative, udecl, variances =
         poly_cumul_udecl_variance_of_options state coq_ctx.options in
-      let state, name = mk_coq_annot state itname in
+      let state, name = mk_coq_name state itname in
       let the_type =
         let open Context.Rel.Declaration in
         LocalAssum(name, EConstr.it_mkProd_or_LetIn arity (nuparams @ params)) in
@@ -3795,7 +3799,7 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
         gls := gls_t @ !gls;
         state, t
     | { id; typ; extra } :: rest ->
-        let state, name = mk_coq_annot state id in
+        let state, name = mk_coq_name state id in
         let state, ty, gls_ty = constr2lp coq_ctx ~calldepth ~depth state typ in
         gls := gls_ty @ !gls;
         let hyp = mk_decl ~depth name ~ty in

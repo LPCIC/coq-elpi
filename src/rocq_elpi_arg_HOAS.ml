@@ -736,21 +736,23 @@ let mk_indt_decl state univpoly r =
 let rec garityparams2lp_synterp ~depth params k state =
   match params with
   | [] -> k state
-  | (name,_rel,imp,ob,src) :: params ->
+  | (name,_,imp,ob,src) :: params ->
       if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let src = E.mkDiscard in
       let state, tgt = garityparams2lp_synterp ~depth params k state in
       let state, imp = in_elpi_imp ~depth state imp in
-      state, in_elpi_arity_parameter (EConstr.annotR name) ~imp src tgt
+      let name = EConstr.annotR name in (* no sigma at synterp *)
+      state, in_elpi_arity_parameter name ~imp src tgt
 let rec gindparams2lp_synterp ~depth params k state =
   match params with
   | [] -> k state
-  | (name,_rel,imp,ob,src) :: params ->
+  | (name,_,imp,ob,src) :: params ->
       if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let src = E.mkDiscard in
       let state, tgt = gindparams2lp_synterp ~depth params k state in
       let state, imp = in_elpi_imp ~depth state imp in
-      state, in_elpi_inductive_parameter (EConstr.annotR name) ~imp src tgt
+      let name = EConstr.annotR name in (* no sigma at synterp *)
+      state, in_elpi_inductive_parameter name ~imp src tgt
             
       
 let rec gfields2lp_synterp ~depth fields state =
@@ -963,13 +965,14 @@ let best_effort_recover_arity ~depth state glob_sign typ bl =
   let _, grouped_bl = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env bl in
   let rec aux ~depth state typ gbl =
     match gbl with
-    | (name,_rel,ik,_,_) :: gbl ->
+    | (name,_,ik,_,_) :: gbl ->
       begin match Rocq_elpi_HOAS.is_prod ~depth typ with
       | None -> state, in_elpi_arity typ
       | Some(ty,bo) ->
           let state, imp = in_elpi_imp ~depth state ik in
           let state, bo = aux ~depth:(depth+1) state bo gbl in
-          state, in_elpi_arity_parameter (EConstr.annotR name) ~imp ty bo
+          let state, name = mk_coq_annot state name in
+          state, in_elpi_arity_parameter name ~imp ty bo
       end
     | _ -> state, in_elpi_arity typ
     in

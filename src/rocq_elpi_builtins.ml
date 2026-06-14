@@ -4595,7 +4595,7 @@ and for all in a .v file which your clients will load. Eg.
     Out(name,  "Name",
     Full(global, "creates a name hint"))),
   (fun s _ ~depth _ _ state -> 
-    let state, s = mk_coq_annot state (Id.of_string s) in
+    let state, s = mk_coq_name state (Id.of_string s) in
     state, !: s, [])),
   DocAbove);
 

@@ -212,7 +212,8 @@ val in_elpiast_name : loc:Ast.Loc.t -> annot_name -> Ast.Term.t
 val in_elpiast_decl : loc:Ast.Loc.t -> v:Ast.Term.t -> annot_name -> ty:Ast.Term.t -> Ast.Term.t
 val in_elpiast_def : loc:Ast.Loc.t -> v:Ast.Term.t -> annot_name -> ty:Ast.Term.t -> bo:Ast.Term.t -> Ast.Term.t
 
-val mk_coq_annot : State.t -> Names.Id.t -> State.t * annot_name
+val mk_coq_name : State.t -> Names.Id.t -> State.t * annot_name
+val mk_coq_annot : State.t -> Names.Name.t -> State.t * annot_name
 
 val in_coq_name : depth:int -> State.t -> term -> State.t * annot_name * Conversion.extra_goals
 val is_coq_name : depth:int -> term -> bool
