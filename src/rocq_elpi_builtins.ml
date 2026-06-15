@@ -4593,15 +4593,24 @@ and for all in a .v file which your clients will load. Eg.
   MLCode(Pred("coq.string->name",
     In(B.string, "Hint",
     Out(name,  "Name",
-    Full(global, "creates a name hint"))),
+    Full(global, "creates a name hint using a relevance variable"))),
   (fun s _ ~depth _ _ state -> 
     let state, s = mk_coq_name state (Id.of_string s) in
     state, !: s, [])),
   DocAbove);
 
+  MLCode(Pred("coq.string->name-relevant",
+    In(B.string, "Hint",
+    Out(name,  "Name",
+    Easy("creates a name hint with the relevant mark (see SProp)"))),
+  (fun s _ ~depth -> 
+    let s = EConstr.nameR (Id.of_string s) in
+    !: s)),
+  DocAbove);
+
   LPCode {|
 func coq.id->name id -> name.
-coq.id->name S N :- coq.string->name S N.
+coq.id->name S N :- coq.string->name-relevant S N.
   |};
 
   MLCode(Pred("coq.name->id",

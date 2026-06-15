@@ -2309,7 +2309,8 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
               | Projection p ->
                   let state, i, gl1 = aux ~depth state i in
                   let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
-                  let state, rv = fresh_relevance_variable state in
+                  (* let state, rv = fresh_relevance_variable state in *)
+                  let rv = EC.ERelevance.relevant in
                   state, EC.mkApp (EC.mkProj (p,rv,i),Array.of_list xs), gls @ gl1 @ gl2
               | _ ->  err Pp.(str"not a primitive projection:" ++ str (E.Constants.show c))
               end
