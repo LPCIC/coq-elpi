@@ -821,14 +821,18 @@ let compile ~loc src =
     with Not_found ->
       match src with
       | Code.Base { base = u } ->
+        Format.eprintf "compiling Base: %a\n%!" pp_cunit u;
           let elpi = ensure_initialized () in
           let prog = extend_with_unit ~base:(EC.empty_base ~elpi) ~loc u in
           cache_code 0 h prog src
       | Code.Snoc { prev; source } ->
+          Format.eprintf "compiling Snoc\n%!";
           let base = compile_code prev in
+          Format.eprintf "compiling Snoc src: %a\n%!" pp_cunit source;
           let prog = extend_with_unit ~base ~loc source in
           if Code.cache src then cache_code 0 h prog src else prog
       | Code.Snoc_db { prev; chunks } ->
+          Format.eprintf "compiling Snoc\n%!";
           let base = compile_code prev in
           let prog = compile_chunk (Code.hash prev) base chunks in
           prog
@@ -840,8 +844,12 @@ let compile ~loc src =
     with Not_found ->
       match src with
       | Chunk.Base { base = _ } -> (* base already added as the header *)
+          Format.eprintf "compiling db Base\n%!";
           base
       | Chunk.Snoc { prev; source_rev } ->
+          Format.eprintf "compiling db Snocs: ";
+          List.iter (Format.eprintf "%a, " pp_cunit) source_rev;
+          Format.eprintf "\n%!";
           let base = compile_chunk bh base prev in
           let prog = extend_with_idependent_units ~base ~loc (List.rev source_rev) in
           recache_chunk bh (Chunk.hash prev) h prog src
@@ -851,7 +859,7 @@ let compile ~loc src =
 let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
   let t = Unix.gettimeofday () in
   let res = code ?even_if_empty name |> Option.map (fun src ->
-    (* Format.eprintf "compile %a = %a" pp_qualified_name name (Code.pp Chunk.pp) src; *)
+    Format.eprintf "compile %a = %a" pp_qualified_name name (Code.pp Chunk.pp) src;
     let prog = compile ~loc src in
     let new_hash = Code.hash src in
     let old_hash = try SLMap.find name !programs_tip with Not_found -> 0 in
