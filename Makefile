@@ -24,7 +24,7 @@ build:
 	$(call dune,build) builtin-doc
 .PHONY: build
 
-all-tests-no-plugins: test-core test-stdlib test-apps test-apps-stdlib
+all-tests-no-plugins: test-core test-repro test-stdlib test-apps test-apps-stdlib
 .PHONY: all-tests-no-plugins
 
 all-tests: all-tests-no-plugins test-plugins
@@ -33,14 +33,19 @@ all-tests: all-tests-no-plugins test-plugins
 test-core:
 	$(call dune,runtest) tests
 	$(call dune,build) tests
-	# Check for build reproducibility
-	md5sum _build/default/tests/accumulate1.vo > md5sum_accumulate1vo_1
-	rm -f _build/default/tests/accumulate1.vo
-	$(call dune,build) --cache=disabled tests
-	md5sum _build/default/tests/accumulate1.vo > md5sum_accumulate1vo_2
+
+# Check for build reproducibility
+test-repro: test-core
+	$(dune_wrap) dune coq top --toplevel coqc tests/accumulate1.v -- tests/accumulate1.v
+	md5sum tests/accumulate1.vo > md5sum_accumulate1vo_1
+	rm -f tests/accumulate1.vo tests/accumulate1.glob
+	$(dune_wrap) dune coq top --toplevel coqc tests/accumulate1.v -- tests/accumulate1.v
+	md5sum tests/accumulate1.vo > md5sum_accumulate1vo_2
+	rm -f tests/accumulate1.vo tests/accumulate1.glob
 	diff md5sum_accumulate1vo_1 md5sum_accumulate1vo_2
 	rm md5sum_accumulate1vo_1 md5sum_accumulate1vo_2
-.PHONY: test-core
+
+.PHONY: test-core test-repro
 
 test-apps:
 	$(call dune,build) $$(find apps -type d -name tests)
