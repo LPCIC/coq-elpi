@@ -1,5 +1,7 @@
 
-From elpi Require Import elpi ext.
+From elpi Require Import elpi.
+
+From elpi.ext Require Import ext.
 
 Elpi Command test.
 Elpi Accumulate Plugin "ext.elpi".
@@ -28,4 +30,9 @@ Elpi Accumulate  lp:{{
 Elpi Query  lp:{{
   encode {{2 + 3}} X,
   compute X Z, decode Z R.
+}}.
+
+(* Calling the command defined in theories *)
+Elpi Query C lp:{{
+  to_int z N, coq.say N.
 }}.

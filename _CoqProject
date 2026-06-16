@@ -9,3 +9,6 @@
 
 -Q tests ext.tests
 -Q _build/default/tests ext.tests
+
+-Q elpi elpi.elpi
+-Q _build/default/elpi elpi.elpi
