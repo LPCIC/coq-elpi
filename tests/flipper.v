@@ -1,6 +1,5 @@
 
 From elpi Require Import elpi ext.
-From elpi Require ext.tests.dummy.
 
 Elpi Command test.
 Elpi Accumulate Plugin "ext.elpi".
