@@ -11,7 +11,7 @@
  (mode promote)
  (action (run ./gen_doc.exe)))
 
-(install
- (files ext.elpi)
- (section doc)
- (package ext))
+; (install
+;  (files ext.elpi)
+;  (section doc)
+;  (package ext))
