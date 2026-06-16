@@ -1,9 +1,10 @@
-
 From elpi Require Import elpi.
 
-From elpi.ext Require Import ext.
+From ext Require Import ext.
 
 Elpi Command test.
+(* loading the API created in ext.elpi *)
+(* the name of this file is set in the target of doc/dune *)
 Elpi Accumulate Plugin "ext.elpi".
 Elpi Accumulate  lp:{{
   func int2nat int -> term.
@@ -29,7 +30,9 @@ Elpi Accumulate  lp:{{
 
 Elpi Query  lp:{{
   encode {{2 + 3}} X,
-  compute X Z, decode Z R.
+  % compute is the ocaml API defined in ext.ml
+  compute X Z, 
+  decode Z R.
 }}.
 
 (* Calling the command defined in theories *)

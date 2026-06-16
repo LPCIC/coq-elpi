@@ -1,6 +1,7 @@
 (library
- (name elpi_ext_plugin)
- (public_name rocq-elpi-ext.elpi_ext_plugin)
- (flags :standard -w -27)
- (preprocess (pps ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
- (libraries rocq-runtime.plugins.ltac rocq-runtime.vernac rocq-elpi.elpi elpi))
+ ; this is the name of the current library
+ ; this library contains the modules declared in src (the ml files)
+ (name ext_plug)
+ (public_name ext.plug)
+ ; the files in src depends on elpi
+ (libraries elpi))

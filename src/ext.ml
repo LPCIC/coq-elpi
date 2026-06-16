@@ -1,25 +1,21 @@
 module API = Elpi.API
 module E = API.RawData
 
-let declare = let open API.AlgebraicData in declare
-
-
+(* defining a ad-hoc type in caml *)
 type mysumT = | MyC : int -> mysumT | MyA : (mysumT * mysumT) -> mysumT
 
 let rec compute (s : mysumT) = match s with
   | MyC n -> n
   | MyA (s1, s2) -> compute s1 + compute s2
 
+(* declaring the elpi symbol corresponding to the constructors of mysumT *)
 let myC = E.Constants.declare_global_symbol "myC"
 let myA = E.Constants.declare_global_symbol "myA"
 
-let rec embed = function
-  | MyC n -> E.mkApp myC (API.RawOpaqueData.of_int n) []
-  | MyA (s1, s2) -> E.mkApp myA (embed s1) [embed s2]
-
+(* declaring the caml type mysumT in elpi *)
 let mysum_ = API.(AlgebraicData.declare {
   ty = TyName "mysumT";
-  doc = "blibli";
+  doc = "description for the new elpi type";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
   constructors = [
    K("myC","",A(BuiltInData.int, N),
@@ -31,13 +27,17 @@ let mysum_ = API.(AlgebraicData.declare {
 ]
 } |> ContextualConversion.(!<))
 
+(* declaring a new elpi API *)
 let compute_api = API.BuiltIn.MLCode(Pred("compute",
     In(mysum_, "mysumT",
     Out(mysum_, "int",
-    Easy("AAA"))),
-    fun a _ ~depth -> (), Some (MyC (compute a))),
+    Easy("Description for the new API"))),
+    (* The implementation of the API is the result of compute *)
+    fun a _ ~depth:_ -> (), Some (MyC (compute a))),
     DocAbove)
 
+(* we declare the neame of the file in which the new API are declared
+   and what are the new elpi object defined *)
 let builtins =
   API.BuiltIn.declare ~file_name:"ext.elpi" [
   MLData mysum_;

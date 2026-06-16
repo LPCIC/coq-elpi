@@ -16,13 +16,13 @@
 (documentation https://url/to/documentation)
 
 (package
- (name rocq-elpi-ext)
+ (name ext)
  (synopsis "Ext")
  (description "Ext")
  (depends rocq-elpi))
 
 (package
- (name rocq-elpi-ext-tests)
+ (name ext-tests)
  (synopsis "Ext")
  (description "Ext")
  (depends rocq-elpi))

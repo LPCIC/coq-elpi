@@ -1,8 +1,9 @@
-Declare ML Module "rocq-elpi-ext.elpi_ext_plugin".
+Declare ML Module "ext.plug".
 
 From elpi Require Import elpi.
 
-From elpi.ext Extra Dependency "src.elpi" as src.
+(* loading the src.elpi file declared in the ext_elpi_src library *)
+From ext_elpi_src Extra Dependency "src.elpi" as src.
 
 Elpi Command C.
 Elpi Accumulate File src.
