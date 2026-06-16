@@ -167,7 +167,7 @@ Elpi Query lp:{{ cs.compiler.record.create-cs-pred {{r}}. }}.
 Set Printing All.
 Elpi Query lp:{{ cs.compiler.cs.main {{c}}. }}.
 
-Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx". 
+(* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
 
 Definition rrf (H1 H2 : r) := (fun '(x,y) => (rf H1 x, rf H2 y)).
 Canonical Structure rr (H1 H2 H3 : r) := mkr (car H1 * car H2) (rrf H1 H2).
@@ -175,7 +175,7 @@ Canonical Structure rr (H1 H2 H3 : r) := mkr (car H1 * car H2) (rrf H1 H2).
 Elpi Trace Browser.
 Elpi Query lp:{{ cs.compiler.cs.main {{rr}}. }}.
 
-Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx". 
+(* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
 
 Goal exists x, car x = (nat * nat)%type.
-Proof. eexists. auto.
+Proof. eexists. auto. Unshelve. apply c. Qed.
