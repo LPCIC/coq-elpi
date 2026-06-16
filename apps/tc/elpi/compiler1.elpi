@@ -94,7 +94,7 @@ namespace tc {
   remove-inst InstGR :- 
     tc.get-full-path InstGR ClauseName,
     std.once(tc.instance _ InstGR ClassGR Locality),
-    tc.gref->pred-name ClassGR PredName,
+    tc.gref->pred-name "tc" ClassGR PredName,
     coq.env.typeof ClassGR ClassTy,
     coq.elpi.predicate PredName {build-args ClassTy} Clause,
     tc.remove-clause ClauseName Clause Locality.

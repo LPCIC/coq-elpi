@@ -1,83 +1,7 @@
 namespace tc {
   shorten tc.{r-ar, range-arity}.
 
-  func split-last list A -> list A, A.
-  split-last [X] [] X :- !.
-  split-last [X|Xs] [X|Y] Z :- split-last Xs Y Z.
-
-  func list.pos list A, A -> int.
-  list.pos [A|_] A 0 :- !.
-  list.pos [_|L] A N :- list.pos L A N', N is N' + 1.
-
   namespace precomp {
-    func get-record int, term -> inductive.
-    get-record 0 (prod _ (app [global (indt I) | _]) _) I :- !.
-    get-record 0 (prod _ (global (indt I)) _) I :- !.
-    get-record N (prod _ _ Bo) T :- N > 0, N' is N - 1,
-      pi x\ get-record N' (Bo x) T, !.
-
-    func get-proj-nb constant -> int.
-    get-proj-nb C N :-
-      coq.env.projection? C Nx,
-      coq.env.const C _ Ty,
-      get-record Nx Ty I,
-      coq.env.projections I P,
-      list.pos P (some C) M,
-      N is M + Nx.
-
-    % [maybe-projection T C N A R]
-    % check if the head of T is the application of a projection
-    %                      for example T = app[P, ARGS..., R]
-    %                      where P is the projector, ARGS are the parameter of the projector
-    %                      R is the record to project
-    % C is the compatibily constant of the projector P
-    % N is the number position of C
-    % A is the list of argument applied to the projection (except for the record itself)
-    % R is the record
-    func maybe-projection term -> constant, int, list term, term.
-    :name "maybe-projection"
-    maybe-projection (app [primitive (proj P N), R]) C N A R :-
-      coq.env.primitive-projection? P C _,
-      std.assert-ok!(coq.typecheck R Ty) "err",
-      coq.safe-dest-app Ty _ A.
-    % TODO: should check that C is fully applied
-    maybe-projection (app [global (const C) | Args]) C N A R :-
-      coq.env.projection? C _, !,
-      get-proj-nb C N, std.assert!(split-last Args A R) "err: empty list".
-
-    func build-proj-term constant, list term, term -> term.
-    build-proj-term P Ag C (app[global (const P) | Ag']) :-
-      std.append Ag [C] Ag'.
-
-    % [proj-reducer-aux R P N O L T]
-    % R is the record constant
-    % P is the compatibility constant of the projector
-    % N is the projection number
-    % O is the optional body of the projected constant
-    % L are the arguments of the projection
-    % T is the projected terms
-    :index(_ _ _ 1)
-    func proj-reducer-aux constant, constant, int, option term, list term -> term.
-    :name "proj-reducer-aux"
-    proj-reducer-aux _ _ N (some (app [_|L])) _ T :- std.nth N L T.
-    proj-reducer-aux R P _ none Ag T :- build-proj-term P Ag (global (const R)) T.
-
-    % [proj-reducer P N Ag R T]
-    % P is the projector constant
-    % N is the number of P
-    % Ag is the arguments applied to the projector (except for the record)
-    % R is the record
-    % T is the reduced term
-    func proj-reducer constant, int, list term, term -> term.
-    :name "proj-reducer"
-    proj-reducer P N _ (global (const R)) T :- !,
-      coq.env.const R O Ty,
-      coq.safe-dest-app Ty _ TyAg,
-      proj-reducer-aux R P N O TyAg T.
-    proj-reducer P _ Ag X T :- name X, !, build-proj-term P Ag X T.
-
-    % proj-reducer P _ Ag R T :- build-proj-term P Ag R T.
-
 
     namespace instance {
       % Tells if the current name is a bound variables
@@ -193,7 +117,7 @@ namespace tc {
       func work-proj constant, int, list term, term, nat -> term, nat.
       work-proj P _ Ag R N (tc.maybe-proj (app[global (const P) | Ag']) X) (s N) :- is-uvar R, !,
         std.append Ag [R] Ag', free-var X.
-      work-proj P PN Ag R N T' N :- proj-reducer P PN Ag R T', !.
+      work-proj P PN Ag R N T' N :- tc.proj-reducer P PN Ag R T', !.
       work-proj P _ Ag R N (tc.maybe-proj (app[global (const P) | Ag']) X) (s N) :- !,
         std.append Ag [R] Ag', free-var X.
 % 
@@ -205,7 +129,7 @@ namespace tc {
       precompile-aux _ (sort _ as C) A C A :- !.
       :name "precomp-proj-inst"
       precompile-aux _ T N T' N' :-
-        maybe-projection T P PN Ag R, !,
+        tc.maybe-projection T P PN Ag R, !,
         work-proj P PN Ag R N T' N'.
 
       % Detect maybe-eta term
@@ -332,7 +256,7 @@ namespace tc {
       func work-proj constant, int, list term, term -> term.
       work-proj P _ Ag (uvar as R) (tc.maybe-proj (app[global (const P) | Ag']) X) :- !,
         std.append Ag [R] Ag', names X.
-      work-proj P PN Ag R T' :- proj-reducer P PN Ag R T', !.
+      work-proj P PN Ag R T' :- tc.proj-reducer P PN Ag R T', !.
       work-proj P _ Ag R (tc.maybe-proj (app[global (const P) | Ag']) X) :-
         std.append Ag [R] Ag', names X.
 
@@ -343,7 +267,7 @@ namespace tc {
       precompile-aux (sort _ as C) A C A :- !.
       :name "precomp-proj-goal"
       precompile-aux T A T' A :- 
-        maybe-projection T P PN Ag R, !,
+        tc.maybe-projection T P PN Ag R, !,
         work-proj P PN Ag R T'.
 
       % Detect maybe-eta term
