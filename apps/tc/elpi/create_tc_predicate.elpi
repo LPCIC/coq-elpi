@@ -21,7 +21,7 @@ add-class-gr SearchMode ClassGR SMR :-
   tc.get-elpi-mode ClassGR SMR EM SM,
   if (std.forall EM (m\ sigma a s\ m = pr a s, a = out)) (true) (
     std.fold EM "" (m\s\r\ sigma a s'\ m = pr a s', if (a = in) (calc (s ^ " 10") r) (calc (s ^ " _") r)) Indexing),
-  tc.gref->pred-name ClassGR PredName,
+  tc.gref->pred-name "tc" ClassGR PredName,
   get-class-locality Locality, 
   Locality => (
     coq.elpi.add-predicate "tc.db" Indexing PredName EM,
@@ -64,7 +64,7 @@ declare-class-in-coq ClassGR :-
   % CAVEAT: this triggers the observer
   coq.TC.declare-class ClassGR,
   attr->search-mode SearchMode, 
-  tc.gref->pred-name ClassGR PredName,
+  tc.gref->pred-name "tc" ClassGR PredName,
   % HACK: we override the clauses added by the observer, since it does not know
   % the SearchMode.
   get-class-locality Locality, 
@@ -106,7 +106,7 @@ namespace eta-reduction-aux {
   compile ClassGR (sort _) tt L (pi sol new-term\ Cl new-term sol) :-
     pi solution new-term\ sigma Args Args' Q Q'\
       std.do![
-        tc.gref->pred-name ClassGR PredName,
+        tc.gref->pred-name "tc" ClassGR PredName,
         std.rev [solution | L] Args,
         replace Args new-term Args' T,
         coq.elpi.predicate PredName Args Q,

@@ -13,6 +13,7 @@ From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
 From elpi.apps.tc.elpi Extra Dependency "ho_link.elpi" as ho_link.
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
+From elpi.apps.tc.elpi Extra Dependency "cs.elpi" as cs.
 
 From elpi.apps Require Import db.
 From elpi.apps Require Export add_commands.
@@ -200,3 +201,8 @@ Set Warnings "elpi".
 
 Elpi TC.AddAllClasses.
 Elpi TC.AddAllInstances.
+
+Elpi Tactic cs.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate File tc_aux.
+Elpi Accumulate File cs.

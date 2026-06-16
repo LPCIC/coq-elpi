@@ -114,6 +114,8 @@ Module m4.
     ofe_car2 :> Type -> Type;
   }.
 
+  Canonical Structure ss := Ofe nat nat (fun x => x).
+
   Definition p := Ofe nat bool (fun x => x).
 
   Check (eq_refl : (p.(ofe_car1 _)) = bool).
@@ -147,7 +149,33 @@ Module m4.
   Goal forall x y, C (@ofe_car2 x y x).
     intros x y. apply _. Qed.
 End m4.
-  
 
+From elpi.apps Require Import db.
 
+From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
+From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
+From elpi.apps.tc.elpi Extra Dependency "cs.elpi" as cs.
+Elpi Command B.
+Elpi Accumulate Db tc.db.
+Elpi Accumulate Db tc_options.db.
+(* Elpi Accumulate File base. *)
+Elpi Accumulate File tc_aux.
+Elpi Accumulate File cs.
 
+Elpi Trace Browser.
+Elpi Query lp:{{ cs.compiler.record.create-cs-pred {{r}}. }}.
+Set Printing All.
+Elpi Query lp:{{ cs.compiler.cs.main {{c}}. }}.
+
+Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx". 
+
+Definition rrf (H1 H2 : r) := (fun '(x,y) => (rf H1 x, rf H2 y)).
+Canonical Structure rr (H1 H2 H3 : r) := mkr (car H1 * car H2) (rrf H1 H2).
+
+Elpi Trace Browser.
+Elpi Query lp:{{ cs.compiler.cs.main {{rr}}. }}.
+
+Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx". 
+
+Goal exists x, car x = (nat * nat)%type.
+Proof. eexists. auto.
