@@ -147,8 +147,8 @@ namespace cs {
       % IC is the projection being compiled together with its number
       % CS is the instance of the structure
       % Ag is the term being consumed for compilation (i.e. the implementation of CS) 
-      % P is the list of premises (TODO: should be removed?)
-      % L is the list of abstractions: the arguments of CS
+      % L is the list of premises (TODO: should be removed?)
+      % A is the list of abstractions: the arguments of CS
       % C is the final rule
       func compiler bool, (pair int constant), term, term, list prop, list term -> prop.
       compiler B (pr N P) CS (app[_|Ag]) L A Rs :- !,
@@ -158,7 +158,7 @@ namespace cs {
         precompile I z I' NPb,
         load-nestedp NPb B PN I' CS' [] Rs.
       compiler B P CS (fun N Ty Bo') L A (pi x\ R x) :-
-        @pi-decl N Ty x\ (is-uvar x :- !) =>
+        @pi-decl N Ty x\ (is-uvar x :- !) ==>
           compiler B P CS (Bo' x) L [x|A] (R x).
 
       func main term ->.
