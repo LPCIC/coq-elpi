@@ -8,7 +8,7 @@ namespace tc.compile {
     % applied Ar times.
     pred name-pair o:term, o:term, o:nat.
 
-    func fold-map2 list A, B, D, (func A, B, D -> C, B, D) -> list C, B, D.
+    func fold-map2 list A, B, C, (func A, B, C -> A', B, C) -> list A', B, C.
     fold-map2 [] A B _ [] A B.
     fold-map2 [X|XS] A B F [Y|YS] A2 B2 :- F X A B Y A1 B1, fold-map2 XS A1 B1 F YS A2 B2.
 
