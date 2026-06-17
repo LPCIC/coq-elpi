@@ -182,9 +182,9 @@ let set_solver_mode kind qname (l: Libnames.qualid list) =
 
 let tc_builtins = [
   Elpi.API.BuiltIn.MLCode(Pred("coq.TC.override-solver",
-    In(Elpi.API.BuiltInData.string, "GR",
-    In(Elpi.API.BuiltInData.list Elpi.API.BuiltInData.string, "GR",
-    Easy("Declares that goals on GR should be solved using elpi's typeclass solver."))),
+    In(Elpi.API.BuiltInData.string, "SolverName",
+    In(Elpi.API.BuiltInData.list Elpi.API.BuiltInData.string, "ClassNames",
+    Easy("Declares that goals on classes in ClassNames should be solved using the typeclass solver SolverName."))),
   (fun s gr ~depth ->
     set_solver_mode AAdd [s] (List.map Libnames.qualid_of_string gr))), 
   DocAbove)]

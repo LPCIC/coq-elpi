@@ -37,8 +37,8 @@
 
 (package
  (name rocq-elpi-typeclasses)
- (synopsis "TC bindings for rocq-elpi")
- (description "This package provides a typeclass solver written in Elpi for Rocq")
+ (synopsis "Typeclass solver in rocq-elpi")
+ (description "This package provides a typeclass solver written in Elpi, as well as the infrastructure for writing custom ones")
  (depends rocq-elpi))
 
 (package
