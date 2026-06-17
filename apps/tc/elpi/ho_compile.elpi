@@ -421,7 +421,7 @@ namespace tc {
         std.append L' L'' L.
     }
     
-    %          Goal    Goal'      Links
+    %         Goal    Goal'   Links
     func goal term -> term, list prop.
     :name "compile-goal"
     goal Goal Goal' Links :-
