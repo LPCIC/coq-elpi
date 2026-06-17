@@ -126,7 +126,7 @@ Module HO_swap.
   Class c2 (T : (Type -> Type -> Type)).
 
   Elpi Query TC.Solver lp:{{
-    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
+    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.is-uvar f => 
       sigma T\
         tc.precomp.instance {{c1 (fun x y => lp:f y x)}} T N _ _,
         std.assert! (T = app[{{c1}}, tc.maybe-eta-tm _ _]) "[TC] invalid precomp".
@@ -245,7 +245,7 @@ Module HO_9.
   Instance i1 A: c1 (fun x => f (A x) (A x)). Qed.
 
   Elpi Query TC.Solver lp:{{
-    pi F\ sigma T\ decl F `x` {{Type -> Type}} ==> tc.precomp.instance.is-uvar F ==> 
+    pi F\ sigma T\ decl F `x` {{Type -> Type}} ==> tc.precomp.is-uvar F ==> 
       tc.precomp.instance {{c1 (fun x => f (lp:F x) (lp:F x))}} T N _ _,
       std.assert! (T = app [{{c1}}, tc.maybe-eta-tm _ _]) "Invalid precompilation".
   }}.
@@ -334,8 +334,8 @@ Module Llam_1.
   Class B (i: nat -> nat).
 
   Elpi Query TC.Solver lp:{{
-    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
-      @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
+    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.is-uvar f => 
+      @pi-decl `x` {{Type -> Type}} g\ tc.precomp.is-uvar g => 
         sigma T\
           tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N _ _,
           std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _)) _]) "[TC] invalid precomp".
