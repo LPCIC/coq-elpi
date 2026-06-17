@@ -1724,15 +1724,13 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let names = Array.to_list names in
          let tys = Array.to_list tys in
          let rargs = Array.to_list rargs in
-         let state, tys_lp = CList.fold_left_map (aux ~depth env) state tys in
-         let names_rnos_tys =
-           List.map2 (fun (name,rno) typ -> (name.Context.binder_name, rno, typ))
-             (List.combine names rargs) tys_lp in
-         let env =
-           List.fold_left (fun env (name,typ0) ->
-             EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env)
-             env (List.combine names tys) in
-         let n = List.length names in
+         let (n,state,env), names_rnos_tys =
+           CList.fold_left_map (fun (n,state,env) ((name,rno),typ0) ->
+             let state,typ = aux ~depth env state typ0 in
+             let typ = U.move ~from:depth ~to_:(depth+n) typ in
+             let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
+             (n+1,state,env), (name.Context.binder_name, rno, typ))
+           (0,state,env) (List.combine (List.combine names rargs) tys) in
          let state, bos = CArray.fold_left_map (aux ~depth:(depth+n) env) state bos in
          state, in_elpi_mfix names_rnos_tys focus_idx (Array.to_list bos)
     | C.Proj(p,_,t) ->
@@ -2355,14 +2353,16 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let outer_ctx = coq_ctx in
       let focus_idx = lp2int ~depth ~ctx:"mfix focus" focus_lp in
       let top_rno = lp2int ~depth ~ctx:"mfix rno" rno in
+      let mfix_depth = depth in
       let rec collect_ty ~depth state coq_ctx node defs gls_acc =
         match E.look ~depth node with
         | E.App(c2,name_lp,[rno_lp; ty_lp; rest_lam]) when mfix_tyc == c2 ->
           let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name_lp in
           let rno = lp2int ~depth ~ctx:"mfix-ty rno" rno_lp in
           let state, ty, gl =
+            let ty_lp = U.move ~from:depth ~to_:mfix_depth ty_lp in
             lp2constr ~calldepth syntactic_constraints outer_ctx
-              ~depth state ~on_ty:true ty_lp in
+              ~depth:mfix_depth state ~on_ty:true ty_lp in
           let coq_ctx = push_coq_ctx_local depth
             (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
           let defs = (name, rno, ty) :: defs in
