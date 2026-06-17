@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
   ; ext is the logical path that can be used in rocq to import the
   ; the .v in the theories folder
  (name ext)
