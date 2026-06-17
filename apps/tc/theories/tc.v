@@ -206,3 +206,6 @@ Elpi Tactic cs.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File cs.
+Elpi Accumulate lp:{{
+  main L :- cs.main L.
+}}.

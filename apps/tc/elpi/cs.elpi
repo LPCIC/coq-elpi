@@ -172,4 +172,9 @@ namespace cs {
   namespace solver {
 
   }
+
+  pred main list argument.
+  :name "cs-main"
+  main [str "class", trm T] :- cs.compiler.record.create-cs-pred T.
+  main [str "cs", trm T] :- cs.compiler.cs.main T.
 }
