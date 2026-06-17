@@ -1,8 +1,8 @@
 From elpi Require Import tc.
+From elpi Require Import elpi.
 
-
-Set TC NameShortPath.
-Class C (T : Type) := {f : T -> T}.
+Global Set TC NameShortPath.
+Class C (T : Type) := mkC {f : T -> T}.
 Class D (T : nat -> nat) := {g : unit}.
 Class E (T : nat) := {ge : unit}.
 Record r := mkr {car : Type; rf : car -> car}.
@@ -12,13 +12,9 @@ Elpi Accumulate TC.Compiler lp:{{
   % the goal is to check instances for C are correctly compiled
   func is-class-C prop ->.
   is-class-C (pi x\ X x) :- !, pi x\ is-class-C (X x).
-  :name "is-class-C"
   is-class-C (tc.instance _ _ _ _) :- !.
-  % :name "XX"
-  % is-class-C (tc-C _ _ :- _ as C) :- !, 
-  %   coq.say "Checking"C, if (expected-rule C) true (coq.error "Wrong compilation of" C).
-  % is-class-C (tc-C _ _ as C) :- !, 
-  %   coq.say "Checking"C, if (expected-rule C) true (coq.error "Wrong compilation of" C).
+  :name "is-class-C"
+  is-class-C (tc.class _ _ _ _) :- !.
   is-class-C C :- coq.error "FAIL" C.
 
   :before "tc-adder"
@@ -150,32 +146,79 @@ Module m4.
     intros x y. apply _. Qed.
 End m4.
 
-From elpi.apps Require Import db.
 
-From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
-From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
-From elpi.apps.tc.elpi Extra Dependency "cs.elpi" as cs.
-Elpi Command B.
-Elpi Accumulate Db tc.db.
-Elpi Accumulate Db tc_options.db.
-(* Elpi Accumulate File base. *)
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File cs.
-
-Elpi Trace Browser.
-Elpi Query lp:{{ cs.compiler.record.create-cs-pred {{r}}. }}.
+Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C _ :- !. }}.
 Set Printing All.
-Elpi Query lp:{{ cs.compiler.cs.main {{c}}. }}.
 
-(* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
+Module M.
 
-Definition rrf (H1 H2 : r) := (fun '(x,y) => (rf H1 x, rf H2 y)).
-Canonical Structure rr (H1 H2 H3 : r) := mkr (car H1 * car H2) (rrf H1 H2).
+  Elpi cs class (r).
+  Elpi cs class (C).
+  Elpi cs cs (c).
 
-Elpi Trace Browser.
-Elpi Query lp:{{ cs.compiler.cs.main {{rr}}. }}.
+  (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
 
-(* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
+  Definition fcs1 (H1 H2 : r) := (fun '(x,y) => (rf H1 x, rf H2 y)).
+  Local Canonical Structure cs1 (H1 H2 H3 : r) := mkr (car H1 * car H2) (fcs1 H1 H2).
+  Elpi cs cs (cs1).
 
-Goal exists x, car x = (nat * nat)%type.
-Proof. eexists. auto. Unshelve. apply c. Qed.
+  Goal exists x, car x = (nat * nat)%type.
+  Proof. eexists. auto. Unshelve. apply c. Qed.
+
+  Local Canonical Structure cs2 (T : Type) (c : C T) := mkr T (@f _ c).
+
+  Local Instance i : C bool. apply (mkC _ (fun x => x)). Qed.
+  Elpi cs cs (cs2).
+  (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
+
+  (* Print HintDb typeclass_instances. *)
+  Elpi TC Solver Activate TC.Solver.
+  (* Set Typeclasses Debug. *)
+  (* Set Debug "tactic-unification". *)
+
+  Elpi Accumulate solve_cs lp:{{
+    solve (goal _ _ {{@eq lp:T_ lp:P lp:T}} _ _ as G) GL :-
+      % coq.say "The goal is"G,
+      P = app [global (const Proj), A],
+      cs.compiler.cs.compiler ff (pr 0 Proj) A (app[_, T]) [] [] R,
+      % R, coq.say "The rule is"R,
+      @no-tc! => refine {{eq_refl}} G GL.
+  }}.
+
+  Goal exists x, car x = bool.
+  Proof. 
+    eexists.
+    Elpi Accumulate TC.Solver lp:{{tc.print-goal.}}.
+    elpi solve_cs.
+  Abort. (*TODO:*)
+End M.
+
+
+(* Module tc.
+  Class Cx (t: Type) := mkC {op : t -> t -> bool}.
+  Record Rx := mkR {car : Type; class_of : Cx car}.
+
+  Set Printing All.
+
+  Instance Ic : Cx bool := mkC _ (fun (x:bool) y => if x then y else negb y).
+  Canonical Structure Ir := mkR bool Ic.
+  
+  Elpi cs class (Rx).
+  Elpi cs cs (Ir).
+  Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".
+
+  From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
+  From elpi.apps.tc.elpi Extra Dependency "cs.elpi" as cs.
+
+  Elpi Tactic solve_cs.
+  Elpi Accumulate Db tc.db.
+  Elpi Accumulate File tc_aux.
+  Elpi Accumulate File cs.
+
+  Elpi Accumulate lp:{{
+    solve (goal _ _ Ty _ _ as G) GL :-
+      coq.say Ty.
+  }}.
+
+  Definition op_of (T: Rx) := @op _ (class_of T). *)
+  
