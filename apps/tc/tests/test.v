@@ -212,7 +212,7 @@ Module HO_81.
     tc.compile.goal Goal _ _ :-
       Goal = {{HO_81.c1 lp:_}}, !,
       tc.precomp.goal Goal _ Vars, !,
-      tc.compile.goal.make-pairs Vars Pairs,
+      tc.compile.make-pairs Vars Pairs,
       std.assert! (Pairs = []) "", fail.
   }}.
   

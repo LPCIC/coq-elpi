@@ -1,4 +1,53 @@
 namespace tc.compile {
+  % [uvar-pair V1 Ty V2] List of uvar for link-eta-dedup
+  %                      V1 has arity n and V2 has arity n+1
+  %                      If V1 has type A -> B, then A = Ty
+  pred uvar-pair i:term, o:term, o:term.
+
+  %                    Type     Var    Cnt    uvar-pair-list
+  func make-pairs-aux term, term -> list prop.
+  make-pairs-aux (prod _ Ty Bo) V [pi x\ uvar-pair x Ty X' :- x == V, ! | L] :- !,
+    pi x\ make-pairs-aux (Bo x) X' L.
+  make-pairs-aux _ _ [].
+
+  func make-pairs list term -> list prop.
+  make-pairs [] [] :- !.
+  make-pairs [X|Xs] L :- !,
+    coq.typecheck X Ty ok,
+    make-pairs-aux Ty X L',
+    make-pairs Xs L'',
+    std.append L' L'' L.
+
+  %                                Uva      Binders      LinkEta 
+  func build-eta-links-of-vars-aux term, list term -> list prop.
+  build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
+    uvar-pair Old Ty Next, !,
+    prune OldScope L,
+    prune Name L,
+    var OldScope Old L,
+    Hd = tc.link.eta OldScope (fun Name Ty (x\ NextScope x)),
+    pi x\ sigma L'\
+      std.append L [x] L',
+      prune (NextScope x) L',
+      var (NextScope x) Next L',
+      build-eta-links-of-vars-aux Next L' (Ys x), !,
+    sigma Closed\ (close-term-no-prune-ty Ys Ty Closed),
+    Xs = Closed.
+  build-eta-links-of-vars-aux _ _ [].
+
+  func build-eta-links-of-vars list term -> list prop.
+  build-eta-links-of-vars [] [].
+  build-eta-links-of-vars [V|Vars] L :-
+    var V Hd S,
+    build-eta-links-of-vars-aux Hd S L',
+    build-eta-links-of-vars Vars L'',
+    std.append L' L'' L.
+
+  func get-uva-pair-arity term, list term -> term.
+  get-uva-pair-arity X [] X :- !.
+  get-uva-pair-arity X [_|L] Z :- uvar-pair X _ Y, !, 
+    get-uva-pair-arity Y L Z.
+
   namespace instance {
     func is-name term ->.
     func is-uvar term ->.
@@ -55,11 +104,9 @@ namespace tc.compile {
         var H _ Scope, !,
         std.append Scope S S',
         prune Z S',
-        tc.compile.goal.make-pairs [T] Pairs,
+        make-pairs [T] Pairs,
         % We build on the fly the eta-links for T
-        (Pairs =>
-          (tc.compile.goal.build-eta-links-of-vars [T] P,
-            tc.compile.goal.get-uva-pair-arity T PF Y)),
+        (Pairs ==> build-eta-links-of-vars [T] P, get-uva-pair-arity T PF Y),
         fold-map2 NPF A L decompile-term-aux Tl XS' L2,
         std.append P L2 L3,
         NL = tc.link.llam Z (app [Y|Tl]).
@@ -95,11 +142,9 @@ namespace tc.compile {
         distinct_names L, !,      % Not needed, since decompile for llam leaves only PF
         std.append Scope L Scope',
         prune Z Scope',
-        tc.compile.goal.make-pairs [T] Pairs,
+        make-pairs [T] Pairs,
         % We build on the fly the eta-links for `T`
-        (Pairs =>
-          (tc.compile.goal.build-eta-links-of-vars [T] P,
-            tc.compile.goal.get-uva-pair-arity T L Y)),
+        (Pairs ==> build-eta-links-of-vars [T] P, get-uva-pair-arity T L Y),
         var Z Y Scope',
         std.append P B B'.
 
@@ -327,30 +372,6 @@ namespace tc.compile {
     tc.compile.instance Ty (global InstGR) Clause.
   
   namespace goal {
-    % [uvar-pair V1 Ty V2] List of uvar for link-eta-dedup
-    %                      V1 has arity n and V2 has arity n+1
-    %                      If V1 has type A -> B, then A = Ty
-    pred uvar-pair i:term, o:term, o:term.
-
-    %                    Type     Var    Cnt    uvar-pair-list
-    func make-pairs-aux term, term -> list prop.
-    make-pairs-aux (prod _ Ty Bo) V [pi x\ uvar-pair x Ty X' :- x == V, ! | L] :- !,
-      pi x\ make-pairs-aux (Bo x) X' L.
-    make-pairs-aux _ _ [].
-
-    func make-pairs list term -> list prop.
-    make-pairs [] [] :- !.
-    make-pairs [X|Xs] L :- !,
-      coq.typecheck X Ty ok,
-      make-pairs-aux Ty X L',
-      make-pairs Xs L'',
-      std.append L' L'' L.
-
-    func get-uva-pair-arity term, list term -> term.
-    get-uva-pair-arity X [] X :- !.
-    get-uva-pair-arity X [_|L] Z :- uvar-pair X _ Y, !, 
-      get-uva-pair-arity Y L Z.
-
     func decomp-term term, list prop -> term, list prop.
     decomp-term X A Y A :- name X, !, X = Y, !.
     decomp-term (global _ as C) A C A :- !.
@@ -409,31 +430,6 @@ namespace tc.compile {
     decomp-term (primitive _ as C) A C A :- !.
     decomp-term (uvar M L as X) A W A1 :- var X, !, 
       std.fold-map L A decomp-term L1 A1, coq.mk-app-uvar M L1 W.
-
-    %                                  Uva      Binders      LinkEta 
-    func build-eta-links-of-vars-aux term, list term -> list prop.
-    build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
-      uvar-pair Old Ty Next, !,
-      prune OldScope L,
-      prune Name L,
-      var OldScope Old L,
-      Hd = tc.link.eta OldScope (fun Name Ty (x\ NextScope x)),
-      pi x\ sigma L'\
-        std.append L [x] L',
-        prune (NextScope x) L',
-        var (NextScope x) Next L',
-        build-eta-links-of-vars-aux Next L' (Ys x), !,
-      sigma Closed\ (close-term-no-prune-ty Ys Ty Closed),
-      Xs = Closed.
-    build-eta-links-of-vars-aux _ _ [].
-
-    func build-eta-links-of-vars list term -> list prop.
-    build-eta-links-of-vars [] [].
-    build-eta-links-of-vars [V|Vars] L :-
-      var V Hd S,
-      build-eta-links-of-vars-aux Hd S L',
-      build-eta-links-of-vars Vars L'',
-      std.append L' L'' L.
   }
   
   %         Goal    Goal'   Links
@@ -441,9 +437,9 @@ namespace tc.compile {
   :name "compile-goal"
   goal Goal Goal' Links :-
     tc.precomp.goal Goal GoalPrecomp Vars, !,
-    goal.make-pairs Vars Pairs,
+    make-pairs Vars Pairs,
     Pairs => (
-      std.assert!(goal.build-eta-links-of-vars Vars EtaLinks) "[TC] cannot build eta-links",
+      std.assert!(build-eta-links-of-vars Vars EtaLinks) "[TC] cannot build eta-links",
       std.assert!(goal.decomp-term GoalPrecomp EtaLinks Goal' Links) "[TC] cannot compile goal"
     ).
 }
