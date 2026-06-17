@@ -291,13 +291,9 @@ namespace tc {
     proj-reducer-aux R P N O TyAg T.
   proj-reducer P _ Ag X T :- name X, !, build-proj-term P Ag X T.
 
-
-  kind range-arity type.
-  type r-ar nat -> nat -> range-arity.
-
   type prod-range 
     term ->          % The current qunatified uvar 
-    range-arity ->   % Its minimum and maximal application
+    nat ->   % Its minimum and maximal application
     term.
 
   type maybe-eta-tm 

@@ -203,15 +203,15 @@ namespace tc {
       :index (_ 1)
       func add-link-eta-dedup 
         (func list prop -> prop),
-        range-arity, term, term, (list (pair term name)), list prop -> prop.
+        nat, term, term, (list (pair term name)), list prop -> prop.
       % Base case when the variable is always used at same arity
-      add-link-eta-dedup F (r-ar _ z) _ _ [] PremR Clause :- !, 
+      add-link-eta-dedup F z _ _ [] PremR Clause :- !, 
         F PremR Clause.
-      add-link-eta-dedup F (r-ar _ z) P Pty Acc PremR Clause :- !, 
+      add-link-eta-dedup F z P Pty Acc PremR Clause :- !, 
         make-eta-link P Pty Acc [] [] LinkEtaDedup,
         F [LinkEtaDedup|PremR] Clause.
-      add-link-eta-dedup F (r-ar M (s N)) P PTy Acc PremR (pi x y\ Clause x y) :- !,
-        pi x y\ name-pair P x (s N) => is-uvar x => add-link-eta-dedup F (r-ar M N) P PTy [pr x y|Acc] PremR (Clause x y).
+      add-link-eta-dedup F (s N) P PTy Acc PremR (pi x y\ Clause x y) :- !,
+        pi x y\ name-pair P x (s N) => is-uvar x => add-link-eta-dedup F N P PTy [pr x y|Acc] PremR (Clause x y).
       add-link-eta-dedup _ Ar P PTy _ _ _ :- coq.error "[TC] add-link-eta-dedup error" Ar P PTy. 
 
       :functional
