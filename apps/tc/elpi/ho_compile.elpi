@@ -351,49 +351,64 @@ namespace tc.compile {
     get-uva-pair-arity X [_|L] Z :- uvar-pair X _ Y, !, 
       get-uva-pair-arity Y L Z.
 
-    func decompile-problematic-term term, list prop -> term, list prop.
-    decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
-      prune V S, !, fold-map T L T' L2.
+    func decomp-term term, list prop -> term, list prop.
+    decomp-term X A Y A :- name X, !, X = Y, !.
+    decomp-term (global _ as C) A C A :- !.
+    decomp-term (pglobal _ _ as C) A C A :- !.
+    decomp-term (sort _ as C) A C A :- !.
 
-    decompile-problematic-term (tc.maybe-proj A S) L X [NL|L] :- !,
+    decomp-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
+      prune V S, !, decomp-term T L T' L2.
+
+    decomp-term (tc.maybe-proj A S) L X [NL|L] :- !,
       prune X S,
       NL = tc.link.proj A X.
 
-    decompile-problematic-term (tc.prod-range T _) A T' A' :- !,
-      fold-map T A T' A'.
+    decomp-term (tc.prod-range T _) A T' A' :- !,
+      decomp-term T A T' A'.
 
-    decompile-problematic-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
+    decomp-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
       prune Z Sc,
       get-uva-pair-arity H S Y,
-      std.fold-map NPF L fold-map Tl L',
+      std.fold-map NPF L decomp-term Tl L',
       NL = tc.link.llam Z (app[Y | Tl]).
 
     % TODO: complete this fold
-    decompile-problematic-term (app[X|S]) L Z L :-
+    decomp-term (app[X|S]) L Z L :-
       var X _ Scope, 
       std.append Scope S Scope',
       distinct_names Scope', !,
       get-uva-pair-arity X S Y,
       prune Z Scope', var Z Y Scope'.
     
-    decompile-problematic-term A L A L :- var A, !.
+    decomp-term A L A L :- var A, !.
 
-    decompile-problematic-term (fun N Ty Bo) L (fun N Ty' Bo') L3 :-
-      fold-map Ty L Ty' L1,
-      (pi x\ fold-map (Bo x) [] (Bo' x) (Lx x)),
+    decomp-term (fun N Ty Bo) L (fun N Ty' Bo') L3 :-
+      decomp-term Ty L Ty' L1,
+      (pi x\ decomp-term (Bo x) [] (Bo' x) (Lx x)),
       close-term-no-prune-ty Lx Ty' L2,
       std.append L1 L2 L3.
 
-    decompile-problematic-term (prod N Ty Bo) L (prod N Ty' Bo') L3 :-
-      (pi x\ fold-map (Bo x) [] (Bo' x) (Lx x)),
+    decomp-term (prod N Ty Bo) L (prod N Ty' Bo') L3 :-
+      (pi x\ decomp-term (Bo x) [] (Bo' x) (Lx x)),
       close-term-no-prune-ty Lx Ty L1,
-      fold-map Ty L Ty' L2,
+      decomp-term Ty L Ty' L2,
       std.append L2 L1 L3.
 
-    func compile term, list prop -> term, list prop.
-    compile T L T' L' :-
-      (pi t l t' l'\ fold-map t l t' l' :- decompile-problematic-term t l t' l', !) =>
-        fold-map T L T' L'.
+    decomp-term (let N T B F) A (let N T1 B1 F1) A3 :- !,
+      decomp-term T A T1 A1, decomp-term B A1 B1 A2, 
+      pi x\ decomp-term (F x) A2 (F1 x) A3.
+    decomp-term (app L) A (app L1) A1 :- !, 
+      std.fold-map L A decomp-term L1 A1.
+    decomp-term (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+      decomp-term Ty A Ty1 A1, 
+      pi x\ decomp-term (F x) A1 (F1 x) A2.
+    decomp-term (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+      decomp-term T A T1 A1, decomp-term Rty A1 Rty1 A2, 
+      std.fold-map B A2 decomp-term B1 A3.
+    decomp-term (primitive _ as C) A C A :- !.
+    decomp-term (uvar M L as X) A W A1 :- var X, !, 
+      std.fold-map L A decomp-term L1 A1, coq.mk-app-uvar M L1 W.
 
     %                                  Uva      Binders      LinkEta 
     func build-eta-links-of-vars-aux term, list term -> list prop.
@@ -429,7 +444,7 @@ namespace tc.compile {
     goal.make-pairs Vars Pairs,
     Pairs => (
       std.assert!(goal.build-eta-links-of-vars Vars EtaLinks) "[TC] cannot build eta-links",
-      std.assert!(goal.compile GoalPrecomp EtaLinks Goal' Links) "[TC] cannot compile goal"
+      std.assert!(goal.decomp-term GoalPrecomp EtaLinks Goal' Links) "[TC] cannot compile goal"
     ).
 }
 
