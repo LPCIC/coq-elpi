@@ -85,13 +85,10 @@ namespace tc.precomp {
     % for example, max-arity-aux x (f (x 1 2) (g (x 4 5 6))) returns 3
     :index (_ 1)
     func get-max-arity-aux term, term -> nat.
-    get-max-arity-aux N N z :- !.
     get-max-arity-aux _ N z :- name N, !.
-    get-max-arity-aux T (app [T|L]) R :- !,
-      length-nat L Len,
+    get-max-arity-aux T (app [H|L]) R :- !,
+      if (T == H) (length-nat L Len) (Len = z),
       std.fold L Len (x\y\w\ sigma M\ get-max-arity-aux T x M, max-nat y M w) R.
-    get-max-arity-aux T (app [_|L]) R :- !,
-      std.fold L z (x\y\w\ sigma M\ get-max-arity-aux T x M, max-nat y M w) R.
     get-max-arity-aux T (fun _ Ty B) R2 :- !,
       get-max-arity-aux T Ty R,
       (pi x\ get-max-arity-aux T (B x) R1),
@@ -108,14 +105,12 @@ namespace tc.precomp {
       get-max-arity-aux X Ty R1,
       get-max-arity-aux X T R2,
       (pi x\ get-max-arity-aux T (B x) R3),
-      max-nat R1 R2 R12,
-      max-nat R12 R3 R4.
+      max-nat {max-nat R1 R2} R3 R4.
     get-max-arity-aux A B _ :- coq.error "TC: get-max-arity-aux failure with" A B.
 
     func get-max-arity term, term, term -> nat.
     get-max-arity _ Ty _ N :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
     get-max-arity B _ T N :- !, get-max-arity-aux B T N. 
-
 
     :index (_ 1)
     func precompile-aux positivity, term, nat -> term, nat.
