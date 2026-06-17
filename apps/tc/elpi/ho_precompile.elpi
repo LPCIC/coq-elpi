@@ -108,9 +108,15 @@ namespace tc.precomp {
       max-nat {max-nat R1 R2} R3 R4.
     get-max-arity-aux A B _ :- coq.error "TC: get-max-arity-aux failure with" A B.
 
+    % [get-max-arity T Ty T' N]
+    % Invariant = T is of type Ty and T is a name
+    % returns the number of variables that shoud be quantified
+    % when compiling T, in particular:
+    % - if Ty a type-class, then we return the number of arguments of the class
+    % - otherwise, we count at which arity T is used in T'
     func get-max-arity term, term, term -> nat.
     get-max-arity _ Ty _ N :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
-    get-max-arity B _ T N :- !, get-max-arity-aux B T N. 
+    get-max-arity T _ T' N :- !, get-max-arity-aux T T' N. 
 
     :index (_ 1)
     func precompile-aux positivity, term, nat -> term, nat.
@@ -178,7 +184,6 @@ namespace tc.precomp {
     get-univ T L :-
       coq.univ.variable.set.elements {coq.univ.variable.of-term T} Vars,
       std.map Vars (x\r\ coq.univ.variable r x) L.
-
   }
 
   /*
@@ -205,8 +210,6 @@ namespace tc.precomp {
     std.assert!(instance.precompile-aux instance.is_pos T z T' N) "[TC] cannot precompile instance".
 
   namespace goal {
-
-
     func precompile-aux term, list term -> term, list term.
     precompile-aux X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
     precompile-aux (global _ as C) A C A :- !.
