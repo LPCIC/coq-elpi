@@ -8,46 +8,50 @@ namespace tc.compile {
     % applied Ar times.
     pred name-pair o:term, o:term, o:nat.
 
+    func fold-map2 list A, B, D, (func A, B, D -> C, B, D) -> list C, B, D.
+    fold-map2 [] A B _ [] A B.
+    fold-map2 [X|XS] A B F [Y|YS] A2 B2 :- F X A B Y A1 B1, fold-map2 XS A1 B1 F YS A2 B2.
+
     namespace decompile {
 
-      func decompile-term-aux term, pair (list term) (list prop) -> term, pair (list term) (list prop).
+      func decompile-term-aux term, list term, list prop -> term, list term, list prop.
 
-      decompile-term-aux X A Y A :- name X, !, X = Y, !. % avoid loading "decompile-term-aux x A x A" at binders
-      decompile-term-aux (global _ as C) A C A :- !.
-      decompile-term-aux (pglobal _ _ as T) L T' L :- !, copy T T', !.
-      decompile-term-aux (sort _ as T) L T' L :- !, copy T T', !.
-      decompile-term-aux (uvar as X) L X L :- !.
-      decompile-term-aux (primitive _ as P) L P L :- !.
+      decompile-term-aux X A L Y A L :- name X, !, X = Y, !. % avoid loading "decompile-term-aux x A x A" at binders
+      decompile-term-aux (global _ as C) A L C A L :- !.
+      decompile-term-aux (pglobal _ _ as T) A L T' A L :- !, copy T T', !.
+      decompile-term-aux (sort _ as T) A L T' A L :- !, copy T T', !.
+      decompile-term-aux (uvar as X) A L X A L :- !.
+      decompile-term-aux (primitive _ as P) A L P A L :- !.
 
       :name "decompile-inst-maybe-proj"
-      decompile-term-aux (tc.maybe-proj T S) (pr [X|XS] L1) Y (pr XS [NL|L1]) :- !,
+      decompile-term-aux (tc.maybe-proj T S) [X|XS] L1 Y XS [NL|L1] :- !,
         name Y X S, NL = tc.link.proj T Y.
 
-      decompile-term-aux (tc.maybe-eta-tm T S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :- !,
+      decompile-term-aux (tc.maybe-eta-tm T S) [X|XS] L1 Y XS' [NL | L2] :- !,
         name Y X S,
-        decompile-term-aux T (pr XS L1) T' (pr XS' L2), 
+        decompile-term-aux T XS L1 T' XS' L2,
         NL = tc.link.eta Y T'.
 
-      decompile-term-aux (tc.prod-range T _) A T' A' :- !,
-        decompile-term-aux T A T' A'.
+      decompile-term-aux (tc.prod-range T _) A L T' A' L' :- !,
+        decompile-term-aux T A L T' A' L'.
 
       % Maybe-llam when H is a coq unif variable quantified in the instance type
       % In the following instance, X is a HO variable applied to a constant (not a name)
       %   Instance i : forall (X : T1 -> T2) (a : T1), c (X a). 
-      decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) (pr [X|XS] L1) Y (pr XS' [NL | L2]) :-
+      decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) [X|XS] L1 Y XS' [NL | L2] :-
         not (var H), !, % is-uvar H, holds
         name Y X S,
         length-nat PF Len,
         std.assert!(name-pair H V Len) "[TC] fail to find name-pair",
         name Hd V PF,
-        std.fold-map NPF (pr XS L1) decompile-term-aux Tl (pr XS' L2), 
+        fold-map2 NPF XS L1 decompile-term-aux Tl XS' L2, 
         NL = tc.link.llam Y (app [Hd|Tl]).
 
       % Maybe-llam when H is a hole appearing in the shelved goals
       % This happens when the instance to be compiled comes from the context
       % Example: Goal exists (X : T1 -> T2), forall a, c (X a) -> ...
       %            intros; eexists. (* In the context we have the instance `H: c (?X a)` *)
-      decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) A Z (pr XS' [NL | L3]) :-  !,
+      decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) A L Z XS' [NL | L3] :-  !,
         var H _ Scope, !,
         std.append Scope S S',
         prune Z S',
@@ -56,27 +60,27 @@ namespace tc.compile {
         (Pairs =>
           (tc.compile.goal.build-eta-links-of-vars [T] P,
             tc.compile.goal.get-uva-pair-arity T PF Y)),
-        std.fold-map NPF A decompile-term-aux Tl (pr XS' L2), 
+        fold-map2 NPF A L decompile-term-aux Tl XS' L2,
         std.append P L2 L3,
         NL = tc.link.llam Z (app [Y|Tl]).
 
-      decompile-term-aux (fun Name Ty Bo) (pr XS L) (fun Name Ty' Bo') (pr XS2 L3) :- !,
-        (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
+      decompile-term-aux (fun Name Ty Bo) XS L (fun Name Ty' Bo') XS2 L3 :- !,
+        (pi x\ is-name x => decompile-term-aux (Bo x) XS [] (Bo' x) XS1 (L1x x)),
         close-term-no-prune-ty L1x {clean-term Ty} L1,
-        decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
+        decompile-term-aux Ty XS1 L Ty' XS2 L2,
         std.append L1 L2 L3.
 
-      decompile-term-aux (prod Name Ty Bo) (pr XS L) (prod Name Ty' Bo') (pr XS2 L3) :- !,
-        (pi x\ is-name x => decompile-term-aux (Bo x) (pr XS []) (Bo' x) (pr XS1 (L1x x))),
+      decompile-term-aux (prod Name Ty Bo) XS L (prod Name Ty' Bo') XS2 L3 :- !,
+        (pi x\ is-name x => decompile-term-aux (Bo x) XS [] (Bo' x) XS1 (L1x x)),
         close-term-no-prune-ty L1x {clean-term Ty} L1,
-        decompile-term-aux Ty (pr XS1 L) Ty' (pr XS2 L2),
+        decompile-term-aux Ty XS1 L Ty' XS2 L2,
         std.append L1 L2 L3.
 
       % HO var when H is a quantified variable in the instance type being in PF
       % Example: Instance i: forall (X : T1 -> T2), (forall a, c1 (X a)) -> c2.
       %   Note: X is the HO var taken into account which is applied to the list of 
       %         distinct_names [a]
-      decompile-term-aux (app [H|L]) N R N :-
+      decompile-term-aux (app [H|L]) N A R N A :-
         is-uvar H,
         std.forall L is-name,     % Not needed, since precompile does this check
         distinct_names L, !,      % Not needed, since precompile does this check
@@ -85,7 +89,7 @@ namespace tc.compile {
         name R V L.
 
       % HO var when H is a hole appearing in the shelved goals
-      decompile-term-aux (app [T|L]) (pr A B) Z (pr A B') :-
+      decompile-term-aux (app [T|L]) A B Z A B' :-
         var T _ Scope,
         std.forall L is-name,     % Not needed, since decompile for llam leaves only PF
         distinct_names L, !,      % Not needed, since decompile for llam leaves only PF
@@ -99,20 +103,20 @@ namespace tc.compile {
         var Z Y Scope',
         std.append P B B'.
 
-      decompile-term-aux (app L) PR (app L') PR' :- !,
-        std.fold-map L PR decompile-term-aux L' PR'.
+      decompile-term-aux (app L) A PR (app L') A' PR' :- !,
+        fold-map2 L A PR decompile-term-aux L' A' PR'.
 
-      decompile-term-aux (let N T Ty Bo) PR (let N T' Ty' Bo') PR3 :- !,
-        decompile-term-aux T PR T' PR1,
-        decompile-term-aux Ty PR1 Ty' PR2,
-        (pi x\ is-name x => decompile-term-aux (Bo x) PR2 (Bo' x) PR3).
+      decompile-term-aux (let N T Ty Bo) A PR (let N T' Ty' Bo') A3 PR3 :- !,
+        decompile-term-aux T A PR T' A1 PR1,
+        decompile-term-aux Ty A1 PR1 Ty' A2 PR2,
+        (pi x\ is-name x => decompile-term-aux (Bo x) A2 PR2 (Bo' x) A3 PR3).
 
-      decompile-term-aux A B _ _ :- coq.error "[TC] cannot decompile-term-aux of" A B.
+      decompile-term-aux A B C _ _ _ :- coq.error "[TC] cannot decompile-term-aux of" A B C.
       
       :functional
       pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
       decompile-term L L' T R Links :-
-        decompile-term-aux T (pr L []) R (pr L' Links).
+        decompile-term-aux T L [] R L' Links.
 
     }
 
