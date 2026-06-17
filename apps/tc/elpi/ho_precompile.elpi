@@ -80,39 +80,41 @@ namespace tc.precomp {
     neg is_neg is_pos :- !.
     neg is_neg_fix is_neg_fix :- !.
 
-    % TODO: this is incomplete: it lacks of some term constructors
+    % [max-arity-aux X T N] 
+    % returns the maximal application of X in T
+    % for example, max-arity-aux x (f (x 1 2) (g (x 4 5 6))) returns 3
     :index (_ 1)
-    func get-range-arity-aux term, term -> nat.
-    get-range-arity-aux N N z :- !.
-    get-range-arity-aux _ N z :- name N, !.
-    get-range-arity-aux T (app [T|L]) R :- !,
+    func get-max-arity-aux term, term -> nat.
+    get-max-arity-aux N N z :- !.
+    get-max-arity-aux _ N z :- name N, !.
+    get-max-arity-aux T (app [T|L]) R :- !,
       length-nat L Len,
-      std.fold L Len (x\y\w\ sigma M\ get-range-arity-aux T x M, max-nat y M w) R.
-    get-range-arity-aux T (app [_|L]) R :- !,
-      std.fold L z (x\y\w\ sigma M\ get-range-arity-aux T x M, max-nat y M w) R.
-    get-range-arity-aux T (fun _ Ty B) R2 :- !,
-      get-range-arity-aux T Ty R,
-      (pi x\ get-range-arity-aux T (B x) R1),
+      std.fold L Len (x\y\w\ sigma M\ get-max-arity-aux T x M, max-nat y M w) R.
+    get-max-arity-aux T (app [_|L]) R :- !,
+      std.fold L z (x\y\w\ sigma M\ get-max-arity-aux T x M, max-nat y M w) R.
+    get-max-arity-aux T (fun _ Ty B) R2 :- !,
+      get-max-arity-aux T Ty R,
+      (pi x\ get-max-arity-aux T (B x) R1),
       max-nat R R1 R2.
-    get-range-arity-aux T (prod _ Ty B) R2 :- !,
-      get-range-arity-aux T Ty R,
-      (pi x\ get-range-arity-aux T (B x) R1),
+    get-max-arity-aux T (prod _ Ty B) R2 :- !,
+      get-max-arity-aux T Ty R,
+      (pi x\ get-max-arity-aux T (B x) R1),
       max-nat R R1 R2.
-    get-range-arity-aux _ (global _) z :- !.
-    get-range-arity-aux _ uvar z :- !.
-    get-range-arity-aux _ (sort _) z :- !.
-    get-range-arity-aux _ (pglobal _ _) z :- !.
-    get-range-arity-aux X (let _ T Ty B) R4 :- !,
-      get-range-arity-aux X Ty R1,
-      get-range-arity-aux X T R2,
-      (pi x\ get-range-arity-aux T (B x) R3),
+    get-max-arity-aux _ (global _) z :- !.
+    get-max-arity-aux _ uvar z :- !.
+    get-max-arity-aux _ (sort _) z :- !.
+    get-max-arity-aux _ (pglobal _ _) z :- !.
+    get-max-arity-aux X (let _ T Ty B) R4 :- !,
+      get-max-arity-aux X Ty R1,
+      get-max-arity-aux X T R2,
+      (pi x\ get-max-arity-aux T (B x) R3),
       max-nat R1 R2 R12,
       max-nat R12 R3 R4.
-    get-range-arity-aux A B _ :- coq.error "Count maximal arity failure" A B.
+    get-max-arity-aux A B _ :- coq.error "TC: get-max-arity-aux failure with" A B.
 
-    func get-range-arity term, term, term -> nat.
-    get-range-arity _ Ty _ N :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
-    get-range-arity B _ T N :- !, get-range-arity-aux B T N. 
+    func get-max-arity term, term, term -> nat.
+    get-max-arity _ Ty _ N :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
+    get-max-arity B _ T N :- !, get-max-arity-aux B T N. 
 
 
     :index (_ 1)
@@ -143,7 +145,7 @@ namespace tc.precomp {
     % Charge if we work with unification variable or local name
     % And returns the subterms is a prod-range
     precompile-aux IsP (prod Name Ty B) N (tc.prod-range (prod Name Ty' B') MaxAr) P :- !,
-      std.assert! (pi x\ get-range-arity x Ty (B x) MaxAr) "[TC] get-range-arity should not fail",
+      std.assert! (pi x\ get-max-arity x Ty (B x) MaxAr) "[TC] get-max-arity should not fail",
       if (IsP = is_pos) (C = x\ is-uvar x) (C = x\ is-name x),
       std.assert! (pi x\ C x => decl x Name Ty => precompile-aux IsP (B x) N (B' x) M) "[TC] should not fail",
       precompile-aux {neg IsP} Ty M Ty' P.
