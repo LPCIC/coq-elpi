@@ -3281,7 +3281,14 @@ Supported attributes:
       match c with
       | Variable _ -> raise No_clause
       | Constant c ->
-        try ignore (find_structure_from_projection env c)
+        try 
+          (* TODO: this can be optimized with ad-hoc API in rocq *)
+          (* here we look twice for env to get some partial information from c *)
+          (* we could have: Structures.Structure.is_canon_proj : Names.Constant.t -> bool *)
+          let s = (find_structure_from_projection env c) in
+          let n = Structures.Structure.projection_number env c in 
+          if (List.nth s.projections n).proj_canonical then ()
+          else raise No_clause
         with Not_found -> raise No_clause)),
   DocAbove);
 
