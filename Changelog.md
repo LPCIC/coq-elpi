@@ -1,3 +1,7 @@
+# [UNRELESED]
+- New `coq.elpi.add-predicate?` to check if a predicate is declared in elpi
+
+
 # [3.4.0] 19/05/2026
 
 Requires Elpi 3.7.1 and Rocq 9.0, 9.1 or 9.2.
