@@ -172,6 +172,23 @@ End raw_anonymous_fields.
 
 (*****************************************)
 
+Module record_attributes0.
+Record foo A (B : A) : Type := {
+    a (_: A) (_ : A) : A;
+    z (a : A) :>  B = B -> A;
+#[canonical=no]
+    x (w := 3) : forall x, a x x = x;
+  }.
+Elpi Query lp:{{
+  coq.locate "foo" (indt I),
+  coq.env.projections I [some A, some B, some C],
+  coq.CS.canonical-projection? A,
+  coq.CS.canonical-projection? B,
+  not (coq.CS.canonical-projection? C).
+}}.
+End record_attributes0.
+
+
 Module record_attributes.
 Elpi declarations
 Record foo A (B : A) : Type := {
@@ -182,7 +199,10 @@ Record foo A (B : A) : Type := {
   }.
 Elpi Query lp:{{
   coq.locate "foo" (indt I),
-  coq.env.projections I [some _, some _, some _].
+  coq.env.projections I [some A, some B, some C],
+  coq.CS.canonical-projection? A,
+  coq.CS.canonical-projection? B,
+  not (coq.CS.canonical-projection? C).
 }}.
 End record_attributes.
 
