@@ -169,17 +169,11 @@ namespace tc.precomp {
       pi x\ is-name x => def x N T Ty => precompile-aux is_neg_fix (Bo x) A2 (Bo' x) A3.
 
 
-    % TODO: what about the following constructors?
-    % precompile-aux IsP (let N T B F) A (let N T1 B1 F1) A3 :- !,
-    %   precompile-aux IsP T A T1 A1, precompile-aux IsP B A1 B1 A2, pi x\ is-name x => precompile-aux IsP (F x) A2 (F1 x) A3.
-    % precompile-aux IsP (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
-    %   precompile-aux IsP Ty A Ty1 A1, pi x\ is-name x => precompile-aux IsP (F x) A1 (F1 x) A2.
-    % precompile-aux IsP (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
-    %   precompile-aux IsP T A T1 A1, precompile-aux IsP Rty A1 Rty1 A2, std.fold-map B A2 (precompile-aux IsP) B1 A3.
+    precompile-aux B (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+      precompile-aux B Ty A Ty1 A1, pi x\ precompile-aux is_neg_fix (F x) A1 (F1 x) A2.
+    precompile-aux IsP (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+      precompile-aux IsP T A T1 A1, precompile-aux IsP Rty A1 Rty1 A2, std.fold-map B A2 (precompile-aux IsP) B1 A3.
     precompile-aux _ (primitive _ as C) A C A :- !.
-    % precompile-aux IsP (uvar M L as X) A W A1 :- var X, !, std.fold-map L A (precompile-aux IsP) L1 A1, coq.mk-app-uvar M L1 W.
-    % % when used in CHR rules
-    % precompile-aux IsP (uvar X L) A (uvar X L1) A1 :- std.fold-map L A (precompile-aux IsP) L1 A1.
 
     func get-univ-instances term -> list univ-instance.
     get-univ-instances T L :-
@@ -239,7 +233,6 @@ namespace tc.precomp {
       names Scope1,
       std.fold-map NPF N precompile-aux NPF1 M. 
 
-    % In the goal there are 
     precompile-aux (prod Name Ty B) N (tc.prod-range (prod Name Ty' B') MaxAr) P :- !,
       count-prod Ty MaxAr,
       std.assert! (pi x\ decl x Name Ty => precompile-aux (B x) N (B' x) M) "[TC] should not fail",
