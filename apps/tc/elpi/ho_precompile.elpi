@@ -118,6 +118,11 @@ namespace tc.precomp {
     get-max-arity _ Ty _ N :- tc.get-TC-of-inst-type Ty _, !, count-prod Ty N.
     get-max-arity T _ T' N :- !, get-max-arity-aux T T' N. 
 
+    % [precompile-aux P T N T' N']
+    % P tells if we are in positive or negative position
+    % takes a term T and a nat N
+    % returns a tagged term T and an unpdated nat N'
+    % the tags are for problematic subterms and N' is for how many problamatic subterms exists
     :index (_ 1)
     func precompile-aux positivity, term, nat -> term, nat.
     precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
