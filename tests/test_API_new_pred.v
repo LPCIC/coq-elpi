@@ -20,6 +20,13 @@ main [str P] :-
   coq.say "Result" Q.
 }}.
 
+Elpi Query lp:{{
+  not (coq.elpi.predicate? "this.predicate.does.not.exists"),
+  coq.elpi.predicate? "std.rev",
+  coq.elpi.predicate? "std.append",
+  coq.elpi.predicate? "main".
+}}.
+
 
 Elpi Command declare_pred.
 Elpi Accumulate lp:{{
