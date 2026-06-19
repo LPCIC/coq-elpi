@@ -1,0 +1,13 @@
+(rocq.theory
+  ; ext is the logical path that can be used in rocq to import the
+  ; the .v in the theories folder
+ (name ext)
+  ; these are the dependencies of the current package
+ (theories elpi_elpi elpi ext_elpi_src)
+  ; the rocq files in this folder (theories)
+  ; will use the pluging called ext.plug
+  ; this is the name of the library defined in src
+ (plugins ext.plug)
+ (package ext))
+
+(include_subdirs qualified)
