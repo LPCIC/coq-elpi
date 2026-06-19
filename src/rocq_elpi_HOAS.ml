@@ -2353,16 +2353,14 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let outer_ctx = coq_ctx in
       let focus_idx = lp2int ~depth ~ctx:"mfix focus" focus_lp in
       let top_rno = lp2int ~depth ~ctx:"mfix rno" rno in
-      let mfix_depth = depth in
       let rec collect_ty ~depth state coq_ctx node defs gls_acc =
         match E.look ~depth node with
         | E.App(c2,name_lp,[rno_lp; ty_lp; rest_lam]) when mfix_tyc == c2 ->
           let name = in_coq_fresh_annot_name ~depth ~coq_ctx depth name_lp in
           let rno = lp2int ~depth ~ctx:"mfix-ty rno" rno_lp in
           let state, ty, gl =
-            let ty_lp = U.move ~from:depth ~to_:mfix_depth ty_lp in
             lp2constr ~calldepth syntactic_constraints outer_ctx
-              ~depth:mfix_depth state ~on_ty:true ty_lp in
+              ~depth state ~on_ty:true ty_lp in
           let coq_ctx = push_coq_ctx_local depth
             (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
           let defs = (name, rno, ty) :: defs in
