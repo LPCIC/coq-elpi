@@ -39,8 +39,8 @@ namespace cs {
       :index (_ 1)
       func get-projn int, list (option constant) -> list (pair int constant).
       get-projn _ [] [].
-      get-projn M [some X|Xs] [pr M X|Ys] :- N is M + 1, get-projn N Xs Ys.
-      get-projn M [none|Xs] Ys :- N is M + 1, get-projn N Xs Ys.
+      get-projn M [some C|Xs] [pr M C|Ys] :- coq.CS.canonical-projection? C, !, N is M + 1, get-projn N Xs Ys.
+      get-projn M [_|Xs] Ys :- N is M + 1, get-projn N Xs Ys.
 
       func get-proj term -> list (pair int constant).
       get-proj (prod _ _ B) Pg :- !, pi x\ get-proj (B x) Pg.
