@@ -4793,6 +4793,17 @@ Supported attributes:
       )),
   DocAbove);
 
+  MLCode(Pred("coq.elpi.predicate?",
+    In(B.string,"PredName",
+    Full(global,"Tells if a predicate called PredName exists")),
+    (fun name ~depth _ _ state ->
+      try
+        Elpi.API.RawQuery.global_name_to_constant state name |> ignore;
+        state, (), []
+      with Elpi_compiler.Compiler_data.CompileError _ -> raise No_clause
+      )),
+  DocAbove);
+
   MLCode(Pred("coq.elpi.predicate",
     In(B.string,"PredName",
     In(list B.any,"Args",

@@ -2000,6 +2000,9 @@ external symbol out : argument_mode = "1".
 external func coq.elpi.add-predicate string, string, string, 
                                     list (pair argument_mode string).
 
+% [coq.elpi.predicate? PredName] Tells if a predicate called PredName exists
+external func coq.elpi.predicate? string.
+
 % [coq.elpi.predicate PredName Args Pred] Pred is the application of
 % PredName to Args
 external func coq.elpi.predicate string, list any -> prop.
