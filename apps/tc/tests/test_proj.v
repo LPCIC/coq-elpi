@@ -47,35 +47,32 @@ End m1.
 
 Module m1'.
   Elpi Accumulate TC.Compiler lp:{{
-    :after "is-class-C" is-class-C (tc-D {{fun x => x}} _) :- !.
+    % NOTE: rf is not canonical, therefore no reduced nor linked
+    :after "is-class-C" is-class-C (tc-D {{rf c}} _) :- !.
   }}.
 
   Local Instance inst_red: D (rf c). now constructor. Qed.
 
   Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C C :- coq.error "FAIL" C, !. }}.
-  Goal D (fun x => x). apply _. Qed.
+  (* NOTE: The failure here is due to delta and beta conversion rules *)
+  Goal D (fun x => x). Fail apply _. Abort.
 End m1'.
 
 Module m1''.
   Elpi Accumulate TC.Compiler lp:{{
-    :after "is-class-C" is-class-C (tc-E X _ :- [K_]) :- !, name X.
+    :after "is-class-C" is-class-C (tc-E {{rf c 3}} _) :- !.
   }}.
 
   Local Instance inst_red: E (rf c 3). now constructor. Qed.
   Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C C :- coq.error "FAIL" C, !. }}.
 
-  (* TODO: check this *)
+  (* NOTE: similarly to previous test, this fails due to delta-beta conv rules *)
   Goal E 3. Fail apply _. Abort.
 End m1''.
 
 Module m2.
-  (* Mh, why this fails? *)
-  (* Elpi Accumulate TC.Compiler lp:{{
-    :after "x" expected-rule X :- !, coq.say "CIAO"X, std.spy(X = (tc-C Y _ :- [tc.link.proj _ _])), !.
-  }}. *)
   Elpi Accumulate TC.Compiler lp:{{
-    % TODO: here I am doing to weak check, should make the previous Accumulate succeeds
-    :after "is-class-C" is-class-C (tc-C X _ :- [K_]) :- !, name X, coq.say K_.
+    :after "is-class-C" is-class-C (tc-C X (app[_,W]) :- [canstr-car X W]) :- !, name X.
   }}.
 
   (* cannot reduce the projection: c is quantified *)
@@ -101,7 +98,6 @@ Module m3.
   Goal C nat. apply _. Qed.
   Goal C (car c). apply _. Qed.
   (* with local instance for c *)
-  Elpi Trace Browser.
   Goal forall x, C (car x). intros. apply _. Qed.
 End m3.
 
@@ -142,24 +138,18 @@ Module m4.
 
   Local Instance inst2 c: C c. now constructor. Qed.
 
-  Goal forall x y, C (@ofe_car1 x y).
-    intros x y. apply _. Qed.
+  Goal forall x y, C (@ofe_car1 x y). apply _. Qed.
 
-  Goal forall x y, C (@ofe_car2 x y x).
-    intros x y. apply _. Qed.
+  Goal forall x y, C (@ofe_car2 x y x). apply _. Qed.
 End m4.
-
 
 Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C _ :- !. }}.
 Set Printing All.
 
 Module M.
 
-  (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
-
   Definition fcs1 (H1 H2 : r) := (fun '(x,y) => (rf H1 x, rf H2 y)).
   Local Canonical Structure cs1 (H1 H2 H3 : r) := mkr (car H1 * car H2) (fcs1 H1 H2).
-  Elpi cs cs (cs1).
 
   Goal exists x, car x = (nat * nat)%type.
   Proof. eexists. auto. Unshelve. apply c. Qed.
@@ -167,13 +157,6 @@ Module M.
   Local Canonical Structure cs2 (T : Type) (c : C T) := mkr T (@f _ c).
 
   Local Instance i : C bool. apply (mkC _ (fun x => x)). Qed.
-  (* Elpi cs cs (cs2). *)
-  (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
-
-  (* Print HintDb typeclass_instances. *)
-  Elpi TC Solver Activate TC.Solver.
-  (* Set Typeclasses Debug. *)
-  (* Set Debug "tactic-unification". *)
 
   Elpi Accumulate solve_cs lp:{{
     solve (goal _ _ {{@eq lp:T_ lp:P lp:T}} _ _ as G) GL :-
@@ -187,24 +170,16 @@ Module M.
   Goal exists x, car x = bool.
   Proof. 
     eexists.
-    Elpi Accumulate TC.Solver lp:{{tc.print-goal.}}.
     elpi solve_cs.
-    Show Proof.
   Abort. (*TODO:*)
 End M.
 
 Module M1.
-
-  Inductive to_prop (x : Type) : Prop := c : to_prop x.
-
   Class C (T : Type) := {f : T -> Prop}.
   Instance i x : C (car x). Admitted.
-
-  Elpi TC Solver Activate TC.Solver.
-  Set Typeclasses Debug.
-  Print HintDb typeclass_instances.
-  Set Debug "tactic-unification".
-  Elpi Trace Browser.
+  Elpi Accumulate TC.Solver lp:{{
+    tc.print-compiled-goal.
+  }}.
   Check (_ : C (car _)).
 End M1.
 
