@@ -173,6 +173,11 @@ namespace cs {
 
   pred main list argument.
   :name "cs-main"
-  main [str "class", trm T] :- cs.compiler.record.create-cs-pred T.
-  main [str "cs", trm T] :- cs.compiler.cs.main T.
+  main [str "class", trm T] :- !, std.assert! (cs.compiler.record.create-cs-pred T) "Cannot compile record projection".
+  main [str "cs", trm T] :- !, std.assert! (cs.compiler.cs.main T) "Cannot compile canonical structure".
+  main L :- coq.error "
+    Invalid input for command cs\n
+    Expected:\n
+      \tElpi cs cs (CANSTR)\n
+      \tElpi class (STRU)\n" L.
 }
