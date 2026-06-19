@@ -205,9 +205,7 @@ let binding_kind_of_manual_implicit x =
 let manual_implicit_of_gdecl (name, _, bk, _, _) = manual_implicit_of_binding_kind name bk
 
 let lookup_inductive env i =
-  let mind, indbo = Inductive.lookup_mind_specif env i in
-  if Array.length mind.Declarations.mind_packets <> 1 then nYI "API(env) mutual inductive";
-  (mind, indbo)
+  Inductive.lookup_mind_specif env i
 
 [%%if coq = "9.0" || coq = "9.1"]
 let abbreviation_find_interp = Abbreviation.search_abbreviation
