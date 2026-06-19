@@ -1,6 +1,5 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
-main _.
 
 msolve L N :- tc.time-it tc.oTC-time-msolve (coq.ltac.all (coq.ltac.open tc.solve-aux) L N) "msolve".
 msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
