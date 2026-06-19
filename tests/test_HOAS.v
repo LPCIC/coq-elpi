@@ -741,7 +741,38 @@ Elpi test_mfix_copy (f3_0).
 Elpi test_mfix_copy (f3_1).
 Elpi test_mfix_copy (f3_2).
 
-(* mfix component types must be read in the outer context, 
+Elpi Command test_mfix_fold_map.
+Elpi Accumulate lp:{{
+:before "fold-map:start"
+fold-map {{ true }} A {{ false }} A :- !.
+
+main [trm T] :-
+  coq.term->gref T (const C),
+  coq.env.const C (some Body) _Ty,
+  fold-map Body [] Body1 _,
+  std.assert! (not(Body = Body1)) "fold-map did not traverse mfix bodies",
+  coq.typecheck Body1 _ ok,
+  coq.say "fold-map ok for" {coq.gref->string (const C)}.
+}}.
+
+Elpi test_mfix_fold_map (myeven).
+
+(* constr2lp must read all mutual-fixpoint component types in the
+   original outer context, before pushing any self-reference. *)
+Elpi Command test_mfix_constr2lp_outer_ref.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  copy T T1,
+  std.assert-ok! (coq.typecheck T1 _) "copy of mfix under binders is illtyped".
+}}.
+
+Elpi test_mfix_constr2lp_outer_ref
+  (fun (B : Type) (d : B) =>
+     fix f (n : nat) {struct n} : B := d
+     with g (n : nat) {struct n} : B := d
+     for f).
+
+(* mfix component types must be read in the outer context,
    before self-refs are pushed. *)
 Elpi Command test_mfix_outer_ref.
 Elpi Accumulate lp:{{
@@ -759,6 +790,24 @@ main _ :-
 }}.
 
 Elpi test_mfix_outer_ref.
+
+(* lp2constr must reject a mfix whose top-level recarg disagrees with
+   the focused component's recarg.  Elpi reduction reads the top-level
+   recarg, while Coq fixpoints store recargs per component. *)
+Elpi Command test_mfix_bad_top_rno.
+Elpi Accumulate lp:{{
+main _ :-
+  T = mfix 0 1
+        (mfix-ty `f` 0 (prod `n` {{ nat }} (_\ {{ nat }})) (fv\
+          mfix-ty `g` 0 (prod `n` {{ nat }} (_\ {{ nat }})) (gv\
+            mfix-bo [
+              fun `n` {{ nat }} (_\ {{ O }}),
+              fun `n` {{ nat }} (_\ {{ O }})
+            ]))),
+  coq.typecheck T _ ok.
+}}.
+
+Fail Elpi test_mfix_bad_top_rno.
 
 Elpi Query lp:{{
 

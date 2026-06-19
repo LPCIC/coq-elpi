@@ -1726,7 +1726,8 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let rargs = Array.to_list rargs in
          let (n,state,env), names_rnos_tys =
            CList.fold_left_map (fun (n,state,env) ((name,rno),typ0) ->
-             let state,typ = aux ~depth:(depth+n) env state typ0 in
+             let state,typ = aux ~depth env state typ0 in
+             let typ = U.move ~from:depth ~to_:(depth+n) typ in
              let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
              (n+1,state,env), (name.Context.binder_name, rno, typ))
            (0,state,env) (List.combine (List.combine names rargs) tys) in
@@ -2351,6 +2352,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       (* mkFix's types live in outer_ctx (no self-refs); bodies use extended ctx. *)
       let outer_ctx = coq_ctx in
       let focus_idx = lp2int ~depth ~ctx:"mfix focus" focus_lp in
+      let top_rno = lp2int ~depth ~ctx:"mfix rno" rno in
       let rec collect_ty ~depth state coq_ctx node defs gls_acc =
         match E.look ~depth node with
         | E.App(c2,name_lp,[rno_lp; ty_lp; rest_lam]) when mfix_tyc == c2 ->
@@ -2375,6 +2377,10 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         let n = List.length defs in
         if focus_idx < 0 || focus_idx >= n then
           err Pp.(str"mfix: focus index out of range: " ++ int focus_idx);
+        let _, focus_rno, _ = List.nth defs focus_idx in
+        if top_rno <> focus_rno then
+          err Pp.(str"mfix: top-level rno " ++ int top_rno ++
+                  str" does not match focused component rno " ++ int focus_rno);
         let body_list = U.lp_list_to_list ~depth bodies_lp in
         if List.length body_list <> n then
           err Pp.(str"mfix: expected " ++ int n ++ str" bodies, got " ++
