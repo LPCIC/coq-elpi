@@ -29,13 +29,6 @@ namespace cs {
         std.forall P (x\ omap' x (make-pred-sig "tc.db")).
     }
     namespace cs {
-      func map-filter2 list A, list B, (func A, B -> C) -> list C.
-      map-filter2 [] [_|_] _ _ :- std.fatal-error "map2 on lists of different length".
-      map-filter2 [_|_] [] _ _ :- std.fatal-error "map2 on lists of different length".
-      map-filter2 [] [] _ [].
-      map-filter2 [X|XS] [Y|YS] F [Z|ZS] :- F X Y Z, !, map-filter2 XS YS F ZS.
-      map-filter2 [_|XS] [_|YS] F ZS :- !, map-filter2 XS YS F ZS.
-
       :index (_ 1)
       func get-projn int, list (option constant) -> list (pair int constant).
       get-projn _ [] [].
