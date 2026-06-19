@@ -56,8 +56,7 @@ Elpi Db tc_options.db lp:{{
 
     func is-option-active (func (list string) ->) ->.
     is-option-active uvar :- !, fail.
-    is-option-active Opt :-
-      Opt X, coq.option.get X (coq.option.bool tt).
+    is-option-active Opt :- Opt X, coq.option.get X (coq.option.bool tt).
 
     func warning-name -> string.
     warning-name "[TC] Warning".

@@ -69,8 +69,9 @@ namespace tc.compile {
       decompile-term-aux (primitive _ as P) A L P A L :- !.
 
       :name "decompile-inst-maybe-proj"
-      decompile-term-aux (tc.maybe-proj T S) [X|XS] L1 Y XS [NL|L1] :- !,
-        name Y X S, NL = tc.link.proj T Y.
+      decompile-term-aux (tc.maybe-proj P _ _ T S) [X|XS] L1 Y XS [NL|L1] :- !,
+        name Y X S, 
+        cs.compiler.cs.compiler ff (pr 0 P) T (app[_, Y]) [] [] NL.
 
       decompile-term-aux (tc.maybe-eta-tm T S) [X|XS] L1 Y XS' [NL | L2] :- !,
         name Y X S,
@@ -164,7 +165,7 @@ namespace tc.compile {
     % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
     func clean-term term -> term.
     clean-term A B :-
-      (pi t s r \ copy (tc.maybe-proj t s) t :- !) =>
+      (pi c n a s sc r \ copy (tc.maybe-proj c n a s sc) r :- !, sigma X\ std.append a [s] X, copy (app[global(const c) | X]) r) =>
       (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
       (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
       (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
@@ -377,9 +378,9 @@ namespace tc.compile {
     decomp-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
       prune V S, !, decomp-term T L T' L2.
 
-    decomp-term (tc.maybe-proj A S) L X [NL|L] :- !,
+    decomp-term (tc.maybe-proj P _ Ag T S) L X [NL|L] :- !,
       prune X S,
-      NL = tc.link.proj A X.
+      cs.compiler.cs.compiler ff (pr 0 P) T (app[_, X]) [] [] NL.
 
     decomp-term (tc.prod-range T _) A T' A' :- !,
       decomp-term T A T' A'.

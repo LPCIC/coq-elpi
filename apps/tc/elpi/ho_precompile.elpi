@@ -56,11 +56,9 @@ namespace tc.precomp {
   % T is the new term
   % N' is the updated counter
   func work-proj (func -> list term), constant, int, list term, term, nat -> term, nat.
-  work-proj F P _ Ag R N (tc.maybe-proj (app[global (const P) | Ag']) X) (s N) :- (var R; is-uvar R), !,
-    std.append Ag [R] Ag', F X.
+  work-proj F P PN Ag R N (tc.maybe-proj P PN Ag R X) (s N) :- (var R; is-uvar R), !, F X.
   work-proj _ P PN Ag R N T' N :- tc.proj-reducer P PN Ag R T', !.
-  work-proj F P _ Ag R N (tc.maybe-proj (app[global (const P) | Ag']) X) (s N) :- !,
-    std.append Ag [R] Ag', F X.
+  work-proj F P _ Ag R N (tc.maybe-proj P PN Ag R X) (s N) :- !, F X.
     
   namespace instance {
 
