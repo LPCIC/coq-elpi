@@ -307,8 +307,11 @@ namespace tc {
     term.
 
   type maybe-proj
-    term ->          % The current precompiled subterm
-    list term ->     % The list of FV in the precomp subterm
+    constant ->      % The canonical constant of a projection (INVARIANT: it is the canonical projection of a CS)
+    int ->           % The position of the CS in the record
+    list term ->     % The arguments of the projection
+    term ->          % The record which is projected
+    list term ->     % The list of FV in the scope of the problematic term
     term.
     
 }

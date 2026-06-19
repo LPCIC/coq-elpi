@@ -67,11 +67,9 @@ namespace cs {
       mk-rule ff P R (R => P).
 
       func work-proj constant, int, list term, term, nat -> term, nat.
-      work-proj P _ Ag R N (tc.maybe-proj (app[global (const P) | Ag']) []) (s N) :- is-uvar R, !,
-        std.append Ag [R] Ag'.
+      work-proj P PN Ag R N (tc.maybe-proj P PN Ag R []) (s N) :- is-uvar R, !.
       work-proj P PN Ag R N T' N :- tc.proj-reducer P PN Ag R T', !.
-      work-proj P _ Ag R N (tc.maybe-proj (app[global (const P) | Ag']) []) (s N) :- !,
-        std.append Ag [R] Ag'.
+      work-proj P PN Ag R N (tc.maybe-proj P PN Ag R []) (s N) :- !.
 
       func precompile term, nat -> term, nat.
       :name "cs-precompile"
@@ -102,10 +100,10 @@ namespace cs {
       
       func decompile term, pair (list term) (list prop) -> term, pair (list term) (list prop).
       :name "cs-decompile"
-      decompile (tc.maybe-proj (app[global (const C) | Ag']) S) (pr [X|XS] L1) Y (pr XS [NL|L1]) :- !,
+      decompile (tc.maybe-proj C _ _ R S) (pr [X|XS] L1) Y (pr XS [NL|L1]) :- !,
         name Y X S, 
         record.proj-to-pname C PN,
-        coq.elpi.predicate PN [{std.last Ag'}, Y] NL.
+        coq.elpi.predicate PN [R, Y] NL.
 
       decompile X A Y A :- name X, !, X = Y, !. % avoid loading "decompile x A x A" at binders
       decompile (global _ as C) A C A :- !.

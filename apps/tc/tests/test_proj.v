@@ -5,8 +5,13 @@ Global Set TC NameShortPath.
 Class C (T : Type) := mkC {f : T -> T}.
 Class D (T : nat -> nat) := {g : unit}.
 Class E (T : nat) := {ge : unit}.
-Record r := mkr {car : Type; rf : car -> car}.
+Record r := mkr {car : Type; #[canonical=no] rf : car -> car}.
 Canonical Structure c := mkr nat (fun x => x).
+
+Elpi Query TC.Solver lp:{{ true. }}.
+
+Elpi cs class (r).
+Elpi cs cs (c).
 
 Elpi Accumulate TC.Compiler lp:{{
   % the goal is to check instances for C are correctly compiled
@@ -56,13 +61,11 @@ Module m1''.
     :after "is-class-C" is-class-C (tc-E X _ :- [K_]) :- !, name X.
   }}.
 
-  (* TODO: the current compiler is too permessive: it replaces rf c 3 *)
-  (* which contains 1. record reduction 2. beta reduction *)
-  (* two solutions 1. avid to define a class like that one 2. correctly reduce *)
   Local Instance inst_red: E (rf c 3). now constructor. Qed.
   Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C C :- coq.error "FAIL" C, !. }}.
 
-  Goal E 3. apply _. Qed.
+  (* TODO: check this *)
+  Goal E 3. Fail apply _. Abort.
 End m1''.
 
 Module m2.
@@ -152,10 +155,6 @@ Set Printing All.
 
 Module M.
 
-  Elpi cs class (r).
-  Elpi cs class (C).
-  Elpi cs cs (c).
-
   (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
 
   Definition fcs1 (H1 H2 : r) := (fun '(x,y) => (rf H1 x, rf H2 y)).
@@ -168,7 +167,7 @@ Module M.
   Local Canonical Structure cs2 (T : Type) (c : C T) := mkr T (@f _ c).
 
   Local Instance i : C bool. apply (mkC _ (fun x => x)). Qed.
-  Elpi cs cs (cs2).
+  (* Elpi cs cs (cs2). *)
   (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
 
   (* Print HintDb typeclass_instances. *)
@@ -190,8 +189,25 @@ Module M.
     eexists.
     Elpi Accumulate TC.Solver lp:{{tc.print-goal.}}.
     elpi solve_cs.
+    Show Proof.
   Abort. (*TODO:*)
 End M.
+
+Module M1.
+
+  Inductive to_prop (x : Type) : Prop := c : to_prop x.
+
+  Class C (T : Type) := {f : T -> Prop}.
+  Instance i x : C (car x). Admitted.
+
+  Elpi TC Solver Activate TC.Solver.
+  Set Typeclasses Debug.
+  Print HintDb typeclass_instances.
+  Set Debug "tactic-unification".
+  Elpi Trace Browser.
+  Check (_ : C (car _)).
+End M1.
+
 
 
 (* Module tc.
