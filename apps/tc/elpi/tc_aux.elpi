@@ -251,12 +251,12 @@ namespace tc {
   func maybe-projection term -> constant, int, list term, term.
   :name "maybe-projection"
   maybe-projection (app [primitive (proj P N), R]) C N A R :-
-    coq.env.primitive-projection? P C _,
+    coq.env.primitive-projection? P C _, coq.CS.canonical-projection? C,
     std.assert-ok!(coq.typecheck R Ty) "err",
     coq.safe-dest-app Ty _ A.
   % TODO: should check that C is fully applied
   maybe-projection (app [global (const C) | Args]) C N A R :-
-    coq.env.projection? C _, !,
+    coq.CS.canonical-projection? C, !,
     get-proj-nb C N, std.assert!(split-last Args A R) "err: empty list".
 
   func build-proj-term constant, list term, term -> term.
