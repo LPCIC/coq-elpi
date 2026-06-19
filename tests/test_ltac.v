@@ -145,3 +145,18 @@ Goal O = O /\ 1 = 1.
   Unshelve. 
   Fail 3: idtac.
 Abort.
+
+(********************)
+
+Elpi Tactic call.
+Elpi Accumulate lp:{{
+  solve (goal C A TY B [tac T] as G) GL :-
+    std.assert-ok! (d\coq.ltac.call-ltac1 T (goal C A TY B []) GL d) "err".
+
+}}.
+Tactic Notation "callx" tactic(ta) :=
+  elpi call ltac_tactic:(ta).
+
+Goal True.
+  callx (exact I).
+Qed.

@@ -657,7 +657,7 @@ let glob glob_sign : raw -> _ * glob = function
   | Term t -> glob_sign, Term (intern_tactic_constr glob_sign t)
   | OpenTerm t -> glob_sign, OpenTerm (intern_tactic_constr glob_sign t)
   | LTac(ty,t) -> glob_sign, LTac (ty,fst @@ intern_tactic_constr glob_sign t)
-  | LTacTactic t -> glob_sign, LTacTactic (Ltac_plugin.Tacintern.glob_tactic t)
+  | LTacTactic t -> glob_sign, LTacTactic (Ltac_plugin.Tacintern.intern_pure_tactic glob_sign t)
 
 let subst mod_subst = function
   | Int _ as x -> x
