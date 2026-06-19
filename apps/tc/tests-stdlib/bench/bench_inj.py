@@ -120,7 +120,6 @@ def writeFile(fileName: str, composeLen: int, isCoq: bool):
     else:
         TXT += "From elpi_apps_tc_tests_stdlib Require Import stdppInj.\n"
         TXT += refine_no_check # (Un)Comment this for using refine or refine.no_check
-        TXT += "Elpi TC.Solver.\n"
         TXT += f"Goal Inj eq eq({GOAL}).\n"
         # TXT += "Elpi Command time_it. Elpi Accumulate  lp:{{ main _ :- coq.say {gettimeofday}. }}. Elpi time_it.\n"
         TXT += 'Set Time TC Bench. Set Debug "elpitime".\n'
