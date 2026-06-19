@@ -8,30 +8,42 @@ namespace cs {
     forall-ocan F L :- std.forall L (ocan F).
     
 
-    func proj-to-pname constant -> string.
-    proj-to-pname P S :- tc.gref->pred-name "canstr" (const P) S.
+    % NOTE: the following code is to build a predicate name canstr-projx
+    % the problem is that we need to awake all links for CS projection
+    % after the execution of a tc resolution. Rules for constraints seems
+    % not to be dynamically extensible, therefore tc.link.solver-proj will
+    % not be capable of awaking new dynamically declared predicates.
+    % We use a single predicate tc.link.proj with three arguments for each
+    % projection: tc.link.proj PNAME CAR CS
+    % func proj-to-pname constant -> string.
+    % proj-to-pname P S :- tc.gref->pred-name "canstr" (const P) S.
 
-    namespace record {
-      func proj-to-args constant -> list (pair argument_mode string).
-      proj-to-args _ [pr in "term", pr out "term"].
-        % coq.env.projection? C N,
-        % std.list.init N (x\y\ y = MT) L,
-        % std.append L [MT, MT] R.
+    % namespace record {
+    %   % each cs goal has three argument:
+    %   % - N the name of the projection
+    %   % - A the argument of the projection
+    %   % - the canonical structure of N applied to A
+    %   func proj-to-args constant -> list (pair argument_mode string).
+    %   proj-to-args _ [pr in "term", pr in "term", pr out "term"].
+    %     % coq.env.projection? C N,
+    %     % std.list.init N (x\y\ y = MT) L,
+    %     % std.append L [MT, MT] R.
 
-      % [make-pred-sig C Db]
-      % C the projection's constant
-      % Db the name of the database in which adding the predicate
-      func make-pred-sig string, constant ->.
-      make-pred-sig Db C :- !,
-        proj-to-pname C S,
-        proj-to-args  C A,
-        coq.elpi.add-predicate Db _ S A.
+    %   % [make-pred-sig C Db]
+    %   % C the projection's constant
+    %   % Db the name of the database in which adding the predicate
+    %   func make-pred-sig string, constant ->.
+    %   make-pred-sig Db C :- !,
+    %     proj-to-pname C S,
+    %     proj-to-args  C A,
+    %     coq.elpi.add-predicate Db _ S A.
 
-      func create-cs-pred i:term.
-      create-cs-pred (global (indt R)) :-
-        coq.env.projections R LP,
-        forall-ocan (make-pred-sig "tc.db") LP.
-    }
+    %   func create-cs-pred i:term.
+    %   create-cs-pred (global (indt R)) :-
+    %     coq.env.projections R LP,
+    %     forall-ocan (make-pred-sig "tc.db") LP.
+    % }
+
     namespace cs {
       :index (_ 1)
       func get-projn int, list (option constant) -> list (pair int constant).
@@ -54,9 +66,10 @@ namespace cs {
       % CS = canonical structure
       % R  = the compiled rule for the cs
       func compile constant, term, term -> prop.
-      compile P I CS R :-
-        proj-to-pname P PN,
-        coq.elpi.predicate PN [I, CS] R.
+      % compile P I CS R :-
+      %   proj-to-pname P PN,
+      %   coq.elpi.predicate PN [I, CS] R.
+      compile P I CS (tc.link.proj P I CS :- !).
 
       func mk-rule bool, prop, list prop -> prop.
       mk-rule _  P [] P :- !.
@@ -97,10 +110,10 @@ namespace cs {
       
       func decompile term, pair (list term) (list prop) -> term, pair (list term) (list prop).
       :name "cs-decompile"
-      decompile (tc.maybe-proj C _ _ R S) (pr [X|XS] L1) Y (pr XS [NL|L1]) :- !,
-        name Y X S, 
-        proj-to-pname C PN,
-        coq.elpi.predicate PN [R, Y] NL.
+      decompile (tc.maybe-proj C _ _ R S) (pr [X|XS] L1) Y (pr XS [tc.link.proj C R Y|L1]) :- !,
+        name Y X S.
+        % proj-to-pname C PN,
+        % coq.elpi.predicate PN [R, Y] NL.
 
       decompile X A Y A :- name X, !, X = Y, !. % avoid loading "decompile x A x A" at binders
       decompile (global _ as C) A C A :- !.
@@ -125,17 +138,17 @@ namespace cs {
       % [load-nestedp N B S T P L C]
       % N is the number of pi to load
       % B is the pos/neg position of the term being compiled
-      % S is the name of the predicate
+      % C is the name of the predicate
       % T is the argument (with N problematic subterms)
       % P is the instance of the record to be used
       % L is the list of pi accumulated terms
-      % C is the created clause
-      func load-nestedp nat, bool, string, term, term, list term -> prop.
-      load-nestedp z B S T P L C :-
+      % R is the created clause
+      func load-nestedp nat, bool, constant, term, term, list term -> prop.
+      load-nestedp z B C T P L R :-
         decompile T (pr L []) T' (pr _ Pm),
-        coq.elpi.predicate S [T', P] Hd,
-        mk-rule B Hd {std.rev Pm} C.
-      load-nestedp (s N) B S T P L (pi x\ C x) :- pi x\ load-nestedp N B S T P [x|L] (C x).
+        % coq.elpi.predicate C [T', P] Hd,
+        mk-rule B (tc.link.proj C T' P) {std.rev Pm} R.
+      load-nestedp (s N) B C T P L (pi x\ R x) :- pi x\ load-nestedp N B C T P [x|L] (R x).
       
       % [compiler B IC CS Ag P L C]
       % B is the pos/neg position of the term
@@ -148,10 +161,9 @@ namespace cs {
       func compiler bool, (pair int constant), term, term, list prop, list term -> prop.
       compiler B (pr N P) CS (app[_|Ag]) L A Rs :- !,
         coq.mk-app CS {std.rev A} CS',
-        proj-to-pname P PN,
         std.nth N Ag I,
         precompile I z I' NPb,
-        load-nestedp NPb B PN I' CS' [] Rs.
+        load-nestedp NPb B P I' CS' [] Rs.
       compiler B P CS (fun N Ty Bo') L A (pi x\ R x) :-
         @pi-decl N Ty x\ (is-uvar x :- !) ==>
           compiler B P CS (Bo' x) L [x|A] (R x).
@@ -164,6 +176,15 @@ namespace cs {
     }
 
     namespace default {
+      func build-default constant ->.
+      build-default D :-
+        R = (pi x y z \ tc.link.proj D (uvar as x) y :- declare_constraint (tc.link.proj D x y) [x,z]),
+        tc.add-tc-db _ _ R.
+
+      func main term ->.
+      main (global (indt C)) :-
+        coq.env.projections C P,
+        cs.compiler.forall-ocan build-default P.
     }
   }
 
@@ -173,13 +194,13 @@ namespace cs {
 
   pred main list argument.
   :name "cs-main"
-  main [str "class", trm T] :- !, std.assert! (cs.compiler.record.create-cs-pred T) "Cannot compile record projection".
+  % main [str "class", trm T] :- !, std.assert! (cs.compiler.record.create-cs-pred T) "Cannot compile record projection".
   main [str "cs", trm T] :- !, std.assert! (cs.compiler.cs.main T) "Cannot compile canonical structure".
-  main [str "default", trm T] :- !, coq.error "TODO".
+  main [str "default", trm T] :- !, std.assert! (cs.compiler.default.main T) "Cannot compile canonical structure".
   main L :- coq.error "
     Invalid input for command cs\n
     Expected:\n
       \tElpi cs cs (CANSTR)\n
-      \tElpi class (STRU)\n
       \tElpi default (CANSTR)\n" L.
+      % \tElpi class (STRU)\n
 }
