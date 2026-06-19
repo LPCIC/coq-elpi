@@ -422,14 +422,14 @@ Tactics also accept Ltac variables as follows:
 - `ltac_term:(v)` (for `v` of type `constr` or `open_constr` or `uconstr` or `hyp`)
 - `ltac_open_term:(v)` (for `v` of type `uconstr`)
 - `ltac_(string|int|term|open_term)_list:(v)` (for `v` of type `list` of ...)
-- `ltac_tactic:(t)` (for `t` of type `tactic_expr`)
+- `ltac_tactic:(t)` (for `t` of type `tactic`)
 - `ltac_attributes:(v)` (for `v` of type `attributes`)
 For example:
 ```coq
-Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) simple_intropattern_list(P) uconstr(U) :=
-  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L) ltac_tactic:(intros P) ltac_open_term:(U).
+Tactic Notation "tac" string(X) ident(Y) int(Z) hyp(T) constr_list(L) simple_intropattern_list(P) uconstr(U) tactic(TA) :=
+  elpi tac ltac_string:(X) ltac_string:(Y) ltac_int:(Z) ltac_term:(T) ltac_term_list:(L) ltac_tactic:(intros P) ltac_open_term:(U) ltac_tactic:(TA).
 ```
-lets one write `tac "a" b 3 H t1 t2 t3 [|m]` in any Ltac context.
+lets one write `tac "a" b 3 H t1 t2 t3 [|m] u ta` in any Ltac context.
 Arguments are first interpreted by Ltac according to the types declared
 in the tactic notation and then injected in the corresponding Elpi argument.
 For example `H` must be an existing hypothesis, since it is typed with
@@ -442,6 +442,8 @@ Both `"a"` and `b` are passed to Elpi as `str ...`.
 Argument `U` flagged as `ltac_open_term` can mention free variables. The Elpi
 tactic receives `open-trm N F` where `N` is the number of free variables in `U`
 and `F` is `fun x1 => ... fun xN => U`.
+Argument `TA` is received as `tac T` where `T` is an (opaque) tactic that can
+be called via the `coq.ltac.*` APIs.
 Finally, `ltac_term:(T)` and `(T)` are *not* synonyms: but the former must be used
 when defining tactic notations, the latter when invoking elpi tactics directly.
 ``` `(T)``` can be used to pass an open term to `elpi tactic ...`.

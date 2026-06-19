@@ -1,4 +1,9 @@
-# [UNRELESED]
+
+# [UNRELEASED]
+
+### API:
+- fix `coq.CS.canonical-projection?`, used to disregard `#[canonical=no]`
+- fix `ltac_tactic:(t)`, use to ignore ltac variables in `t`
 - New `coq.elpi.add-predicate?` to check if a predicate is declared in elpi
 
 
