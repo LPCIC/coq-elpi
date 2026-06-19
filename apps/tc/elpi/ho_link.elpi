@@ -133,10 +133,10 @@ namespace tc.link {
   % Projection LINK                                                          %
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   namespace proj {
-    func proj term, term ->.
-    proj T V :- var V, !, get-vars T Vars, declare_constraint (proj T V) [_,V|Vars].
-    :name "proj-unif"
-    proj T R :- coq.unify-eq T R ok.
+    % func proj term, term ->.
+    % proj T V :- var V, !, get-vars T Vars, declare_constraint (proj T V) [_,V|Vars].
+    % :name "proj-unif"
+    % proj T R :- coq.unify-eq T R ok.
 
     func force-unify list prop, term, term ->.
     :name "force-proj"
@@ -145,9 +145,9 @@ namespace tc.link {
     force-unify Ctx A B :- Ctx => coq.unify-eq A B ok. 
 
 
-    constraint decl def ?- solve-proj proj {
+    constraint decl def ?- solve-proj tc.link.proj force-unify {
       % TODO: should add a dedup constraint
-      rule solve-proj \ (Ctx ?- proj A B) <=> (force-unify Ctx A B).
+      rule solve-proj \ (Ctx ?- tc.link.proj C A B) <=> (force-unify Ctx (app[global (const C), A]) B).
       % rule solve-proj \ (Ctx ?- proj A B) <=> (A = B).
       rule \ solve-proj.
     }
@@ -175,8 +175,8 @@ namespace tc.link {
   func solve-llam.
   solve-llam :- declare_constraint solve-llam [_].
 
-  func proj term, term ->.
-  proj A B :- proj.proj A B.
+  % func proj constant, term -> term.
+  % proj A B :- proj.proj A B.
 
   func solve-proj.
   solve-proj :- declare_constraint solve-proj [_].

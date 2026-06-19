@@ -10,7 +10,7 @@ Canonical Structure c := mkr nat (fun x => x).
 
 Elpi Query TC.Solver lp:{{ true. }}.
 
-Elpi cs class (r).
+Elpi cs default (r).
 Elpi cs cs (c).
 
 Elpi Accumulate TC.Compiler lp:{{
@@ -72,7 +72,7 @@ End m1''.
 
 Module m2.
   Elpi Accumulate TC.Compiler lp:{{
-    :after "is-class-C" is-class-C (tc-C X (app[_,W]) :- [canstr-car X W]) :- !, name X.
+    :after "is-class-C" is-class-C (tc-C X (app[_,W]) :- [tc.link.proj CAR X W]) :- !, const CAR = {{:gref car}}, name X.
   }}.
 
   (* cannot reduce the projection: c is quantified *)
@@ -176,40 +176,22 @@ End M.
 
 Module M1.
   Class C (T : Type) := {f : T -> Prop}.
-  Instance i x : C (car x). Admitted.
-  Elpi Accumulate TC.Solver lp:{{
-    tc.print-compiled-goal.
-  }}.
+  Local Instance i x : C (car x). Admitted.
   Check (_ : C (car _)).
 End M1.
 
+Module M2.
+  Inductive to_prop (T: Type) : Prop := tp : T -> to_prop T.
 
+  Record r1 := mkr1 {car : Type; #[canonical=no] rf : C car}.
+  Local Instance i : C bool. Admitted.
+  Local Canonical Structure c1 := mkr1 bool i.
+  Elpi cs default (r1).
+  Elpi cs cs (c1).
 
-(* Module tc.
-  Class Cx (t: Type) := mkC {op : t -> t -> bool}.
-  Record Rx := mkR {car : Type; class_of : Cx car}.
-
-  Set Printing All.
-
-  Instance Ic : Cx bool := mkC _ (fun (x:bool) y => if x then y else negb y).
-  Canonical Structure Ir := mkR bool Ic.
-  
-  Elpi cs class (Rx).
-  Elpi cs cs (Ir).
-  Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".
-
-  From elpi.apps.tc.elpi Extra Dependency "tc_aux.elpi" as tc_aux.
-  From elpi.apps.tc.elpi Extra Dependency "cs.elpi" as cs.
-
-  Elpi Tactic solve_cs.
-  Elpi Accumulate Db tc.db.
-  Elpi Accumulate File tc_aux.
-  Elpi Accumulate File cs.
-
-  Elpi Accumulate lp:{{
-    solve (goal _ _ Ty _ _ as G) GL :-
-      coq.say Ty.
-  }}.
-
-  Definition op_of (T: Rx) := @op _ (class_of T). *)
-  
+  Goal exists x, to_prop (C (car x)).
+  Proof. 
+    eexists; constructor.
+    apply _.
+  Qed.
+End M2.
