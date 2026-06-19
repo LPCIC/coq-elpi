@@ -9,7 +9,7 @@ namespace cs {
       proj-to-pname P S :- tc.gref->pred-name "canstr" (const P) S.
 
       func proj-to-args constant -> list (pair argument_mode string).
-      proj-to-args _ [MT, MT] :- MT = pr out "term".
+      proj-to-args _ [pr in "term", pr out "term"].
         % coq.env.projection? C N,
         % std.list.init N (x\y\ y = MT) L,
         % std.append L [MT, MT] R.
