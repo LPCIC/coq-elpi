@@ -1,13 +1,17 @@
 namespace cs {
   namespace compiler {
-    func omap' option A, (func A ->).
-    omap' (some A) F :- F A.
-    omap' none _.
+    func ocan (func constant ->), option constant.
+    ocan F (some C) :- coq.CS.canonical-projection? C, !, F C.
+    ocan _ _.
+
+    func forall-ocan (func constant ->), list (option constant) ->.
+    forall-ocan F L :- std.forall L (ocan F).
+    
+
+    func proj-to-pname constant -> string.
+    proj-to-pname P S :- tc.gref->pred-name "canstr" (const P) S.
 
     namespace record {
-      func proj-to-pname constant -> string.
-      proj-to-pname P S :- tc.gref->pred-name "canstr" (const P) S.
-
       func proj-to-args constant -> list (pair argument_mode string).
       proj-to-args _ [pr in "term", pr out "term"].
         % coq.env.projection? C N,
@@ -18,15 +22,15 @@ namespace cs {
       % C the projection's constant
       % Db the name of the database in which adding the predicate
       func make-pred-sig string, constant ->.
-      make-pred-sig Db C :-
+      make-pred-sig Db C :- !,
         proj-to-pname C S,
         proj-to-args  C A,
         coq.elpi.add-predicate Db _ S A.
 
       func create-cs-pred i:term.
       create-cs-pred (global (indt R)) :-
-        coq.env.projections R P,
-        std.forall P (x\ omap' x (make-pred-sig "tc.db")).
+        coq.env.projections R LP,
+        forall-ocan (make-pred-sig "tc.db") LP.
     }
     namespace cs {
       :index (_ 1)
@@ -51,7 +55,7 @@ namespace cs {
       % R  = the compiled rule for the cs
       func compile constant, term, term -> prop.
       compile P I CS R :-
-        record.proj-to-pname P PN,
+        proj-to-pname P PN,
         coq.elpi.predicate PN [I, CS] R.
 
       func mk-rule bool, prop, list prop -> prop.
@@ -95,7 +99,7 @@ namespace cs {
       :name "cs-decompile"
       decompile (tc.maybe-proj C _ _ R S) (pr [X|XS] L1) Y (pr XS [NL|L1]) :- !,
         name Y X S, 
-        record.proj-to-pname C PN,
+        proj-to-pname C PN,
         coq.elpi.predicate PN [R, Y] NL.
 
       decompile X A Y A :- name X, !, X = Y, !. % avoid loading "decompile x A x A" at binders
@@ -144,7 +148,7 @@ namespace cs {
       func compiler bool, (pair int constant), term, term, list prop, list term -> prop.
       compiler B (pr N P) CS (app[_|Ag]) L A Rs :- !,
         coq.mk-app CS {std.rev A} CS',
-        record.proj-to-pname P PN,
+        proj-to-pname P PN,
         std.nth N Ag I,
         precompile I z I' NPb,
         load-nestedp NPb B PN I' CS' [] Rs.
@@ -158,6 +162,9 @@ namespace cs {
         get-proj Ty P,
         std.forall P (x\ sigma R\ compiler tt x T Bo [] [] R, tc.add-tc-db _ _ R).
     }
+
+    namespace default {
+    }
   }
 
   namespace solver {
@@ -168,9 +175,11 @@ namespace cs {
   :name "cs-main"
   main [str "class", trm T] :- !, std.assert! (cs.compiler.record.create-cs-pred T) "Cannot compile record projection".
   main [str "cs", trm T] :- !, std.assert! (cs.compiler.cs.main T) "Cannot compile canonical structure".
+  main [str "default", trm T] :- !, coq.error "TODO".
   main L :- coq.error "
     Invalid input for command cs\n
     Expected:\n
       \tElpi cs cs (CANSTR)\n
-      \tElpi class (STRU)\n" L.
+      \tElpi class (STRU)\n
+      \tElpi default (CANSTR)\n" L.
 }
