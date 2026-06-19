@@ -1,6 +1,9 @@
 # [UNRELEASED]
 
-- fix and test API `coq.CS.canonical-projection?`
+### API:
+- fix `coq.CS.canonical-projection?`, used to disregard `#[canonical=no]`
+- fix `ltac_tactic:(t)`, use to ignore ltac variables in `t`
+
 
 # [3.4.0] 19/05/2026
 
