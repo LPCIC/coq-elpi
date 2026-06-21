@@ -1,10 +1,15 @@
 
 # [UNRELEASED]
 
+### HOAS:
+- New `minductive` and `mblock` for mutual inductive types
+
 ### API:
 - fix `coq.CS.canonical-projection?`, used to disregard `#[canonical=no]`
 - fix `ltac_tactic:(t)`, use to ignore ltac variables in `t`
 - New `coq.elpi.add-predicate?` to check if a predicate is declared in elpi
+- New `coq.env.indt-block` to list the inductive types in the same
+  mutual block
 
 
 # [3.4.0] 19/05/2026
@@ -40,8 +45,6 @@ Requires Elpi 3.7.1 and Rocq 9.0, 9.1 or 9.2.
 - New argument `const-decl` can now be introduces by the `Lemma` keyword,
   and not just by `Definition`.
 - New `coq.scheme` to query registered schemes
-- New `coq.env.mutual-inductives` to list the inductive types in the same
-  mutual block without reifying the full inductive declaration
 
 
 # [3.3.1] 12/03/2026
