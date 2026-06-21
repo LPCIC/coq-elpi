@@ -104,6 +104,12 @@ namespace tc {
     get-TC-of-inst-type T Hd, 
     coq.TC.class? Hd. 
 
+  func check-pname string, gref ->.
+  check-pname N _ :- coq.elpi.predicate? N, !.
+  check-pname _ G :-
+    MSG is "Found an undeclared class in Elpi.\nPlease add it via: Elpi TC.AddClasses " ^ {coq.gref->id G},
+    coq.say MSG, coq.error MSG.
+
   % [gref->pred-name P G S]
   % takes a prefix P and a gref G
   % returns S = P-[PATH_TO_G].P-[TC-Name]
@@ -148,6 +154,7 @@ namespace tc {
     get-TC-of-inst-type Class ClassGR,
     gref->pred-name "tc" ClassGR ClassStr,
     std.append Args [Sol] ArgsSol, 
+    tc.check-pname ClassStr ClassGR,
     coq.elpi.predicate ClassStr ArgsSol RuleHead,
     make-tc.aux IsPositive Sol RuleHead RuleBody Rule.
 
