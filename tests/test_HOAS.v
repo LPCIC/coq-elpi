@@ -939,3 +939,14 @@ Elpi Query lp:{{
 
 
 }}.
+
+(************** *)
+
+Inductive i1 (A: Type) | (B : Type) : (forall x : nat, x + 1 = x) -> Prop :=
+  | K11 : forall p, forall x : bool, x = x -> i2 B -> i1 (B * B) p -> i1 B p
+with i2 (A:Type) | (B : Type) : Type := K21.
+
+Elpi Query lp:{{
+  {{ i1 }} = global (indt I),
+  coq.env.indt-block I [I,I2]
+}}.

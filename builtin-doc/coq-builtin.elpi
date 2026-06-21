@@ -694,9 +694,9 @@ external func coq.env.indt-decl % reads the inductive type declaration for the e
   -> indt-decl.
    % HOAS description of the inductive type
   
-% [coq.env.mutual-inductives reference to an inductive type Inductives]
-% lists all inductive types in the same mutual block, in declaration order
-external func coq.env.mutual-inductives inductive -> list inductive.
+% [coq.env.indt-block Ind AllInd] AllInd are all the inductive types in the
+% mutual block of Ind, in declaration order
+external func coq.env.indt-block inductive -> list inductive.
 
 % [coq.env.indc->indt K I N] finds the inductive I to which constructor K
 % belongs and its position N among the other constructors
