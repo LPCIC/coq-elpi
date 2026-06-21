@@ -3748,7 +3748,7 @@ type record_decl = {
 type ind_decl =
   | Inductive of inductive_decl
   | Record of record_decl
-  | Mutual of ind_decl list
+  | Mutual of inductive_decl list
 type hoas_ind = {
   params : Glob_term.binding_kind ctx_entry list;
   decl : ind_decl;
@@ -3867,10 +3867,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
       let state, ks, gls2 =
         API.Utils.map_acc embed_constructor state constructors in
       state, in_elpi_indtdecl_inductive state kind (Name id) arity ks, List.flatten [gls1 ; gls2]
-   | Mutual decls ->
-      let inds = List.map (function
-        | Inductive i -> i
-        | Record _ | Mutual _ -> nYI "records inside mutual inductive blocks") decls in
+   | Mutual inds ->
       let ninds = List.length inds in
       if ninds < 2 then nYI "ill-formed mutual inductive block";
       let sigma = get_sigma state in
@@ -4073,7 +4070,8 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,mind,(i_imp
     one_inductive_decl i ind i_impls_i k_impls_i) packets in
   let decl = match decls with
     | [decl] -> decl
-    | decls -> Mutual decls in
+    | decls ->
+        Mutual (List.map (function Inductive d -> d | Record _ -> nYI "mutual records" | Mutual _ -> assert false) decls) in
   let ind = { params; decl } in
   hoas_ind2lp ~depth coq_ctx state ind
 ;;
@@ -4152,7 +4150,7 @@ let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
       List.map (fun ((id,typ),_impls) ->
         (* FIXME, arity could be longer *)
         { id; arity = nuparams; typ = EConstr.of_constr typ }) in
-    Inductive { nuparams; id; typ; kind; constructors } in
+    { nuparams; id; typ; kind; constructors } in
   let rec pad_impls xs ys default =
     match xs, ys with
     | [], _ -> []
@@ -4161,7 +4159,7 @@ let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let k_impls = pad_impls mie.mind_entry_inds k_impls [] in
   let decls = List.map2 one_ind mie.mind_entry_inds k_impls in
   let decl = match decls with
-    | [decl] -> decl
+    | [decl] -> Inductive decl
     | decls -> Mutual decls in
   let ind = { params; decl } in
   let state, i, gls = hoas_ind2lp ~depth coq_ctx state ind in
