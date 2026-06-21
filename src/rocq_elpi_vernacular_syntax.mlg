@@ -143,14 +143,9 @@ GRAMMAR EXTEND Gram
 
   term: LEVEL "0"
     [ [ lookahead_lib_colon;IDENT "lib"; ":"; id = qualified_name -> {
-          let ref = lib_ref id in
-          let path = Nametab.path_of_global ref in
-          CAst.make ~loc Constrexpr.(CRef (Libnames.qualid_of_path ~loc:(fst id) path,None)) }
+          Rocq_elpi_vernacular.lib_ref ~loc ~expl:false id }
       | lookahead_lib_colon;IDENT "lib"; ":"; "@"; id = qualified_name -> {
-          let ref = lib_ref id in
-          let path = Nametab.path_of_global ref in
-          let f = Libnames.qualid_of_path ~loc:(fst id) path in
-          CAst.make ~loc Constrexpr.(CAppExpl((f,None),[])) } ] ]
+          Rocq_elpi_vernacular.lib_ref ~loc ~expl:true id } ] ]
   ;
 END
 
