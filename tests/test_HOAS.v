@@ -948,5 +948,9 @@ with i2 (A:Type) | (B : Type) : Type := K21.
 
 Elpi Query lp:{{
   {{ i1 }} = global (indt I),
-  coq.env.indt-block I [I,I2]
+  coq.env.indt-block I [I,I2],
+  coq.env.indt-decl I D,
+  coq.env.indt-decl I2 D2,
+  std.assert! (D = D2) "different inductives",
+  coq.typecheck-indt-decl D ok.
 }}.
