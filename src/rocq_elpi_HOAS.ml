@@ -3833,45 +3833,20 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
   under_coq2elpi_relctx ~calldepth ~coq_ctx state params
     ~mk_ctx_item:mk_inductive_parameter2
     (fun coq_ctx hyps ~depth state -> match decl with
-    | Inductive { id; nuparams; typ; constructors; kind } ->
+   | Inductive _
+   | Mutual _ ->
+      let inds =
+        match decl with
+        | Mutual l -> l | Inductive x -> [x] | Record _ -> assert false in
+      let ninds = List.length inds in
       let sigma = get_sigma state in
       let paramsno = List.length params in
-     (* Relocation to match Coq's API.
+      (* Relocation to match Coq's API.
       * From
       *  Ind, Params, NuParams |- ktys
       * To
       *  Params, Ind, NuParams |- ktys
       *)
-      let rec iter n acc f =
-        if n = 0 then acc
-        else iter (n-1) (f acc) f in
-      let subst arityno = CList.init (arityno + paramsno + 1) (fun i ->
-        let i = i + 1 in (* init is 0 based, rels are 1 base *)
-        if i = arityno + paramsno + 1 then
-          let ind = EC.mkRel (arityno + 1) in
-          iter paramsno ind (fun x -> EConstr.mkLambda (anonR,EConstr.mkProp,EConstr.Vars.lift 1 x))
-        else if i > arityno then EC.mkRel(i+1)
-        else EC.mkRel i) in
-      let reloc ctx_len t =
-        let t = EC.Vars.substl (subst ctx_len) t in
-        Reductionops.nf_beta (Global.env()) sigma t in
-    
-      let state, arity, gls1 = embed_arity ~depth coq_ctx state (nuparams,typ) in
-      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(anonR,EConstr.mkProp)) coq_ctx in
-      let depth = depth+1 in
-      let embed_constructor state { id; arity; typ } =
-        let alen = List.length arity in
-        let kctx = List.mapi (fun i ({ extra; typ } as x) -> { x with typ = reloc (alen - i -1) typ }) arity in
-        let state, karity, gl = embed_arity ~depth coq_ctx state (kctx,reloc alen typ) in
-        state, in_elpi_indtdecl_constructor (Name id) karity, gl in
-      let state, ks, gls2 =
-        API.Utils.map_acc embed_constructor state constructors in
-      state, in_elpi_indtdecl_inductive state kind (Name id) arity ks, List.flatten [gls1 ; gls2]
-   | Mutual inds ->
-      let ninds = List.length inds in
-      if ninds < 2 then nYI "ill-formed mutual inductive block";
-      let sigma = get_sigma state in
-      let paramsno = List.length params in
       let rec iter n acc f =
         if n = 0 then acc
         else iter (n-1) (f acc) f in
@@ -3899,16 +3874,24 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
         let kctx = List.mapi (fun i ({ extra; typ } as x) -> { x with typ = reloc (alen - i -1) typ }) arity in
         let state, karity, gl = embed_arity ~depth coq_ctx state (kctx,reloc alen typ) in
         state, in_elpi_indtdecl_constructor (Name id) karity, gl in
-      let embed_constructor_block state { constructors; _ } =
-        API.Utils.map_acc embed_constructor state constructors in
-      let state, constructor_blocks, gls2 =
-        API.Utils.map_acc embed_constructor_block state inds in
-      let body = in_elpi_indtdecl_mblock constructor_blocks in
-      let body =
-        List.fold_right2 (fun { id; kind; _ } arity body ->
-          in_elpi_indtdecl_minductive state kind (Name id) arity body)
-          inds arities body in
-      state, body, List.flatten [gls1; gls2]
+      begin match decl with
+      | Record _ -> assert false
+      | Mutual _ ->
+          let embed_constructor_block state { constructors; _ } =
+            API.Utils.map_acc embed_constructor state constructors in
+          let state, constructor_blocks, gls2 =
+            API.Utils.map_acc embed_constructor_block state inds in
+          let body = in_elpi_indtdecl_mblock constructor_blocks in
+          let body =
+            List.fold_right2 (fun { id; kind; _ } arity body ->
+              in_elpi_indtdecl_minductive state kind (Name id) arity body)
+              inds arities body in
+          state, body, List.flatten [gls1; gls2]
+      | Inductive { constructors; id; kind } ->
+          let state, ks, gls2 =
+            API.Utils.map_acc embed_constructor state constructors in
+          state, in_elpi_indtdecl_inductive state kind (Name id) (List.hd arities) ks, List.flatten [gls1 ; gls2]
+      end
    | Record { id; kid; typ; fields } ->
       let embed_record_constructor state fields =
         under_coq2elpi_relctx ~calldepth:depth state fields
