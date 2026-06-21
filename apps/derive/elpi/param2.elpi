@@ -389,8 +389,7 @@ dispatch (indt I as GR) Suffix Clauses :- do! [
   pi new_name\ sigma KtypesR TyR\ (
       (param-indt I IsInd Lno Luno Ty Ks Ktypes
  	    	 new_name IsIndR LnoR LunoR TyR KtypesR),
-    coq.build-indt-decl
-      (pr new_name FNameR) IsIndR LnoR LunoR {coq.subst-fun [Ind, Ind] TyR} KnamesR KtypesR DeclR
+    coq.build-indt-decl (coq.indt-spec new_name FNameR IsIndR {coq.subst-fun [Ind, Ind] TyR} KnamesR KtypesR) LnoR LunoR  DeclR
   ),
 
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param2 generates illtyped term",

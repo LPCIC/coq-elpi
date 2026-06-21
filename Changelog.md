@@ -11,6 +11,10 @@
 - New `coq.env.indt-block` to list the inductive types in the same
   mutual block
 
+### LIB:
+- Change `coq.build-indt-decl`, not taking a `coq.indt-spec` tuple
+- New `coq.build-mindt-decl` taking a list of `coq.indt-spec`
+
 
 # [3.4.0] 19/05/2026
 
