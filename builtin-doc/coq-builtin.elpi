@@ -128,6 +128,8 @@ external symbol arity       : term -> arity.
 
 external symbol parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
 external symbol inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+external symbol minductive  : id -> bool -> arity -> (term -> indt-decl) -> indt-decl. % one type of a mutual block
+external symbol mblock      : list (list indc-decl) -> indt-decl. % constructor blocks for minductive declarations
 external symbol record      : id -> term -> id -> record-decl -> indt-decl.
 
 external symbol constructor : id -> arity -> indc-decl.
@@ -684,6 +686,17 @@ external func coq.env.indt % reads the inductive type declaration for the enviro
   list constructor, 
    % list of constructor names
   list term.       % list of the types of the constructors (type of KNames) including parameters
+  
+external func coq.env.indt-block % reads the inductive type declaration for the environment.
+  inductive               % Ind
+  -> bool,                % tt if the type is inductive (ff for co-inductive)
+  int,                    % number of parameters
+  int,                    % number of parameters that are uniform (<= parameters)
+  list inductive,         % all inductives in the block
+  list term,              % types of the inductive types constructors including parameters
+  list (list constructor), 
+   % lists of constructor names
+  list (list term).       % lists of the types of the constructors (type of KNames) including parameters
   
 external func coq.env.indt-decl % reads the inductive type declaration for the environment.
 % Supported attributes:

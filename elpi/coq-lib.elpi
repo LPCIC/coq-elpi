@@ -133,9 +133,16 @@ copy-indt-decl (parameter ID I Ty D) (parameter ID I Ty1 D1) :-
 copy-indt-decl (inductive ID CO A D) (inductive ID CO A1 D1) :-
   copy-arity A A1,
   @pi-inductive ID A1 i\ std.map (D i) copy-constructor (D1 i).
+copy-indt-decl (minductive ID CO A D) (minductive ID CO A1 D1) :-
+  copy-arity A A1,
+  @pi-inductive ID A1 i\ copy-indt-decl (D i) (D1 i).
+copy-indt-decl (mblock Bs) (mblock Bs1) :- map Bs copy-constructor-block Bs1.
 copy-indt-decl (record ID T IDK F) (record ID T1 IDK F1) :-
   copy T T1,
   copy-fields F F1.
+
+func copy-constructor-block list indc-decl -> list indc-decl.
+copy-constructor-block Ks Ks1 :- map Ks copy-constructor Ks1.
 
 func copy-fields record-decl -> record-decl.
 copy-fields end-record end-record.
@@ -214,12 +221,14 @@ coq.upoly-decl-cumul.complete-constraints.aux (covariant V) CS :- coq.univ.varia
 coq.upoly-decl-cumul.complete-constraints.aux (invariant V) CS :- coq.univ.variable.constraints V CS.
 coq.upoly-decl-cumul.complete-constraints.aux (irrelevant V) CS :- coq.univ.variable.constraints V CS.
 
-:index (1)
-func coq.build-indt-decl
-  (pair inductive id), bool, int, int, term, list (pair constructor id), list term -> indt-decl.
 
-coq.build-indt-decl GR IsInd Pno UPno Arity Kns Ktys Decl :-
-  coq.build-indt-decl-aux GR IsInd Pno UPno Arity Kns Ktys [] Decl.
+kind coq.indt-spec type.
+type coq.indt-spec inductive -> id -> bool -> term -> list (pair constructor id) -> list term -> coq.indt-spec.
+
+func coq.build-indt-decl coq.indt-spec, int, int -> indt-decl.
+
+coq.build-indt-decl (coq.indt-spec I ID IsInd Arity Kns Ktys) Pno UPno  Decl :-
+  coq.build-indt-decl-aux (pr I ID) IsInd Pno UPno Arity Kns Ktys [] Decl.
 
 func coq.build-indt-decl-aux
   pair inductive id, bool, int, int, term, list (pair constructor id), list term, list term -> indt-decl.
@@ -252,6 +261,59 @@ coq.build-indt-decl-aux GR IsInd Pno UPno (prod N S T) Kns Ktys Params (paramete
 :name "coq.build-indt-decl-aux:fail"
 coq.build-indt-decl-aux _ _ _ _ _ _ _ _ _ :- !,
   fatal-error "coq.build-indt-decl-aux: invalid declaration".
+
+func coq.build-mindt-decl list coq.indt-spec, int, int -> indt-decl.
+coq.build-mindt-decl Specs Pno UPno Decl :-
+  coq.build-mindt-decl-aux Specs Pno UPno [] Decl.
+
+func coq.build-mindt-decl-aux list coq.indt-spec, int, int, list term -> indt-decl.
+coq.build-mindt-decl-aux Specs 0 0 Params Decl :- !,
+  rev Params ParamsR,
+  coq.build-mindt-decl-binders Specs Specs ParamsR [] Decl.
+coq.build-mindt-decl-aux ([coq.indt-spec _ _ _ (prod N S _) _ _|_] as Specs) Pno UPno Params (parameter NS explicit S Res) :- Pno > 0, UPno > 0, !,
+  coq.name->id N NS,
+  Pno1 is Pno - 1,
+  UPno1 is UPno - 1,
+  pi p\
+    std.map Specs (coq.build-mindt-decl-subst-param p) Specs1,
+    coq.build-mindt-decl-aux Specs1 Pno1 UPno1 [p|Params] (Res p).
+:name "coq.build-mindt-decl-aux:fail"
+coq.build-mindt-decl-aux _ _ _ _ _ :- !,
+  fatal-error "coq.build-mindt-decl-aux: invalid mutual declaration".
+
+func coq.build-mindt-decl-subst-param term, coq.indt-spec -> coq.indt-spec.
+coq.build-mindt-decl-subst-param P (coq.indt-spec GR ID IsInd (prod _ _ T) Kns Ktys) (coq.indt-spec GR ID IsInd (T P) Kns Ktys1) :- !,
+  std.map Ktys (coq.subst-prod [P]) Ktys1.
+coq.build-mindt-decl-subst-param _ _ _ :- !,
+  fatal-error "coq.build-mindt-decl-subst-param: parameter mismatch".
+
+func coq.build-mindt-decl-binders list coq.indt-spec, list coq.indt-spec, list term, list (pair inductive term) -> indt-decl.
+coq.build-mindt-decl-binders All [] ParamsR Acc (mblock Blocks) :- !,
+  rev Acc Pairs,
+  std.map All (coq.build-mindt-decl-block Pairs ParamsR) Blocks.
+coq.build-mindt-decl-binders All [coq.indt-spec GR ID IsInd Ty _ _|Rest] ParamsR Acc (minductive ID IsInd Arity More) :- !,
+  coq.term->arity Ty 0 Arity,
+  @pi-inductive ID Arity i\
+    coq.build-mindt-decl-binders All Rest ParamsR [pr GR i|Acc] (More i).
+
+func coq.build-mindt-decl-block list (pair inductive term), list term, coq.indt-spec -> list indc-decl.
+coq.build-mindt-decl-block Pairs ParamsR (coq.indt-spec _ _ _ _ Kns Ktys) Block :-
+  coq.build-mindt-decl-copy-clauses Pairs ParamsR Sub,
+  std.map2 Kns Ktys (gr_name\ ty\ res\ sigma tmp name ar\
+    (Sub ==> copy ty tmp),
+    coq.term->arity tmp 0 ar,
+    gr_name = pr _ name,
+    res = constructor name ar) Block.
+
+func coq.build-mindt-decl-copy-clauses list (pair inductive term), list term -> list prop.
+coq.build-mindt-decl-copy-clauses [] _ [].
+coq.build-mindt-decl-copy-clauses [pr GR I|Rest] ParamsR [
+    (pi l rest r\ copy (app[global (indt GR)|l]) r :- !, std.append ParamsR rest l, coq.mk-app I rest r, !),
+    (pi l rest r ui\ copy (app[pglobal (indt GR) ui|l]) r :- !, std.append ParamsR rest l, coq.mk-app I rest r, !),
+    (copy (global (indt GR)) I :- !),
+    (pi ui\ copy (pglobal (indt GR) ui) I :- !)
+  | More] :-
+  coq.build-mindt-decl-copy-clauses Rest ParamsR More.
 
 % [coq.indt-unif->indt-nonunif I O] takes an inductive declaration I which may
 % contain uniform parameters (i.e. be headed by the `parameter` constructor),
@@ -331,9 +393,25 @@ coq.rename-indt-decl RP RI RK (inductive ID Ind A In) (inductive ID1 Ind A1 Out)
   coq.arity->term A TY,
   @pi-decl Name TY i\
     std.map (In i) (coq.rename-indt-decl.aux RP RI RK) (Out i).
+coq.rename-indt-decl RP RI RK (minductive ID Ind A In) (minductive ID1 Ind A1 Out) :-
+  RI ID ID1,
+  coq.rename-arity RP A A1,
+  coq.id->name ID Name,
+  coq.arity->term A TY,
+  @pi-decl Name TY i\
+    coq.rename-indt-decl RP RI RK (In i) (Out i).
+coq.rename-indt-decl RP RI RK (mblock Blocks) (mblock Blocks1) :-
+  map Blocks (coq.rename-indt-decl.block RP RI RK) Blocks1.
 coq.rename-indt-decl _ RI RK (record ID A KID F) (record ID1 A KID1 F) :-
   RI ID ID1,
   RK KID KID1.
+
+func coq.rename-indt-decl.block
+  (func id -> id),
+  (func id -> id),
+  (func id -> id),
+  list indc-decl -> list indc-decl.
+coq.rename-indt-decl.block RP RI RK Ks Ks1 :- map Ks (coq.rename-indt-decl.aux RP RI RK) Ks1.
 
 func coq.rename-indt-decl.aux
   (func id -> id),
@@ -378,6 +456,10 @@ coq.typecheck-indt-decl (inductive ID _ Arity KDecl) Diag :- do-ok! Diag [
   coq.typecheck-indt-arity Arity A NUPNO,
   d\ @pi-parameter ID A i\ forall-ok (KDecl i) (coq.typecheck-indt-decl-c i A NUPNO) d
 ].
+coq.typecheck-indt-decl (minductive ID _ Arity Rest) Diag :- do-ok! Diag [
+  coq.typecheck-indt-arity Arity A NUPNO,
+  d\ @pi-parameter ID A i\ coq.typecheck-indt-decl-mutual [pr i (pr A NUPNO)] (Rest i) d
+].
 coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- do-ok! Diag [
   coq.typecheck-ty A _,
   d\ @pi-parameter ID A i\ do-ok! d [
@@ -385,6 +467,24 @@ coq.typecheck-indt-decl (record ID A _IDK FDecl) Diag :- do-ok! Diag [
     coq.typecheck-indt-decl-c i A 0 (constructor "fields" (arity (K i)))
   ]
 ].
+
+func coq.typecheck-indt-decl-mutual list (pair term (pair term int)), indt-decl -> diagnostic.
+coq.typecheck-indt-decl-mutual Acc (minductive ID _ Arity Rest) Diag :- !, do-ok! Diag [
+  coq.typecheck-indt-arity Arity A NUPNO,
+  d\ @pi-parameter ID A i\ coq.typecheck-indt-decl-mutual [pr i (pr A NUPNO)|Acc] (Rest i) d
+].
+coq.typecheck-indt-decl-mutual Acc (mblock Blocks) Diag :- !,
+  rev Acc Infos,
+  coq.typecheck-indt-decl-blocks Infos Blocks Diag.
+coq.typecheck-indt-decl-mutual _ _ (error "minductive/mblock expected") :- !.
+
+func coq.typecheck-indt-decl-blocks list (pair term (pair term int)), list (list indc-decl) -> diagnostic.
+coq.typecheck-indt-decl-blocks [] [] ok :- !.
+coq.typecheck-indt-decl-blocks [pr I (pr A NUPNO)|Infos] [Ks|Blocks] Diag :- !, do-ok! Diag [
+  forall-ok Ks (coq.typecheck-indt-decl-c I A NUPNO),
+  d\ coq.typecheck-indt-decl-blocks Infos Blocks d
+].
+coq.typecheck-indt-decl-blocks _ _ (error "mblock constructor block count mismatch") :- !.
 
 func coq.typecheck-indc-arity arity, int -> term, sort, diagnostic.
 coq.typecheck-indc-arity A 0 T S Diag :- !,
@@ -439,11 +539,42 @@ coq.elaborate-indt-decl-skeleton (inductive ID I Arity KDecl) (inductive ID I Ar
        d\ @pi-parameter ID A1 i\ map-ok (KDecl i) (coq.elaborate-indt-decl-skeleton-c i Arity1 NUPNO) (KDecl1 i) d
   ]
 ].
+coq.elaborate-indt-decl-skeleton (minductive ID I Arity Rest) (minductive ID I Arity1 Rest1) Diag :- do-ok! Diag [
+  coq.elaborate-arity-skeleton Arity _ Arity1,
+  lift-ok (coq.arity->nparams Arity1 NUPNO) "",
+  d\ coq.arity->term Arity1 A1, do-ok! d [
+       coq.typecheck-indt-decl.heuristic-var-type A1,
+       d\ @pi-parameter ID A1 i\ coq.elaborate-indt-decl-skeleton-mutual [pr i (pr Arity1 NUPNO)] (Rest i) (Rest1 i) d
+  ]
+].
 coq.elaborate-indt-decl-skeleton (record ID A IDK FDecl) (record ID A1 IDK FDecl1) Diag :- do-ok! Diag [
   coq.elaborate-ty-skeleton A _ A1,
   lift-ok (A1 = sort U) "record type is not a sort",
   d\ @pi-parameter ID A1 i\ coq.elaborate-indt-decl-skeleton-fields U FDecl FDecl1 d
 ].
+
+:index (_ 1)
+func coq.elaborate-indt-decl-skeleton-mutual list (pair term (pair arity int)), indt-decl -> indt-decl, diagnostic.
+coq.elaborate-indt-decl-skeleton-mutual Acc (minductive ID I Arity Rest) (minductive ID I Arity1 Rest1) Diag :- !, do-ok! Diag [
+  coq.elaborate-arity-skeleton Arity _ Arity1,
+  lift-ok (coq.arity->nparams Arity1 NUPNO) "",
+  d\ coq.arity->term Arity1 A1, do-ok! d [
+       coq.typecheck-indt-decl.heuristic-var-type A1,
+       d\ @pi-parameter ID A1 i\ coq.elaborate-indt-decl-skeleton-mutual [pr i (pr Arity1 NUPNO)|Acc] (Rest i) (Rest1 i) d
+  ]
+].
+coq.elaborate-indt-decl-skeleton-mutual Acc (mblock Blocks) (mblock Blocks1) Diag :- !,
+  rev Acc Infos,
+  coq.elaborate-indt-decl-skeleton-blocks Infos Blocks Blocks1 Diag.
+coq.elaborate-indt-decl-skeleton-mutual _ _ _ (error "minductive/mblock expected") :- !.
+
+func coq.elaborate-indt-decl-skeleton-blocks list (pair term (pair arity int)), list (list indc-decl) -> list (list indc-decl), diagnostic.
+coq.elaborate-indt-decl-skeleton-blocks [] [] [] ok :- !.
+coq.elaborate-indt-decl-skeleton-blocks [pr I (pr Arity NUPNO)|Infos] [Ks|Blocks] [Ks1|Blocks1] Diag :- !, do-ok! Diag [
+  map-ok Ks (coq.elaborate-indt-decl-skeleton-c I Arity NUPNO) Ks1,
+  d\ coq.elaborate-indt-decl-skeleton-blocks Infos Blocks Blocks1 d
+].
+coq.elaborate-indt-decl-skeleton-blocks _ _ _ (error "mblock constructor block count mismatch") :- !.
 
 :index (_ 1)
 func coq.elaborate-indt-decl-skeleton-fields sort, record-decl -> record-decl, diagnostic.
@@ -542,16 +673,31 @@ coq.arity->implicits (parameter Id I Ty F) [I|Is] :-
   @pi-parameter Id Ty x\ coq.arity->implicits (F x) Is.
 coq.arity->implicits (arity _) [].
 
-% Get impargs setting from an indt-decl
-func coq.indt-decl->implicits indt-decl -> list implicit_kind, list (list implicit_kind).
-coq.indt-decl->implicits (parameter Id I Ty F) [I|Is] R :-
-  @pi-parameter Id Ty x\ coq.indt-decl->implicits (F x) Is R1,
-  std.map R1 (l\r\r = [I|l]) R.
-coq.indt-decl->implicits (record _ _ _ _) [] [[]].
-coq.indt-decl->implicits (inductive Id _ A Ks) Is R :-
+func coq.constructor-block->implicits list indc-decl -> list (list implicit_kind).
+coq.constructor-block->implicits Ks R :-
+  std.map Ks (c\i\sigma a\ c = constructor _ a, coq.arity->implicits a i) R.
+
+% Get impargs settings from all inductives in an indt-decl, and from their
+% constructor blocks, in declaration order.
+func coq.indt-decl->implicits-all indt-decl -> list (list implicit_kind), list (list (list implicit_kind)).
+coq.indt-decl->implicits-all (parameter Id I Ty F) Inds1 Ks1 :-
+  @pi-parameter Id Ty x\ coq.indt-decl->implicits-all (F x) Inds Ks,
+  std.map Inds (l\r\ r = [I|l]) Inds1,
+  std.map Ks (b\r\ std.map b (l\r\ r = [I|l]) r) Ks1.
+coq.indt-decl->implicits-all (record _ _ _ _) [[]] [[[]]].
+coq.indt-decl->implicits-all (inductive Id _ A Ks) [Is] [R] :-
   coq.arity->implicits A Is,
-  @pi-inductive Id A x\
-    std.map (Ks x) (c\i\sigma a\c = constructor _ a,coq.arity->implicits a i) R.
+  @pi-inductive Id A x\ coq.constructor-block->implicits (Ks x) R.
+coq.indt-decl->implicits-all (minductive Id _ A Rest) [Is|Inds] Ks :-
+  coq.arity->implicits A Is,
+  @pi-inductive Id A x\ coq.indt-decl->implicits-all (Rest x) Inds Ks.
+coq.indt-decl->implicits-all (mblock Ks) [] R :-
+  std.map Ks coq.constructor-block->implicits R.
+
+% Get impargs setting from the first inductive in an indt-decl.
+func coq.indt-decl->implicits indt-decl -> list implicit_kind, list (list implicit_kind).
+coq.indt-decl->implicits D Is Ks :-
+  coq.indt-decl->implicits-all D [Is|_] [Ks|_].
 
 % Check if some implicits are set
 func coq.any-implicit? list implicit_kind ->.

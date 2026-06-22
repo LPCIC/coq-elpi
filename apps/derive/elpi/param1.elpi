@@ -174,8 +174,7 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
     NewName is Prefix ^ {coq.gref->id (indt GR)},
 
     coq.ensure-fresh-global-id NewName FNewName,
-    coq.build-indt-decl
-      (pr new_name FNewName) tt LnoR LnoR {coq.subst-fun [Ind] TyR} KnamesR KtypesR DeclR
+    coq.build-indt-decl (coq.indt-spec new_name FNewName tt {coq.subst-fun [Ind] TyR} KnamesR KtypesR) LnoR LnoR  DeclR
   ),
 
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped inductive",

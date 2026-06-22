@@ -87,7 +87,7 @@ main [str IN, str OUT ] :-
   % we rename them, otherwise Coq complains the names are already used
   std.map KN rename-constructors KN1,
   % declare the new inductive
-  coq.build-indt-decl (pr I OUT) B NP NPU A KN1 KT1 Decl,
+  coq.build-indt-decl (coq.indt-spec I OUT B A KN1 KT1) NP NPU  Decl,
   coq.env.add-indt Decl _.
 
 }}.

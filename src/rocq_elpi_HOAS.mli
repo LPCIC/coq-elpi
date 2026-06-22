@@ -141,7 +141,7 @@ val lp2record_field_spec : record_field_spec -> Name.t * Record.Data.projection_
 [%%endif]
 
 val inductive_decl2lp :
-  depth:int -> empty conv_context -> constraints -> State.t -> (Names.MutInd.t * UVars.Instance.t * (Declarations.mutual_inductive_body * Declarations.one_inductive_body) * (Glob_term.binding_kind list * Glob_term.binding_kind list list)) ->
+  depth:int -> empty conv_context -> constraints -> State.t -> (Names.MutInd.t * UVars.Instance.t * Declarations.mutual_inductive_body * (Glob_term.binding_kind list list * Glob_term.binding_kind list list list)) ->
     State.t * term * Conversion.extra_goals
 
 val inductive_entry2lp :

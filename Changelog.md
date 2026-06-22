@@ -1,10 +1,19 @@
 
 # [UNRELEASED]
 
+### HOAS:
+- New `minductive` and `mblock` for mutual inductive types
+
 ### API:
 - fix `coq.CS.canonical-projection?`, used to disregard `#[canonical=no]`
 - fix `ltac_tactic:(t)`, use to ignore ltac variables in `t`
 - New `coq.elpi.add-predicate?` to check if a predicate is declared in elpi
+- New `coq.env.indt-block` to list the inductive types in the same
+  mutual block
+
+### LIB:
+- Change `coq.build-indt-decl`, now taking a `coq.indt-spec` tuple
+- New `coq.build-mindt-decl` taking a list of `coq.indt-spec`
 
 
 # [3.4.0] 19/05/2026
