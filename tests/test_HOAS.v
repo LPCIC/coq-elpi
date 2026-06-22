@@ -943,14 +943,14 @@ Elpi Query lp:{{
 (************** *)
 
 Inductive i1 (A: Type) (B : Type) : (forall x : nat, x + 1 = x) -> Prop :=
-  | K11 : forall p, forall x : bool, x = x -> i2 A B -> i1 A (B * B) p -> i1 A B p
+  | K11 : forall p, forall x : bool, x = x -> i2 A B -> i1 A B p -> i1 A B p
 with i2 (A:Type) (B : Type) : Type := K21.
 
 Elpi Query lp:{{
   {{ i1 }} = global (indt I),
   coq.env.indt-block I tt NP NUP [I,I2] SL KNL KTL,
   std.assert! (NP = 2) "NP",
-  std.assert! (NUP = 1) "NUP",
+  std.assert! (NUP = 2) "NUP",
   std.assert! (SL = [_,_]) "SL",
   std.assert! (KNL = [[_],[_]]) "KNL",
   std.assert! (KTL = [[_],[_]]) "KTL",
