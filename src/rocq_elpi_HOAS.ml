@@ -3625,25 +3625,13 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_binding_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
     | E.App(c,id,[fin;arity;rest])
       when c == minductivec ->
-        let name = in_coq_annot ~depth id in
-        if Name.is_anonymous (Context.binder_name name) then
-          err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
-        let fin = if in_coq_bool ~depth state ~default:true fin then Declarations.Finite else Declarations.CoFinite in
-        let state, nuparams, nuimpls, arity, gl1 = readback_arity ~depth coq_ctx constraints state arity in
-        let iname =
-          match Context.binder_name name with Name x -> x | _ -> assert false in
-        let e = Context.Rel.Declaration.LocalAssum(name,arity) in
+        let  state, e, fin, iname, nuparams, nuimpls, arity, gl1 =
+          aux_inductive ~depth id fin arity coq_ctx state in
         aux_mind_lam e coq_ctx ~depth params impls [(iname, nuparams, List.rev nuimpls, arity, fin)] state (gl1 :: extra) rest
     | E.App(c,id,[fin;arity;ks])
       when c == inductivec ->
-        let name = in_coq_annot ~depth id in
-        if Name.is_anonymous (Context.binder_name name) then
-          err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
-        let fin = if in_coq_bool ~depth state ~default:true fin then Declarations.Finite else Declarations.CoFinite in
-        let state, nuparams, nuimpls, arity, gl1 = readback_arity ~depth coq_ctx constraints state arity in
-        let e = Context.Rel.Declaration.LocalAssum(name,arity) in
-        let iname =
-          match Context.binder_name name with Name x -> x | _ -> assert false in
+        let  state, e, fin, iname, nuparams, nuimpls, arity, gl1 =
+          aux_inductive ~depth id fin arity coq_ctx state in
         begin match E.look ~depth ks with
         | E.Lam t ->
             let ks = U.lp_list_to_list ~depth:(depth+1) t in
@@ -3686,17 +3674,22 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     | E.Lam t -> aux_decl (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params impls state extra t
     | _ -> err Pp.(str"lambda expected: "  ++
                  str (pp2string P.(term depth) t))
+  and aux_inductive ~depth id fin arity coq_ctx state =
+    let name = in_coq_annot ~depth id in
+    if Name.is_anonymous (Context.binder_name name) then
+      err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
+    let fin = if in_coq_bool ~depth state ~default:true fin then Declarations.Finite else Declarations.CoFinite in
+    let state, nuparams, nuimpls, arity, gl1 = readback_arity ~depth coq_ctx constraints state arity in
+    let e = Context.Rel.Declaration.LocalAssum(name,arity) in
+    let iname =
+      match Context.binder_name name with Name x -> x | _ -> assert false in
+    state, e, fin, iname, nuparams, nuimpls, arity, gl1
+
   and aux_mind_decl coq_ctx ~depth params impls inds state extra t =
     match E.look ~depth t with
     | E.App(c,id,[fin;arity;rest]) when c == minductivec ->
-        let name = in_coq_annot ~depth id in
-        if Name.is_anonymous (Context.binder_name name) then
-          err Pp.(str"id expected, got: "++ str (pp2string P.(term depth) id));
-        let fin = if in_coq_bool ~depth state ~default:true fin then Declarations.Finite else Declarations.CoFinite in
-        let state, nuparams, nuimpls, arity, gl1 = readback_arity ~depth coq_ctx constraints state arity in
-        let iname =
-          match Context.binder_name name with Name x -> x | _ -> assert false in
-        let e = Context.Rel.Declaration.LocalAssum(name,arity) in
+        let  state, e, fin, iname, nuparams, nuimpls, arity, gl1 =
+          aux_inductive ~depth id fin arity coq_ctx state in
         aux_mind_lam e coq_ctx ~depth params impls ((iname, nuparams, List.rev nuimpls, arity, fin) :: inds) state (gl1 :: extra) rest
     | E.App(c,blocks,[]) when c == mblockc ->
         let inds = List.rev inds in
