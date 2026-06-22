@@ -687,6 +687,17 @@ external func coq.env.indt % reads the inductive type declaration for the enviro
    % list of constructor names
   list term.       % list of the types of the constructors (type of KNames) including parameters
   
+external func coq.env.indt-block % reads the inductive type declaration for the environment.
+  inductive               % Ind
+  -> bool,                % tt if the type is inductive (ff for co-inductive)
+  int,                    % number of parameters
+  int,                    % number of parameters that are uniform (<= parameters)
+  list inductive,         % all inductives in the block
+  list term,              % types of the inductive types constructors including parameters
+  list (list constructor), 
+   % lists of constructor names
+  list (list term).       % lists of the types of the constructors (type of KNames) including parameters
+  
 external func coq.env.indt-decl % reads the inductive type declaration for the environment.
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
@@ -694,10 +705,6 @@ external func coq.env.indt-decl % reads the inductive type declaration for the e
   -> indt-decl.
    % HOAS description of the inductive type
   
-% [coq.env.indt-block Ind AllInd] AllInd are all the inductive types in the
-% mutual block of Ind, in declaration order
-external func coq.env.indt-block inductive -> list inductive.
-
 % [coq.env.indc->indt K I N] finds the inductive I to which constructor K
 % belongs and its position N among the other constructors
 external func coq.env.indc->indt constructor -> inductive, int.

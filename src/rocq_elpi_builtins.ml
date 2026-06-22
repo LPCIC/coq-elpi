@@ -2101,6 +2101,36 @@ Supported attributes:
 
   DocNext);
 
+  MLCode(Pred("coq.env.indt-block",
+    In(inductive, "Ind",
+    Out(bool, "tt if the type is inductive (ff for co-inductive)",
+    Out(int,  "number of parameters",
+    Out(int,  "number of parameters that are uniform (<= parameters)",
+    Out(list inductive, "all inductives in the block",
+    COut(B.listC closed_ground_term, "types of the inductive types constructors including parameters",
+    Out(list (list constructor), "lists of constructor names",
+    COut(B.listC (B.listC closed_ground_term), "lists of the types of the constructors (type of KNames) including parameters",
+    Full(global, {|reads the inductive type declaration for the environment.|}))))))))),
+  (fun i _ _ _ _ arity knames ktypes ~depth { env ; options } _ state ->
+    let open Declarations in
+    let mind, _indbo as _ind = lookup_inductive env i in
+    let co  = mind.mind_finite <> Declarations.CoFinite in
+    let lno = mind.mind_nparams in
+    let luno = mind.mind_nparams_rec in
+    let uinst, state, extra_goals = handle_uinst_option_for_inductive ~depth options i state in
+    let arity = if_keep arity (fun () ->
+      mind.mind_packets |> CArray.map_to_list (fun ind -> Inductive.type_of_inductive ((mind,ind),uinst) |> EConstr.of_constr)) in
+    let knames = if_keep knames (fun () ->
+      mind.mind_packets |> CArray.map_to_list (fun ind -> 
+        CList.(init (Array.length Declarations.(ind.mind_consnames)) (fun k -> i,k+1)))) in
+    let ktypes = if_keep ktypes (fun () ->
+      mind.mind_packets |> CArray.map_to_list (fun ind -> 
+      Inductive.type_of_constructors (i,uinst) (mind,ind)
+      |> CArray.map_to_list EConstr.of_constr)) in
+     let inames = CList.(init (Array.length Declarations.(mind.mind_packets)) (fun k -> fst i, k)) in
+     state, !:  co +! lno +! luno +! inames +? arity +? knames +? ktypes, extra_goals)),
+  DocNext);
+
   MLCode(Pred("coq.env.indt-decl",
     In(inductive, "reference to the inductive type",
     COut(indt_decl_out,"HOAS description of the inductive type",
@@ -2120,15 +2150,6 @@ Supported attributes:
        List.map (fun x -> Impargs.extract_impargs_data (Impargs.implicits_of_global x) |> hd) knames) packets in
      state, !: (fst i, uinst, mind, (i_impls,k_impls)), extra_goals)),
   DocNext);
-
-  MLCode(Pred("coq.env.indt-block",
-    In(inductive, "Ind",
-    Out(list inductive, "AllInd",
-    Read(global, "AllInd are all the inductive types in the mutual block of Ind, in declaration order"))),
-  (fun i _ ~depth { env } _ _state ->
-     let mind, _indbo = lookup_inductive env i in
-     !: CList.(init (Array.length Declarations.(mind.mind_packets)) (fun k -> fst i, k)))),
-  DocAbove);
 
   MLCode(Pred("coq.env.indc->indt",
     In(constructor,"K",
