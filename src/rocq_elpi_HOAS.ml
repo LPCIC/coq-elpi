@@ -3632,16 +3632,7 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       when c == inductivec ->
         let  state, e, fin, iname, nuparams, nuimpls, arity, gl1 =
           aux_inductive ~depth id fin arity coq_ctx state in
-        begin match E.look ~depth ks with
-        | E.Lam t ->
-            let ks = U.lp_list_to_list ~depth:(depth+1) t in
-            let state, melims, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
-              aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) (nuparams, List.rev nuimpls) arity iname fin
-                state ks in
-            state, (melims, idecl, uctx, ubinders, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: gl1 :: extra)))
-        | _ -> err Pp.(str"lambda expected: "  ++
-                 str (pp2string P.(term depth) ks))
-        end
+        aux_ind_lam e coq_ctx ~depth params impls state ks nuparams nuimpls arity iname fin (gl1 :: extra)
     | E.App(c,id,[arity;kn;fields]) when c == recordc ->
       begin match E.look ~depth kn with
       | E.CData kname when CD.is_string kname ->
@@ -3697,6 +3688,17 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let state, res, gl2 = aux_mutual_constructors coq_ctx ~depth (params,List.rev impls) inds state constructor_blocks in
         state, res, List.(concat (rev (gl2 :: extra)))
     | _ -> err Pp.(str"minductive/mblock expected: " ++ str (pp2string P.(term depth) t))
+  and aux_ind_lam e coq_ctx ~depth params impls state ks nuparams nuimpls arity iname fin extra =
+    match E.look ~depth ks with
+    | E.Lam t ->
+        let ks = U.lp_list_to_list ~depth:(depth+1) t in
+        let state, melims, idecl, uctx, ubinders, i_impls, ks_impls, gl2 =
+          aux_construtors (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) (params,List.rev impls) (nuparams, List.rev nuimpls) arity iname fin
+            state ks in
+        state, (melims, idecl, uctx, ubinders, None, [i_impls, ks_impls]), List.(concat (rev (gl2 :: extra)))
+    | _ -> err Pp.(str"lambda expected: "  ++
+              str (pp2string P.(term depth) ks))
+      
   and aux_mind_lam e coq_ctx ~depth params impls inds state extra t =
     match E.look ~depth t with
     | E.Lam t -> aux_mind_decl (push_coq_ctx_local depth e coq_ctx) ~depth:(depth+1) params impls inds state extra t
@@ -3834,7 +3836,7 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
       let ninds = List.length inds in
       let sigma = get_sigma state in
       let paramsno = List.length params in
-      (* Relocation to match Coq's API.
+     (* Relocation to match Coq's API.
       * From
       *  Ind, Params, NuParams |- ktys
       * To
