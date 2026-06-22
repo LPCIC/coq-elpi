@@ -12,7 +12,7 @@
   mutual block
 
 ### LIB:
-- Change `coq.build-indt-decl`, not taking a `coq.indt-spec` tuple
+- Change `coq.build-indt-decl`, now taking a `coq.indt-spec` tuple
 - New `coq.build-mindt-decl` taking a list of `coq.indt-spec`
 
 
