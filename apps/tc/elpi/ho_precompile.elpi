@@ -130,6 +130,7 @@ namespace tc.precomp {
     :name "precomp-proj-inst"
     precompile-aux _ T N T' N' :-
       tc.maybe-projection T P PN Ag R, !,
+      % TODO: should precompile Ag?
       work-proj free-var P PN Ag R N T' N'.
 
     % Detect maybe-eta term

@@ -4,7 +4,7 @@ Set Primitive Projections.
 Record S := { sort :> Type }.
 Unset Primitive Projections.
 
-Elpi cs class (S).
+Elpi cs default (S).
 
 Class C (s : Type) := {}.
 
