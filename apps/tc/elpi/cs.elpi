@@ -220,7 +220,6 @@ namespace cs {
   % main [str "default", trm T] :- !, std.assert! (cs.compiler.default.main T) "Cannot compile canonical structure".
   main L :- coq.error "
     Invalid input for command cs\n
-    Expected:\n
-      \tElpi cs cs (CANSTR)\n
+    Expected:\n \tElpi cs cs (CANSTR)".
       % \tElpi class (STRU)\n
 }
