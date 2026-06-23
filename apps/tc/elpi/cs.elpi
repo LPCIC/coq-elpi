@@ -156,23 +156,44 @@ namespace cs {
       % CS is the instance of the structure
       % Ag is the term being consumed for compilation (i.e. the implementation of CS) 
       % L is the list of premises (TODO: should be removed?)
+      % PT is the list of pi-quantified variables for problematic subterms
       % A is the list of abstractions: the arguments of CS
       % C is the final rule
-      func compiler bool, (pair int constant), term, term, list prop, list term -> prop.
-      compiler B (pr N P) CS (app[_|Ag]) L A Rs :- !,
+      % NOTE: differently from type-class compilation, we are not compiling
+      %       types of terms, but their implementation. That is we need to cross
+      %       fun instead of prod
+      :index (_ _ _ 1)
+      func compiler bool, (pair int constant), term, term, list prop, list term, list term -> prop.
+      compiler B (pr N P) CS (app[_|Ag]) L _ A Rs :-
         coq.mk-app CS {std.rev A} CS',
         std.nth N Ag I,
         precompile I z I' NPb,
         load-nestedp NPb B P I' CS' [] Rs.
-      compiler B P CS (fun N Ty Bo') L A (pi x\ R x) :-
+      compiler B P CS (fun N Ty Bo') L PT A (pi x\ R x) :-
         @pi-decl N Ty x\ (is-uvar x :- !) ==>
-          compiler B P CS (Bo' x) L [x|A] (R x).
+          compiler B P CS (Bo' x) L [x|A] PT (R x).
+
+      func compiler-pt nat, (pair int constant), term, term, list term -> prop.
+      compiler-pt z IC CS T L R :- compiler tt IC CS T [] L [] R.
+      compiler-pt (s N) IC CS T L (pi x\ R x) :-
+        pi x\ is-uvar x => compiler-pt N IC CS T [x|L] (R x).
+
+      :index (_ _ _ _ 1 1)
+      func compiler-univ nat, (pair int constant), term, term, list univ, list univ-instance -> prop.
+      compiler-univ N IC CS T [] [] R :- compiler-pt N IC CS T [] R.
+      compiler-univ N IC CS T [X|Xs] L (pi x\ R x) :-
+        pi x\ (copy (sort (typ X)) (sort (typ x)) :- !) => 
+          compiler-univ N IC CS T Xs L (R x).
+      compiler-univ N IC CS T [] [X|Xs] (pi x\ R x) :-
+        pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
+          compiler-univ N IC CS T [] Xs (R x).
 
       func main term ->.
       main (global (const C) as T) :-
         coq.env.const C (some Bo) Ty,
         get-proj Ty P,
-        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] R, tc.add-tc-db _ _ R).
+        % tc.precomp.instance T T' N UnivConstL UnivInstL,
+        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, tc.add-tc-db _ _ R).
     }
 
     namespace default {
