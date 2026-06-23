@@ -79,7 +79,7 @@ namespace tc.compile {
       % Maybe-llam when H is a coq unif variable quantified in the instance type
       % In the following instance, X is a HO variable applied to a constant (not a name)
       %   Instance i : forall (X : T1 -> T2) (a : T1), c (X a). 
-      decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) [X|XS] L1 Y XS' [NL | L2] :-
+      decompile-term-aux (tc.maybe-llam-tm H PF NPF S) [X|XS] L1 Y XS' [NL | L2] :-
         not (var H), !, % is-uvar H, holds
         name Y X S,
         length-nat PF Len,
@@ -92,7 +92,7 @@ namespace tc.compile {
       % This happens when the instance to be compiled comes from the context
       % Example: Goal exists (X : T1 -> T2), forall a, c (X a) -> ...
       %            intros; eexists. (* In the context we have the instance `H: c (?X a)` *)
-      decompile-term-aux (tc.maybe-llam-tm (app[app[H | PF] | NPF]) S) A L Z XS' [NL | L3] :-  !,
+      decompile-term-aux (tc.maybe-llam-tm H PF NPF S) A L Z XS' [NL | L3] :-  !,
         var H _ Scope, !,
         std.append Scope S S',
         prune Z S',
@@ -162,7 +162,7 @@ namespace tc.compile {
     clean-term A B :-
       (pi c n a s sc r \ copy (tc.maybe-proj c n a s sc) r :- !, sigma X\ std.append a [s] X, copy (app[global(const c) | X]) r) =>
       (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
-      (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
+      (pi a p n s r \ copy (tc.maybe-llam-tm a p n s) r :- !, sigma X\ std.append p n X, copy (app[a|X]) r, !) =>
         std.assert!  (copy A B) "[TC] clean-term error".
 
     func main 
@@ -371,7 +371,7 @@ namespace tc.compile {
 
     decomp-term (tc.maybe-proj P _ _ T S) L Y [tc.link.proj P T Y|L] :- !, prune Y S.
 
-    decomp-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
+    decomp-term (tc.maybe-llam-tm H S NPF Sc) L Z [NL|L'] :- !,
       prune Z Sc,
       get-uva-pair-arity H S Y,
       std.fold-map NPF L decomp-term Tl L',

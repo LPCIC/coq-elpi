@@ -71,9 +71,11 @@ namespace cs {
       %   coq.elpi.predicate PN [I, CS] R.
       compile P I CS (tc.link.proj P CS I :- !).
 
+      :index (1 _ 1)
       func mk-rule bool, prop, list prop -> prop.
-      mk-rule _  P [] P :- !.
-      mk-rule tt P R (P :- R).
+      mk-rule tt P [] (P :- !) :- !.
+      mk-rule ff P [] P :- !.
+      mk-rule tt P R (P :- !, R).
       mk-rule ff P R (R => P).
 
       func work-proj constant, int, list term, term, nat -> term, nat.
@@ -193,7 +195,7 @@ namespace cs {
         coq.env.const C (some Bo) Ty,
         get-proj Ty P,
         % tc.precomp.instance T T' N UnivConstL UnivInstL,
-        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, tc.add-tc-db _ (after "0") R).
+        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, coq.say "Adding R"R, tc.add-tc-db _ (after "0") R).
     }
 
     % namespace default {
