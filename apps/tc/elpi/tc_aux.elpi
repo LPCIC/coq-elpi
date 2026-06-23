@@ -298,11 +298,6 @@ namespace tc {
     proj-reducer-aux R P N O TyAg T.
   proj-reducer P _ Ag X T :- name X, !, build-proj-term P Ag X T.
 
-  type prod-range 
-    term ->          % The current qunatified uvar 
-    nat ->           % Its maximal application of the term
-    term.
-
   type maybe-eta-tm 
     term ->          % The current precompiled subterm
     list term ->     % The list of FV in the precomp subterm

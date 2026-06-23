@@ -69,15 +69,12 @@ namespace tc.compile {
       decompile-term-aux (primitive _ as P) A L P A L :- !.
 
       :name "decompile-inst-maybe-proj"
-      decompile-term-aux (tc.maybe-proj P _ _ T S) [X|XS] L1 Y XS [tc.link.proj P Y T|L1] :- !, name Y X S.
+      decompile-term-aux (tc.maybe-proj P _ _ T S) [X|XS] L1 Y XS [tc.link.proj P T Y|L1] :- !, name Y X S.
 
       decompile-term-aux (tc.maybe-eta-tm T S) [X|XS] L1 Y XS' [NL | L2] :- !,
         name Y X S,
         decompile-term-aux T XS L1 T' XS' L2,
         NL = tc.link.eta Y T'.
-
-      decompile-term-aux (tc.prod-range T _) A L T' A' L' :- !,
-        decompile-term-aux T A L T' A' L'.
 
       % Maybe-llam when H is a coq unif variable quantified in the instance type
       % In the following instance, X is a HO variable applied to a constant (not a name)
@@ -165,7 +162,6 @@ namespace tc.compile {
     clean-term A B :-
       (pi c n a s sc r \ copy (tc.maybe-proj c n a s sc) r :- !, sigma X\ std.append a [s] X, copy (app[global(const c) | X]) r) =>
       (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
-      (pi t s r \ copy (tc.prod-range t s) r :- !, copy t r, !) =>
       (pi t s r \ copy (tc.maybe-llam-tm t s) r :- !, copy t r, !) =>
         std.assert!  (copy A B) "[TC] clean-term error".
 
@@ -216,9 +212,6 @@ namespace tc.compile {
       name A' A {std.rev L},
       Link = tc.link.eta A' (fun Name Ty' B'),
       pi x\ sigma L'\ std.rev [x|L] L', name (B' x) B L'.
-    % Going under prod-range
-    make-eta-link-aux A (tc.prod-range Prod _) BN L Link Ty' Bo :- !,
-      make-eta-link-aux A Prod BN L Link Ty' Bo.
     % The type of a higher order variable can be hidden behind a definition
     % In this case we unfold this definition to get the prod constructor
     make-eta-link-aux A T BN L Link Ty' Bo :-
@@ -267,8 +260,7 @@ namespace tc.compile {
       i:list prop,       % Pr : the premises of the rule
       o:prop.            % C  : the final clause corresponding to the compilation of I
     compile-premise L L2 P PTy ProofHd IsPositive ITy ProofTlR PremR Clause :-
-      ((pi a b c\ tc.get-TC-of-inst-type (tc.prod-range a c) b :- !, tc.get-TC-of-inst-type a b) => 
-        tc.get-TC-of-inst-type PTy TC), !,
+      tc.get-TC-of-inst-type PTy TC, !,
       compile-ty L L1 P {neg IsPositive} PTy [] [] NewPrem,
       if (tc.class TC _ tc.deterministic _)
         (NewPrem' = std.once NewPrem)
@@ -287,8 +279,9 @@ namespace tc.compile {
       list term,    % Ag : the arguments of I that will be part of the proof
       list prop     % Pr : the premises of the rule
       -> prop.      % C  : the final clause corresponding to the compilation of I
-    compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
+    compile-ty L L1 ProofHd IsPositive (prod N Ty Bo) ProofTlR PremR Clause :- !,
       std.do![
+        std.assert! (pi x\ tc.precomp.instance.get-max-arity x Ty (Bo x) Arity) "[TC] get-max-arity should not fail",
         if (IsPositive = tt) 
           (Clause = (pi x\ C x), E = is-uvar) 
           (clean-term Ty Ty', Clause = (pi x\ decl x N Ty' => C x), E = is-name),
@@ -376,10 +369,7 @@ namespace tc.compile {
     decomp-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
       prune V S, !, decomp-term T L T' L2.
 
-    decomp-term (tc.maybe-proj P _ _ T S) L Y [tc.link.proj P Y T|L] :- !, prune Y S.
-
-    decomp-term (tc.prod-range T _) A T' A' :- !,
-      decomp-term T A T' A'.
+    decomp-term (tc.maybe-proj P _ _ T S) L Y [tc.link.proj P T Y|L] :- !, prune Y S.
 
     decomp-term (tc.maybe-llam-tm (app [app[H|S] | NPF]) Sc) L Z [NL|L'] :- !,
       prune Z Sc,
