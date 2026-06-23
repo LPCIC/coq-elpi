@@ -69,7 +69,7 @@ namespace cs {
       % compile P I CS R :-
       %   proj-to-pname P PN,
       %   coq.elpi.predicate PN [I, CS] R.
-      compile P I CS (tc.link.proj P I CS :- !).
+      compile P I CS (tc.link.proj P CS I :- !).
 
       func mk-rule bool, prop, list prop -> prop.
       mk-rule _  P [] P :- !.
@@ -147,7 +147,7 @@ namespace cs {
       load-nestedp z B C T P L R :-
         decompile T (pr L []) T' (pr _ Pm),
         % coq.elpi.predicate C [T', P] Hd,
-        mk-rule B (tc.link.proj C T' P) {std.rev Pm} R.
+        mk-rule B (tc.link.proj C P T') {std.rev Pm} R.
       load-nestedp (s N) B C T P L (pi x\ R x) :- pi x\ load-nestedp N B C T P [x|L] (R x).
       
       % [compiler B IC CS Ag P L C]
@@ -193,20 +193,20 @@ namespace cs {
         coq.env.const C (some Bo) Ty,
         get-proj Ty P,
         % tc.precomp.instance T T' N UnivConstL UnivInstL,
-        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, tc.add-tc-db _ _ R).
+        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, tc.add-tc-db _ (after "0") R).
     }
 
-    namespace default {
-      func build-default constant ->.
-      build-default D :-
-        R = (pi x y z \ tc.link.proj D (uvar as x) y :- declare_constraint (tc.link.proj D x y) [x,z]),
-        tc.add-tc-db _ _ R.
+    % namespace default {
+    %   func build-default constant ->.
+    %   build-default D :-
+    %     R = (pi x y z \ tc.link.proj D (uvar as x) y :- declare_constraint (tc.link.proj D x y) [x,z]),
+    %     tc.add-tc-db _ _ R.
 
-      func main term ->.
-      main (global (indt C)) :-
-        coq.env.projections C P,
-        cs.compiler.forall-ocan build-default P.
-    }
+    %   func main term ->.
+    %   main (global (indt C)) :-
+    %     coq.env.projections C P,
+    %     cs.compiler.forall-ocan build-default P.
+    % }
   }
 
   namespace solver {
@@ -217,11 +217,10 @@ namespace cs {
   :name "cs-main"
   % main [str "class", trm T] :- !, std.assert! (cs.compiler.record.create-cs-pred T) "Cannot compile record projection".
   main [str "cs", trm T] :- !, std.assert! (cs.compiler.cs.main T) "Cannot compile canonical structure".
-  main [str "default", trm T] :- !, std.assert! (cs.compiler.default.main T) "Cannot compile canonical structure".
+  % main [str "default", trm T] :- !, std.assert! (cs.compiler.default.main T) "Cannot compile canonical structure".
   main L :- coq.error "
     Invalid input for command cs\n
     Expected:\n
       \tElpi cs cs (CANSTR)\n
-      \tElpi default (CANSTR)\n" L.
       % \tElpi class (STRU)\n
 }

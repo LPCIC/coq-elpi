@@ -84,6 +84,11 @@ namespace tc.precomp {
     :index (_ 1)
     func get-max-arity-aux term, term -> nat.
     get-max-arity-aux _ N z :- name N, !.
+    get-max-arity-aux _ (tc.maybe-proj _ _ _ _ _) z :- !.
+    get-max-arity-aux X (tc.maybe-llam-tm (app[app[H|PF]|NPF]) _) R :- !, 
+      std.append PF NPF L,
+      get-max-arity-aux X (app[H|L]) R.
+    get-max-arity-aux X (tc.maybe-eta-tm T _) R :- !, get-max-arity-aux X T R.
     get-max-arity-aux T (app [H|L]) R :- !,
       if (T == H) (length-nat L Len) (Len = z),
       std.fold L Len (x\y\w\ sigma M\ get-max-arity-aux T x M, max-nat y M w) R.
@@ -147,9 +152,7 @@ namespace tc.precomp {
       free-var Scope,
       std.fold-map NPF N (precompile-aux is_neg_fix) NPF1 M. 
 
-    % Charge if we work with unification variable or local name
-    % And returns the subterms is a prod-range
-    precompile-aux IsP (prod Name Ty B) N (tc.prod-range (prod Name Ty' B') MaxAr) P :- !,
+    precompile-aux IsP (prod Name Ty B) N (prod Name Ty' B') P :- !,
       std.assert! (pi x\ get-max-arity x Ty (B x) MaxAr) "[TC] get-max-arity should not fail",
       if (IsP = is_pos) (C = x\ is-uvar x) (C = x\ is-name x),
       std.assert! (pi x\ C x => decl x Name Ty => precompile-aux IsP (B x) N (B' x) M) "[TC] should not fail",
@@ -190,15 +193,6 @@ namespace tc.precomp {
       T' is obtained by the replacement of
         - all maybe-eta term `t1` with (tc.maybe-eta-tm `t1` `s`) where `s` = FV(`t1`)
             ==> This helps knowing if a subterm should be replaced with a `eta-link`
-        - all `prod _ Ty (x\ Bo x)` with (tc.prod-range (prod _ Ty (x\ Bo x)) N), 
-          where N is represent the "maximal" application of `x` in `Bo`
-            for example:
-              let Ty = {{Type -> Type -> Type -> Type -> Type}},
-              and Bo = x\ c1 (x nat bool) (x nat) (x nat nat bool)
-            the term `prod _ Ty Bo` is replaced with
-              (tc.prod-range (prod _ T Bo) 3)
-            since x is applied at most 3 times in Bo
-              ==> This helps charging the right number of `eta-link` for map-deduplication rule
       N is the number of problematic terms in T
   */
   func instance term -> term, nat, list univ, list univ-instance.
@@ -232,8 +226,7 @@ namespace tc.precomp {
       names Scope1,
       std.fold-map NPF N precompile-aux NPF1 M. 
 
-    precompile-aux (prod Name Ty B) N (tc.prod-range (prod Name Ty' B') MaxAr) P :- !,
-      count-prod Ty MaxAr,
+    precompile-aux (prod Name Ty B) N (prod Name Ty' B') P :- !,
       std.assert! (pi x\ decl x Name Ty => precompile-aux (B x) N (B' x) M) "[TC] should not fail",
       precompile-aux Ty M Ty' P.
 

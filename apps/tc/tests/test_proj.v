@@ -72,7 +72,7 @@ End m1''.
 
 Module m2.
   Elpi Accumulate TC.Compiler lp:{{
-    :after "is-class-C" is-class-C (tc-C X (app[_,W]) :- [tc.link.proj CAR X W]) :- !, const CAR = {{:gref car}}, name X.
+    :after "is-class-C" is-class-C (tc-C X (app[_,W]) :- [tc.link.proj CAR W X]) :- !, const CAR = {{:gref car}}, name X.
   }}.
 
   (* cannot reduce the projection: c is quantified *)
@@ -162,7 +162,7 @@ Module M.
     solve (goal _ _ {{@eq lp:T_ lp:P lp:T}} _ _ as G) GL :-
       % coq.say "The goal is"G,
       P = app [global (const Proj), A],
-      cs.compiler.cs.compiler ff (pr 0 Proj) A (app[_, T]) [] [] R,
+      cs.compiler.cs.compiler ff (pr 0 Proj) A (app[_, T]) [] [] [] R,
       % R, coq.say "The rule is"R,
       @no-tc! => refine {{eq_refl}} G GL.
   }}.

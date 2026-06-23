@@ -147,11 +147,14 @@ namespace tc.link {
 
     constraint decl def ?- solve-proj tc.link.proj force-unify {
       % TODO: should add a dedup constraint
+      % TODO: the term (app[global(const C), A]) is wrong since C can have parameters...
       rule solve-proj \ (Ctx ?- tc.link.proj C A B) <=> (force-unify Ctx (app[global (const C), A]) B).
       % rule solve-proj \ (Ctx ?- proj A B) <=> (A = B).
       rule \ solve-proj.
     }
   }
+
+  proj C (app[global(const C)| Ag]) L :- !, std.last Ag L.
 
   namespace unif-eq {
     func unif-eq term, term.
