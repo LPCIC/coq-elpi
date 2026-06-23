@@ -10,7 +10,7 @@ Canonical Structure c := mkr nat (fun x => x).
 
 Elpi Query TC.Solver lp:{{ true. }}.
 
-Elpi cs default (r).
+(* Elpi cs default (r). *)
 Elpi cs cs (c).
 
 Elpi Accumulate TC.Compiler lp:{{
@@ -186,7 +186,6 @@ Module M2.
   Record r1 := mkr1 {car : Type; #[canonical=no] rf : C car}.
   Local Instance i : C bool. Admitted.
   Local Canonical Structure c1 := mkr1 bool i.
-  Elpi cs default (r1).
   Elpi cs cs (c1).
 
   Goal exists x, to_prop (C (car x)).

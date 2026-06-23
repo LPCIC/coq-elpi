@@ -303,8 +303,17 @@ namespace tc {
     list term ->     % The list of FV in the precomp subterm
     term.
 
+  % [maybe-llam-tm H PF NPF L] 
+  % the original term is (app[H|{append PF NPF}])
+  % H is a variable, PF is a list of distinct names and NPF is a list of terms
+  % a maybe-llam-tm is (F x y (H z) (K w)) when H and K become both (x\x)
+  % in this case the term becomes (maybe-llam F [x,y] [H z,K w] [V3,V4])
+  % where V3 and V4 are elpi variables of arity 3 and 4, used to represent the
+  % term when applied to 3 or 4 arguments
   type maybe-llam-tm 
-    term ->          % The current precompiled subterm: shape is app[app[X,PF],NPF]
+    term ->          % The head of the term
+    list term ->     % The list of arguments in the PF
+    list term ->     % The list of argument not in the PF
     list term ->     % The eta-expanded version of X, from X^{len(PF)} to X^{len(PF)+len(NPF)}
     term.
 

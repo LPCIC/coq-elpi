@@ -85,9 +85,10 @@ namespace tc.precomp {
     func get-max-arity-aux term, term -> nat.
     get-max-arity-aux _ N z :- name N, !.
     get-max-arity-aux _ (tc.maybe-proj _ _ _ _ _) z :- !.
-    get-max-arity-aux X (tc.maybe-llam-tm (app[app[H|PF]|NPF]) _) R :- !, 
-      std.append PF NPF L,
-      get-max-arity-aux X (app[H|L]) R.
+    get-max-arity-aux X (tc.maybe-llam-tm H PF NPF _) R :- !,
+      if (H == X) (length-nat {std.append PF NPF} Len) (Len = z),
+      std.fold PF Len (x\y\w\ sigma M\ get-max-arity-aux X x M, max-nat y M w) R',
+      std.fold NPF R' (x\y\w\ sigma M\ get-max-arity-aux X x M, max-nat y M w) R.
     get-max-arity-aux X (tc.maybe-eta-tm T _) R :- !, get-max-arity-aux X T R.
     get-max-arity-aux T (app [H|L]) R :- !,
       if (T == H) (length-nat L Len) (Len = z),
@@ -146,7 +147,7 @@ namespace tc.precomp {
       precompile-aux is_neg_fix Ty N _ N',
       (pi x\ is-name x => decl x Name Ty => precompile-aux is_neg_fix (B x) N' (B' x) M).
 
-    precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope) (s M) :-
+    precompile-aux _ (app [X|XS]) N (tc.maybe-llam-tm X PF NPF1 Scope) (s M) :-
       if (is-uvar X) (Sc = []) (var X _ Sc), split-pf is-name XS Sc PF NPF, 
       not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
       free-var Scope,
@@ -220,7 +221,7 @@ namespace tc.precomp {
       precompile-aux Ty M' Ty' M.
 
     % Detect maybe-beta term
-    precompile-aux (app [X|XS]) N (tc.maybe-llam-tm (app [app[X | PF] | NPF1]) Scope1) [X|M] :-
+    precompile-aux (app [X|XS]) N (tc.maybe-llam-tm X PF NPF1 Scope1) [X|M] :-
       var X _ Scope, split-pf name XS Scope PF NPF, 
       not (NPF = []), !, % else XS is a list of distinct names, i.e. `app [X|XS]` is in PF
       names Scope1,
