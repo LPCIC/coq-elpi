@@ -69,7 +69,7 @@ namespace tc.compile {
       decompile-term-aux (primitive _ as P) A L P A L :- !.
 
       :name "decompile-inst-maybe-proj"
-      decompile-term-aux (tc.maybe-proj P _ _ T S) [X|XS] L1 Y XS [tc.link.proj P T Y|L1] :- !, name Y X S.
+      decompile-term-aux (tc.maybe-proj P _ _ T S) [X|XS] L1 Y XS [tc.link.proj P Y T|L1] :- !, name Y X S.
 
       decompile-term-aux (tc.maybe-eta-tm T S) [X|XS] L1 Y XS' [NL | L2] :- !,
         name Y X S,
@@ -165,6 +165,7 @@ namespace tc.compile {
       (pi a p n s r \ copy (tc.maybe-llam-tm a p n s) r :- !, sigma X\ std.append p n X, copy (app[a|X]) r, !) =>
         std.assert!  (copy A B) "[TC] clean-term error".
 
+    :index (_ _ _ 1 1)
     func main 
       nat,                % the number of problematic terms
       term,               % the type of the instance
@@ -369,7 +370,7 @@ namespace tc.compile {
     decomp-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
       prune V S, !, decomp-term T L T' L2.
 
-    decomp-term (tc.maybe-proj P _ _ T S) L Y [tc.link.proj P T Y|L] :- !, prune Y S.
+    decomp-term (tc.maybe-proj P _ _ T S) L Y [tc.link.proj P Y T|L] :- !, prune Y S.
 
     decomp-term (tc.maybe-llam-tm H S NPF Sc) L Z [NL|L'] :- !,
       prune Z Sc,
