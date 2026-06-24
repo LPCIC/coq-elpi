@@ -51,13 +51,13 @@ Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
-Elpi Accumulate File cs.
 Elpi Accumulate File ho_precompile.
 Elpi Accumulate File ho_compile.
 Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
+Elpi Accumulate File cs.
 Elpi Query lp:{{
   sigma Options\ 
     tc.all-options Options,
@@ -80,7 +80,6 @@ Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File tc_aux.
-Elpi Accumulate File cs.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File ho_precompile.
@@ -88,6 +87,7 @@ Elpi Accumulate File ho_compile.
 Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
 Elpi Accumulate File compiler1.
+Elpi Accumulate File cs.
 Elpi Accumulate lp:{{
 
   /* 
@@ -207,6 +207,8 @@ Elpi Tactic cs.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
+Elpi Accumulate File ho_precompile.
+Elpi Accumulate File ho_compile.
 Elpi Accumulate File cs.
 Elpi Accumulate lp:{{
   main L :- cs.main L.
@@ -216,6 +218,8 @@ Elpi Tactic solve_cs.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate File tc_aux.
+Elpi Accumulate File ho_precompile.
+Elpi Accumulate File ho_compile.
 Elpi Accumulate File cs.
 (* Elpi Accumulate lp:{{
   main L :- cs.main L.

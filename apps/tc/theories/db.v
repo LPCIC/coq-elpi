@@ -100,7 +100,7 @@ Elpi Db tc.db lp:{{
     func link.llam term, term ->.
     func link.unif-eq term, term ->.
     :index (1 2 2)
-    func link.proj constant -> term, term.
+    pred link.proj constant -> term, term.
 
   }
 }}.

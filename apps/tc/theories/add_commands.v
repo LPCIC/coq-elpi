@@ -24,10 +24,10 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate File ho_precompile.
 Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
-Elpi Accumulate File cs.
 Elpi Accumulate File ho_compile.
 Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
+Elpi Accumulate File cs.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
