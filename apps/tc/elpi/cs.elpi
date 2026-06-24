@@ -151,7 +151,7 @@ namespace cs {
       load-nestedp z B C T P L Pr R :-
         decompile T (pr L []) T' (pr _ Pm),
         % coq.elpi.predicate C [T', P] Hd,
-        mk-rule B (tc.link.proj C T' P) {std.rev.aux Pm Pr} R.
+        mk-rule B (tc.link.proj C T' P) {std.rev.aux Pm {std.rev [!|Pr]}} R.
       load-nestedp (s N) B C T P L Pr (pi x\ R x) :- pi x\ load-nestedp N B C T P [x|L] Pr (R x).
       
       % [compiler B IC CS Ag P L C]
@@ -212,19 +212,24 @@ namespace cs {
       %   pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
       %     compiler-univ N IC CS T [] Xs (R x).
 
+      func main.aux 
+        (func bool, (pair int constant), term, term, list prop, list term, list term -> prop),
+        (pair int constant), term, term -> .
+      main.aux F IC I T :-
+        F tt IC I T [] [] [] R,
+        tc.add-tc-db _ (after "0") R.
+
       :index (4)
       func main term ->.
       :name "cs.compiler.main"
       main (global (const C) as T) :-
         coq.env.const C (some Bo) Ty,
         get-proj Ty P,
-        % tc.precomp.instance T T' N UnivConstL UnivInstL,
-        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, tc.add-tc-db _ (after "0") R).
+        std.forall P (x\ main.aux compiler x T Bo).
       main (global (indc C) as T) :-
         coq.typecheck T Ty ok,
         get-proj Ty P,
-        % tc.precomp.instance T T' N UnivConstL UnivInstL,
-        std.forall P (x\ sigma R\ compiler-record tt x T Ty [] [] [] R, tc.add-tc-db _ (after "0") R).
+        std.forall P (x\ main.aux compiler-record x T Ty).
     }
 
     % namespace default {

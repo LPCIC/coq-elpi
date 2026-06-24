@@ -138,6 +138,15 @@ namespace tc.link {
     % :name "proj-unif"
     % proj T R :- coq.unify-eq T R ok.
 
+    % TODO: this recreates the application of C to T adding the record arguments
+    % as unification variables (via the _ symbol), we could pass them as a
+    % parameter of tc.link.proj
+    func build-proj-app constant, term -> term.
+    build-proj-app C T (app[global(const C) | L']) :-
+      coq.env.projection? C N,
+      std.list.make N _ L,
+      std.append L [T] L'.
+
     func force-unify list prop, term, term ->.
     :name "force-proj"
     % If B is a variale we launch elpi unification
@@ -147,14 +156,14 @@ namespace tc.link {
 
     constraint decl def ?- solve-proj tc.link.proj force-unify {
       % TODO: should add a dedup constraint
-      % TODO: the term (app[global(const C), A]) is wrong since C can have parameters...
-      rule solve-proj \ (Ctx ?- tc.link.proj C B A) <=> (force-unify Ctx (app[global (const C), A]) B).
+      rule solve-proj \ (Ctx ?- tc.link.proj C B A) <=> (build-proj-app C A T, force-unify Ctx T B).
       % rule solve-proj \ (Ctx ?- proj A B) <=> (A = B).
       rule \ solve-proj.
     }
   }
 
   proj C (app[global(const C)| Ag]) L :- !, std.last Ag L.
+  proj C (uvar as T) X :- declare_constraint (proj C T X) [T, _].
 
   namespace unif-eq {
     func unif-eq term, term.
