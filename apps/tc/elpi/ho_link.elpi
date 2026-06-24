@@ -154,7 +154,7 @@ namespace tc.link {
     }
   }
 
-  proj C L (app[global(const C)| Ag]) :- !, std.last Ag L.
+  proj C (app[global(const C)| Ag]) L :- !, std.last Ag L.
 
   namespace unif-eq {
     func unif-eq term, term.

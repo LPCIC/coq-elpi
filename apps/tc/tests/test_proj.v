@@ -181,7 +181,7 @@ End M.
 Module M1.
   Class C (T : Type) := {f : T -> Prop}.
   Local Instance i x : C (car x). Admitted.
-  Check (_ : C (car _)).
+  Goal forall x, C (car x). apply _. Qed.
 End M1.
 
 Module M2.
@@ -224,6 +224,6 @@ Module M3.
 
   Existing Instance Mem.memP.
 
-  Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx". 
+  (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
 
 End M3.
