@@ -70,7 +70,7 @@ namespace cs {
       % compile P I CS R :-
       %   proj-to-pname P PN,
       %   coq.elpi.predicate PN [I, CS] R.
-      compile P I CS (tc.link.proj P CS I :- !).
+      compile P I CS (tc.link.proj P I CS :- !).
 
       :index (1 _ 1)
       func mk-rule bool, prop, list prop -> prop.
@@ -113,7 +113,7 @@ namespace cs {
       
       func decompile term, pair (list term) (list prop) -> term, pair (list term) (list prop).
       :name "cs-decompile"
-      decompile (tc.maybe-proj C _ _ R S) (pr [X|XS] L1) Y (pr XS [tc.link.proj C R Y|L1]) :- !,
+      decompile (tc.maybe-proj C _ _ R S) (pr [X|XS] L1) Y (pr XS [tc.link.proj C Y R|L1]) :- !,
         name Y X S.
         % proj-to-pname C PN,
         % coq.elpi.predicate PN [R, Y] NL.
@@ -151,7 +151,7 @@ namespace cs {
       load-nestedp z B C T P L Pr R :-
         decompile T (pr L []) T' (pr _ Pm),
         % coq.elpi.predicate C [T', P] Hd,
-        mk-rule B (tc.link.proj C P T') {std.rev.aux Pm Pr} R.
+        mk-rule B (tc.link.proj C T' P) {std.rev.aux Pm Pr} R.
       load-nestedp (s N) B C T P L Pr (pi x\ R x) :- pi x\ load-nestedp N B C T P [x|L] Pr (R x).
       
       % [compiler B IC CS Ag P L C]
@@ -173,9 +173,29 @@ namespace cs {
         std.nth N Ag I,
         precompile I z I' NPb,
         load-nestedp NPb B P I' CS' [] L Rs.
+      compiler B P CS (fun N Ty Bo') L PT A (pi x\ R x) :- tc.get-TC-of-inst-type Ty TC, !,
+        @pi-decl N Ty x\ (is-uvar x :- !) ==>
+          tc.compile.instance Ty x (Pr x),
+          compiler B P CS (Bo' x) [Pr x|L] PT [x|A] (R x).
       compiler B P CS (fun N Ty Bo') L PT A (pi x\ R x) :-
         @pi-decl N Ty x\ (is-uvar x :- !) ==>
           compiler B P CS (Bo' x) L PT [x|A] (R x).
+      
+      :index (_ _ _ 1)
+      func compiler-record bool, (pair int constant), term, term, list prop, list term, list term -> prop.
+      compiler-record B P CS (prod N Ty Bo') L PT A (pi x\ R x) :- tc.get-TC-of-inst-type Ty TC, !,
+        @pi-decl N Ty x\ (is-uvar x :- !) ==>
+          tc.compile.instance Ty x (Pr x),
+          compiler-record B P CS (Bo' x) [Pr x|L] PT [x|A] (R x).
+      compiler-record B P CS (prod N Ty Bo') L PT A (pi x\ R x) :- !,
+        @pi-decl N Ty x\ (is-uvar x :- !) ==>
+          compiler-record B P CS (Bo' x) L PT [x|A] (R x).
+      compiler-record B (pr N P) CS _ L _ A Rs :-
+        std.rev A Ar,
+        coq.mk-app CS Ar CS',
+        std.nth N Ar I,
+        precompile I z I' NPb,
+        load-nestedp NPb B P I' CS' [] L Rs.
 
       % func compiler-pt nat, (pair int constant), term, term, list term -> prop.
       % compiler-pt z IC CS T L R :- compiler tt IC CS T [] L [] R.
@@ -192,6 +212,7 @@ namespace cs {
       %   pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
       %     compiler-univ N IC CS T [] Xs (R x).
 
+      :index (4)
       func main term ->.
       :name "cs.compiler.main"
       main (global (const C) as T) :-
@@ -199,6 +220,11 @@ namespace cs {
         get-proj Ty P,
         % tc.precomp.instance T T' N UnivConstL UnivInstL,
         std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, tc.add-tc-db _ (after "0") R).
+      main (global (indc C) as T) :-
+        coq.typecheck T Ty ok,
+        get-proj Ty P,
+        % tc.precomp.instance T T' N UnivConstL UnivInstL,
+        std.forall P (x\ sigma R\ compiler-record tt x T Ty [] [] [] R, tc.add-tc-db _ (after "0") R).
     }
 
     % namespace default {

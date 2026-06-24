@@ -19,7 +19,12 @@ Elpi Accumulate TC.Compiler lp:{{
   is-class-C (tc.instance _ _ _ _) :- !.
   :name "is-class-C"
   is-class-C (tc.class _ _ _ _) :- !.
-  is-class-C C :- coq.error "FAIL" C.
+  is-class-C C :- 
+    coq.error 
+      "Fail to verify the shape of compiled instance."
+      "Received:\n" C 
+      "\nTo fix the issue either the class is compiled wrongly\n" 
+      "or you forgot to load. A is-class-C rule in the database".
 
   :before "tc-adder"
   tc.add-tc-db _I _G C :- % coq.say "Compiled term is" C,
@@ -71,7 +76,7 @@ End m1''.
 
 Module m2.
   Elpi Accumulate TC.Compiler lp:{{
-    :after "is-class-C" is-class-C (tc-C X (app[_,W]) :- [tc.link.proj CAR W X]) :- !, const CAR = {{:gref car}}, name X.
+    :after "is-class-C" is-class-C (tc-C X (app[_,W]) :- [tc.link.proj CAR X W]) :- !, const CAR = {{:gref car}}, name X.
   }}.
 
   (* cannot reduce the projection: c is quantified *)
@@ -196,6 +201,7 @@ End M2.
 
 Module M3.
 
+  Set Printing All.
   Structure set (T : Type) := MkSet {
     set_to_pred : T -> Prop
   }.
@@ -208,9 +214,16 @@ Module M3.
   Record type T (X : set T) := Pack { elt : T;   memP : mem _ X elt }.
   End Mem.
 
-  Canonical Structure s T X E (I: @mem T X E) := Mem.Pack _ _ _ I.
-  Elpi cs cs (s).
+  (* Canonical Structure s T X E (I: @mem T X E) := Mem.Pack _ _ _ I. *)
+  Elpi cs cs (Mem.Pack).
+
+  Elpi Accumulate TC.Compiler lp:{{
+    :after "is-class-C" is-class-C (tc-mem Ty S T {{@Mem.memP lp:Ty lp:S lp:Z}} :- [tc.link.proj X T Z]) :- !,
+      const X = {{:gref Mem.elt}}.
+  }}.
+
+  Existing Instance Mem.memP.
+
   Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx". 
 
-  
 End M3.
