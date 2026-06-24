@@ -246,7 +246,11 @@ namespace cs {
   }
 
   namespace solver {
-
+    func solve goal ->.
+    solve (goal Ctx _ _ T [trm P, trm R] as G) :- 
+      tc.compile.context Ctx CtxR,
+      coq.safe-dest-app P (global (const H)) _,
+      CtxR => tc.link.proj H R T.
   }
 
   pred main list argument.

@@ -208,6 +208,10 @@ Module M2.
   Qed.
 End M2.
 
+From elpi Require Import cs.
+
+Elpi CS cs.
+
 Module M3.
 
   Set Printing All.
@@ -226,15 +230,22 @@ Module M3.
   (* Canonical Structure s T X E (I: @mem T X E) := Mem.Pack _ _ _ I. *)
   Elpi cs cs (Mem.Pack).
 
-  Elpi Accumulate TC.Compiler lp:{{
-    :after "is-class-C" is-class-C (tc-mem Ty S T {{@Mem.memP lp:Ty lp:S lp:Z}} :- [tc.link.proj X T Z]) :- !,
-      const X = {{:gref Mem.elt}}.
-  }}.
+  Section X.
+    Parameter SN : set nat.
+    Elpi Trace Browser.
+    Time Check ((fun x => eq_refl _) : (forall (x : mem nat SN 0), Mem.elt _ SN _ = 0)).
+  End X.
 
+  (* checking valididy of built rule *)
+  Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C (tc-mem Ty S T {{@Mem.memP lp:Ty lp:S lp:Z}} :- [tc.link.proj X T Z]) :- !, const X = {{:gref Mem.elt}}. }}.
   Existing Instance Mem.memP.
-
-  (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
-
+  (* Goal forall SN,
+    mem nat SN 0 -> exists X, Mem.elt _ SN X = 0.
+  Proof.
+    intros SN I.
+    eexists.
+    (* eexists (Mem.Pack _ _ _ I). *)
+    apply eq_refl. *)
 End M3.
 
 (* from stdpp/definitions.v *)

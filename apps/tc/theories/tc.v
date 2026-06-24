@@ -212,6 +212,9 @@ Elpi Accumulate File ho_compile.
 Elpi Accumulate File cs.
 Elpi Accumulate lp:{{
   main L :- cs.main L.
+
+  solve G _ :-
+    cs.solver.solve G.
 }}.
 
 Elpi Tactic solve_cs.
