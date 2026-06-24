@@ -188,9 +188,9 @@ func raw-mutual-spec-clause derive.param1.raw-mindt-spec, inductive -> prop.
 raw-mutual-spec-clause (derive.param1.raw-mindt-spec GR _ _ _ _ _ _ _ _ _) NewGR
   (reali (global (indt GR)) (global (indt NewGR)) :- !).
 
-func translate-mutual-spec derive.param1.raw-mindt-spec, inductive -> coq.mindt-spec.
+func translate-mutual-spec derive.param1.raw-mindt-spec, inductive -> coq.indt-spec.
 translate-mutual-spec (derive.param1.raw-mindt-spec GR _ IsInd _ _ Ty KNames KNamesR KTypes FNewName) NewGR
-    (coq.mindt-spec NewGR FNewName IsInd TyOut KNamesR KTypesR) :-
+    (coq.indt-spec NewGR FNewName IsInd TyOut KNamesR KTypesR) :-
   Ind = global (indt GR),
   reali Ty TyR,
   coq.mk-app TyR [Ind] TyOut,
@@ -254,7 +254,7 @@ dispatch-mutual-do Raws NewGRs Clauses :- std.do! [
     coq.build-mindt-decl Specs 0 0 DeclR),
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped mutual inductive",
   coq.env.add-indt DeclR _,
-  std.map Specs (s\r\ sigma name\ s = coq.mindt-spec _ name _ _ _ _, coq.locate name (indt r)) RealGRs,
+  std.map Specs (s\r\ sigma name\ s = coq.indt-spec _ name _ _ _ _, coq.locate name (indt r)) RealGRs,
   map {std.zip Raws RealGRs} reali-store-mutual-indt StoreInds,
   mutual-stores Raws RealGRs StoreKs,
   forall StoreInds (p\ p),

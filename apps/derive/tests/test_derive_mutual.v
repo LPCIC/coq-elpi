@@ -1080,10 +1080,10 @@ End MutualBcongrExpected.
 
 Module Type ParametrizedMutualBase.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 End ParametrizedMutualBase.
 
 Module Type ParametrizedMutualMapExpected.
@@ -3369,13 +3369,13 @@ End TripleMutualEqbOKExpected.
 Module Type ParametrizedTripleMutualBase.
   Inductive palpha (A : Type) : Type :=
   | palpha0
-  | palpha1 (x : A) (b : pbeta A)
+  | palpha1 (x : A) (b : pbeta)
   with pbeta (A : Type) : Type :=
   | pbeta0
-  | pbeta1 (g : pgamma A)
+  | pbeta1 (g : pgamma)
   with pgamma (A : Type) : Type :=
   | pgamma0
-  | pgamma1 (a : palpha A) (b : pbeta A).
+  | pgamma1 (a : palpha) (b : pbeta).
 End ParametrizedTripleMutualBase.
 
 Module MutualMap <: MutualMapExpected.
@@ -3680,9 +3680,9 @@ End NonRecursiveMutualParam2.
 
 Module Type ValueParamMutualBase.
   Inductive a (n : nat) : Type :=
-  | ak (b0 : b n)
+  | ak (b0 : b)
   with b (n : nat) : Type :=
-  | bk (a0 : a n).
+  | bk (a0 : a).
 End ValueParamMutualBase.
 
 Module Type ValueParamMutualEqbExpected.
@@ -3785,9 +3785,9 @@ End ValueParamMutualEqbExpected.
 
 Module ValueParamMutualEqbUnsupported.
   Inductive a (n : nat) : Type :=
-  | ak (b0 : b n)
+  | ak (b0 : b)
   with b (n : nat) : Type :=
-  | bk (a0 : a n).
+  | bk (a0 : a).
 
   Fail #[only(eqb)] derive a.
 End ValueParamMutualEqbUnsupported.
@@ -3899,10 +3899,10 @@ End MutualBcongr.
 
 Module ParametrizedMutualMap <: ParametrizedMutualMapExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(map)] derive ptree.
 
@@ -3920,30 +3920,30 @@ End ParametrizedMutualMap.
 
 Module ParametrizedMutualLens <: ParametrizedMutualLensExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(lens)] derive ptree.
 End ParametrizedMutualLens.
 
 Module ParametrizedMutualLensLaws <: ParametrizedMutualLensLawsExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(lens_laws)] derive ptree.
 End ParametrizedMutualLensLaws.
 
 Module ParametrizedMutualParam1 <: ParametrizedMutualParam1Expected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(param1)] derive ptree.
 
@@ -3969,10 +3969,10 @@ End ParametrizedMutualParam1.
 
 Module ParametrizedMutualParam1Congr <: ParametrizedMutualParam1CongrExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(param1_congr)] derive ptree.
 
@@ -3995,30 +3995,30 @@ End ParametrizedMutualParam1Congr.
 
 Module ParametrizedMutualParam1TrivialUnsupported.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   Fail #[only(param1_trivial)] derive ptree.
 End ParametrizedMutualParam1TrivialUnsupported.
 
 Module ParametrizedMutualParam1Functor <: ParametrizedMutualParam1FunctorExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(param1_functor)] derive ptree.
 End ParametrizedMutualParam1Functor.
 
 Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(param2)] derive ptree.
 
@@ -4046,20 +4046,20 @@ End ParametrizedMutualParam2.
 
 Module ParametrizedMutualInduction <: ParametrizedMutualInductionExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(induction)] derive ptree.
 End ParametrizedMutualInduction.
 
 Module ParametrizedMutualTag <: ParametrizedMutualTagExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(tag)] derive ptree.
 
@@ -4077,10 +4077,10 @@ End ParametrizedMutualTag.
 
 Module ParametrizedMutualFields <: ParametrizedMutualFieldsExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(fields)] derive ptree.
 
@@ -4099,10 +4099,10 @@ End ParametrizedMutualFields.
 
 Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(eqb)] derive ptree.
 
@@ -4129,30 +4129,30 @@ End ParametrizedMutualEqb.
 
 Module ParametrizedMutualEqbCorrect <: ParametrizedMutualEqbCorrectExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(eqbcorrect)] derive ptree.
 End ParametrizedMutualEqbCorrect.
 
 Module ParametrizedMutualEqbOK <: ParametrizedMutualEqbOKExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(eqbOK)] derive ptree.
 End ParametrizedMutualEqbOK.
 
 Module ParametrizedMutualIsK <: ParametrizedMutualIsKExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(isK)] derive ptree.
 
@@ -4170,10 +4170,10 @@ End ParametrizedMutualIsK.
 
 Module ParametrizedMutualProjK <: ParametrizedMutualProjKExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(projK)] derive ptree.
 
@@ -4200,10 +4200,10 @@ End ParametrizedMutualProjK.
 
 Module ParametrizedMutualBcongr <: ParametrizedMutualBcongrExpected.
   Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest A)
+  | pnode (x : A) (f : pforest)
   with pforest (A : Type) : Type :=
   | pempty
-  | pcons (t : ptree A) (f : pforest A).
+  | pcons (t : ptree) (f : pforest).
 
   #[only(bcongr)] derive ptree.
 
@@ -4858,13 +4858,13 @@ End ParametrizedTripleMutualEqbOKExpected.
 Module ParametrizedTripleMutualEqbOKFromBeta <: ParametrizedTripleMutualEqbOKExpected.
   Inductive palpha (A : Type) : Type :=
   | palpha0
-  | palpha1 (x : A) (b : pbeta A)
+  | palpha1 (x : A) (b : pbeta)
   with pbeta (A : Type) : Type :=
   | pbeta0
-  | pbeta1 (g : pgamma A)
+  | pbeta1 (g : pgamma)
   with pgamma (A : Type) : Type :=
   | pgamma0
-  | pgamma1 (a : palpha A) (b : pbeta A).
+  | pgamma1 (a : palpha) (b : pbeta).
 
   #[only(eqbOK)] derive pbeta.
 End ParametrizedTripleMutualEqbOKFromBeta.

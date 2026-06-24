@@ -14,11 +14,11 @@ From elpi.apps Require Import
 
 Module StandaloneTagIsKProjK.
   Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree A 0
-  | inode : forall n, iforest A n -> itree A (S n)
+  | ileaf : A -> itree 0
+  | inode : forall n, iforest n -> itree (S n)
   with iforest (A : Type) : nat -> Type :=
-  | inil : iforest A 0
-  | icons : forall n, itree A n -> iforest A n -> iforest A (S n).
+  | inil : iforest 0
+  | icons : forall n, itree n -> iforest n -> iforest (S n).
 
   Elpi derive.tag itree.
   Redirect "tmp" Check itree_tag : forall A n, itree A n -> positive.
@@ -40,11 +40,11 @@ End StandaloneTagIsKProjK.
 
 Module StandaloneMap.
   Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree A 0
-  | inode : forall n, iforest A n -> itree A (S n)
+  | ileaf : A -> itree 0
+  | inode : forall n, iforest n -> itree (S n)
   with iforest (A : Type) : nat -> Type :=
-  | inil : iforest A 0
-  | icons : forall n, itree A n -> iforest A n -> iforest A (S n).
+  | inil : iforest 0
+  | icons : forall n, itree n -> iforest n -> iforest (S n).
 
   Elpi derive.map itree.
   Redirect "tmp" Check itree_map : forall A B, (A -> B) -> forall n, itree A n -> itree B n.
@@ -57,11 +57,11 @@ End StandaloneMap.
 
 Module StandaloneParam1Param2.
   Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree A 0
-  | inode : forall n, iforest A n -> itree A (S n)
+  | ileaf : A -> itree 0
+  | inode : forall n, iforest n -> itree (S n)
   with iforest (A : Type) : nat -> Type :=
-  | inil : iforest A 0
-  | icons : forall n, itree A n -> iforest A n -> iforest A (S n).
+  | inil : iforest 0
+  | icons : forall n, itree n -> iforest n -> iforest (S n).
 
   Elpi derive.param1 nat.
   Elpi derive.param1 itree.
@@ -80,11 +80,11 @@ End StandaloneParam1Param2.
 
 Module StandaloneParam1CongrFunctorInduction.
   Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree A 0
-  | inode : forall n, iforest A n -> itree A (S n)
+  | ileaf : A -> itree 0
+  | inode : forall n, iforest n -> itree (S n)
   with iforest (A : Type) : nat -> Type :=
-  | inil : iforest A 0
-  | icons : forall n, itree A n -> iforest A n -> iforest A (S n).
+  | inil : iforest 0
+  | icons : forall n, itree n -> iforest n -> iforest (S n).
 
   Elpi derive.param1 nat.
   Elpi derive.param1 itree.
@@ -105,11 +105,11 @@ End StandaloneParam1CongrFunctorInduction.
 
 Module HookMap.
   Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree A 0
-  | inode : forall n, iforest A n -> itree A (S n)
+  | ileaf : A -> itree 0
+  | inode : forall n, iforest n -> itree (S n)
   with iforest (A : Type) : nat -> Type :=
-  | inil : iforest A 0
-  | icons : forall n, itree A n -> iforest A n -> iforest A (S n).
+  | inil : iforest 0
+  | icons : forall n, itree n -> iforest n -> iforest (S n).
 
   #[only(map)] derive itree.
   Redirect "tmp" Check itree_map : forall A B, (A -> B) -> forall n, itree A n -> itree B n.
@@ -118,11 +118,11 @@ End HookMap.
 
 Module HookInduction.
   Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree A 0
-  | inode : forall n, iforest A n -> itree A (S n)
+  | ileaf : A -> itree 0
+  | inode : forall n, iforest n -> itree (S n)
   with iforest (A : Type) : nat -> Type :=
-  | inil : iforest A 0
-  | icons : forall n, itree A n -> iforest A n -> iforest A (S n).
+  | inil : iforest 0
+  | icons : forall n, itree n -> iforest n -> iforest (S n).
 
   Elpi derive.param1 nat.
   #[only(induction)] derive itree.
