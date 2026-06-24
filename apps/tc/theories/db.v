@@ -99,8 +99,13 @@ Elpi Db tc.db lp:{{
     func link.eta term, term ->.
     func link.llam term, term ->.
     func link.unif-eq term, term ->.
-    :index (1 2 2)
-    pred link.proj constant -> term, term.
+
+    % a goal `p ?X = A` is translated into link.proj «p» X A
+    % link.proj is deterministic: this unification is deterministic.
+    % note that link.proj may have tc premises, that can be non deterministic.
+    % to avoid this issue, we wrap the non-deterministic call in std.once
+    :index (1 2)
+    func link.proj constant, term -> term.
 
   }
 }}.

@@ -184,6 +184,14 @@ Module M1.
   Goal forall x, C (car x). apply _. Qed.
 End M1.
 
+Module M1'.
+  Record r A := mkr {car1 : A}.
+
+  Class C (T : Type) := {f : T -> Prop}.
+  Local Instance i x : C (car1 _ x). Admitted.
+  Goal forall x, C (car1 _ x). apply _. Qed.
+End M1'.
+
 Module M2.
   Inductive to_prop (T: Type) : Prop := tp : T -> to_prop T.
 
@@ -195,6 +203,7 @@ Module M2.
   Goal exists x, to_prop (C (car x)).
   Proof. 
     eexists; constructor.
+    
     apply _.
   Qed.
 End M2.
@@ -227,3 +236,47 @@ Module M3.
   (* Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx".  *)
 
 End M3.
+
+(* from stdpp/definitions.v *)
+Module bv_bool.
+  Axiom N Z : Type.
+  Axiom zero : Z.
+  Axiom two one : N.
+  Axiom leq lt : Z -> Z -> bool.
+  Axiom pow : N -> Z -> Z.
+  Axiom ZofN : N -> Z.
+  Axiom Is_true : bool -> Prop.
+  Axiom Zeqdec : forall (x y:Z), sumbool (x = y) (not (x = y)).
+
+  Class Decision (P : Prop) := decide : sumbool P (not P).
+
+  Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C _ :- !. }}.
+
+  Class EqDecision A :=
+    decide_rel x y :: Decision (@eq A x y).
+
+  Definition bool_decide (P : Prop) {dec : Decision P} : bool :=
+    if dec then true else false.
+
+  Definition bv_modulus (n : N) : Z := pow two (ZofN n).
+
+  Class BvWf (n : N) (z : Z) : Prop :=
+      bv_wf : Is_true (andb (leq zero z) (lt z (bv_modulus n))).
+
+  Record bv (n : N) := BV {
+    bv_unsigned : Z;
+    bv_is_wf : BvWf n bv_unsigned;
+  }.
+
+  Axiom bool_to_bv : forall (n : N) (b : bool), bv n.
+
+  Global Instance eq_dec: EqDecision Z := Zeqdec.
+
+  Goal forall x b, Decision (@eq Z (bv_unsigned x (bool_to_bv x b)) zero).
+  Proof. intros. apply _. Qed.
+
+  Lemma bool_decide_bool_to_bv_0 b:
+    bool_decide (bv_unsigned _ (bool_to_bv one b) = zero) = negb b.
+  Abort.
+
+End bv_bool.
