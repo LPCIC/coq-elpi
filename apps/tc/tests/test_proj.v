@@ -8,7 +8,6 @@ Class E (T : nat) := {ge : unit}.
 Record r := mkr {car : Type; #[canonical=no] rf : car -> car}.
 Canonical Structure c := mkr nat (fun x => x).
 
-Elpi Query TC.Solver lp:{{ true. }}.
 
 (* Elpi cs default (r). *)
 Elpi cs cs (c).
@@ -143,7 +142,7 @@ Module m4.
   Goal forall x y, C (@ofe_car2 x y x). apply _. Qed.
 End m4.
 
-Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C _ :- !. }}.
+(* Elpi Accumulate TC.Compiler lp:{{ :after "is-class-C" is-class-C _ :- !. }}. *)
 Set Printing All.
 
 Module M.
@@ -194,3 +193,24 @@ Module M2.
     apply _.
   Qed.
 End M2.
+
+Module M3.
+
+  Structure set (T : Type) := MkSet {
+    set_to_pred : T -> Prop
+  }.
+  Arguments set_to_pred : simpl never.
+
+  Class mem T X (x : T) := mkMem { IsMem : set_to_pred _ X x }.
+
+  (* memType is the type of elements of a given set. *)
+  Module Mem.
+  Record type T (X : set T) := Pack { elt : T;   memP : mem _ X elt }.
+  End Mem.
+
+  Canonical Structure s T X E (I: @mem T X E) := Mem.Pack _ _ _ I.
+  Elpi cs cs (s).
+  Elpi Print TC.Compiler "elpi.apps.derive.tests/xxx". 
+
+  
+End M3.

@@ -53,6 +53,7 @@ namespace cs {
 
       func get-proj term -> list (pair int constant).
       get-proj (prod _ _ B) Pg :- !, pi x\ get-proj (B x) Pg.
+      get-proj (app [X|_]) Pg :- !, get-proj X Pg.
       get-proj (global (indt R)) Pg :- 
         coq.env.indt R _ N _ _ _ _,
         coq.env.projections R P, get-projn N P Pg.
@@ -75,7 +76,7 @@ namespace cs {
       func mk-rule bool, prop, list prop -> prop.
       mk-rule tt P [] (P :- !) :- !.
       mk-rule ff P [] P :- !.
-      mk-rule tt P R (P :- !, R).
+      mk-rule tt P R (P :- [! | R]).
       mk-rule ff P R (R => P).
 
       func work-proj constant, int, list term, term, nat -> term, nat.
@@ -144,13 +145,14 @@ namespace cs {
       % T is the argument (with N problematic subterms)
       % P is the instance of the record to be used
       % L is the list of pi accumulated terms
+      % Pr is the list of premises accumulated so far
       % R is the created clause
-      func load-nestedp nat, bool, constant, term, term, list term -> prop.
-      load-nestedp z B C T P L R :-
+      func load-nestedp nat, bool, constant, term, term, list term, list prop -> prop.
+      load-nestedp z B C T P L Pr R :-
         decompile T (pr L []) T' (pr _ Pm),
         % coq.elpi.predicate C [T', P] Hd,
-        mk-rule B (tc.link.proj C P T') {std.rev Pm} R.
-      load-nestedp (s N) B C T P L (pi x\ R x) :- pi x\ load-nestedp N B C T P [x|L] (R x).
+        mk-rule B (tc.link.proj C P T') {std.rev.aux Pm Pr} R.
+      load-nestedp (s N) B C T P L Pr (pi x\ R x) :- pi x\ load-nestedp N B C T P [x|L] Pr (R x).
       
       % [compiler B IC CS Ag P L C]
       % B is the pos/neg position of the term
@@ -170,32 +172,33 @@ namespace cs {
         coq.mk-app CS {std.rev A} CS',
         std.nth N Ag I,
         precompile I z I' NPb,
-        load-nestedp NPb B P I' CS' [] Rs.
+        load-nestedp NPb B P I' CS' [] L Rs.
       compiler B P CS (fun N Ty Bo') L PT A (pi x\ R x) :-
         @pi-decl N Ty x\ (is-uvar x :- !) ==>
-          compiler B P CS (Bo' x) L [x|A] PT (R x).
+          compiler B P CS (Bo' x) L PT [x|A] (R x).
 
-      func compiler-pt nat, (pair int constant), term, term, list term -> prop.
-      compiler-pt z IC CS T L R :- compiler tt IC CS T [] L [] R.
-      compiler-pt (s N) IC CS T L (pi x\ R x) :-
-        pi x\ is-uvar x => compiler-pt N IC CS T [x|L] (R x).
+      % func compiler-pt nat, (pair int constant), term, term, list term -> prop.
+      % compiler-pt z IC CS T L R :- compiler tt IC CS T [] L [] R.
+      % compiler-pt (s N) IC CS T L (pi x\ R x) :-
+      %   pi x\ is-uvar x => compiler-pt N IC CS T [x|L] (R x).
 
-      :index (_ _ _ _ 1 1)
-      func compiler-univ nat, (pair int constant), term, term, list univ, list univ-instance -> prop.
-      compiler-univ N IC CS T [] [] R :- compiler-pt N IC CS T [] R.
-      compiler-univ N IC CS T [X|Xs] L (pi x\ R x) :-
-        pi x\ (copy (sort (typ X)) (sort (typ x)) :- !) => 
-          compiler-univ N IC CS T Xs L (R x).
-      compiler-univ N IC CS T [] [X|Xs] (pi x\ R x) :-
-        pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
-          compiler-univ N IC CS T [] Xs (R x).
+      % :index (_ _ _ _ 1 1)
+      % func compiler-univ nat, (pair int constant), term, term, list univ, list univ-instance -> prop.
+      % compiler-univ N IC CS T [] [] R :- compiler-pt N IC CS T [] R.
+      % compiler-univ N IC CS T [X|Xs] L (pi x\ R x) :-
+      %   pi x\ (copy (sort (typ X)) (sort (typ x)) :- !) => 
+      %     compiler-univ N IC CS T Xs L (R x).
+      % compiler-univ N IC CS T [] [X|Xs] (pi x\ R x) :-
+      %   pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
+      %     compiler-univ N IC CS T [] Xs (R x).
 
       func main term ->.
+      :name "cs.compiler.main"
       main (global (const C) as T) :-
         coq.env.const C (some Bo) Ty,
         get-proj Ty P,
         % tc.precomp.instance T T' N UnivConstL UnivInstL,
-        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, coq.say "Adding R"R, tc.add-tc-db _ (after "0") R).
+        std.forall P (x\ sigma R\ compiler tt x T Bo [] [] [] R, tc.add-tc-db _ (after "0") R).
     }
 
     % namespace default {
