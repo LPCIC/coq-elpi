@@ -29,13 +29,11 @@ a canonical solution for `nat` in `S`.
 From elpi.apps Require Import cs.
 From Coq Require Import Bool.
 
-Structure S : Type :=
-  { sort :> Type }.
+Structure S : Type := mkS { sort :> Type }.
 
 Elpi Accumulate cs.db lp:{{
 
-cs _ {{ sort lp:Sol }} {{ nat }} :-
-  Sol = {{ Build_S nat }}.
+cs _ {{ sort }} {{ nat }} {{ mkS nat }}.
 
 }}.
 
