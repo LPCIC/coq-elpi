@@ -572,3 +572,8 @@ The code of the Rocq plugin is at the root of the repository in the [src](src/),
 [elpi](elpi/) and [theories](theories/) directories.
 
 The [apps](apps/) directory contains client applications written in Rocq-Elpi.
+
+#### License
+
+Rocq-Elpi is free software under the LGPL v2.1 license or any later version.
+
