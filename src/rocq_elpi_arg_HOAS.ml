@@ -736,20 +736,22 @@ let mk_indt_decl state univpoly r =
 let rec garityparams2lp_synterp ~depth params k state =
   match params with
   | [] -> k state
-  | (name,imp,ob,src) :: params ->
+  | (name,_,imp,ob,src) :: params ->
       if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let src = E.mkDiscard in
       let state, tgt = garityparams2lp_synterp ~depth params k state in
       let state, imp = in_elpi_imp ~depth state imp in
+      let name = EConstr.annotR name in (* no sigma at synterp *)
       state, in_elpi_arity_parameter name ~imp src tgt
 let rec gindparams2lp_synterp ~depth params k state =
   match params with
   | [] -> k state
-  | (name,imp,ob,src) :: params ->
+  | (name,_,imp,ob,src) :: params ->
       if ob <> None then Rocq_elpi_utils.nYI "defined parameters in a record/inductive declaration";
       let src = E.mkDiscard in
       let state, tgt = gindparams2lp_synterp ~depth params k state in
       let state, imp = in_elpi_imp ~depth state imp in
+      let name = EConstr.annotR name in (* no sigma at synterp *)
       state, in_elpi_inductive_parameter name ~imp src tgt
             
       
@@ -772,7 +774,6 @@ let grecord2lp_synterp ~depth ~name ~constructorname arity fields state =
   state, in_elpi_indtdecl_record (Name.Name qrecord_name) arity constructor fields
 
 let grecord2lp_synterp ~depth state { Cmd.name; arity; params; constructorname; fields; univpoly } =
-  let params = List.map drop_relevance params in
   let state, r = gindparams2lp_synterp ~depth params (grecord2lp_synterp ~depth ~name ~constructorname arity fields) state in
   mk_indt_decl state univpoly r
       
@@ -823,8 +824,6 @@ let drop_unit f ~depth state =
   
 let ginductive2lp_synterp ~depth state { Cmd.finiteness; name; arity; params; nuparams; nuparams_given; constructors; univpoly } =
   let space, indt_name = name in
-  let nuparams = List.map drop_relevance nuparams in
-  let params = List.map drop_relevance params in
   let do_constructor ~depth state (name, ty) =
     let state, ty = garityparams2lp_synterp nuparams (fun state -> state, in_elpi_arity E.mkDiscard) ~depth state in
     state, in_elpi_indtdecl_constructor (Name.Name name) ty
@@ -849,7 +848,7 @@ let ginductive2lp ~loc ~depth ~base state { Cmd.finiteness; name; arity; params;
     state, in_elpi_indtdecl_constructor (Name.Name name) ty
   in
   let do_inductive ~depth state =
-    let short_name = Name.Name indt_name in
+    let short_name = EConstr.annotR @@ Name.Name indt_name in
     let qindt_name = Id.of_string_soft @@ String.concat "." (space @ [Id.to_string indt_name]) in
     let state, term_arity = gterm2lp ~loc ~depth ~base (Rocq_elpi_utils.mk_gforall arity nuparams) state in
     let state, arity = garityparams2lp ~loc ~base nuparams ~k:(garity2lp ~loc ~base arity) ~depth state in
@@ -873,7 +872,6 @@ let cdeclc = E.Constants.declare_global_symbol "const-decl"
 let ucdeclc = E.Constants.declare_global_symbol "upoly-const-decl"
 
 let gdecl2lp_synterp ~depth state { Cmd.name; params; typ : _; body; udecl } =
-  let params = List.map drop_relevance params in
   let state, typ = garityparams2lp_synterp ~depth params (fun state -> state, in_elpi_arity E.mkDiscard) state in
   let body = Option.map (fun _ -> E.mkDiscard) body in
   let name = decl_name2lp name in
@@ -919,7 +917,7 @@ let rec do_context_glob ~loc fields ~depth ~base state =
       let open Rocq_elpi_glob_quotation in
       let state, ty = gterm2lp ~loc ~depth ~base ty state in
       let state, bo = option_map_acc (fun state bo -> gterm2lp ~loc ~depth ~base bo state) state bo in
-      let state, fields, () = Rocq_elpi_glob_quotation.under_ctx name ty bo ~k:(nogls (do_context_glob ~loc ~base fields)) ~depth state in
+      let state, fields, () = Rocq_elpi_glob_quotation.under_ctx (EConstr.annotR name) ty bo ~k:(nogls (do_context_glob ~loc ~base fields)) ~depth state in
       let state, bo, _ = in_option ~depth state bo in
       let state, imp = in_elpi_imp ~depth state bk in
       state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields]
@@ -934,7 +932,7 @@ let rec do_context_constr coq_ctx csts fields ~depth state =
         | None -> state, None, []
         | Some bo -> let state, bo, gl = map state bo in state, Some bo, gl in
         (* TODO GLS *)
-      let state, fields, gl2 = Rocq_elpi_glob_quotation.under_ctx name ty bo ~k:(do_context_constr coq_ctx csts fields) ~depth state in
+      let state, fields, gl2 = Rocq_elpi_glob_quotation.under_ctx (EConstr.annotR name) ty bo ~k:(do_context_constr coq_ctx csts fields) ~depth state in
       let state, bo, gl3 = in_option ~depth state bo in
       let state, imp = in_elpi_imp ~depth state bk in
       state, E.mkApp ctxitemc (in_elpi_id name) [imp;ty;bo;E.mkLam fields], gl0 @ gl1 @ gl2 @ gl3
@@ -967,17 +965,18 @@ let best_effort_recover_arity ~depth state glob_sign typ bl =
   let _, grouped_bl = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env bl in
   let rec aux ~depth state typ gbl =
     match gbl with
-    | (name,ik,_,_) :: gbl ->
+    | (name,_,ik,_,_) :: gbl ->
       begin match Rocq_elpi_HOAS.is_prod ~depth typ with
       | None -> state, in_elpi_arity typ
       | Some(ty,bo) ->
           let state, imp = in_elpi_imp ~depth state ik in
           let state, bo = aux ~depth:(depth+1) state bo gbl in
+          let state, name = mk_coq_annot state name in
           state, in_elpi_arity_parameter name ~imp ty bo
       end
     | _ -> state, in_elpi_arity typ
     in
-      aux ~depth state typ (List.map drop_relevance (List.rev grouped_bl))
+      aux ~depth state typ (List.rev grouped_bl)
 
 let in_elpi_string_arg ~depth state x = 
   state, E.mkApp strc (CD.of_string x) [], []

@@ -1814,17 +1814,26 @@ kind name type.
 % an int or another name
 external func coq.name-suffix name, any -> name.
 
-% [coq.string->name Hint Name] creates a name hint
+% [coq.string->name Hint Name] creates a name hint using a relevance
+% variable
 external func coq.string->name string -> name.
+
+% [coq.string->name-relevant Hint Name] creates a name hint with the
+% relevant mark (see SProp)
+external func coq.string->name-relevant string -> name.
 
 
 func coq.id->name id -> name.
-coq.id->name S N :- coq.string->name S N.
+coq.id->name S N :- coq.string->name-relevant S N.
   
 
 % [coq.name->id Name Id] tuns a pretty printing hint into a string. This API
 % is for internal use, no guarantee on its behavior.
 external func coq.name->id name -> id.
+
+% [coq.name.relevant? Name Relevance] Reads the relevance mark. none means
+% unset, some tt means relevant.
+external func coq.name.relevant? name -> option bool.
 
 % [coq.gref->id GR Id] extracts the label (last component of a full kernel
 % name)
