@@ -1,0 +1,7 @@
+(rocq.theory
+ (name ext.tests)
+ (package ext-tests)
+  ; the tests folder depends on ext
+ (theories elpi_elpi elpi ext))
+
+(include_subdirs qualified)

@@ -1,16 +1,17 @@
 (executable
  (name gen_doc)
- (libraries elpi_example_plugin))
+ ; this doc depends on the ext_plus library, where the
+ ; new builtins are declared
+ (libraries ext_plug))
 
 (rule
- (targets
-  elpi_example_plugin.elpi)
+ ; we target ext.elpi which is the name of the file targeted in ext.ml
+ (targets ext.elpi)
  (deps gen_doc.exe)
  (mode promote)
  (action (run ./gen_doc.exe)))
 
-(install
- (files
-  elpi_example_plugin.elpi)
- (section doc)
- (package rocq-elpi))
+; (install
+;  (files ext.elpi)
+;  (section doc)
+;  (package ext))
