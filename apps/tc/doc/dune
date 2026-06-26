@@ -1,0 +1,16 @@
+(executable
+ (name gen_doc)
+ (libraries elpi_tc_plugin))
+
+(rule
+ (targets
+  tc-builtin.elpi)
+ (deps gen_doc.exe)
+ (mode promote)
+ (action (run ./gen_doc.exe)))
+
+(install
+ (files
+  tc-builtin.elpi)
+ (section doc)
+ (package rocq-elpi-typeclasses))

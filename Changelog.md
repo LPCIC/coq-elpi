@@ -39,6 +39,12 @@ Requires Elpi 3.7.1 and Rocq 9.0, 9.1 or 9.2.
 ### Plugins
 - New `xml` plugin containing minimal bindings to `xml-light`, see
   [apps/xml](apps/xml/) for the doc.
+- New `typeclasses` plugin containing rocq-elpi's typeclass solver, see
+  [apps/tc](apps/tc/) for the doc.
+
+### API
+- New `coq.TC.override-solver` builtin calling the
+  `Elpi TC Solver Override _ Add _` directive.
 
 ### API
 - Change `main-interp-proof` and `main-interp-qed` changed type to better chain

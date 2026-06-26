@@ -180,6 +180,17 @@ let set_solver_mode kind qname (l: Libnames.qualid list) =
   | ANone-> Lib.add_leaf (cache_solver_mode (qname, Set (Only OSet.empty), false))
   | ASet -> Lib.add_leaf (cache_solver_mode (qname, Set (Only l), false))
 
+let tc_builtins = [
+  Elpi.API.BuiltIn.MLCode(Pred("coq.TC.override-solver",
+    In(Elpi.API.BuiltInData.string, "SolverName",
+    In(Elpi.API.BuiltInData.list Elpi.API.BuiltInData.string, "ClassNames",
+    Easy("Declares that goals on classes in ClassNames should be solved using the typeclass solver SolverName."))),
+  (fun s gr ~depth ->
+    set_solver_mode AAdd [s] (List.map Libnames.qualid_of_string gr))), 
+  DocAbove)]
+
+let tc_builtins = API.BuiltIn.declare ~file_name:"tc-builtin.elpi" tc_builtins
+
 let solver_register l =
   Lib.add_leaf (Solver.cache_solver (l, Create));
   Lib.add_leaf (Modes.cache_solver_mode (l, Add OSet.empty, true))
