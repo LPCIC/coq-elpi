@@ -29,8 +29,19 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File projK.
 Elpi Accumulate lp:{{
-  main [str I, str O] :- !, coq.locate I (indt GR), derive.projK.main GR O _.
-  main [str I] :- !, coq.locate I (indt GR), derive.projK.main GR "proj" _.
+  func derive.projK.standalone-prefix inductive, string, inductive -> string.
+  derive.projK.standalone-prefix First Prefix T Prefix :- First = T, !.
+  derive.projK.standalone-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_getk_".
+
+  func derive.projK.standalone-main inductive, string -> list prop.
+  derive.projK.standalone-main T Prefix C :-
+    coq.env.mutual-inductives T TS, std.length TS N, N > 1, !,
+    std.map TS (t\c\ sigma p\ derive.projK.standalone-prefix T Prefix t p, derive.projK.main t p c) CS,
+    std.flatten CS C.
+  derive.projK.standalone-main T Prefix C :- derive.projK.main T Prefix C.
+
+  main [str I, str O] :- !, coq.locate I (indt GR), derive.projK.standalone-main GR O _.
+  main [str I] :- !, coq.locate I (indt GR), derive.projK.standalone-main GR "proj" _.
   main _ :- usage.
 
   usage :-
@@ -48,7 +59,18 @@ Elpi Accumulate derive File projK.
 }}.
 
 Elpi Accumulate derive lp:{{
+
+func derive.projK.prefix inductive, string, inductive -> string.
+derive.projK.prefix First Prefix T Prefix :- First = T, !.
+derive.projK.prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+func derive.projK.derive-main inductive, string -> list prop.
+derive.projK.derive-main T Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p n\ derive.projK.prefix T Prefix t p, n is p ^ "getk_", derive.projK.main t n c) CS,
+  std.flatten CS C.
+derive.projK.derive-main T Prefix C :- N is Prefix ^ "getk_", derive.projK.main T N C.
   
-derivation (indt T) Prefix ff (derive "projK" (derive.projK.main T N) (derive.exists-indc T (K\ projK-db K _ _))) :- N is Prefix ^ "getk_".
+derivation (indt T) Prefix ff (derive "projK" (derive.projK.derive-main T Prefix) (derive.exists-indc T (K\ projK-db K _ _))).
 
 }}.

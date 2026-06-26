@@ -23,9 +23,15 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.map.db.
 Elpi Accumulate File map.
 Elpi Accumulate lp:{{ 
+  func derive.map.standalone-main inductive, string -> list prop.
+  derive.map.standalone-main T Prefix C :-
+    coq.env.mutual-inductives T TS, std.length TS N, N > 1, !,
+    derive.map.main-mutual T TS Prefix C.
+  derive.map.standalone-main T Prefix C :- derive.map.main T Prefix C.
+
   main [str I] :- !,
     coq.locate I (indt GR), O is {coq.gref->id (indt GR)} ^ "_",
-    derive.map.main GR O _.
+    derive.map.standalone-main GR O _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.map <inductive type name>".
@@ -41,5 +47,11 @@ Elpi Accumulate derive File map.
 }}.
 
 Elpi Accumulate derive lp:{{
-  derivation (indt T) N ff (derive "map" (derive.map.main T N) (map-done T)).
+  func derive.map.derive-main inductive, string -> list prop.
+  derive.map.derive-main T N C :- derive.mutual-inductive T, !,
+    derive.mutual-inductives T TS,
+    derive.map.main-mutual T TS N C.
+  derive.map.derive-main T N C :- derive.map.main T N C.
+
+  derivation (indt T) N ff (derive "map" (derive.map.derive-main T N) (map-done T)).
 }}.

@@ -112,6 +112,185 @@ body-params _ T _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
+kind derive.param1.trivial.mutual-spec type.
+type derive.param1.trivial.mutual-spec inductive -> term -> term -> derive.param1.trivial.mutual-spec.
+
+func mutual-spec inductive -> derive.param1.trivial.mutual-spec.
+mutual-spec GR (derive.param1.trivial.mutual-spec GRR (global (indt GRR)) Arity) :-
+  reali (global (indt GR)) (global (indt GRR)),
+  coq.env.indt GRR _ _ _ Arity _ _.
+
+func mutual-spec-ind derive.param1.trivial.mutual-spec -> inductive.
+mutual-spec-ind (derive.param1.trivial.mutual-spec GRR _ _) GRR.
+
+func mutual-spec-arity derive.param1.trivial.mutual-spec -> term.
+mutual-spec-arity (derive.param1.trivial.mutual-spec _ _ Arity) Arity.
+
+func mutual-spec-apply-sort-param term, term, derive.param1.trivial.mutual-spec -> derive.param1.trivial.mutual-spec.
+mutual-spec-apply-sort-param A P (derive.param1.trivial.mutual-spec GRR IsT (prod _ _ F))
+    (derive.param1.trivial.mutual-spec GRR IsTAP ArityAP) :- !,
+  F A = prod _ _ G,
+  ArityAP = G P,
+  coq.mk-app IsT [A,P] IsTAP.
+mutual-spec-apply-sort-param _ _ _ _ :- stop "derive.param1_trivial: mutual parameter mismatch".
+
+func mutual-spec-apply-param term, derive.param1.trivial.mutual-spec -> derive.param1.trivial.mutual-spec.
+mutual-spec-apply-param A (derive.param1.trivial.mutual-spec GRR IsT (prod _ _ F))
+    (derive.param1.trivial.mutual-spec GRR IsTA (F A)) :- !,
+  coq.mk-app IsT [A] IsTA.
+mutual-spec-apply-param _ _ _ :- stop "derive.param1_trivial: mutual parameter mismatch".
+
+func mutual-trivial-eq-ty derive.param1.trivial.mutual-spec, term -> term.
+mutual-trivial-eq-ty (derive.param1.trivial.mutual-spec _ IsT (prod _ T _\ sort _)) W Ty :- !,
+  Ty = prod `x` T R1,
+  pi x\ sigma IsTx Wx\
+    coq.mk-app IsT [x] IsTx,
+    coq.mk-app W [x] Wx,
+    R1 x = prod `y` IsTx (y\ {{ lib:@elpi.eq lp:IsTx lp:Wx lp:y }}).
+mutual-trivial-eq-ty _ _ _ :- stop "derive.param1_trivial: mutual indexed data types not supported".
+
+func mutual-trivial-eq-body derive.param1.trivial.mutual-spec, term -> term.
+mutual-trivial-eq-body (derive.param1.trivial.mutual-spec _ IsT (prod _ T _\ sort _)) W (fun `x` T Bo1) :- !,
+  @pi-decl `x` T x\ sigma IsTx\
+    coq.mk-app IsT [x] IsTx,
+    Bo1 x = fun `y` IsTx (Bo2 x),
+    @pi-decl `y` IsTx y\ coq.build-match y IsTx (oty IsT W) (body IsT W) (Bo2 x y).
+mutual-trivial-eq-body _ _ _ :- stop "derive.param1_trivial: mutual indexed data types not supported".
+
+func mutual-trivial-db-clauses list derive.param1.trivial.mutual-spec, list term, list term -> list prop.
+mutual-trivial-db-clauses [] [] [] [].
+mutual-trivial-db-clauses [S|SS] [W|WS] [F|FS] [C|CS] :-
+  S = derive.param1.trivial.mutual-spec _ IsT (prod _ T _\ sort _),
+  C = (param1-trivial-db IsT {{ fun x : lp:T => lib:elpi.derive.contracts lp:T lp:IsT x (lp:W x) (lp:F x) }}),
+  mutual-trivial-db-clauses SS WS FS CS.
+
+func mutual-trivial-mfix-aux list derive.param1.trivial.mutual-spec, list derive.param1.trivial.mutual-spec, list term, list term, list term -> mfix-block.
+mutual-trivial-mfix-aux All [] AllWs [] RevF (mfix-bo Bodies) :- !,
+  std.rev RevF Funs,
+  mutual-trivial-db-clauses All AllWs Funs Clauses,
+  Clauses =!=> std.map2 All AllWs mutual-trivial-eq-body Bodies.
+mutual-trivial-mfix-aux All [S|SS] AllWs [W|WS] RevF (mfix-ty N 1 Ty Rest) :-
+  S = derive.param1.trivial.mutual-spec GRR _ _,
+  ID is {coq.gref->id (indt GRR)} ^ "_trivial_rec",
+  coq.id->name ID N,
+  mutual-trivial-eq-ty S W Ty,
+  @pi-decl N Ty f\ mutual-trivial-mfix-aux All SS AllWs WS [f|RevF] (Rest f).
+
+func mutual-trivial-mfix list derive.param1.trivial.mutual-spec, list term, int -> term.
+mutual-trivial-mfix Specs Ws Focus (mfix Focus 1 Block) :-
+  mutual-trivial-mfix-aux Specs Specs Ws Ws [] Block.
+
+func mutual-trivial-result derive.param1.trivial.mutual-spec, term, term -> term.
+mutual-trivial-result (derive.param1.trivial.mutual-spec _ IsT (prod _ T _\ sort _)) W EqFun R :- !,
+  R = {{ fun x : lp:T => lib:elpi.derive.contracts lp:T lp:IsT x (lp:W x) (lp:EqFun x) }}.
+mutual-trivial-result _ _ _ _ :- stop "derive.param1_trivial: mutual indexed data types not supported".
+
+func mutual-inhab-witness derive.param1.trivial.mutual-spec -> term.
+mutual-inhab-witness (derive.param1.trivial.mutual-spec _ IsT _) W :-
+  std.assert! (param1-inhab-db IsT W) "derive.param1_trivial: use derive.param1_inhab first".
+
+func body-mutual-params int, list derive.param1.trivial.mutual-spec, int -> term.
+body-mutual-params 0 Specs Focus R :- !,
+  std.map Specs mutual-inhab-witness Ws,
+  mutual-trivial-mfix Specs Ws Focus EqFun,
+  std.nth Focus Specs S,
+  std.nth Focus Ws W,
+  mutual-trivial-result S W EqFun R.
+body-mutual-params N ([S|_] as Specs) Focus R :- N > 0,
+  mutual-spec-arity S (prod A TA a\ prod P (TP a) _), coq.sort? TA, !,
+  M is N - 2,
+  R = (fun A TA a\ fun P (TP a) p\ fun _ {{ lib:elpi.derive.trivial lp:a lp:p }} pf\ Bo a p pf),
+  @pi-decl A TA a\ @pi-decl P (TP a) p\ @pi-decl _ {{ lib:elpi.derive.trivial lp:a lp:p }} pf\
+    sigma Specs1\
+      std.map Specs (mutual-spec-apply-sort-param a p) Specs1,
+      (reali a p :- !) =>
+      param1-trivial-db p pf =>
+      param1-inhab-db p {{ lib:elpi.derive.trivial_full lp:a lp:p lp:pf }} =>
+        body-mutual-params M Specs1 Focus (Bo a p pf).
+body-mutual-params N ([S|_] as Specs) Focus R :- N > 0, !,
+  mutual-spec-arity S (prod A TA _F),
+  M is N - 1,
+  R = (fun A TA a\ Bo a),
+  @pi-decl A TA a\
+    sigma Specs1\
+      std.map Specs (mutual-spec-apply-param a) Specs1,
+      body-mutual-params M Specs1 Focus (Bo a).
+body-mutual-params _ _ _ _ :- stop "derive.param1_trivial: wrong mutual shape".
+
+func contractible-ty term -> term.
+contractible-ty T
+  (app [global (indt SigT), T,
+    fun `x` T (x\ prod `y` T (y\ app [global (indt Eq), T, x, y]))]) :-
+  coq.locate "sigT" (indt SigT),
+  coq.locate "eq" (indt Eq).
+
+func trivial-ty term, term -> term.
+trivial-ty T P (prod `x` T B) :-
+  pi x\ sigma Px\
+    coq.mk-app P [x] Px,
+    contractible-ty Px (B x).
+
+func mutual-trivial-result-ty derive.param1.trivial.mutual-spec -> term.
+mutual-trivial-result-ty (derive.param1.trivial.mutual-spec _ IsT (prod _ T _\ sort _)) Ty :- !,
+  trivial-ty T IsT Ty.
+mutual-trivial-result-ty _ _ :- stop "derive.param1_trivial: mutual indexed data types not supported".
+
+func body-mutual-params-ty int, derive.param1.trivial.mutual-spec -> term.
+body-mutual-params-ty 0 S Ty :- !,
+  mutual-trivial-result-ty S Ty.
+body-mutual-params-ty N S Ty :- N > 0,
+  mutual-spec-arity S (prod A TA a\ prod P (TP a) _), coq.sort? TA, !,
+  M is N - 2,
+  Ty = prod A TA (a\ prod P (TP a) (p\ prod _ (TrivAP a p) (pf\ Rest a p pf))),
+  @pi-decl A TA a\ @pi-decl P (TP a) p\
+    trivial-ty a p (TrivAP a p),
+    @pi-decl _ (TrivAP a p) pf\
+      sigma S1\
+        mutual-spec-apply-sort-param a p S S1,
+        body-mutual-params-ty M S1 (Rest a p pf).
+body-mutual-params-ty N S Ty :- N > 0, !,
+  mutual-spec-arity S (prod A TA _),
+  M is N - 1,
+  Ty = prod A TA (a\ Rest a),
+  @pi-decl A TA a\
+    sigma S1\
+      mutual-spec-apply-param a S S1,
+      body-mutual-params-ty M S1 (Rest a).
+body-mutual-params-ty _ _ _ :- stop "derive.param1_trivial: wrong mutual shape".
+
+func add-mutual-trivial-consts list derive.param1.trivial.mutual-spec, list derive.param1.trivial.mutual-spec, string, int, int -> list prop.
+add-mutual-trivial-consts _ [] _ _ _ [].
+add-mutual-trivial-consts All [S|SS] Suffix Lno Focus [Clause,param1-trivial-done (indt GRR)|CS] :- std.do! [
+  S = derive.param1.trivial.mutual-spec GRR IsT _,
+  Name is {coq.gref->id (indt GRR)} ^ Suffix,
+  if (Lno > 0)
+     (coq.error "derive.param1_trivial: mutual triviality generation for parameterized mutual inductives still needs to be implemented" (indt GRR))
+     (body-mutual-params Lno All Focus R,
+      std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped mutual term",
+      coq.env.add-const Name R RT @transparent! Cst),
+  Clause = (param1-trivial-db IsT (global (const Cst))),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done (indt GRR))),
+  Focus1 is Focus + 1,
+  add-mutual-trivial-consts All SS Suffix Lno Focus1 CS
+].
+
+func mutual-lno list inductive, inductive -> int.
+mutual-lno _ FirstGRR Lno :- coq.env.indt FirstGRR _ Lno _ _ _ _, Lno > 0, !.
+mutual-lno [FirstOrig|_] _ Lno :- !, coq.env.indt FirstOrig _ OrigLno _ _ _ _, Lno is 2 * OrigLno.
+mutual-lno _ _ 0 :- !.
+
+func main-mutual list inductive, string -> list prop.
+main-mutual GRS Suffix Clauses :- std.do! [
+  std.map GRS mutual-spec Specs,
+  Specs = [First|_],
+  mutual-spec-ind First FirstGRR,
+  coq.env.indt FirstGRR _ LnoIs Luno _ _ _,
+  assert! (LnoIs = Luno) "derive.param1_trivial: Non-uniform parameters not supported",
+  mutual-lno GRS FirstGRR Lno,
+  add-mutual-trivial-consts Specs Specs Suffix Lno 0 Clauses
+].
+
 func main gref, gref, string -> list prop.
 main _ (indt GR) Suffix [Clause,param1-trivial-done (indt GR)] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,

@@ -6,9 +6,41 @@ namespace derive.eqType.ast {
 
 func translate-indt inductive -> eqb.eqType, diagnostic.
 translate-indt I O D :-
+  coq.env.mutual-inductives I GRS, std.length GRS N, N > 1, !,
+  coq.env.indt I _ Lno _ Arity KN KT,
+  translate-param-arity Lno Arity I KN KT O D.
+translate-indt I O D :-
   coq.env.indt-decl I Decl,
   coq.env.indt I _ _ _ _ KN _,
   translate-param Decl I KN O D.
+
+func translate-param-arity int, term, inductive, list constructor, list term -> eqb.eqType, diagnostic.
+translate-param-arity N (prod ID Ty F) I KS KTS (eqb.type-param F1) D :- N > 0, whd Ty [] {{ Type }} _, !,
+  @pi-decl ID Ty x\ pi y\ (term->trm x y ok :- !) ==>
+    sigma KTS1\
+      std.map KTS (coq.subst-prod [x]) KTS1,
+      N1 is N - 1,
+      translate-param-arity N1 (F x) I KS KTS1 (F1 y) D.
+translate-param-arity N (prod ID Ty F) I KS KTS (eqb.value-param Ty1 F1) D :- N > 0, term->trm Ty Ty1 ok, !,
+  @pi-decl ID Ty x\ pi y\ (term->trm x y ok :- !) ==>
+    sigma KTS1\
+      std.map KTS (coq.subst-prod [x]) KTS1,
+      N1 is N - 1,
+      translate-param-arity N1 (F x) I KS KTS1 (F1 y) D.
+translate-param-arity N (prod ID _ _) _ _ _ _ (error S) :- N > 0, !,
+  coq.name->id ID IDS,
+  S is "unsupported parameter " ^ IDS.
+translate-param-arity 0 (sort _) I KS KTS (eqb.inductive I F) D :- !,
+  pi y\ (term->trm (global (indt I)) y ok :- !) => translate-constructors-terms KTS KS (F y) D.
+translate-param-arity _ _ _ _ _ _ (error "unsupported inductive arity").
+
+:index (1)
+func translate-constructors-terms list term, list constructor -> list eqb.constructor, diagnostic.
+translate-constructors-terms [] [] [] ok.
+translate-constructors-terms [A|KS] [K|KK] [eqb.constructor K Args|KS1] D :- std.do-ok! D [
+  translate-arguments A Args,
+  translate-constructors-terms KS KK KS1,
+].
 
 func translate-param indt-decl, inductive, list constructor -> eqb.eqType, diagnostic.
 translate-param (parameter ID _ Ty F) I KS (eqb.type-param F1) D :- whd Ty [] {{ Type }} _, !,
@@ -44,6 +76,8 @@ translate-arguments (prod N Ty F) (eqb.dependent Ty1 F1) D :- !, std.do-ok! D [
   (d\ @pi-decl N Ty x\ pi y\ term->trm x y ok => translate-arguments (F x) (F1 y) d),
 ].
 translate-arguments Ty (eqb.stop Ty1) D :- name Ty, term->trm Ty Ty1 D, !.
+translate-arguments (global _ as Ty) (eqb.stop Ty1) D :- term->trm Ty Ty1 D, !.
+translate-arguments (app [global _|_] as Ty) (eqb.stop Ty1) D :- term->trm Ty Ty1 D, !.
 translate-arguments (app [N|_] as Ty) (eqb.stop Ty1) D :- name N, term->trm Ty Ty1 D, !.
 translate-arguments T _ (error S) :- S is "unsupported argument " ^ {coq.term->string T}.
 
@@ -133,6 +167,17 @@ validate-arguments (eqb.irrelevant _ Args) D :- validate-arguments Args D.
 validate-arguments (eqb.dependent T Args) D :- std.do-ok! D [
   valid T,
   (d\ pi x\ validate-arguments (Args x) d),
+].
+
+func eqtype-clause inductive, eqb.eqType -> prop.
+eqtype-clause I EQT (eqType (indt I) EQT).
+
+func main-mutual list inductive -> list prop.
+main-mutual IS CL :- std.do! [
+  std.map IS (i\eqt\ std.assert-ok! (translate-indt i eqt) "derive.eqType.ast: translate") EQTS,
+  std.map2 IS EQTS eqtype-clause CL,
+  CL =!=> std.forall EQTS (eqt\ std.assert-ok! (validate-eqType eqt) "derive.eqType.ast: validate"),
+  std.forall CL (c\ coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ c))
 ].
 
 func main inductive -> list prop.

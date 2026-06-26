@@ -104,6 +104,163 @@ body-params _ IsT _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   stop M.
 
+kind derive.param1.inhab.mutual-spec type.
+type derive.param1.inhab.mutual-spec inductive -> inductive -> term -> term -> list constructor -> list term -> list term -> derive.param1.inhab.mutual-spec.
+
+func mutual-spec inductive -> derive.param1.inhab.mutual-spec.
+mutual-spec GR (derive.param1.inhab.mutual-spec GR GRR (global (indt GRR)) Arity KOrig K KT) :- std.do! [
+  reali (global (indt GR)) (global (indt GRR)),
+  coq.env.indt GR _ _ _ _ KOrig _,
+  coq.env.indt GRR _ _ _ Arity KR KT,
+  std.map KR (k\r\ r = global (indc k)) K
+].
+
+func mutual-spec-arity derive.param1.inhab.mutual-spec -> term.
+mutual-spec-arity (derive.param1.inhab.mutual-spec _ _ _ Arity _ _ _) Arity.
+
+func mutual-spec-ind derive.param1.inhab.mutual-spec -> inductive.
+mutual-spec-ind (derive.param1.inhab.mutual-spec _ GRR _ _ _ _ _) GRR.
+
+func mutual-spec-apply-sort-param term, term, derive.param1.inhab.mutual-spec -> derive.param1.inhab.mutual-spec.
+mutual-spec-apply-sort-param A P (derive.param1.inhab.mutual-spec GR GRR IsT (prod _ _ F) KOrig K KT)
+    (derive.param1.inhab.mutual-spec GR GRR IsTAP ArityAP KOrig KAP KTAP) :- !,
+  F A = prod _ _ G,
+  ArityAP = G P,
+  coq.mk-app IsT [A,P] IsTAP,
+  map K (k\ coq.mk-app k [A,P]) KAP,
+  map KT (coq.subst-prod [A,P]) KTAP.
+mutual-spec-apply-sort-param _ _ _ _ :- stop "derive.param1_inhab: mutual parameter mismatch".
+
+func mutual-spec-apply-param term, derive.param1.inhab.mutual-spec -> derive.param1.inhab.mutual-spec.
+mutual-spec-apply-param A (derive.param1.inhab.mutual-spec GR GRR IsT (prod _ _ F) KOrig K KT)
+    (derive.param1.inhab.mutual-spec GR GRR IsTA (F A) KOrig KA KTA) :- !,
+  coq.mk-app IsT [A] IsTA,
+  map K (k\ coq.mk-app k [A]) KA,
+  map KT (coq.subst-prod [A]) KTA.
+mutual-spec-apply-param _ _ _ :- stop "derive.param1_inhab: mutual parameter mismatch".
+
+func mutual-inhab-ty derive.param1.inhab.mutual-spec -> term.
+mutual-inhab-ty (derive.param1.inhab.mutual-spec _ _ IsT (prod _ T _\ sort _) _ _ _) Ty :- !,
+  Ty = prod `x` T R,
+  pi x\ coq.mk-app IsT [x] (R x).
+mutual-inhab-ty _ _ :- stop "derive.param1_inhab: mutual indexed data types not supported".
+
+func mutual-inhab-body derive.param1.inhab.mutual-spec -> term.
+mutual-inhab-body (derive.param1.inhab.mutual-spec _GR _ IsT (prod _ T _\ sort _) KOrig K KT) (fun `x` T Bo) :- !,
+  RT = (x\ {coq.mk-app IsT [x]}),
+  map2 KOrig {zip K KT} (a\b\r\ r = (global (indc a)) `-> b) K2KR,
+  K2KR =!=> @pi-decl `x` T x\ coq.build-match x T (oty RT) body (Bo x).
+mutual-inhab-body _ _ :- stop "derive.param1_inhab: mutual indexed data types not supported".
+
+func mutual-inhab-db-clauses list derive.param1.inhab.mutual-spec, list term -> list prop.
+mutual-inhab-db-clauses [] [] [].
+mutual-inhab-db-clauses [S|SS] [F|FS] [C|CS] :-
+  S = derive.param1.inhab.mutual-spec _ _ IsT _ _ _ _,
+  C = (param1-inhab-db IsT F),
+  mutual-inhab-db-clauses SS FS CS.
+
+func mutual-inhab-mfix-aux list derive.param1.inhab.mutual-spec, list derive.param1.inhab.mutual-spec, list term -> mfix-block.
+mutual-inhab-mfix-aux All [] RevF (mfix-bo Bodies) :- !,
+  rev RevF Funs,
+  mutual-inhab-db-clauses All Funs Clauses,
+  Clauses =!=> map All mutual-inhab-body Bodies.
+mutual-inhab-mfix-aux All [S|SS] RevF (mfix-ty N 0 Ty Rest) :-
+  S = derive.param1.inhab.mutual-spec _ GRR _ _ _ _ _,
+  ID is {coq.gref->id (indt GRR)} ^ "_inhab_rec",
+  coq.id->name ID N,
+  mutual-inhab-ty S Ty,
+  @pi-decl N Ty f\ mutual-inhab-mfix-aux All SS [f|RevF] (Rest f).
+
+func mutual-inhab-mfix list derive.param1.inhab.mutual-spec, int -> term.
+mutual-inhab-mfix Specs Focus (mfix Focus 0 Block) :-
+  mutual-inhab-mfix-aux Specs Specs [] Block.
+
+func body-mutual-params int, list derive.param1.inhab.mutual-spec, int -> term.
+body-mutual-params 0 Specs Focus R :- !, mutual-inhab-mfix Specs Focus R.
+body-mutual-params N ([S|_] as Specs) Focus R :- N > 0,
+  mutual-spec-arity S (prod A TA a\ prod P (TP a) _), coq.sort? TA, !,
+  M is N - 2,
+  R = (fun A TA a\ fun P (TP a) p\ fun _ {{ lib:elpi.derive.full lp:a lp:p }} pf\ Bo a p pf),
+  @pi-decl A TA a\ @pi-decl P (TP a) p\ @pi-decl _ {{ lib:elpi.derive.full lp:a lp:p }} pf\
+    sigma Specs1\
+      map Specs (mutual-spec-apply-sort-param a p) Specs1,
+      (reali a p :- !) => param1-inhab-db p pf =>
+        body-mutual-params M Specs1 Focus (Bo a p pf).
+body-mutual-params N ([S|_] as Specs) Focus R :- N > 0, !,
+  mutual-spec-arity S (prod A TA _F),
+  M is N - 1,
+  R = (fun A TA a\ Bo a),
+  @pi-decl A TA a\
+    sigma Specs1\
+      map Specs (mutual-spec-apply-param a) Specs1,
+      body-mutual-params M Specs1 Focus (Bo a).
+body-mutual-params _ _ _ _ :- stop "derive.param1_inhab: wrong mutual shape".
+
+func full-ty term, term -> term.
+full-ty T P (prod `x` T B) :-
+  pi x\ coq.mk-app P [x] (B x).
+
+func mutual-inhab-result-ty derive.param1.inhab.mutual-spec -> term.
+mutual-inhab-result-ty (derive.param1.inhab.mutual-spec _ _ IsT (prod _ T _\ sort _) _ _ _) Ty :- !,
+  full-ty T IsT Ty.
+mutual-inhab-result-ty _ _ :- stop "derive.param1_inhab: mutual indexed data types not supported".
+
+func body-mutual-params-ty int, derive.param1.inhab.mutual-spec -> term.
+body-mutual-params-ty 0 S Ty :- !,
+  mutual-inhab-result-ty S Ty.
+body-mutual-params-ty N S Ty :- N > 0,
+  mutual-spec-arity S (prod A TA a\ prod P (TP a) _), coq.sort? TA, !,
+  M is N - 2,
+  Ty = prod A TA (a\ prod P (TP a) (p\ prod _ (FullAP a p) (pf\ Rest a p pf))),
+  @pi-decl A TA a\ @pi-decl P (TP a) p\
+    full-ty a p (FullAP a p),
+    @pi-decl _ (FullAP a p) pf\
+      sigma S1\
+        mutual-spec-apply-sort-param a p S S1,
+        body-mutual-params-ty M S1 (Rest a p pf).
+body-mutual-params-ty N S Ty :- N > 0, !,
+  mutual-spec-arity S (prod A TA _),
+  M is N - 1,
+  Ty = prod A TA (a\ Rest a),
+  @pi-decl A TA a\
+    sigma S1\
+      mutual-spec-apply-param a S S1,
+      body-mutual-params-ty M S1 (Rest a).
+body-mutual-params-ty _ _ _ :- stop "derive.param1_inhab: wrong mutual shape".
+
+func add-mutual-inhab-consts list derive.param1.inhab.mutual-spec, list derive.param1.inhab.mutual-spec, string, int, int -> list prop.
+add-mutual-inhab-consts _ [] _ _ _ [].
+add-mutual-inhab-consts All [S|SS] Suffix Lno Focus [ClauseW, param1-inhab-done (indt GRR)|CS] :- std.do! [
+  S = derive.param1.inhab.mutual-spec _ GRR IsT _ _ _ _,
+  body-mutual-params Lno All Focus RSkel,
+  std.assert-ok! (coq.typecheck RSkel RT) "derive.param1_inhab generates illtyped mutual term",
+  R = RSkel,
+  Name is {coq.gref->id (indt GRR)} ^ Suffix,
+  coq.env.add-const Name R RT @transparent! Witness,
+  ClauseW = (param1-inhab-db IsT (global (const Witness))),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ ClauseW),
+  coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-inhab-done (indt GRR))),
+  Focus1 is Focus + 1,
+  add-mutual-inhab-consts All SS Suffix Lno Focus1 CS
+].
+
+func mutual-lno list inductive, inductive -> int.
+mutual-lno _ FirstGRR Lno :- coq.env.indt FirstGRR _ Lno _ _ _ _, Lno > 0, !.
+mutual-lno [FirstOrig|_] _ Lno :- !, coq.env.indt FirstOrig _ OrigLno _ _ _ _, Lno is 2 * OrigLno.
+mutual-lno _ _ 0 :- !.
+
+func main-mutual list inductive, string -> list prop.
+main-mutual GRS Suffix Clauses :- std.do! [
+  map GRS mutual-spec Specs,
+  Specs = [First|_],
+  mutual-spec-ind First FirstGRR,
+  coq.env.indt FirstGRR Ind LnoIs Luno _ _ _,
+  assert! (Ind = tt) "derive.param1_inhab: Coinductive types are not supported",
+  assert! (LnoIs = Luno) "derive.param1_inhab: Non-uniform parameters not supported",
+  mutual-lno GRS FirstGRR Lno,
+  add-mutual-inhab-consts Specs Specs Suffix Lno 0 Clauses
+].
+
 func main gref, gref, string -> list prop.
 main _ (indt GR) Suffix [ClauseW, param1-inhab-done (indt GR)] :- do! [
 

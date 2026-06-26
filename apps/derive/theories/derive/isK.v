@@ -28,11 +28,22 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File isK.
 Elpi Accumulate lp:{{
-  main [str I,str O] :- !, coq.locate I (indt GR), derive.isK.main GR O _.
+  func derive.isK.standalone-prefix inductive, string, inductive -> string.
+  derive.isK.standalone-prefix First Prefix T Prefix :- First = T, !.
+  derive.isK.standalone-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_is_".
+
+  func derive.isK.standalone-main inductive, string -> list prop.
+  derive.isK.standalone-main T Prefix C :-
+    coq.env.mutual-inductives T TS, std.length TS N, N > 1, !,
+    std.map TS (t\c\ sigma p\ derive.isK.standalone-prefix T Prefix t p, derive.isK.main t p c) CS,
+    std.flatten CS C.
+  derive.isK.standalone-main T Prefix C :- derive.isK.main T Prefix C.
+
+  main [str I,str O] :- !, coq.locate I (indt GR), derive.isK.standalone-main GR O _.
   main [str I] :- !,
     coq.locate I (indt GR),
     Prefix is {coq.gref->id (indt GR)} ^ "_is_",
-    derive.isK.main GR Prefix _.
+    derive.isK.standalone-main GR Prefix _.
   main _ :- usage.
 
   usage :-
@@ -49,7 +60,18 @@ Elpi Accumulate derive File isK.
 }}.
 
 Elpi Accumulate derive lp:{{
+
+func derive.isK.prefix inductive, string, inductive -> string.
+derive.isK.prefix First Prefix T Prefix :- First = T, !.
+derive.isK.prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+func derive.isK.derive-main inductive, string -> list prop.
+derive.isK.derive-main T Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p n\ derive.isK.prefix T Prefix t p, n is p ^ "isk_", derive.isK.main t n c) CS,
+  std.flatten CS C.
+derive.isK.derive-main T Prefix C :- N is Prefix ^ "isk_", derive.isK.main T N C.
   
-derivation (indt T) Prefix ff (derive "isK" (derive.isK.main T N) (derive.exists-indc T (K\ isK-db K _))) :- N is Prefix ^ "isk_".
+derivation (indt T) Prefix ff (derive "isK" (derive.isK.derive-main T Prefix) (derive.exists-indc T (K\ isK-db K _))).
 
 }}.

@@ -34,9 +34,15 @@ Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File induction.
 Elpi Accumulate lp:{{
+  func derive.induction.standalone-main inductive, string -> list prop.
+  derive.induction.standalone-main T Prefix C :-
+    coq.env.mutual-inductives T TS, std.length TS N, N > 1, !,
+    derive.induction.main-mutual T TS Prefix C.
+  derive.induction.standalone-main T Prefix C :- derive.induction.main T Prefix C.
+
   main [str I] :- !,
     coq.locate I (indt GR), Name is {coq.gref->id (indt GR)} ^ "_",
-    derive.induction.main GR Name _.
+    derive.induction.standalone-main GR Name _.
   main _ :- usage.
 
   usage :-
@@ -58,6 +64,12 @@ dep1 "induction" "param1_functor".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) N ff (derive "induction" (derive.induction.main T N) (induction-db T _)).
+func derive.induction.derive-main inductive, string -> list prop.
+derive.induction.derive-main T N C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.induction.main-mutual T TS N C.
+derive.induction.derive-main T N C :- derive.induction.main T N C.
+
+derivation (indt T) N ff (derive "induction" (derive.induction.derive-main T N) (induction-db T _)).
 
 }}.

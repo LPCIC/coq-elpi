@@ -25,11 +25,22 @@ Elpi Accumulate File tag.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate lp:{{
 
+  func derive.tag.standalone-prefix inductive, string, inductive -> string.
+  derive.tag.standalone-prefix First Prefix T Prefix :- First = T, !.
+  derive.tag.standalone-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+  func derive.tag.standalone-main inductive, string -> list prop.
+  derive.tag.standalone-main T Prefix C :-
+    coq.env.mutual-inductives T TS, std.length TS N, N > 1, !,
+    std.map TS (t\c\ sigma p\ derive.tag.standalone-prefix T Prefix t p, derive.tag.main t p c) CS,
+    std.flatten CS C.
+  derive.tag.standalone-main T Prefix C :- derive.tag.main T Prefix C.
+
   main [str I] :- !, 
     coq.locate I (indt GR),
     coq.gref->id (indt GR) Tname,
     Prefix is Tname ^ "_",
-    derive.tag.main GR Prefix _.
+    derive.tag.standalone-main GR Prefix _.
 
   main _ :- usage.
    
@@ -47,7 +58,18 @@ Elpi Accumulate derive File tag.
 }}.
 
 Elpi Accumulate derive lp:{{
+
+func derive.tag.prefix inductive, string, inductive -> string.
+derive.tag.prefix First Prefix T Prefix :- First = T, !.
+derive.tag.prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+func derive.tag.derive-main inductive, string -> list prop.
+derive.tag.derive-main T Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p\ derive.tag.prefix T Prefix t p, derive.tag.main t p c) CS,
+  std.flatten CS C.
+derive.tag.derive-main T Prefix C :- derive.tag.main T Prefix C.
   
-derivation (indt T) Prefix ff (derive "tag" (derive.tag.main T Prefix) (tag-for T _)).
+derivation (indt T) Prefix ff (derive "tag" (derive.tag.derive-main T Prefix) (tag-for T _)).
 
 }}.

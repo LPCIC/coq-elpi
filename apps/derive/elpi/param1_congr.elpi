@@ -49,10 +49,31 @@ main-k Prefix Lno K KT Clause :- do! [
   Clause = param1-congr-db K (global (const Cst))
 ].
 
+func mutual-indt-count indt-decl -> int.
+mutual-indt-count (parameter ID _ Ty F) N :- !,
+  @pi-parameter ID Ty x\ mutual-indt-count (F x) N.
+mutual-indt-count (minductive ID _ Arity Rest) N :- !,
+  @pi-inductive ID Arity i\ mutual-indt-count (Rest i) M,
+  N is M + 1.
+mutual-indt-count (mblock _) 0.
+
+func mutual-inductive inductive ->.
+mutual-inductive I :- coq.env.mutual-inductives I GRS, std.length GRS N, N > 1.
+
+func translated-lno gref, gref -> int.
+translated-lno (indt _Orig) (indt IsGR) Lno :-
+  coq.env.indt IsGR _ LnoIs _ _ _ _, LnoIs > 0, !,
+  Lno = LnoIs.
+translated-lno (indt Orig) (indt _) Lno :- mutual-inductive Orig, !,
+  coq.env.indt Orig _ OrigLno _ _ _ _,
+  Lno is 2 * OrigLno.
+translated-lno _ _ 0 :- !.
+
 func main gref, gref, string -> list prop.
-main _ (indt GR) Prefix Clauses2 :-
+main Orig (indt GR) Prefix Clauses2 :-
   
-  coq.env.indt GR _ Lno _ _ K KT,
+  coq.env.indt GR _ _ _ _ K KT,
+  translated-lno Orig (indt GR) Lno,
   map2-filter K KT (main-k Prefix Lno) Clauses,
   Clauses2 = [param1-congr-done (indt GR)|Clauses],
   forall Clauses2

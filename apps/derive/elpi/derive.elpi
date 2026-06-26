@@ -9,6 +9,25 @@ exists-indc I P :-
   coq.env.indt I _ _ _ _ KL _,
   std.exists! KL P.
 
+func mutual-ids indt-decl -> list id.
+mutual-ids (parameter ID _ Ty F) IDs :- !,
+  @pi-parameter ID Ty x\ mutual-ids (F x) IDs.
+mutual-ids (minductive ID _ Arity Rest) [ID|IDs] :- !,
+  @pi-inductive ID Arity i\ mutual-ids (Rest i) IDs.
+mutual-ids (mblock _) [].
+
+func mutual-indt-decl indt-decl ->.
+mutual-indt-decl D :- mutual-ids D IDs, std.length IDs N, N > 1.
+
+func mutual-inductive inductive ->.
+mutual-inductive I :- coq.env.mutual-inductives I GRS, std.length GRS N, N > 1.
+
+func id->indt id -> inductive.
+id->indt ID GR :- coq.locate ID (indt GR).
+
+func mutual-inductives inductive -> list inductive.
+mutual-inductives I GRS :- coq.env.mutual-inductives I GRS.
+
 func if-verbose (func) ->.
 if-verbose P :- (get-option "verbose" tt ; get-option "recursive" tt), !, P.
 if-verbose _.
@@ -148,7 +167,7 @@ decl+main TypeName DS :- std.do! [
   if-verbose (coq.say "Done"),
   if (HasModule = tt)
      (coq.env.end-module _,
-      decl+main.post TypeName I DS CL)
+      decl+main.post ModName DS CL)
      check-no-no-alias
 ].
 
@@ -157,24 +176,57 @@ check-no-no-alias :- get-option "no_alias" tt, !,
   coq.error "The no_alias attribute only has an effect when a wrapper module is generated.".
 check-no-no-alias.
 
-func decl+main.post string, inductive, indt-decl -> list prop.
-decl+main.post TypeName I DS CL :- std.do! [
-  coq.env.indt I _ _ _ _ KS _,
+func indt-decl-ids indt-decl -> list id.
+indt-decl-ids (parameter ID _ Ty F) IDs :- !,
+  @pi-parameter ID Ty x\ indt-decl-ids (F x) IDs.
+indt-decl-ids (inductive ID _ _ _) [ID] :- !.
+indt-decl-ids (minductive ID _ Arity Rest) [ID|IDs] :- !,
+  @pi-inductive ID Arity i\ indt-decl-ids (Rest i) IDs.
+indt-decl-ids (record ID _ _ _) [ID] :- !.
+indt-decl-ids (mblock _) [].
+
+func module-indt string, id -> inductive.
+module-indt ModName ID I :-
+  QName is ModName ^ "." ^ ID,
+  coq.locate QName (indt I).
+
+func indt-constructors inductive -> list constructor.
+indt-constructors I KS :- coq.env.indt I _ _ _ _ KS _.
+
+func set-indt-implicits inductive, list implicit_kind ->.
+set-indt-implicits I Impl :-
+  if (coq.any-implicit? Impl)
+     (@global! ==> coq.arguments.set-implicit (indt I) [Impl])
+     true.
+
+func set-indc-implicits constructor, list implicit_kind ->.
+set-indc-implicits K Impl :-
+  if (coq.any-implicit? Impl)
+     (@global! ==> coq.arguments.set-implicit (indc K) [Impl])
+     true.
+
+func set-indcs-implicits list constructor, list (list implicit_kind) ->.
+set-indcs-implicits KS Impls :-
+  std.forall2 KS Impls set-indc-implicits.
+
+func decl+main.post string, indt-decl -> list prop.
+decl+main.post ModName DS CL :- std.do! [
+  indt-decl-ids DS IDs,
+  std.map IDs (module-indt ModName) IS,
+  std.map IS (i\r\ r = global (indt i)) ITS,
+  std.map IS indt-constructors KBlocks,
+  std.flatten KBlocks KS,
   std.map KS (k\r\ r = indc k) KGRS,
   std.map KGRS coq.gref->id KNS,
   std.map KGRS (gr\r\ r = global gr) KTS,
 
-  std.forall2 [TypeName|KNS] [global (indt I)|KTS] short-alias,
+  std.append IDs KNS AliasNames,
+  std.append ITS KTS AliasTerms,
+  std.forall2 AliasNames AliasTerms short-alias,
 
-  coq.indt-decl->implicits DS IndImpls KsImpls,
-  if (coq.any-implicit? IndImpls)
-     (@global! ==> coq.arguments.set-implicit (indt I) [IndImpls])
-     true,
-  std.forall2 KsImpls KS (i\k\
-    if (coq.any-implicit? i)
-       (@global! ==> coq.arguments.set-implicit (indc k) [i])
-       true
-    ),
+  coq.indt-decl->implicits-all DS IndImpls KsImpls,
+  std.forall2 IS IndImpls set-indt-implicits,
+  std.forall2 KBlocks KsImpls set-indcs-implicits,
   std.map-filter CL export? P,
   std.do! P,
 ].
