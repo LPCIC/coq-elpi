@@ -1,5 +1,6 @@
-(coq.theory
+(rocq.theory
  (name example_plugin)
+ (generate_project_file)
  (theories elpi)
  (plugins rocq-elpi.elpi_example_plugin))
 
