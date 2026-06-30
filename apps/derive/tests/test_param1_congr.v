@@ -41,6 +41,12 @@ Elpi derive.param1.congr is_sigma_bool.
 Elpi derive.param1.congr is_sigma_bool2.
 Elpi derive.param1.congr is_ord.
 Elpi derive.param1.congr is_val.
+Elpi derive.param1.congr is_mempty.
+Elpi derive.param1.congr is_munit.
+Fail Elpi derive.param1.congr is_mpeano.
+Elpi derive.param1.congr is_moption.
+Fail Elpi derive.param1.congr is_mtree.
+
 End Coverage.
 
 Import Coverage.

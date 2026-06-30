@@ -35,6 +35,11 @@ Elpi derive.projK bool.
 Elpi derive.projK sigma_bool.
 Elpi derive.projK ord.
 Elpi derive.projK val.
+Elpi derive.projK mempty.
+Elpi derive.projK munit.
+Elpi derive.projK mpeano.
+Elpi derive.projK moption.
+Elpi derive.projK mtree.
 End Coverage.
 
 Import Coverage.
@@ -75,6 +80,11 @@ Redirect "tmp" Check projBuild_fo_record1 : peano -> unit -> fo_record -> peano.
 Redirect "tmp" Check projBuild_fo_record2 : peano -> unit -> fo_record -> unit.
 Redirect "tmp" Check projBuild_pa_record2 : forall A, peano -> A -> pa_record A -> A.
 Redirect "tmp" Check projBuild_pr_record2 : forall A, peano -> A -> pr_record A -> A.
+
+Fail Redirect "tmp" Check projmpeano'1.
+Fail Redirect "tmp" Check projmoption'1.
+Fail Redirect "tmp" Check projmtree'1.
+
 
 Set Universe Polymorphism.
 Unset Universe Minimization ToSet.

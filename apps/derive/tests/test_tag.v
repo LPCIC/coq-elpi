@@ -38,6 +38,11 @@ Elpi derive.tag sigma_bool2.
 Elpi derive.tag ord.
 Elpi derive.tag ord2.
 Elpi derive.tag val.
+Elpi derive.tag mempty.
+Elpi derive.tag munit.
+Elpi derive.tag mpeano.
+Elpi derive.tag moption.
+Elpi derive.tag mtree.
 End Coverage.
 
 Import Coverage.

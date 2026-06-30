@@ -129,3 +129,9 @@ Unset Universe Polymorphism.
 Inductive RenamedParam (n : nat) := renamedParam (_ : unit).
 Arguments renamedParam m t : rename.
 Elpi derive.param2 RenamedParam.
+
+Fail Elpi derive.param2 mempty.
+Fail Elpi derive.param2 munit.
+Fail Elpi derive.param2 mpeano.
+Fail Elpi derive.param2 moption.
+Fail Elpi derive.param2 mtree.

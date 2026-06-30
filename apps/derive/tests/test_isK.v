@@ -35,6 +35,11 @@ Elpi derive.isK eq.
 Elpi derive.isK sigma_bool.
 Elpi derive.isK ord.
 Elpi derive.isK val.
+Elpi derive.isK mempty.
+Elpi derive.isK munit.
+Elpi derive.isK mpeano.
+Elpi derive.isK moption.
+Elpi derive.isK mtree.
 End Coverage.
 
 Import Coverage.

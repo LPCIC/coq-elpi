@@ -43,6 +43,12 @@ Elpi derive.eqcorrect bool.
 Fail Elpi derive.eqcorrect sigma_bool.
 Fail Elpi derive.eqcorrect ord.
 Fail Elpi derive.eqcorrect val.
+Fail Elpi derive.eqcorrenct mempty.
+Fail Elpi derive.eqcorrenct munit.
+Fail Elpi derive.eqcorrenct mpeano.
+Fail Elpi derive.eqcorrenct moption.
+Fail Elpi derive.eqcorrenct mtree.
+
 End Coverage.
 
 Import Coverage eqK.

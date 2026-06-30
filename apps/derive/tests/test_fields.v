@@ -37,6 +37,11 @@ Elpi derive.fields sigma_bool2.
 Elpi derive.fields ord.
 Elpi derive.fields ord2.
 Elpi derive.fields val.
+Fail Elpi derive.fields mempty.
+Fail Elpi derive.fields munit.
+Fail Elpi derive.fields mpeano.
+Fail Elpi derive.fields moption.
+Fail Elpi derive.fields mtree.
 End Coverage.
 
 Import Coverage.

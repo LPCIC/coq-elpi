@@ -44,6 +44,12 @@ Elpi derive.param1.trivial is_ord.
 Elpi derive.param1.trivial is_ord2.
 Elpi derive.param1.trivial is_val.
 Elpi derive.param1.trivial is_alias.
+Elpi derive.param1.trivial is_mempty.
+Elpi derive.param1.trivial is_munit.
+Fail Elpi derive.param1.trivial is_mpeano.
+Elpi derive.param1.trivial is_moption.
+Fail Elpi derive.param1.trivial is_mtree.
+
 
 End Coverage.
 

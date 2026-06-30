@@ -51,6 +51,12 @@ Elpi derive.eqbcorrect ord.
 Elpi derive.eqbcorrect ord2.
 Elpi derive.eqbcorrect val.
 Elpi derive.eqbcorrect alias.
+Fail Elpi derive.eqbcorrent mempty.
+Fail Elpi derive.eqbcorrent munit.
+Fail Elpi derive.eqbcorrent mpeano.
+Fail Elpi derive.eqbcorrent moption.
+Fail Elpi derive.eqbcorrent mtree.
+
 
 End Coverage.
 

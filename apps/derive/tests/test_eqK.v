@@ -48,6 +48,12 @@ Fail Elpi derive.eqK eq.
 Elpi derive.eqK bool.
 Fail Elpi derive.eqK val.
 Fail Elpi derive.eqK ord.
+Elpi derive.eqK mempty.
+Elpi derive.eqK munit.
+Fail Elpi derive.eqK mpeano.
+Elpi derive.eqK moption.
+Fail Elpi derive.eqK mtree.
+
 End Coverage.
 
 Import Coverage.
