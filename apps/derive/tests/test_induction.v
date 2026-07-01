@@ -42,9 +42,9 @@ Elpi derive.induction ord2.
 Elpi derive.induction val.
 Elpi derive.induction mempty.
 Elpi derive.induction munit.
-Fail Elpi derive.induction mpeano.
+Elpi derive.induction mpeano.
 Elpi derive.induction moption.
-Fail Elpi derive.induction mtree.
+Elpi derive.induction mtree.
 End Coverage.
 
 Import Coverage.
@@ -75,3 +75,5 @@ Redirect "tmp" Check sigma_bool_induction.
 Redirect "tmp" Check sigma_bool2_induction.
 Redirect "tmp" Check ord_induction : forall p Pp P, (forall n Pn l, is_eq bool is_bool (is_leq n p) (is_is_leq n Pn p Pp) true is_true l -> P (mkOrd p n l)) -> forall (o : ord p), is_ord p Pp o -> P o.
 Redirect "tmp" Check ord2_induction : forall p Pp P, (forall (o1 : ord p), is_ord p Pp o1 -> forall (o2 : ord p), is_ord p Pp o2 -> P (mkOrd2 p o1 o2)) -> forall (o : ord2 p), is_ord2 p Pp o -> P o.
+Fail Redirect "tmp" Check mpeano'_induction.
+Fail Redirect "tmp" Check mforest_induction.
