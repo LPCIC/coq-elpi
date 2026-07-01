@@ -1,5 +1,5 @@
 
-# [UNRELEASED]
+# [3.5.0] 01/07/2026
 
 ### HOAS:
 - New `minductive` and `mblock` for mutual inductive types
@@ -21,6 +21,11 @@
 - Change `coq.build-indt-decl`, now taking a `coq.indt-spec` tuple
 - New `coq.build-mindt-decl` taking a list of `coq.indt-spec`
 
+### APPS:
+- Fix many bugs in `derive` related to universe polymorphism
+
+### Vernac:
+- Fix double accumulation bug when mixing Files and Dbs
 
 # [3.4.0] 19/05/2026
 
