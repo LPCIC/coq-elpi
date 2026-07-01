@@ -40,6 +40,11 @@ Elpi derive.induction sigma_bool2.
 Elpi derive.induction ord.
 Elpi derive.induction ord2.
 Elpi derive.induction val.
+Elpi derive.induction mempty.
+Elpi derive.induction munit.
+Fail Elpi derive.induction mpeano.
+Elpi derive.induction moption.
+Fail Elpi derive.induction mtree.
 End Coverage.
 
 Import Coverage.

@@ -39,6 +39,11 @@ Elpi derive.param1.functor is_sigma_bool2.
 Elpi derive.param1.functor is_ord.
 Elpi derive.param1.functor is_ord2.
 Elpi derive.param1.functor is_val.
+Fail Elpi derive.param1.functor mempty.
+Fail Elpi derive.param1.functor munit.
+Fail Elpi derive.param1.functor mpeano.
+Fail Elpi derive.param1.functor moption.
+Fail Elpi derive.param1.functor mtree.
 
 End Coverage.
 

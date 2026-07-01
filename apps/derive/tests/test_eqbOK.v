@@ -45,6 +45,11 @@ Elpi derive.eqbOK ord.
 Elpi derive.eqbOK ord2.
 Elpi derive.eqbOK val.
 Elpi derive.eqbOK alias.
+Fail Elpi derive.eqbOK mempty.
+Fail Elpi derive.eqbOK munit.
+Fail Elpi derive.eqbOK mpeano.
+Fail Elpi derive.eqbOK moption.
+Fail Elpi derive.eqbOK mtree.
 
 End Coverage.
 

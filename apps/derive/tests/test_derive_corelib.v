@@ -7,11 +7,19 @@ Module Coverage.
 
 Inductive empty := .
 
+Inductive mempty := with mempty' := .
+
 Inductive unit := tt.
+
+Inductive munit := mtt with munit' := mtt'.
 
 Inductive peano := Zero | Succ (n : peano).
 
+Inductive mpeano := mZero | mSucc (n : mpeano') with mpeano' := mZero' | mSucc' (n' : mpeano).
+
 Inductive option A := None | Some (_ : A).
+
+Inductive moption A := mNone | mSome (_ : A) with moption' A := mNone' | mSome' (_ : A).
 
 Inductive pair A B := Comma (a : A) (b : B).
 
@@ -24,6 +32,8 @@ Inductive rose (A : Type) := Leaf (a : A) | Node (sib : seq (rose A)).
 Inductive rose_p (A B : Type) := Leafp (p : pair A B) | Nodep (sib : pair (rose_p A B) (rose_p A B)).
 
 Inductive rose_o (A : Type) := Leafo (a : A) | Nodeo (x: pair (rose A) (rose A)) (sib : option (seq (rose A))).
+
+Inductive mtree (A : Type) := mLeaf (a : A) | mNode (_ : mforest A) with mforest (A : Type) := mEnd | mTree (_ : mtree A) (_ : mforest A).
 
 Inductive nest A := NilN | ConsN (x : A) (xs : nest (pair A A)).
 

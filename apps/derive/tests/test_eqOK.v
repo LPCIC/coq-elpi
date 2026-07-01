@@ -42,6 +42,12 @@ Fail Elpi derive.eqOK eq.
 Fail Elpi derive.eqOK sigma_bool.
 Fail Elpi derive.eqOK val.
 Fail Elpi derive.eqOK ord.
+Fail Elpi derive.eqOK mempty.
+Fail Elpi derive.eqOK munit.
+Fail Elpi derive.eqOK mpeano.
+Fail Elpi derive.eqOK moption.
+Fail Elpi derive.eqOK mtree.
+
 End Coverage.
 
 Import Coverage eqK.

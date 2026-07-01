@@ -36,6 +36,11 @@ Elpi derive.map sigma_bool.
 Elpi derive.map sigma_bool2.
 Fail Elpi derive.map ord.
 Elpi derive.map val.
+Elpi derive.map mempty.
+Elpi derive.map munit.
+Elpi derive.map mpeano.
+Elpi derive.map moption.
+Fail Elpi derive.map mtree.
 End Coverage.
 
 Import Coverage.

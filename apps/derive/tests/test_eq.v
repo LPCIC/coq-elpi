@@ -34,6 +34,11 @@ Elpi derive.eq bool.
 Fail Elpi derive.eq sigma_bool.
 Fail Elpi derive.eq ord.
 Fail Elpi derive.eq val.
+Elpi derive.eq mempty.
+Elpi derive.eq munit.
+Fail Elpi derive.eq mpeano.
+Elpi derive.eq moption.
+Fail Elpi derive.eq mtree.
 End Coverage.
 
 Import Coverage.
@@ -61,3 +66,10 @@ Redirect "tmp" Check fo_record_eq : eq_test fo_record.
 Redirect "tmp" Check pa_record_eq : forall A, eq_test A -> eq_test (pa_record A).
 Redirect "tmp" Check pr_record_eq : forall A, eq_test A -> eq_test (pr_record A).
 Redirect "tmp" Check enum_eq : eq_test enum.
+
+Redirect "tmp" Check mempty_eq : eq_test mempty.
+Fail Redirect "tmp" Check mempty'_eq : eq_test mempty'.
+Redirect "tmp" Check munit_eq : eq_test munit.
+Fail Redirect "tmp" Check munit'_eq : eq_test munit'.
+Redirect "tmp" Check moption_eq : forall A, eq_test A -> eq_test (moption A).
+Fail Redirect "tmp" Check moption'_eq : eq_test (moption' A).

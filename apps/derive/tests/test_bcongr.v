@@ -39,6 +39,12 @@ Elpi derive.bcongr bool.
 Fail Elpi derive.bcongr sigma_bool.
 Fail Elpi derive.bcongr val.
 Fail Elpi derive.bcongr ord.
+Elpi derive.bcongr mempty.
+Elpi derive.bcongr munit.
+Elpi derive.bcongr mpeano.
+Elpi derive.bcongr moption.
+Elpi derive.bcongr mtree.
+
 End Coverage.
 
 Import Coverage.

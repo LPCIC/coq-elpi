@@ -37,6 +37,11 @@ Elpi derive.eqType.ast sigma_bool2.
 Elpi derive.eqType.ast ord.
 Elpi derive.eqType.ast ord2.
 Elpi derive.eqType.ast val.
+Fail Elpi derive.eqType.ast mempty.
+Fail Elpi derive.eqType.ast munit.
+Fail Elpi derive.eqType.ast mpeano.
+Fail Elpi derive.eqType.ast moption.
+Fail Elpi derive.eqType.ast mtree.
 End Coverage.
 Import Coverage.
 
