@@ -80,6 +80,7 @@ Elpi Accumulate lp:{{
   pred get_name i:indt-decl, o:string.
   get_name (parameter _ _ _ F) N :- pi p\ get_name (F p) N.
   get_name (inductive N _ _ _) N.
+  get_name (minductive N _ _ _) N.
   get_name (record N _ _ _) N.
 }}.
 
