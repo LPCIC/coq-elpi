@@ -24,8 +24,8 @@ Elpi Accumulate Db derive.map.db.
 Elpi Accumulate File map.
 Elpi Accumulate lp:{{ 
   main [str I] :- !,
-    coq.locate I (indt GR), O is {coq.gref->id (indt GR)} ^ "_",
-    derive.map.main GR O _.
+    coq.locate I (indt GR),
+    derive.map.main GR "" _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.map <inductive type name>".
