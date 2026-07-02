@@ -43,9 +43,9 @@ Elpi derive.param1.congr is_ord.
 Elpi derive.param1.congr is_val.
 Elpi derive.param1.congr is_mempty.
 Elpi derive.param1.congr is_munit.
-Fail Elpi derive.param1.congr is_mpeano.
+Elpi derive.param1.congr is_mpeano.
 Elpi derive.param1.congr is_moption.
-Fail Elpi derive.param1.congr is_mtree.
+Elpi derive.param1.congr is_mtree.
 
 End Coverage.
 
@@ -92,3 +92,7 @@ Redirect "tmp" Check congr_is_Build_fo_record : forall n p1 p2, p1 = p2 -> foral
 Redirect "tmp" Check congr_is_Build_pa_record : forall A PA n p1 p2, p1 = p2 -> forall b q1 q2, q1 = q2 -> is_Build_pa_record A PA n p1 b q1= is_Build_pa_record A PA n p2 b q2.
 Redirect "tmp" Check congr_is_Build_pr_record : forall A pr n p1 p2, p1 = p2 -> forall b q1 q2, q1 = q2 -> is_Build_pr_record A pr n p1 b q1= is_Build_pr_record A pr n p2 b q2.
 Redirect "tmp" Check congr_is_E1 : is_E1 = is_E1.
+
+
+Fail Redirect "tmp" Check congr_is_mpeano'.
+Fail Redirect "tmp" Check congr_is_mforest.

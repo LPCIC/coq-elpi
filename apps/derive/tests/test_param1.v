@@ -45,9 +45,9 @@ Elpi derive.param1 val.
 Elpi derive.param1 alias.
 Elpi derive.param1 mempty.
 Elpi derive.param1 munit.
-Fail Elpi derive.param1 mpeano.
+Elpi derive.param1 mpeano.
 Elpi derive.param1 moption.
-Fail Elpi derive.param1 mtree.
+Elpi derive.param1 mtree.
 
 End Coverage.
 
@@ -83,12 +83,15 @@ Redirect "tmp" Check is_val : pred val.
 Redirect "tmp" Check is_alias : pred alias.
 
 Redirect "tmp" Check is_mempty : pred mempty.
-Fail Redirect "tmp" Check is_mempty' : pred mempty'.
+Redirect "tmp" Check is_mempty' : pred mempty'.
 Redirect "tmp" Check is_munit : pred munit.
-Fail Redirect "tmp" Check is_munit' : pred munit'.
-
+Redirect "tmp" Check is_munit' : pred munit'.
 Redirect "tmp" Check is_moption : forall A, pred A -> pred (moption A).
-Fail Redirect "tmp" Check is_moption' : forall A, pred A -> pred (moption' A).
+Redirect "tmp" Check is_moption' : forall A, pred A -> pred (moption' A).
+Redirect "tmp" Check is_mpeano : pred mpeano.
+Redirect "tmp" Check is_mpeano' : pred mpeano'.
+Redirect "tmp" Check is_mtree : forall A, pred A -> pred (mtree A).
+Redirect "tmp" Check is_mforest : forall A, pred A -> pred (mforest A).
 
 End Test.
 
@@ -204,5 +207,10 @@ Elpi derive.param1 nat_eq.
 Inductive Acc {A : Type} (R : A -> A -> Prop) | (x : A) : Prop :=
     Acc_intro : (forall y : A, R y x -> Acc y) -> Acc x.
 Elpi derive.param1 Acc.
+
+Inductive a := ka with b := kb.
+Elpi derive.param1 a.
+Inductive c := kc : a -> kb = kb -> c.
+Elpi derive.param1 c.
 
 End OtherTests.
