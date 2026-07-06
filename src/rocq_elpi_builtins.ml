@@ -4580,26 +4580,37 @@ and for all in a .v file which your clients will load. Eg.
   (fun n suffix _ ~depth ->
      match E.look ~depth suffix with
      | E.CData i when API.RawOpaqueData.(is_string i || is_int i || isname i) ->
-         let s = Pp.string_of_ppcmds (Name.print n) in
+         let s = Pp.string_of_ppcmds (Name.print @@ Context.binder_name n) in
          let suffix =
            if API.RawOpaqueData.is_string i then API.RawOpaqueData.to_string i
            else if API.RawOpaqueData.is_int i then string_of_int (API.RawOpaqueData.to_int i)
-           else Pp.string_of_ppcmds (Name.print (nameout i)) in
+           else Pp.string_of_ppcmds (Name.print (Context.binder_name @@ nameout i)) in
          let s = s ^ suffix in
-         !: (Name.mk_name (Id.of_string s))
+         !: (Context.map_annot (fun _ -> Name.mk_name (Id.of_string s)) n)
      | _ -> err Pp.(str "coq.name-suffix: suffix is not int, nor string nor name"))),
   DocAbove);
 
   MLCode(Pred("coq.string->name",
     In(B.string, "Hint",
     Out(name,  "Name",
-    Easy "creates a name hint")),
-  (fun s _ ~depth -> !: (Name.mk_name (Id.of_string s)))),
+    Full(global, "creates a name hint using a relevance variable"))),
+  (fun s _ ~depth _ _ state -> 
+    let state, s = mk_coq_name state (Id.of_string s) in
+    state, !: s, [])),
+  DocAbove);
+
+  MLCode(Pred("coq.string->name-relevant",
+    In(B.string, "Hint",
+    Out(name,  "Name",
+    Easy("creates a name hint with the relevant mark (see SProp)"))),
+  (fun s _ ~depth -> 
+    let s = EConstr.nameR (Id.of_string s) in
+    !: s)),
   DocAbove);
 
   LPCode {|
 func coq.id->name id -> name.
-coq.id->name S N :- coq.string->name S N.
+coq.id->name S N :- coq.string->name-relevant S N.
   |};
 
   MLCode(Pred("coq.name->id",
@@ -4607,10 +4618,23 @@ coq.id->name S N :- coq.string->name S N.
     Out(id,  "Id",
     Easy "tuns a pretty printing hint into a string. This API is for internal use, no guarantee on its behavior.")),
   (fun n _ ~depth ->
-     match n with
+     match Context.binder_name n with
      | Name.Anonymous -> !: "_"
      | Name.Name s -> !: (Id.to_string s))),
   DocAbove);
+
+  MLCode(Pred("coq.name.relevant?",
+    In(name, "Name",
+    Out(option bool,  "Relevance",
+    Read(global, "Reads the relevance mark. none means unset, some tt means relevant."))),
+  (fun n _ ~depth _ _ state ->
+     let sigma = get_sigma state in
+     match EConstr.ERelevance.kind sigma @@ Context.binder_relevance n with
+     | Sorts.Irrelevant -> !: (Some false)
+     | Sorts.Relevant -> !: (Some true)
+     | Sorts.RelevanceVar _ -> !: None)),
+  DocAbove);
+
 
   MLCode(Pred("coq.gref->id",
     In(gref, "GR",

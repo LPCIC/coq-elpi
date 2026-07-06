@@ -12,7 +12,7 @@ val coq : Ast.Scope.language
 val set_coq_ctx_hyps : State.t -> [> `Options ] Rocq_elpi_HOAS.conv_context * hyps -> State.t
 
 val under_ctx :
-  Names.Name.t -> term -> term option ->
+  Rocq_elpi_HOAS.annot_name -> term -> term option ->
   k:(depth:int -> State.t -> State.t * 'b * 'c) ->
   depth:int -> State.t -> State.t * 'b * 'c
 
@@ -21,7 +21,7 @@ val gterm2lp :
   base:Compile.program -> 
   Glob_term.glob_constr ->
   depth:int -> State.t -> State.t * term
-  val gindparams2lp :
+val gindparams2lp :
   loc:Loc.t ->
   base:Compile.program -> 
   Glob_term.glob_decl list ->
