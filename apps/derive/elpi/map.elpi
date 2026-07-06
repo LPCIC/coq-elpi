@@ -57,12 +57,12 @@ bo-k-args ParamsRev K _ Args Tys R :-
   (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R).
 
 pred bo-k-args.aux i:term, i:list term, i:list term, i:term, o:term.
-bo-k-args.aux R [] [] _ R. % :- coq.typecheck R _ ok.
+bo-k-args.aux R [] [] _ R.
 bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   map-db T S F,
   coq.mk-app F [A] FA,
   bo-k-args.aux {coq.mk-app K [FA]} As Ts (Ty FA) R.
-bo-k-args.aux K [A|As] [_|Ts] (prod _ _ Ty) R :-
+bo-k-args.aux K [A|As] [_|Ts] (prod _ _ Ty) R :- !,
   bo-k-args.aux {coq.mk-app K [A]} As Ts (Ty A) R.
 bo-k-args.aux K As Ts X R :- whd1 X X1, !,
   bo-k-args.aux K As Ts X1 R.
