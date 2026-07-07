@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.param1_trivial.
+From elpi.apps Require Import derive derive.param1_trivial.
 
 From elpi.apps Require Import test_derive_corelib test_param1 test_param1_congr.
 Import derive.param1. (* for is_eq *)
@@ -46,7 +46,7 @@ Elpi derive.param1.trivial is_val.
 Elpi derive.param1.trivial is_alias.
 Elpi derive.param1.trivial is_mempty.
 Elpi derive.param1.trivial is_munit.
-Fail Elpi derive.param1.trivial is_mpeano.
+Elpi derive.param1.trivial is_mpeano.
 Fail Elpi derive.param1.trivial is_moption.
 Fail Elpi derive.param1.trivial is_mtree.
 
@@ -113,3 +113,127 @@ Redirect "tmp" Check is_ord2_inhab : forall p px, full (ord2 p) (is_ord2 p px).
 Redirect "tmp" Check is_val_inhab : full val is_val.
 
 Redirect "tmp" Check is_alias_inhab : full alias is_alias.
+
+Module InhabStandaloneFirst.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.inhab is_tree.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+End InhabStandaloneFirst.
+
+Module InhabStandaloneSecond.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.inhab is_forest.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+End InhabStandaloneSecond.
+
+Module InhabMetaFirst.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(param1,param1_inhab)] derive tree.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+End InhabMetaFirst.
+
+Module InhabMetaSecond.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(param1,param1_inhab)] derive forest.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+End InhabMetaSecond.
+
+Module TrivialStandaloneFirst.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.congr is_tree.
+  Elpi derive.param1.trivial is_tree.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+  Redirect "tmp" Check is_tree_trivial.
+  Redirect "tmp" Check is_forest_trivial.
+End TrivialStandaloneFirst.
+
+Module TrivialStandaloneSecond.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.congr is_tree.
+  Elpi derive.param1.trivial is_forest.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+  Redirect "tmp" Check is_tree_trivial.
+  Redirect "tmp" Check is_forest_trivial.
+End TrivialStandaloneSecond.
+
+Module TrivialMetaFirst.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(param1,param1_congr,param1_inhab,param1_trivial)] derive tree.
+
+  Redirect "tmp" Check congr_is_node.
+  Redirect "tmp" Check congr_is_empty.
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+  Redirect "tmp" Check is_tree_trivial.
+  Redirect "tmp" Check is_forest_trivial.
+End TrivialMetaFirst.
+
+Module TrivialMetaSecond.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(param1,param1_congr,param1_inhab,param1_trivial)] derive forest.
+
+  Redirect "tmp" Check congr_is_node.
+  Redirect "tmp" Check congr_is_empty.
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+  Redirect "tmp" Check is_tree_trivial.
+  Redirect "tmp" Check is_forest_trivial.
+End TrivialMetaSecond.
+
+Module TrivialParametrizedFail.
+  From elpi.apps Require Import derive.param1_trivial.
+
+  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
+  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+
+  (* Parameterized mutual triviality is intentionally unsupported for now. *)
+  Fail #[only(param1,param1_congr,param1_inhab,param1_trivial)] derive ptree.
+End TrivialParametrizedFail.
