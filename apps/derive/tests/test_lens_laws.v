@@ -1,5 +1,5 @@
 
-From elpi.apps Require Import derive.lens_laws.
+From elpi.apps Require Import derive derive.lens_laws.
 
 From elpi.apps Require Import test_derive_corelib test_lens.
 
@@ -44,4 +44,18 @@ Redirect "tmp" Check _f3_f4_exchange : forall A, exchange (_f3 A) (_f4 A).
 Redirect "tmp" Check _f4_f3_exchange : forall A, exchange (_f4 A) (_f3 A).
 Redirect "tmp" Check _pf3_pf4_exchange : forall A, exchange (_pf3 A) (_pf4 A).
 Redirect "tmp" Check _pf4_pf3_exchange : forall A, exchange (_pf4 A) (_pf3 A).
+
+Module LensLawsMutualSkip.
+  From elpi.apps Require Import derive.lens_laws.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(lens,lens_laws)] derive tree.
+
+  Fail Check tree_lens.
+  Fail Check forest_lens.
+  Fail Check tree_lens_view_set.
+  Fail Check forest_lens_view_set.
+End LensLawsMutualSkip.
 
