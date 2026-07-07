@@ -106,3 +106,93 @@ Elpi derive.isK List.
 End UnivPoly.
 
 Unset Universe Polymorphism.
+
+From elpi.apps Require Import derive.
+
+Module IsKStandaloneFirst.
+  From elpi.apps Require Import derive.isK.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  Elpi derive.isK color.
+
+  Redirect "tmp" Check color_is_red : color -> bool.
+  Redirect "tmp" Check color_is_blue : color -> bool.
+  Redirect "tmp" Check shape_is_circle : shape -> bool.
+  Redirect "tmp" Check shape_is_square : shape -> bool.
+  Redirect "tmp" Elpi Query derive.isK lp:{{
+    coq.locate "red" (indc R),
+    coq.locate "circle" (indc C),
+    isK-db R _,
+    isK-db C _
+  }}.
+End IsKStandaloneFirst.
+
+Module IsKStandaloneSecond.
+  From elpi.apps Require Import derive.isK.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  Elpi derive.isK shape.
+
+  Redirect "tmp" Check color_is_red : color -> bool.
+  Redirect "tmp" Check color_is_blue : color -> bool.
+  Redirect "tmp" Check shape_is_circle : shape -> bool.
+  Redirect "tmp" Check shape_is_square : shape -> bool.
+End IsKStandaloneSecond.
+
+Module IsKMetaFirst.
+  From elpi.apps Require Import derive.isK.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  #[only(isK)] derive color.
+
+  Redirect "tmp" Check color_isk_red : color -> bool.
+  Redirect "tmp" Check color_isk_blue : color -> bool.
+  Redirect "tmp" Check shape_isk_circle : shape -> bool.
+  Redirect "tmp" Check shape_isk_square : shape -> bool.
+End IsKMetaFirst.
+
+Module IsKMetaSecond.
+  From elpi.apps Require Import derive.isK.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  #[only(isK)] derive shape.
+
+  Redirect "tmp" Check color_isk_red : color -> bool.
+  Redirect "tmp" Check color_isk_blue : color -> bool.
+  Redirect "tmp" Check shape_isk_circle : shape -> bool.
+  Redirect "tmp" Check shape_isk_square : shape -> bool.
+End IsKMetaSecond.
+
+Module IsKPrefixSecond.
+  From elpi.apps Require Import derive.isK.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  #[only(isK), prefix="custom_"] derive shape.
+
+  Redirect "tmp" Check color_isk_red : color -> bool.
+  Redirect "tmp" Check color_isk_blue : color -> bool.
+  Redirect "tmp" Check custom_isk_circle : shape -> bool.
+  Redirect "tmp" Check custom_isk_square : shape -> bool.
+End IsKPrefixSecond.
+
+Module IsKPrefixCollision.
+  From elpi.apps Require Import derive.isK.
+
+  Inductive left : Type := same
+  with right : Type := same_r.
+
+  #[only(isK)] derive right.
+
+  Redirect "tmp" Check left_isk_same : left -> bool.
+  Redirect "tmp" Check right_isk_same_r : right -> bool.
+End IsKPrefixCollision.
