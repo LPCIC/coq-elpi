@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.eqb.
+From elpi.apps Require Import derive derive.eqb.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib test_eqType_ast test_tag test_fields.
 Import test_derive_corelib.Coverage test_eqType_ast.Coverage test_tag.Coverage test_fields.Coverage.
@@ -42,9 +42,9 @@ Elpi derive.eqb val.
 Elpi derive.eqb alias.
 Elpi derive.eqb mempty.
 Elpi derive.eqb munit.
-Fail Elpi derive.eqb mpeano.
+Elpi derive.eqb mpeano.
 Elpi derive.eqb moption.
-Fail Elpi derive.eqb mtree.
+Elpi derive.eqb mtree.
 
 
 End Coverage.
@@ -83,3 +83,145 @@ Redirect "tmp" Check ord2_eqb : forall p1 p2, eq_test2 (ord2 p1) (ord2 p2).
 Redirect "tmp" Check val_eqb : eq_test val.
 
 Redirect "tmp" Check alias_eqb : eq_test alias.
+
+Module EqbStandaloneFirst.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.eqb tree.
+
+  Redirect "tmp" Check tree_eqb : tree -> tree -> bool.
+  Redirect "tmp" Check forest_eqb : forest -> forest -> bool.
+  Redirect "tmp" Check tree_eqb_fields.
+  Redirect "tmp" Check forest_eqb_fields.
+  Redirect "tmp" Elpi Query derive.eqb lp:{{
+    eqb-done {{:gref tree}},
+    eqb-done {{:gref forest}}
+  }}.
+End EqbStandaloneFirst.
+
+Module EqbStandaloneSecond.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.eqb forest.
+
+  Redirect "tmp" Check tree_eqb : tree -> tree -> bool.
+  Redirect "tmp" Check forest_eqb : forest -> forest -> bool.
+  Redirect "tmp" Check tree_eqb_fields.
+  Redirect "tmp" Check forest_eqb_fields.
+End EqbStandaloneSecond.
+
+Module EqbMetaFirst.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(eqType_ast,tag,fields,eqb)] derive tree.
+
+  Redirect "tmp" Check tree_eqb : tree -> tree -> bool.
+  Redirect "tmp" Check forest_eqb : forest -> forest -> bool.
+  Redirect "tmp" Check tree_eqb_fields.
+  Redirect "tmp" Check forest_eqb_fields.
+End EqbMetaFirst.
+
+Module EqbMetaSecond.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(eqType_ast,tag,fields,eqb)] derive forest.
+
+  Redirect "tmp" Check tree_eqb : tree -> tree -> bool.
+  Redirect "tmp" Check forest_eqb : forest -> forest -> bool.
+  Redirect "tmp" Check tree_eqb_fields.
+  Redirect "tmp" Check forest_eqb_fields.
+End EqbMetaSecond.
+
+Module EqbPrefixSecond.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(eqType_ast,tag,fields,eqb), prefix="custom_"] derive forest.
+
+  Redirect "tmp" Check tree_eqb : tree -> tree -> bool.
+  Redirect "tmp" Check custom_eqb : forest -> forest -> bool.
+  Redirect "tmp" Check tree_eqb_fields.
+  Redirect "tmp" Check custom_eqb_fields.
+End EqbPrefixSecond.
+
+Module EqbComputation.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(eqType_ast,tag,fields,eqb)] derive tree.
+
+  Example tree_eqb_refl_node : tree_eqb (node empty) (node empty) = true := eq_refl.
+  Example forest_eqb_neq : forest_eqb empty (cons (node empty) empty) = false := eq_refl.
+End EqbComputation.
+
+Module EqbParametrized.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
+  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+
+  #[only(eqType_ast,tag,fields,eqb)] derive pforest.
+
+  Redirect "tmp" Check ptree_eqb : forall A, (A -> A -> bool) -> ptree A -> ptree A -> bool.
+  Redirect "tmp" Check pforest_eqb : forall A, (A -> A -> bool) -> pforest A -> pforest A -> bool.
+End EqbParametrized.
+
+Module EqbUnsupportedValueParam.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive a (n : nat) : Type := ak (b0 : b)
+  with b (n : nat) : Type := bk (a0 : a).
+
+  (* Value-parameterized mutual eqb is intentionally unsupported for now. *)
+  Fail #[only(eqb)] derive a.
+End EqbUnsupportedValueParam.
+
+Module EqbTripleFromBeta.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive alpha : Type := alpha_beta (b : beta)
+  with beta : Type := beta_gamma (g : gamma)
+  with gamma : Type := gamma_alpha (a : alpha) | gamma_done.
+
+  #[only(eqType_ast,tag,fields,eqb)] derive beta.
+
+  Redirect "tmp" Check alpha_eqb : alpha -> alpha -> bool.
+  Redirect "tmp" Check beta_eqb : beta -> beta -> bool.
+  Redirect "tmp" Check gamma_eqb : gamma -> gamma -> bool.
+End EqbTripleFromBeta.
+
+Module EqbTripleFromGamma.
+  From elpi.apps Require Import derive.eqb.
+
+  Inductive alpha : Type := alpha_beta (b : beta)
+  with beta : Type := beta_gamma (g : gamma)
+  with gamma : Type := gamma_alpha (a : alpha) | gamma_done.
+
+  #[only(eqType_ast,tag,fields,eqb)] derive gamma.
+
+  Redirect "tmp" Check alpha_eqb : alpha -> alpha -> bool.
+  Redirect "tmp" Check beta_eqb : beta -> beta -> bool.
+  Redirect "tmp" Check gamma_eqb : gamma -> gamma -> bool.
+End EqbTripleFromGamma.
