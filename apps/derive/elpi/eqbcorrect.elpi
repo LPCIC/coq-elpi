@@ -20,6 +20,93 @@ has-params? (eqb.value-param _ _).
 % eg: config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for
 pred config  o:term,            o:term,               o:term,                 o:string,                o:(pred i:term, o:term).
 
+namespace mutual {
+
+func correct-ty eqb.eqType, list term, term -> term.
+correct-ty (eqb.type-param F) PI EQB {{ forall (p : Type) (eqp : p -> p -> bool), @eqb_correct p eqp -> lp:(R p eqp) }} :- !,
+  @pi-trm `p` {{ Type }} y\p\
+  @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
+    correct-ty (F y) [p|PI] {coq.mk-app EQB [p,eqp]} (R p eqp).
+correct-ty (eqb.value-param TY F) PI EQB {{ forall (x y : lp:Ty), lp:(R x y) }} :- !,
+  feqb.trm->term TY Ty,
+  @pi-trm `x` Ty xx\x\
+  @pi-trm `y` Ty yy\y\
+    correct-ty (F xx) [x|PI] {coq.mk-app EQB [x,y]} (R x y).
+correct-ty (eqb.inductive Ind _) PI EQB {{ forall x : lp:I, @eqb_correct_on lp:I lp:EQB x }} :-
+  coq.mk-app (global (indt Ind)) {std.rev PI} I.
+
+func refl-ty eqb.eqType, list term, term -> term.
+refl-ty (eqb.type-param F) PI EQB {{ forall (p : Type) (eqp : p -> p -> bool), @eqb_reflexive p eqp -> lp:(R p eqp) }} :- !,
+  @pi-trm `p` {{ Type }} y\p\
+  @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
+    refl-ty (F y) [p|PI] {coq.mk-app EQB [p,eqp]} (R p eqp).
+refl-ty (eqb.value-param TY F) PI EQB {{ forall (x y : lp:Ty), lp:(R x y) }} :- !,
+  feqb.trm->term TY Ty,
+  @pi-trm `x` Ty xx\x\
+  @pi-trm `y` Ty yy\y\
+    refl-ty (F xx) [x|PI] {coq.mk-app EQB [x,y]} (R x y).
+refl-ty (eqb.inductive Ind _) PI EQB {{ forall x : lp:I, @eqb_refl_on lp:I lp:EQB x }} :-
+  coq.mk-app (global (indt Ind)) {std.rev PI} I.
+
+func aux-ty term, eqb.eqType, list term, list term, term -> term.
+aux-ty Pred_on (eqb.type-param F) PI RealiArgs EQB {{ forall (p : Type) (eqp : p -> p -> bool), lp:(R p eqp) }} :- !,
+  @pi-trm `p` {{ Type }} y\p\
+  @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
+    sigma RealiArgs1\ sigma EQB1\ std.do! [
+      std.append RealiArgs [p,{{ lp:Pred_on lp:p lp:eqp }}] RealiArgs1,
+      coq.mk-app EQB [p,eqp] EQB1,
+      aux-ty Pred_on (F y) [p|PI] RealiArgs1 EQB1 (R p eqp)
+    ].
+aux-ty Pred_on (eqb.value-param TY F) PI RealiArgs EQB {{ forall (x : lp:Ty) (px : lp:TR x), lp:(R x px) }} :- !,
+  feqb.trm->term TY Ty,
+  mk-reali Ty TR,
+  @pi-trm `x` Ty xx\x\
+  @pi-decl `px` {{ lp:TR lp:x }} px\
+    sigma RealiArgs1\ sigma EQB1\ std.do! [
+      std.append RealiArgs [x,px] RealiArgs1,
+      coq.mk-app EQB [x,x] EQB1,
+      aux-ty Pred_on (F xx) [x|PI] RealiArgs1 EQB1 (R x px)
+    ].
+aux-ty Pred_on (eqb.inductive Ind _) PI RealiArgs EQB {{ forall x : lp:I, lp:IRR x -> lp:Pred_on lp:I lp:EQB x }} :-
+  coq.mk-app (global (indt Ind)) {std.rev PI} I,
+  mk-reali (global (indt Ind)) IR,
+  coq.mk-app IR RealiArgs IRR.
+
+func add-one list inductive, list eqb.eqType, list term, inductive, string -> list prop.
+add-one _MutualInds MutualFIs MutualRealis I Prefix [Clause, ClauseC, ClauseR] :- std.do! [
+  std.assert! (eqType (indt I) FI) "this inductive is not supported",
+  std.assert! (induction-db I Indu) "call derive.induction before",
+
+  std.assert! ((config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+    common-mutual FI [] Indu MutualFIs MutualRealis CorrectTerm)) "derive.eqbcorrect: failed to build mutual correct proof",
+  std.assert-ok! (coq.typecheck CorrectTerm CTy) "derive.eqbcorrect: mutual correct proof is illtyped",
+  CName is Prefix ^ "eqb_correct",
+  coq.ensure-fresh-global-id CName FCName,
+  coq.env.add-const FCName CorrectTerm CTy @transparent! Correct,
+
+  std.assert! ((config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+    common-mutual FI [] Indu MutualFIs MutualRealis ReflTerm)) "derive.eqbcorrect: failed to build mutual refl proof",
+  std.assert-ok! (coq.typecheck ReflTerm RTy) "derive.eqbcorrect: mutual refl proof is illtyped",
+  RName is Prefix ^ "eqb_refl",
+  coq.ensure-fresh-global-id RName FRName,
+  coq.env.add-const FRName ReflTerm RTy @transparent! Refl,
+
+  Clause = eqcorrect-for (indt I) Correct Refl,
+  ClauseC = correct-lemma-for (global (indt I)) (global (const Correct)),
+  ClauseR = refl-lemma-for (global (indt I)) (global (const Refl)),
+  std.forall [Clause,ClauseC,ClauseR] (x\coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ x))
+].
+
+func main inductive, list inductive, string -> list prop.
+main _ [] _ [] :- !.
+main Selected IS Prefix CL :-
+  std.map IS (i\fi\ std.assert! (eqType (indt i) fi) "this inductive is not supported") MutualFIs,
+  std.map IS (i\r\ mk-reali (global (indt i)) r) MutualRealis,
+  std.map IS (i\c\ sigma p\ derive.mutual.selected-prefix Selected Prefix i p, add-one IS MutualFIs MutualRealis i p c) CLS,
+  std.flatten CLS CL.
+
+}
+
 func main gref, string -> list prop.
 main (indt I) Prefix CLs :- std.do! [
 
@@ -211,6 +298,103 @@ common (eqb.inductive I Ks) ParamsRev Ind O :- std.do! [
 ].
 
 %---------------------------------------------------------------------------
+% Variant of common used for mutual inductives.  Constructor hypotheses for
+% recursive fields already receive the mutual induction hypothesis, so branch
+% generation consumes that hypothesis instead of looking for a previously
+% registered correctness lemma for another member of the same block.
+
+func mutual-reali list term, term ->.
+mutual-reali [IR|_] EqbOn :-
+  coq.safe-dest-app EqbOn HD _, same_term HD IR, !.
+mutual-reali [_|IRS] EqbOn :- mutual-reali IRS EqbOn.
+
+func build-mutual-branches list term, list term, list eqb.eqType, (func (list term) -> term) -> term.
+build-mutual-branches _ _ [] K R :- K [] R.
+build-mutual-branches MutualRealis Params [eqb.inductive I Ks|Rest] K R :- std.do! [
+  config _Pred _Pred_on Pred_body _Solver _Db,
+  coq.mk-app (global (indt I)) Params Ty,
+  tag-for I TagC,
+  fields-for I Fields_tC FieldsC ConstructC ConstructPC,
+  coq.mk-app (global (const TagC)) Params Tag,
+  coq.mk-app (global (const Fields_tC)) Params Fields_t,
+  coq.mk-app (global (const FieldsC)) Params Fields,
+  coq.mk-app (global (const ConstructC)) Params Construct,
+  coq.mk-app (global (const ConstructPC)) Params ConstructP,
+  eqb-fields Ty Ty EqbFields,
+  Common = ({{ lp:Pred_body lp:Ty lp:Tag lp:Fields_t lp:Fields lp:Construct lp:ConstructP lp:EqbFields }} : term),
+  std.assert-ok! (coq.typecheck Common CommonTy) "WTF",
+  @pi-def `common` CommonTy Common c\ std.do! [
+    (common-body c => fields-t Tag Fields_t Fields Construct =>
+      pi i\ (feqb.trm->term i Ty :- !) =>
+        std.map (Ks i) (branch-mutual MutualRealis Params) (Branches c)),
+    build-mutual-branches MutualRealis Params Rest (more\r\ K {std.append (Branches c) more} r) (Body c)
+  ],
+  R = (let `common` CommonTy Common c\ Body c)
+].
+
+func mutual-fis-apply-type-param eqb.trm, list eqb.eqType -> list eqb.eqType.
+mutual-fis-apply-type-param _ [] [].
+mutual-fis-apply-type-param A [eqb.type-param F|FS] [F A|FS1] :-
+  mutual-fis-apply-type-param A FS FS1.
+
+:index (1)
+func common-mutual eqb.eqType, list term, term, list eqb.eqType, list term -> term.
+common-mutual (eqb.type-param F) Params Ind MutualFIs MutualRealis O :- std.do! [
+  config Pred Pred_on _Pred_body _Solver Db,
+  O = {{ fun (a : lp:Type) (eqA : a -> a -> bool) (eqAc : lp:Pred a eqA) => lp:(R a eqA eqAc) }},
+  Type = sort (typ {coq.univ.new}),
+  @pi-trm `a` Type aa\a\
+  @pi-decl `eqA` {{ lp:a -> lp:a -> bool }} eqA\
+  @pi-decl `eqAc` {{ lp:Pred lp:a lp:eqA }} eqAc\
+  param1-inhab-db {{ lp:Pred_on lp:a lp:eqA }} eqAc =>
+  eqb-for a a eqA =>
+  reali a {{ lp:Pred_on lp:a lp:eqA }} =>
+  prove Db a {{ fun (x: lp:a) (Hx : lp:Pred_on lp:a lp:eqA x) => Hx }} => sigma MutualFIs1\ std.do! [
+    std.assert! (mutual-fis-apply-type-param aa MutualFIs MutualFIs1) "derive.eqbcorrect: failed to apply mutual type parameter",
+    std.assert! (common-mutual (F aa) [a|Params]
+      {coq.mk-app Ind [a, {{ lp:Pred_on lp:a lp:eqA }} ] }
+      MutualFIs1 MutualRealis (R a eqA eqAc)) "derive.eqbcorrect: failed after mutual type parameter"
+  ]
+].
+
+common-mutual (eqb.value-param TY F) Params Ind MutualFIs MutualRealis O :- std.do! [
+  feqb.trm->term TY T,
+  O = {{ fun (a : lp:T) => lp:(R a) }},
+  mk-reali T TR,
+  std.assert! (param1-inhab-db TR Is_full) "not trivially inhabited",
+  @pi-trm `a` T aa\a\
+    reali a {{ lp:Is_full lp:a }} => std.do! [
+      std.map MutualFIs (fi\fi1\ sigma F1 TY1\ fi = eqb.value-param TY1 F1, fi1 = F1 aa) MutualFIs1,
+      common-mutual (F aa) [a|Params]
+        {{ lp:Ind lp:a (lp:Is_full lp:a) }}
+        MutualFIs1 MutualRealis (R a)
+    ]
+].
+
+common-mutual (eqb.inductive I _) ParamsRev Ind MutualFIs MutualRealis O :- std.do! [
+  config _Pred Pred_on _Pred_body _Solver _Db,
+  std.rev ParamsRev Params,
+  coq.mk-app (global (indt I)) Params Ty,
+
+  mk-reali (global (indt I)) IR,
+  coq.safe-dest-app Ind _ RealiArgs,
+  coq.mk-app IR RealiArgs TyR,
+  std.assert! (param1-inhab-db TyR Is_full) "not trivially inhabited",
+
+  std.map MutualFIs (fi\m\ sigma J Ks TyJ CmpJ\
+    fi = eqb.inductive J Ks,
+    coq.mk-app (global (indt J)) Params TyJ,
+    mk-eqb-for TyJ CmpJ,
+    m = {{ lp:Pred_on lp:TyJ lp:CmpJ }}) Motives,
+
+  (@pi-decl `x` Ty x\
+    build-mutual-branches MutualRealis Params MutualFIs
+      (branches\r\ coq.mk-app Ind {std.append Motives {std.append branches [x, app[Is_full,x]]}} r)
+      (R x)),
+  O = {{ fun (x :lp:Ty) => lp:(R x) }},
+].
+
+%---------------------------------------------------------------------------
 
 :index (1)
 func common-aux eqb.eqType, list term, term -> term.
@@ -263,6 +447,64 @@ common-aux (eqb.inductive I Ks) ParamsRev Ind O :- std.do! [
 ].
 
 %---------------------------------------------------------------------------
+
+func branch-mutual list term, list term, eqb.constructor -> term.
+branch-mutual MutualRealis Params (eqb.constructor K Args) R :-
+  coq.mk-app (global (indc K)) Params KParams,
+  args-mutual MutualRealis Args KParams [] [] [] 0 R.
+
+:index (2)
+func args-mutual list term, eqb.arguments, term, list term, list term, list term, int -> term.
+args-mutual MutualRealis (eqb.irrelevant TY Args) K As Hs Bs N O :- !, std.do! [
+  O = {{ fun (x : lp:T) (px : lp:EqbOn x) => lp:(R x px) }},
+  feqb.trm->term TY T,
+  mk-reali T EqbOn,
+  @pi-decl `x` T x\
+  @pi-decl `px` {{ lp:EqbOn lp:x }} px\
+    args-mutual MutualRealis Args {coq.mk-app K [x]} [x|As] Hs Bs {calc (N + 1)} (R x px)
+].
+
+args-mutual MutualRealis (eqb.regular TY Args) K As Hs Bs N O :- !, std.do! [
+  config _Pred Pred_on _Pred_body _Solver Db,
+  feqb.trm->term TY T,
+  mk-reali T EqbOn,
+  mk-eqb-for T Cmp,
+  EqbOn' = {{ lp:Pred_on lp:T lp:Cmp }},
+  if (mutual-reali MutualRealis EqbOn)
+    (O = {{ fun (x : lp:T) (px : lp:EqbOn x) (h : lp:EqbOn' x) => lp:(R x px h) }},
+     @pi-decl `x` T x\
+     @pi-decl `px` {{ lp:EqbOn lp:x }} px\
+     @pi-decl `h` {{ lp:EqbOn' lp:x }} h\
+       args-mutual MutualRealis Args {coq.mk-app K [x]} [x|As] [h|Hs] [{{ lp:Cmp lp:x }}|Bs] N (R x px h))
+    (O = {{ fun (x : lp:T) (px : lp:EqbOn x) (h : lp:EqbOn' x := lp:View x px) => lp:(R x px h) }},
+     if (same_term EqbOn EqbOn') (View = {{ fun (x : lp:T) (px : lp:EqbOn x) => px }}) (prove Db T View),
+     @pi-decl `x` T x\
+     @pi-decl `px` {{ lp:EqbOn lp:x }} px\
+     @pi-def  `h` {{ lp:EqbOn' lp:x }} {{ lp:View lp:x lp:px }} h\
+       args-mutual MutualRealis Args {coq.mk-app K [x]} [x|As] [h|Hs] [{{ lp:Cmp lp:x }}|Bs] N (R x px h))
+].
+
+args-mutual MutualRealis (eqb.dependent TY Args) K As Hs Bs N O :- !, std.do! [
+  config _Pred Pred_on _Pred_body _Solver Db,
+  feqb.trm->term TY T,
+  mk-reali T EqbOn,
+  mk-eqb-for T Cmp,
+  EqbOn' = {{ lp:Pred_on lp:T lp:Cmp }},
+  if (mutual-reali MutualRealis EqbOn)
+    (O = {{ fun (x : lp:T) (px : lp:EqbOn x) (h : lp:EqbOn' x) => lp:(R x px h) }},
+     @pi-trm `x` T xx\x\
+     @pi-decl `px` {{ lp:EqbOn lp:x }} px\ reali x px =>
+     @pi-decl `h` {{ lp:EqbOn' lp:x }} h\
+       args-mutual MutualRealis (Args xx) {coq.mk-app K [x]} [x|As] [h|Hs] [{{ lp:Cmp lp:x }}|Bs] {calc (N + 1)} (R x px h))
+    (O = {{ fun (x : lp:T) (px : lp:EqbOn x) (h : lp:EqbOn' x := lp:View x px) => lp:(R x px h) }},
+     if (same_term EqbOn EqbOn') (View = {{ fun (x : lp:T) (px : lp:EqbOn x) => px }}) (prove Db T View),
+     @pi-trm `x` T xx\x\
+     @pi-decl `px` {{ lp:EqbOn lp:x }} px\ reali x px =>
+     @pi-def  `h` {{ lp:EqbOn' lp:x }} {{ lp:View lp:x lp:px }} h\
+       args-mutual MutualRealis (Args xx) {coq.mk-app K [x]} [x|As] [h|Hs] [{{ lp:Cmp lp:x }}|Bs] {calc (N + 1)} (R x px h))
+].
+
+args-mutual _ (eqb.stop TY) K As Hs Bs N O :- !, args (eqb.stop TY) K As Hs Bs N O.
 
 func branch list term, eqb.constructor -> term.
 branch Params (eqb.constructor K Args) R :-
