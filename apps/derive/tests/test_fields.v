@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.fields.
+From elpi.apps Require Import derive derive.fields.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib test_eqType_ast test_tag.
 Import test_derive_corelib.Coverage test_eqType_ast.Coverage test_tag.Coverage.
@@ -161,4 +161,110 @@ Redirect "tmp" Check val_fields_t : Numbers.BinNums.positive -> Type.
 Redirect "tmp" Check val_fields : forall i : val, val_fields_t (val_tag i).
 Redirect "tmp" Check val_construct : forall (p: Numbers.BinNums.positive),  val_fields_t p -> Datatypes.option val.
 Redirect "tmp" Check val_constructP : forall (v:val), val_construct (val_tag v) (val_fields v) = Datatypes.Some v.
+
+Module FieldsStandaloneFirst.
+  From elpi.apps Require Import derive.fields.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  Elpi derive.eqType.ast color.
+  Elpi derive.tag color.
+  Elpi derive.fields color.
+
+  Redirect "tmp" Check color_fields_t.
+  Redirect "tmp" Check color_fields.
+  Redirect "tmp" Check color_construct.
+  Redirect "tmp" Check shape_fields_t.
+  Redirect "tmp" Check shape_fields.
+  Redirect "tmp" Check shape_construct.
+  Redirect "tmp" Elpi Query derive.fields lp:{{
+    coq.locate "color" (indt C),
+    coq.locate "shape" (indt S),
+    fields-for C _ _ _ _,
+    fields-for S _ _ _ _
+  }}.
+End FieldsStandaloneFirst.
+
+Module FieldsStandaloneSecond.
+  From elpi.apps Require Import derive.fields.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  Elpi derive.eqType.ast color.
+  Elpi derive.tag color.
+  Elpi derive.fields shape.
+
+  Redirect "tmp" Check color_fields_t.
+  Redirect "tmp" Check color_fields.
+  Redirect "tmp" Check color_construct.
+  Redirect "tmp" Check shape_fields_t.
+  Redirect "tmp" Check shape_fields.
+  Redirect "tmp" Check shape_construct.
+End FieldsStandaloneSecond.
+
+Module FieldsMetaFirst.
+  From elpi.apps Require Import derive.fields.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  #[only(eqType_ast,tag,fields)] derive color.
+
+  Redirect "tmp" Check color_fields_t.
+  Redirect "tmp" Check color_fields.
+  Redirect "tmp" Check color_construct.
+  Redirect "tmp" Check shape_fields_t.
+  Redirect "tmp" Check shape_fields.
+  Redirect "tmp" Check shape_construct.
+End FieldsMetaFirst.
+
+Module FieldsMetaSecond.
+  From elpi.apps Require Import derive.fields.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  #[only(eqType_ast,tag,fields)] derive shape.
+
+  Redirect "tmp" Check color_fields_t.
+  Redirect "tmp" Check color_fields.
+  Redirect "tmp" Check color_construct.
+  Redirect "tmp" Check shape_fields_t.
+  Redirect "tmp" Check shape_fields.
+  Redirect "tmp" Check shape_construct.
+End FieldsMetaSecond.
+
+Module FieldsPrefixSecond.
+  From elpi.apps Require Import derive.fields.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(eqType_ast,tag,fields), prefix="custom_"] derive forest.
+
+  Redirect "tmp" Check tree_fields_t.
+  Redirect "tmp" Check tree_fields.
+  Redirect "tmp" Check tree_construct.
+  Redirect "tmp" Check custom_fields_t.
+  Redirect "tmp" Check custom_fields.
+  Redirect "tmp" Check custom_construct.
+End FieldsPrefixSecond.
+
+Module FieldsParametrized.
+  From elpi.apps Require Import derive.fields.
+
+  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
+  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+
+  #[only(eqType_ast,tag,fields)] derive pforest.
+
+  Redirect "tmp" Check ptree_fields_t.
+  Redirect "tmp" Check ptree_fields.
+  Redirect "tmp" Check ptree_construct.
+  Redirect "tmp" Check pforest_fields_t.
+  Redirect "tmp" Check pforest_fields.
+  Redirect "tmp" Check pforest_construct.
+End FieldsParametrized.
 
