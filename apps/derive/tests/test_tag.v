@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.tag.
+From elpi.apps Require Import derive derive.tag.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib.
 Import test_derive_corelib.Coverage.
@@ -72,3 +72,91 @@ Redirect "tmp" Check pr_record_tag : forall A, tag (pr_record A).
 Redirect "tmp" Check ord_tag : forall p : peano, tag (ord p).
 Redirect "tmp" Check ord2_tag : forall p : peano, tag (ord2 p).
 Redirect "tmp" Check val_tag : tag val.
+
+Module TagStandaloneFirst.
+  From elpi.apps Require Import derive.tag.
+  From Corelib Require Import PosDef.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  Elpi derive.tag color.
+
+  Redirect "tmp" Check color_tag : color -> positive.
+  Redirect "tmp" Check shape_tag : shape -> positive.
+  Redirect "tmp" Elpi Query derive.tag lp:{{
+    coq.locate "color" (indt C),
+    coq.locate "shape" (indt S),
+    tag-for C _,
+    tag-for S _
+  }}.
+End TagStandaloneFirst.
+
+Module TagStandaloneSecond.
+  From elpi.apps Require Import derive.tag.
+  From Corelib Require Import PosDef.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  Elpi derive.tag shape.
+
+  Redirect "tmp" Check color_tag : color -> positive.
+  Redirect "tmp" Check shape_tag : shape -> positive.
+End TagStandaloneSecond.
+
+Module TagMetaFirst.
+  From elpi.apps Require Import derive.tag.
+  From Corelib Require Import PosDef.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  #[only(tag)] derive color.
+
+  Redirect "tmp" Check color_tag : color -> positive.
+  Redirect "tmp" Check shape_tag : shape -> positive.
+End TagMetaFirst.
+
+Module TagMetaSecond.
+  From elpi.apps Require Import derive.tag.
+  From Corelib Require Import PosDef.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  #[only(tag)] derive shape.
+
+  Redirect "tmp" Check color_tag : color -> positive.
+  Redirect "tmp" Check shape_tag : shape -> positive.
+End TagMetaSecond.
+
+Module TagPrefixSecond.
+  From elpi.apps Require Import derive.tag.
+  From Corelib Require Import PosDef.
+
+  Inductive color : Type := red | blue
+  with shape : Type := circle | square.
+
+  #[only(tag), prefix="selected_"] derive shape.
+
+  Redirect "tmp" Check color_tag : color -> positive.
+  Redirect "tmp" Check selected_tag : shape -> positive.
+End TagPrefixSecond.
+
+Module TagIndexedPositive.
+  From elpi.apps Require Import derive.tag.
+  From Corelib Require Import PosDef.
+
+  Inductive itree (A : Type) : nat -> Type :=
+  | ileaf (x : A) : itree 0
+  | inode n (f : iforest n) : itree (S n)
+  with iforest (A : Type) : nat -> Type :=
+  | inil : iforest 0
+  | icons n (t : itree n) (f : iforest n) : iforest (S n).
+
+  #[only(tag)] derive iforest.
+
+  Redirect "tmp" Check itree_tag : forall A n, itree A n -> positive.
+  Redirect "tmp" Check iforest_tag : forall A n, iforest A n -> positive.
+End TagIndexedPositive.
