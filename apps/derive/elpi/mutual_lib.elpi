@@ -1,0 +1,42 @@
+/* Shared helpers for mutual-inductive derivations.                         */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive.mutual {
+
+func members inductive -> list inductive.
+members I IS :- coq.env.indt-block I _ _ _ IS _ _ _.
+
+func is-mutual inductive ->.
+is-mutual I :- members I IS, std.length IS N, N > 1.
+
+func block-info inductive -> bool, int, int, list inductive.
+block-info I IsInd Lno Luno IS :- coq.env.indt-block I IsInd Lno Luno IS _ _ _.
+
+func assert-uniform string, inductive -> int.
+assert-uniform Derivation I Lno :-
+  block-info I _ Lno Luno _,
+  M is Derivation ^ ": Non-uniform parameters not supported",
+  std.assert! (Lno = Luno) M.
+
+func selected-prefix inductive, string, inductive -> string.
+selected-prefix Selected Prefix T Prefix :- Selected = T, !.
+selected-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+func map-members inductive, string, (func inductive, string -> list prop) -> list prop.
+map-members T Prefix F Clauses :- is-mutual T, !,
+  members T TS,
+  std.map TS (t\c\ sigma p\ selected-prefix T Prefix t p, F t p c) CS,
+  std.flatten CS Clauses.
+map-members T Prefix F Clauses :- F T Prefix Clauses.
+
+func indexed-members list inductive -> list (pair int inductive).
+indexed-members IS Pairs :- indexed-members.aux 0 IS Pairs.
+
+func indexed-members.aux int, list inductive -> list (pair int inductive).
+indexed-members.aux _ [] [].
+indexed-members.aux N [I|IS] [pr N I|Pairs] :-
+  N1 is N + 1,
+  indexed-members.aux N1 IS Pairs.
+
+}

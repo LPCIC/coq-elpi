@@ -1,0 +1,38 @@
+/* Shared helpers for derivations over mutual param1 translations.           */
+/* license: GNU Lesser General Public License Version 2.1 or later           */
+/* ------------------------------------------------------------------------- */
+
+namespace derive.param1_mutual {
+
+/*
+   Mutual param1 translations are built with coq.build-mindt-decl Specs 0 0.
+   Depending on the shape of the translated block, the generated is_* inductive
+   may report no uniform parameters even when the original block had uniform
+   parameters.  Derivations over is_* blocks therefore use the generated count
+   when available and otherwise fall back to twice the original uniform
+   parameter count.
+*/
+func translated-lno list inductive, inductive -> int.
+translated-lno _ FirstGRR Lno :-
+  coq.env.indt FirstGRR _ Lno _ _ _ _, Lno > 0, !.
+translated-lno [FirstOrig|_] _ Lno :- !,
+  derive.mutual.assert-uniform "derive.param1_mutual" FirstOrig OrigLno,
+  Lno is 2 * OrigLno.
+translated-lno _ _ 0 :- !.
+
+func translated-lno-gref gref, gref -> int.
+translated-lno-gref _ (indt IsGR) Lno :-
+  coq.env.indt IsGR _ Lno _ _ _ _, Lno > 0, !.
+translated-lno-gref (indt Orig) (indt _) Lno :-
+  derive.mutual.is-mutual Orig, !,
+  derive.mutual.assert-uniform "derive.param1_mutual" Orig OrigLno,
+  Lno is 2 * OrigLno.
+translated-lno-gref _ _ 0 :- !.
+
+func translated-members list inductive -> list inductive.
+translated-members [] [].
+translated-members [I|IS] [IR|IRS] :-
+  reali (global (indt I)) (global (indt IR)),
+  translated-members IS IRS.
+
+}

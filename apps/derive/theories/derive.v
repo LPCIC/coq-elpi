@@ -56,6 +56,7 @@ From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive.elpi" as derive.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp.elpi" as derive_synterp.
+From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
 
 From elpi Require Import elpi.
 
@@ -98,6 +99,7 @@ Elpi Accumulate lp:{{
 }}.
 
 Elpi Accumulate File derive_hook.
+Elpi Accumulate File mutual_lib.
 Elpi Accumulate File derive.
 Elpi Accumulate lp:{{
   main [str I] :- !,
