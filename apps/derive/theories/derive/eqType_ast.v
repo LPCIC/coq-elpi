@@ -4,6 +4,7 @@ From elpi.apps.derive Require Import PrimStringEqb.
 From elpi.apps Require Export derive.
 
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
+From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -43,13 +44,20 @@ Register apply as elpi.derive.apply.
 (* standalone *)
 Elpi Command derive.eqType.ast.
 Elpi Accumulate File derive_hook.
+Elpi Accumulate File mutual_lib.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate File eqType.
 Elpi Accumulate lp:{{
 
+func derive.eqType.ast.standalone-main inductive -> list prop.
+derive.eqType.ast.standalone-main T C :- derive.mutual.is-mutual T, !,
+  derive.mutual.members T TS,
+  derive.eqType.ast.main-mutual TS C.
+derive.eqType.ast.standalone-main T C :- derive.eqType.ast.main T C.
+
 main [str S] :-
   std.assert! (coq.locate S (indt I)) "derive.eqType.ast: not an inductive",
-  derive.eqType.ast.main I _.
+  derive.eqType.ast.standalone-main I _.
 
 }}.
 
@@ -64,6 +72,12 @@ Elpi Accumulate derive File eqType.
 
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.main T) (eqType (indt T) _)).
+func derive.eqType.ast.derive-main inductive -> list prop.
+derive.eqType.ast.derive-main T C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.eqType.ast.main-mutual TS C.
+derive.eqType.ast.derive-main T C :- derive.eqType.ast.main T C.
+
+derivation (indt T) _ ff (derive "eqType_ast" (derive.eqType.ast.derive-main T) (eqType (indt T) _)).
 
 }}.

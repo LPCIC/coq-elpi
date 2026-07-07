@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.eqType_ast.
+From elpi.apps Require Import derive derive.eqType_ast.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib.
 Import test_derive_corelib.Coverage.
@@ -37,11 +37,11 @@ Elpi derive.eqType.ast sigma_bool2.
 Elpi derive.eqType.ast ord.
 Elpi derive.eqType.ast ord2.
 Elpi derive.eqType.ast val.
-Fail Elpi derive.eqType.ast mempty.
-Fail Elpi derive.eqType.ast munit.
-Fail Elpi derive.eqType.ast mpeano.
-Fail Elpi derive.eqType.ast moption.
-Fail Elpi derive.eqType.ast mtree.
+Elpi derive.eqType.ast mempty.
+Elpi derive.eqType.ast munit.
+Elpi derive.eqType.ast mpeano.
+Elpi derive.eqType.ast moption.
+Elpi derive.eqType.ast mtree.
 End Coverage.
 Import Coverage.
 
@@ -61,6 +61,82 @@ Elpi derive.eqType.ast S2.
 Inductive S3 (f : peano -> peano) := | D3 x : f x = x -> S3.
 Elpi derive.eqType.ast S3.
 
+Module EqTypeStandaloneFirst.
+  From elpi.apps Require Import derive.eqType_ast.
 
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
 
+  Elpi derive.eqType.ast tree.
 
+  Redirect "tmp" Elpi Query derive lp:{{
+    eqType {{:gref tree}} _,
+    eqType {{:gref forest}} _
+  }}.
+End EqTypeStandaloneFirst.
+
+Module EqTypeStandaloneSecond.
+  From elpi.apps Require Import derive.eqType_ast.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.eqType.ast forest.
+
+  Redirect "tmp" Elpi Query derive lp:{{
+    eqType {{:gref tree}} _,
+    eqType {{:gref forest}} _
+  }}.
+End EqTypeStandaloneSecond.
+
+Module EqTypeMetaFirst.
+  From elpi.apps Require Import derive.eqType_ast.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(eqType_ast)] derive tree.
+
+  Redirect "tmp" Elpi Query derive lp:{{
+    eqType {{:gref tree}} _,
+    eqType {{:gref forest}} _
+  }}.
+End EqTypeMetaFirst.
+
+Module EqTypeMetaSecond.
+  From elpi.apps Require Import derive.eqType_ast.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(eqType_ast)] derive forest.
+
+  Redirect "tmp" Elpi Query derive lp:{{
+    eqType {{:gref tree}} _,
+    eqType {{:gref forest}} _
+  }}.
+End EqTypeMetaSecond.
+
+Module EqTypeParametrized.
+  From elpi.apps Require Import derive.eqType_ast.
+
+  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
+  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+
+  #[only(eqType_ast)] derive pforest.
+
+  Redirect "tmp" Elpi Query derive lp:{{
+    eqType {{:gref ptree}} _,
+    eqType {{:gref pforest}} _
+  }}.
+End EqTypeParametrized.
+
+Module EqTypeUnsupported.
+  From elpi.apps Require Import derive.eqType_ast.
+
+  Inductive bad : Type := badk : (nat -> nat) -> bad
+  with bad_wrap : Type := bad_wrapk : bad -> bad_wrap.
+
+  (* Function-valued constructor fields are intentionally unsupported by eqType_ast. *)
+  Fail Elpi derive.eqType.ast bad.
+End EqTypeUnsupported.
