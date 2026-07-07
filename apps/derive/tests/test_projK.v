@@ -102,3 +102,93 @@ Elpi derive.projK Prod.
 End UnivPoly.
 
 Unset Universe Polymorphism.
+
+From elpi.apps Require Import derive.
+
+Module ProjKStandaloneFirst.
+  From elpi.apps Require Import derive.projK.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.projK tree.
+
+  Redirect "tmp" Check projnode1.
+  Redirect "tmp" Check forest_getk_cons1.
+  Redirect "tmp" Check forest_getk_cons2.
+  Redirect "tmp" Elpi Query derive.projK lp:{{
+    coq.locate "node" (indc N),
+    coq.locate "cons" (indc C),
+    projK-db N 1 _,
+    projK-db C 1 _
+  }}.
+End ProjKStandaloneFirst.
+
+Module ProjKStandaloneSecond.
+  From elpi.apps Require Import derive.projK.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  Elpi derive.projK forest.
+
+  Redirect "tmp" Check tree_getk_node1.
+  Redirect "tmp" Check projcons1.
+  Redirect "tmp" Check projcons2.
+End ProjKStandaloneSecond.
+
+Module ProjKMetaFirst.
+  From elpi.apps Require Import derive.projK.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(projK)] derive tree.
+
+  Redirect "tmp" Check tree_getk_node1.
+  Redirect "tmp" Check forest_getk_cons1.
+  Redirect "tmp" Check forest_getk_cons2.
+End ProjKMetaFirst.
+
+Module ProjKMetaSecond.
+  From elpi.apps Require Import derive.projK.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(projK)] derive forest.
+
+  Redirect "tmp" Check tree_getk_node1.
+  Redirect "tmp" Check forest_getk_cons1.
+  Redirect "tmp" Check forest_getk_cons2.
+End ProjKMetaSecond.
+
+Module ProjKPrefixSecond.
+  From elpi.apps Require Import derive.projK.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(projK), prefix="custom_"] derive forest.
+
+  Redirect "tmp" Check tree_getk_node1.
+  Redirect "tmp" Check custom_getk_cons1.
+  Redirect "tmp" Check custom_getk_cons2.
+End ProjKPrefixSecond.
+
+Module ProjKComputation.
+  From elpi.apps Require Import derive.projK.
+
+  Inductive tree : Type := node (f : forest)
+  with forest : Type := empty | cons (t : tree) (f : forest).
+
+  #[only(projK)] derive tree.
+
+  Example tree_getk_node1_computes :
+    tree_getk_node1 empty (node (cons (node empty) empty)) = cons (node empty) empty := eq_refl.
+  Example forest_getk_cons1_computes :
+    forest_getk_cons1 (node empty) empty (cons (node empty) empty) = node empty := eq_refl.
+  Example forest_getk_cons2_computes :
+    forest_getk_cons2 (node empty) empty (cons (node empty) (cons (node empty) empty)) =
+    cons (node empty) empty := eq_refl.
+End ProjKComputation.
