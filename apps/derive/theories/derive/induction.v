@@ -5,6 +5,8 @@
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive.elpi Extra Dependency "induction.elpi" as induction.
+From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
+From elpi.apps.derive.elpi Extra Dependency "param1_mutual_lib.elpi" as param1_mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -26,17 +28,26 @@ induction-db T _ :-
 (* standalone *)
 Elpi Command derive.induction.
 Elpi Accumulate File derive_hook.
+Elpi Accumulate File mutual_lib.
 Elpi Accumulate File paramX.
 Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
+Elpi Accumulate File param1_mutual_lib.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File induction.
 Elpi Accumulate lp:{{
+  func derive.induction.standalone-main inductive, string -> list prop.
+  derive.induction.standalone-main T Prefix C :-
+    derive.mutual.is-mutual T, !,
+    derive.mutual.members T TS,
+    derive.induction.main-mutual T TS Prefix C.
+  derive.induction.standalone-main T Prefix C :- derive.induction.main T Prefix C.
+
   main [str I] :- !,
     coq.locate I (indt GR), Name is {coq.gref->id (indt GR)} ^ "_",
-    derive.induction.main GR Name _.
+    derive.induction.standalone-main GR Name _.
   main _ :- usage.
 
   usage :-
@@ -46,6 +57,7 @@ Elpi Accumulate lp:{{
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.induction.db.
+Elpi Accumulate derive File param1_mutual_lib.
 Elpi Accumulate derive File induction.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
@@ -58,6 +70,12 @@ dep1 "induction" "param1_functor".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) N ff (derive "induction" (derive.induction.main T N) (induction-db T _)).
+func derive.induction.derive-main inductive, string -> list prop.
+derive.induction.derive-main T N C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.induction.main-mutual T TS N C.
+derive.induction.derive-main T N C :- derive.induction.main T N C.
+
+derivation (indt T) N ff (derive "induction" (derive.induction.derive-main T N) (induction-db T _)).
 
 }}.
