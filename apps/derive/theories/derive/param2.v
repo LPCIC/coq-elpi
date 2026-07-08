@@ -16,8 +16,8 @@ Class param {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
 
 Register store_param as param2.store_param.
 
-(* Links a term (constant, inductive type, inductive constructor) with
-   its parametricity translation *)
+(* Links a term (constant, inductive type, inductive constructor, record type,
+   projection) with its parametricity translation *)
 Elpi Db derive.param2.db lp:{{
     :index(3)
     % param (t : T) is a function that returns t' and tr such that tr : [| T |] t t'
