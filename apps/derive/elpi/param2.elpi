@@ -228,6 +228,8 @@ param-indt-decl I Suffix NR DeclR :-
   % We can avoid the issue by first converting all parameters to non-uniform
   % ones, since then passing the unapplied inductives everywhere still produces
   % well-typed arities.
+  % As usual, we treat record types as inductives with a single constructor;
+  % this conversion happens during conversion to non-uniform parameters.
   coq.indt-unif->indt-nonunif Decl CleanDecl,
   param-indt-decl.aux I Suffix [] [] CleanDecl NR DeclR.
 
@@ -273,6 +275,9 @@ param-indt-decl.aux I Suffix RevParams1 RevParams2
   pi ty tyR\
     param ty ty tyR =!=>
     map2 Cs (Ks ty) (param-indc-decl Suffix Params1 Params2) (KRs ty tyR).
+
+param-indt-decl.aux _ _ _ _ (record N _ _ _) _ _ :-
+  coq.error "Record was expected to be translated to inductive by this point" N.
 
 func param-indc-decl
   string,      % Suffix to add to the name
@@ -349,10 +354,7 @@ dispatch ((const GR) as C) Suffix Clauses :- do! [
   Clauses = [param-done C, C1]
 ].
 
-
-dispatch (indt I as GR) Suffix Clauses :-
-  % TODO: New translation does not support records yet
-  not (coq.env.record? I _), !,
+dispatch (indt I as GR) Suffix Clauses :- !,
   param-indt-decl I Suffix NameR DeclR,
 
   std.assert-ok! (coq.typecheck-indt-decl DeclR)

@@ -135,3 +135,13 @@ Fail Elpi derive.param2 munit.
 Fail Elpi derive.param2 mpeano.
 Fail Elpi derive.param2 moption.
 Fail Elpi derive.param2 mtree.
+
+Record Box (A : Type) :=
+  mkBox {
+      unbox : A
+    }.
+Elpi derive.param2 Box.
+Elpi derive.param2 unbox.
+
+Definition box := mkBox.
+Elpi derive.param2 box.

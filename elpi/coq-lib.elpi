@@ -326,7 +326,8 @@ coq.build-mindt-decl-copy-clauses [pr GR I|Rest] ParamsR [
 % added with coq.env.add-indt might give you an inductive with uniform
 % parameters anyway.
 %
-% This function is meant to be applied to inductives, not records.
+% When the inductive passed is a record, it is interpreted as an inductive
+% with one constructor.
 func coq.indt-unif->indt-nonunif indt-decl -> indt-decl.
 coq.indt-unif->indt-nonunif (parameter N Expl Ty RestI) (inductive IN IsInd IA Cs) :-
   % Reparameterize the inductive and constructors' arities by a fresh variable
@@ -360,8 +361,19 @@ coq.indt-unif->indt-nonunif (parameter N Expl Ty RestI) (inductive IN IsInd IA C
       (Cs i)).
 
 coq.indt-unif->indt-nonunif (inductive _ _ _ _ as I) I.
-coq.indt-unif->indt-nonunif (record _ _ _ _) _ :-
-  coq.error "coq.indt-unif->indt-nonunif does not support record types".
+
+coq.indt-unif->indt-nonunif (record N Ty CN Decl) (inductive N tt (arity Ty) C) :-
+  coq.record-decl->arity Decl Ar,
+  pi c\ C c = [constructor CN (arity (Ar c))].
+
+% [coq.record-decl->arity R T] takes a record declaration R and returns in T
+% the type of the the record's constructor, parameterized by a term standing
+% for the record type.
+func coq.record-decl->arity record-decl -> (term -> term).
+coq.record-decl->arity (field _ Id Ty RestF) (r\ prod N Ty (RestT r)) :- !,
+  coq.id->name Id N,
+  pi x\ coq.record-decl->arity (RestF x) (r\ RestT r x).
+coq.record-decl->arity end-record (r\ r) :- !.
 
 :index (_ 1)
 func coq.rename-arity
