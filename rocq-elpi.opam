@@ -15,7 +15,7 @@ tags: [
 homepage: "https://github.com/LPCIC/coq-elpi"
 bug-reports: "https://github.com/LPCIC/coq-elpi/issues"
 depends: [
-  "dune" {>= "3.13"}
+  "dune" {>= "3.21"}
   "ocaml" {>= "4.10.0"}
   "elpi" {>= "3.7.1" & < "3.8.0~"}
   "rocq-core" {>= "9.0+rc1" & < "9.3~" | = "dev"}

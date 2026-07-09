@@ -1,6 +1,7 @@
-(coq.theory
+(rocq.theory
  (name elpi)
  (package rocq-elpi)
+ (generate_project_file)
  (plugins rocq-elpi.elpi)
  (theories elpi_elpi))
 
@@ -10,6 +11,6 @@
   (glob_files elpi.v.in))
  (action
   (with-stdout-to %{target}
-   (run rocq_elpi_optcomp "%{coq:version.major}.%{coq:version.minor}" %{deps}))))
+   (run rocq_elpi_optcomp "%{rocq:version.major}.%{rocq:version.minor}" %{deps}))))
 
 (include_subdirs qualified)

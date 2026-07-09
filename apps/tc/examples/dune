@@ -1,5 +1,6 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.tc.examples)
+ (generate_project_file)
  (theories elpi elpi.apps.tc Stdlib))
 
 (include_subdirs qualified)
