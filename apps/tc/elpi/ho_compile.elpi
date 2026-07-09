@@ -380,6 +380,12 @@ namespace tc {
         fold-map Ty L Ty' L2,
         std.append L2 L1 L3.
 
+      pred unif-univ-constraint term, term.
+      unif-univ-constraint T1 T2 :- declare_constraint (tc.link.univ-poly T1 T2) [_].
+
+      decompile-problematic-term (pglobal P Q as T) L (pglobal P Q' as T') L' :-
+        L' = [unif-univ-constraint T T' | L].
+
       func compile term, list prop -> term, list prop.
       compile T L T' L' :-
         (pi t l t' l'\ fold-map t l t' l' :- decompile-problematic-term t l t' l', !) =>
