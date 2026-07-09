@@ -16,7 +16,8 @@ Delimit Scope label_scope with lbl.
 Declare Scope labeled_scope.
 Delimit Scope labeled_scope with lbled.
 Notation " a # b" := (ssrfun.catcomp a b) (at level 0, b at level 0) : label_scope.
-Notation " l := v " := (Label _ _ l%lbl v)  (at level 51, v at level 98) : labeled_scope.
+
+Notation " l .= v " := (Label _ _ l%lbl v)  (at level 51, v at level 98) : labeled_scope.
 Notation "« x ; .. ; y »" :=
   (More _ x%lbled .. (More _ y%lbled Stop) ..  (* stage 1 : field rearranging / padding *)
 
@@ -28,7 +29,7 @@ Notation "« 'unresolved record' »" := (More _ _ _) (at level 0, only printing
 
 Inductive update := With (T : Type) : T -> named_field T -> update.
 
-Notation "« x 'with' l := v »" := (With _ x (Label _ _ l%lbl v) : With _ x (Label _ _ l%lbl v))
+Notation "« x 'with' l .= v »" := (With _ x (Label _ _ l%lbl v) : With _ x (Label _ _ l%lbl v))
   (at level 0, x at level 100, l at level 0, v at level 98, only parsing).
 
 
