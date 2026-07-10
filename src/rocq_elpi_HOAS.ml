@@ -3013,6 +3013,7 @@ let tclSOLUTION2EVD ~eta_contract_solution sigma0 solution gls =
     let roots = List.fold_right Evar.Set.add gls Evar.Set.empty in
     let sigma, declared_goals, shelved_goals = solution2evd ~eta_contract_solution sigma0 solution roots in
     let sigma = Evd.fold_future_goals Evd.remove_future_goal sigma in
+    let sigma = List.fold_right Evd.declare_future_goal declared_goals sigma in
     (* debug Pp.(fun () -> str "Old Shelved Goals: " ++ prlist_with_sep spc Evar.print sh);
     debug Pp.(fun () -> str "New Evd Shelved Goals: " ++ prlist_with_sep spc Evar.print (Evd.shelf sigma)); *)
   tclTHENLIST [
