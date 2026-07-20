@@ -1,4 +1,4 @@
-(lang dune 3.23)
+(lang dune 3.13)
 (using rocq 0.13)
 (name Ext)
 
