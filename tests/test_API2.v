@@ -432,3 +432,24 @@ main _ :-
 Elpi Accumulate Db foo.db.
 
 Elpi acc_foo2. (* since r has no type in foo.db *)
+
+(* test goals that are TC are flagged as interactive *)
+
+Class Foo (A : Type) := { a : A }.
+
+Elpi Tactic spawn_tc_goal.
+Elpi Accumulate lp:{{
+  solve (goal _ _ Ty _ _ as G) GL :-
+    T = {{ proj1 (conj _ (@a True _)) }},
+    (std.assert-ok! (coq.elaborate-skeleton T Ty T') "??"),
+    refine T' G GL.
+
+}}.
+
+Goal 3+2=5.
+elpi spawn_tc_goal.
+  Show.
+  (* 2: shelve. Unshelve. *)
+  easy.
+constructor. easy.
+Qed.
