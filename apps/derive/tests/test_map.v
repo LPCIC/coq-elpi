@@ -40,7 +40,7 @@ Elpi derive.map mempty.
 Elpi derive.map munit.
 Elpi derive.map mpeano.
 Elpi derive.map moption.
-Fail Elpi derive.map mtree.
+Elpi derive.map mtree.
 End Coverage.
 
 Import Coverage.
@@ -67,3 +67,14 @@ Redirect "tmp" Check prim_int_map : map prim_int.
 Redirect "tmp" Check prim_float_map : map prim_float.
 Redirect "tmp" Check pa_record_map : map1 pa_record.
 Redirect "tmp" Check pr_record_map : map1 pr_record.
+
+Redirect "tmp" Check mempty_map : map mempty.
+Redirect "tmp" Check mempty'_map : map mempty'.
+Redirect "tmp" Check munit_map : map munit.
+Redirect "tmp" Check munit'_map : map munit'.
+Redirect "tmp" Check mpeano_map : map mpeano.
+Redirect "tmp" Check mpeano'_map : map mpeano'.
+Redirect "tmp" Check moption_map : map1 moption.
+Redirect "tmp" Check moption'_map : map1 moption'.
+Redirect "tmp" Check mtree_map : map1 mtree.
+Redirect "tmp" Check mforest_map : map1 mforest.
