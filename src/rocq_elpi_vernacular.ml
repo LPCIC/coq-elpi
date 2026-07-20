@@ -712,6 +712,7 @@ let run_tactic_common ~loc program ~main ?(atts=[]) () =
   Unsafe.tclGETGOALS >>= fun gls ->
   let gls = CList.map Proofview.drop_state gls in
   Proofview.tclEVARMAP >>= fun sigma ->
+  let sigma = Evd.push_future_goals sigma in (* avoid touching unrelated future goals *)
   let query ~base state =
     let loc = of_coq_loc loc in
     let depth = 0 in

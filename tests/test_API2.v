@@ -448,6 +448,7 @@ Elpi Accumulate lp:{{
 
 Goal 3+2=5.
 elpi spawn_tc_goal.
+  Show.
   (* 2: shelve. Unshelve. *)
   easy.
 constructor. easy.

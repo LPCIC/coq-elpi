@@ -3012,13 +3012,16 @@ let tclSOLUTION2EVD ~eta_contract_solution sigma0 solution gls =
   tclGETSHELF >>= fun sh ->
     let roots = List.fold_right Evar.Set.add gls Evar.Set.empty in
     let sigma, declared_goals, shelved_goals = solution2evd ~eta_contract_solution sigma0 solution roots in
-    let sigma = Evd.fold_future_goals Evd.remove_future_goal sigma in
-    let sigma = List.fold_right Evd.declare_future_goal declared_goals sigma in
-    (* debug Pp.(fun () -> str "Old Shelved Goals: " ++ prlist_with_sep spc Evar.print sh);
-    debug Pp.(fun () -> str "New Evd Shelved Goals: " ++ prlist_with_sep spc Evar.print (Evd.shelf sigma)); *)
+
+    let future_goals, sigma = Evd.pop_future_goals sigma in
+    let future_goals = Evd.FutureGoals.map_filter (Proofview.Unsafe.advance sigma) future_goals in
+    let future_goals = Evd.FutureGoals.filter (fun ev -> not @@ List.mem ev (Evd.shelf sigma) && not @@ List.mem ev shelved_goals) future_goals in
+    let sigma = Proofview.Unsafe.mark_as_goals sigma (Evd.FutureGoals.comb future_goals @ declared_goals) in
+    let comb = CList.map (fun x -> Proofview.with_empty_state x) (Evd.FutureGoals.comb future_goals @ declared_goals) in
+
   tclTHENLIST [
     tclEVARS sigma;
-    tclSETGOALS @@ List.map Proofview.with_empty_state declared_goals;
+    tclSETGOALS @@ comb;
     tclNEWSHELVED shelved_goals
   ]
 
