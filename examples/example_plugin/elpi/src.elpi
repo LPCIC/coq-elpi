@@ -1,8 +1,0 @@
-kind nat type.
-
-type z nat.
-type s nat -> nat.
-
-func to_int nat -> int.
-to_int z 0.
-to_int (s X) N :- to_int X N', N is N' + 1.

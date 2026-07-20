@@ -4,11 +4,11 @@
 
 # Theories
 
--R theories ext
--R _build/default/theories ext
+-R theories myExtension
+-R _build/default/theories myExtension
 
--Q tests ext.tests
--Q _build/default/tests ext.tests
+-Q tests myExtension.tests
+-Q _build/default/tests myExtension.tests
 
--Q elpi ext_elpi_src
--Q _build/default/elpi ext_elpi_src
+-Q elpi myExtension.lib
+-Q _build/default/elpi myExtension.lib

@@ -1,0 +1,7 @@
+  func int2nat int -> term.
+  int2nat 0 {{0}} :- !.
+  int2nat N {{S lp:R}} :- N > 0, N' is N - 1, int2nat N' R.
+
+  func nat2int term -> int.
+  nat2int {{0}} 0.
+  nat2int {{S lp:R}} N :- nat2int R N', N is N' + 1.

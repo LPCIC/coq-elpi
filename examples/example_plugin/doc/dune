@@ -2,11 +2,11 @@
  (name gen_doc)
  ; this doc depends on the ext_plus library, where the
  ; new builtins are declared
- (libraries ext_plug))
+ (libraries myExtension.plugin))
 
 (rule
  ; we target ext.elpi which is the name of the file targeted in ext.ml
- (targets ext.elpi)
+ (targets myExtension.elpi)
  (deps gen_doc.exe)
  (mode promote)
  (action (run ./gen_doc.exe)))

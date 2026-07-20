@@ -16,15 +16,15 @@
 (documentation https://url/to/documentation)
 
 (package
- (name ext)
- (synopsis "Ext")
- (description "Ext")
+ (name myExtension)
+ (synopsis "myExtension adds extra Elpi datatypes and APIs")
+ (description "This package provides some extra goodies")
  (depends rocq-elpi))
 
 (package
- (name ext-tests)
- (synopsis "Ext")
- (description "Ext")
+ (name myExtension-tests)
+ (synopsis "myExtension tests - do not install")
+ (description "myExtension tests - do not install")
  (depends rocq-elpi))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
