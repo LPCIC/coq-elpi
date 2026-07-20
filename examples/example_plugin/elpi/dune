@@ -1,5 +1,5 @@
-(rocq.theory
-  ; ext is the logical path that can be used in rocq
+(coq.theory
+  ; myExtension is the logical path that can be used in rocq
  (name ext_elpi_src)
  (theories elpi)
   ; the rocq files in this folder (theories)

@@ -1,5 +1,5 @@
-(rocq.theory
-  ; ext is the logical path that can be used in rocq to import the
+(coq.theory
+  ; myExtension is the logical path that can be used in rocq to import the
   ; the .v in the theories folder
  (name ext)
   ; these are the dependencies of the current package
