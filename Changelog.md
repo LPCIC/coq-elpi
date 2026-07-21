@@ -24,6 +24,7 @@
 ### APPS:
 - Fix many bugs in `derive` related to universe polymorphism
 - Fix binary parametricity translation for primitive records
+- Fix param1 and map on mutual inductives
 
 ### Vernac:
 - Fix double accumulation bug when mixing Files and Dbs
