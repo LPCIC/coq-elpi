@@ -8,12 +8,12 @@ let
     "mathcomp-analysis"
     "mathcomp-bigenough"
     "mathcomp-finmap"
+    "mathcomp-real-closed"
   ];
   coq-master = [
     "coqeal"
     "ITree"
     "mathcomp-algebra-tactics"
-    "mathcomp-real-closed"
     "mathcomp-word"
     "mathcomp-zify"
     "multinomials"
