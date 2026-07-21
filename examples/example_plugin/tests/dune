@@ -1,0 +1,7 @@
+(coq.theory
+ (name myExtension.tests)
+ (package myExtension-tests)
+  ; the tests folder depends on ext
+ (theories elpi_elpi elpi myExtension myExtension.lib))
+
+(include_subdirs qualified)

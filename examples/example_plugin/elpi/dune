@@ -1,0 +1,21 @@
+(coq.theory
+  ; myExtension.lib is the logical path that can be used in rocq
+ (name myExtension.lib)
+ (theories elpi)
+  ; the rocq files in this folder (theories)
+  ; will use the pluging called ext.plug
+  ; this is the name of the library defined in src
+ (plugins myExtension.plugin)
+ (package myExtension))
+
+(include_subdirs qualified)
+
+; this rule is needed for loading elpi files as extra deps
+(rule
+ (target dummy.v)
+ (deps
+  (glob_files *.elpi))
+ (action
+  (with-stdout-to %{target}
+   (progn
+     (run rocq_elpi_shafile %{deps})))))
