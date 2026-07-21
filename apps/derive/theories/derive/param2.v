@@ -16,8 +16,8 @@ Class param {X : Type} {XR : X -> X -> Type} (x : X) (xR : XR x x) := Param {}.
 
 Register store_param as param2.store_param.
 
-(* Links a term (constant, inductive type, inductive constructor) with
-   its parametricity translation *)
+(* Links a term (constant, inductive type, inductive constructor, record type,
+   projection) with its parametricity translation *)
 Elpi Db derive.param2.db lp:{{
     :index(3)
     % param (t : T) is a function that returns t' and tr such that tr : [| T |] t t'
@@ -33,29 +33,22 @@ Elpi Db derive.param2.db lp:{{
 }}.
 #[superglobal] Elpi Accumulate derive.param2.db lp:{{
 
-    % helper to lift undeclared grefs to terms.
-    func global-gref gref, gref -> term.
-    global-gref (const _) GRR TR :- !,
-      coq.env.global GRR TR.
-    % GRR is the yet undeclared param translation of _GT.
-    global-gref _GT GRR (global GRR) :- !.
-
     % queries param.gref and lifts answer to terms.
     func dispatch-gref gref -> term,term.
     dispatch-gref GRT U TR :-
       param.gref GRT GRU GRR,
       coq.env.global GRU U,
-      global-gref GRT GRR TR.
+      coq.env.global GRR TR.
 
     :name "param:gref"
     param T U TR :-
-      coq.env.global GRT T, !,
-      dispatch-gref GRT U TR.
+      coq.env.global GRT T,
+      dispatch-gref GRT U TR, !.
 
     :name "paramR:gref"
     paramR T U TR :-
-      coq.env.global GRT T, !,
-      dispatch-gref GRT U TR.
+      coq.env.global GRT T,
+      dispatch-gref GRT U TR, !.
 
     :name "param:fail"
     param X _ _ :-
