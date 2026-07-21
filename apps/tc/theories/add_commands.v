@@ -13,6 +13,7 @@ From elpi.apps.tc.elpi Extra Dependency "ho_link.elpi" as ho_link.
 From elpi.apps.tc.elpi Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
+From elpi.apps.tc.elpi Extra Dependency "cs.elpi" as cs.
 
 (* Set Warnings "+elpi". *)
 
@@ -26,6 +27,7 @@ Elpi Accumulate File ho_link.
 Elpi Accumulate File ho_compile.
 Elpi Accumulate File compiler1.
 Elpi Accumulate File modes.
+Elpi Accumulate File cs.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,

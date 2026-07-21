@@ -3,6 +3,11 @@
 
 namespace tc {
 
+  func get-vars term -> list term.
+  get-vars T R :-
+    (pi X H L Ign\ fold-map X L X [H|L] :- var X H Ign, !) => 
+      fold-map T [] _ R.
+
   namespace lettify {
     func replace-args term, list term, list term, (func term -> term) -> term.
     replace-args Hd []     L K R :- std.rev L L1, K (app [Hd|L1]) R.
@@ -78,6 +83,7 @@ namespace tc {
 
   % adds a clause to the tc.db DB at the passed grafting
   func add-tc-db id, grafting, prop ->.
+  :name "tc-adder"
   add-tc-db _          _     Clause :- not (ground_term Clause), coq.error "[TC] anomaly: open rule:" Clause, !.
   add-tc-db ClauseName Graft Clause :- coq.elpi.accumulate _ "tc.db" (clause ClauseName Graft Clause), !.
   add-tc-db _          _     Clause :- coq.error "cannot add " PR " to tc.db".
@@ -98,19 +104,28 @@ namespace tc {
     get-TC-of-inst-type T Hd, 
     coq.TC.class? Hd. 
 
-  % TC preds are on the form tc-[PATH_TO_TC].tc-[TC-Name]
-  func gref->pred-name gref -> string.
-  gref->pred-name Gr S :-
+  func check-pname string, gref ->.
+  check-pname N _ :- coq.elpi.predicate? N, !.
+  check-pname _ G :-
+    MSG is "Found an undeclared class in Elpi.\nPlease add it via: Elpi TC.AddClasses " ^ {coq.gref->id G},
+    coq.say MSG, coq.error MSG.
+
+  % [gref->pred-name P G S]
+  % takes a prefix P and a gref G
+  % returns S = P-[PATH_TO_G].P-[TC-Name]
+  % NOTE: P should start with lower case letter
+  func gref->pred-name string, gref -> string.
+  gref->pred-name P G S :-
     if (tc.is-option-active tc.oTC-clauseNameShortName)
       (Path = "")
-      (coq.gref->path Gr [Hd | Tl], 
+      (coq.gref->path G [Hd | Tl], 
         if (Hd = "Coq") (Hd' = "Corelib") (Hd' = Hd),
         std.string.concat "." [Hd'|Tl] Path',
-        Path is Path' ^ ".tc-"),
+        Path is Path' ^ "." ^ P ^ "-"),
     % CAVEAT : Non-ascii caractars can't be part of a pred
     %          name, we replace ö with o
-    rex.replace "ö" "o" {coq.gref->id Gr} GrStr,
-    S is "tc-" ^ Path ^ GrStr.
+    rex.replace "ö" "o" {coq.gref->id G} GrStr,
+    S is P ^ "-" ^ Path ^ GrStr.
 
   func get-mode gref -> list string.
   get-mode ClassGR M :- tc.class ClassGR _ _ M, !.
@@ -137,8 +152,9 @@ namespace tc {
   make-tc Goal Sol RuleBody IsPositive Rule :-
     coq.safe-dest-app Goal Class Args,
     get-TC-of-inst-type Class ClassGR,
-    gref->pred-name ClassGR ClassStr,
+    gref->pred-name "tc" ClassGR ClassStr,
     std.append Args [Sol] ArgsSol, 
+    tc.check-pname ClassStr ClassGR,
     coq.elpi.predicate ClassStr ArgsSol RuleHead,
     make-tc.aux IsPositive Sol RuleHead RuleBody Rule.
 
@@ -207,21 +223,106 @@ namespace tc {
   time-it Opt P Msg :- time-is-active Opt, !, time-res P Time Res, build-msg Res Msg Msg', time-pp Msg' Time, Res.
   time-it _ P _ :- P.
 
-  kind range-arity type.
-  type r-ar nat -> nat -> range-arity.
+  func split-last list A -> list A, A.
+  split-last [X] [] X :- !.
+  split-last [X|Xs] [X|Y] Z :- split-last Xs Y Z.
 
-  type prod-range 
-    term ->          % The current qunatified uvar 
-    range-arity ->   % Its minimum and maximal application
-    term.
+  func list.pos list A, A -> int.
+  list.pos [A|_] A 0 :- !.
+  list.pos [_|L] A N :- list.pos L A N', N is N' + 1.
+
+  func get-record int, term -> inductive.
+  get-record 0 (prod _ (app [global (indt I) | _]) _) I :- !.
+  get-record 0 (prod _ (global (indt I)) _) I :- !.
+  get-record N (prod _ _ Bo) T :- N > 0, N' is N - 1,
+    pi x\ get-record N' (Bo x) T, !.
+
+  func get-proj-nb constant -> int.
+  get-proj-nb C N :-
+    coq.env.projection? C Nx,
+    coq.env.const C _ Ty,
+    get-record Nx Ty I,
+    coq.env.projections I P,
+    list.pos P (some C) M,
+    N is M + Nx.
+
+  % [maybe-projection T C N A R]
+  % check if the head of T is the application of a projection
+  %                      for example T = app[P, ARGS..., R]
+  %                      where P is the projector, ARGS are the parameter of the projector
+  %                      R is the record to project
+  % C is the compatibily constant of the projector P
+  % N is the number position of C
+  % A is the list of argument applied to the projection (except for the record itself)
+  % R is the record
+  func maybe-projection term -> constant, int, list term, term.
+  :name "maybe-projection"
+  maybe-projection (app [primitive (proj P N), R]) C N A R :-
+    coq.env.primitive-projection? P C _, coq.CS.canonical-projection? C,
+    std.assert-ok!(coq.typecheck R Ty) "err",
+    coq.safe-dest-app Ty _ A.
+  % TODO: should check that C is fully applied
+  maybe-projection (app [global (const C) | Args]) C N A R :-
+    coq.CS.canonical-projection? C, !,
+    get-proj-nb C N, std.assert!(split-last Args A R) "err: empty list".
+
+  func build-proj-term constant, list term, term -> term.
+  build-proj-term P Ag C (app[global (const P) | Ag']) :-
+    std.append Ag [C] Ag'.
+
+
+  % [proj-reducer-aux R P N O L T]
+  % R is the record constant
+  % P is the compatibility constant of the projector
+  % N is the projection number
+  % O is the optional body of the projected constant
+  % L are the arguments of the projection
+  % T is the projected terms
+  :index(_ _ _ 1)
+  func proj-reducer-aux constant, constant, int, option term, list term -> term.
+  :name "proj-reducer-aux"
+  proj-reducer-aux _ _ N (some (app [_|L])) _ T :- std.nth N L T.
+  proj-reducer-aux R P _ none Ag T :- build-proj-term P Ag (global (const R)) T.
+  
+  % [proj-reducer P N Ag R T]
+  % P is the projector constant
+  % N is the number of P
+  % Ag is the arguments applied to the projector (except for the record)
+  % R is the record
+  % T is the reduced term
+  func proj-reducer constant, int, list term, term -> term.
+  :name "proj-reducer"
+  proj-reducer P N _ (global (const R)) T :- !,
+    coq.env.const R O Ty,
+    coq.safe-dest-app Ty _ TyAg,
+    proj-reducer-aux R P N O TyAg T.
+  proj-reducer P _ Ag X T :- name X, !, build-proj-term P Ag X T.
 
   type maybe-eta-tm 
     term ->          % The current precompiled subterm
     list term ->     % The list of FV in the precomp subterm
     term.
 
+  % [maybe-llam-tm H PF NPF L] 
+  % the original term is (app[H|{append PF NPF}])
+  % H is a variable, PF is a list of distinct names and NPF is a list of terms
+  % a maybe-llam-tm is (F x y (H z) (K w)) when H and K become both (x\x)
+  % in this case the term becomes (maybe-llam F [x,y] [H z,K w] [V3,V4])
+  % where V3 and V4 are elpi variables of arity 3 and 4, used to represent the
+  % term when applied to 3 or 4 arguments
   type maybe-llam-tm 
-    term ->          % The current precompiled subterm: shape is app[app[X,PF],NPF]
+    term ->          % The head of the term
+    list term ->     % The list of arguments in the PF
+    list term ->     % The list of argument not in the PF
     list term ->     % The eta-expanded version of X, from X^{len(PF)} to X^{len(PF)+len(NPF)}
     term.
+
+  type maybe-proj
+    constant ->      % The canonical constant of a projection (INVARIANT: it is the canonical projection of a CS)
+    int ->           % The position of the CS in the record
+    list term ->     % The arguments of the projection
+    term ->          % The record which is projected
+    list term ->     % The list of FV in the scope of the problematic term
+    term.
+    
 }

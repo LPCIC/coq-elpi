@@ -150,3 +150,8 @@ func close-term-no-prune-ty (term -> list prop), term -> list prop.
 close-term-no-prune-ty (x\ []) _ [] :- !.
 close-term-no-prune-ty (x\ [X x | Xs x]) Ty [@pi-decl `x` Ty x\ X x | Xs'] :- !, 
   close-term-no-prune-ty Xs Ty Xs'. 
+
+
+func fold-map2 list A, B, C, (func A, B, C -> A', B, C) -> list A', B, C.
+fold-map2 [] A B _ [] A B.
+fold-map2 [X|XS] A B F [Y|YS] A2 B2 :- F X A B Y A1 B1, fold-map2 XS A1 B1 F YS A2 B2.
