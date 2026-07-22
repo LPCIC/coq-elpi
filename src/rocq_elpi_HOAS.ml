@@ -1222,10 +1222,12 @@ let in_coq_name ~depth state t =
       state, Context.make_annot Name.Anonymous rv,[]
      else
       state, Context.make_annot (Name.Name (Id.of_string s)) rv,[]
-  | E.UnifVar _ ->
+  | E.UnifVar (ev,args) ->
      let state, rv = fresh_relevance_variable state in
      let annot = Context.make_annot Name.Anonymous rv in
-     state, annot,[API.Conversion.Unify(t,in_elpi_name annot)]
+     let state, ev1 = F.Elpi.make state in (* for pruning*)
+     let rec mkLam = function [] -> E.mkUnifVar ev1 ~args:[] state | _ :: rest -> E.mkLam (mkLam rest) in
+     state, annot,[API.Conversion.Unify(mkLam args,E.mkUnifVar ev ~args:[] state);API.Conversion.Unify(t,in_elpi_name annot)]
   | _ -> err Pp.(str"Not a name: " ++ str (API.RawPp.Debug.show_term t))
 
 let in_coq_fresh ~id_only =
