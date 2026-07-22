@@ -2,6 +2,7 @@
  (name elpi_plugin)
  (public_name rocq-elpi.elpi)
  (synopsis "Elpi")
+ (modes byte native)
  (flags :standard -w -27)
  (preprocessor_deps rocq_elpi_config.mlh)
  (preprocess
