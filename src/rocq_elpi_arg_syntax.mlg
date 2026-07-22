@@ -42,6 +42,12 @@ let streamOk x = Ok x
 let streamFail () = Error ()
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let get_next_loc strm = LStream.get_loc (LStream.count strm) strm
+[%%else]
+let get_next_loc strm = LStream.get_relative_loc 0 strm
+[%%endif]
+
 }
 
 ARGUMENT EXTEND elpi_string PRINTED BY { pr_elpi_string }
@@ -69,12 +75,11 @@ let any_qname kwstate strm =
   let re = Str.regexp "[A-Za-z][A-Za-z0-9]*\\(\\.?[A-Za-z][A-Za-z0-9]*\\)*" in
   match LStream.peek kwstate strm with
   | Some (Tok.KEYWORD sym) when Str.string_match re sym 0 ->
-      let pos = LStream.count strm in
-      let _, ep = Loc.unloc (LStream.get_loc pos strm) in
+      let _, ep = Loc.unloc (get_next_loc strm) in
       LStream.junk kwstate strm;
       let v = match LStream.peek kwstate strm with
       | Some (Tok.IDENT id) ->
-          let bp, _ = Loc.unloc (LStream.get_loc (pos+1) strm) in
+          let bp, _ = Loc.unloc (get_next_loc strm) in
           if Int.equal ep bp then
             (LStream.junk kwstate strm; sym ^ id)
           else
