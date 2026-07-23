@@ -905,3 +905,9 @@ let push_named = Environ.push_named
 [%%else]
 let push_named = Environ.push_named ProofVar
 [%%endif]
+
+let prune_uvar state ev args =
+  let state, ev1 = API.FlexibleData.Elpi.make state in
+  let rec mkLam = function [] -> API.RawData.mkUnifVar ev1 ~args:[] state | _ :: rest -> API.RawData.mkLam (mkLam rest) in
+  state, API.Conversion.Unify(mkLam args,API.RawData.mkUnifVar ev ~args:[] state)
+  

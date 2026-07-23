@@ -211,7 +211,8 @@ let isuniv, univout, univino, (univ : Univ.Universe.t API.Conversion.t) =
          (* flexible makes {{ Type }} = {{ Set }} also true when coq.unify-eq {{ Type }} {{ Set }} *)
          let state, (_,u) = new_univ_level_variable ~flexible:true state in
          let state = S.update um state (UM.add b u) in
-         state, u, [ API.Conversion.Unify(E.mkUnifVar b ~args state,univin u) ]
+         let state, prune_ev = prune_uvar state b args in
+         state, u, [ prune_ev; API.Conversion.Unify(E.mkUnifVar b ~args state,univin u) ]
        end
     | _ -> univ_to_be_patched.API.Conversion.readback ~depth state t
   end
@@ -241,7 +242,8 @@ let universe_level_variable =
        with Not_found ->
          let state, (l,u) = new_univ_level_variable state in
          let state = S.update um state (UM.add b u) in
-         state, l, [ API.Conversion.Unify(E.mkUnifVar b ~args state,levelin l) ]
+         let state, prune_ev = prune_uvar state b args in
+         state, l, [ prune_ev; API.Conversion.Unify(E.mkUnifVar b ~args state,levelin l) ]
        end
     | _ -> universe_level_variable_to_patch.API.Conversion.readback ~depth state t
   end
@@ -1225,9 +1227,8 @@ let in_coq_name ~depth state t =
   | E.UnifVar (ev,args) ->
      let state, rv = fresh_relevance_variable state in
      let annot = Context.make_annot Name.Anonymous rv in
-     let state, ev1 = F.Elpi.make state in (* for pruning*)
-     let rec mkLam = function [] -> E.mkUnifVar ev1 ~args:[] state | _ :: rest -> E.mkLam (mkLam rest) in
-     state, annot,[API.Conversion.Unify(mkLam args,E.mkUnifVar ev ~args:[] state);API.Conversion.Unify(t,in_elpi_name annot)]
+     let state, prune_ev = prune_uvar state ev args in
+     state, annot,[prune_ev;API.Conversion.Unify(t,in_elpi_name annot)]
   | _ -> err Pp.(str"Not a name: " ++ str (API.RawPp.Debug.show_term t))
 
 let in_coq_fresh ~id_only =
@@ -2129,7 +2130,8 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
           | _ -> assert false
         in
         let s = S.update uim s (UIM.add b u) in
-        s, u, [API.Conversion.Unify (E.mkUnifVar b ~args s,uinstancein u)]
+        let s, prune_ev = prune_uvar s b args in
+        s, u, [prune_ev; API.Conversion.Unify (E.mkUnifVar b ~args s,uinstancein u)]
       end
     | _ -> uinstance.readback ~depth s i
   in

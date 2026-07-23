@@ -97,3 +97,5 @@ val is_sync_anomaly : exn -> bool
 val push_named : Constr.named_declaration -> Environ.env -> Environ.env
 
 val get_projection_constant : Environ.env -> Names.Projection.Repr.t -> Names.Constant.t
+
+val prune_uvar : Elpi.API.State.t -> Elpi.API.FlexibleData.Elpi.t -> Elpi.API.RawData.term list -> Elpi.API.State.t * Elpi.API.Conversion.extra_goal
