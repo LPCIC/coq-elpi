@@ -67,9 +67,29 @@ End MutualBase.
 Module Type MutualMapExpected.
   Include MutualBase.
   Definition tree_map : tree -> tree :=
-  fun x : tree => x.
+  fix tree_map_rec (x : tree) : tree :=
+    match x with
+    | node f => node (forest_map_rec f)
+    end
+  with forest_map_rec (x : forest) : forest :=
+    match x with
+    | empty => empty
+    | cons t f => cons (tree_map_rec t) (forest_map_rec f)
+    end
+  for
+  tree_map_rec.
   Definition forest_map : forest -> forest :=
-  fun x : forest => x.
+  fix tree_map_rec (x : tree) : tree :=
+    match x with
+    | node f => node (forest_map_rec f)
+    end
+  with forest_map_rec (x : forest) : forest :=
+    match x with
+    | empty => empty
+    | cons t f => cons (tree_map_rec t) (forest_map_rec f)
+    end
+  for
+  forest_map_rec.
 End MutualMapExpected.
 
 Module Type MutualLensExpected.
@@ -2174,11 +2194,59 @@ End TripleMutualBase.
 Module Type TripleMutualMapExpected.
   Include TripleMutualBase.
   Definition alpha_map : alpha -> alpha :=
-  fun x : alpha => x.
+  fix alpha_map_rec (x : alpha) : alpha :=
+    match x with
+    | alpha0 => alpha0
+    | alpha1 b => alpha1 (beta_map_rec b)
+    end
+  with beta_map_rec (x : beta) : beta :=
+    match x with
+    | beta0 => beta0
+    | beta1 g => beta1 (gamma_map_rec g)
+    end
+  with gamma_map_rec (x : gamma) : gamma :=
+    match x with
+    | gamma0 => gamma0
+    | gamma1 a b => gamma1 (alpha_map_rec a) (beta_map_rec b)
+    end
+  for
+  alpha_map_rec.
   Definition beta_map : beta -> beta :=
-  fun x : beta => x.
+  fix alpha_map_rec (x : alpha) : alpha :=
+    match x with
+    | alpha0 => alpha0
+    | alpha1 b => alpha1 (beta_map_rec b)
+    end
+  with beta_map_rec (x : beta) : beta :=
+    match x with
+    | beta0 => beta0
+    | beta1 g => beta1 (gamma_map_rec g)
+    end
+  with gamma_map_rec (x : gamma) : gamma :=
+    match x with
+    | gamma0 => gamma0
+    | gamma1 a b => gamma1 (alpha_map_rec a) (beta_map_rec b)
+    end
+  for
+  beta_map_rec.
   Definition gamma_map : gamma -> gamma :=
-  fun x : gamma => x.
+  fix alpha_map_rec (x : alpha) : alpha :=
+    match x with
+    | alpha0 => alpha0
+    | alpha1 b => alpha1 (beta_map_rec b)
+    end
+  with beta_map_rec (x : beta) : beta :=
+    match x with
+    | beta0 => beta0
+    | beta1 g => beta1 (gamma_map_rec g)
+    end
+  with gamma_map_rec (x : gamma) : gamma :=
+    match x with
+    | gamma0 => gamma0
+    | gamma1 a b => gamma1 (alpha_map_rec a) (beta_map_rec b)
+    end
+  for
+  gamma_map_rec.
 End TripleMutualMapExpected.
 
 Module Type TripleMutualEqbExpected.
