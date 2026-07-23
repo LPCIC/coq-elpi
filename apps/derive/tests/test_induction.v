@@ -79,8 +79,7 @@ Redirect "tmp" Check ord2_induction : forall p Pp P, (forall (o1 : ord p), is_or
 Module InductionStandaloneFirst.
   From elpi.apps Require Import derive.induction.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 tree.
   Elpi derive.param1.functor is_tree.
@@ -93,8 +92,7 @@ End InductionStandaloneFirst.
 Module InductionStandaloneSecond.
   From elpi.apps Require Import derive.induction.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 tree.
   Elpi derive.param1.functor is_tree.
@@ -107,8 +105,7 @@ End InductionStandaloneSecond.
 Module InductionMetaFirst.
   From elpi.apps Require Import derive.induction.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,induction)] derive tree.
 
@@ -119,8 +116,7 @@ End InductionMetaFirst.
 Module InductionMetaSecond.
   From elpi.apps Require Import derive.induction.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,induction)] derive forest.
 
@@ -131,8 +127,7 @@ End InductionMetaSecond.
 Module InductionParametrized.
   From elpi.apps Require Import derive.induction.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(param1,param1_functor,induction)] derive pforest.
 
@@ -143,12 +138,7 @@ End InductionParametrized.
 Module InductionIndexed.
   From elpi.apps Require Import derive.induction.
 
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf (x : A) : itree 0
-  | inode n (f : iforest n) : itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons n (t : itree n) (f : iforest n) : iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   Elpi derive.param1 nat.
   #[only(param1,param1_functor,induction)] derive iforest.

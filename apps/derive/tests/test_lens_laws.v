@@ -48,8 +48,7 @@ Redirect "tmp" Check _pf4_pf3_exchange : forall A, exchange (_pf4 A) (_pf3 A).
 Module LensLawsMutualSkip.
   From elpi.apps Require Import derive.lens_laws.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(lens,lens_laws)] derive tree.
 

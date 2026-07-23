@@ -4,7 +4,6 @@ From elpi.apps.derive Require Import PrimStringEqb.
 From elpi.apps Require Export derive.
 
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -44,14 +43,13 @@ Register apply as elpi.derive.apply.
 (* standalone *)
 Elpi Command derive.eqType.ast.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate File eqType.
 Elpi Accumulate lp:{{
 
 func derive.eqType.ast.standalone-main inductive -> list prop.
-derive.eqType.ast.standalone-main T C :- derive.mutual.is-mutual T, !,
-  derive.mutual.members T TS,
+derive.eqType.ast.standalone-main T C :- mutual.is-mutual T, !,
+  mutual.members T TS,
   derive.eqType.ast.main-mutual TS C.
 derive.eqType.ast.standalone-main T C :- derive.eqType.ast.main T C.
 

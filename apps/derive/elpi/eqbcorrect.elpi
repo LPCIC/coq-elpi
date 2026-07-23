@@ -102,7 +102,7 @@ main _ [] _ [] :- !.
 main Selected IS Prefix CL :-
   std.map IS (i\fi\ std.assert! (eqType (indt i) fi) "this inductive is not supported") MutualFIs,
   std.map IS (i\r\ mk-reali (global (indt i)) r) MutualRealis,
-  std.map IS (i\c\ sigma p\ derive.mutual.selected-prefix Selected Prefix i p, add-one IS MutualFIs MutualRealis i p c) CLS,
+  std.map IS (i\c\ sigma p\ mutual.selected-prefix Selected Prefix i p, add-one IS MutualFIs MutualRealis i p c) CLS,
   std.flatten CLS CL.
 
 }

@@ -96,8 +96,7 @@ Redirect "tmp" Check congr_is_E1 : is_E1 = is_E1.
 Module MutualStandaloneFirst.
   From elpi.apps Require Import derive.param1_congr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 tree.
   Elpi derive.param1.congr is_tree.
@@ -110,8 +109,7 @@ End MutualStandaloneFirst.
 Module MutualStandaloneSecond.
   From elpi.apps Require Import derive.param1_congr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 tree.
   Elpi derive.param1.congr is_forest.
@@ -124,8 +122,7 @@ End MutualStandaloneSecond.
 Module MutualMetaFirst.
   From elpi.apps Require Import derive.param1_congr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_congr)] derive tree.
 
@@ -137,8 +134,7 @@ End MutualMetaFirst.
 Module MutualMetaSecond.
   From elpi.apps Require Import derive.param1_congr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_congr)] derive forest.
 
@@ -150,8 +146,7 @@ End MutualMetaSecond.
 Module ParametrizedMutual.
   From elpi.apps Require Import derive.param1_congr.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(param1,param1_congr)] derive ptree.
 

@@ -1,4 +1,5 @@
 From elpi.apps Require Import derive derive.param2.
+From elpi.apps.derive.tests Require Import test_derive_corelib.
 
 Set Uniform Inductive Parameters.
 
@@ -155,40 +156,30 @@ Unset Primitive Projections.
 
 Module MutualCoreTests.
 
-Inductive mempty : Type :=
-with mempty' : Type := .
+Import test_derive_corelib.Coverage.
+Import test_derive_corelib.Mutual.Dependency.
+
 Elpi derive.param2 mempty.
 Redirect "tmp" Check mempty_R : mempty -> mempty -> Type.
 Redirect "tmp" Check mempty'_R : mempty' -> mempty' -> Type.
 
-Inductive munit : Type := mtt
-with munit' : Type := mtt'.
 Elpi derive.param2 munit.
 Redirect "tmp" Check munit_R : munit -> munit -> Type.
 Redirect "tmp" Check munit'_R : munit' -> munit' -> Type.
 
-Inductive mpeano : Type := mZero | mSucc (n : mpeano')
-with mpeano' : Type := mZero' | mSucc' (n' : mpeano).
 Elpi derive.param2 mpeano.
 Redirect "tmp" Check mpeano_R : mpeano -> mpeano -> Type.
 Redirect "tmp" Check mpeano'_R : mpeano' -> mpeano' -> Type.
 
-Inductive moption (A : Type) : Type := mNone | mSome (_ : A)
-with moption' (A : Type) : Type := mNone' | mSome' (_ : A).
 Elpi derive.param2 moption.
 Redirect "tmp" Check moption_R : forall A A1, (A -> A1 -> Type) -> moption A -> moption A1 -> Type.
 Redirect "tmp" Check moption'_R : forall A A1, (A -> A1 -> Type) -> moption' A -> moption' A1 -> Type.
 
-Inductive mtree (A : Type) : Type := mLeaf (a : A) | mNode (_ : mforest)
-with mforest (A : Type) : Type := mEnd | mTree (_ : mtree) (_ : mforest).
 Elpi derive.param2 mtree.
 Redirect "tmp" Check mtree_R : forall A A1, (A -> A1 -> Type) -> mtree A -> mtree A1 -> Type.
 Redirect "tmp" Check mforest_R : forall A A1, (A -> A1 -> Type) -> mforest A -> mforest A1 -> Type.
 
-Inductive a : Type := ka
-with b : Type := kb.
 Elpi derive.param2 a.
-Inductive c : Type := kc : a -> kb = kb -> c.
 Elpi derive.param2 c.
 Redirect "tmp" Check c_R : c -> c -> Type.
 
@@ -197,8 +188,7 @@ End MutualCoreTests.
 Module MutualCoreNonFirst.
   From elpi.apps Require Import derive.param2.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param2 forest.
 
@@ -216,8 +206,7 @@ End MutualCoreNonFirst.
 Module MutualMetaFirst.
   From elpi.apps Require Import derive.param2.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param2)] derive tree.
 
@@ -232,8 +221,7 @@ End MutualMetaFirst.
 Module MutualMetaSecond.
   From elpi.apps Require Import derive.param2.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param2)] derive forest.
 

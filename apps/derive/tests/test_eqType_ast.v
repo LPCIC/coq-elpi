@@ -64,8 +64,7 @@ Elpi derive.eqType.ast S3.
 Module EqTypeStandaloneFirst.
   From elpi.apps Require Import derive.eqType_ast.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.eqType.ast tree.
 
@@ -78,8 +77,7 @@ End EqTypeStandaloneFirst.
 Module EqTypeStandaloneSecond.
   From elpi.apps Require Import derive.eqType_ast.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.eqType.ast forest.
 
@@ -92,8 +90,7 @@ End EqTypeStandaloneSecond.
 Module EqTypeMetaFirst.
   From elpi.apps Require Import derive.eqType_ast.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(eqType_ast)] derive tree.
 
@@ -106,8 +103,7 @@ End EqTypeMetaFirst.
 Module EqTypeMetaSecond.
   From elpi.apps Require Import derive.eqType_ast.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(eqType_ast)] derive forest.
 
@@ -120,8 +116,7 @@ End EqTypeMetaSecond.
 Module EqTypeParametrized.
   From elpi.apps Require Import derive.eqType_ast.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(eqType_ast)] derive pforest.
 

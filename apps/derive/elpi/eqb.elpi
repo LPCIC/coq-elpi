@@ -149,7 +149,7 @@ add-mutual-eqb-consts Selected All [S|SS] Prefix Focus [pr I C|Cs] [Clause, eqb-
   S = eqb-mutual-spec I _ FI _,
   eqb-body-mutual-params All Focus R,
   std.assert-ok! (coq.typecheck R Ty) "derive.eqb generates illtyped mutual term",
-  derive.mutual.selected-prefix Selected Prefix I P,
+  mutual.selected-prefix Selected Prefix I P,
   Name is P ^ "eqb",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName R Ty @transparent! C,
@@ -166,7 +166,7 @@ add-mutual-eqbf-consts Selected [S|SS] Prefix EqbClauses [CL1|CLs] :- std.do! [
   S = eqb-mutual-spec I _ FI _,
   EqbClauses =!=> derive.eqb.eqbf.main FI FI [] [] R,
   std.assert-ok! (coq.typecheck R Ty) "derive.eqbf generates illtyped mutual term",
-  derive.mutual.selected-prefix Selected Prefix I P,
+  mutual.selected-prefix Selected Prefix I P,
   Name is P ^ "eqb_fields",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName R Ty @transparent! C,
@@ -218,7 +218,7 @@ main _ [] _ [] :- !.
 main Selected ([First|_] as IS) Prefix CL :- coq.env.indt First _ Lno Lno Arity _ _, eqb-supported-arity Arity, !,
   add-all-consts Selected IS Prefix CL.
 main Selected IS Prefix CL :-
-  std.map IS (i\c\ sigma p\ derive.mutual.selected-prefix Selected Prefix i p, add-one i p c) CLS,
+  std.map IS (i\c\ sigma p\ mutual.selected-prefix Selected Prefix i p, add-one i p c) CLS,
   std.flatten CLS CL.
 
 }

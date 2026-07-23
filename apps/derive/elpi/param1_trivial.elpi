@@ -282,7 +282,7 @@ main-mutual GRS Suffix Clauses :- std.do! [
   mutual-spec-ind First FirstGRR,
   coq.env.indt FirstGRR _ LnoIs Luno _ _ _,
   assert! (LnoIs = Luno) "derive.param1_trivial: Non-uniform parameters not supported",
-  derive.param1_mutual.translated-lno GRS FirstGRR Lno,
+  paramX.translated-lno GRS FirstGRR Lno,
   add-mutual-trivial-consts Specs Specs Suffix Lno 0 Clauses
 ].
 

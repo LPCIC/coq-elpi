@@ -3,9 +3,9 @@
    lives in its own module and is checked against a signature documenting the
    Coq definitions that derivation is expected to add. *)
 From Corelib Require Import BinNums Nat ssrbool.
+From elpi.apps.derive.tests Require Import test_derive_corelib.
 Definition bool_is_true := is_true.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook_for_mutual_wrapper_test.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib_for_mutual_wrapper_test.
 From elpi.apps.derive.elpi Extra Dependency "derive.elpi" as derive_core_for_mutual_wrapper_test.
 From elpi.apps Require Import
   derive
@@ -32,7 +32,6 @@ Elpi Command derive_mutual_wrapper_test.
   main _ :- coq.env.begin-module "wleft" none, coq.env.end-module _.
 }}.
 Elpi Accumulate File derive_hook_for_mutual_wrapper_test.
-Elpi Accumulate File mutual_lib_for_mutual_wrapper_test.
 Elpi Accumulate File derive_core_for_mutual_wrapper_test.
 Elpi Accumulate lp:{{
   derivation (indt _) _ ff (derive "noop" (cl\ cl = []) true).
@@ -57,11 +56,7 @@ Module WrapperMutualDeclaration.
 End WrapperMutualDeclaration.
 
 Module Type MutualBase.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 End MutualBase.
 
 Module Type MutualMapExpected.
@@ -1101,11 +1096,7 @@ Module Type MutualBcongrExpected.
 End MutualBcongrExpected.
 
 Module Type ParametrizedMutualBase.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 End ParametrizedMutualBase.
 
 Module Type ParametrizedMutualMapExpected.
@@ -2180,15 +2171,7 @@ Module Type ParametrizedMutualBcongrExpected.
 End ParametrizedMutualBcongrExpected.
 
 Module Type TripleMutualBase.
-  Inductive alpha : Type :=
-  | alpha0
-  | alpha1 (b : beta)
-  with beta : Type :=
-  | beta0
-  | beta1 (g : gamma)
-  with gamma : Type :=
-  | gamma0
-  | gamma1 (a : alpha) (b : beta).
+  Include test_derive_corelib.Mutual.Triple.
 End TripleMutualBase.
 
 Module Type TripleMutualMapExpected.
@@ -3437,23 +3420,11 @@ Module Type TripleMutualEqbOKExpected.
 End TripleMutualEqbOKExpected.
 
 Module Type ParametrizedTripleMutualBase.
-  Inductive palpha (A : Type) : Type :=
-  | palpha0
-  | palpha1 (x : A) (b : pbeta)
-  with pbeta (A : Type) : Type :=
-  | pbeta0
-  | pbeta1 (g : pgamma)
-  with pgamma (A : Type) : Type :=
-  | pgamma0
-  | pgamma1 (a : palpha) (b : pbeta).
+  Include test_derive_corelib.Mutual.ParametrizedTriple.
 End ParametrizedTripleMutualBase.
 
 Module MutualMap <: MutualMapExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(map)] derive tree.
 
@@ -3467,31 +3438,19 @@ Module MutualMap <: MutualMapExpected.
 End MutualMap.
 
 Module MutualLens <: MutualLensExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(lens)] derive tree.
 End MutualLens.
 
 Module MutualLensLaws <: MutualLensLawsExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(lens_laws)] derive tree.
 End MutualLensLaws.
 
 Module MutualParam1 <: MutualParam1Expected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(param1)] derive tree.
 
@@ -3510,11 +3469,7 @@ Module MutualParam1 <: MutualParam1Expected.
 End MutualParam1.
 
 Module MutualParam1Congr <: MutualParam1CongrExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(param1_congr)] derive tree.
 
@@ -3529,11 +3484,7 @@ Module MutualParam1Congr <: MutualParam1CongrExpected.
 End MutualParam1Congr.
 
 Module MutualParam1Trivial <: MutualParam1TrivialExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(param1_trivial)] derive tree.
 
@@ -3557,11 +3508,7 @@ Module MutualParam1Trivial <: MutualParam1TrivialExpected.
 End MutualParam1Trivial.
 
 Module MutualParam1Functor <: MutualParam1FunctorExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(param1_functor)] derive tree.
 
@@ -3577,11 +3524,7 @@ Module MutualParam1Functor <: MutualParam1FunctorExpected.
 End MutualParam1Functor.
 
 Module MutualParam2 <: MutualParam2Expected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(param2)] derive tree.
 
@@ -3601,11 +3544,7 @@ Module MutualParam2 <: MutualParam2Expected.
 End MutualParam2.
 
 Module MutualInduction <: MutualInductionExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(induction)] derive tree.
 
@@ -3630,11 +3569,7 @@ Module MutualInduction <: MutualInductionExpected.
 End MutualInduction.
 
 Module MutualTag <: MutualTagExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(tag)] derive tree.
 
@@ -3649,11 +3584,7 @@ Module MutualTag <: MutualTagExpected.
 End MutualTag.
 
 Module MutualFields <: MutualFieldsExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(fields)] derive tree.
 
@@ -3668,11 +3599,7 @@ Module MutualFields <: MutualFieldsExpected.
 End MutualFields.
 
 Module MutualEqb <: MutualEqbExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(eqb)] derive tree.
 
@@ -3694,12 +3621,7 @@ Module MutualEqb <: MutualEqbExpected.
 End MutualEqb.
 
 Module NonRecursiveMutualEqb.
-  Inductive color : Type :=
-  | red
-  | blue
-  with shape : Type :=
-  | circle
-  | square.
+  Include test_derive_corelib.Mutual.NonRecursive.
 
   #[only(eqb)] derive color.
 
@@ -3717,12 +3639,7 @@ Module NonRecursiveMutualEqb.
 End NonRecursiveMutualEqb.
 
 Module NonRecursiveMutualParam1.
-  Inductive color : Type :=
-  | red
-  | blue
-  with shape : Type :=
-  | circle
-  | square.
+  Include test_derive_corelib.Mutual.NonRecursive.
 
   #[only(param1)] derive color.
 
@@ -3733,12 +3650,7 @@ Module NonRecursiveMutualParam1.
 End NonRecursiveMutualParam1.
 
 Module NonRecursiveMutualParam2.
-  Inductive color : Type :=
-  | red
-  | blue
-  with shape : Type :=
-  | circle
-  | square.
+  Include test_derive_corelib.Mutual.NonRecursive.
 
   #[only(param2)] derive color.
 
@@ -3863,11 +3775,7 @@ Module ValueParamMutualEqbUnsupported.
 End ValueParamMutualEqbUnsupported.
 
 Module MutualEqbCorrect <: MutualEqbCorrectExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(eqbcorrect)] derive tree.
 
@@ -3892,21 +3800,13 @@ Module MutualEqbCorrect <: MutualEqbCorrectExpected.
 End MutualEqbCorrect.
 
 Module MutualEqbOK <: MutualEqbOKExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(eqbOK)] derive tree.
 End MutualEqbOK.
 
 Module MutualIsK <: MutualIsKExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(isK)] derive tree.
 
@@ -3924,11 +3824,7 @@ Module MutualIsK <: MutualIsKExpected.
 End MutualIsK.
 
 Module MutualProjK <: MutualProjKExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(projK)] derive tree.
 
@@ -3947,11 +3843,7 @@ Module MutualProjK <: MutualProjKExpected.
 End MutualProjK.
 
 Module MutualBcongr <: MutualBcongrExpected.
-  Inductive tree : Type :=
-  | node (f : forest)
-  with forest : Type :=
-  | empty
-  | cons (t : tree) (f : forest).
+  Include test_derive_corelib.Mutual.Tree.
 
   #[only(bcongr)] derive tree.
 
@@ -3968,11 +3860,7 @@ Module MutualBcongr <: MutualBcongrExpected.
 End MutualBcongr.
 
 Module ParametrizedMutualMap <: ParametrizedMutualMapExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(map)] derive ptree.
 
@@ -3989,31 +3877,19 @@ Module ParametrizedMutualMap <: ParametrizedMutualMapExpected.
 End ParametrizedMutualMap.
 
 Module ParametrizedMutualLens <: ParametrizedMutualLensExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(lens)] derive ptree.
 End ParametrizedMutualLens.
 
 Module ParametrizedMutualLensLaws <: ParametrizedMutualLensLawsExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(lens_laws)] derive ptree.
 End ParametrizedMutualLensLaws.
 
 Module ParametrizedMutualParam1 <: ParametrizedMutualParam1Expected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(param1)] derive ptree.
 
@@ -4038,11 +3914,7 @@ Module ParametrizedMutualParam1 <: ParametrizedMutualParam1Expected.
 End ParametrizedMutualParam1.
 
 Module ParametrizedMutualParam1Congr <: ParametrizedMutualParam1CongrExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(param1_congr)] derive ptree.
 
@@ -4064,31 +3936,19 @@ Module ParametrizedMutualParam1Congr <: ParametrizedMutualParam1CongrExpected.
 End ParametrizedMutualParam1Congr.
 
 Module ParametrizedMutualParam1TrivialUnsupported.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   Fail #[only(param1_trivial)] derive ptree.
 End ParametrizedMutualParam1TrivialUnsupported.
 
 Module ParametrizedMutualParam1Functor <: ParametrizedMutualParam1FunctorExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(param1_functor)] derive ptree.
 End ParametrizedMutualParam1Functor.
 
 Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(param2)] derive ptree.
 
@@ -4115,21 +3975,13 @@ Module ParametrizedMutualParam2 <: ParametrizedMutualParam2Expected.
 End ParametrizedMutualParam2.
 
 Module ParametrizedMutualInduction <: ParametrizedMutualInductionExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(induction)] derive ptree.
 End ParametrizedMutualInduction.
 
 Module ParametrizedMutualTag <: ParametrizedMutualTagExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(tag)] derive ptree.
 
@@ -4146,11 +3998,7 @@ Module ParametrizedMutualTag <: ParametrizedMutualTagExpected.
 End ParametrizedMutualTag.
 
 Module ParametrizedMutualFields <: ParametrizedMutualFieldsExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(fields)] derive ptree.
 
@@ -4168,11 +4016,7 @@ Module ParametrizedMutualFields <: ParametrizedMutualFieldsExpected.
 End ParametrizedMutualFields.
 
 Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(eqb)] derive ptree.
 
@@ -4198,31 +4042,19 @@ Module ParametrizedMutualEqb <: ParametrizedMutualEqbExpected.
 End ParametrizedMutualEqb.
 
 Module ParametrizedMutualEqbCorrect <: ParametrizedMutualEqbCorrectExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(eqbcorrect)] derive ptree.
 End ParametrizedMutualEqbCorrect.
 
 Module ParametrizedMutualEqbOK <: ParametrizedMutualEqbOKExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(eqbOK)] derive ptree.
 End ParametrizedMutualEqbOK.
 
 Module ParametrizedMutualIsK <: ParametrizedMutualIsKExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(isK)] derive ptree.
 
@@ -4239,11 +4071,7 @@ Module ParametrizedMutualIsK <: ParametrizedMutualIsKExpected.
 End ParametrizedMutualIsK.
 
 Module ParametrizedMutualProjK <: ParametrizedMutualProjKExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(projK)] derive ptree.
 
@@ -4269,11 +4097,7 @@ Module ParametrizedMutualProjK <: ParametrizedMutualProjKExpected.
 End ParametrizedMutualProjK.
 
 Module ParametrizedMutualBcongr <: ParametrizedMutualBcongrExpected.
-  Inductive ptree (A : Type) : Type :=
-  | pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type :=
-  | pempty
-  | pcons (t : ptree) (f : pforest).
+  Include test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(bcongr)] derive ptree.
 
@@ -4295,15 +4119,7 @@ Module ParametrizedMutualBcongr <: ParametrizedMutualBcongrExpected.
 End ParametrizedMutualBcongr.
 
 Module TripleMutualMapFromGamma <: TripleMutualMapExpected.
-  Inductive alpha : Type :=
-  | alpha0
-  | alpha1 (b : beta)
-  with beta : Type :=
-  | beta0
-  | beta1 (g : gamma)
-  with gamma : Type :=
-  | gamma0
-  | gamma1 (a : alpha) (b : beta).
+  Include test_derive_corelib.Mutual.Triple.
 
   #[only(map)] derive gamma.
 
@@ -4320,57 +4136,25 @@ Module TripleMutualMapFromGamma <: TripleMutualMapExpected.
 End TripleMutualMapFromGamma.
 
 Module TripleMutualEqbFromAlpha <: TripleMutualEqbExpected.
-  Inductive alpha : Type :=
-  | alpha0
-  | alpha1 (b : beta)
-  with beta : Type :=
-  | beta0
-  | beta1 (g : gamma)
-  with gamma : Type :=
-  | gamma0
-  | gamma1 (a : alpha) (b : beta).
+  Include test_derive_corelib.Mutual.Triple.
 
   #[only(eqb)] derive alpha.
 End TripleMutualEqbFromAlpha.
 
 Module TripleMutualEqbFromBeta <: TripleMutualEqbExpected.
-  Inductive alpha : Type :=
-  | alpha0
-  | alpha1 (b : beta)
-  with beta : Type :=
-  | beta0
-  | beta1 (g : gamma)
-  with gamma : Type :=
-  | gamma0
-  | gamma1 (a : alpha) (b : beta).
+  Include test_derive_corelib.Mutual.Triple.
 
   #[only(eqb)] derive beta.
 End TripleMutualEqbFromBeta.
 
 Module TripleMutualEqbFromGamma <: TripleMutualEqbExpected.
-  Inductive alpha : Type :=
-  | alpha0
-  | alpha1 (b : beta)
-  with beta : Type :=
-  | beta0
-  | beta1 (g : gamma)
-  with gamma : Type :=
-  | gamma0
-  | gamma1 (a : alpha) (b : beta).
+  Include test_derive_corelib.Mutual.Triple.
 
   #[only(eqb)] derive gamma.
 End TripleMutualEqbFromGamma.
 
 Module TripleMutualEqbOKFromBeta <: TripleMutualEqbOKExpected.
-  Inductive alpha : Type :=
-  | alpha0
-  | alpha1 (b : beta)
-  with beta : Type :=
-  | beta0
-  | beta1 (g : gamma)
-  with gamma : Type :=
-  | gamma0
-  | gamma1 (a : alpha) (b : beta).
+  Include test_derive_corelib.Mutual.Triple.
 
   #[only(eqbOK)] derive beta.
 
@@ -4926,15 +4710,7 @@ Module Type ParametrizedTripleMutualEqbOKExpected.
 End ParametrizedTripleMutualEqbOKExpected.
 
 Module ParametrizedTripleMutualEqbOKFromBeta <: ParametrizedTripleMutualEqbOKExpected.
-  Inductive palpha (A : Type) : Type :=
-  | palpha0
-  | palpha1 (x : A) (b : pbeta)
-  with pbeta (A : Type) : Type :=
-  | pbeta0
-  | pbeta1 (g : pgamma)
-  with pgamma (A : Type) : Type :=
-  | pgamma0
-  | pgamma1 (a : palpha) (b : pbeta).
+  Include test_derive_corelib.Mutual.ParametrizedTriple.
 
   #[only(eqbOK)] derive pbeta.
 End ParametrizedTripleMutualEqbOKFromBeta.

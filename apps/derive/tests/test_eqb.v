@@ -87,8 +87,7 @@ Redirect "tmp" Check alias_eqb : eq_test alias.
 Module EqbStandaloneFirst.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.eqType.ast tree.
   Elpi derive.tag tree.
@@ -108,8 +107,7 @@ End EqbStandaloneFirst.
 Module EqbStandaloneSecond.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.eqType.ast tree.
   Elpi derive.tag tree.
@@ -125,8 +123,7 @@ End EqbStandaloneSecond.
 Module EqbMetaFirst.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(eqType_ast,tag,fields,eqb)] derive tree.
 
@@ -139,8 +136,7 @@ End EqbMetaFirst.
 Module EqbMetaSecond.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(eqType_ast,tag,fields,eqb)] derive forest.
 
@@ -153,8 +149,7 @@ End EqbMetaSecond.
 Module EqbPrefixSecond.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(eqType_ast,tag,fields,eqb), prefix="custom_"] derive forest.
 
@@ -167,8 +162,7 @@ End EqbPrefixSecond.
 Module EqbComputation.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(eqType_ast,tag,fields,eqb)] derive tree.
 
@@ -179,8 +173,7 @@ End EqbComputation.
 Module EqbParametrized.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(eqType_ast,tag,fields,eqb)] derive pforest.
 
@@ -201,9 +194,7 @@ End EqbUnsupportedValueParam.
 Module EqbTripleFromBeta.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive alpha : Type := alpha_beta (b : beta)
-  with beta : Type := beta_gamma (g : gamma)
-  with gamma : Type := gamma_alpha (a : alpha) | gamma_done.
+  Import test_derive_corelib.Mutual.CyclicTriple.
 
   #[only(eqType_ast,tag,fields,eqb)] derive beta.
 
@@ -215,9 +206,7 @@ End EqbTripleFromBeta.
 Module EqbTripleFromGamma.
   From elpi.apps Require Import derive.eqb.
 
-  Inductive alpha : Type := alpha_beta (b : beta)
-  with beta : Type := beta_gamma (g : gamma)
-  with gamma : Type := gamma_alpha (a : alpha) | gamma_done.
+  Import test_derive_corelib.Mutual.CyclicTriple.
 
   #[only(eqType_ast,tag,fields,eqb)] derive gamma.
 

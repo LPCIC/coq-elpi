@@ -82,8 +82,7 @@ Redirect "tmp" Check mforest_map : map1 mforest.
 Module MapStandaloneFirst.
   From elpi.apps Require Import derive.map.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.map tree.
 
@@ -100,8 +99,7 @@ End MapStandaloneFirst.
 Module MapStandaloneSecond.
   From elpi.apps Require Import derive.map.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.map forest.
 
@@ -112,8 +110,7 @@ End MapStandaloneSecond.
 Module MapMetaFirst.
   From elpi.apps Require Import derive.map.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(map)] derive tree.
 
@@ -124,8 +121,7 @@ End MapMetaFirst.
 Module MapMetaSecond.
   From elpi.apps Require Import derive.map.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(map)] derive forest.
 
@@ -136,8 +132,7 @@ End MapMetaSecond.
 Module MapMetaMutualPrefix.
   From elpi.apps Require Import derive.map.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(map), prefix="custom_"] derive forest.
 
@@ -149,8 +144,7 @@ End MapMetaMutualPrefix.
 Module MapParametrized.
   From elpi.apps Require Import derive.map.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(map)] derive pforest.
 
@@ -161,8 +155,7 @@ End MapParametrized.
 Module MapComputation.
   From elpi.apps Require Import derive.map.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.map tree.
 

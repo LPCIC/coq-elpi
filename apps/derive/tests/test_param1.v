@@ -217,42 +217,32 @@ End OtherTests.
 
 Module MutualCoreTests.
 
+Import test_derive_corelib.Coverage.
+Import test_derive_corelib.Mutual.Dependency.
+
 Local Notation pred X := (X -> Type).
 
-Inductive mempty : Type :=
-with mempty' : Type := .
 Elpi derive.param1 mempty.
 Redirect "tmp" Check is_mempty : pred mempty.
 Redirect "tmp" Check is_mempty' : pred mempty'.
 
-Inductive munit : Type := mtt
-with munit' : Type := mtt'.
 Elpi derive.param1 munit.
 Redirect "tmp" Check is_munit : pred munit.
 Redirect "tmp" Check is_munit' : pred munit'.
 
-Inductive mpeano : Type := mZero | mSucc (n : mpeano')
-with mpeano' : Type := mZero' | mSucc' (n' : mpeano).
 Elpi derive.param1 mpeano.
 Redirect "tmp" Check is_mpeano : pred mpeano.
 Redirect "tmp" Check is_mpeano' : pred mpeano'.
 
-Inductive moption (A : Type) : Type := mNone | mSome (_ : A)
-with moption' (A : Type) : Type := mNone' | mSome' (_ : A).
 Elpi derive.param1 moption.
 Redirect "tmp" Check is_moption : forall A, pred A -> pred (moption A).
 Redirect "tmp" Check is_moption' : forall A, pred A -> pred (moption' A).
 
-Inductive mtree (A : Type) : Type := mLeaf (a : A) | mNode (_ : mforest)
-with mforest (A : Type) : Type := mEnd | mTree (_ : mtree) (_ : mforest).
 Elpi derive.param1 mtree.
 Redirect "tmp" Check is_mtree : forall A, pred A -> pred (mtree A).
 Redirect "tmp" Check is_mforest : forall A, pred A -> pred (mforest A).
 
-Inductive a : Type := ka
-with b : Type := kb.
 Elpi derive.param1 a.
-Inductive c : Type := kc : a -> kb = kb -> c.
 Elpi derive.param1 c.
 Redirect "tmp" Check is_c : pred c.
 
@@ -263,8 +253,7 @@ Module MutualCoreNonFirst.
 
   Local Definition pred (X : Type) := X -> Type.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 forest.
 
@@ -284,8 +273,7 @@ Module MutualMetaFirst.
 
   Local Definition pred (X : Type) := X -> Type.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1)] derive tree.
 
@@ -302,8 +290,7 @@ Module MutualMetaSecond.
 
   Local Definition pred (X : Type) := X -> Type.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1)] derive forest.
 

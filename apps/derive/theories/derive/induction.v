@@ -5,8 +5,6 @@
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive.elpi Extra Dependency "induction.elpi" as induction.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
-From elpi.apps.derive.elpi Extra Dependency "param1_mutual_lib.elpi" as param1_mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -28,20 +26,18 @@ induction-db T _ :-
 (* standalone *)
 Elpi Command derive.induction.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate File paramX.
 Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
-Elpi Accumulate File param1_mutual_lib.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate File induction.
 Elpi Accumulate lp:{{
   func derive.induction.standalone-main inductive, string -> list prop.
   derive.induction.standalone-main T Prefix C :-
-    derive.mutual.is-mutual T, !,
-    derive.mutual.members T TS,
+    mutual.is-mutual T, !,
+    mutual.members T TS,
     derive.induction.main-mutual T TS Prefix C.
   derive.induction.standalone-main T Prefix C :- derive.induction.main T Prefix C.
 
@@ -57,7 +53,6 @@ Elpi Accumulate lp:{{
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.induction.db.
-Elpi Accumulate derive File param1_mutual_lib.
 Elpi Accumulate derive File induction.
 
 #[phases="both"] Elpi Accumulate derive lp:{{

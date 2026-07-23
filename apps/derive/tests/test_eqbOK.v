@@ -63,8 +63,7 @@ Redirect "tmp" Check alias_eqb_OK : forall x y : alias, Datatypes.reflect (x = y
 Module EqbOKStandaloneFirst.
   From elpi.apps Require Import derive.eqbOK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect)] derive tree.
   Elpi derive.eqbOK tree.
@@ -82,8 +81,7 @@ End EqbOKStandaloneFirst.
 Module EqbOKStandaloneSecond.
   From elpi.apps Require Import derive.eqbOK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect)] derive tree.
   Elpi derive.eqbOK forest.
@@ -97,8 +95,7 @@ End EqbOKStandaloneSecond.
 Module EqbOKMetaFirst.
   From elpi.apps Require Import derive.eqbOK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive tree.
 
@@ -111,8 +108,7 @@ End EqbOKMetaFirst.
 Module EqbOKMetaSecond.
   From elpi.apps Require Import derive.eqbOK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive forest.
 
@@ -125,8 +121,7 @@ End EqbOKMetaSecond.
 Module EqbOKPrefixSecond.
   From elpi.apps Require Import derive.eqbOK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK), prefix="custom_"] derive forest.
 
@@ -139,8 +134,7 @@ End EqbOKPrefixSecond.
 Module EqbOKChainVisibility.
   From elpi.apps Require Import derive.eqbOK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive forest.
 
@@ -153,9 +147,7 @@ End EqbOKChainVisibility.
 Module EqbOKTripleFromBeta.
   From elpi.apps Require Import derive.eqbOK.
 
-  Inductive alpha : Type := alpha_beta (b : beta)
-  with beta : Type := beta_gamma (g : gamma)
-  with gamma : Type := gamma_alpha (a : alpha) | gamma_done.
+  Import test_derive_corelib.Mutual.CyclicTriple.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive beta.
 
@@ -170,9 +162,7 @@ End EqbOKTripleFromBeta.
 Module EqbOKTripleFromGamma.
   From elpi.apps Require Import derive.eqbOK.
 
-  Inductive alpha : Type := alpha_beta (b : beta)
-  with beta : Type := beta_gamma (g : gamma)
-  with gamma : Type := gamma_alpha (a : alpha) | gamma_done.
+  Import test_derive_corelib.Mutual.CyclicTriple.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive gamma.
 

@@ -62,8 +62,7 @@ Qed.
 Module LensMutualSkip.
   From elpi.apps Require Import derive.lens.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(lens)] derive tree.
 

@@ -117,8 +117,7 @@ Redirect "tmp" Check is_alias_inhab : full alias is_alias.
 Module InhabStandaloneFirst.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 tree.
   Elpi derive.param1.inhab is_tree.
@@ -130,8 +129,7 @@ End InhabStandaloneFirst.
 Module InhabStandaloneSecond.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 tree.
   Elpi derive.param1.inhab is_forest.
@@ -143,8 +141,7 @@ End InhabStandaloneSecond.
 Module InhabMetaFirst.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_inhab)] derive tree.
 
@@ -155,8 +152,7 @@ End InhabMetaFirst.
 Module InhabMetaSecond.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_inhab)] derive forest.
 
@@ -167,8 +163,7 @@ End InhabMetaSecond.
 Module TrivialStandaloneFirst.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 tree.
   Elpi derive.param1.congr is_tree.
@@ -183,8 +178,7 @@ End TrivialStandaloneFirst.
 Module TrivialStandaloneSecond.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.param1 tree.
   Elpi derive.param1.congr is_tree.
@@ -199,8 +193,7 @@ End TrivialStandaloneSecond.
 Module TrivialMetaFirst.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_congr,param1_inhab,param1_trivial)] derive tree.
 
@@ -215,8 +208,7 @@ End TrivialMetaFirst.
 Module TrivialMetaSecond.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_congr,param1_inhab,param1_trivial)] derive forest.
 
@@ -231,8 +223,7 @@ End TrivialMetaSecond.
 Module TrivialParametrizedFail.
   From elpi.apps Require Import derive.param1_trivial.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   (* Parameterized mutual triviality is intentionally unsupported for now. *)
   Fail #[only(param1,param1_congr,param1_inhab,param1_trivial)] derive ptree.

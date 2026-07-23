@@ -6,7 +6,6 @@ From Corelib Require Import PosDef.
 From elpi.apps.derive.elpi Extra Dependency "fields.elpi" as fields.
 From elpi.apps.derive.elpi Extra Dependency "eqb.elpi" as eqb.
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -43,7 +42,6 @@ Elpi Db derive.eqb.db lp:{{
 (* standalone *)
 Elpi Command derive.eqb.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.fields.db.
@@ -56,8 +54,8 @@ Elpi Accumulate lp:{{
 
   func derive.eqb.standalone-main gref, string -> list prop.
   derive.eqb.standalone-main (indt T) Prefix C :-
-    derive.mutual.is-mutual T, !,
-    derive.mutual.members T TS,
+    mutual.is-mutual T, !,
+    mutual.members T TS,
     derive.eqb.mutual.main T TS Prefix C.
   derive.eqb.standalone-main T Prefix C :- derive.eqb.main T Prefix C.
 

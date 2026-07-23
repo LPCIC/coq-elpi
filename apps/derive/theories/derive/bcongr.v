@@ -5,7 +5,6 @@
 
 From elpi.apps.derive.elpi Extra Dependency "injection.elpi" as injection.
 From elpi.apps.derive.elpi Extra Dependency "bcongr.elpi" as bcongr.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -38,7 +37,6 @@ bcongr-db K _ :-
 (* standalone *)
 Elpi Command derive.bcongr.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate Db derive.bcongr.db.
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File injection.
@@ -46,9 +44,9 @@ Elpi Accumulate File bcongr.
 Elpi Accumulate lp:{{
   func derive.bcongr.standalone-main inductive, string -> list prop.
   derive.bcongr.standalone-main T Prefix C :-
-    derive.mutual.is-mutual T, !,
-    derive.mutual.members T TS,
-    std.map TS (t\c\ sigma p\ derive.mutual.selected-prefix T Prefix t p, derive.bcongr.main t p c) CS,
+    mutual.is-mutual T, !,
+    mutual.members T TS,
+    std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.bcongr.main t p c) CS,
     std.flatten CS C.
   derive.bcongr.standalone-main T Prefix C :- derive.bcongr.main T Prefix C.
 
@@ -83,7 +81,7 @@ Elpi Accumulate derive lp:{{
 func derive.bcongr.derive-main inductive, string -> list prop.
 derive.bcongr.derive-main T Prefix C :- derive.mutual-inductive T, !,
   derive.mutual-inductives T TS,
-  std.map TS (t\c\ sigma p\ derive.mutual.selected-prefix T Prefix t p, derive.bcongr.main t p c) CS,
+  std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.bcongr.main t p c) CS,
   std.flatten CS C.
 derive.bcongr.derive-main T Prefix C :- derive.bcongr.main T Prefix C.
   

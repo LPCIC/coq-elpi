@@ -6,7 +6,6 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "projK.elpi" as projK.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -27,7 +26,6 @@ projK-db GR N _ :-
 
 Elpi Command derive.projK.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File projK.
 Elpi Accumulate lp:{{
@@ -37,8 +35,8 @@ Elpi Accumulate lp:{{
 
   func derive.projK.standalone-main inductive, string -> list prop.
   derive.projK.standalone-main T Prefix C :-
-    derive.mutual.is-mutual T, !,
-    derive.mutual.members T TS,
+    mutual.is-mutual T, !,
+    mutual.members T TS,
     std.map TS (t\c\ sigma p\ derive.projK.standalone-prefix T Prefix t p, derive.projK.main t p c) CS,
     std.flatten CS C.
   derive.projK.standalone-main T Prefix C :- derive.projK.main T Prefix C.
@@ -66,7 +64,7 @@ Elpi Accumulate derive lp:{{
 func derive.projK.derive-main inductive, string -> list prop.
 derive.projK.derive-main T Prefix C :- derive.mutual-inductive T, !,
   derive.mutual-inductives T TS,
-  std.map TS (t\c\ sigma p n\ derive.mutual.selected-prefix T Prefix t p, n is p ^ "getk_", derive.projK.main t n c) CS,
+  std.map TS (t\c\ sigma p n\ mutual.selected-prefix T Prefix t p, n is p ^ "getk_", derive.projK.main t n c) CS,
   std.flatten CS C.
 derive.projK.derive-main T Prefix C :- N is Prefix ^ "getk_", derive.projK.main T N C.
   

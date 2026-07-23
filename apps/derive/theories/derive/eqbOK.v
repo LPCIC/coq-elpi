@@ -8,7 +8,6 @@ From elpi.apps.derive Require Import tag eqType_ast fields eqb eqbcorrect derive
 
 From elpi.apps.derive.elpi Extra Dependency "eqbOK.elpi" as eqbOK.
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -44,7 +43,6 @@ Definition dec_reflect : forall a (H : forall x y : a, {x=y}+{x<>y}), forall x y
 (* standalone *)
 Elpi Command derive.eqbOK.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate Db derive.eqb.db.
 Elpi Accumulate Db derive.eqbcorrect.db.
 Elpi Accumulate Db derive.eqType.db.
@@ -54,9 +52,9 @@ Elpi Accumulate File eqType.
 Elpi Accumulate lp:{{
   func derive.eqbOK.standalone-main gref, string -> list prop.
   derive.eqbOK.standalone-main (indt T) Prefix C :-
-    derive.mutual.is-mutual T, !,
-    derive.mutual.members T TS,
-    std.map TS (t\c\ sigma p\ derive.mutual.selected-prefix T Prefix t p, derive.eqbOK.main (indt t) p c) CS,
+    mutual.is-mutual T, !,
+    mutual.members T TS,
+    std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.eqbOK.main (indt t) p c) CS,
     std.flatten CS C.
   derive.eqbOK.standalone-main T Prefix C :- derive.eqbOK.main T Prefix C.
 
@@ -91,7 +89,7 @@ Elpi Accumulate derive lp:{{
 func derive.eqbOK.derive-main gref, string -> list prop.
 derive.eqbOK.derive-main (indt T) Prefix C :- derive.mutual-inductive T, !,
   derive.mutual-inductives T TS,
-  std.map TS (t\c\ sigma p\ derive.mutual.selected-prefix T Prefix t p, derive.eqbOK.main (indt t) p c) CS,
+  std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.eqbOK.main (indt t) p c) CS,
   std.flatten CS C.
 derive.eqbOK.derive-main T Prefix C :- derive.eqbOK.main T Prefix C.
 
@@ -102,7 +100,6 @@ derivation (const T) Prefix ff (derive "eqbOK_alias" (derive.eqbOK.derive-main (
 
 
 Elpi Command derive.eqbOK.register_axiom.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate Db derive.eqb.db.
 Elpi Accumulate Db derive.eqbcorrect.db.
 Elpi Accumulate Db derive.param1.db.

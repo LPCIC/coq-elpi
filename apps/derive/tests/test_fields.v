@@ -165,8 +165,7 @@ Redirect "tmp" Check val_constructP : forall (v:val), val_construct (val_tag v) 
 Module FieldsStandaloneFirst.
   From elpi.apps Require Import derive.fields.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   Elpi derive.eqType.ast color.
   Elpi derive.tag color.
@@ -189,8 +188,7 @@ End FieldsStandaloneFirst.
 Module FieldsStandaloneSecond.
   From elpi.apps Require Import derive.fields.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   Elpi derive.eqType.ast color.
   Elpi derive.tag color.
@@ -207,8 +205,7 @@ End FieldsStandaloneSecond.
 Module FieldsMetaFirst.
   From elpi.apps Require Import derive.fields.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   #[only(eqType_ast,tag,fields)] derive color.
 
@@ -223,8 +220,7 @@ End FieldsMetaFirst.
 Module FieldsMetaSecond.
   From elpi.apps Require Import derive.fields.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   #[only(eqType_ast,tag,fields)] derive shape.
 
@@ -239,8 +235,7 @@ End FieldsMetaSecond.
 Module FieldsPrefixSecond.
   From elpi.apps Require Import derive.fields.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(eqType_ast,tag,fields), prefix="custom_"] derive forest.
 
@@ -255,8 +250,7 @@ End FieldsPrefixSecond.
 Module FieldsParametrized.
   From elpi.apps Require Import derive.fields.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(eqType_ast,tag,fields)] derive pforest.
 

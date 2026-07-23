@@ -1,5 +1,6 @@
 From Corelib Require Import Nat BinNums.
 Definition bool_is_true := is_true.
+From elpi.apps.derive.tests Require Import test_derive_corelib.
 From elpi.apps Require Import
   derive
   derive.tag
@@ -13,12 +14,7 @@ From elpi.apps Require Import
   derive.induction.
 
 Module StandaloneTagIsKProjK.
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree 0
-  | inode : forall n, iforest n -> itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons : forall n, itree n -> iforest n -> iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   Elpi derive.tag itree.
   Redirect "tmp" Check itree_tag : forall A n, itree A n -> positive.
@@ -39,12 +35,7 @@ Module StandaloneTagIsKProjK.
 End StandaloneTagIsKProjK.
 
 Module StandaloneMap.
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree 0
-  | inode : forall n, iforest n -> itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons : forall n, itree n -> iforest n -> iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   Elpi derive.map itree.
   Redirect "tmp" Check itree_map : forall A B, (A -> B) -> forall n, itree A n -> itree B n.
@@ -56,12 +47,7 @@ Module StandaloneMap.
 End StandaloneMap.
 
 Module StandaloneParam1Param2.
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree 0
-  | inode : forall n, iforest n -> itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons : forall n, itree n -> iforest n -> iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   Elpi derive.param1 nat.
   Elpi derive.param1 itree.
@@ -79,12 +65,7 @@ Module StandaloneParam1Param2.
 End StandaloneParam1Param2.
 
 Module StandaloneParam1CongrFunctorInduction.
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree 0
-  | inode : forall n, iforest n -> itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons : forall n, itree n -> iforest n -> iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   Elpi derive.param1 nat.
   Elpi derive.param1 itree.
@@ -104,12 +85,7 @@ Module StandaloneParam1CongrFunctorInduction.
 End StandaloneParam1CongrFunctorInduction.
 
 Module HookMap.
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree 0
-  | inode : forall n, iforest n -> itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons : forall n, itree n -> iforest n -> iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   #[only(map)] derive itree.
   Redirect "tmp" Check itree_map : forall A B, (A -> B) -> forall n, itree A n -> itree B n.
@@ -117,12 +93,7 @@ Module HookMap.
 End HookMap.
 
 Module HookInduction.
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf : A -> itree 0
-  | inode : forall n, iforest n -> itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons : forall n, itree n -> iforest n -> iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   Elpi derive.param1 nat.
   #[only(induction)] derive itree.

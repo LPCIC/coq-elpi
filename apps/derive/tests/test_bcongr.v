@@ -111,8 +111,7 @@ Redirect "tmp" Check enum_bcongr_E3 : reflect (E3 = E3) true.
 Module BcongrStandaloneFirst.
   From elpi.apps Require Import derive.bcongr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.projK tree.
   Elpi derive.bcongr tree.
@@ -131,8 +130,7 @@ End BcongrStandaloneFirst.
 Module BcongrStandaloneSecond.
   From elpi.apps Require Import derive.bcongr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.projK tree.
   Elpi derive.bcongr forest.
@@ -145,8 +143,7 @@ End BcongrStandaloneSecond.
 Module BcongrMetaFirst.
   From elpi.apps Require Import derive.bcongr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(projK,bcongr)] derive tree.
 
@@ -158,8 +155,7 @@ End BcongrMetaFirst.
 Module BcongrMetaSecond.
   From elpi.apps Require Import derive.bcongr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(projK,bcongr)] derive forest.
 
@@ -171,8 +167,7 @@ End BcongrMetaSecond.
 Module BcongrPrefixSecond.
   From elpi.apps Require Import derive.bcongr.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(projK,bcongr), prefix="custom_"] derive forest.
 

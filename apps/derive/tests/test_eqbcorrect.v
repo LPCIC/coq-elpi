@@ -80,8 +80,7 @@ Redirect "tmp" Check alias_eqb_refl : eqb_reflexive alias_eqb.
 Module EqbCorrectStandaloneFirst.
   From elpi.apps Require Import derive.eqbcorrect.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.eqType.ast tree.
   Elpi derive.tag tree.
@@ -106,8 +105,7 @@ End EqbCorrectStandaloneFirst.
 Module EqbCorrectStandaloneSecond.
   From elpi.apps Require Import derive.eqbcorrect.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.eqType.ast tree.
   Elpi derive.tag tree.
@@ -128,8 +126,7 @@ End EqbCorrectStandaloneSecond.
 Module EqbCorrectMetaFirst.
   From elpi.apps Require Import derive.eqbcorrect.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect)] derive tree.
 
@@ -142,8 +139,7 @@ End EqbCorrectMetaFirst.
 Module EqbCorrectMetaSecond.
   From elpi.apps Require Import derive.eqbcorrect.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect)] derive forest.
 
@@ -156,8 +152,7 @@ End EqbCorrectMetaSecond.
 Module EqbCorrectPrefixSecond.
   From elpi.apps Require Import derive.eqbcorrect.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect), prefix="custom_"] derive forest.
 

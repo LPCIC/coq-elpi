@@ -83,8 +83,7 @@ Redirect "tmp" Check is_val_functor : func is_val.
 Module FunctorStandaloneFirst.
   From elpi.apps Require Import derive.param1_functor.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   Elpi derive.param1 ptree.
   Elpi derive.param1.functor is_ptree.
@@ -96,8 +95,7 @@ End FunctorStandaloneFirst.
 Module FunctorStandaloneSecond.
   From elpi.apps Require Import derive.param1_functor.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   Elpi derive.param1 ptree.
   Elpi derive.param1.functor is_pforest.
@@ -109,8 +107,7 @@ End FunctorStandaloneSecond.
 Module FunctorMetaFirst.
   From elpi.apps Require Import derive.param1_functor.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(param1,param1_functor)] derive ptree.
 
@@ -121,8 +118,7 @@ End FunctorMetaFirst.
 Module FunctorMetaSecond.
   From elpi.apps Require Import derive.param1_functor.
 
-  Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest)
-  with pforest (A : Type) : Type := pempty | pcons (t : ptree) (f : pforest).
+  Import test_derive_corelib.Mutual.ParametrizedTree.
 
   #[only(param1,param1_functor)] derive pforest.
 
@@ -133,12 +129,7 @@ End FunctorMetaSecond.
 Module FunctorIndexedPositive.
   From elpi.apps Require Import derive.param1_functor.
 
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf (x : A) : itree 0
-  | inode n (f : iforest n) : itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons n (t : itree n) (f : iforest n) : iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   Elpi derive.param1 nat.
   #[only(param1,param1_functor)] derive iforest.

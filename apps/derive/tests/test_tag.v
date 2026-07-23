@@ -77,8 +77,7 @@ Module TagStandaloneFirst.
   From elpi.apps Require Import derive.tag.
   From Corelib Require Import PosDef.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   Elpi derive.tag color.
 
@@ -96,8 +95,7 @@ Module TagStandaloneSecond.
   From elpi.apps Require Import derive.tag.
   From Corelib Require Import PosDef.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   Elpi derive.tag shape.
 
@@ -109,8 +107,7 @@ Module TagMetaFirst.
   From elpi.apps Require Import derive.tag.
   From Corelib Require Import PosDef.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   #[only(tag)] derive color.
 
@@ -122,8 +119,7 @@ Module TagMetaSecond.
   From elpi.apps Require Import derive.tag.
   From Corelib Require Import PosDef.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   #[only(tag)] derive shape.
 
@@ -135,8 +131,7 @@ Module TagPrefixSecond.
   From elpi.apps Require Import derive.tag.
   From Corelib Require Import PosDef.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   #[only(tag), prefix="selected_"] derive shape.
 
@@ -148,12 +143,7 @@ Module TagIndexedPositive.
   From elpi.apps Require Import derive.tag.
   From Corelib Require Import PosDef.
 
-  Inductive itree (A : Type) : nat -> Type :=
-  | ileaf (x : A) : itree 0
-  | inode n (f : iforest n) : itree (S n)
-  with iforest (A : Type) : nat -> Type :=
-  | inil : iforest 0
-  | icons n (t : itree n) (f : iforest n) : iforest (S n).
+  Import test_derive_corelib.Mutual.Indexed.
 
   #[only(tag)] derive iforest.
 

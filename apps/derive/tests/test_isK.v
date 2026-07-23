@@ -112,8 +112,7 @@ From elpi.apps Require Import derive.
 Module IsKStandaloneFirst.
   From elpi.apps Require Import derive.isK.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   Elpi derive.isK color.
 
@@ -132,8 +131,7 @@ End IsKStandaloneFirst.
 Module IsKStandaloneSecond.
   From elpi.apps Require Import derive.isK.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   Elpi derive.isK shape.
 
@@ -146,8 +144,7 @@ End IsKStandaloneSecond.
 Module IsKMetaFirst.
   From elpi.apps Require Import derive.isK.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   #[only(isK)] derive color.
 
@@ -160,8 +157,7 @@ End IsKMetaFirst.
 Module IsKMetaSecond.
   From elpi.apps Require Import derive.isK.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   #[only(isK)] derive shape.
 
@@ -174,8 +170,7 @@ End IsKMetaSecond.
 Module IsKPrefixSecond.
   From elpi.apps Require Import derive.isK.
 
-  Inductive color : Type := red | blue
-  with shape : Type := circle | square.
+  Import test_derive_corelib.Mutual.NonRecursive.
 
   #[only(isK), prefix="custom_"] derive shape.
 

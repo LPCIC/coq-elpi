@@ -53,7 +53,7 @@ func main gref, gref, string -> list prop.
 main Orig (indt GR) Prefix Clauses2 :-
   
   coq.env.indt GR _ _ _ _ K KT,
-  derive.param1_mutual.translated-lno-gref Orig (indt GR) Lno,
+  paramX.translated-lno-gref Orig (indt GR) Lno,
   map2-filter K KT (main-k Prefix Lno) Clauses,
   Clauses2 = [param1-congr-done (indt GR)|Clauses],
   forall Clauses2

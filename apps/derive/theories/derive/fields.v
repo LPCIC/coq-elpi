@@ -4,7 +4,6 @@ From Corelib Require Import PosDef.
 From elpi.apps Require Export derive.eqType_ast derive.tag.
 From elpi.apps.derive.elpi Extra Dependency "fields.elpi" as fields.
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -32,7 +31,6 @@ Elpi Command derive.fields.
 Elpi Accumulate Db Header derive.eqType.db.
 Elpi Accumulate Db Header derive.tag.db.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate File eqType.
 Elpi Accumulate Db Header derive.fields.db.
 Elpi Accumulate File fields.
@@ -43,9 +41,9 @@ Elpi Accumulate lp:{{
 
   func derive.fields.standalone-main inductive, string -> list prop.
   derive.fields.standalone-main T Prefix C :-
-    derive.mutual.is-mutual T, !,
-    derive.mutual.members T TS,
-    std.map TS (t\c\ sigma p\ derive.mutual.selected-prefix T Prefix t p, derive.fields.main t p c) CS,
+    mutual.is-mutual T, !,
+    mutual.members T TS,
+    std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.fields.main t p c) CS,
     std.flatten CS C.
   derive.fields.standalone-main T Prefix C :- derive.fields.main T Prefix C.
 
@@ -80,7 +78,7 @@ Elpi Accumulate derive lp:{{
 func derive.fields.derive-main inductive, string -> list prop.
 derive.fields.derive-main T Prefix C :- derive.mutual-inductive T, !,
   derive.mutual-inductives T TS,
-  std.map TS (t\c\ sigma p\ derive.mutual.selected-prefix T Prefix t p, derive.fields.main t p c) CS,
+  std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.fields.main t p c) CS,
   std.flatten CS C.
 derive.fields.derive-main T Prefix C :- derive.fields.main T Prefix C.
 

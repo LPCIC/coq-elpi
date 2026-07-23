@@ -10,8 +10,6 @@ From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive.elpi Extra Dependency "param1_inhab.elpi" as param1_inhab.
 From elpi.apps.derive.elpi Extra Dependency "param1_trivial.elpi" as param1_trivial.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
-From elpi.apps.derive.elpi Extra Dependency "param1_mutual_lib.elpi" as param1_mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -82,12 +80,10 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
 (* standalone *)
 Elpi Command derive.param1.trivial.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate File paramX.
 Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
-Elpi Accumulate File param1_mutual_lib.
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File param1_inhab.
@@ -95,8 +91,8 @@ Elpi Accumulate File param1_trivial.
 Elpi Accumulate lp:{{
   func derive.param1.trivial.standalone-main gref, gref -> list prop.
   derive.param1.trivial.standalone-main (indt GR) _IsGR C :-
-    derive.mutual.is-mutual GR, !,
-    derive.mutual.members GR TS,
+    mutual.is-mutual GR, !,
+    mutual.members GR TS,
     derive.param1.inhab.main-mutual TS "_inhab" CL,
     CL =!=> derive.param1.trivial.main-mutual TS "_trivial" C.
   derive.param1.trivial.standalone-main GR IsGR C :-
@@ -116,20 +112,18 @@ Elpi Accumulate lp:{{
  
 Elpi Command derive.param1.inhab.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
 Elpi Accumulate File paramX.
 Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
-Elpi Accumulate File param1_mutual_lib.
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File param1_inhab.
 Elpi Accumulate lp:{{
   func derive.param1.inhab.standalone-main gref, gref -> list prop.
   derive.param1.inhab.standalone-main (indt GR) _IsGR C :-
-    derive.mutual.is-mutual GR, !,
-    derive.mutual.members GR TS,
+    mutual.is-mutual GR, !,
+    mutual.members GR TS,
     derive.param1.inhab.main-mutual TS "_inhab" C.
   derive.param1.inhab.standalone-main GR IsGR C :-
     derive.param1.inhab.main GR IsGR "_inhab" C.
@@ -273,7 +267,6 @@ Elpi Accumulate derive.param1.trivial.db lp:{{
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.param1.trivial.db.
-Elpi Accumulate derive File param1_mutual_lib.
 Elpi Accumulate derive File param1_inhab.
 Elpi Accumulate derive File param1_trivial.
 

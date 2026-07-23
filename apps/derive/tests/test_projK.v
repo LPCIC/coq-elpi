@@ -108,8 +108,7 @@ From elpi.apps Require Import derive.
 Module ProjKStandaloneFirst.
   From elpi.apps Require Import derive.projK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.projK tree.
 
@@ -127,8 +126,7 @@ End ProjKStandaloneFirst.
 Module ProjKStandaloneSecond.
   From elpi.apps Require Import derive.projK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   Elpi derive.projK forest.
 
@@ -140,8 +138,7 @@ End ProjKStandaloneSecond.
 Module ProjKMetaFirst.
   From elpi.apps Require Import derive.projK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(projK)] derive tree.
 
@@ -153,8 +150,7 @@ End ProjKMetaFirst.
 Module ProjKMetaSecond.
   From elpi.apps Require Import derive.projK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(projK)] derive forest.
 
@@ -166,8 +162,7 @@ End ProjKMetaSecond.
 Module ProjKPrefixSecond.
   From elpi.apps Require Import derive.projK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(projK), prefix="custom_"] derive forest.
 
@@ -179,8 +174,7 @@ End ProjKPrefixSecond.
 Module ProjKComputation.
   From elpi.apps Require Import derive.projK.
 
-  Inductive tree : Type := node (f : forest)
-  with forest : Type := empty | cons (t : tree) (f : forest).
+  Import test_derive_corelib.Mutual.Tree.
 
   #[only(projK)] derive tree.
 

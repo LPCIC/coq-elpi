@@ -252,7 +252,7 @@ main-mutual GRS Suffix Clauses :- std.do! [
   coq.env.indt FirstGRR Ind LnoIs Luno _ _ _,
   assert! (Ind = tt) "derive.param1_inhab: Coinductive types are not supported",
   assert! (LnoIs = Luno) "derive.param1_inhab: Non-uniform parameters not supported",
-  derive.param1_mutual.translated-lno GRS FirstGRR Lno,
+  paramX.translated-lno GRS FirstGRR Lno,
   add-mutual-inhab-consts Specs Specs Suffix Lno 0 Clauses
 ].
 

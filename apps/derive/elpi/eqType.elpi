@@ -6,8 +6,8 @@ namespace derive.eqType.ast {
 
 func translate-indt inductive -> eqb.eqType, diagnostic.
 translate-indt I O D :-
-  derive.mutual.is-mutual I, !,
-  derive.mutual.block-info I _ Lno _ _,
+  mutual.is-mutual I, !,
+  mutual.block-info I _ Lno _ _,
   coq.env.indt I _ _ _ Arity KN KT,
   translate-param-arity Lno Arity I KN KT O D.
 translate-indt I O D :-

@@ -6,9 +6,8 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1_functor.elpi" as param1_functor.
-From elpi.apps.derive.elpi Extra Dependency "mutual_lib.elpi" as mutual_lib.
-From elpi.apps.derive.elpi Extra Dependency "param1_mutual_lib.elpi" as param1_mutual_lib.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
@@ -22,16 +21,15 @@ Elpi Db derive.param1.functor.db lp:{{
 
 Elpi Command derive.param1.functor.
 Elpi Accumulate File derive_hook.
-Elpi Accumulate File mutual_lib.
+Elpi Accumulate File paramX.
 Elpi Accumulate Db derive.param1.db.
-Elpi Accumulate File param1_mutual_lib.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File param1_functor.
 Elpi Accumulate lp:{{ 
   func derive.param1.functor.standalone-main inductive, inductive, string -> list prop.
   derive.param1.functor.standalone-main GR _IsGR Suffix C :-
-    derive.mutual.is-mutual GR, !,
-    derive.mutual.members GR TS,
+    mutual.is-mutual GR, !,
+    mutual.members GR TS,
     derive.param1.functor.main-mutual TS Suffix C.
   derive.param1.functor.standalone-main GR IsGR Suffix C :-
     derive.param1.functor.main (indt GR) (indt IsGR) Suffix C.
@@ -54,7 +52,6 @@ Elpi Accumulate lp:{{
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.param1.functor.db.
-Elpi Accumulate derive File param1_mutual_lib.
 Elpi Accumulate derive File param1_functor.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
