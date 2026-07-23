@@ -6,6 +6,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1_functor.elpi" as param1_functor.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
@@ -20,20 +21,29 @@ Elpi Db derive.param1.functor.db lp:{{
 
 Elpi Command derive.param1.functor.
 Elpi Accumulate File derive_hook.
+Elpi Accumulate File paramX.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File param1_functor.
 Elpi Accumulate lp:{{ 
+  func derive.param1.functor.standalone-main inductive, inductive, string -> list prop.
+  derive.param1.functor.standalone-main GR _IsGR Suffix C :-
+    mutual.is-mutual GR, !,
+    mutual.members GR TS,
+    derive.param1.functor.main-mutual TS Suffix C.
+  derive.param1.functor.standalone-main GR IsGR Suffix C :-
+    derive.param1.functor.main (indt GR) (indt IsGR) Suffix C.
+
   main [str I, str O] :- !,
     coq.locate I (indt IsGR),
     realiR T {coq.env.global (indt IsGR)},
     coq.env.global (indt GR) T,
-    derive.param1.functor.main (indt GR) (indt IsGR) O _.
+    derive.param1.functor.standalone-main GR IsGR O _.
   main [str I] :- !,
     coq.locate I (indt IsGR),
     realiR T {coq.env.global (indt IsGR)},
     coq.env.global (indt GR) T,
-    derive.param1.functor.main (indt GR) (indt IsGR) "_functor" _.
+    derive.param1.functor.standalone-main GR IsGR "_functor" _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.param1.functor <inductive type name> [<output suffix>]".
@@ -54,6 +64,12 @@ dep1 "param1_functor" "param1".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) _ ff (derive "param1_functor" (derive.on_param1 (indt T) derive.param1.functor.main "_functor") (derive.on_param1 (indt T) (_\T\_\_\sigma I\ T = indt I, param1-functor-for I _ _) _ _)).
+func derive.param1.functor.derive-main inductive -> list prop.
+derive.param1.functor.derive-main T C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.param1.functor.main-mutual TS "_functor" C.
+derive.param1.functor.derive-main T C :- derive.on_param1 (indt T) derive.param1.functor.main "_functor" C.
+
+derivation (indt T) _ ff (derive "param1_functor" (derive.param1.functor.derive-main T) (derive.on_param1 (indt T) (_\T\_\_\sigma I\ T = indt I, param1-functor-for I _ _) _ _)).
 
 }}.

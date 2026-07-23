@@ -126,3 +126,61 @@ we don't have a copy here because some DBs have special rules*)
 Definition alias := seq peano.
 
 End Coverage.
+
+Module Mutual.
+
+Module Tree.
+Inductive tree : Type := node (f : forest)
+with forest : Type := empty | cons (t : tree) (f : forest).
+End Tree.
+
+Module ParametrizedTree.
+Inductive ptree (A : Type) : Type := pnode (x : A) (f : pforest A)
+with pforest (A : Type) : Type := pempty | pcons (t : ptree A) (f : pforest A).
+End ParametrizedTree.
+
+Module Triple.
+Inductive alpha : Type := alpha0 | alpha1 (b : beta)
+with beta : Type := beta0 | beta1 (g : gamma)
+with gamma : Type := gamma0 | gamma1 (a : alpha) (b : beta).
+End Triple.
+
+Module CyclicTriple.
+Inductive alpha : Type := alpha_beta (b : beta)
+with beta : Type := beta_gamma (g : gamma)
+with gamma : Type := gamma_alpha (a : alpha) | gamma_done.
+End CyclicTriple.
+
+Module ParametrizedTriple.
+Inductive palpha (A : Type) : Type :=
+| palpha0
+| palpha1 (x : A) (b : pbeta A)
+with pbeta (A : Type) : Type :=
+| pbeta0
+| pbeta1 (g : pgamma A)
+with pgamma (A : Type) : Type :=
+| pgamma0
+| pgamma1 (a : palpha A) (b : pbeta A).
+End ParametrizedTriple.
+
+Module NonRecursive.
+Inductive color : Type := red | blue
+with shape : Type := circle | square.
+End NonRecursive.
+
+Module Indexed.
+Inductive itree (A : Type) : nat -> Type :=
+| ileaf : A -> itree A 0
+| inode : forall n, iforest A n -> itree A (S n)
+with iforest (A : Type) : nat -> Type :=
+| inil : iforest A 0
+| icons : forall n, itree A n -> iforest A n -> iforest A (S n).
+End Indexed.
+
+Module Dependency.
+Inductive a : Type := ka
+with b : Type := kb.
+Inductive c : Type := kc : a -> kb = kb -> c.
+End Dependency.
+
+End Mutual.

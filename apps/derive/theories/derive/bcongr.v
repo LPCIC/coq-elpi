@@ -42,11 +42,19 @@ Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File injection.
 Elpi Accumulate File bcongr.
 Elpi Accumulate lp:{{
+  func derive.bcongr.standalone-main inductive, string -> list prop.
+  derive.bcongr.standalone-main T Prefix C :-
+    mutual.is-mutual T, !,
+    mutual.members T TS,
+    std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.bcongr.main t p c) CS,
+    std.flatten CS C.
+  derive.bcongr.standalone-main T Prefix C :- derive.bcongr.main T Prefix C.
+
   main [str I] :- !,
     coq.locate I (indt GR),
     coq.gref->id (indt GR) Tname,
     Prefix is Tname ^ "_",
-    derive.bcongr.main GR Prefix _.
+    derive.bcongr.standalone-main GR Prefix _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.bcongr <inductive type name>".
@@ -69,7 +77,14 @@ dep1 "bcongr" "projK".
 }}.
 
 Elpi Accumulate derive lp:{{
+
+func derive.bcongr.derive-main inductive, string -> list prop.
+derive.bcongr.derive-main T Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.bcongr.main t p c) CS,
+  std.flatten CS C.
+derive.bcongr.derive-main T Prefix C :- derive.bcongr.main T Prefix C.
   
-derivation (indt T) N ff (derive "bcongr" (derive.bcongr.main T N) (derive.exists-indc T (K\bcongr-db K _))).
+derivation (indt T) N ff (derive "bcongr" (derive.bcongr.derive-main T N) (derive.exists-indc T (K\bcongr-db K _))).
 
 }}.

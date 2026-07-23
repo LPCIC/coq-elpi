@@ -99,11 +99,18 @@ Elpi Accumulate File eqType.
 Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate lp:{{
+  func derive.eqbcorrect.standalone-main gref, string -> list prop.
+  derive.eqbcorrect.standalone-main (indt T) Prefix C :-
+    mutual.is-mutual T, !,
+    mutual.members T TS,
+    derive.eqbcorrect.mutual.main T TS Prefix C.
+  derive.eqbcorrect.standalone-main T Prefix C :- derive.eqbcorrect.main T Prefix C.
+
   main [str I] :- !, 
     coq.locate I GR,
     coq.gref->id GR Tname,
     Prefix is Tname ^ "_",
-    derive.eqbcorrect.main GR Prefix _.
+    derive.eqbcorrect.standalone-main GR Prefix _.
 
   main _ :- usage.
    
@@ -128,7 +135,13 @@ dep1 "eqbcorrect_alias" "eqb_alias".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) Prefix ff (derive "eqbcorrect" (derive.eqbcorrect.main (indt T) Prefix) (eqcorrect-for (indt T) _ _)).
-derivation (const C) Prefix ff (derive "eqbcorrect_alias" (derive.eqbcorrect.main (const C) Prefix) (eqcorrect-for (const C) _ _)).
+func derive.eqbcorrect.derive-main gref, string -> list prop.
+derive.eqbcorrect.derive-main (indt T) Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.eqbcorrect.mutual.main T TS Prefix C.
+derive.eqbcorrect.derive-main T Prefix C :- derive.eqbcorrect.main T Prefix C.
+
+derivation (indt T) Prefix ff (derive "eqbcorrect" (derive.eqbcorrect.derive-main (indt T) Prefix) (eqcorrect-for (indt T) _ _)).
+derivation (const C) Prefix ff (derive "eqbcorrect_alias" (derive.eqbcorrect.derive-main (const C) Prefix) (eqcorrect-for (const C) _ _)).
 
 }}.

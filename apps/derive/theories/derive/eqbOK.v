@@ -50,11 +50,19 @@ Elpi Accumulate Db derive.eqbOK.db.
 Elpi Accumulate File eqbOK.
 Elpi Accumulate File eqType.
 Elpi Accumulate lp:{{
+  func derive.eqbOK.standalone-main gref, string -> list prop.
+  derive.eqbOK.standalone-main (indt T) Prefix C :-
+    mutual.is-mutual T, !,
+    mutual.members T TS,
+    std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.eqbOK.main (indt t) p c) CS,
+    std.flatten CS C.
+  derive.eqbOK.standalone-main T Prefix C :- derive.eqbOK.main T Prefix C.
+
   main [str I] :- !, 
     coq.locate I GR,
     coq.gref->id GR Tname,
     Prefix is Tname ^ "_",
-    derive.eqbOK.main GR Prefix _.
+    derive.eqbOK.standalone-main GR Prefix _.
 
   main _ :- usage.
 
@@ -78,8 +86,15 @@ dep1 "eqbOK_alias" "eqbcorrect_alias".
 
 Elpi Accumulate derive lp:{{
 
-derivation (indt T) Prefix ff (derive "eqbOK" (derive.eqbOK.main (indt T) Prefix) (eqbok-for (indt T) _)).
-derivation (const T) Prefix ff (derive "eqbOK_alias" (derive.eqbOK.main (const T) Prefix) (eqbok-for (const T) _)).
+func derive.eqbOK.derive-main gref, string -> list prop.
+derive.eqbOK.derive-main (indt T) Prefix C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  std.map TS (t\c\ sigma p\ mutual.selected-prefix T Prefix t p, derive.eqbOK.main (indt t) p c) CS,
+  std.flatten CS C.
+derive.eqbOK.derive-main T Prefix C :- derive.eqbOK.main T Prefix C.
+
+derivation (indt T) Prefix ff (derive "eqbOK" (derive.eqbOK.derive-main (indt T) Prefix) (eqbok-for (indt T) _)).
+derivation (const T) Prefix ff (derive "eqbOK_alias" (derive.eqbOK.derive-main (const T) Prefix) (eqbok-for (const T) _)).
 
 }}.
 

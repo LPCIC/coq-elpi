@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.param1.
+From elpi.apps Require Import derive derive.param1.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib.
 Import test_derive_corelib.Coverage.
@@ -214,3 +214,90 @@ Inductive c := kc : a -> kb = kb -> c.
 Elpi derive.param1 c.
 
 End OtherTests.
+
+Module MutualCoreTests.
+
+Import test_derive_corelib.Coverage.
+Import test_derive_corelib.Mutual.Dependency.
+
+Local Notation pred X := (X -> Type).
+
+Elpi derive.param1 mempty.
+Redirect "tmp" Check is_mempty : pred mempty.
+Redirect "tmp" Check is_mempty' : pred mempty'.
+
+Elpi derive.param1 munit.
+Redirect "tmp" Check is_munit : pred munit.
+Redirect "tmp" Check is_munit' : pred munit'.
+
+Elpi derive.param1 mpeano.
+Redirect "tmp" Check is_mpeano : pred mpeano.
+Redirect "tmp" Check is_mpeano' : pred mpeano'.
+
+Elpi derive.param1 moption.
+Redirect "tmp" Check is_moption : forall A, pred A -> pred (moption A).
+Redirect "tmp" Check is_moption' : forall A, pred A -> pred (moption' A).
+
+Elpi derive.param1 mtree.
+Redirect "tmp" Check is_mtree : forall A, pred A -> pred (mtree A).
+Redirect "tmp" Check is_mforest : forall A, pred A -> pred (mforest A).
+
+Elpi derive.param1 a.
+Elpi derive.param1 c.
+Redirect "tmp" Check is_c : pred c.
+
+End MutualCoreTests.
+
+Module MutualCoreNonFirst.
+  From elpi.apps Require Import derive.param1.
+
+  Local Definition pred (X : Type) := X -> Type.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.param1 forest.
+
+  Redirect "tmp" Check is_tree : pred tree.
+  Redirect "tmp" Check is_forest : pred forest.
+  Redirect "tmp" Check is_node : forall f, is_forest f -> is_tree (node f).
+  Redirect "tmp" Check is_empty : is_forest empty.
+  Redirect "tmp" Check is_cons : forall t, is_tree t -> forall f, is_forest f -> is_forest (cons t f).
+  Redirect "tmp" Elpi Query derive.param1 lp:{{
+    reali (global {{:gref tree}}) _,
+    reali (global {{:gref forest}}) _
+  }}.
+End MutualCoreNonFirst.
+
+Module MutualMetaFirst.
+  From elpi.apps Require Import derive.param1.
+
+  Local Definition pred (X : Type) := X -> Type.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1)] derive tree.
+
+  Redirect "tmp" Check is_tree : pred tree.
+  Redirect "tmp" Check is_forest : pred forest.
+  Redirect "tmp" Elpi Query derive.param1 lp:{{
+    reali (global {{:gref tree}}) _,
+    reali (global {{:gref forest}}) _
+  }}.
+End MutualMetaFirst.
+
+Module MutualMetaSecond.
+  From elpi.apps Require Import derive.param1.
+
+  Local Definition pred (X : Type) := X -> Type.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1)] derive forest.
+
+  Redirect "tmp" Check is_tree : pred tree.
+  Redirect "tmp" Check is_forest : pred forest.
+  Redirect "tmp" Elpi Query derive.param1 lp:{{
+    reali (global {{:gref tree}}) _,
+    reali (global {{:gref forest}}) _
+  }}.
+End MutualMetaSecond.

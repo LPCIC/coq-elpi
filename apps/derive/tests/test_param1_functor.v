@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.param1 derive.param1_functor.
+From elpi.apps Require Import derive derive.param1 derive.param1_functor.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib test_param1.
 Import test_derive_corelib.Coverage.
@@ -39,11 +39,11 @@ Elpi derive.param1.functor is_sigma_bool2.
 Elpi derive.param1.functor is_ord.
 Elpi derive.param1.functor is_ord2.
 Elpi derive.param1.functor is_val.
-Fail Elpi derive.param1.functor mempty.
-Fail Elpi derive.param1.functor munit.
-Fail Elpi derive.param1.functor mpeano.
-Fail Elpi derive.param1.functor moption.
-Fail Elpi derive.param1.functor mtree.
+Elpi derive.param1.functor is_mempty.
+Elpi derive.param1.functor is_munit.
+Elpi derive.param1.functor is_mpeano.
+Elpi derive.param1.functor is_moption.
+Elpi derive.param1.functor is_mtree.
 
 End Coverage.
 
@@ -79,3 +79,61 @@ Redirect "tmp" Check is_enum_functor : func is_enum.
 Redirect "tmp" Check is_ord_functor : forall n pn, func (is_ord n pn).
 Redirect "tmp" Check is_ord2_functor : forall n pn, func (is_ord2 n pn).
 Redirect "tmp" Check is_val_functor : func is_val.
+
+Module FunctorStandaloneFirst.
+  From elpi.apps Require Import derive.param1_functor.
+
+  Import test_derive_corelib.Mutual.ParametrizedTree.
+
+  Elpi derive.param1 ptree.
+  Elpi derive.param1.functor is_ptree.
+
+  Redirect "tmp" Check is_ptree_functor.
+  Redirect "tmp" Check is_pforest_functor.
+End FunctorStandaloneFirst.
+
+Module FunctorStandaloneSecond.
+  From elpi.apps Require Import derive.param1_functor.
+
+  Import test_derive_corelib.Mutual.ParametrizedTree.
+
+  Elpi derive.param1 ptree.
+  Elpi derive.param1.functor is_pforest.
+
+  Redirect "tmp" Check is_ptree_functor.
+  Redirect "tmp" Check is_pforest_functor.
+End FunctorStandaloneSecond.
+
+Module FunctorMetaFirst.
+  From elpi.apps Require Import derive.param1_functor.
+
+  Import test_derive_corelib.Mutual.ParametrizedTree.
+
+  #[only(param1,param1_functor)] derive ptree.
+
+  Redirect "tmp" Check is_ptree_functor.
+  Redirect "tmp" Check is_pforest_functor.
+End FunctorMetaFirst.
+
+Module FunctorMetaSecond.
+  From elpi.apps Require Import derive.param1_functor.
+
+  Import test_derive_corelib.Mutual.ParametrizedTree.
+
+  #[only(param1,param1_functor)] derive pforest.
+
+  Redirect "tmp" Check is_ptree_functor.
+  Redirect "tmp" Check is_pforest_functor.
+End FunctorMetaSecond.
+
+Module FunctorIndexedPositive.
+  From elpi.apps Require Import derive.param1_functor.
+
+  Import test_derive_corelib.Mutual.Indexed.
+
+  Elpi derive.param1 nat.
+  #[only(param1,param1_functor)] derive iforest.
+
+  Redirect "tmp" Check is_itree_functor.
+  Redirect "tmp" Check is_iforest_functor.
+End FunctorIndexedPositive.

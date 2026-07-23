@@ -89,11 +89,20 @@ Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File param1_inhab.
 Elpi Accumulate File param1_trivial.
 Elpi Accumulate lp:{{
+  func derive.param1.trivial.standalone-main gref, gref -> list prop.
+  derive.param1.trivial.standalone-main (indt GR) _IsGR C :-
+    mutual.is-mutual GR, !,
+    mutual.members GR TS,
+    derive.param1.inhab.main-mutual TS "_inhab" CL,
+    CL =!=> derive.param1.trivial.main-mutual TS "_trivial" C.
+  derive.param1.trivial.standalone-main GR IsGR C :-
+    derive.param1.inhab.main GR IsGR "_inhab" CL,
+    CL =!=> derive.param1.trivial.main GR IsGR "_trivial" C.
+
   main [str I] :- coq.locate I IsGR, !,
     realiR T {coq.env.global IsGR},
     coq.env.global GR T,
-    derive.param1.inhab.main GR IsGR "_inhab" CL,
-    CL =!=> derive.param1.trivial.main GR IsGR "_trivial" _.
+    derive.param1.trivial.standalone-main GR IsGR _.
   main _ :- usage.
 
   usage :-
@@ -111,10 +120,18 @@ Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate File param1_inhab.
 Elpi Accumulate lp:{{
+  func derive.param1.inhab.standalone-main gref, gref -> list prop.
+  derive.param1.inhab.standalone-main (indt GR) _IsGR C :-
+    mutual.is-mutual GR, !,
+    mutual.members GR TS,
+    derive.param1.inhab.main-mutual TS "_inhab" C.
+  derive.param1.inhab.standalone-main GR IsGR C :-
+    derive.param1.inhab.main GR IsGR "_inhab" C.
+
   main [str I] :- coq.locate I IsGR, !,
     realiR T {coq.env.global IsGR},
     coq.env.global GR T,
-    derive.param1.inhab.main GR IsGR "_inhab" _.
+    derive.param1.inhab.standalone-main GR IsGR _.
   main _ :- usage.
 
   usage :-
@@ -266,7 +283,19 @@ dep1 "param1_inhab" "param1".
 
 Elpi Accumulate derive lp:{{
 
-derivation T  _ ff (derive "param1_inhab"   (derive.on_param1 T derive.param1.inhab.main   "_inhab")   (derive.on_param1 T  (_\T\_\_\param1-inhab-done T) _ _)).
-derivation T  _ ff (derive "param1_trivial" (derive.on_param1 T derive.param1.trivial.main "_trivial") (derive.on_param1 T  (_\T\_\_\param1-trivial-done T) _ _)).
+func derive.param1.inhab.derive-main gref -> list prop.
+derive.param1.inhab.derive-main (indt T) C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.param1.inhab.main-mutual TS "_inhab" C.
+derive.param1.inhab.derive-main T C :- derive.on_param1 T derive.param1.inhab.main "_inhab" C.
+
+func derive.param1.trivial.derive-main gref -> list prop.
+derive.param1.trivial.derive-main (indt T) C :- derive.mutual-inductive T, !,
+  derive.mutual-inductives T TS,
+  derive.param1.trivial.main-mutual TS "_trivial" C.
+derive.param1.trivial.derive-main T C :- derive.on_param1 T derive.param1.trivial.main "_trivial" C.
+
+derivation T  _ ff (derive "param1_inhab"   (derive.param1.inhab.derive-main T)   (derive.on_param1 T  (_\T\_\_\param1-inhab-done T) _ _)).
+derivation T  _ ff (derive "param1_trivial" (derive.param1.trivial.derive-main T) (derive.on_param1 T  (_\T\_\_\param1-trivial-done T) _ _)).
 
 }}.

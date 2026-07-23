@@ -27,7 +27,9 @@ derive.eqb.main (indt I) Prefix CL :- std.do! [
   derive.eqb.eqbf.do-clause FI FI [] [] EQBF [] CL1,
   derive.eqb.eqb.do-clause FI FI [] [] EQB [] CL2,
   CL = [CL1,CL2,eqb-done (indt I)],
-  std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ x)),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ CL1),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") CL2),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done (indt I))),
 ].
 derive.eqb.main (const C) Prefix CL :- std.do! [
   coq.env.const C (some T) _,
@@ -40,6 +42,186 @@ derive.eqb.main (const C) Prefix CL :- std.do! [
   std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") x)),
 ].
 % derive.eqb.main (indc _) _ _ :- stop "eqrive.eqb cannot be called on constructors".
+
+namespace derive.eqb.mutual {
+
+func eqb-ty eqb.eqType, eqb.eqType, list term, list term -> term.
+eqb-ty (eqb.type-param FI) (eqb.type-param FJ) PI PJ {{ forall (p : Type) (eqp : p -> p -> bool), lp:(R p eqp) }} :- !,
+  @pi-trm `p` {{ Type }} y\p\
+  @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
+    eqb-ty (FI y) (FJ y) [p|PI] [p|PJ] (R p eqp).
+eqb-ty (eqb.value-param TYI FI) (eqb.value-param TYJ FJ) PI PJ {{ forall (x : lp:TI) (y : lp:TJ), lp:(R x y) }} :- !,
+  feqb.trm->term TYI TI,
+  feqb.trm->term TYJ TJ,
+  @pi-trm `x` TI xx\x\
+  @pi-trm `y` TJ yy\y\
+    eqb-ty (FI xx) (FJ yy) [x|PI] [y|PJ] (R x y).
+eqb-ty (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ {{ lp:I -> lp:J -> bool }} :-
+  coq.env.global (indt Ind) IndT,
+  coq.mk-app IndT {std.rev PI} I,
+  coq.mk-app IndT {std.rev PJ} J.
+
+func eqbf-ty eqb.eqType, eqb.eqType, list term, list term -> term.
+eqbf-ty (eqb.type-param FI) (eqb.type-param FJ) PI PJ {{ forall (p : Type) (eqp : p -> p -> bool), lp:(R p eqp) }} :- !,
+  @pi-trm `p` {{ Type }} y\p\
+  @pi-decl `eqp` {{ lp:p -> lp:p -> bool }} eqp\
+    eqbf-ty (FI y) (FJ y) [p|PI] [p|PJ] (R p eqp).
+eqbf-ty (eqb.value-param TYI FI) (eqb.value-param TYJ FJ) PI PJ {{ forall (x : lp:TI) (y : lp:TJ), lp:(R x y) }} :- !,
+  feqb.trm->term TYI TI,
+  feqb.trm->term TYJ TJ,
+  @pi-trm `x` TI xx\x\
+  @pi-trm `y` TJ yy\y\
+    eqbf-ty (FI xx) (FJ yy) [x|PI] [y|PJ] (R x y).
+eqbf-ty (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ {{ (lp:I -> lp:J -> bool) -> forall x : lib:elpi.derive.positive, lp:FieldsI x -> lp:FieldsJ x -> bool }} :-
+  coq.env.global (indt Ind) IndT,
+  coq.mk-app IndT {std.rev PI} I,
+  coq.mk-app IndT {std.rev PJ} J,
+  std.assert! (fields-for Ind F_t _ _ _) "derive.eqb: run derive.fields before",
+  coq.env.global (const F_t) FT,
+  coq.mk-app FT {std.rev PI} FieldsI,
+  coq.mk-app FT {std.rev PJ} FieldsJ.
+
+kind eqb-mutual-spec type.
+type eqb-mutual-spec inductive -> term -> eqb.eqType -> list term -> eqb-mutual-spec.
+
+func eqb-mutual-spec-of inductive -> eqb-mutual-spec.
+eqb-mutual-spec-of I (eqb-mutual-spec I (global (indt I)) FI []) :-
+  std.assert! (eqType (indt I) FI) "this inductive is not supported".
+
+func eqb-mutual-spec-ind eqb-mutual-spec -> inductive.
+eqb-mutual-spec-ind (eqb-mutual-spec I _ _ _) I.
+
+func eqb-mutual-ty eqb-mutual-spec -> term.
+eqb-mutual-ty (eqb-mutual-spec _ IT _ _) {{ lp:IT -> lp:IT -> bool }}.
+
+func eqb-mutual-clause eqb-mutual-spec, term -> prop.
+eqb-mutual-clause (eqb-mutual-spec _ IT _ _) F (eqb-for IT IT F).
+
+func eqb-mutual-body eqb-mutual-spec, term -> term.
+eqb-mutual-body (eqb-mutual-spec _ IT FI PI) F (fun `x1` IT (x1\ fun `x2` IT (x2\ Bo x1 x2))) :- std.do! [
+  derive.eqb.eqbf.main FI FI PI PI Eqbf,
+  @pi-decl `x1` IT x1\
+  @pi-decl `x2` IT x2\
+    derive.eqb.eqb.do-match x1 IT x2 IT {coq.mk-app Eqbf [F]} (Bo x1 x2)
+].
+
+func eqb-mutual-mfix-aux list eqb-mutual-spec, list eqb-mutual-spec, list term -> mfix-block.
+eqb-mutual-mfix-aux All [] RevF (mfix-bo Bodies) :- !,
+  std.rev RevF Funs,
+  std.map2 All Funs eqb-mutual-clause Clauses,
+  Clauses =!=> std.map2 All Funs eqb-mutual-body Bodies.
+eqb-mutual-mfix-aux All [S|SS] RevF (mfix-ty N 0 Ty Rest) :-
+  S = eqb-mutual-spec I _ _ _,
+  coq.gref->id (indt I) ID,
+  coq.id->name ID N,
+  eqb-mutual-ty S Ty,
+  @pi-decl N Ty f\ eqb-mutual-mfix-aux All SS [f|RevF] (Rest f).
+
+func eqb-mutual-mfix list eqb-mutual-spec, int -> term.
+eqb-mutual-mfix Specs Focus (mfix Focus 0 Block) :-
+  eqb-mutual-mfix-aux Specs Specs [] Block.
+
+func eqb-mutual-spec-apply-type-param eqb.trm, term, eqb-mutual-spec -> eqb-mutual-spec.
+eqb-mutual-spec-apply-type-param X A (eqb-mutual-spec I IT (eqb.type-param F) PI) (eqb-mutual-spec I ITA (F X) [A|PI]) :- !,
+  coq.mk-app IT [A] ITA.
+eqb-mutual-spec-apply-type-param _ _ _ _ :- stop "derive.eqb: mutual parameter mismatch".
+
+func eqb-body-mutual-params list eqb-mutual-spec, int -> term.
+eqb-body-mutual-params ([eqb-mutual-spec _ _ (eqb.type-param _) _|_] as Specs) Focus R :- !,
+  R = {{ fun (a : Type) (eqA : a -> a -> bool) => lp:(Bo a eqA) }},
+  @pi-trm `a` {{ Type }} x\a\
+  @pi-decl `eqA` {{ lp:a -> lp:a -> bool }} eqA\
+    sigma Specs1\
+      std.map Specs (eqb-mutual-spec-apply-type-param x a) Specs1,
+      eqb-for a a eqA =>
+        eqb-body-mutual-params Specs1 Focus (Bo a eqA).
+eqb-body-mutual-params Specs Focus R :-
+  eqb-mutual-mfix Specs Focus R.
+
+func eqb-supported-arity term ->.
+eqb-supported-arity (sort _) :- !.
+eqb-supported-arity (prod _ S F) :- coq.sort? S, !,
+  @pi-decl `_` S x\ eqb-supported-arity (F x).
+
+func add-mutual-eqb-consts inductive, list eqb-mutual-spec, list eqb-mutual-spec, string, int -> list (pair inductive constant), list prop.
+add-mutual-eqb-consts _ _ [] _ _ [] [] :- !.
+add-mutual-eqb-consts Selected All [S|SS] Prefix Focus [pr I C|Cs] [Clause, eqb-done (indt I)|CLs] :- std.do! [
+  S = eqb-mutual-spec I _ FI _,
+  eqb-body-mutual-params All Focus R,
+  std.assert-ok! (coq.typecheck R Ty) "derive.eqb generates illtyped mutual term",
+  mutual.selected-prefix Selected Prefix I P,
+  Name is P ^ "eqb",
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName R Ty @transparent! C,
+  derive.eqb.eqb.do-clause FI FI [] [] (global (const C)) [] Clause,
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") Clause),
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done (indt I))),
+  Focus1 is Focus + 1,
+  add-mutual-eqb-consts Selected All SS Prefix Focus1 Cs CLs
+].
+
+func add-mutual-eqbf-consts inductive, list eqb-mutual-spec, string, list prop -> list prop.
+add-mutual-eqbf-consts _ [] _ _ [] :- !.
+add-mutual-eqbf-consts Selected [S|SS] Prefix EqbClauses [CL1|CLs] :- std.do! [
+  S = eqb-mutual-spec I _ FI _,
+  EqbClauses =!=> derive.eqb.eqbf.main FI FI [] [] R,
+  std.assert-ok! (coq.typecheck R Ty) "derive.eqbf generates illtyped mutual term",
+  mutual.selected-prefix Selected Prefix I P,
+  Name is P ^ "eqb_fields",
+  coq.ensure-fresh-global-id Name FName,
+  coq.env.add-const FName R Ty @transparent! C,
+  EqbClauses =!=> derive.eqb.eqbf.do-clause FI FI [] [] (global (const C)) [] CL1,
+  coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ CL1),
+  add-mutual-eqbf-consts Selected SS Prefix EqbClauses CLs
+].
+
+func add-all-consts inductive, list inductive, string -> list prop.
+add-all-consts Selected IS Prefix CL :- std.do! [
+  std.map IS eqb-mutual-spec-of Specs,
+  add-mutual-eqb-consts Selected Specs Specs Prefix 0 _ EqbCL,
+  add-mutual-eqbf-consts Selected Specs Prefix EqbCL EqbfCL,
+  std.append EqbfCL EqbCL CL
+].
+
+func type-param1-eqb-ty inductive -> term.
+type-param1-eqb-ty I EqbTy :-
+  coq.env.indt I _ 1 _ (prod N Ty _) _ _, !,
+  coq.env.global (indt I) IndT,
+  EqbTy = prod N Ty (p\ prod `eqp` (prod `_` p (_\ prod `_` p (_\ {{ bool }}))) (eqp\ prod `_` (Ip p) (_\ prod `_` (Ip p) (_\ {{ bool }})))),
+  @pi-decl N Ty p\ coq.mk-app IndT [p] (Ip p).
+
+func type-param1-eqbf-ty inductive -> term.
+type-param1-eqbf-ty I EqbfTy :-
+  coq.env.indt I _ 1 _ (prod N Ty _) _ _, !,
+  coq.env.global (indt I) IndT,
+  std.assert! (fields-for I F_t _ _ _) "derive.eqb: run derive.fields before",
+  coq.env.global (const F_t) FT,
+  EqbfTy = prod N Ty (p\ prod `eqp` (prod `_` p (_\ prod `_` p (_\ {{ bool }})))
+    (eqp\ prod `_` (prod `_` (Ip p) (_\ prod `_` (Ip p) (_\ {{ bool }})))
+      (eqi\ prod `x` {{ lib:elpi.derive.positive }} (x\ prod `_` (app [Fields p, x]) (_\ prod `_` (app [Fields p, x]) (_\ {{ bool }})))))),
+  @pi-decl N Ty p\
+    coq.mk-app IndT [p] (Ip p),
+    coq.mk-app FT [p] (Fields p).
+
+func add-one-param1 inductive, string -> list prop.
+add-one-param1 I _ _ :-
+  coq.error "derive.eqb: mutual eqb generation for this parameterized shape still needs to be implemented" (indt I).
+
+func add-one inductive, string -> list prop.
+add-one I Prefix CL :- eqType (indt I) (eqb.type-param _), coq.env.indt I _ 1 _ _ _ _, !, add-one-param1 I Prefix CL.
+add-one I _ _ :-
+  std.assert! (eqType (indt I) _) "this inductive is not supported",
+  coq.error "derive.eqb: mutual eqb generation for this shape still needs to be implemented" (indt I).
+
+func main inductive, list inductive, string -> list prop.
+main _ [] _ [] :- !.
+main Selected ([First|_] as IS) Prefix CL :- coq.env.indt First _ Lno Lno Arity _ _, eqb-supported-arity Arity, !,
+  add-all-consts Selected IS Prefix CL.
+main Selected IS Prefix CL :-
+  std.map IS (i\c\ sigma p\ mutual.selected-prefix Selected Prefix i p, add-one i p c) CLS,
+  std.flatten CLS CL.
+
+}
 
 namespace derive.eqb.eqb {
 
@@ -112,8 +294,9 @@ do-clause (eqb.value-param _ AI) (eqb.value-param _ AJ) PI PJ F Todo (pi a b\ C 
     do-clause (AI x) (AJ x) [a|PI] [b|PJ] {coq.mk-app F [a,b]} Todo (C a b).
 
 do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (eqb-for I J F :- Todo) :-
-  coq.mk-app (global (indt Ind)) {std.rev PI} I,
-  coq.mk-app (global (indt Ind)) {std.rev PJ} J.
+  coq.env.global (indt Ind) IndT,
+  coq.mk-app IndT {std.rev PI} I,
+  coq.mk-app IndT {std.rev PJ} J.
 
 
 }
@@ -236,8 +419,9 @@ do-clause (eqb.value-param _ AI) (eqb.value-param _ AJ) PI PJ F Todo (pi a b\ C 
     do-clause (AI x) (AJ x) [a|PI] [b|PJ] {coq.mk-app F [a,b]} Todo (C a b).
 
 do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (pi ela\ eqb-fields I J (F1 ela) :- [C ela|Todo]) :- !,
-  coq.mk-app (global (indt Ind)) {std.rev PI} I,
-  coq.mk-app (global (indt Ind)) {std.rev PJ} J,
+  coq.env.global (indt Ind) IndT,
+  coq.mk-app IndT {std.rev PI} I,
+  coq.mk-app IndT {std.rev PJ} J,
   pi ela\
     (coq.mk-app F [ela] (F1 ela), C ela = eqb-for I J ela).
      

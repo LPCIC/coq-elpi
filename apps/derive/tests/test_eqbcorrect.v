@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.eqbcorrect.
+From elpi.apps Require Import derive derive.eqbcorrect.
 From elpi.apps.derive Require Import param1. (* FIXME, the clause is in param1 *)
 From elpi.apps.derive.tests Require Import test_derive_corelib test_eqType_ast test_tag test_fields test_eqb test_induction 
                                            test_param1 test_param1_trivial test_param1_functor.
@@ -51,11 +51,11 @@ Elpi derive.eqbcorrect ord.
 Elpi derive.eqbcorrect ord2.
 Elpi derive.eqbcorrect val.
 Elpi derive.eqbcorrect alias.
-Fail Elpi derive.eqbcorrent mempty.
-Fail Elpi derive.eqbcorrent munit.
-Fail Elpi derive.eqbcorrent mpeano.
-Fail Elpi derive.eqbcorrent moption.
-Fail Elpi derive.eqbcorrent mtree.
+Elpi derive.eqbcorrect mempty.
+Elpi derive.eqbcorrect munit.
+Elpi derive.eqbcorrect mpeano.
+Fail Elpi derive.eqbcorrect moption.
+Fail Elpi derive.eqbcorrect mtree.
 
 
 End Coverage.
@@ -76,3 +76,88 @@ Redirect "tmp" Check val_eqb_refl : eqb_reflexive val_eqb.
 
 Redirect "tmp" Check alias_eqb_correct : eqb_correct alias_eqb.
 Redirect "tmp" Check alias_eqb_refl : eqb_reflexive alias_eqb.
+
+Module EqbCorrectStandaloneFirst.
+  From elpi.apps Require Import derive.eqbcorrect.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.param1 tree.
+  Elpi derive.param1.functor is_tree.
+  Elpi derive.induction tree.
+  Elpi derive.param1.inhab is_tree.
+  Elpi derive.eqb tree.
+  Elpi derive.eqbcorrect tree.
+
+  Redirect "tmp" Check tree_eqb_correct.
+  Redirect "tmp" Check tree_eqb_refl.
+  Redirect "tmp" Check forest_eqb_correct.
+  Redirect "tmp" Check forest_eqb_refl.
+  Redirect "tmp" Elpi Query derive.eqbcorrect lp:{{
+    eqcorrect-for {{:gref tree}} _ _,
+    eqcorrect-for {{:gref forest}} _ _
+  }}.
+End EqbCorrectStandaloneFirst.
+
+Module EqbCorrectStandaloneSecond.
+  From elpi.apps Require Import derive.eqbcorrect.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.param1 tree.
+  Elpi derive.param1.functor is_tree.
+  Elpi derive.induction tree.
+  Elpi derive.param1.inhab is_tree.
+  Elpi derive.eqb tree.
+  Elpi derive.eqbcorrect forest.
+
+  Redirect "tmp" Check tree_eqb_correct.
+  Redirect "tmp" Check tree_eqb_refl.
+  Redirect "tmp" Check forest_eqb_correct.
+  Redirect "tmp" Check forest_eqb_refl.
+End EqbCorrectStandaloneSecond.
+
+Module EqbCorrectMetaFirst.
+  From elpi.apps Require Import derive.eqbcorrect.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect)] derive tree.
+
+  Redirect "tmp" Check tree_eqb_correct.
+  Redirect "tmp" Check tree_eqb_refl.
+  Redirect "tmp" Check forest_eqb_correct.
+  Redirect "tmp" Check forest_eqb_refl.
+End EqbCorrectMetaFirst.
+
+Module EqbCorrectMetaSecond.
+  From elpi.apps Require Import derive.eqbcorrect.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect)] derive forest.
+
+  Redirect "tmp" Check tree_eqb_correct.
+  Redirect "tmp" Check tree_eqb_refl.
+  Redirect "tmp" Check forest_eqb_correct.
+  Redirect "tmp" Check forest_eqb_refl.
+End EqbCorrectMetaSecond.
+
+Module EqbCorrectPrefixSecond.
+  From elpi.apps Require Import derive.eqbcorrect.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect), prefix="custom_"] derive forest.
+
+  Redirect "tmp" Check tree_eqb_correct.
+  Redirect "tmp" Check tree_eqb_refl.
+  Redirect "tmp" Check custom_eqb_correct.
+  Redirect "tmp" Check custom_eqb_refl.
+End EqbCorrectPrefixSecond.

@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.map.
+From elpi.apps Require Import derive derive.map.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib.
 Import test_derive_corelib.Coverage.
@@ -78,3 +78,87 @@ Redirect "tmp" Check moption_map : map1 moption.
 Redirect "tmp" Check moption'_map : map1 moption'.
 Redirect "tmp" Check mtree_map : map1 mtree.
 Redirect "tmp" Check mforest_map : map1 mforest.
+
+Module MapStandaloneFirst.
+  From elpi.apps Require Import derive.map.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.map tree.
+
+  Redirect "tmp" Check tree_map : tree -> tree.
+  Redirect "tmp" Check forest_map : forest -> forest.
+  Redirect "tmp" Elpi Query derive.map lp:{{
+    coq.locate "tree" (indt T),
+    coq.locate "forest" (indt F),
+    map-done T,
+    map-done F
+  }}.
+End MapStandaloneFirst.
+
+Module MapStandaloneSecond.
+  From elpi.apps Require Import derive.map.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.map forest.
+
+  Redirect "tmp" Check tree_map : tree -> tree.
+  Redirect "tmp" Check forest_map : forest -> forest.
+End MapStandaloneSecond.
+
+Module MapMetaFirst.
+  From elpi.apps Require Import derive.map.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(map)] derive tree.
+
+  Redirect "tmp" Check tree_map : tree -> tree.
+  Redirect "tmp" Check forest_map : forest -> forest.
+End MapMetaFirst.
+
+Module MapMetaSecond.
+  From elpi.apps Require Import derive.map.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(map)] derive forest.
+
+  Redirect "tmp" Check tree_map : tree -> tree.
+  Redirect "tmp" Check forest_map : forest -> forest.
+End MapMetaSecond.
+
+Module MapMetaMutualPrefix.
+  From elpi.apps Require Import derive.map.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(map), prefix="custom_"] derive forest.
+
+  Redirect "tmp" Check tree_map : tree -> tree.
+  Redirect "tmp" Check forest_map : forest -> forest.
+  Fail Check custom_map.
+End MapMetaMutualPrefix.
+
+Module MapParametrized.
+  From elpi.apps Require Import derive.map.
+
+  Import test_derive_corelib.Mutual.ParametrizedTree.
+
+  #[only(map)] derive pforest.
+
+  Redirect "tmp" Check ptree_map : forall A B, (A -> B) -> ptree A -> ptree B.
+  Redirect "tmp" Check pforest_map : forall A B, (A -> B) -> pforest A -> pforest B.
+End MapParametrized.
+
+Module MapComputation.
+  From elpi.apps Require Import derive.map.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.map tree.
+
+  Example tree_map_node_empty : tree_map (node empty) = node empty := eq_refl.
+  Example forest_map_cons : forest_map (cons (node empty) empty) = cons (node empty) empty := eq_refl.
+End MapComputation.

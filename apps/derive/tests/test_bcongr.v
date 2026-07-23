@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.bcongr.
+From elpi.apps Require Import derive derive.bcongr.
 
 From elpi.apps Require Import test_derive_corelib test_projK.
 
@@ -107,4 +107,72 @@ Redirect "tmp" Check pr_record_bcongr_Build_pr_record :
 Redirect "tmp" Check enum_bcongr_E1 : reflect (E1 = E1) true.
 Redirect "tmp" Check enum_bcongr_E2 : reflect (E2 = E2) true.
 Redirect "tmp" Check enum_bcongr_E3 : reflect (E3 = E3) true.
+
+Module BcongrStandaloneFirst.
+  From elpi.apps Require Import derive.bcongr.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.projK tree.
+  Elpi derive.bcongr tree.
+
+  Redirect "tmp" Check tree_bcongr_node.
+  Redirect "tmp" Check forest_bcongr_empty.
+  Redirect "tmp" Check forest_bcongr_cons.
+  Redirect "tmp" Elpi Query derive.bcongr lp:{{
+    coq.locate "node" (indc N),
+    coq.locate "cons" (indc C),
+    bcongr-db N _,
+    bcongr-db C _
+  }}.
+End BcongrStandaloneFirst.
+
+Module BcongrStandaloneSecond.
+  From elpi.apps Require Import derive.bcongr.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.projK tree.
+  Elpi derive.bcongr forest.
+
+  Redirect "tmp" Check tree_bcongr_node.
+  Redirect "tmp" Check forest_bcongr_empty.
+  Redirect "tmp" Check forest_bcongr_cons.
+End BcongrStandaloneSecond.
+
+Module BcongrMetaFirst.
+  From elpi.apps Require Import derive.bcongr.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(projK,bcongr)] derive tree.
+
+  Redirect "tmp" Check tree_bcongr_node.
+  Redirect "tmp" Check forest_bcongr_empty.
+  Redirect "tmp" Check forest_bcongr_cons.
+End BcongrMetaFirst.
+
+Module BcongrMetaSecond.
+  From elpi.apps Require Import derive.bcongr.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(projK,bcongr)] derive forest.
+
+  Redirect "tmp" Check tree_bcongr_node.
+  Redirect "tmp" Check forest_bcongr_empty.
+  Redirect "tmp" Check forest_bcongr_cons.
+End BcongrMetaSecond.
+
+Module BcongrPrefixSecond.
+  From elpi.apps Require Import derive.bcongr.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(projK,bcongr), prefix="custom_"] derive forest.
+
+  Redirect "tmp" Check tree_bcongr_node.
+  Redirect "tmp" Check custom_bcongr_empty.
+  Redirect "tmp" Check custom_bcongr_cons.
+End BcongrPrefixSecond.
 

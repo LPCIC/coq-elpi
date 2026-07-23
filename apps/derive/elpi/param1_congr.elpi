@@ -50,9 +50,10 @@ main-k Prefix Lno K KT Clause :- do! [
 ].
 
 func main gref, gref, string -> list prop.
-main _ (indt GR) Prefix Clauses2 :-
+main Orig (indt GR) Prefix Clauses2 :-
   
-  coq.env.indt GR _ Lno _ _ K KT,
+  coq.env.indt GR _ _ _ _ K KT,
+  paramX.translated-lno-gref Orig (indt GR) Lno,
   map2-filter K KT (main-k Prefix Lno) Clauses,
   Clauses2 = [param1-congr-done (indt GR)|Clauses],
   forall Clauses2
