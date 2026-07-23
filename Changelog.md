@@ -1,5 +1,7 @@
 
-# [UNRELEASED]
+# [3.5.0] 21/07/2026
+
+Requires Elpi 3.7.1 and Rocq 9.0, 9.1, 9.2 and 9.3.
 
 ### HOAS:
 - New `minductive` and `mblock` for mutual inductive types
@@ -21,6 +23,13 @@
 - Change `coq.build-indt-decl`, now taking a `coq.indt-spec` tuple
 - New `coq.build-mindt-decl` taking a list of `coq.indt-spec`
 
+### APPS:
+- Fix many bugs in `derive` related to universe polymorphism
+- Fix binary parametricity translation for primitive records
+- Fix param1 and map on mutual inductives
+
+### Vernac:
+- Fix double accumulation bug when mixing Files and Dbs
 
 # [3.4.0] 19/05/2026
 
