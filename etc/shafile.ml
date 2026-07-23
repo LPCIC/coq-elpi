@@ -1,5 +1,5 @@
 let mk_ident =
-  String.map (function '.' | '/' | '-' -> '_' | c -> c)
+  String.map (function '.' | '/' | '-' | '~' -> '_' | c -> c)
 
 let () =
   Printf.printf "Local Set Warnings \"-abstract-large-number\".\n";
