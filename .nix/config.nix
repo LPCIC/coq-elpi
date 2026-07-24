@@ -96,14 +96,20 @@ let
       rocq-core.override.version = "9.2";
       micromega-plugin.override.version = "master";  # to be removed at some point
       micromega-plugin.job = false;
-      coqeal.job = false;  # MathComp not released yet
-      mathcomp-reals-stdlib.job = false;  # MathComp not released yet
-      mathcomp-analysis-stdlib.job = false;  # MathComp not released yet
-      mathcomp-zify.job = false;  # MathComp not released yet
-      mathcomp-algebra-tactics.job = false;  # MathComp not released yet
-      jasmin.job = false;  # MathComp not released yet
+      mathcomp-zify.job = false;  # not available yet
+      jasmin.job = false;  # not available yet
     }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.2";
+    }; };
+
+    "rocq-9.3" = { rocqPackages = rocq-common-bundles // {
+      rocq-core.override.version = "9.3";
+      micromega-plugin.override.version = "master";  # to be removed at some point
+      micromega-plugin.job = false;
+      mathcomp-zify.job = false;  # not available yet
+      jasmin.job = false;  # not available yet
+    }; coqPackages = coq-common-bundles // {
+      coq.override.version = "9.3";
     }; };
 
     "rocq-master" = { rocqPackages = rocq-common-bundles // {
