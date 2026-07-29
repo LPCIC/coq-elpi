@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.param1_trivial.
+From elpi.apps Require Import derive derive.param1_trivial.
 
 From elpi.apps Require Import test_derive_corelib test_param1 test_param1_congr.
 Import derive.param1. (* for is_eq *)
@@ -46,9 +46,9 @@ Elpi derive.param1.trivial is_val.
 Elpi derive.param1.trivial is_alias.
 Elpi derive.param1.trivial is_mempty.
 Elpi derive.param1.trivial is_munit.
-Fail Elpi derive.param1.trivial is_mpeano.
-Fail Elpi derive.param1.trivial is_moption.
-Fail Elpi derive.param1.trivial is_mtree.
+Elpi derive.param1.trivial is_mpeano.
+Elpi derive.param1.trivial is_moption.
+Elpi derive.param1.trivial is_mtree.
 
 
 End Coverage.
@@ -113,3 +113,78 @@ Redirect "tmp" Check is_ord2_inhab : forall p px, full (ord2 p) (is_ord2 p px).
 Redirect "tmp" Check is_val_inhab : full val is_val.
 
 Redirect "tmp" Check is_alias_inhab : full alias is_alias.
+
+Redirect "tmp" Check is_mempty_trivial : trivial mempty is_mempty.
+Redirect "tmp" Check is_munit_trivial : trivial munit is_munit.
+Redirect "tmp" Check is_mpeano_trivial : trivial mpeano is_mpeano.
+Redirect "tmp" Check is_moption_trivial : trivial moption is_moption.
+Redirect "tmp" Check is_mtree_trivial : trivial mtree is_mtree.
+
+Redirect "tmp" Check is_mempty_inhab : inhab mempty is_mempty.
+Redirect "tmp" Check is_munit_inhab : inhab munit is_munit.
+Redirect "tmp" Check is_mpeano_inhab : inhab mpeano is_mpeano.
+Redirect "tmp" Check is_moption_inhab : inhab moption is_moption.
+Redirect "tmp" Check is_mtree_inhab : inhab mtree is_mtree.
+
+Module InhabStandaloneFirst.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.inhab is_tree.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+End InhabStandaloneFirst.
+
+Module InhabStandaloneSecond.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.inhab is_forest.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+End InhabStandaloneSecond.
+
+Module TrivialStandaloneFirst.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.congr is_tree.
+  Elpi derive.param1.trivial is_tree.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+  Redirect "tmp" Check is_tree_trivial.
+  Redirect "tmp" Check is_forest_trivial.
+End TrivialStandaloneFirst.
+
+Module TrivialStandaloneSecond.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.congr is_tree.
+  Elpi derive.param1.trivial is_forest.
+
+  Redirect "tmp" Check is_tree_inhab : forall x : tree, is_tree x.
+  Redirect "tmp" Check is_forest_inhab : forall x : forest, is_forest x.
+  Redirect "tmp" Check is_tree_trivial.
+  Redirect "tmp" Check is_forest_trivial.
+End TrivialStandaloneSecond.
+
+Module TrivialParametrizedFail.
+
+  Import test_derive_corelib.Mutual.ParametrizedTree.
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.congr is_tree.
+  Elpi derive.param1.trivial is_forest.
+
+  Redirect "tmp" Check is_tree_trivial.
+  Redirect "tmp" Check is_forest_trivial.
+
+End TrivialParametrizedFail.
