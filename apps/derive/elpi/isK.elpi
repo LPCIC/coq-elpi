@@ -34,7 +34,8 @@ main-K Prefix Ity Arity GRK Clause :-
   coq.bind-ind-arity Ity Arity (body K) TSek,
   (@keepunivs! => std.assert-ok! (coq.elaborate-skeleton TSek Ty T) "derive.isK generates illtyped term"),
   Name is Prefix ^ {coq.gref->id (indc GRK)},
-  coq.env.add-const Name T Ty _ IsK,
+  coq.ensure-fresh-global-id Name NameF,
+  coq.env.add-const NameF T Ty _ IsK,
 
   Clause = (isK-db GRK (global (const IsK)) :- !).
 func main1 inductive, string -> list prop.
