@@ -35,14 +35,22 @@ main-K Prefix Ity Arity GRK Clause :-
   (@keepunivs! => std.assert-ok! (coq.elaborate-skeleton TSek Ty T) "derive.isK generates illtyped term"),
   Name is Prefix ^ {coq.gref->id (indc GRK)},
   coq.env.add-const Name T Ty _ IsK,
-  Clause = (isK-db GRK (global (const IsK)) :- !).
 
-func main inductive, string -> list prop.
-main GR Prefix Clauses :-
+  Clause = (isK-db GRK (global (const IsK)) :- !).
+func main1 inductive, string -> list prop.
+main1 GR Prefix Clauses :-
   coq.env.global (indt GR) T,
   coq.env.indt GR _ _ _ Arity Kn _,
-  map Kn (main-K Prefix T Arity) Clauses,
+  Prefix1 is Prefix ^ "is_",
+  map Kn (main-K Prefix1 T Arity) Clauses,
   forall Clauses (c\ coq.elpi.accumulate _ "derive.isK.db" (clause _ (before "isK-db:fail") c)).
+
+func main inductive, string -> list prop.
+main T Prefix C :- coq.mutual? T, !,
+  coq.mutual.members T TS,
+  std.map TS (t\c\ sigma p\ derive.mutual.selected-prefix T Prefix t p, main1 t p c) CS,
+  std.flatten CS C.
+main T Prefix C :- main1 T Prefix C.
 
 }
 

@@ -28,10 +28,11 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File isK.
 Elpi Accumulate lp:{{
+
   main [str I,str O] :- !, coq.locate I (indt GR), derive.isK.main GR O _.
   main [str I] :- !,
     coq.locate I (indt GR),
-    Prefix is {coq.gref->id (indt GR)} ^ "_is_",
+    Prefix is {coq.gref->id (indt GR)} ^ "_",
     derive.isK.main GR Prefix _.
   main _ :- usage.
 
@@ -50,6 +51,6 @@ Elpi Accumulate derive File isK.
 
 Elpi Accumulate derive lp:{{
   
-derivation (indt T) Prefix ff (derive "isK" (derive.isK.main T N) (derive.exists-indc T (K\ isK-db K _))) :- N is Prefix ^ "isk_".
+derivation (indt T) Prefix ff (derive "isK" (derive.isK.main T Prefix) (derive.exists-indc T (K\ isK-db K _))).
 
 }}.
