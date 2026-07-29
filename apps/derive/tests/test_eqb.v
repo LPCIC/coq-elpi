@@ -40,10 +40,10 @@ Elpi derive.eqb ord.
 Elpi derive.eqb ord2.
 Elpi derive.eqb val.
 Elpi derive.eqb alias.
-Fail Elpi derive.eqb mempty.
-Fail Elpi derive.eqb munit.
+Elpi derive.eqb mempty.
+Elpi derive.eqb munit.
 Fail Elpi derive.eqb mpeano.
-Fail Elpi derive.eqb moption.
+Elpi derive.eqb moption.
 Fail Elpi derive.eqb mtree.
 
 

@@ -75,12 +75,12 @@ derive Vector.t.
 End Vector.
 
 Redirect "tmp" Check Vector.t_eq : forall A, (A -> A -> bool) -> forall n, Vector.t A n -> Vector.t A n -> bool.
-Redirect "tmp" Check Vector.t_isk_nil : forall A n, Vector.t A n -> bool.
-Redirect "tmp" Check Vector.t_isk_cons : forall A n, Vector.t A n -> bool.
+Redirect "tmp" Check Vector.t_is_nil : forall A n, Vector.t A n -> bool.
+Redirect "tmp" Check Vector.t_is_cons : forall A n, Vector.t A n -> bool.
 Redirect "tmp" Check Vector.t_map : forall A B, (A -> B) -> forall n, Vector.t A n -> Vector.t B n.
-Redirect "tmp" Check Vector.t_getk_cons1 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> A.
-Redirect "tmp" Check Vector.t_getk_cons2 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> nat.
-Redirect "tmp" Check Vector.t_getk_cons3 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> { k : nat & Vector.t A k}.
+Redirect "tmp" Check Vector.t_projcons1 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> A.
+Redirect "tmp" Check Vector.t_projcons2 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> nat.
+Redirect "tmp" Check Vector.t_projcons3 : forall A n, A -> forall m, Vector.t A m -> Vector.t A n -> { k : nat & Vector.t A k}.
 Redirect "tmp" Check Vector.is_t : forall A, (A -> Type) -> forall n, is_nat n -> Vector.t A n -> Type.
 Redirect "tmp" Check Vector.is_nil : forall A (PA : A -> Type), Vector.is_t A PA 0 is_O (Vector.nil A).
 Redirect "tmp" Check Vector.is_cons : forall A (PA : A -> Type) (a : A), PA a -> forall n (Pn : is_nat n) (H : Vector.t A n),
