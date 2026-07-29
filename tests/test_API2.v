@@ -370,6 +370,7 @@ Elpi Query lp:{{
 
 Elpi Command test.eta.
 Elpi Accumulate lp:{{
+  pred test term, term -> .
   test T1 T2 :-
     coq.reduction.eta-contract T1 X,  
     Msg is {coq.term->string T1} ^ "\n--eta-->\n" ^ {coq.term->string X} ^ "\n!=\n" ^ {coq.term->string T2} ^ "\n\n",

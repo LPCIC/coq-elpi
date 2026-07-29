@@ -711,6 +711,16 @@ func coq.indt-decl->implicits indt-decl -> list implicit_kind, list (list implic
 coq.indt-decl->implicits D Is Ks :-
   coq.indt-decl->implicits-all D [Is|_] [Ks|_].
 
+% Gets all inductive types names
+func coq.indt-decl->ids indt-decl -> list id.
+coq.indt-decl->ids (parameter ID _ Ty F) IDs :- !,
+  @pi-parameter ID Ty x\ coq.indt-decl->ids (F x) IDs.
+coq.indt-decl->ids (inductive ID _ _ _) [ID] :- !.
+coq.indt-decl->ids (minductive ID _ Arity Rest) [ID|IDs] :- !,
+  @pi-inductive ID Arity i\ coq.indt-decl->ids (Rest i) IDs.
+coq.indt-decl->ids (record ID _ _ _) [ID] :- !.
+coq.indt-decl->ids (mblock _) [].
+
 % Check if some implicits are set
 func coq.any-implicit? list implicit_kind ->.
 coq.any-implicit? L :- std.exists! L (x\not(x = explicit)).
@@ -868,3 +878,24 @@ coq.replay-next-synterp-actions :-
   coq.replay-synterp-action Action, !,
   coq.replay-next-synterp-actions.
 coq.replay-next-synterp-actions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+func coq.mutual? inductive ->.
+coq.mutual? I :- coq.mutual.members I IS, std.length IS N, N > 1.
+
+namespace coq.mutual {
+
+func members inductive -> list inductive.
+members I IS :- coq.env.indt-block I _ _ _ IS _ _ _.
+
+}
+
+/* belong to derive */
+namespace derive.mutual {
+
+func selected-prefix inductive, string, inductive -> string.
+selected-prefix Selected Prefix T Prefix :- Selected = T, !.
+selected-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
+
+}
