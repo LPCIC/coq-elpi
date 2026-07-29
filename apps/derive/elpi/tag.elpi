@@ -10,10 +10,18 @@ shorten coq.{ elaborate-skeleton }.             % from coq-builtin.elpi
 % if we load this file together with others files, we avoid chlashes
 namespace derive.tag {
 
+func main inductive, string -> list prop.
+main T Prefix C :- coq.mutual? T, !,
+  coq.mutual.members T TS,
+  std.map TS (t\c\ sigma p\ derive.mutual.selected-prefix T Prefix t p, main1 t p c) CS,
+  std.flatten CS C.
+main T Prefix C :- main1 T Prefix C.
+
+
 % we return the clauses for the tag.db since we may need them right away
 % if we run other derivations immediately
-func main inductive, string -> list prop.
-main I Prefix CL :- do! [
+func main1 inductive, string -> list prop.
+main1 I Prefix CL :- do! [
 
   % build   fun params (x : I params) => ... do-match ...
   coq.env.indt I _ _ _ Arity _ _,
