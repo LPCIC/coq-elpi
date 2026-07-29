@@ -29,8 +29,9 @@ Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.projK.db.
 Elpi Accumulate File projK.
 Elpi Accumulate lp:{{
+
   main [str I, str O] :- !, coq.locate I (indt GR), derive.projK.main GR O _.
-  main [str I] :- !, coq.locate I (indt GR), derive.projK.main GR "proj" _.
+  main [str I] :- !, coq.locate I (indt GR), derive.projK.main GR "" _.
   main _ :- usage.
 
   usage :-
@@ -48,7 +49,7 @@ Elpi Accumulate derive File projK.
 }}.
 
 Elpi Accumulate derive lp:{{
-  
-derivation (indt T) Prefix ff (derive "projK" (derive.projK.main T N) (derive.exists-indc T (K\ projK-db K _ _))) :- N is Prefix ^ "getk_".
+
+derivation (indt T) Prefix ff (derive "projK" (derive.projK.main T Prefix) (derive.exists-indc T (K\ projK-db K _ _))).
 
 }}.
