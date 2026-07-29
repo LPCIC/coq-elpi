@@ -106,3 +106,34 @@ Elpi derive.isK List.
 End UnivPoly.
 
 Unset Universe Polymorphism.
+
+Module IsKStandaloneFirst.
+
+  Import test_derive_corelib.Mutual.NonRecursive.
+
+  Elpi derive.isK color.
+
+  Redirect "tmp" Check color_is_red : color -> bool.
+  Redirect "tmp" Check color_is_blue : color -> bool.
+  Redirect "tmp" Check shape_is_circle : shape -> bool.
+  Redirect "tmp" Check shape_is_square : shape -> bool.
+  Redirect "tmp" Elpi Query derive.isK lp:{{
+    coq.locate "red" (indc R),
+    coq.locate "circle" (indc C),
+    isK-db R _,
+    isK-db C _
+  }}.
+End IsKStandaloneFirst.
+
+Module IsKStandaloneSecond.
+
+  Import test_derive_corelib.Mutual.NonRecursive.
+
+  Elpi derive.isK shape.
+
+  Redirect "tmp" Check color_is_red : color -> bool.
+  Redirect "tmp" Check color_is_blue : color -> bool.
+  Redirect "tmp" Check shape_is_circle : shape -> bool.
+  Redirect "tmp" Check shape_is_square : shape -> bool.
+End IsKStandaloneSecond.
+
