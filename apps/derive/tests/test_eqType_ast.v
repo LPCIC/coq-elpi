@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive derive.eqType_ast.
+From elpi.apps Require Import derive.eqType_ast.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib.
 Import test_derive_corelib.Coverage.
