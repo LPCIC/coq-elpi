@@ -6,10 +6,10 @@ Module ProjK_IsK.
 
 Inductive Sum (A B : Type) := InL : A -> Sum A B | InR : B -> Sum A B.
 Elpi derive Sum.
-Redirect "tmp" Check Sum_isk_InL.
-Redirect "tmp" Check Sum_isk_InR.
-Redirect "tmp" Check Sum_getk_InL1.
-Redirect "tmp" Check Sum_getk_InR1.
+Redirect "tmp" Check Sum_is_InL.
+Redirect "tmp" Check Sum_is_InR.
+Redirect "tmp" Check Sum_projInL1.
+Redirect "tmp" Check Sum_projInR1.
 
 End ProjK_IsK.
 

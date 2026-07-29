@@ -81,9 +81,12 @@ Redirect "tmp" Check projBuild_fo_record2 : peano -> unit -> fo_record -> unit.
 Redirect "tmp" Check projBuild_pa_record2 : forall A, peano -> A -> pa_record A -> A.
 Redirect "tmp" Check projBuild_pr_record2 : forall A, peano -> A -> pr_record A -> A.
 
-Fail Redirect "tmp" Check projmpeano'1.
-Fail Redirect "tmp" Check projmoption'1.
-Fail Redirect "tmp" Check projmtree'1.
+Redirect "tmp" Check projmSucc1.
+Redirect "tmp" Check mpeano'_projmSucc'1.
+Redirect "tmp" Check projmSome1.
+Redirect "tmp" Check moption'_projmSome'1.
+Redirect "tmp" Check mforest_projmTree1.
+Redirect "tmp" Check mforest_projmTree2.
 
 
 Set Universe Polymorphism.
@@ -102,3 +105,46 @@ Elpi derive.projK Prod.
 End UnivPoly.
 
 Unset Universe Polymorphism.
+
+Module ProjKStandaloneFirst.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.projK tree.
+
+  Redirect "tmp" Check projnode1.
+  Redirect "tmp" Check forest_projcons1.
+  Redirect "tmp" Check forest_projcons2.
+  Redirect "tmp" Elpi Query derive.projK lp:{{
+    coq.locate "node" (indc N),
+    coq.locate "cons" (indc C),
+    projK-db N 1 _,
+    projK-db C 1 _
+  }}.
+End ProjKStandaloneFirst.
+
+Module ProjKStandaloneSecond.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.projK forest.
+
+  Redirect "tmp" Check tree_projnode1.
+  Redirect "tmp" Check projcons1.
+  Redirect "tmp" Check projcons2.
+End ProjKStandaloneSecond.
+
+Module ProjKComputation.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.projK  tree.
+
+  Example tree_projnode1_computes :
+    projnode1 empty (node (cons (node empty) empty)) = cons (node empty) empty := eq_refl.
+  Example forest_projcons1_computes :
+    forest_projcons1 (node empty) empty (cons (node empty) empty) = node empty := eq_refl.
+  Example forest_projcons2_computes :
+    forest_projcons2 (node empty) empty (cons (node empty) (cons (node empty) empty)) =
+    cons (node empty) empty := eq_refl.
+End ProjKComputation.
