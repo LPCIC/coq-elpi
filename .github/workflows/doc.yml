@@ -34,7 +34,7 @@ jobs:
         opam repo add coq-dev https://coq.inria.fr/opam/core-dev
         opam repo add extra-dev https://coq.inria.fr/opam/extra-dev
         opam update
-        opam install rocq-core.9.0.0 vsrocq-language-server coq-core
+        opam install rocq-core.9.0.0 vsrocq-language-server coq-core rocq-stdlib.9.0.0 coq-stdlib
         opam install ./rocq-elpi.opam
         sudo apt-get update
         sudo apt-get install python3-pip -y
