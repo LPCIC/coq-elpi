@@ -6,6 +6,7 @@
 
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
+From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1_functor.elpi" as param1_functor.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
@@ -20,20 +21,21 @@ Elpi Db derive.param1.functor.db lp:{{
 
 Elpi Command derive.param1.functor.
 Elpi Accumulate File derive_hook.
+Elpi Accumulate File paramX.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File param1_functor.
 Elpi Accumulate lp:{{ 
   main [str I, str O] :- !,
-    coq.locate I (indt IsGR),
-    realiR T {coq.env.global (indt IsGR)},
-    coq.env.global (indt GR) T,
-    derive.param1.functor.main (indt GR) (indt IsGR) O _.
+    coq.locate I IsGR,
+    realiR T {coq.env.global IsGR},
+    coq.env.global GR T,
+    derive.param1.functor.main GR IsGR O _.
   main [str I] :- !,
-    coq.locate I (indt IsGR),
-    realiR T {coq.env.global (indt IsGR)},
-    coq.env.global (indt GR) T,
-    derive.param1.functor.main (indt GR) (indt IsGR) "_functor" _.
+    coq.locate I IsGR,
+    realiR T {coq.env.global IsGR},
+    coq.env.global GR T,
+    derive.param1.functor.main GR IsGR "_functor" _.
   main _ :- usage.
 
   usage :- coq.error "Usage: derive.param1.functor <inductive type name> [<output suffix>]".
