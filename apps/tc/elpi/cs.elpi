@@ -1,0 +1,265 @@
+namespace cs {
+  namespace compiler {
+    func ocan (func constant ->), option constant.
+    ocan F (some C) :- coq.CS.canonical-projection? C, !, F C.
+    ocan _ _.
+
+    func forall-ocan (func constant ->), list (option constant) ->.
+    forall-ocan F L :- std.forall L (ocan F).
+    
+
+    % NOTE: the following code is to build a predicate name canstr-projx
+    % the problem is that we need to awake all links for CS projection
+    % after the execution of a tc resolution. Rules for constraints seems
+    % not to be dynamically extensible, therefore tc.link.solver-proj will
+    % not be capable of awaking new dynamically declared predicates.
+    % We use a single predicate tc.link.proj with three arguments for each
+    % projection: tc.link.proj PNAME CAR CS
+    % func proj-to-pname constant -> string.
+    % proj-to-pname P S :- tc.gref->pred-name "canstr" (const P) S.
+
+    % namespace record {
+    %   % each cs goal has three argument:
+    %   % - N the name of the projection
+    %   % - A the argument of the projection
+    %   % - the canonical structure of N applied to A
+    %   func proj-to-args constant -> list (pair argument_mode string).
+    %   proj-to-args _ [pr in "term", pr in "term", pr out "term"].
+    %     % coq.env.projection? C N,
+    %     % std.list.init N (x\y\ y = MT) L,
+    %     % std.append L [MT, MT] R.
+
+    %   % [make-pred-sig C Db]
+    %   % C the projection's constant
+    %   % Db the name of the database in which adding the predicate
+    %   func make-pred-sig string, constant ->.
+    %   make-pred-sig Db C :- !,
+    %     proj-to-pname C S,
+    %     proj-to-args  C A,
+    %     coq.elpi.add-predicate Db _ S A.
+
+    %   func create-cs-pred i:term.
+    %   create-cs-pred (global (indt R)) :-
+    %     coq.env.projections R LP,
+    %     forall-ocan (make-pred-sig "tc.db") LP.
+    % }
+
+    namespace cs {
+      :index (_ 1)
+      func get-projn int, list (option constant) -> list (pair int constant).
+      get-projn _ [] [].
+      get-projn M [some C|Xs] [pr M C|Ys] :- coq.CS.canonical-projection? C, !, N is M + 1, get-projn N Xs Ys.
+      get-projn M [_|Xs] Ys :- N is M + 1, get-projn N Xs Ys.
+
+      func get-proj term -> list (pair int constant).
+      get-proj (prod _ _ B) Pg :- !, pi x\ get-proj (B x) Pg.
+      get-proj (app [X|_]) Pg :- !, get-proj X Pg.
+      get-proj (global (indt R)) Pg :- 
+        coq.env.indt R _ N _ _ _ _,
+        coq.env.projections R P, get-projn N P Pg.
+
+      func is-uvar term ->.
+
+      % [compile C P Ag T R]
+      % P  = projection
+      % Ag = args list of the can struct
+      % I  = carrier
+      % CS = canonical structure
+      % R  = the compiled rule for the cs
+      func compile constant, term, term -> prop.
+      % compile P I CS R :-
+      %   proj-to-pname P PN,
+      %   coq.elpi.predicate PN [I, CS] R.
+      compile P I CS (tc.link.proj P I CS :- !).
+
+      :index (1 _ 1)
+      func mk-rule bool, prop, list prop -> prop.
+      mk-rule tt P [] (P :- !) :- !.
+      mk-rule ff P [] P :- !.
+      mk-rule tt P R (P :- [! | R]).
+      mk-rule ff P R (R => P).
+
+      func work-proj constant, int, list term, term, nat -> term, nat.
+      work-proj P PN Ag R N (tc.maybe-proj P PN Ag R []) (s N) :- is-uvar R, !.
+      work-proj P PN Ag R N T' N :- tc.proj-reducer P PN Ag R T', !.
+      work-proj P PN Ag R N (tc.maybe-proj P PN Ag R []) (s N) :- !.
+
+      func precompile term, nat -> term, nat.
+      :name "cs-precompile"
+      precompile T N T' N' :- 
+        tc.maybe-projection T P PN Ag R, !,
+        work-proj P PN Ag R N T' N'.
+
+      precompile X A Y A :- name X, !, X = Y, !. % avoid loading "precompile x A x A" at binders
+      precompile (global _ as C) A C A :- !.
+      precompile (pglobal _ _ as C) A C A :- !.
+      precompile (sort _ as C) A C A :- !.
+      precompile (fun N T F) A (fun N T1 F1) A2 :- !,
+        precompile T A T1 A1, pi x\ precompile (F x) A1 (F1 x) A2.
+      precompile (let N T B F) A (let N T1 B1 F1) A3 :- !,
+        precompile T A T1 A1, precompile B A1 B1 A2, pi x\ precompile (F x) A2 (F1 x) A3.
+      precompile (prod N T F) A (prod N T1 F1) A2 :- !,
+        precompile T A T1 A1, (pi x\ precompile (F x) A1 (F1 x) A2).
+      precompile (app L) A (app L1) A1 :- !, std.fold-map L A precompile L1 A1.
+      precompile (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+        precompile Ty A Ty1 A1, pi x\ precompile (F x) A1 (F1 x) A2.
+      precompile (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+        precompile T A T1 A1, precompile Rty A1 Rty1 A2, std.fold-map B A2 precompile B1 A3.
+      precompile (primitive _ as C) A C A :- !.
+      precompile (uvar M L as X) A W A1 :- var X, !, std.fold-map L A precompile L1 A1, coq.mk-app-uvar M L1 W.
+      % when used in CHR rules
+      precompile (uvar X L) A (uvar X L1) A1 :- std.fold-map L A precompile L1 A1.
+
+      
+      func decompile term, pair (list term) (list prop) -> term, pair (list term) (list prop).
+      :name "cs-decompile"
+      decompile (tc.maybe-proj C _ _ R S) (pr [X|XS] L1) Y (pr XS [tc.link.proj C Y R|L1]) :- !,
+        name Y X S.
+        % proj-to-pname C PN,
+        % coq.elpi.predicate PN [R, Y] NL.
+
+      decompile X A Y A :- name X, !, X = Y, !. % avoid loading "decompile x A x A" at binders
+      decompile (global _ as C) A C A :- !.
+      decompile (pglobal _ _ as C) A C A :- !.
+      decompile (sort _ as C) A C A :- !.
+      decompile (fun N T F) A (fun N T1 F1) A2 :- !,
+        decompile T A T1 A1, pi x\ decompile (F x) A1 (F1 x) A2.
+      decompile (let N T B F) A (let N T1 B1 F1) A3 :- !,
+        decompile T A T1 A1, decompile B A1 B1 A2, pi x\ decompile (F x) A2 (F1 x) A3.
+      decompile (prod N T F) A (prod N T1 F1) A2 :- !,
+        decompile T A T1 A1, (pi x\ decompile (F x) A1 (F1 x) A2).
+      decompile (app L) A (app L1) A1 :- !, std.fold-map L A decompile L1 A1.
+      decompile (fix N Rno Ty F) A (fix N Rno Ty1 F1) A2 :- !,
+        decompile Ty A Ty1 A1, pi x\ decompile (F x) A1 (F1 x) A2.
+      decompile (match T Rty B) A (match T1 Rty1 B1) A3 :- !,
+        decompile T A T1 A1, decompile Rty A1 Rty1 A2, std.fold-map B A2 decompile B1 A3.
+      decompile (primitive _ as C) A C A :- !.
+      decompile (uvar M L as X) A W A1 :- var X, !, std.fold-map L A decompile L1 A1, coq.mk-app-uvar M L1 W.
+      % when used in CHR rules
+      decompile (uvar X L) A (uvar X L1) A1 :- std.fold-map L A decompile L1 A1.
+
+      % [load-nestedp N B S T P L C]
+      % N is the number of pi to load
+      % B is the pos/neg position of the term being compiled
+      % C is the name of the predicate
+      % T is the argument (with N problematic subterms)
+      % P is the instance of the record to be used
+      % L is the list of pi accumulated terms
+      % Pr is the list of premises accumulated so far
+      % R is the created clause
+      func load-nestedp nat, bool, constant, term, term, list term, list prop -> prop.
+      load-nestedp z B C T P L Pr R :-
+        decompile T (pr L []) T' (pr _ Pm),
+        % coq.elpi.predicate C [T', P] Hd,
+        mk-rule B (tc.link.proj C T' P) {std.rev.aux Pm {std.rev [!|Pr]}} R.
+      load-nestedp (s N) B C T P L Pr (pi x\ R x) :- pi x\ load-nestedp N B C T P [x|L] Pr (R x).
+      
+      % [compiler B IC CS Ag P L C]
+      % B is the pos/neg position of the term
+      % IC is the projection being compiled together with its number
+      % CS is the instance of the structure
+      % Ag is the term being consumed for compilation (i.e. the implementation of CS) 
+      % L is the list of premises (TODO: should be removed?)
+      % PT is the list of pi-quantified variables for problematic subterms
+      % A is the list of abstractions: the arguments of CS
+      % C is the final rule
+      % NOTE: differently from type-class compilation, we are not compiling
+      %       types of terms, but their implementation. That is we need to cross
+      %       fun instead of prod
+      :index (_ _ _ 1)
+      func compiler bool, (pair int constant), term, term, list prop, list term, list term -> prop.
+      compiler B (pr N P) CS (app[_|Ag]) L _ A Rs :-
+        coq.mk-app CS {std.rev A} CS',
+        std.nth N Ag I,
+        precompile I z I' NPb,
+        load-nestedp NPb B P I' CS' [] L Rs.
+      compiler B P CS (fun N Ty Bo') L PT A (pi x\ R x) :- tc.get-TC-of-inst-type Ty TC, !,
+        @pi-decl N Ty x\ (is-uvar x :- !) ==>
+          tc.compile.instance Ty x (Pr x),
+          compiler B P CS (Bo' x) [Pr x|L] PT [x|A] (R x).
+      compiler B P CS (fun N Ty Bo') L PT A (pi x\ R x) :-
+        @pi-decl N Ty x\ (is-uvar x :- !) ==>
+          compiler B P CS (Bo' x) L PT [x|A] (R x).
+      
+      :index (_ _ _ 1)
+      func compiler-record bool, (pair int constant), term, term, list prop, list term, list term -> prop.
+      compiler-record B P CS (prod N Ty Bo') L PT A (pi x\ R x) :- tc.get-TC-of-inst-type Ty TC, !,
+        @pi-decl N Ty x\ (is-uvar x :- !) ==>
+          tc.compile.instance Ty x (Pr x),
+          compiler-record B P CS (Bo' x) [Pr x|L] PT [x|A] (R x).
+      compiler-record B P CS (prod N Ty Bo') L PT A (pi x\ R x) :- !,
+        @pi-decl N Ty x\ (is-uvar x :- !) ==>
+          compiler-record B P CS (Bo' x) L PT [x|A] (R x).
+      compiler-record B (pr N P) CS _ L _ A Rs :-
+        std.rev A Ar,
+        coq.mk-app CS Ar CS',
+        std.nth N Ar I,
+        precompile I z I' NPb,
+        load-nestedp NPb B P I' CS' [] L Rs.
+
+      % func compiler-pt nat, (pair int constant), term, term, list term -> prop.
+      % compiler-pt z IC CS T L R :- compiler tt IC CS T [] L [] R.
+      % compiler-pt (s N) IC CS T L (pi x\ R x) :-
+      %   pi x\ is-uvar x => compiler-pt N IC CS T [x|L] (R x).
+
+      % :index (_ _ _ _ 1 1)
+      % func compiler-univ nat, (pair int constant), term, term, list univ, list univ-instance -> prop.
+      % compiler-univ N IC CS T [] [] R :- compiler-pt N IC CS T [] R.
+      % compiler-univ N IC CS T [X|Xs] L (pi x\ R x) :-
+      %   pi x\ (copy (sort (typ X)) (sort (typ x)) :- !) => 
+      %     compiler-univ N IC CS T Xs L (R x).
+      % compiler-univ N IC CS T [] [X|Xs] (pi x\ R x) :-
+      %   pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
+      %     compiler-univ N IC CS T [] Xs (R x).
+
+      func main.aux 
+        (func bool, (pair int constant), term, term, list prop, list term, list term -> prop),
+        (pair int constant), term, term -> .
+      main.aux F IC I T :-
+        F tt IC I T [] [] [] R,
+        tc.add-tc-db _ (after "0") R.
+
+      :index (4)
+      func main term ->.
+      :name "cs.compiler.main"
+      main (global (const C) as T) :-
+        coq.env.const C (some Bo) Ty,
+        get-proj Ty P,
+        std.forall P (x\ main.aux compiler x T Bo).
+      main (global (indc C) as T) :-
+        coq.typecheck T Ty ok,
+        get-proj Ty P,
+        std.forall P (x\ main.aux compiler-record x T Ty).
+    }
+
+    % namespace default {
+    %   func build-default constant ->.
+    %   build-default D :-
+    %     R = (pi x y z \ tc.link.proj D (uvar as x) y :- declare_constraint (tc.link.proj D x y) [x,z]),
+    %     tc.add-tc-db _ _ R.
+
+    %   func main term ->.
+    %   main (global (indt C)) :-
+    %     coq.env.projections C P,
+    %     cs.compiler.forall-ocan build-default P.
+    % }
+  }
+
+  namespace solver {
+    func solve goal ->.
+    solve (goal Ctx _ _ T [trm P, trm R] as G) :- 
+      tc.compile.context Ctx CtxR,
+      coq.safe-dest-app P (global (const H)) _,
+      CtxR => tc.link.proj H R T.
+  }
+
+  pred main list argument.
+  :name "cs-main"
+  % main [str "class", trm T] :- !, std.assert! (cs.compiler.record.create-cs-pred T) "Cannot compile record projection".
+  main [str "cs", trm T] :- !, std.assert! (cs.compiler.cs.main T) "Cannot compile canonical structure".
+  % main [str "default", trm T] :- !, std.assert! (cs.compiler.default.main T) "Cannot compile canonical structure".
+  main L :- coq.error "
+    Invalid input for command cs\n
+    Expected:\n \tElpi cs cs (CANSTR)".
+      % \tElpi class (STRU)\n
+}

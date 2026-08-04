@@ -2,7 +2,7 @@
  (name elpi.apps.tc.tests)
  (flags :standard -async-proofs-cache force)
  (package rocq-elpi-tests)
- (theories elpi elpi.apps.tc))
+ (theories elpi elpi.apps.tc elpi.apps.cs))
 
 (include_subdirs qualified)
 (dirs :standard \ WIP)
