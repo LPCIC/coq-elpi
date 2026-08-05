@@ -37,7 +37,7 @@ let compute_api =
       (fun a _ ~depth:_ -> (), Some (Constant (compute a)))),
     DocAbove)
 
-(* we declare the neame of the file in which the new builtins are declared
+(* we declare the name of the file in which the new builtins are declared
    and the exported stuff (data types and predicates) *)
 let builtins = API.BuiltIn.declare ~file_name:"myExtension.elpi" [
   MLData myType;
