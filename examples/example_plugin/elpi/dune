@@ -3,8 +3,7 @@
  (name myExtension.lib)
  (theories elpi)
   ; the rocq files in this folder (theories)
-  ; will use the pluging called ext.plug
-  ; this is the name of the library defined in src
+  ; will use the plugin defined in src
  (plugins myExtension.plugin)
  (package myExtension))
 

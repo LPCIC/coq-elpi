@@ -1,6 +1,5 @@
 (library
- ; this is the name of the current library
- ; this library contains the modules declared in src (the ml files)
+ ; this library contains the modules declared in src (the ml files listed in the .mlpack file)
  (name myExtension_plugin)
  (public_name myExtension.plugin)
  ; the files in src depends on elpi
