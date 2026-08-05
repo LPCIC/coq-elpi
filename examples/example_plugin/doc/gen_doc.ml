@@ -1,3 +1,6 @@
-
+(* the builtins are taken from the src folder
+   this folder is a library called Ext_plug.
+   From ths Ext module we get the builtins constant
+*)
 let _ = Elpi.API.BuiltIn.document_file ~header:"% Generated"
-  Elpi_example_plugin.Rocq_elpi_example_plugin.builtins
+  MyExtension_plugin.My_extension_ocaml_code.builtins

@@ -1,0 +1,14 @@
+# Plugins.
+
+-I _build/install/default/lib
+
+# Theories
+
+-R theories myExtension
+-R _build/default/theories myExtension
+
+-Q tests myExtension.tests
+-Q _build/default/tests myExtension.tests
+
+-Q elpi myExtension.lib
+-Q _build/default/elpi myExtension.lib
