@@ -1,0 +1,13 @@
+
+
+% description for the new elpi type
+kind myType type.
+external symbol constant : int -> myType = "1". 
+external symbol sumof : myType -> myType -> myType = "1". 
+
+% [compute Expression Result] Result is the normal form of Expression
+external func compute myType -> myType.
+
+
+
+

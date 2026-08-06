@@ -1,16 +1,17 @@
 (executable
  (name gen_doc)
- (libraries elpi_example_plugin))
+ ; this doc depends on the myExtension library, where the
+ ; new builtins are declared
+ (libraries myExtension.plugin))
 
 (rule
- (targets
-  elpi_example_plugin.elpi)
+ ; myExtension.elpi contains the doc of the builtins defined in the myExtension plugin
+ (targets myExtension.elpi)
  (deps gen_doc.exe)
  (mode promote)
  (action (run ./gen_doc.exe)))
 
-(install
- (files
-  elpi_example_plugin.elpi)
- (section doc)
- (package rocq-elpi))
+; (install
+;  (files myExtension.elpi)
+;  (section doc)
+;  (package ext))
