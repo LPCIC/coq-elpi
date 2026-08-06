@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.eqbOK.
+From elpi.apps Require Import derive derive.eqbOK.
 
 From elpi.apps.derive.tests Require Import test_derive_corelib test_eqb test_eqbcorrect.
 
@@ -45,9 +45,9 @@ Elpi derive.eqbOK ord.
 Elpi derive.eqbOK ord2.
 Elpi derive.eqbOK val.
 Elpi derive.eqbOK alias.
-Fail Elpi derive.eqbOK mempty.
-Fail Elpi derive.eqbOK munit.
-Fail Elpi derive.eqbOK mpeano.
+Elpi derive.eqbOK mempty.
+Elpi derive.eqbOK munit.
+Elpi derive.eqbOK mpeano.
 Fail Elpi derive.eqbOK moption.
 Fail Elpi derive.eqbOK mtree.
 
@@ -59,3 +59,114 @@ Redirect "tmp" Check peano_eqb_OK : forall n m, Datatypes.reflect (n = m) (peano
 Redirect "tmp" Check seq_eqb_OK : forall A eqA (h : forall a1 a2 : A, Datatypes.reflect (a1 = a2) (eqA a1 a2)) l1 l2, Datatypes.reflect (l1 = l2) (seq_eqb A eqA l1 l2).
 Redirect "tmp" Check ord_eqb_OK : forall n (o1 o2 : ord n), Datatypes.reflect (o1 = o2) (ord_eqb n n o1 o2).
 Redirect "tmp" Check alias_eqb_OK : forall x y : alias, Datatypes.reflect (x = y) (alias_eqb x y).
+
+Module EqbOKStandaloneFirst.
+  From elpi.apps Require Import derive.eqbOK.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect)] derive tree.
+  Elpi derive.eqbOK tree.
+
+  Redirect "tmp" Check tree_eqb_OK.
+  Redirect "tmp" Check forest_eqb_OK.
+  Redirect "tmp" Check tree_eqb_OK_sumbool.
+  Redirect "tmp" Check forest_eqb_OK_sumbool.
+  Redirect "tmp" Elpi Query derive.eqbOK lp:{{
+    eqbok-for {{:gref tree}} _,
+    eqbok-for {{:gref forest}} _
+  }}.
+End EqbOKStandaloneFirst.
+
+Module EqbOKStandaloneSecond.
+  From elpi.apps Require Import derive.eqbOK.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect)] derive tree.
+  Elpi derive.eqbOK forest.
+
+  Redirect "tmp" Check tree_eqb_OK.
+  Redirect "tmp" Check forest_eqb_OK.
+  Redirect "tmp" Check tree_eqb_OK_sumbool.
+  Redirect "tmp" Check forest_eqb_OK_sumbool.
+End EqbOKStandaloneSecond.
+
+Module EqbOKMetaFirst.
+  From elpi.apps Require Import derive.eqbOK.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive tree.
+
+  Redirect "tmp" Check tree_eqb_OK.
+  Redirect "tmp" Check forest_eqb_OK.
+  Redirect "tmp" Check tree_eqb_OK_sumbool.
+  Redirect "tmp" Check forest_eqb_OK_sumbool.
+End EqbOKMetaFirst.
+
+Module EqbOKMetaSecond.
+  From elpi.apps Require Import derive.eqbOK.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive forest.
+
+  Redirect "tmp" Check tree_eqb_OK.
+  Redirect "tmp" Check forest_eqb_OK.
+  Redirect "tmp" Check tree_eqb_OK_sumbool.
+  Redirect "tmp" Check forest_eqb_OK_sumbool.
+End EqbOKMetaSecond.
+
+Module EqbOKPrefixSecond.
+  From elpi.apps Require Import derive.eqbOK.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK), prefix="custom_"] derive forest.
+
+  Redirect "tmp" Check tree_eqb_OK.
+  Redirect "tmp" Check tree_eqb_OK_sumbool.
+  Redirect "tmp" Check custom_eqb_OK.
+  Redirect "tmp" Check custom_eqb_OK_sumbool.
+End EqbOKPrefixSecond.
+
+Module EqbOKChainVisibility.
+  From elpi.apps Require Import derive.eqbOK.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive forest.
+
+  Redirect "tmp" Check tree_eqb_correct.
+  Redirect "tmp" Check forest_eqb_correct.
+  Redirect "tmp" Check tree_eqb_OK.
+  Redirect "tmp" Check forest_eqb_OK.
+End EqbOKChainVisibility.
+
+Module EqbOKTripleFromBeta.
+  From elpi.apps Require Import derive.eqbOK.
+
+  Import test_derive_corelib.Mutual.CyclicTriple.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive beta.
+
+  Redirect "tmp" Check alpha_eqb_OK.
+  Redirect "tmp" Check beta_eqb_OK.
+  Redirect "tmp" Check gamma_eqb_OK.
+  Redirect "tmp" Check alpha_eqb_OK_sumbool.
+  Redirect "tmp" Check beta_eqb_OK_sumbool.
+  Redirect "tmp" Check gamma_eqb_OK_sumbool.
+End EqbOKTripleFromBeta.
+
+Module EqbOKTripleFromGamma.
+  From elpi.apps Require Import derive.eqbOK.
+
+  Import test_derive_corelib.Mutual.CyclicTriple.
+
+  #[only(param1,param1_functor,param1_inhab,induction,eqType_ast,tag,fields,eqb,eqbcorrect,eqbOK)] derive gamma.
+
+  Redirect "tmp" Check alpha_eqb_OK.
+  Redirect "tmp" Check beta_eqb_OK.
+  Redirect "tmp" Check gamma_eqb_OK.
+End EqbOKTripleFromGamma.
