@@ -1,7 +1,7 @@
 (* license: GNU Lesser General Public License Version 2.1 or later           *)
 (* ------------------------------------------------------------------------- *)
 
-DECLARE PLUGIN "rocq-elpi.tc"
+DECLARE PLUGIN "rocq-elpi-typeclasses.elpi_tc_plugin"
 
 {
 open Stdarg
