@@ -3566,6 +3566,20 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
     EC.Vars.substl subst t
   in
 
+  (* The arity of the i-th member of a mutual block is read back in a context
+     already extended with the binders of the i preceding members (see
+     aux_mind_lam), hence its parameters live at de Bruijn i+1..i+paramsno.
+     Arities cannot mention the inductive types being defined, so we drop these
+     i binders and bring the parameters back to 1..paramsno, which is what
+     it_mkProd_or_LetIn expects below. *)
+  let relocate_mutual_arity sigma ~name ~nindsbefore t =
+    if nindsbefore = 0 then t
+    else if not (EConstr.Vars.noccur_between sigma 1 nindsbefore t) then
+      err Pp.(str"minductive: the arity of " ++ Id.print name ++
+              str" mentions an inductive type of the same block")
+    else EConstr.Vars.liftn (-nindsbefore) (nindsbefore + 1) t
+  in
+
   let aux_mutual_constructors coq_ctx ~depth (params,impls) inds state constructor_blocks =
     let params = force_name_ctx params in
     let paramsno = List.length params in
@@ -3596,7 +3610,10 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
       (state, [], []) inds constructor_blocks in
     let constructor_infos = List.rev constructor_infos in
     let indnames = List.map (fun (name, _, _, _, _, _) -> name) constructor_infos in
-    let arities = List.map (fun (_, arity, _, _, _, _) -> arity) constructor_infos in
+    let arities =
+      List.mapi (fun i (name, arity, _, _, _, _) ->
+        relocate_mutual_arity (get_sigma state) ~name ~nindsbefore:i arity)
+        constructor_infos in
     let constructors = List.map (fun (_, _, knames, ktypes, _, _) -> knames, ktypes) constructor_infos in
     let ind_impls = List.map (fun (_, _, _, _, i_impls, k_impls) -> i_impls, k_impls) constructor_infos in
     let finiteness =
@@ -3896,14 +3913,26 @@ let hoas_ind2lp ~depth coq_ctx state { params; decl } =
       let reloc ctx_len t =
         let t = EC.Vars.substl (subst ctx_len) t in
         Reductionops.nf_beta (Global.env()) sigma t in
-      let rec embed_arities coq_ctx depth state = function
+      (* Arities are stated in the context of the parameters only, while the
+         embedding of the n-th member of a mutual block takes place in a
+         coq_ctx already extended with the binders of the n preceding members.
+         We hence lift the arity telescope over these n binders. *)
+      let lift_arity_over_inds n ((nuparams : Glob_term.binding_kind ctx_entry list),typ) =
+        if n = 0 then (nuparams,typ)
+        else
+          let len = List.length nuparams in
+          List.mapi (fun i (x : Glob_term.binding_kind ctx_entry) ->
+            { x with typ = EC.Vars.liftn n (len - i) x.typ }) nuparams,
+          EC.Vars.liftn n (len + 1) typ in
+      let rec embed_arities coq_ctx depth state nindsbefore = function
         | [] -> state, [], coq_ctx, depth, []
         | { id; nuparams; typ; _ } :: rest ->
+            let nuparams, typ = lift_arity_over_inds nindsbefore (nuparams,typ) in
             let state, arity, gls = embed_arity ~depth coq_ctx state (nuparams,typ) in
             let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(EConstr.anonR,EConstr.mkProp)) coq_ctx in
-            let state, arities, coq_ctx, depth, gls_rest = embed_arities coq_ctx (depth+1) state rest in
+            let state, arities, coq_ctx, depth, gls_rest = embed_arities coq_ctx (depth+1) state (nindsbefore+1) rest in
             state, arity :: arities, coq_ctx, depth, gls @ gls_rest in
-      let state, arities, coq_ctx, depth, gls1 = embed_arities coq_ctx depth state inds in
+      let state, arities, coq_ctx, depth, gls1 = embed_arities coq_ctx depth state 0 inds in
       let embed_constructor state { id; arity; typ } =
         let alen = List.length arity in
         let kctx = List.mapi (fun i ({ extra; typ } as x) -> { x with typ = reloc (alen - i -1) typ }) arity in

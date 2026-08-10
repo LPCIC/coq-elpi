@@ -1,6 +1,12 @@
 
 # UNRELEASED
 
+### HOAS:
+- Fix `minductive` when the arity of a member of the block mentions a
+  parameter, in both directions (reading a declaration back was raising
+  `Invalid_argument("index out of bounds")` from the kernel, printing one
+  was producing an ill-typed declaration)
+
 ### LIB:
 - New  `coq.indt-decl->ids`, `coq.mutual?`, `coq.mutual.members`
 
