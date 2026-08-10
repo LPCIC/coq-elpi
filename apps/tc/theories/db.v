@@ -56,8 +56,7 @@ Elpi Db tc_options.db lp:{{
 
     func is-option-active (func (list string) ->) ->.
     is-option-active uvar :- !, fail.
-    is-option-active Opt :-
-      Opt X, coq.option.get X (coq.option.bool tt).
+    is-option-active Opt :- Opt X, coq.option.get X (coq.option.bool tt).
 
     func warning-name -> string.
     warning-name "[TC] Warning".
@@ -100,6 +99,13 @@ Elpi Db tc.db lp:{{
     func link.eta term, term ->.
     func link.llam term, term ->.
     func link.unif-eq term, term ->.
+
+    % a goal `p ?X = A` is translated into link.proj «p» X A
+    % link.proj is deterministic: this unification is deterministic.
+    % note that link.proj may have tc premises, that can be non deterministic.
+    % to avoid this issue, we wrap the non-deterministic call in std.once
+    :index (1 2)
+    func link.proj constant, term -> term.
 
   }
 }}.

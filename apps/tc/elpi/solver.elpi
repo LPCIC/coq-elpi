@@ -1,6 +1,5 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
-main _.
 
 msolve L N :- tc.time-it tc.oTC-time-msolve (coq.ltac.all (coq.ltac.open tc.solve-aux) L N) "msolve".
 msolve L _ :- coq.ltac.fail _ "[TC] fail to solve" L.
@@ -11,7 +10,7 @@ namespace tc {
     tc.compile.goal Goal Goal' PostProcess, !,
     coq.safe-dest-app Goal' (global TC) TL',
     std.append TL' [Proof] TL, !,
-    coq.elpi.predicate {tc.gref->pred-name TC} TL Q.
+    coq.elpi.predicate {tc.gref->pred-name "tc" TC} TL Q.
 
   type tc.mode_fail term.
 
@@ -33,7 +32,8 @@ namespace tc {
     tc.time-it tc.oTC-time-instance-search (
       do PostProcess, Q,
       tc.link.solve-eta, % Trigger eta links
-      tc.link.solve-llam % Trigger llam links
+      tc.link.solve-llam, % Trigger llam links
+      tc.link.solve-proj % Trigger proj links
     ) "instance search".
 
   pred solve-aux i:goal, o:list sealed-goal.

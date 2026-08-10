@@ -7,7 +7,7 @@ Section test_max_arity.
         (prod `a` _ c3 \
           app [global _, app [c1, c3], c2]) c3 \
         app [global _, c1, c2]),
-    pi x\ tc.precomp.instance.get-range-arity x _ (T x) (tc.r-ar z (s z)).
+    pi x\ tc.precomp.instance.get-max-arity x _ (T x) (s z).
   }}.
 End test_max_arity.
 
@@ -126,7 +126,7 @@ Module HO_swap.
   Class c2 (T : (Type -> Type -> Type)).
 
   Elpi Query TC.Solver lp:{{
-    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
+    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.is-uvar f => 
       sigma T\
         tc.precomp.instance {{c1 (fun x y => lp:f y x)}} T N _ _,
         std.assert! (T = app[{{c1}}, tc.maybe-eta-tm _ _]) "[TC] invalid precomp".
@@ -212,7 +212,7 @@ Module HO_81.
     tc.compile.goal Goal _ _ :-
       Goal = {{HO_81.c1 lp:_}}, !,
       tc.precomp.goal Goal _ Vars, !,
-      tc.compile.goal.make-pairs Vars Pairs,
+      tc.compile.make-pairs Vars Pairs,
       std.assert! (Pairs = []) "", fail.
   }}.
   
@@ -245,7 +245,7 @@ Module HO_9.
   Instance i1 A: c1 (fun x => f (A x) (A x)). Qed.
 
   Elpi Query TC.Solver lp:{{
-    pi F\ sigma T\ decl F `x` {{Type -> Type}} ==> tc.precomp.instance.is-uvar F ==> 
+    pi F\ sigma T\ decl F `x` {{Type -> Type}} ==> tc.precomp.is-uvar F ==> 
       tc.precomp.instance {{c1 (fun x => f (lp:F x) (lp:F x))}} T N _ _,
       std.assert! (T = app [{{c1}}, tc.maybe-eta-tm _ _]) "Invalid precompilation".
   }}.
@@ -334,11 +334,11 @@ Module Llam_1.
   Class B (i: nat -> nat).
 
   Elpi Query TC.Solver lp:{{
-    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.instance.is-uvar f => 
-      @pi-decl `x` {{Type -> Type}} g\ tc.precomp.instance.is-uvar g => 
+    @pi-decl `x` {{Type -> Type}} f\ tc.precomp.is-uvar f => 
+      @pi-decl `x` {{Type -> Type}} g\ tc.precomp.is-uvar g => 
         sigma T\
           tc.precomp.instance {{A (fun x => lp:f (lp:g x))}} T N _ _,
-          std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _)) _]) "[TC] invalid precomp".
+          std.assert! (T = app[{{A}}, tc.maybe-eta-tm (fun _ _ (x\ tc.maybe-llam-tm _ _ _ _)) _]) "[TC] invalid precomp".
   }}.
 
   Instance I1: forall F G, B G -> A (fun x => F (G x)). Qed.
@@ -515,7 +515,7 @@ Module CoqUvar3.
     tc.precomp.goal {{c1 (fun x y => lp:X (lp:A x y) y)}} C _,
     Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
     Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
-    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [x,y]),
+    Body2 = (x\y\ tc.maybe-llam-tm X [] [Y x y, y] [x,y]),
     std.assert! (C = Expected) "[TC] invalid compilation".
   }}.
 
@@ -555,7 +555,7 @@ Module CoqUvar4.
     tc.precomp.instance {{c1 (fun x y => lp:X (lp:A x y) y)}} C _ _ _,
     Expected = app [{{c1}}, tc.maybe-eta-tm (fun _ _ Body1) _],
     Body1 = (x\ tc.maybe-eta-tm (fun _ _ (Body2 x)) [x]),
-    Body2 = (x\y\ tc.maybe-llam-tm (app [app [X], (Y x y), y]) [y,x]),
+    Body2 = (x\y\ tc.maybe-llam-tm X [] [Y x y, y] [y,x]),
     std.assert! (C = Expected) "[TC] invalid compilation".
   }}.
 
