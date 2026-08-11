@@ -154,17 +154,26 @@ evar _ _ _. % volatile, only unresolved evars are considered as evars
 macro @pi-decl N T F :- pi x\ decl x N T => F x.
 macro @pi-def N T B F :- pi x\ def x N T B => cache x B_ => F x.
 
+% [coq.id->name-of-ty ID Ty Name] turns an id into a name carrying the
+% relevance mark of Ty. [coq.id->name] cannot do that: it only sees the id, so
+% it always answers a relevant name, and the kernel rejects a relevant binder
+% whose type lives in SProp. Ty not retyping leaves the mark alone.
+func coq.id->name-of-ty id, term -> name.
+coq.id->name-of-ty ID Ty Name :-
+  coq.id->name ID N,
+  coq.typecheck-relevance (prod N Ty _\ Ty) (prod Name _ _).
+
 % Converts an arity to a term
 func coq.arity->term arity -> term.
 coq.arity->term (parameter ID _ Ty Rest) (prod Name Ty R) :-
-  coq.id->name ID Name,
+  coq.id->name-of-ty ID Ty Name,
   @pi-decl Name Ty x\ coq.arity->term (Rest x) (R x).
 coq.arity->term (arity A) A.
 
 macro @pi-parameter ID T F :-
-  sigma N\ (coq.id->name ID N, pi x\ decl x N T => F x).
+  sigma N\ (coq.id->name-of-ty ID T N, pi x\ decl x N T => F x).
 macro @pi-inductive ID A F :-
-  sigma N\ (coq.id->name ID N, coq.arity->term A T, pi x\ decl x N T => F x).
+  sigma N\ (coq.arity->term A T, coq.id->name-of-ty ID T N, pi x\ decl x N T => F x).
 
 
 % Sometimes it can be useful to pass to Coq a term with unification variables

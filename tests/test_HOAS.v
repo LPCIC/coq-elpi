@@ -1021,3 +1021,48 @@ Elpi Query lp:{{
   coq.env.add-const "sprop_after_fix" Body1 _ @transparent! _.
 }}.
 
+(* -------- Relevance of inductive parameters -------- *)
+
+(* A parameter whose type lives in SProp: the binder [coq.arity->term] and
+   [@pi-parameter] build for it has to be irrelevant, or the kernel rejects the
+   inductive on the mark alone. *)
+Elpi Query lp:{{
+  coq.locate "sTrue" (indt ST),
+  Decl =
+    (parameter "proof" explicit (global (indt ST)) proof\
+      inductive "sprop_parameter_inductive" tt (arity {{ Type }}) ind\
+        [constructor "sprop_parameter_constructor"
+           (arity ind)]),
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton Decl Elaborated)
+    "failed to elaborate SProp-parameter inductive",
+  coq.env.add-indt Elaborated _.
+}}.
+
+(* Same, for a parameter of an arity *)
+Elpi Query lp:{{
+  coq.locate "sTrue" (indt ST),
+  Decl =
+    (inductive "sprop_arity_parameter_inductive" tt
+      (parameter "proof" explicit (global (indt ST)) proof\
+        arity {{ Type }}) ind\
+        [constructor "sprop_arity_parameter_constructor"
+           (parameter "proof" explicit (global (indt ST)) proof\
+             arity (app [ind, proof]))]),
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton Decl Elaborated)
+    "failed to elaborate SProp-arity-parameter inductive",
+  coq.env.add-indt Elaborated _.
+}}.
+
+(* coq.id->name-of-ty answers the mark of the type, not of the id *)
+Elpi Query lp:{{
+  coq.locate "sTrue" (indt ST),
+  coq.id->name-of-ty "proof" (global (indt ST)) NS,
+  coq.name.relevant? NS RS,
+  std.assert! (RS = some ff) "an SProp binder should be irrelevant",
+  coq.id->name-of-ty "n" {{ nat }} NN,
+  coq.name.relevant? NN RN,
+  std.assert! (RN = some tt) "a nat binder should be relevant",
+  coq.id->name-of-ty "p" {{ True }} NP,
+  coq.name.relevant? NP RP,
+  std.assert! (RP = some tt) "a Prop binder should be relevant".
+}}.

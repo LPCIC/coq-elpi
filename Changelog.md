@@ -6,6 +6,10 @@
   parameter, in both directions (reading a declaration back was raising
   `Invalid_argument("index out of bounds")` from the kernel, printing one
   was producing an ill-typed declaration)
+- New `coq.id->name-of-ty`, building a name whose relevance mark is the one of
+  the given type; `coq.arity->term`, `@pi-parameter` and `@pi-inductive` use it
+  instead of `coq.id->name`, so a parameter whose type lives in `SProp` no
+  longer gets a relevant binder that the kernel rejects
 
 ### API:
 - New `coq.string->name-irrelevant`, the counterpart of
