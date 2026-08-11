@@ -1021,3 +1021,32 @@ Elpi Query lp:{{
   coq.env.add-const "sprop_after_fix" Body1 _ @transparent! _.
 }}.
 
+(* -------- Relevance of inductive parameters -------- *)
+
+(* coq.env.add-indt: infer a parameter's relevance from its type *)
+Elpi Query lp:{{
+  coq.locate "sTrue" (indt ST),
+  Decl =
+    (parameter "proof" explicit (global (indt ST)) proof\
+      inductive "sprop_parameter_inductive" tt (arity {{ Type }}) ind\
+        [constructor "sprop_parameter_constructor"
+           (arity ind)]),
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton Decl Elaborated)
+    "failed to elaborate SProp-parameter inductive",
+  coq.env.add-indt Elaborated _.
+}}.
+
+(* coq.env.add-indt: same, for a parameter of an arity *)
+Elpi Query lp:{{
+  coq.locate "sTrue" (indt ST),
+  Decl =
+    (inductive "sprop_arity_parameter_inductive" tt
+      (parameter "proof" explicit (global (indt ST)) proof\
+        arity {{ Type }}) ind\
+        [constructor "sprop_arity_parameter_constructor"
+           (parameter "proof" explicit (global (indt ST)) proof\
+             arity (app [ind, proof]))]),
+  std.assert-ok! (coq.elaborate-indt-decl-skeleton Decl Elaborated)
+    "failed to elaborate SProp-arity-parameter inductive",
+  coq.env.add-indt Elaborated _.
+}}.

@@ -3336,6 +3336,9 @@ let readback_arity ~depth coq_ctx constraints state t =
         let state, name, gl0 = in_coq_annot ~depth state name in
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
+        (* The kernel checks a parameter's mark against the sort of its type, so
+           the unset mark a name carries will not do. *)
+        let name = relevance_of_binder coq_ctx.env (get_sigma state) name ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
         aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_binding_kind (Context.binder_name name) imp :: impls) state (gl0 :: gls :: extra) decl
     | E.App(c,ty,[]) when c == arityc ->
@@ -3739,6 +3742,9 @@ let lp2inductive_entry ~depth coq_ctx constraints state t =
         let state, name, gl0 = in_coq_annot ~depth state name in
         let state, imp = in_coq_imp ~depth state imp in
         let state, ty, gls = lp2constr coq_ctx ~depth state ty in
+        (* The kernel checks a parameter's mark against the sort of its type, so
+           the unset mark a name carries will not do. *)
+        let name = relevance_of_binder coq_ctx.env (get_sigma state) name ty in
         let e = Context.Rel.Declaration.LocalAssum(name,ty) in
         aux_lam e coq_ctx ~depth (e :: params) (manual_implicit_of_binding_kind (Context.binder_name name) imp :: impls) state (gls :: extra) decl
     | E.App(c,id,[fin;arity;rest])
