@@ -233,6 +233,12 @@ val sort : (Sorts.t,'a conv_context,constraints) ContextualConversion.t
 val global_constant_of_globref : Names.GlobRef.t -> global_constant
 val abbreviation : Globnames.abbreviation Conversion.t
 val implicit_kind : Glob_term.binding_kind Conversion.t
+
+(* Recomputes, by retyping, the relevance mark of every binder of a term, the
+   binders of Case/Fix/CoFix included.  Marks whose type does not retype are
+   left alone. *)
+val retype_relevance_of_binders : Environ.env -> Evd.evar_map -> EConstr.t -> EConstr.t
+
 val collect_term_variables : depth:int -> term -> Names.Id.t list
 val subst_cdata : Mod_subst.substitution -> Elpi.API.RawOpaqueData.t -> Elpi.API.RawOpaqueData.t
 type pstring = Pstring.t

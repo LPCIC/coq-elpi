@@ -1517,6 +1517,13 @@ external func coq.typecheck term -> term, diagnostic.
 % Universe constraints are put in the constraint store.
 external func coq.typecheck-ty term -> sort, diagnostic.
 
+% [coq.typecheck-relevance T T1] recomputes by retyping the relevance
+% mark of every binder of T: binders whose type lives in SProp become
+% irrelevant, the others relevant. A binder whose type does not retype
+% keeps the mark it has. The kernel checks these marks, so a term
+% assembled by hand rather than obtained from elaboration may need this.
+external func coq.typecheck-relevance term -> term.
+
 % [coq.unify-eq A B Diagnostic] unifies the two terms
 external func coq.unify-eq term, term -> diagnostic.
 
@@ -1821,6 +1828,10 @@ external func coq.string->name string -> name.
 % [coq.string->name-relevant Hint Name] creates a name hint with the
 % relevant mark (see SProp)
 external func coq.string->name-relevant string -> name.
+
+% [coq.string->name-irrelevant Hint Name] creates a name hint with the
+% irrelevant mark (see SProp)
+external func coq.string->name-irrelevant string -> name.
 
 
 func coq.id->name id -> name.

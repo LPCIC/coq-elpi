@@ -3948,6 +3948,19 @@ Universe constraints are put in the constraint store.|})))),
           state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
+  MLCode(Pred("coq.typecheck-relevance",
+    CIn(term, "T",
+    COut(term, "T1",
+    Read (proof_context,
+{|recomputes by retyping the relevance
+mark of every binder of T: binders whose type lives in SProp become
+irrelevant, the others relevant. A binder whose type does not retype
+keeps the mark it has. The kernel checks these marks, so a term
+assembled by hand rather than obtained from elaboration may need this.|}))),
+  (fun t _ ~depth proof_context _ state ->
+     !: (retype_relevance_of_binders proof_context.env (get_sigma state) t))),
+  DocAbove);
+
   MLCode(Pred("coq.unify-eq",
     CIn(term, "A",
     CIn(term, "B",
@@ -4603,8 +4616,17 @@ and for all in a .v file which your clients will load. Eg.
     In(B.string, "Hint",
     Out(name,  "Name",
     Easy("creates a name hint with the relevant mark (see SProp)"))),
-  (fun s _ ~depth -> 
+  (fun s _ ~depth ->
     let s = EConstr.nameR (Id.of_string s) in
+    !: s)),
+  DocAbove);
+
+  MLCode(Pred("coq.string->name-irrelevant",
+    In(B.string, "Hint",
+    Out(name,  "Name",
+    Easy("creates a name hint with the irrelevant mark (see SProp)"))),
+  (fun s _ ~depth ->
+    let s = Context.make_annot (Name.mk_name (Id.of_string s)) EConstr.ERelevance.irrelevant in
     !: s)),
   DocAbove);
 
