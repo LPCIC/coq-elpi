@@ -12,6 +12,13 @@ with pforest (A : Type) : Type :=
 | pempty
 | pcons (t : ptree A) (f : pforest A).
 
+(* Arities that mention a parameter of the block. *)
+Inductive stree (A : Type) : A -> Type :=
+| snode (x : A) (f : sforest A x) : stree A x
+with sforest (A : Type) : A -> Type :=
+| sempty (x : A) : sforest A x
+| scons (x : A) (t : stree A x) (f : sforest A x) : sforest A x.
+
 Inductive even : nat -> Type :=
 | evenO : even 0
 | evenS n : odd n -> even (S n)
@@ -28,6 +35,10 @@ main _ :-
   coq.locate "ptree" (indt PTree),
   coq.env.indt-decl PTree PTreeDecl,
   std.assert-ok! (coq.typecheck-indt-decl PTreeDecl) "ptree declaration illtyped",
+
+  coq.locate "stree" (indt STree),
+  coq.env.indt-decl STree STreeDecl,
+  std.assert-ok! (coq.typecheck-indt-decl STreeDecl) "stree declaration illtyped",
 
   coq.locate "even" (indt Even),
   coq.env.indt-decl Even EvenDecl,
@@ -54,6 +65,21 @@ main _ :-
   std.assert-ok! (coq.typecheck-indt-decl PTree2Decl) "ptree2 declaration illtyped",
   coq.env.add-indt PTree2Decl _,
 
+  % The arity of each member mentions the parameter A.
+  STree2Decl = (parameter "A" explicit {{ Type }} a\
+    (minductive "stree2" tt (arity {{ lp:a -> Type }}) t\
+    (minductive "sforest2" tt (arity {{ lp:a -> Type }}) f\
+      (mblock [
+        [constructor "snode2" (parameter "x" explicit a x\
+           arity {{ lp:f lp:x -> lp:t lp:x }})],
+        [constructor "sempty2" (parameter "x" explicit a x\
+           arity {{ lp:f lp:x }}),
+         constructor "scons2" (parameter "x" explicit a x\
+           arity {{ lp:t lp:x -> lp:f lp:x -> lp:f lp:x }})]
+      ])))),
+  std.assert-ok! (coq.typecheck-indt-decl STree2Decl) "stree2 declaration illtyped",
+  coq.env.add-indt STree2Decl _,
+
   Even2Decl = (minductive "even2" tt (arity {{ nat -> Type }}) even\
     (minductive "odd2" tt (arity {{ nat -> Type }}) odd\
       (mblock [
@@ -70,7 +96,7 @@ Module Generated.
   Elpi test_mutind.
 End Generated.
 
-Universe tree2_u ptree2_arg_u ptree2_u even2_u.
+Universe tree2_u ptree2_arg_u ptree2_u stree2_arg_u stree2_u even2_u.
 
 Module Type GeneratedMutualInductives.
   Inductive tree2 : Type@{tree2_u} :=
@@ -84,6 +110,12 @@ Module Type GeneratedMutualInductives.
   with pforest2 (A : Type@{ptree2_arg_u}) : Type@{ptree2_u} :=
   | pempty2
   | pcons2 (t : ptree2 A) (f : pforest2 A).
+
+  Inductive stree2 (A : Type@{stree2_arg_u}) : A -> Type@{stree2_u} :=
+  | snode2 (x : A) (f : sforest2 A x) : stree2 A x
+  with sforest2 (A : Type@{stree2_arg_u}) : A -> Type@{stree2_u} :=
+  | sempty2 (x : A) : sforest2 A x
+  | scons2 (x : A) (t : stree2 A x) (f : sforest2 A x) : sforest2 A x.
 
   Inductive even2 : nat -> Type@{even2_u} :=
   | evenO2 : even2 0
