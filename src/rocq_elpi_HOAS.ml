@@ -3265,6 +3265,77 @@ let force_name_ctx =
     | LocalDef(n,b,ty) -> LocalDef(map_annot (fun n -> Name (force_name n)) n, b, ty))
 ;;
 
+(* The kernel checks the relevance mark carried by a binder against the sort of
+   the binder's type, so a term assembled by hand -- rather than obtained from
+   elaboration -- can be rejected on a mark alone.  Retyping recovers the right
+   mark, but it is partial on open terms: when it gives up we keep the mark that
+   was already there rather than guess. *)
+let retyped_relevance env sigma ~dflt ty =
+  try Retyping.relevance_of_type env sigma ty
+  with Retyping.RetypeError _ -> dflt
+
+let relevance_of_binder env sigma na ty =
+  { na with Context.binder_relevance =
+      retyped_relevance env sigma ~dflt:na.Context.binder_relevance ty }
+
+(* Same, for every binder of a term.  Each type is retyped in the environment of
+   the binders that precede it, so [Case], [Fix] and [CoFix] have to push their
+   own binders too: their bodies are not closed, and typing them in the ambient
+   context would not fail, it would silently produce marks for the wrong types. *)
+let retype_relevance_of_binders env sigma t =
+  let open Context.Rel.Declaration in
+  (* A rel_context is innermost-first, the [name] arrays of a [Case] run the
+     other way; [decls] below is the context reversed to match. *)
+  let rec fix_telescope env acc decls nas =
+    match decls, nas with
+    | [], [] -> env, Array.of_list (List.rev acc)
+    | d :: decls, na :: nas ->
+        let na = relevance_of_binder env sigma na (get_type d) in
+        fix_telescope (EConstr.push_rel (set_annot na d) env) (na :: acc) decls nas
+    | _ -> assert false (* annotate_case returns a context per bound name *)
+  in
+  let rec aux env t =
+    match EConstr.kind sigma t with
+    | Constr.Prod(na,ty,bo) ->
+        let ty = aux env ty in
+        let na = relevance_of_binder env sigma na ty in
+        EConstr.mkProd(na,ty,aux (EConstr.push_rel (LocalAssum(na,ty)) env) bo)
+    | Constr.Lambda(na,ty,bo) ->
+        let ty = aux env ty in
+        let na = relevance_of_binder env sigma na ty in
+        EConstr.mkLambda(na,ty,aux (EConstr.push_rel (LocalAssum(na,ty)) env) bo)
+    | Constr.LetIn(na,v,ty,bo) ->
+        let v = aux env v in
+        let ty = aux env ty in
+        let na = relevance_of_binder env sigma na ty in
+        EConstr.mkLetIn(na,v,ty,aux (EConstr.push_rel (LocalDef(na,v,ty)) env) bo)
+    | Constr.Fix(ri,(nas,tys,bos)) ->
+        let tys = Array.map (aux env) tys in
+        let nas = Array.map2 (relevance_of_binder env sigma) nas tys in
+        let env = EConstr.push_rec_types (nas,tys,bos) env in
+        EConstr.mkFix(ri,(nas,tys,Array.map (aux env) bos))
+    | Constr.CoFix(i,(nas,tys,bos)) ->
+        let tys = Array.map (aux env) tys in
+        let nas = Array.map2 (relevance_of_binder env sigma) nas tys in
+        let env = EConstr.push_rec_types (nas,tys,bos) env in
+        EConstr.mkCoFix(i,(nas,tys,Array.map (aux env) bos))
+    | Constr.Case(ci,u,pms,((rnas,rbo),rrel),iv,c,bs) ->
+        (* The names of the return clause and of the branches bind the
+           inductive's indices and the constructors' arguments; their types are
+           not in the node, they have to be recovered from the inductive. *)
+        let _, _, _, ((rctx,_),_), _, _, abs =
+          EConstr.annotate_case env sigma (ci,u,pms,((rnas,rbo),rrel),iv,c,bs) in
+        let renv, rnas = fix_telescope env [] (List.rev rctx) (Array.to_list rnas) in
+        let rrel = retyped_relevance renv sigma ~dflt:rrel rbo in
+        let bs = Array.map2 (fun (ctx,_) (nas,bo) ->
+            let env, nas = fix_telescope env [] (List.rev ctx) (Array.to_list nas) in
+            nas, aux env bo) abs bs in
+        let iv = Constr.map_invert (aux env) iv in
+        EConstr.mkCase(ci,u,Array.map (aux env) pms,
+          ((rnas,aux renv rbo),rrel),iv,aux env c,bs)
+    | _ -> EConstr.map sigma (aux env) t
+  in
+    aux env t
 
 let readback_arity ~depth coq_ctx constraints state t =
   let lp2constr coq_ctx ~depth state t =

@@ -7,6 +7,12 @@
   `Invalid_argument("index out of bounds")` from the kernel, printing one
   was producing an ill-typed declaration)
 
+### API:
+- New `coq.string->name-irrelevant`, the counterpart of
+  `coq.string->name-relevant`
+- New `coq.typecheck-relevance` recomputing, by retyping, the relevance mark of
+  every binder of a term
+
 ### LIB:
 - New  `coq.indt-decl->ids`, `coq.mutual?`, `coq.mutual.members`
 
