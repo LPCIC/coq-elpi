@@ -959,3 +959,65 @@ Elpi Query lp:{{
   std.assert! (D = D2) "different inductives",
   coq.typecheck-indt-decl D ok.
 }}.
+
+(* -------- Relevance of binders -------- *)
+
+Inductive sTrue : SProp := sI.
+
+(* coq.string->name-relevant and coq.string->name-irrelevant *)
+Elpi Query lp:{{
+  coq.string->name "x" N,
+  coq.name.relevant? N R,
+  std.assert! (R = none) "coq.string->name should leave the mark unset",
+  coq.string->name-relevant "x" NR,
+  coq.name.relevant? NR RR,
+  std.assert! (RR = some tt) "coq.string->name-relevant is not relevant",
+  coq.string->name-irrelevant "x" NI,
+  coq.name.relevant? NI RI,
+  std.assert! (RI = some ff) "coq.string->name-irrelevant is not irrelevant".
+}}.
+
+(* coq.typecheck-relevance fixes both directions, on nested binders *)
+Elpi Query lp:{{
+  coq.locate "sTrue" (indt ST),
+  coq.string->name-irrelevant "n" Nwrong,
+  coq.string->name-relevant "p" Pwrong,
+  coq.typecheck-relevance
+    (prod Nwrong {{ nat }} _\ prod Pwrong (global (indt ST)) _\ {{ nat }}) T,
+  T = prod Nfixed _ F, pi n\
+  F n = prod Pfixed _ _,
+  coq.name.relevant? Nfixed Rn,
+  coq.name.relevant? Pfixed Rp,
+  std.assert! (Rn = some tt) "the nat binder should have become relevant",
+  std.assert! (Rp = some ff) "the SProp binder should have become irrelevant".
+}}.
+
+(* The binders of a match branch have to be pushed before its body is retyped:
+   here [T], the type of [y], is the second de Bruijn index inside the branch
+   and the first one outside it, where it is an SProp.  The kernel checks the
+   marks, so the term is rejected on the mark alone if the branch's own binders
+   are not in the environment. *)
+Inductive box : Type := Box (T : Type) (t : T).
+
+Definition sprop_before_match (P : SProp) (b : box) : nat :=
+  match b with Box T t => (fun y : T => 0) t end.
+
+Elpi Query lp:{{
+  coq.locate "sprop_before_match" (const C),
+  coq.env.const C (some Body) _,
+  coq.typecheck-relevance Body Body1,
+  coq.env.add-const "sprop_after_match" Body1 _ @transparent! _.
+}}.
+
+(* Same, for the binders of a fix: [Q], the type of [y], is shifted by the
+   recursive binder [f]. *)
+Definition sprop_before_fix (P : SProp) (Q : Type) (q : Q) : nat -> nat :=
+  fix f (n : nat) : nat := (fun y : Q => 0) q.
+
+Elpi Query lp:{{
+  coq.locate "sprop_before_fix" (const C),
+  coq.env.const C (some Body) _,
+  coq.typecheck-relevance Body Body1,
+  coq.env.add-const "sprop_after_fix" Body1 _ @transparent! _.
+}}.
+

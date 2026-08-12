@@ -3265,6 +3265,67 @@ let force_name_ctx =
     | LocalDef(n,b,ty) -> LocalDef(map_annot (fun n -> Name (force_name n)) n, b, ty))
 ;;
 
+(* The kernel checks the relevance mark carried by a binder against the sort of
+   the binder's type, so a term assembled by hand -- rather than obtained from
+   elaboration -- can be rejected on a mark alone.  Retyping recovers the right
+   mark, but it is partial on open terms: when it gives up we keep the mark that
+   was already there rather than guess. *)
+let retyped_relevance env sigma ~dflt ty =
+  try Retyping.relevance_of_type env sigma ty
+  with Retyping.RetypeError _ -> dflt
+
+let relevance_of_binder env sigma na ty =
+  { na with Context.binder_relevance =
+      retyped_relevance env sigma ~dflt:na.Context.binder_relevance ty }
+
+(* Same, for every binder of a term.  Only the marks a node's own binders carry
+   are fixed here; the descent, and the environment each subterm is retyped in,
+   are [Termops.map_constr_with_full_binders]'.  That is what makes [Case], [Fix]
+   and [CoFix] safe: their bodies are not closed, and retyping them in the
+   ambient context would not fail, it would silently mark the wrong types. *)
+let retype_relevance_of_binders env sigma t =
+  let open Context.Rel.Declaration in
+  (* A rel_context is innermost-first, the [name] arrays of a [Case] run the
+     other way; [decls] below is the context reversed to match. *)
+  let rec fix_telescope env acc decls nas =
+    match decls, nas with
+    | [], [] -> env, Array.of_list (List.rev acc)
+    | d :: decls, na :: nas ->
+        let na = relevance_of_binder env sigma na (get_type d) in
+        fix_telescope (EConstr.push_rel (set_annot na d) env) (na :: acc) decls nas
+    | _ -> assert false (* annotate_case returns a context per bound name *)
+  in
+  let fix_binders env t =
+    match EConstr.kind sigma t with
+    | Constr.Prod(na,ty,bo) ->
+        EConstr.mkProd(relevance_of_binder env sigma na ty,ty,bo)
+    | Constr.Lambda(na,ty,bo) ->
+        EConstr.mkLambda(relevance_of_binder env sigma na ty,ty,bo)
+    | Constr.LetIn(na,v,ty,bo) ->
+        EConstr.mkLetIn(relevance_of_binder env sigma na ty,v,ty,bo)
+    | Constr.Fix(ri,(nas,tys,bos)) ->
+        EConstr.mkFix(ri,(Array.map2 (relevance_of_binder env sigma) nas tys,tys,bos))
+    | Constr.CoFix(i,(nas,tys,bos)) ->
+        EConstr.mkCoFix(i,(Array.map2 (relevance_of_binder env sigma) nas tys,tys,bos))
+    | Constr.Case(ci,u,pms,((rnas,rbo),rrel),iv,c,bs) ->
+        (* The names of the return clause and of the branches bind the
+           inductive's indices and the constructors' arguments; their types are
+           not in the node, they have to be recovered from the inductive. *)
+        let _, _, _, ((rctx,_),_), _, _, abs =
+          EConstr.annotate_case env sigma (ci,u,pms,((rnas,rbo),rrel),iv,c,bs) in
+        let renv, rnas = fix_telescope env [] (List.rev rctx) (Array.to_list rnas) in
+        let bs = Array.map2 (fun (ctx,_) (nas,bo) ->
+            snd (fix_telescope env [] (List.rev ctx) (Array.to_list nas)), bo) abs bs in
+        EConstr.mkCase(ci,u,pms,
+          ((rnas,rbo),retyped_relevance renv sigma ~dflt:rrel rbo),iv,c,bs)
+    | _ -> t
+  in
+  (* The marks have to be fixed before the descent, not after: the binders a
+     node is rebuilt with are the ones the map found there. *)
+  let rec aux env t =
+    Termops.map_constr_with_full_binders env sigma EConstr.push_rel aux env
+      (fix_binders env t) in
+    aux env t
 
 let readback_arity ~depth coq_ctx constraints state t =
   let lp2constr coq_ctx ~depth state t =
