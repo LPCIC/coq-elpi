@@ -6,6 +6,9 @@
   parameter, in both directions (reading a declaration back was raising
   `Invalid_argument("index out of bounds")` from the kernel, printing one
   was producing an ill-typed declaration)
+- Fix the relevance mark of `parameter` binders in inductive declarations: it
+  is now inferred by retyping instead of being left to the (relevant) mark
+  carried by the name, which the kernel rejects for a parameter in `SProp`
 
 ### API:
 - New `coq.string->name-irrelevant`, the counterpart of
