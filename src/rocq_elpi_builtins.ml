@@ -1179,8 +1179,14 @@ type tac_abbrev = {
 
 type ('a,'d) gbpmp = Gbpmp : ('d, _, 'b, Loc.t -> 'd) Procq.Rule.t * ('a -> 'b) -> ('a,'d) gbpmp
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let exact_ident x = Tok.PIDENT (Some x)
+[%%else]
+let exact_ident x = Tok.PIDENT (Exact x)
+[%%endif]
+
 let rec gbpmp f = function
-  | [x] -> Gbpmp (Procq.Rule.next Procq.Rule.stop (Procq.Symbol.token (Tok.PIDENT(Some x))), (fun a _ -> f a))
+  | [x] -> Gbpmp (Procq.Rule.next Procq.Rule.stop (Procq.Symbol.token (exact_ident x)), (fun a _ -> f a))
   | x :: xs ->
       let Gbpmp (r, f) = gbpmp f xs in
       Gbpmp (Procq.Rule.next r (Procq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a))
