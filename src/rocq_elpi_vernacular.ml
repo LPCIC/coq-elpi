@@ -100,20 +100,32 @@ let warn_scope_not_regular ~loc = function
 
 module Compiler(P : Programs) = struct
 
+  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
+   module Summary = struct
+    include Summary
+    let ref ~name x = Summary.ref ~stage:P.stage ~name:(P.in_stage name) x
+    let local_ref ~name x = Summary.ref ~local:true ~stage:P.stage ~name:(P.in_stage name) x
+   end
+  [%%else]
   module Summary = struct
     include Summary
-    let ref ?local ~name x = Summary.ref ~stage:P.stage ?local ~name:(P.in_stage name) x
+    let ref ~name x = Summary.ref ~stage:P.stage ~name:(P.in_stage name) x
+    let local_ref ~name x = Summary.local_ref ~stage:P.stage ~name:(P.in_stage name) x
+    let (!) = Summary.Ref.get
+    let (:=) = Summary.Ref.set
   end
+  [%%endif]
 
   let skip = skip ~phase:P.stage
 
   let trace_options = Summary.ref ~name:"elpi-trace" []
   let max_steps = Summary.ref ~name:"elpi-steps" default_max_step
 
-  let debug vl = P.debug_vars := List.fold_right EC.StrSet.add vl EC.StrSet.empty
+  let debug vl = P.set_debug_vars (List.fold_right EC.StrSet.add vl EC.StrSet.empty)
   let debug ~atts:ph vl = skip ~ph debug vl
 
   let bound_steps n =
+    let open Summary in
     if n <= 0 then max_steps := default_max_step else max_steps := n
   let bound_steps ~atts:ph n = skip ~ph bound_steps n
 
@@ -123,6 +135,7 @@ let trace_filename_gen (add_counter: string) =
 let trace_filename = trace_filename_gen ""
 
 let run ~loc program query =
+  let open Summary in
   let t1 = Unix.gettimeofday () in
 
   let query =
@@ -133,7 +146,7 @@ let run ~loc program query =
   let t2 = Unix.gettimeofday () in
   let _ = API.Setup.trace [] in
   let t3 = Unix.gettimeofday () in
-  let leftovers = API.Setup.trace !trace_options in
+  let leftovers = API.Setup.trace Summary.(!trace_options) in
   if (!trace_options <> [] && Sys.file_exists trace_filename) then 
     Sys.command (Printf.sprintf "mv %s %s" trace_filename (trace_filename_gen (Printf.sprintf "_%.0f" @@ Unix.gettimeofday ()))) |> ignore;
   if leftovers <> [] then
@@ -172,7 +185,7 @@ let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi
   with
   | API.Execute.Failure -> elpi_fails program_name
   | API.Execute.NoMoreSteps ->
-      CErrors.user_err Pp.(str "elpi run out of steps ("++int !max_steps++str")")
+      CErrors.user_err Pp.(str "elpi run out of steps ("++int Summary.(!max_steps)++str")")
   | API.Execute.Success {
     assignments ; constraints; state; pp_ctx; relocate_assignment_to_runtime;
     } ->
@@ -229,9 +242,11 @@ let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi
 
 let current_program = Summary.ref ~name:"elpi-cur-program-name" None
 let set_current_program n =
+  let open Summary in
   current_program := Some n
   
 let current_program () =
+  let open Summary in
   match !current_program with
   | None -> CErrors.user_err Pp.(str "No current Elpi Program")
   | Some x -> x
@@ -359,11 +374,13 @@ let run_in_program ~loc ?(program = current_program ()) ?(st_setup=fun _ x -> x)
     ] @ List.(flatten (map (fun x -> ["-trace-only-pred"; x]) preds))
   
   let trace start stop preds opts =
+    let open Summary in
     if start = 0 && stop = 0 then trace_options := []
     else trace_options := mk_trace_opts start stop preds @ opts
   let trace ~atts start stop preds opts = skip ~ph:atts (trace start stop preds) opts
   
   let trace_browser _opts =
+    let open Summary in
     trace_options :=
       [ "-trace-on"; "json"; trace_filename
       ; "-trace-at"; "run"; "0"; string_of_int max_int
@@ -605,7 +622,7 @@ module Interp = struct
     | Rocq_elpi_builtins_synterp.SynterpAction.Error x when syndata = None -> err Pp.(x ++ missing_synterp)
     | Rocq_elpi_builtins_synterp.SynterpAction.Error x -> err x
 
-let stash = Summary.ref ~local:true ~name:"elpi:proof_stash" None
+let stash = Summary.local_ref ~name:"elpi:proof_stash" None
 let set_stash x = stash := Some x
 let get_stash ~default_name =
   match !stash with

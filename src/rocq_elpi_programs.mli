@@ -75,7 +75,7 @@ val combine_hash : int -> int -> int
 
 module type Programs = sig
 
-  val debug_vars : Compile.StrSet.t ref
+  val set_debug_vars : Compile.StrSet.t -> unit
   val cc_flags : unit -> Compile.flags
   val unit_from_ast    : ?error_header:string -> elpi:Setup.elpi -> base:Compile.program -> loc:Loc.t -> Compile.scoped_program -> cunit
   val parse_goal       : elpi:Setup.elpi -> loc:Loc.t -> Ast.Loc.t -> string -> Ast.query

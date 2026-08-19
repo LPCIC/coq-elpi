@@ -1332,9 +1332,24 @@ module WMsg = Set.Make(struct
   let compare = Stdlib.compare
 end)
 
-let coq_warning_cache : WMsg.t API.Data.StrMap.t ref =
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+module Summary = struct
+  type 'a ref = 'a Stdlib.ref
+  let ref ~name x = Summary.ref ~name x
+end
+[%%else]
+module Summary = struct
+  type 'a ref = 'a Summary.Ref.t
+  let ref ~name x = Summary.ref ~name x
+  let (!) = Summary.Ref.get
+  let (:=) = Summary.Ref.set
+end
+[%%endif]
+
+let coq_warning_cache : WMsg.t API.Data.StrMap.t Summary.ref =
   Summary.ref ~name:"elpi-warning-cache" API.Data.StrMap.empty
 let coq_warning_cache category name loc txt =
+  let open Summary in
   let key = category ^ " " ^ name in
   let msg = loc, txt in
   try

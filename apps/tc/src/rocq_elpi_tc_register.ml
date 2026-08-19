@@ -100,7 +100,21 @@ module StringMap = Map.Make(String)
 
 type observers = observer StringMap.t
 
-let observers : observers ref = Summary.ref StringMap.empty ~name:"tc_observers"
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
+module Summary = struct
+  type 'a ref = 'a Stdlib.ref
+  let ref ~name x = Summary.ref ~name x
+end
+[%%else]
+module Summary = struct
+  type 'a ref = 'a Summary.Ref.t
+  let ref ~name x = Summary.ref ~name x
+  let (!) = Summary.Ref.get
+  let (:=) = Summary.Ref.set
+end
+[%%endif]
+
+let observers : observers Summary.ref = Summary.ref StringMap.empty ~name:"tc_observers"
 
 let build_observer_name (observer : qualified_name) = 
   String.concat "." observer
@@ -111,6 +125,7 @@ type action =
   | Deactivate of qualified_name
 
 let action_manager x = 
+  let open Summary in
     match x with
   | Create (name, loc_name_atts) -> 
       let t1 = Sys.time () in
