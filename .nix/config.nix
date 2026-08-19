@@ -9,18 +9,15 @@ let
     "mathcomp-bigenough"
     "mathcomp-finmap"
     "mathcomp-real-closed"
-  ];
-  coq-master = [
     "coqeal"
     "ITree"
-    "mathcomp-algebra-tactics"
     "mathcomp-word"
     "mathcomp-zify"
     "multinomials"
     "odd-order"
     "trakt"
   ];
-  rocq-common-bundles = listToAttrs (forEach master (p:
+  common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
     rocq-elpi.override.elpi-version = default-elpi-version;
@@ -39,18 +36,12 @@ let
     mathcomp-experimental-reals.job = true;
     mathcomp-reals-stdlib.job = true;
     mathcomp-analysis-stdlib.job = true;
-  };
-  coq-common-bundles = listToAttrs (forEach (master ++ coq-master) (p:
-    { name = p; value.override.version = "master"; }))
-  // {
-    coq-elpi.override.elpi-version = default-elpi-version;
+
     jasmin.override.version = "main";
 
     bignums.job = true;
     stdlib.job = true;
 
-    mathcomp-single-planB-src.job = false;
-    mathcomp-single-planB.job = false;
     mathcomp-single.job = false;
 
     deriving.job = false;
@@ -70,83 +61,68 @@ let
 {
   format = "1.0.0";
   attribute = "rocq-elpi";
-  coq-attribute = "coq-elpi";
-  default-bundle = "rocq-9.1";
+  default-bundle = "rocq-9.2";
   bundles = {
 
-    "rocq-9.0" = { rocqPackages = rocq-common-bundles // {
+    "rocq-9.0".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.0";
+      coq.override.version = "9.0";
       micromega-plugin.override.version = "master";  # to be removed at some point
       micromega-plugin.job = false;
-    }; coqPackages = coq-common-bundles // {
-      coq.override.version = "9.0";
       odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
       trakt.job = false;  # broken
-    }; };
+      mathcomp-algebra-tactics.override.version = "master";
+    };
 
-    "rocq-9.1" = { rocqPackages = rocq-common-bundles // {
+    "rocq-9.1".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.1";
-      micromega-plugin.override.version = "master";  # to be removed at some point
-      micromega-plugin.job = false;
-    }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.1";
-    }; };
+      micromega-plugin.override.version = "master";  # to be removed at some point
+      micromega-plugin.job = false;
+      mathcomp-algebra-tactics.override.version = "master";
+    };
 
-    "rocq-9.2" = { rocqPackages = rocq-common-bundles // {
+    "rocq-9.2".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.2";
-      micromega-plugin.override.version = "master";  # to be removed at some point
-      micromega-plugin.job = false;
-      mathcomp-zify.job = false;  # not available yet
-      jasmin.job = false;  # not available yet
-    }; coqPackages = coq-common-bundles // {
       coq.override.version = "9.2";
-    }; };
-
-    "rocq-9.3" = { rocqPackages = rocq-common-bundles // {
-      rocq-core.override.version = "9.3";
       micromega-plugin.override.version = "master";  # to be removed at some point
       micromega-plugin.job = false;
-      mathcomp-reals-stdlib.job = false;  # not available yet
-      mathcomp-analysis-stdlib.job = false;  # not available yet
       mathcomp-zify.job = false;  # not available yet
       jasmin.job = false;  # not available yet
-      rocq-elpi-tests-stdlib.job = false;  # not available yet
-    }; coqPackages = coq-common-bundles // {
+    };
+
+    "rocq-9.3".rocqPackages = common-bundles // {
+      rocq-core.override.version = "9.3";
       coq.override.version = "9.3";
+      micromega-plugin.override.version = "master";  # to be removed at some point
+      micromega-plugin.job = false;
+      mathcomp-zify.job = false;  # not available yet
+      jasmin.job = false;  # not available yet
       coqeal.job = false;  # not available yet
-      mathcomp-algebra-tactics.job = false;  # not available
       mathcomp-word.job = false;  # not available yet
       trakt.job = false;  # not available yet
-    }; };
+    };
 
-    "rocq-master" = { rocqPackages = rocq-common-bundles // {
+    "rocq-master".rocqPackages = common-bundles // {
       rocq-core.override.version = "master";
+      coq.override.version = "master";
       micromega-plugin.override.version = "master";
       micromega-plugin.job = false;
-      bignums.override.version = "master";
       stdlib.override.version = "master";
-    }; coqPackages = coq-common-bundles // {
-      coq.override.version = "master";
       bignums.override.version = "master";
-      stdlib.override.version = "master";
       jasmin.job = false;
-    }; };
+    };
 
   } // optionalAttrs (min-elpi-version != default-elpi-version) {
-    "rocq-master-min-elpi" = { rocqPackages = rocq-common-bundles // {
+    "rocq-master-min-elpi".rocqPackages = common-bundles // {
       rocq-elpi.override.elpi-version = min-elpi-version;
       rocq-core.override.version = "master";
-      bignums.override.version = "master";
-      stdlib.override.version = "master";
-    }; coqPackages = coq-common-bundles // {
-      coq-elpi.override.elpi-version = min-elpi-version;
       coq.override.version = "master";
       bignums.override.version = "master";
       stdlib.override.version = "master";
       jasmin.job = false;
-    }; };
+    };
   };
-
 
   cachix.coq = {};
   cachix.math-comp = {};
