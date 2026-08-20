@@ -1,6 +1,7 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.rbuild.elpi)
  (package rocq-elpi)
+ (generate_project_file)
  (theories elpi elpi.apps.coercion))
 
 (rule

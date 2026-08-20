@@ -1,7 +1,6 @@
-(coq.theory
- (package rocq-elpi-tests-stdlib)
+(include_subdirs qualified)
+(rocq.theory
  (name elpi_tests_stdlib)
+ (generate_project_file)
  (plugins rocq-elpi.elpi)
  (theories elpi Stdlib))
-
-; (include_subdirs qualified)

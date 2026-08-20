@@ -1,6 +1,7 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.cs)
  (package rocq-elpi)
+ (generate_project_file)
  (theories elpi)
  (plugins rocq-elpi.cs))
 
