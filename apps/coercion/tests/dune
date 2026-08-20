@@ -1,7 +1,5 @@
+(include_subdirs qualified)
 (rocq.theory
  (name elpi.apps.coercion.tests)
- (package rocq-elpi-tests)
  (generate_project_file)
  (theories elpi elpi.apps.coercion))
-
-(include_subdirs qualified)

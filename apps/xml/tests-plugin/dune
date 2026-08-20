@@ -1,6 +1,6 @@
+(include_subdirs qualified)
 (rocq.theory
  (name elpi.xml.tests)
- (package rocq-elpi-xml-tests)
  (generate_project_file)
  (theories elpi elpi.xml))
 
@@ -14,5 +14,3 @@
   (with-stdout-to %{target}
    (progn
      (run rocq_elpi_shafile %{deps})))))
-
-(include_subdirs qualified)
