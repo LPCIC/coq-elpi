@@ -65,7 +65,20 @@ let elpi_cs_hook program env sigma ((proji, u), params1, c1) (t2, args2) =
 		 | API.Execute.Failure -> None
 		 end
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
+module Summary = struct
+  let ref ~name x = Summary.ref ~name x
+end
+[%%else]
+module Summary = struct
+  let ref ~name x = Summary.ref ~name x
+  let (!) = Summary.Ref.get
+  let (:=) = Summary.Ref.set
+end
+[%%endif]
+
 let add_cs_hook =
+  let open Summary in
   let cs_hook_program = Summary.ref ~name:"elpi-cs" None in
   let cs_hook env sigma proj pat =
     match !cs_hook_program with
