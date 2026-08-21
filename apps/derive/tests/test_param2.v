@@ -1,4 +1,5 @@
-From elpi.apps Require Import derive.param2.
+From elpi.apps Require Import derive derive.param2.
+From elpi.apps.derive.tests Require Import test_derive_corelib.
 
 Set Uniform Inductive Parameters.
 
@@ -130,12 +131,6 @@ Inductive RenamedParam (n : nat) := renamedParam (_ : unit).
 Arguments renamedParam m t : rename.
 Elpi derive.param2 RenamedParam.
 
-Fail Elpi derive.param2 mempty.
-Fail Elpi derive.param2 munit.
-Fail Elpi derive.param2 mpeano.
-Fail Elpi derive.param2 moption.
-Fail Elpi derive.param2 mtree.
-
 Record Box (A : Type) :=
   mkBox {
       unbox : A
@@ -158,3 +153,82 @@ Definition boxP := mkBoxP.
 Elpi derive.param2 boxP.
 
 Unset Primitive Projections.
+
+Module MutualCoreTests.
+
+Import test_derive_corelib.Coverage.
+Import test_derive_corelib.Mutual.Dependency.
+
+Elpi derive.param2 mempty.
+Redirect "tmp" Check mempty_R : mempty -> mempty -> Type.
+Redirect "tmp" Check mempty'_R : mempty' -> mempty' -> Type.
+
+Elpi derive.param2 munit.
+Redirect "tmp" Check munit_R : munit -> munit -> Type.
+Redirect "tmp" Check munit'_R : munit' -> munit' -> Type.
+
+Elpi derive.param2 mpeano.
+Redirect "tmp" Check mpeano_R : mpeano -> mpeano -> Type.
+Redirect "tmp" Check mpeano'_R : mpeano' -> mpeano' -> Type.
+
+Elpi derive.param2 moption.
+Redirect "tmp" Check moption_R : forall A A1, (A -> A1 -> Type) -> moption A -> moption A1 -> Type.
+Redirect "tmp" Check moption'_R : forall A A1, (A -> A1 -> Type) -> moption' A -> moption' A1 -> Type.
+
+Elpi derive.param2 mtree.
+Redirect "tmp" Check mtree_R : forall A A1, (A -> A1 -> Type) -> mtree A -> mtree A1 -> Type.
+Redirect "tmp" Check mforest_R : forall A A1, (A -> A1 -> Type) -> mforest A -> mforest A1 -> Type.
+
+Elpi derive.param2 a.
+Elpi derive.param2 c.
+Redirect "tmp" Check c_R : c -> c -> Type.
+
+End MutualCoreTests.
+
+Module MutualCoreNonFirst.
+  From elpi.apps Require Import derive.param2.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.param2 forest.
+
+  Redirect "tmp" Check tree_R : tree -> tree -> Type.
+  Redirect "tmp" Check forest_R : forest -> forest -> Type.
+  Redirect "tmp" Check node_R.
+  Redirect "tmp" Check empty_R.
+  Redirect "tmp" Check cons_R.
+  Redirect "tmp" Elpi Query derive.param2 lp:{{
+    param.gref {{:gref tree}} {{:gref tree}} _,
+    param.gref {{:gref forest}} {{:gref forest}} _
+  }}.
+End MutualCoreNonFirst.
+
+Module MutualMetaFirst.
+  From elpi.apps Require Import derive.param2.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param2)] derive tree.
+
+  Redirect "tmp" Check tree_R : tree -> tree -> Type.
+  Redirect "tmp" Check forest_R : forest -> forest -> Type.
+  Redirect "tmp" Elpi Query derive.param2 lp:{{
+    param.gref {{:gref tree}} {{:gref tree}} _,
+    param.gref {{:gref forest}} {{:gref forest}} _
+  }}.
+End MutualMetaFirst.
+
+Module MutualMetaSecond.
+  From elpi.apps Require Import derive.param2.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param2)] derive forest.
+
+  Redirect "tmp" Check tree_R : tree -> tree -> Type.
+  Redirect "tmp" Check forest_R : forest -> forest -> Type.
+  Redirect "tmp" Elpi Query derive.param2 lp:{{
+    param.gref {{:gref tree}} {{:gref tree}} _,
+    param.gref {{:gref forest}} {{:gref forest}} _
+  }}.
+End MutualMetaSecond.
