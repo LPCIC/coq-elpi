@@ -3,6 +3,7 @@ import time
 import sys
 import os
 import re
+import random
 
 """
 About this file:
@@ -19,23 +20,33 @@ type class search.
 """
 
 INJ_BASE_FUN = "f"
-KEYS = "coqT, elpiT, tcSearch, refineT, compilT, runtimeT, buildQuery".split(", ")
 
+TOT_COQ_TIME = "coqT"
+TOT_ELPI_TIME = "elpiT"
+TOT_NORMALIZE = "normalize"
+TOT_COMPILE_CTX = "compile context"
+TOT_BUILD_QUERY = "build query"
+TOT_INSTANCE_SEARCH = "instance search"
+TOT_FULL_INSTANCE_SEARCH = "full instance search"
+TOT_REFINE = "refine"
+MSOLVE = "msolve"
 
-def buildDict():
-    res = dict()
-    for key in KEYS:
-        res[key] = []
-    return res
+COMPILT = "compilT"
+RUNTIMET = "runtimeT"
+
+KEYL =                               [TOT_COQ_TIME, TOT_ELPI_TIME, TOT_NORMALIZE, TOT_COMPILE_CTX, TOT_BUILD_QUERY, TOT_INSTANCE_SEARCH, TOT_FULL_INSTANCE_SEARCH, TOT_REFINE, MSOLVE, COMPILT,    RUNTIMET]
+HEADER = re.sub(r'\s+', ' ', "Height, Coq,          Elpi,          normalize,     ctx,             BuildQuery,      TC search,           TC Search Full,           Refine,     msolve, ElpiCompil, ElpiRuntime, DIFF, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
 
 
 def printDict(d):
-    for key in KEYS:
-        d[key] = sum(d[key])/len(d[key])
-    L = [d[k] for k in KEYS]
-    L.append(d["elpiT"] - d["refineT"] - d["buildQuery"])
-    L.append(d["coqT"] / d["elpiT"])
-    L.append(d["elpiT"] / d["coqT"] if d["coqT"] > 0 else 100)
+    # for key in KEYS:
+        # d[key] = sum(d[key])/len(d[key])
+    # L = [d[k] for k in KEYS]
+    L = []
+    for k in KEYL: L.append(d[k])
+    L.append(d[TOT_ELPI_TIME] - d[MSOLVE])
+    L.append(d[TOT_COQ_TIME] / d[TOT_ELPI_TIME])
+    L.append(d[TOT_ELPI_TIME] / d[TOT_COQ_TIME] if d[TOT_COQ_TIME] > 0 else 100)
     print(", ".join(map(lambda x: str(round(x, 5)), L)))
 
 
@@ -44,31 +55,32 @@ def findFloats(s):
 
 
 def filterLines(lines):
-    #print(lines)
-    validStarts = ["Finished", "Refine", "Elpi:", "Instance search", "Time build query"]
+    with open("xxx.txt", "w") as f:
+        f.write(lines)
+    DEBUG_STR = "Debug: [TC] - Time of "
+    r = {}
     for line in lines.split("\n"):
-        for start in validStarts:
-            if start in line:
-                yield line
-
-
-def parseFile(s):
-    lines = [findFloats(x) for x in filterLines(s)]
-    #print(lines)
-    base = 0
-    coqT = lines[base][0]
-    buildQuery = lines[base + 1][0]
-    tcSearch = lines[base + 2][0]
-    refineT = lines[base + 3][0]
-    elpiStats = lines[base + 4]
-    compilT, runtimeT = elpiStats[0], elpiStats[-1]
-    elpiT = lines[base + 5][0]
-    res = buildDict()
-    for key in KEYS:
-        res[key].append(eval(key))
-    #print(res)
-    return res
-
+        fl = findFloats(line)
+        if line.startswith("Finished transaction"):
+            if TOT_COQ_TIME in r: r[TOT_ELPI_TIME] = fl[0]
+            else: r[TOT_COQ_TIME] = fl[0]
+        elif line.strip().startswith("Elpi: query-compilation"):
+            r[COMPILT] = fl[0]
+            r[RUNTIMET] = fl[-1]
+        elif line.startswith(DEBUG_STR):
+            def check_(n): return line.startswith(DEBUG_STR + n)
+            def set_(n): r[n] = fl[0]
+            if check_(TOT_NORMALIZE): set_(TOT_NORMALIZE)
+            elif check_(TOT_COMPILE_CTX): set_(TOT_COMPILE_CTX)
+            elif check_(TOT_BUILD_QUERY): set_(TOT_BUILD_QUERY)
+            elif check_(TOT_INSTANCE_SEARCH): set_(TOT_INSTANCE_SEARCH)
+            elif check_(TOT_FULL_INSTANCE_SEARCH): set_(TOT_FULL_INSTANCE_SEARCH)
+            elif check_(TOT_REFINE): set_(TOT_REFINE)
+            elif check_(MSOLVE): set_(MSOLVE)
+            else: raise "Not found" + line
+    with open("zzz.txt", "w") as f:
+        f.write(str(r))
+    return r
 
 def buildTree(len):
     if len == 0:
@@ -87,22 +99,44 @@ Elpi Accumulate TC_solver lp:{{
 }}.
 """
 
-def writeFile(fileName: str, composeLen: int, isCoq: bool):
-    PREAMBLE = f"""\
-From elpi_apps_tc_tests_stdlib Require Import {"stdppInjClassic" if isCoq else "stdppInj"}.
-{"" if isCoq else 'Elpi TC.Solver. Set TC Time Refine. Set TC Time Instance Search. Set TC Time Build Query. Set Debug "elpitime".'}
-"""
-    GOAL = buildTree(composeLen)
-    with open(fileName + ".v", "w") as fd:
-        fd.write(PREAMBLE)
-        fd.write(f"Goal Inj eq eq({GOAL}). Time apply _. Qed.\n")
+refine_no_check = """
+Elpi Accumulate TC.Solver lp:{{
+  :after "0"
+  tc.refine-proof Proof G GL :- !,
+      
+    /*********** CHECK IF THE PROOF TYPECHECKS ***********/
+    tc.time-it tc.oTC-time-refine (@no-tc! => refine.no_check Proof G GL) "refine.typecheck",
+    
+    if-true tc.print-solution (coq.say "[TC] The proof typechecks").
+}}.
+""" if False else ""
 
+def writeFile(fileName: str, composeLen: int, isCoq: bool):
+    TXT = f"(* {random.random()} *)\n"
+    GOAL = buildTree(composeLen)
+    if isCoq:
+        TXT += "From elpi_apps_tc_tests_stdlib Require Import stdppInjClassic.\n"
+        TXT += f"Goal Inj eq eq({GOAL}). Time apply _. Qed.\n"
+    else:
+        TXT += "From elpi_apps_tc_tests_stdlib Require Import stdppInj.\n"
+        TXT += refine_no_check # (Un)Comment this for using refine or refine.no_check
+        TXT += f"Goal Inj eq eq({GOAL}).\n"
+        # TXT += "Elpi Command time_it. Elpi Accumulate  lp:{{ main _ :- coq.say {gettimeofday}. }}. Elpi time_it.\n"
+        TXT += 'Set Time TC Bench. Set Debug "elpitime".\n'
+        TXT += "Time apply _.\n"
+        # TXT += "Unset Time TC Bench. Set Debug \"-elpitime\". Elpi time_it.\n"
+        TXT += "Qed.\n"
+    with open(fileName + ".v", "w") as fd:
+        fd.write(TXT)
 
 def runCoqMake(fileName):
     fileName = fileName + ".vo"
-    if (os.path.exists(file_name)):
+    if (os.path.exists(fileName)):
         subprocess.run(["rm", fileName])
-    return subprocess.check_output(["make", fileName]).decode()
+    r = subprocess.run(["dune" , "build", fileName], capture_output=True, text=True)
+    out = r.stdout
+    err = r.stderr
+    return f"{out}\n---\n f{err}"
 
 
 def run(file_name, height):
@@ -112,22 +146,43 @@ def run(file_name, height):
     return partialFun
 
 
+def plot_dict(i, d):
+    L = [2**i, d[TOT_INSTANCE_SEARCH]]
+    L.append(L[-1] + d[TOT_INSTANCE_SEARCH] + d[TOT_BUILD_QUERY] + d[TOT_COMPILE_CTX] + d[TOT_NORMALIZE])
+    L.append(L[-1] + d[TOT_REFINE])
+    L.append(d[TOT_ELPI_TIME])
+    L.append(d[TOT_COQ_TIME])
+    return L
+
+def print_plot(pl):
+    l = ""
+    for i in pl:
+        l += ",".join(map(lambda x: str(round(x, 5)), i)) + "\n"
+    return l
+
 def loopTreeDepth(file_name: str, maxHeight: int, makeCoq=True, onlyOne=False):
-    print("Height, Coq, Elpi, TC search, Refine, ElpiCompil, ElpiRuntime, BuildQuery, ElpiNoRefine, Ratio(Coq/Elpi), Ratio(Elpi/Coq)")
+    plot = []
+    print(HEADER)
     for i in range(1 if not onlyOne else maxHeight, maxHeight+1):
         FUN = run(file_name, i)
-        x = FUN(True) if makeCoq else "Finished 0.0"
+        x = FUN(True) if makeCoq else "Finished transaction in 0.0"
         y = FUN(False)
-        print(i, ", ", end="", sep="")
+        print(2**i, ", ", end="", sep="")
         # print("The xx result is " , x)
-        dic = parseFile(x + y)
+        dic = filterLines(x + y)
+        plot.append(plot_dict(i, dic))
         printDict(dic)
-
+    return plot
 
 if __name__ == "__main__":
     print(os.curdir)
-    file_name = "tests/bench/bench_inj"
+    file_name = "tests-stdlib/bench/bench_inj"
     height = int(sys.argv[1])
-    loopTreeDepth(file_name, height, makeCoq=not (
+    pl = loopTreeDepth(file_name, height, makeCoq=not (
         "-nocoq" in sys.argv), onlyOne=("-onlyOne" in sys.argv))
+    
+    print("\n\n ELPI STATS")
+    print("HEIGHT, TC, BUILD, REFINE, COQ")
+
+    print(print_plot((pl)))
     #writeFile(file_name, 1, False)
