@@ -1,36 +1,36 @@
 From elpi.apps Require Import derive.std derive.legacy derive.experimental.
 From elpi.apps Require Import test_derive_corelib.
 
-Elpi derive Coverage.empty.
-Elpi derive Coverage.unit.
-Elpi derive Coverage.peano.
-Elpi derive Coverage.option.
-Elpi derive Coverage.pair.
-Elpi derive Coverage.seq.
-Elpi derive Coverage.box_peano.
-Elpi derive Coverage.rose.
-Elpi derive Coverage.rose_p.
-Elpi derive Coverage.rose_o.
-Elpi derive Coverage.nest.
-Elpi derive Coverage.w.
-Elpi derive Coverage.vect.
-Elpi derive Coverage.dyn.
-Fail Elpi derive Coverage.zeta.
-Elpi derive Coverage.beta.
-Elpi derive Coverage.iota.
-(* Elpi derive Coverage.large. search slow *)
-Elpi derive Coverage.prim_int.
-Elpi derive Coverage.fo_record.
-Elpi derive Coverage.pa_record.
-Elpi derive Coverage.pr_record.
-Elpi derive Coverage.dep_record.
-Elpi derive Coverage.enum.
+derive Coverage.empty.
+derive Coverage.unit.
+derive Coverage.peano.
+derive Coverage.option.
+derive Coverage.pair.
+derive Coverage.seq.
+derive Coverage.box_peano.
+derive Coverage.rose.
+derive Coverage.rose_p.
+derive Coverage.rose_o.
+derive Coverage.nest.
+derive Coverage.w.
+derive Coverage.vect.
+derive Coverage.dyn.
+Fail derive Coverage.zeta.
+derive Coverage.beta.
+derive Coverage.iota.
+(* derive Coverage.large. search slow *)
+derive Coverage.prim_int.
+derive Coverage.fo_record.
+derive Coverage.pa_record.
+derive Coverage.pr_record.
+derive Coverage.dep_record.
+derive Coverage.enum.
 
 (* ---------------------------------------------------- *)
 
-Elpi derive bool.
+derive bool.
 
-#[verbose] Elpi derive nat.
+#[verbose] derive nat.
 
 Redirect "tmp" Check nat_eqb : nat -> nat -> bool.
 Redirect "tmp" Check is_nat : nat -> Type.
@@ -98,7 +98,7 @@ Fail Check Vector.t_eqb : forall A, (A -> A -> bool) -> forall n, Vector.t A n -
 
 Inductive W A := B (f : A -> W).
 
-Elpi derive W.
+derive W.
 (* Not implemented yet :-/ *)
 Fail Check W_induction : forall A (P : W A -> Type),
        (forall f, (forall x, UnitPred A x -> P (f x)) -> P (B A f)) ->
