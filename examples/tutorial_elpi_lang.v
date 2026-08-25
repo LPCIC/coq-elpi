@@ -1289,19 +1289,7 @@ In our example we use the higher order predicate :stdlib:`std.map`:
 
 .. code:: elpi
 
-  pred std.map i:list A, i:(A -> B -> prop), o:list B.
-
-.. note:: :e:`prop` is the type of predicates
-
-   The actual type of the :e:`std.map` symbol is:
-
-   .. code:: elpi
-   
-      type std.map list A -> (A -> B -> prop) -> list B -> prop.
-
-   The :e:`pred` directive complements a type declaration for predicates
-   (the trailing :e:`-> prop` is implicit) with a mode declaration for
-   each argument.
+  func std.map list A, (func A -> B) -> list B.
 
 The type of the second argument of :e:`std.map`
 is the one of a predicate relating :e:`A` with :e:`B`.
