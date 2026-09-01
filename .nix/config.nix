@@ -92,8 +92,8 @@ let
     };
 
     "rocq-9.3".rocqPackages = common-bundles // {
-      rocq-core.override.version = "9.3";
-      coq.override.version = "9.3";
+      rocq-core.override.version = "v9.3";
+      coq.override.version = "v9.3";
       micromega-plugin.override.version = "master";  # to be removed at some point
       micromega-plugin.job = false;
       mathcomp-zify.job = false;  # not available yet

@@ -1179,7 +1179,7 @@ type tac_abbrev = {
 
 type ('a,'d) gbpmp = Gbpmp : ('d, _, 'b, Loc.t -> 'd) Procq.Rule.t * ('a -> 'b) -> ('a,'d) gbpmp
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
 let exact_ident x = Tok.PIDENT (Some x)
 [%%else]
 let exact_ident x = Tok.PIDENT (Exact x)
