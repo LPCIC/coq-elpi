@@ -1518,7 +1518,8 @@ external func coq.typecheck term -> term, diagnostic.
 external func coq.typecheck-ty term -> sort, diagnostic.
 
 % [coq.typecheck-relevance T T1] recomputes by retyping the relevance
-% mark of every binder of T: binders whose type lives in SProp become
+% mark of every binder of T: binders whose type lives in SProp
+% become
 % irrelevant, the others relevant. A binder whose type does not retype
 % keeps the mark it has. The kernel checks these marks, so a term
 % assembled by hand rather than obtained from elaboration may need this.
