@@ -104,6 +104,9 @@ type observers = observer StringMap.t
 module Summary = struct
   type 'a ref = 'a Stdlib.ref
   let ref ~name x = Summary.ref ~name x
+  let (!) = (!)
+  let (:=) = (:=)
+
 end
 [%%else]
 module Summary = struct

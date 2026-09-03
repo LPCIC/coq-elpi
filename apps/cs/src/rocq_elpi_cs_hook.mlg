@@ -68,6 +68,8 @@ let elpi_cs_hook program env sigma ((proji, u), params1, c1) (t2, args2) =
 [%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
 module Summary = struct
   let ref ~name x = Summary.ref ~name x
+  let (!) = (!)
+  let (:=) = (:=)
 end
 [%%else]
 module Summary = struct
