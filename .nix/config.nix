@@ -64,16 +64,6 @@ let
   default-bundle = "rocq-9.2";
   bundles = {
 
-    "rocq-9.0".rocqPackages = common-bundles // {
-      rocq-core.override.version = "9.0";
-      coq.override.version = "9.0";
-      micromega-plugin.override.version = "master";  # to be removed at some point
-      micromega-plugin.job = false;
-      odd-order.job = false;  # no longer supported since https://github.com/math-comp/odd-order/pull/74
-      trakt.job = false;  # broken
-      mathcomp-algebra-tactics.override.version = "master";
-    };
-
     "rocq-9.1".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.1";
       coq.override.version = "9.1";

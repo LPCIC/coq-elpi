@@ -105,7 +105,9 @@ module Compiler(P : Programs) = struct
     include Summary
     let ref ~name x = Summary.ref ~stage:P.stage ~name:(P.in_stage name) x
     let local_ref ~name x = Summary.ref ~local:true ~stage:P.stage ~name:(P.in_stage name) x
-   end
+    let (!) = (!)
+    let (:=) = (:=)
+ end
   [%%else]
   module Summary = struct
     include Summary

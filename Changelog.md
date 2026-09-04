@@ -16,6 +16,10 @@
 ### LIB:
 - New  `coq.indt-decl->ids`, `coq.mutual?`, `coq.mutual.members`
 
+### APPS:
+- Mutual inductives supported by derive in derivations: tag, isK, projK, eqtype,
+  map, param1, param1_functor
+
 # [3.5.0] 21/07/2026
 
 Requires Elpi 3.7.1 and Rocq 9.0, 9.1, 9.2 and 9.3.

@@ -302,6 +302,8 @@ module SourcesStorage(S : Stage) = struct
     type 'a ref = 'a Stdlib.ref
     let ref ~name x = Summary.ref ~stage ~name:(in_stage name) x
     let local_ref ~name x = Summary.ref ~local:true ~stage ~name:(in_stage name) x
+    let (!) = (!)
+    let (:=) = (:=)
   end
   [%%else]
   module Summary = struct
@@ -733,7 +735,6 @@ let get ?(fail_if_not_exists=false) p =
     | Some ast -> ast
   
   let init_program_units (loc,qualid) ~loc (init : src list) =
-    let open Summary in
     if stage = Summary.Stage.Interp && Global.sections_are_opened () then
       CErrors.user_err Pp.(str "Program/Tactic/Db cannot be declared inside sections")
     else
