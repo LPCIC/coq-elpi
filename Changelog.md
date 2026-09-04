@@ -1,5 +1,7 @@
 
-# UNRELEASED
+# [3.5.1] 04/09/2026
+
+Requires Elpi 3.7.1 and Rocq 9.0, 9.1, 9.2 and 9.3.
 
 ### HOAS:
 - Fix `minductive` when the arity of a member of the block mentions a
