@@ -42,9 +42,9 @@ Elpi derive.eqb val.
 Elpi derive.eqb alias.
 Elpi derive.eqb mempty.
 Elpi derive.eqb munit.
-Fail Elpi derive.eqb mpeano.
+Elpi derive.eqb mpeano.
 Elpi derive.eqb moption.
-Fail Elpi derive.eqb mtree.
+Elpi derive.eqb mtree.
 
 
 End Coverage.
@@ -83,3 +83,115 @@ Redirect "tmp" Check ord2_eqb : forall p1 p2, eq_test2 (ord2 p1) (ord2 p2).
 Redirect "tmp" Check val_eqb : eq_test val.
 
 Redirect "tmp" Check alias_eqb : eq_test alias.
+
+Redirect "tmp" Check mempty_eqb : eq_test mempty.
+Redirect "tmp" Check mempty'_eqb : eq_test mempty'.
+Redirect "tmp" Check munit_eqb : eq_test munit.
+Redirect "tmp" Check munit'_eqb : eq_test munit'.
+Redirect "tmp" Check mpeano_eqb : eq_test mpeano.
+Redirect "tmp" Check mpeano'_eqb : eq_test mpeano'.
+Redirect "tmp" Check moption_eqb : forall A, eq_test A -> eq_test (moption A).
+Redirect "tmp" Check moption'_eqb : forall A, eq_test A -> eq_test (moption' A).
+Redirect "tmp" Check mtree_eqb : forall A, eq_test A -> eq_test (mtree A).
+Redirect "tmp" Check mforest_eqb : forall A, eq_test A -> eq_test (mforest A).
+
+
+Module EqbStandaloneFirst.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.eqb tree.
+
+  Redirect "tmp" Check tree_eqb : tree -> tree -> bool.
+  Redirect "tmp" Check forest_eqb : forest -> forest -> bool.
+  Redirect "tmp" Check tree_eqb_fields.
+  Redirect "tmp" Check forest_eqb_fields.
+  Redirect "tmp" Elpi Query derive.eqb lp:{{
+    eqb-done {{:gref tree}},
+    eqb-done {{:gref forest}}
+  }}.
+End EqbStandaloneFirst.
+
+Module EqbStandaloneSecond.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.eqb forest.
+
+  Redirect "tmp" Check tree_eqb : tree -> tree -> bool.
+  Redirect "tmp" Check forest_eqb : forest -> forest -> bool.
+  Redirect "tmp" Check tree_eqb_fields.
+  Redirect "tmp" Check forest_eqb_fields.
+End EqbStandaloneSecond.
+
+Module EqbComputation.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.eqb tree.
+
+  Example tree_eqb_refl_node : tree_eqb (node empty) (node empty) = true := eq_refl.
+  Example forest_eqb_neq : forest_eqb empty (cons (node empty) empty) = false := eq_refl.
+End EqbComputation.
+
+Module EqbParametrized.
+
+  Import test_derive_corelib.Mutual.ParametrizedTree.
+
+  Elpi derive.eqType.ast ptree.
+  Elpi derive.tag ptree.
+  Elpi derive.fields ptree.
+  Elpi derive.eqb ptree.
+
+  Redirect "tmp" Check ptree_eqb : forall A, (A -> A -> bool) -> ptree A -> ptree A -> bool.
+  Redirect "tmp" Check pforest_eqb : forall A, (A -> A -> bool) -> pforest A -> pforest A -> bool.
+End EqbParametrized.
+
+Module EqbUnsupportedValueParam.
+
+  Inductive a (n : nat) : Type := ak (b0 : b n)
+  with b (n : nat) : Type := bk (a0 : a n).
+
+  Elpi derive.eqType.ast a.
+  Elpi derive.tag a.
+  Elpi derive.fields a.
+  (* Value-parameterized mutual eqb is intentionally unsupported for now. *)
+  Fail Elpi derive.eqb a.
+End EqbUnsupportedValueParam.
+
+Module EqbTripleFromBeta.
+
+  Import test_derive_corelib.Mutual.CyclicTriple.
+
+  Elpi derive.eqType.ast alpha.
+  Elpi derive.tag alpha.
+  Elpi derive.fields alpha.
+  Elpi derive.eqb alpha.
+
+  Redirect "tmp" Check alpha_eqb : alpha -> alpha -> bool.
+  Redirect "tmp" Check beta_eqb : beta -> beta -> bool.
+  Redirect "tmp" Check gamma_eqb : gamma -> gamma -> bool.
+End EqbTripleFromBeta.
+
+Module EqbTripleFromGamma.
+
+  Import test_derive_corelib.Mutual.CyclicTriple.
+
+  Elpi derive.eqType.ast gamma.
+  Elpi derive.tag gamma.
+  Elpi derive.fields gamma.
+  Elpi derive.eqb gamma.
+
+  Redirect "tmp" Check alpha_eqb : alpha -> alpha -> bool.
+  Redirect "tmp" Check beta_eqb : beta -> beta -> bool.
+  Redirect "tmp" Check gamma_eqb : gamma -> gamma -> bool.
+End EqbTripleFromGamma.
