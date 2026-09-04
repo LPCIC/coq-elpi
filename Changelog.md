@@ -8,8 +8,9 @@
   was producing an ill-typed declaration)
 
 ### API:
-- New `coq.string->name-irrelevant`, the counterpart of
-  `coq.string->name-relevant`
+- New `coq.string->name-irrelevant`, the counterpart of `coq.string->name-relevant`
+- New `coq.id->name-irrelevant` and `coq.id->name-relevant`
+- Change `coq.id->name` is an alias for `coq.string->name-relevant`
 - New `coq.typecheck-relevance` recomputing, by retyping, the relevance mark of
   every binder of a term
 

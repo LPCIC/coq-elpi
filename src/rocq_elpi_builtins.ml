@@ -4656,6 +4656,10 @@ and for all in a .v file which your clients will load. Eg.
   LPCode {|
 func coq.id->name id -> name.
 coq.id->name S N :- coq.string->name-relevant S N.
+func coq.id->name-relevant id -> name.
+coq.id->name-relevant S N :- coq.string->name-relevant S N.
+func coq.id->name-irrelevant id -> name.
+coq.id->name-irrelevant S N :- coq.string->name-irrelevant S N.
   |};
 
   MLCode(Pred("coq.name->id",

@@ -1837,6 +1837,10 @@ external func coq.string->name-irrelevant string -> name.
 
 func coq.id->name id -> name.
 coq.id->name S N :- coq.string->name-relevant S N.
+func coq.id->name-relevant id -> name.
+coq.id->name-relevant S N :- coq.string->name-relevant S N.
+func coq.id->name-irrelevant id -> name.
+coq.id->name-irrelevant S N :- coq.string->name-irrelevant S N.
   
 
 % [coq.name->id Name Id] tuns a pretty printing hint into a string. This API
