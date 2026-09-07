@@ -1,4 +1,4 @@
-From elpi.apps Require Import derive.param1_congr.
+From elpi.apps Require Import derive derive.param1_congr.
 
 From elpi.apps Require Import test_derive_corelib test_param1.
 Import test_derive_corelib.Coverage.
@@ -93,6 +93,64 @@ Redirect "tmp" Check congr_is_Build_pa_record : forall A PA n p1 p2, p1 = p2 -> 
 Redirect "tmp" Check congr_is_Build_pr_record : forall A pr n p1 p2, p1 = p2 -> forall b q1 q2, q1 = q2 -> is_Build_pr_record A pr n p1 b q1= is_Build_pr_record A pr n p2 b q2.
 Redirect "tmp" Check congr_is_E1 : is_E1 = is_E1.
 
+Module MutualStandaloneFirst.
+  From elpi.apps Require Import derive.param1_congr.
 
-Fail Redirect "tmp" Check congr_is_mpeano'.
-Fail Redirect "tmp" Check congr_is_mforest.
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.congr is_tree.
+
+  Redirect "tmp" Check congr_is_node.
+  Redirect "tmp" Check congr_is_empty.
+  Redirect "tmp" Check congr_is_cons.
+End MutualStandaloneFirst.
+
+Module MutualStandaloneSecond.
+  From elpi.apps Require Import derive.param1_congr.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.param1 tree.
+  Elpi derive.param1.congr is_forest.
+
+  Redirect "tmp" Check congr_is_node.
+  Redirect "tmp" Check congr_is_empty.
+  Redirect "tmp" Check congr_is_cons.
+End MutualStandaloneSecond.
+
+Module MutualMetaFirst.
+  From elpi.apps Require Import derive.param1_congr.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_congr)] derive tree.
+
+  Redirect "tmp" Check congr_is_node.
+  Redirect "tmp" Check congr_is_empty.
+  Redirect "tmp" Check congr_is_cons.
+End MutualMetaFirst.
+
+Module MutualMetaSecond.
+  From elpi.apps Require Import derive.param1_congr.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(param1,param1_congr)] derive forest.
+
+  Redirect "tmp" Check congr_is_node.
+  Redirect "tmp" Check congr_is_empty.
+  Redirect "tmp" Check congr_is_cons.
+End MutualMetaSecond.
+
+Module ParametrizedMutual.
+  From elpi.apps Require Import derive.param1_congr.
+
+  Import test_derive_corelib.Mutual.ParametrizedTree.
+
+  #[only(param1,param1_congr)] derive ptree.
+
+  Redirect "tmp" Check congr_is_pnode.
+  Redirect "tmp" Check congr_is_pempty.
+  Redirect "tmp" Check congr_is_pcons.
+End ParametrizedMutual.

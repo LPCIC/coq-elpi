@@ -99,6 +99,7 @@ Elpi Accumulate File eqType.
 Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate lp:{{
+
   main [str I] :- !, 
     coq.locate I GR,
     coq.gref->id GR Tname,

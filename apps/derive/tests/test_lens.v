@@ -1,4 +1,4 @@
-From elpi.apps Require Import test_derive_corelib derive.lens.
+From elpi.apps Require Import test_derive_corelib derive derive.lens.
 
 Import test_derive_corelib.Coverage.
 
@@ -58,3 +58,14 @@ Proof.
   rewrite Hpr.
   reflexivity.
 Qed.
+
+Module LensMutualSkip.
+  From elpi.apps Require Import derive.lens.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  #[only(lens)] derive tree.
+
+  Fail Check tree_lens.
+  Fail Check forest_lens.
+End LensMutualSkip.

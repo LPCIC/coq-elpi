@@ -51,11 +51,11 @@ Elpi derive.eqbcorrect ord.
 Elpi derive.eqbcorrect ord2.
 Elpi derive.eqbcorrect val.
 Elpi derive.eqbcorrect alias.
-Fail Elpi derive.eqbcorrent mempty.
-Fail Elpi derive.eqbcorrent munit.
-Fail Elpi derive.eqbcorrent mpeano.
-Fail Elpi derive.eqbcorrent moption.
-Fail Elpi derive.eqbcorrent mtree.
+Elpi derive.eqbcorrect mempty.
+Elpi derive.eqbcorrect munit.
+Elpi derive.eqbcorrect mpeano.
+Fail Elpi derive.eqbcorrect moption.
+Fail Elpi derive.eqbcorrect mtree.
 
 
 End Coverage.
@@ -76,3 +76,47 @@ Redirect "tmp" Check val_eqb_refl : eqb_reflexive val_eqb.
 
 Redirect "tmp" Check alias_eqb_correct : eqb_correct alias_eqb.
 Redirect "tmp" Check alias_eqb_refl : eqb_reflexive alias_eqb.
+
+Module EqbCorrectStandaloneFirst.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.param1 tree.
+  Elpi derive.param1.functor is_tree.
+  Elpi derive.induction tree.
+  Elpi derive.param1.inhab is_tree.
+  Elpi derive.eqb tree.
+  Elpi derive.eqbcorrect tree.
+
+  Redirect "tmp" Check tree_eqb_correct.
+  Redirect "tmp" Check tree_eqb_refl.
+  Redirect "tmp" Check forest_eqb_correct.
+  Redirect "tmp" Check forest_eqb_refl.
+  Redirect "tmp" Elpi Query derive.eqbcorrect lp:{{
+    eqcorrect-for {{:gref tree}} _ _,
+    eqcorrect-for {{:gref forest}} _ _
+  }}.
+End EqbCorrectStandaloneFirst.
+
+Module EqbCorrectStandaloneSecond.
+
+  Import test_derive_corelib.Mutual.Tree.
+
+  Elpi derive.eqType.ast tree.
+  Elpi derive.tag tree.
+  Elpi derive.fields tree.
+  Elpi derive.param1 tree.
+  Elpi derive.param1.functor is_tree.
+  Elpi derive.induction tree.
+  Elpi derive.param1.inhab is_tree.
+  Elpi derive.eqb tree.
+  Elpi derive.eqbcorrect forest.
+
+  Redirect "tmp" Check tree_eqb_correct.
+  Redirect "tmp" Check tree_eqb_refl.
+  Redirect "tmp" Check forest_eqb_correct.
+  Redirect "tmp" Check forest_eqb_refl.
+End EqbCorrectStandaloneSecond.
