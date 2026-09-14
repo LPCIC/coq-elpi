@@ -58,15 +58,16 @@ data attribute-signature.
 symb att : string -> attribute-type -> attribute-signature.
 symb att-ignore-unknown : attribute-signature.
 
-% Not converted to `pred i:attribute-signature.`: callers invoke this with
-% the Type field of `att Name Type` left unbound to extract it (e.g.
-% `supported-attribute (att Name Type)` in coq.valid-str-attribute below),
-% relying on full unification. Elpi's `i:` mode instead *matches* the
-% argument, which may inspect but not instantiate a variable the caller
-% left unbound, so a moded declaration silently breaks this lookup.
-type supported-attribute attribute-signature -> prop.
-supported-attribute (att "elpi.loc" loc).
-supported-attribute (att Name string) :- rex_match "^elpi\\." Name.
+% Split from the single-argument `attribute-signature` design so that
+% looking up an already-known attribute's Type can be a proper `o:` output
+% (unified) instead of buried inside an `i:`-matched `att Name Type` term:
+% matching may inspect a caller's argument but, unlike unification, cannot
+% instantiate a variable (here, Type) the caller left unbound.
+pred supported-attribute-type string -> attribute-type.
+supported-attribute-type "elpi.loc" loc.
+supported-attribute-type Name string :- rex_match "^elpi\\." Name.
+
+pred ignore-unknown-attribute.
 
 data attribute-type.
 symb int : attribute-type.
@@ -83,15 +84,15 @@ symb (`->) : string -> any -> attribute-mapping.
 
 func coq.valid-str-attribute string, string -> option any, diagnostic.
 coq.valid-str-attribute Name Value V Diag :-
-  if (supported-attribute (att Name Type))
+  if (supported-attribute-type Name Type)
      (coq.typecheck-attribute Name Type Value LPV Diag, V = some LPV)
-     (if (supported-attribute att-ignore-unknown) (V = none, Diag = ok)
+     (if (ignore-unknown-attribute) (V = none, Diag = ok)
          (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
 func coq.valid-loc-attribute string, loc -> diagnostic.
 coq.valid-loc-attribute Name Loc Diag :-
-  if (supported-attribute (att Name loc))
+  if (supported-attribute-type Name loc)
      (if (primitive? Loc "loc") (Diag = ok) (Diag = error {calc ( "Attribute " ^ Name ^ " takes a loc, got " ^ {std.any->string Loc} ) } ))
-     (if (supported-attribute att-ignore-unknown) (Diag = ok)
+     (if (ignore-unknown-attribute) (Diag = ok)
          (Diag = error {calc ( "Attribute " ^ Name ^ " is not supported")})).
 
 :index (_ 1 1)
@@ -117,11 +118,10 @@ coq.typecheck-attribute _ bool "no"    ff ok :- !.
 coq.typecheck-attribute N bool Value _ (error Msg) :-
   Msg is "Attribute " ^ N ^ " takes an boolean, got: " ^ Value.
 
-:functional
-pred coq.is-one-of i:string, o:any, i:attribute-mapping.
-coq.is-one-of K V (K `-> V).
+func coq.is-one-of string, attribute-mapping -> any.
+coq.is-one-of K (K `-> V) V.
 
-coq.typecheck-attribute _ (oneof L) K V ok :- std.exists L (coq.is-one-of K V), !.
+coq.typecheck-attribute _ (oneof L) K V ok :- std.exists L (x\ coq.is-one-of K x V), !.
 coq.typecheck-attribute N (oneof L) K _ (error Msg) :-
   std.map L (x\r\ sigma tmp\ x = r `-> tmp) S,
   std.fold S "" (s\ a\ calc (a ^ " " ^ s)) OneOf,
@@ -134,28 +134,32 @@ append-string A B R :- R is A ^ "." ^ B.
 func keep-only-label attribute -> attribute.
 keep-only-label (attribute L _) (attribute L (leaf-str "")).
 
+pred spec->clause attribute-signature -> (pred).
+spec->clause (att Name Type) (supported-attribute-type Name Type).
+spec->clause att-ignore-unknown ignore-unknown-attribute.
+
 coq.parse-attributes L S O :-
-  std.map S (x\r\ r = supported-attribute x) CS,
+  std.map S spec->clause CS,
   CS => parse-attributes.aux L "" O, !.
 
 :index (1)
 func parse-attributes.aux list attribute, string -> list (pred).
 parse-attributes.aux [] _ [].
-parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
-  append-string Prefix S PS, supported-attribute (att PS attlist), !,
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :-
+  append-string Prefix S PS, supported-attribute-type PS attlist, !,
   parse-attributes.aux AS Prefix R1,
-  ((pi x\ supported-attribute (att x bool) :- !) ==> parse-attributes.aux L "" Map),
+  ((pi x\ supported-attribute-type x bool :- !) ==> parse-attributes.aux L "" Map),
   std.append R1 [get-option PS Map] R.
-parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
-  append-string Prefix S PS, supported-attribute (att PS attmap), !,
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :-
+  append-string Prefix S PS, supported-attribute-type PS attmap, !,
   parse-attributes.aux AS Prefix R1,
-  ((pi x\ supported-attribute (att x string) :- !) ==> parse-attributes.aux L "" Map),
+  ((pi x\ supported-attribute-type x string :- !) ==> parse-attributes.aux L "" Map),
   std.append R1 [get-option PS Map] R.
-parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
-  append-string Prefix S PS, supported-attribute (att PS attlabel), !,
+parse-attributes.aux [attribute S (node L)|AS] Prefix R :-
+  append-string Prefix S PS, supported-attribute-type PS attlabel, !,
   parse-attributes.aux AS Prefix R1,
   std.map L keep-only-label Ll,
-  ((pi x\ supported-attribute (att x bool) :- !) ==> parse-attributes.aux Ll "" Map),
+  ((pi x\ supported-attribute-type x bool :- !) ==> parse-attributes.aux Ll "" Map),
   parse-attributes.aux L Prefix R2,
   std.append R1 [get-option PS Map|R2] R.
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- !,

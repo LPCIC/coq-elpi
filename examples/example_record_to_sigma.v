@@ -6,7 +6,7 @@ Elpi Command UM.expand.
 Elpi Accumulate lp:{{
 
 % From a record declaration to an iterated sigma type
-pred wrap-fields-ty i:record-decl, o:term.
+pred wrap-fields-ty record-decl -> term.
 wrap-fields-ty (field _ _ Ty _\ end-record) Ty.
 wrap-fields-ty (field _ Proj Ty Fields) {{ sigT lp:F }} :-
   coq.string->name Proj Name,

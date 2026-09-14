@@ -291,13 +291,13 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   of ResRtyRaw _ ResRty, unify-eq Rty ResRty,
   % Rty must type each branch
   map2 KsLArgs Kn (mk-bty Rty Lno) BsTy,
-  map2R Bs BsTy of ResBs,
+  map2R Bs of BsTy ResBs,
   % Outside type
   unify-leq {coq.mk-app ResRty {append RArgs [ResT]}} ResRtyInst.
 
-pred map2R i:list A, o:list B, i:(pred i:A, o:B, o:C), o:list C.
-map2R [] [] _ [].
-map2R [X|XS] [Y|YS] F [Z|ZS] :- F X Y Z, map2R XS YS F ZS.
+pred map2R list A, (pred A -> B, C) -> list B, list C.
+map2R [] _ [] [].
+map2R [X|XS] F [Y|YS] [Z|ZS] :- F X Y Z, map2R XS F YS ZS.
 
 of (let N Ty Bo F) TyFx (let N ResTy ResBo ResF) :-
   of Ty (sort _) ResTy, of Bo ResTy ResBo,
@@ -327,7 +327,7 @@ evar X Ty S :- !, of X Ty S, !.
 
 pred coerce -> term, term, term, term.
 pred coerced term, term, term -> term.
-pred coerceible i:term, o:term, i:term, o:term.
+pred coerceible term, term -> term, term.
 of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y, coerced XT T Y R.
 
 :if "DBG:of"

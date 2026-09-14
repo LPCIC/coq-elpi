@@ -5,7 +5,7 @@ namespace tc {
 
     namespace instance {
       % Tells if the current name is a bound variables
-      pred is-name o:term.
+      pred is-name -> term.
       % Tells if the current name stands for a uvar
       pred is-uvar -> term.
 

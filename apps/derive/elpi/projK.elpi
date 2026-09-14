@@ -56,12 +56,14 @@ func mask-for term, list (pair term term) -> list int.
 mask-for T Args Mask :- occurs-list Args 0 T Mask.
 
 
-pred default-output i:int, % gather infos to generate the match
-  o:list int, % mask: the position of the arguments that occur in the type
-              % of the projected one
-  o:list (pair term term), % a context (term,type) of default values
-  o:term, % the default value for the projected argument
-  o:term. % its type
+pred default-output
+  int % gather infos to generate the match
+  ->
+  list int, % mask: the position of the arguments that occur in the type
+            % of the projected one
+  list (pair term term), % a context (term,type) of default values
+  term, % the default value for the projected argument
+  term. % its type
 
 func body-default % makes lambdas for all default arguments + the projected
   term, % constructor type (begin processed)

@@ -64,7 +64,7 @@ Elpi Command derive.
 #[phase="both"]
 Elpi Accumulate lp:{{
   % runs P in a context where Coq #[attributes] are parsed
-  pred with-attributes i:prop.
+  pred with-attributes (pred).
   with-attributes P :-
     attributes A,
     coq.parse-attributes A [

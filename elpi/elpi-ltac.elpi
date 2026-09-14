@@ -171,7 +171,7 @@ open T (seal (goal Ctx _ _ _ _ as G)) O :-
 namespace private {
 
 :index(_ _ 1)
-func move-goal-argument list prop, list prop, argument -> argument.
+func move-goal-argument list (pred), list (pred), argument -> argument.
 move-goal-argument _ _ (int _ as A) A.
 move-goal-argument _ _ (str _ as A) A.
 move-goal-argument _ _ (tac _) _ :-

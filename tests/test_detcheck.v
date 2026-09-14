@@ -2,7 +2,7 @@ From elpi Require Import elpi.
 
 Elpi Command test.
 Elpi Db foo lp:{{/*(*/
-  pred test o:pstring.
+  pred test -> pstring.
 /*)*/}}.
 Elpi File buggy_inline lp:{{/*(*/
 data f A.

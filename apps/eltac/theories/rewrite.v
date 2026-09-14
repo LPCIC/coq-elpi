@@ -6,7 +6,7 @@ Elpi Accumulate lp:{{
     % First argument is a term of that type.
     % This tactic finds a subterm of the goal that Q unifies with
     % and rewrites all instances of that subterm from right to left.
-    pred rewrite i:list argument, i:term, i:term, o:goal, o:list sealed-goal.
+    pred rewrite list argument, term, term -> goal, list sealed-goal.
 
     % The copy predicate used below is discussed in the tutorial here:
     % https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html#let-s-code-set-in-elpi

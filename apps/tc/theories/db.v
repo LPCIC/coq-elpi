@@ -96,7 +96,7 @@ Elpi Db tc.db lp:{{
 
     pred pending-mode -> list string.
 
-    pred ho-link o:term, i:term, o:A.
+    pred ho-link term -> term, A.
     func link.eta term, term ->.
     func link.llam term, term ->.
     func link.unif-eq term, term ->.

@@ -189,7 +189,7 @@ namespace tc{
   }
 }
 
-pred tc.unif-aux i:(pred i:A, i:A), i:A, i:A.
+pred tc.unif-aux (pred A, A), A, A.
 tc.unif-aux P A B :-
   (pi K A AS X C TA F\
     hd-beta (uvar as K) [A|AS] X C :- !, % auto-intro

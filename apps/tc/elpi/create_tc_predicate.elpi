@@ -24,7 +24,7 @@ add-class-gr SearchMode ClassGR SMR :-
   tc.gref->pred-name ClassGR PredName,
   get-class-locality Locality, 
   Locality => (
-    coq.elpi.add-predicate "tc.db" Indexing PredName EM,
+    coq.elpi.add-predicate ff "tc.db" Indexing PredName EM,
     tc.add-tc-db _ _ (tc.class ClassGR PredName SearchMode SM)).
 
 func add-class-str search-mode, string ->.

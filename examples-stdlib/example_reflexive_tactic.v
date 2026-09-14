@@ -169,12 +169,13 @@ Qed.
 (* This is for later *)
 Elpi Db monoid.db lp:{{ 
   pred is_monoid
-    i:term, % type
-    o:term, % zero
-    o:term, % op
-    o:term, % assoc
-    o:term, % unit_l
-    o:term. % unit_r
+    term % type
+    ->
+    term, % zero
+    term, % op
+    term, % assoc
+    term, % unit_l
+    term. % unit_r
 }}.
 
 Elpi Tactic monoid.
@@ -188,20 +189,20 @@ Elpi Accumulate lp:{{
 % Note: we build a Coq list, since we have to generate that anyway. We could
 % use an Elpi list or any other data structure here, but then we would need
 % to convert back anyway.
-pred mem o:term, o:term, o:term.
+pred mem -> term, term, term.
 mem {{ lp:X :: _     }} X {{ O      }} :- !.
 mem {{ _    :: lp:XS }} X {{ S lp:N }} :- mem XS X N.
 
 % Give that [mem] works with open ended lists we need a way to close it (assign
 % nil to the tail) at the very end of reification.
-pred close o:term.
+pred close -> term.
 close {{ nil }} :- !.
 close {{ _ :: lp:XS }} :- close XS.
 
 % [quote Zero Op T AstT L] recognizes Zero and Op in T and generates the
 % corresponding AstT using the "context" L for variables standing for
 % terms that are not Zero nor Op
-pred quote i:term, i:term, i:term, o:term, o:term.
+pred quote term, term, term -> term, term.
 quote Zero Op  {{ lp:Op lp:T1 lp:T2 }} {{ add lp:R1 lp:R2 }} L :- !,
   quote Zero Op T1 R1 L,
   quote Zero Op T2 R2 L.

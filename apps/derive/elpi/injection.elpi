@@ -25,8 +25,7 @@ arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
 namespace ltac {
 
 % Tests if the command can be applied
-pred injection? i:term,
-  o:inductive, o:list term, o:constructor, o:list term, o:term, o:term.
+pred injection? term -> inductive, list term, constructor, list term, term, term.
 injection? Ty GR TyArgs GRK KArgs A B :- do! [
   whd Ty [] {{lib:@elpi.eq}} [T,A,B],
   whd T  [] IndT TyArgs,
@@ -39,9 +38,8 @@ injection? Ty GR TyArgs GRK KArgs A B :- do! [
 ].
 
 % Does the job
-pred injection! i:term, o:list term,
-  i:inductive, i:list term, i:constructor, i:list term, i:term, i:term.
-injection! H PL GR TyArgs GRK KArgs A B :- do! [
+pred injection! term, inductive, list term, constructor, list term, term, term -> list term.
+injection! H GR TyArgs GRK KArgs A B PL :- do! [
   coq.env.indt GR _ Pno _ _ _ _,
   length KArgs Argsno,
   Eqno is Argsno - Pno,
@@ -52,7 +50,7 @@ injection! H PL GR TyArgs GRK KArgs A B :- do! [
 pred injection term, term, term -> list term.
 injection H EqAB _ PL :-
   if (injection? EqAB    GR TyArgs  GRK KArgs  A B)
-     (injection! H PL    GR TyArgs  GRK KArgs  A B)
+     (injection! H       GR TyArgs  GRK KArgs  A B PL)
      (coq.error "injection:" {coq.term->string H} "of type"
                 {coq.term->string EqAB} "does not equate equal constructors").
 

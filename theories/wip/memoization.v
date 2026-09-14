@@ -7,7 +7,7 @@ From elpi Require Import elpi.
 Elpi Tactic auto2.
 Elpi Accumulate lp:{{
   % Ex falso
-  pred exf i:goal, o:list sealed-goal.
+  pred exf goal -> list sealed-goal.
   exf (goal Ctx _ Ty _ _ as G) [] :-
     std.exists Ctx (x\ sigma w\ x = decl V w {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].

@@ -804,34 +804,32 @@ coq.build-match T Tty RtyF BranchF (match T Rty Bs) :-
   map2 KnArgs KtArgsLam (k\t\coq.map-under-fun t (BranchF k)) Bs.
 
 % XXX the list of arguments are often needed in reverse order
-:functional
-pred coq.bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
-  i:term, % the inductive type
-  i:term, % the arity
-  i:(func term, list term, list term -> term), % Sort Vars Tys Out
-  o:term. %
-:functional
-pred coq.bind-ind-arity.aux 
-  i:term,
-  o:term,
-  i:list term, i:list term, i:term,
-  i:(func term, list term, list term -> term).
-coq.bind-ind-arity.aux (prod N T B) (fun N T F) AccT AccTy IT K :- !,
-  @pi-decl N T x\ coq.bind-ind-arity.aux (B x) (F x) [x|AccT] [T|AccTy] IT K.
-coq.bind-ind-arity.aux (let N T X B) (let N T X F) AccT AccTy IT K :- !,
-  @pi-def N T X x\ coq.bind-ind-arity.aux (B x) (F x) AccT AccTy IT K.
-coq.bind-ind-arity.aux (sort _ as Sort) (fun `i` ITy F) AccT AccTy IT K :-
+func coq.bind-ind-arity % calls K under (fun Arity (x : Ity Arity) =>..)
+  term, % the inductive type
+  term, % the arity
+  (func term, list term, list term -> term) % Sort Vars Tys Out
+  -> term.
+func coq.bind-ind-arity.aux
+  term,
+  list term, list term, term,
+  (func term, list term, list term -> term)
+  -> term.
+coq.bind-ind-arity.aux (prod N T B) AccT AccTy IT K (fun N T F) :- !,
+  @pi-decl N T x\ coq.bind-ind-arity.aux (B x) [x|AccT] [T|AccTy] IT K (F x).
+coq.bind-ind-arity.aux (let N T X B) AccT AccTy IT K (let N T X F) :- !,
+  @pi-def N T X x\ coq.bind-ind-arity.aux (B x) AccT AccTy IT K (F x).
+coq.bind-ind-arity.aux (sort _ as Sort) AccT AccTy IT K (fun `i` ITy F) :-
   rev AccT Vars,
   coq.mk-app IT Vars ITy,
   @pi-decl `i` ITy x\ K Sort {append Vars [x]} {rev [ITy|AccTy]} (F x).
-coq.bind-ind-arity IT Arity F R :- coq.bind-ind-arity.aux Arity R [] [] IT F.
+coq.bind-ind-arity IT Arity F R :- coq.bind-ind-arity.aux Arity [] [] IT F R.
 % As above but let-ins are reduced
 func coq.bind-ind-arity-no-let term, term, (func term, list term, list term -> term) -> term.
 coq.bind-ind-arity-no-let IT Arity F R :-
   (pi N T X B F AccT AccTy IT K\
-    coq.bind-ind-arity.aux (let N T X B) F AccT AccTy IT K :- !,
-      coq.bind-ind-arity.aux (B X) F AccT AccTy IT K) =>
-  coq.bind-ind-arity.aux Arity R [] [] IT F.
+    coq.bind-ind-arity.aux (let N T X B) AccT AccTy IT K F :- !,
+      coq.bind-ind-arity.aux (B X) AccT AccTy IT K F) =>
+  coq.bind-ind-arity.aux Arity [] [] IT F R.
   
 func coq.bind-ind-parameters inductive, (func term, list term, list term -> term) -> term.
 coq.bind-ind-parameters I K O :-

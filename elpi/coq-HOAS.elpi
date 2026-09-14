@@ -11,8 +11,8 @@
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
 % msolve is for tactics that operate on multiple goals (called via all: ).
-builtin pred solve i:goal, o:list sealed-goal.
-builtin pred msolve i:list sealed-goal, o:list sealed-goal.
+builtin pred solve goal -> list sealed-goal.
+builtin pred msolve list sealed-goal -> list sealed-goal.
 
 % Extra arguments for tactics
 builtin symb tac : ltac1-tactic -> argument.
@@ -110,7 +110,7 @@ builtin func decl term -> name, term. % Var Name Ty
 builtin func def  term -> name, term, term. % Var Name Ty Bo
 builtin func cache term -> term.
 
-builtin func declare-evar list prop, term, term, term. % Ctx RawEvar Ty Evar
+builtin func declare-evar list (pred), term, term, term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-

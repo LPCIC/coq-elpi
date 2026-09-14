@@ -60,13 +60,13 @@ builtin func coq.version -> string, int, int, int.
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
-builtin pred main i:list argument.
+builtin pred main list argument.
 
 % Commands with a non-trivial parsing phase can thread data between
 % from the parsing phase to the interp one in an untyped way using the
 % following two entrypoints
-builtin pred main-interp i:list argument, i:any.
-builtin pred main-synterp i:list argument, o:any.
+builtin pred main-interp list argument, any.
+builtin pred main-synterp list argument -> any.
 
 % Commands starting/closing proofs have to use the following entrypoints.
 % The minimal working snippet is:
@@ -85,23 +85,24 @@ builtin pred main-synterp i:list argument, o:any.
 % the proof opening command is the lemma name, _GL is the empty list and P the
 % proof term.
 builtin pred main-interp-proof
-  i:list argument,    % arguments passed to the command
-  i:any,              % data from the parsing phase (defaults to _)
-  o:term,             % proof data for the corresponding proof-closing command
-  o:list sealed-goal, % the sequents to prove
-  o:any.              % any data for the corresponding proof-closing command
+  list argument,    % arguments passed to the command
+  any              % data from the parsing phase (defaults to _)
+  ->
+  term,             % proof data for the corresponding proof-closing command
+  list sealed-goal, % the sequents to prove
+  any.              % any data for the corresponding proof-closing command
 builtin pred main-interp-qed
-  i:list argument,    % arguments passed to the command
-  i:any,              % data from the parsing phase (defaults to _)
-  i:term,             % proof data from the corresponding proof-opening command
-  i:list sealed-goal, % the sequents from the corresponding proof-opening command, but with proofs
-  i:any.              % any data from the corresponding proof-opening command
+  list argument,    % arguments passed to the command
+  any,              % data from the parsing phase (defaults to _)
+  term,             % proof data from the corresponding proof-opening command
+  list sealed-goal, % the sequents from the corresponding proof-opening command, but with proofs
+  any.              % any data from the corresponding proof-opening command
 
 pred usage.
 builtin func attributes -> list attribute.
 
 % see coq-lib.elpi for coq.parse-attributes generating the options below
-builtin pred get-option o:string, o:A.
+builtin pred get-option -> string, A.
 
 % The data type of arguments (for commands or tactics)
 data argument.

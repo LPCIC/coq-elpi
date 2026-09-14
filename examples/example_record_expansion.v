@@ -32,7 +32,7 @@ Elpi Db record.expand.db lp:{{
 
 % [expand A B] can be used to perform a replacement, eg
 %   (expand (const "foo") (const "bar") :- !) ==> expand A B
-pred expand i:term, o:term.
+pred expand term -> term.
 
 }}.
 Elpi Accumulate record.expand.db lp:{{
@@ -62,7 +62,7 @@ Elpi Accumulate Db record.expand.db.
 Elpi Accumulate lp:{{
 
 % This builds a clause to replace "proji (k y1..yn)" by "yi"
-pred build-iotared-clause i:term, i:(pair constant term), o:prop.
+pred build-iotared-clause term, (pair constant term) -> (pred).
 build-iotared-clause T   (pr Proj Var) C :-
   coq.env.global (const Proj) HD, % HD is the global term for Proj
   C = (pi L AppVar\ expand(app [HD,T|L]) AppVar :- coq.mk-app Var L AppVar).
@@ -96,35 +96,38 @@ symb info :
 % of the record constructor). In parallel it consumes the list of projections,
 % so that it can record that the i-th projection should be replaced by
 % the variable standing for the i-th record field (accumulator called Iota)
-pred expand-abstraction 
-  i:info,
-  i:term, % the varibale binding the record in the input term
-  
+pred expand-abstraction
+  info,
+  term, % the varibale binding the record in the input term
+
   % fuel
-  i:term, % the type of the record constructor
-  i:list (option constant), % projections
+  term, % the type of the record constructor
+  list (option constant), % projections
 
-  i:term, o:term, % the Old and New body
-  
-  i:term, % constructor applied to all arguments treated so far
-  i:list (pair constant term), % iota rules for reductions so far
+  term, % the Old body
 
-  % used by expand-spine, accumulated here 
-  i:list term, i:list term, % variables for the head of the clause (LHS and RHS)
-  i:list prop, o:prop. % accumulator for the premises of the clause, and the clause
+  term, % constructor applied to all arguments treated so far
+  list (pair constant term), % iota rules for reductions so far
 
-expand-abstraction Info Rec (prod N S F) [P|PS] OldBo (fun N S Bo) KArgs Iota AccL AccR Premises (pi x\ Clause x) :- !,
-  pi x\ expand x x ==> 
+  % used by expand-spine, accumulated here
+  list term, list term, % variables for the head of the clause (LHS and RHS)
+  list prop % accumulator for the premises of the clause
+  ->
+  term, % the New body
+  prop. % the clause
+
+expand-abstraction Info Rec (prod N S F) [P|PS] OldBo KArgs Iota AccL AccR Premises (fun N S Bo) (pi x\ Clause x) :- !,
+  pi x\ expand x x ==>
     expand-abstraction Info Rec
-      (F x) PS OldBo (Bo x) {coq.mk-app KArgs [x]} {cons_assoc_opt P x Iota} AccL [x|AccR] Premises (Clause x).
+      (F x) PS OldBo {coq.mk-app KArgs [x]} {cons_assoc_opt P x Iota} AccL [x|AccR] Premises (Bo x) (Clause x).
 
-expand-abstraction Info Rec (let N S B F) [P|PS] OldBo (let N S B Bo) KArgs Iota AccL AccR Premises Clause :- !,
-  pi x\ expand x x ==> 
+expand-abstraction Info Rec (let N S B F) [P|PS] OldBo KArgs Iota AccL AccR Premises (let N S B Bo) Clause :- !,
+  pi x\ expand x x ==>
     % a let in is not a real argument to KArgs, but may need a "iota" redex, since the projection could exist
     expand-abstraction Info Rec
-      (F x) PS OldBo (Bo x) KArgs {cons_assoc_opt P x Iota} AccL AccR Premises Clause.
+      (F x) PS OldBo KArgs {cons_assoc_opt P x Iota} AccL AccR Premises (Bo x) Clause.
 
-expand-abstraction Info Rec _ [] OldBo Result  ExpandedRecord Iota AccL AccR Premises Clause :-
+expand-abstraction Info Rec _ [] OldBo ExpandedRecord Iota AccL AccR Premises Result Clause :-
   % generate all substitutions
   std.map Iota (build-iotared-clause ExpandedRecord) IotaClauses,
   ExpansionClause = expand Rec ExpandedRecord,
@@ -132,32 +135,35 @@ expand-abstraction Info Rec _ [] OldBo Result  ExpandedRecord Iota AccL AccR Pre
   (ExpansionClause ==> expand OldBo NewBo), !,
   % continue, but schedule iota reductions (pre-existing projections became iota redexes)
   IotaClauses ==>
-    expand-spine Info NewBo Result AccL AccR [ExpansionClause|Premises] Clause.
+    expand-spine Info NewBo AccL AccR [ExpansionClause|Premises] Result Clause.
 
 % This predicate travrses the spine of lambdas. When it finds an abstraction
 % on the record R is calls expand-abstraction. Finally it copies the term,
 % applying all substitutions accumulated while descending the spine.
 pred expand-spine
-  i:info,
-  i:term, o:term, % input and output term
-  i:list term, i:list term, % variables for the LHS and RHS of the clause head
-  i:list prop, o:prop. % premises and final clause
+  info,
+  term, % input term
+  list term, list term, % variables for the LHS and RHS of the clause head
+  list prop
+  ->
+  term, % output term
+  prop. % premises and final clause
 
 % if we find a lambda over the record R we expand
-expand-spine (info R _ _ Projs K KTY as Info) (fun _ LTy Bo) Result AccL AccR Premises (pi r\ Clause r) :- coq.env.global (indt R) LTy, !,
-  pi r\ expand-abstraction Info r KTY Projs (Bo r) Result {coq.env.global (indc K)} [] [r|AccL] AccR Premises (Clause r).
+expand-spine (info R _ _ Projs K KTY as Info) (fun _ LTy Bo) AccL AccR Premises Result (pi r\ Clause r) :- coq.env.global (indt R) LTy, !,
+  pi r\ expand-abstraction Info r KTY Projs (Bo r) {coq.env.global (indc K)} [] [r|AccL] AccR Premises Result (Clause r).
 
 % otherwise we traverse the spine
-expand-spine Info (fun Name Ty Bo) (fun Name Ty1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
+expand-spine Info (fun Name Ty Bo) AccL AccR Premises (fun Name Ty1 Bo1) (pi x y\ Clause x y) :- !,
   expand Ty Ty1, !,
-  pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
-expand-spine Info (let Name Ty V Bo) (let Name Ty1 V1 Bo1) AccL AccR Premises (pi x y\ Clause x y) :- !,
+  pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) [x|AccL] [y|AccR] [expand x y|Premises] (Bo1 y) (Clause x y).
+expand-spine Info (let Name Ty V Bo) AccL AccR Premises (let Name Ty1 V1 Bo1) (pi x y\ Clause x y) :- !,
   expand Ty Ty1, !,
   expand V V1, !,
-  pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) (Bo1 y) [x|AccL] [y|AccR] [expand x y|Premises] (Clause x y).
+  pi x y\ expand x y ==> expand y y ==> expand-spine Info (Bo x) [x|AccL] [y|AccR] [expand x y|Premises] (Bo1 y) (Clause x y).
 
 % at the end of the spine we fire the iota redexes and complete the clause
-expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
+expand-spine (info _ GR NGR _ _ _) X AccL AccR Premises Y Clause :-
   expand X Y, !,
   % we build "app[f,x1..xn|rest]"
   (pi rest1\ coq.mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
@@ -173,7 +179,7 @@ pred expand-record inductive, gref, gref, term -> term, (pred).
 expand-record R GR NGR X Y Clause :-
   std.assert! (coq.env.indt R tt 0 0 _ [K] [KTY]) "record is too complex for this example",
   coq.env.projections R Projs,
-  expand-spine (info R GR NGR Projs K KTY) X Y [] [] [] Clause.
+  expand-spine (info R GR NGR Projs K KTY) X [] [] [] Y Clause.
 
 % This simply dispatches between global references ----------------------------
 

@@ -337,7 +337,7 @@ Elpi Command abstract.
 Elpi Accumulate lp:{{
 
   % a renaming function which adds a ' to an ident (a string)
-  pred prime i:id, o:id.
+  pred prime id -> id.
   prime S S1 :- S1 is S ^ "'".
 
   pred id id -> id.
@@ -468,7 +468,7 @@ Let's define a Db.
 Elpi Db age.db lp:{{
 
   % A typical Db is made of one main predicate
-  pred age o:string, o:int.
+  pred age -> string, int.
 
   % the Db is empty for now, we put a rule giving a
   % descriptive error and we name that rule "age.fail".

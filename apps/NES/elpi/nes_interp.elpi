@@ -1,7 +1,7 @@
 namespace nes {
 
 % Print a namespace
-func print-path list string, (pred i:gref, o:coq.pp).
+func print-path list string, (pred gref -> coq.pp).
 print-path Path PP :- std.do! [
   std.map {std.findall (ns Path _)} (p\ mp\ p = ns _ mp) MPs,
   print.pp-list MPs (print.pp-module Path PP) Out,
@@ -29,7 +29,7 @@ namespace print {
   symb context :
     list string ->	% readable path
     int ->	% length of full path
-    (pred i:gref, o:coq.pp) ->
+    (pred gref -> coq.pp) ->
     context.
 
   % Hides `aux` modules

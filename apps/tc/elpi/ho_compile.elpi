@@ -109,9 +109,8 @@ namespace tc {
 
         decompile-term-aux A B _ _ :- coq.error "[TC] cannot decompile-term-aux of" A B.
         
-        :functional
-        pred decompile-term i:list term, o:list term, i:term, o:term, o:list prop.
-        decompile-term L L' T R Links :-
+        func decompile-term list term, term -> list term, term, list (pred).
+        decompile-term L T L' R Links :-
           decompile-term-aux T (pr L []) R (pr L' Links).
 
       }
@@ -207,6 +206,12 @@ namespace tc {
         pi x y\ name-pair P x (s N) => is-uvar x => add-link-eta-dedup F (r-ar M N) P PTy [pr x y|Acc] PremR (Clause x y).
       add-link-eta-dedup _ Ar P PTy _ _ _ :- coq.error "[TC] add-link-eta-dedup error" Ar P PTy. 
 
+      % Not reordered to arrow style: L2 is bound early because a partial
+      % application `compile-premise L L1 p Ty ...` (below) is captured as F
+      % and threaded through add-link-eta-dedup's recursion, which supplies
+      % PremR/Clause only later. Moving L2 after PremR would break that
+      % closure's arity (add-link-eta-dedup expects exactly two residual
+      % arguments after F is partially applied).
       :functional
       pred compile-premise
         i:list term,
@@ -255,8 +260,8 @@ namespace tc {
       compile-ty L L2 ProofHd IsPositive Goal ProofTlR PremR Clause :-
         std.do![    
           coq.mk-app ProofHd {std.rev ProofTlR} Proof,
-          decompile.decompile-term L L1 Proof Proof' Prem1,
-          decompile.decompile-term L1 L2 Goal Goal' Prem2,
+          decompile.decompile-term L Proof L1 Proof' Prem1,
+          decompile.decompile-term L1 Goal L2 Goal' Prem2,
           compile-conclusion IsPositive Goal' Proof' Prem2 Prem1 {std.rev PremR} Clause
         ].
 
@@ -288,7 +293,7 @@ namespace tc {
 
     % build a list of Clauses of type tc to be temporarly added to the 
     % database, used in theorems having assumptions.
-    func context goal-ctx -> list prop.
+    func context goal-ctx -> list (pred).
     :name "tc-compile-context"
     context Ctx Clauses :-
       std.assert! (instance.context Ctx Clauses) "[TC] cannot compile context". 
@@ -314,7 +319,7 @@ namespace tc {
       % [uvar-pair V1 Ty V2] List of uvar for link-eta-dedup
       %                      V1 has arity n and V2 has arity n+1
       %                      If V1 has type A -> B, then A = Ty
-      pred uvar-pair i:term, o:term, o:term.
+      pred uvar-pair term -> term, term.
 
       %                    Type     Var    Cnt    uvar-pair-list
       func make-pairs-aux term, term -> list (pred).
@@ -402,7 +407,7 @@ namespace tc {
     }
     
     %          Goal    Goal'      Links
-    func goal term -> term, list prop.
+    func goal term -> term, list (pred).
     :name "compile-goal"
     goal Goal Goal' Links :-
       tc.precomp.goal Goal GoalPrecomp Vars, !,

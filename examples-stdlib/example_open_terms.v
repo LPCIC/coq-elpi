@@ -51,7 +51,7 @@ Elpi File instantiate.code lp:{{
 % [instantiate-replacement N Ty x L R L1 R1] is called when crossing
 % a goal binder for the variable x named N and of type Ty. The replacement
 % L with R  is instantiated (if possible) to  L1 with R1
-pred instantiate-replacement i:name, i:term, i:term, i:argument, i:argument, o:argument, o:argument.
+pred instantiate-replacement name, term, term, argument, argument -> argument, argument.
 instantiate-replacement N Ty C L R L1 R1 :- std.do! [
   instantiate N Ty C L L1,
   instantiate N Ty C R R1,
@@ -132,7 +132,7 @@ Elpi File congruence.code lp:{{
 % [congruence F G PFG Ty XS YS PXYS R] starting from a proof PFG that F = G
 % it consumes X Y and PXY : X = Y to build a proof R : (F X = G Y). It needs to
 % look at the type of F (and G) in order to decide which congruence lemma to apply
-pred conguence i:term, i:term,  i:term, i:term, i:list term, i:list term, i: list term, o:term.
+pred conguence term, term, term, term, list term, list term, list term -> term.
 conguence _ _ P _ [] [] [] P :- !.
 conguence F G PFG {{ _ -> lp:Ty }} [X|XS] [Y|YS] [PXY|PS] Q :- !,
   PFXGY = {{ congrA _ _ lp:F lp:G lp:PFG lp:X lp:Y lp:PXY }},
@@ -176,7 +176,7 @@ Elpi Accumulate lp:{{
 % [replace L R X Y P] replaces L by R in X obtaining Y and
 % a proof P that X = Y. P will contain holes (sub goals) for sub proofs
 % of L = R.
-pred replace i:argument, i:argument, i:term, o:term, o:term.
+pred replace argument, argument, term -> term, term.
 
 % all binders are crossed and we find a term identical to L.
 % the proof is a hole of type L = R.

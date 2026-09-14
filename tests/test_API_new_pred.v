@@ -38,7 +38,7 @@ make-args [str"o",str T|A] [pr out T|L] :- make-args A L.
   
 main [str P|Args] :-
   make-args Args Spec,
-  coq.elpi.add-predicate "search.db" _ P Spec.
+  coq.elpi.add-predicate ff "search.db" _ P Spec.
 }}.
 
 
