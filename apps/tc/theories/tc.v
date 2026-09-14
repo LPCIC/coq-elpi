@@ -22,11 +22,11 @@ From elpi.apps Require Export add_commands.
 Elpi Command TC.Print_instances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
-  func tc.list-printer-aux prop ->.
+  func tc.list-printer-aux (pred) ->.
   tc.list-printer-aux (tc.instance _ InstGR _ Locality) :-
     coq.say InstGR "with locality" Locality.
 
-  func tc.list-printer gref, list prop ->.
+  func tc.list-printer gref, list (pred) ->.
   tc.list-printer _ [] :- !.
   tc.list-printer ClassGR Instances :- 
     coq.say "Instances list for" ClassGR "is:",

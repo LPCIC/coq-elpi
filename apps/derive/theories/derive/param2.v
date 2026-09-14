@@ -29,7 +29,7 @@ Elpi Db derive.param2.db lp:{{
 
     % a database to store triples t, t', tr, such that tr : [| T |] t t'.
     type paramR term -> term -> term -> prop.
-    pred param-done i:gref.
+    pred param-done gref.
 }}.
 #[superglobal] Elpi Accumulate derive.param2.db lp:{{
 

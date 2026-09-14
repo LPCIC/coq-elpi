@@ -11,7 +11,7 @@ Elpi Accumulate TC.Compiler lp:{{
   old-version _ 9 1 _.
   old-version _ 9 2 _.
 
-  pred get-old-mode o:string.
+  pred get-old-mode -> string.
 
   :after "0"
   main [str "new_class", str Cl, str _] :- old-version {coq.version}, get-old-mode Modes, not (var Modes), !,

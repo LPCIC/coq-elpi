@@ -18,14 +18,14 @@ Elpi AddAllInstances.
 Elpi TC Solver Override TC.Solver All.
 
 Elpi Accumulate tc.db lp:{{
-  pred get-inout-sealed-goal i:argument_mode, i:sealed-goal, o:list term.
+  pred get-inout-sealed-goal argument_mode, sealed-goal -> list term.
   get-inout-sealed-goal AMode (seal (goal _ _ (app [global GR | L]) Sol _)) Res :- 
     tc-mode GR Modes, std.append L [Sol] L',
     std.map2-filter L' Modes (t\m\r\ pr AMode _ = m, var t, r = t) Res.
   get-inout-sealed-goal out (seal (goal _ _ _ Sol _)) [Sol].
   get-inout-sealed-goal _ _ [].
 
-  pred sort-goals i:list sealed-goal, o:list int.
+  pred sort-goals list sealed-goal -> list int.
   sort-goals L NL :-
     std.map-i L (i\x\r\ r = pr x i) LookupList,
     std.map L (x\r\ sigma M\ get-inout-sealed-goal in x M, r = pr x M) InputModes,
@@ -40,7 +40,7 @@ Elpi Accumulate tc.db lp:{{
       r = pr Output2Nb Deps2Nb) Graph, 
     coq.toposort Graph NL.
 
-  pred sort-sealed-goals i:list sealed-goal, o:list sealed-goal.
+  pred sort-sealed-goals list sealed-goal -> list sealed-goal.
   sort-sealed-goals SGL SortedSGL :- 
     sort-goals SGL SGLIndexes, 
     std.map SGLIndexes (x\r\ std.nth x SGL r) SortedSGL.

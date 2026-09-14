@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 
 Elpi Db foo.db lp:{{
-  pred p i:string, i:int.
+  pred p string, int.
 
   :name "0"
   p "init" 0.

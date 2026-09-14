@@ -5,7 +5,7 @@
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
 
-func derive.eqb.main gref, string -> list prop.
+func derive.eqb.main gref, string -> list (pred).
 derive.eqb.main (indt I) Prefix CL :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
 
@@ -101,7 +101,7 @@ do-branch X2 J F K KTY Vars _ {{ @eqb_core_defs.eqb_body _ _ _ _ lp:FLDP lp:F lp
 % example: eqb-for {{ list lp:A }} {{ @list_eqb lp:A lp:F }} :- eqb-for A F.
 
 :index (1)
-func do-clause eqb.eqType, eqb.eqType, list term, list term, term, list prop -> prop.
+func do-clause eqb.eqType, eqb.eqType, list term, list term, term, list (pred) -> (pred).
 
 do-clause (eqb.type-param AI) (eqb.type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
   pi x a ea\
@@ -225,7 +225,7 @@ fields.aux (eqb.stop _) (eqb.stop _) [] [] {{ true }}.
 % example:
 %   eqb-fields {{ list lp:A }} {{ @list_eqb_fields lp:A lp:EA lp:ELA }} :-
 %      eqb-for A EA, eqb-for {{ list lp:A }} ELA.
-func do-clause eqb.eqType, eqb.eqType, list term, list term, term, list prop -> prop.
+func do-clause eqb.eqType, eqb.eqType, list term, list term, term, list (pred) -> (pred).
 
 do-clause (eqb.type-param AI) (eqb.type-param AJ) PI PJ F Todo (pi a ea\ C a ea) :- !,
   pi x a ea\

@@ -8,7 +8,7 @@ From elpi Require Import elpi.
 Elpi Tactic reduce.
 Elpi Accumulate lp:{{
 
-pred gref->redflag i:gref, o:coq.redflag.
+pred gref->redflag gref -> coq.redflag.
 gref->redflag (const C) (coq.redflags.const C).
 
 solve (goal _ _ Ty _ [str M] as G) GS :-

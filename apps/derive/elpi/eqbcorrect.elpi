@@ -18,9 +18,9 @@ has-params? (eqb.value-param _ _).
 % to make the code agnostic on the proof of correctness or reflexivity
 %
 % eg: config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for
-pred config  o:term,            o:term,               o:term,                 o:string,                o:(pred i:term, o:term).
+pred config -> term, term, term, string, (pred term -> term).
 
-func main gref, string -> list prop.
+func main gref, string -> list (pred).
 main (indt I) Prefix CLs :- std.do! [
 
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
@@ -137,12 +137,12 @@ coq.sealed-goal->string (nabla G) R :- pi x\  coq.sealed-goal->string (G x) R.
 coq.sealed-goal->string (seal (goal Ctx _ Ty _ _)) R :-
   Ctx =!=> (std.map {std.rev Ctx} coq.ctx->string L, coq.term->string Ty G, R is "Lemma foo " ^ {std.string.concat "\n" L} ^ "\n :\n" ^ G ^ ".").
 
-func coq.ctx->string prop -> string.
+func coq.ctx->string (pred) -> string.
 coq.ctx->string (decl X _ Ty) R :- R is "(" ^ {coq.term->string X} ^ " : " ^ {coq.term->string Ty} ^ ")".
 coq.ctx->string (def X _ Ty B) R :- R is "(" ^ {coq.term->string X} ^ " : " ^ {coq.term->string Ty} ^ " := " ^ {coq.term->string B} ^ ")".
 
-pred common-body o:term.
-pred fields-t o:term, o:term, o:term, o:term.
+pred common-body -> term.
+pred fields-t -> term, term, term, term.
 
 %---------------------------------------------------------------------------
 :index (1)
@@ -411,12 +411,12 @@ mkblistrefl [X|XS] ACC R :-
 
 % prove {{ is_option (seq A) (is_seq A (eqb_correrct A eqA)) }} T
 % such that T has type {{ forall x (px : is_option ...), eqb_correrct (option (seq A)) x }}
-func prove (pred i:term, o:term), term -> term.
+func prove (pred term -> term), term -> term.
 prove Lemma T R :- search Lemma (prove Lemma) T R.
 %prove T R :- whd1 T T', !, prove T' R.
 
 :index (_ _ 3)
-func search (pred i:term, o:term), (func term -> term), term -> term.
+func search (pred term -> term), (func term -> term), term -> term.
 search What Rec (app [GR|L] as GRL) R :- !, std.do! [
   What GR Aux,
   mk-reali GR (global (indt ISGR)),
@@ -438,7 +438,7 @@ apply-aux Aux [T|L] Aux1 :- !, std.do![
   apply-aux {coq.mk-app Aux [T, EQB]} L Aux1
 ].
 
-func apply-functor term, list bool, list term, (pred i:term, o:term) -> term.
+func apply-functor term, list bool, list term, (pred term -> term) -> term.
 apply-functor X _ [] _ X.
 apply-functor X [ff,tt|Mask] [Y|YS] Rec R :- Rec Y Y1, !, apply-functor {coq.mk-app X [_,_,_,Y1]} Mask YS Rec R.
 apply-functor X [ff|Mask] [Y|YS] Rec R :- reali Y PY, apply-functor {coq.mk-app X [Y,PY]} Mask YS Rec R.

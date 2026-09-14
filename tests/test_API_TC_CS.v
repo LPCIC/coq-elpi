@@ -58,7 +58,7 @@ Module hint_instance.
 
   Elpi Command test.
   Elpi Accumulate lp:{{
-    pred expected o:tc-instance.
+    pred expected -> tc-instance.
     expected (tc-instance {{:gref hint_c}} 0).
     expected (tc-instance {{:gref instance_c}} 0).
     expected (tc-instance {{:gref instance_g}} 4).

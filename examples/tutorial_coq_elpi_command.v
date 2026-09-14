@@ -282,7 +282,7 @@ Elpi Command constructors_num.
 
 Elpi Accumulate lp:{{
 
-pred int->nat i:int, o:term.
+pred int->nat int -> term.
 int->nat 0 {{ 0 }}.
 int->nat N {{ S lp:X }} :- M is N - 1, int->nat M X.
 
@@ -340,7 +340,7 @@ Elpi Accumulate lp:{{
   pred prime i:id, o:id.
   prime S S1 :- S1 is S ^ "'".
 
-  pred id i:id, o:id.
+  pred id id -> id.
   id X X.
 
   main [str Ind, trm Param] :-
@@ -571,7 +571,7 @@ Elpi Accumulate lp:{{
     std.findall (age _ _) Rules,
     std.forall Rules print-rule.
 
-  pred print-rule i:prop.
+  pred print-rule (pred).
   print-rule (age P N) :- coq.say P "is" N "years old".
   
 }}.
@@ -876,9 +876,9 @@ An excerpt of the :type:`synterp-action`.
 .. code:: elpi
 
     % Action executed during the parsing phase (aka synterp)
-    kind synterp-action type.
-    type begin-module id -> synterp-action.
-    type end-module modpath -> synterp-action.
+    data synterp-action.
+    symb begin-module : id -> synterp-action.
+    symb end-module : modpath -> synterp-action.
 
 The following command creates a stack of modules and puts in there
 the given definition. The synterp phase saves the actions when the top of the

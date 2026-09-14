@@ -56,17 +56,17 @@ Elpi Tactic auto.
 Elpi Accumulate lp:{{
   shorten coq.ltac.{ open , or , repeat }.
 
-  pred intro i:name, i:goal, o:list sealed-goal.
+  pred intro name, goal -> list sealed-goal.
   intro S G GS :- refine (fun S Src_ Tgt_) G GS.
 
   % Ex falso
-  pred exf i:goal, o:list sealed-goal.
+  pred exf goal -> list sealed-goal.
   exf (goal Ctx _ Ty _ _ as G) [] :-
     std.exists Ctx (x\ sigma w\ x = decl V w {{False}}),
     refine {{ match lp:V in False return lp:Ty with end }} G [].
  
   % Constructor
-  pred kon i:goal, o:list sealed-goal.
+  pred kon goal -> list sealed-goal.
   kon (goal _ _ Ty _ _ as G) GS :-
     coq.safe-dest-app Ty (global (indt GR)) _,
     coq.env.indt GR _ _ _ _ Ks Kt,

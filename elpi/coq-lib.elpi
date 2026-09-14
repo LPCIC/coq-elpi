@@ -116,7 +116,7 @@ copy-mfix-block (mfix-ty N Rno Ty F) (mfix-ty N Rno Ty1 F1) :- !,
 copy-mfix-block (mfix-bo Bs) (mfix-bo Bs1) :- !,
   map Bs copy Bs1.
 
-func copy-ctx-item prop -> prop.
+func copy-ctx-item (pred) -> (pred).
 copy-ctx-item (decl X N T) (decl X1 N T1) :- copy X X1, copy T T1.
 copy-ctx-item (def X N T B) (def X1 N T1 B1) :-
   copy X X1, copy T T1, copy B B1.
@@ -183,7 +183,7 @@ fold-map-mfix-block (mfix-ty N Rno Ty F) A (mfix-ty N Rno Ty1 F1) A2 :- !,
 fold-map-mfix-block (mfix-bo Bs) A (mfix-bo Bs1) A1 :- !,
   std.fold-map Bs A fold-map Bs1 A1.
 
-func fold-map-ctx-item prop, A -> prop, A.
+func fold-map-ctx-item (pred), A -> (pred), A.
 fold-map-ctx-item (decl X N T) A (decl X1 N T1) A2 :- fold-map X A X1 A1, fold-map T A1 T1 A2.
 fold-map-ctx-item (def X N T B) A (def X1 N T1 B1) A3 :-
   fold-map X A X1 A1, fold-map T A1 T1 A2, fold-map B A2 B1 A3.
@@ -198,7 +198,7 @@ fold-map-arity (arity T) A (arity T1) A1 :- fold-map T A T1 A1.
 % The arguments are the same of coq.env.indt plus an an extra one being
 % the output (of type indt-decl).
 
-func coq.upoly-decl->attribute any -> prop.
+func coq.upoly-decl->attribute any -> (pred).
 coq.upoly-decl->attribute (upoly-decl A B C D) (@udecl! A B C D).
 coq.upoly-decl->attribute (upoly-decl-cumul A B C D) (@udecl-cumul! A B C D).
 
@@ -222,8 +222,8 @@ coq.upoly-decl-cumul.complete-constraints.aux (invariant V) CS :- coq.univ.varia
 coq.upoly-decl-cumul.complete-constraints.aux (irrelevant V) CS :- coq.univ.variable.constraints V CS.
 
 
-kind coq.indt-spec type.
-type coq.indt-spec inductive -> id -> bool -> term -> list (pair constructor id) -> list term -> coq.indt-spec.
+data coq.indt-spec.
+symb coq.indt-spec : inductive -> id -> bool -> term -> list (pair constructor id) -> list term -> coq.indt-spec.
 
 func coq.build-indt-decl coq.indt-spec, int, int -> indt-decl.
 
@@ -305,7 +305,7 @@ coq.build-mindt-decl-block Pairs ParamsR (coq.indt-spec _ _ _ _ Kns Ktys) Block 
     gr_name = pr _ name,
     res = constructor name ar) Block.
 
-func coq.build-mindt-decl-copy-clauses list (pair inductive term), list term -> list prop.
+func coq.build-mindt-decl-copy-clauses list (pair inductive term), list term -> list (pred).
 coq.build-mindt-decl-copy-clauses [] _ [].
 coq.build-mindt-decl-copy-clauses [pr GR I|Rest] ParamsR [
     (pi l rest r\ copy (app[global (indt GR)|l]) r :- !, std.append ParamsR rest l, coq.mk-app I rest r, !),
@@ -850,7 +850,7 @@ coq.bind-ind-parameters.aux I T Vs Ts K O :- I > 0, whd1 T T', !,
 
 % coq.with-TC Class Instance->Clause Code: runs Code under a context augmented with
 % all instances for Class transformed by Instance->Clause.
-func coq.with-TC term, (func tc-instance -> prop), (func) ->.
+func coq.with-TC term, (func tc-instance -> (pred)), (func) ->.
 coq.with-TC Class Instance->Clause Code :-
   coq.TC.db-for {coq.term->gref Class} Instances,
   map Instances Instance->Clause Hyps, !,

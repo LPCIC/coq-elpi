@@ -15,13 +15,13 @@ namespace tc {
     coq.env.dependencies GR _ Deps, 
     std.exists! SectionVars (x\ coq.gref.set.mem (const x) Deps).
 
-  func get-locality string -> list prop.
+  func get-locality string -> list (pred).
   get-locality "Local" [@local!] :- !.
   get-locality _ [@local!] :- coq.env.current-section-path [_ | _], !.
   get-locality "Global" [@global!].
   get-locality "Export" [].
 
-  func add-inst.aux gref, gref, list prop, grafting ->.
+  func add-inst.aux gref, gref, list (pred), grafting ->.
   add-inst.aux Inst TC Locality Grafting :-
     coq.env.current-section-path SectionPath,
     tc.compile.instance-gr Inst Clause, 
@@ -111,9 +111,9 @@ namespace tc {
     std.forall InstInPath (add-inst->db [] ff).
 
   namespace class-coercion {
-    kind task type.
-    type add task.
-    type remove task.
+    data task.
+    symb add : task.
+    symb remove : task.
 
     func do-task task, gref ->.
     do-task add GR :- add-inst->db [] tt GR.

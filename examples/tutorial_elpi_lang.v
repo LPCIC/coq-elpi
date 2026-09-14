@@ -59,8 +59,8 @@ Here we declare that :e:`person` is a type, and that
 
 Elpi Program tutorial lp:{{
 
-  kind person  type.
-  type mallory, bob, alice  person.
+  data person.
+  symb mallory, bob, alice : person.
 
 }}.
 
@@ -79,7 +79,7 @@ and three rules representing our knowledge about our terms.
 
 Elpi Accumulate lp:{{
 
-  pred age o:person, o:int.
+  pred age -> person, int.
 
   age mallory 23.
   age bob 23.
@@ -315,7 +315,7 @@ in terms of the :e:`age` of :e:`P` and :e:`Q`.
 
 Elpi Accumulate lp:{{
 
-  pred older o:person, o:person.
+  pred older -> person, person.
   older P Q :- age P N, age Q M, N > M.
 
 }}.
@@ -389,8 +389,8 @@ i.e. associate only one "output" to a given "input".
 
 Elpi Program tutorial_functions lp:{{
 
-  kind person  type.
-  type mallory, bob, alice  person.
+  data person.
+  symb mallory, bob, alice : person.
 
   func age person -> int.
   age mallory 23.
@@ -473,7 +473,7 @@ The following code is rejected because the second condition does not hold.
 Fail Elpi Program tutorial_functions4 lp:{{
 
    func prime int -> . % code omitted
-   pred one_or_two o:int.
+   pred one_or_two -> int.
    one_or_two 1.
    one_or_two 2.
 
@@ -494,7 +494,7 @@ At the same time the code below is accepted.
 Elpi Program tutorial_functions5 lp:{{
 
    func prime int -> .
-   pred one_or_two o:int.
+   pred one_or_two -> int.
    one_or_two 1.
    one_or_two 2.
 
@@ -626,10 +626,10 @@ that :e:`app` and :e:`fun` are constructors of that type.
 
 Elpi Program stlc lp:{{
 
-  kind  term  type.
+  data  term.
 
-  type  app   term -> term -> term.
-  type  fun   (term -> term) -> term.
+  symb  app   : term -> term -> term.
+  symb  fun   : (term -> term) -> term.
 
 }}.
 
@@ -681,7 +681,7 @@ as a comment.
 
 Elpi Accumulate lp:{{
 
-  pred whd i:term, o:term.
+  pred whd term -> term.
 
   % when the head "Hd" of an "app" (lication) is a
   % "fun" we substitute and continue
@@ -723,7 +723,7 @@ Another little test using global constants:
 |*)
 Elpi Accumulate lp:{{
 
-  type foo, bar term.
+  symb foo, bar : term.
 
 }}.
 
@@ -778,10 +778,10 @@ we provide two rules, one for each term constructor.
 
 Elpi Accumulate lp:{{
 
-  kind  ty   type.           % the data type of types
-  type  arr  ty -> ty -> ty. % our type constructor
+  data  ty.                    % the data type of types
+  symb  arr  : ty -> ty -> ty. % our type constructor
 
-  pred of i:term, o:ty. % the type checking algorithm
+  pred of term -> ty. % the type checking algorithm
 
   % for the app node we ensure the head is a function from
   % A to B, and that the argument is of type A
@@ -993,9 +993,9 @@ A simple example: Peano's addition:
 
 Elpi Program peano lp:{{
 
-kind nat type.
-type z nat.
-type s nat -> nat.
+data nat.
+symb z : nat.
+symb s : nat -> nat.
 
 pred add o:nat, o:nat, o:nat.
 
@@ -1037,9 +1037,9 @@ in the head of rules, rather than unifying them.
 
 Elpi Program peano2 lp:{{
 
-kind nat type.
-type z nat.
-type s nat -> nat.
+data nat.
+symb z : nat.
+symb s : nat -> nat.
 
 pred sum i:nat, i:nat, o:nat.
 
@@ -1063,9 +1063,9 @@ syntactic constraints
 
 Elpi Program peano3 lp:{{
 
-kind nat type.
-type z nat.
-type s nat -> nat.
+data nat.
+symb z : nat.
+symb s : nat -> nat.
 
 func sum nat, nat -> nat.
 

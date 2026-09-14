@@ -19,14 +19,14 @@ open-path :- coq.replay-synterp-action-group "nes.open-path".
 
 namespace print {
 
-  func pp-list list A, (pred i:A, o:coq.pp) -> coq.pp.
+  func pp-list list A, (pred A -> coq.pp) -> coq.pp.
   pp-list L F Out :- std.do! [
     std.map-filter L F PPs,
     Out = coq.pp.box (coq.pp.v 0) {std.intersperse (coq.pp.brk 0 0) PPs},
   ].
 
-  kind context type.
-  type context
+  data context.
+  symb context :
     list string ->	% readable path
     int ->	% length of full path
     (pred i:gref, o:coq.pp) ->
@@ -39,7 +39,7 @@ namespace print {
     std.append Prefix RelPath Path,
   ].
 
-  func module-context list string, modpath, (pred i:gref, o:coq.pp) -> context.
+  func module-context list string, modpath, (pred gref -> coq.pp) -> context.
   module-context Prefix MP PP Ctx :- std.do! [
     coq.modpath->path MP FullPath,
     Ctx = context Prefix {std.length FullPath} PP,
@@ -52,7 +52,7 @@ namespace print {
     Ctx' = context Path {std.length FullPath} PP,
   ].
 
-  func pp-module list string, (pred i:gref, o:coq.pp), modpath -> coq.pp.
+  func pp-module list string, (pred gref -> coq.pp), modpath -> coq.pp.
   pp-module Prefix PP MP Out :- std.do! [
     pp-module-items {module-context Prefix MP PP} {coq.env.module MP} Out,
   ].

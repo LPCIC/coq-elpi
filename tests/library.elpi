@@ -1,5 +1,5 @@
 namespace coq {
-	kind tm type -> type.
+	data tm A.
 }
 namespace cpp {
 	typeabbrev bs (coq.tm int).

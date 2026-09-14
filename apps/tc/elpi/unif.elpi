@@ -5,9 +5,9 @@ namespace tc{
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%% Unification %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    pred unify-eq i:term, i:term.
-    pred unify-list-eq i:list term, i:list term.
-    pred unify-leq i:term, i:term.
+    pred unify-eq term, term.
+    pred unify-list-eq list term, list term.
+    pred unify-leq term, term.
 
     % invariant: hd-beta terms
     % we start with ff, tt to handle symmetric cases
@@ -15,16 +15,16 @@ namespace tc{
     % NOTE: asymmetric rules are not ! otherwise the flip rule is killed
     % NOTE: whd are !
     % names: unif X C  T D M
-    kind cumul type.
-    type eq cumul.
-    type leq cumul.
+    data cumul.
+    symb eq : cumul.
+    symb leq : cumul.
 
     macro @tail-cut-if Option Hd Hyps :- (
       (Hd :- get-option Option tt,      Hyps, !),
       (Hd :- not(get-option Option tt), Hyps   )
     ).
 
-    pred unif i:term, i:stack, i:term, i:stack, i:bool, i:cumul.
+    pred unif term, stack, term, stack, bool, cumul.
     :if "DBG:unif"
     unif X CX Y CY D M :-
       coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
@@ -120,21 +120,21 @@ namespace tc{
     %   print "Error: " {coq.term->string {unwind X C1}} "vs" {coq.term->string {unwind Y C2}}. %, halt.
 
     % Contexts happens to be lists, so we just reuse the code
-    pred unify-list i:list term, i:list term.
+    pred unify-list list term, list term.
     unify-list L1 L2 :- unify-ctxs L1 L2.
 
     % the entry points of rec calls: unify unify-ctxs
-    pred unify-ctxs i:list term, i:list term.
+    pred unify-ctxs list term, list term.
     unify-ctxs [] [].
     unify-ctxs [X|XS] [Y|YS] :- unify X Y eq, !, unify-ctxs XS YS.
 
     % Note lists are reversed + the 2nd length should be leq then the 1st
-    pred unify-lists i:list term, i:list term.
+    pred unify-lists list term, list term.
     unify-lists [X] [Y] :- !, X = Y.
     unify-lists L [X] :- !, app {std.rev L} = X.
     unify-lists [X|Xs] [Y|Ys] :- X = Y, unify-lists Xs Ys.
 
-    pred unify i:term, i:term, i:cumul.
+    pred unify term, term, cumul.
     unify T1 (app [HD|TL]) _ :- not (var T1), var HD, !, T1 = app L1,
       unify-lists {std.rev L1} {std.rev [HD|TL]}.
     unify A B C :- unif {hd-beta A []} {hd-beta B []} ff C.
@@ -143,13 +143,13 @@ namespace tc{
     % Binding a list of terms (delift in Matita, invert subst in Coq) 
 
     % We use a keyd discipline, i.e. we only bind terms with a rigid head
-    pred key i:term.
+    pred key term.
     key (global _) :- !.
     key (pglobal _ _) :- !.
     key C :- name C, !.
     key (primitive _) :- !.
 
-    pred bind-list i:list term, i:term, o:any.
+    pred bind-list list term, term -> any.
     bind-list [] T T' :- bind T T1, T1 = T'.
     bind-list [app [C| AS] |VS] T R :- key C, !,
       pi x\
@@ -165,7 +165,7 @@ namespace tc{
     bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
 
     % CAVEAT: (app FLEX), (match _ _ FLEX) are not terms!
-    pred bind i:term, o:term.
+    pred bind term -> term.
     bind X Y :- name X, X = Y, !.
     bind X Y :- name X, def X _ _ T, !, bind T Y.
     bind (global _ as C) C :- !.
@@ -203,9 +203,9 @@ tc.unif-aux P A B :-
       hd-beta-zeta (F A) AS X C) =>
   P A B.
 
-pred tc.unify-eq i:term, i:term.
-pred tc.unify-leq i:term, i:term.
-pred tc.unify-list-eq i:list term, i:list term.
+pred tc.unify-eq term, term.
+pred tc.unify-leq term, term.
+pred tc.unify-list-eq list term, list term.
 
 tc.unify-eq X Y :- tc.unif-aux tc.unif.unify-eq X Y.
 tc.unify-leq X Y :- tc.unif-aux tc.unif.unify-leq X Y.

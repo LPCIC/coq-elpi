@@ -42,21 +42,21 @@ bo-idx (sort _) Ity1 Ity2 N N Ps (fun `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
 bo-idx X Ity1 Ity2 N M Ps R1 R2 :- whd1 X X1, !,
   bo-idx X1 Ity1 Ity2 N M Ps R1 R2.
 
-pred bo-idx-rty i:list term, i:term, i:term, i:list term, i:list term, o:term.
+pred bo-idx-rty list term, term, term, list term, list term -> term.
 bo-idx-rty Ps ItyArgs _ Vs _ R :-
   rev Vs [_|IdxsRev],
   rev IdxsRev Idxs,
   coq.safe-dest-app ItyArgs HD _,
   coq.mk-app HD {append {rev Ps} Idxs} R.
 
-pred bo-k-args i:list term, i:term,  i:term, i:list term, i:list term, o:term.
+pred bo-k-args list term, term, term, list term, list term -> term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
   coq.safe-dest-app K (global (indc GR)) _,
   coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
   (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R).
 
-pred bo-k-args.aux i:term, i:list term, i:list term, i:term, o:term.
+pred bo-k-args.aux term, list term, list term, term -> term.
 bo-k-args.aux R [] [] _ R.
 bo-k-args.aux K [A|As] [T|Ts] (prod _ S Ty) R :-
   map-db T S F,
@@ -68,7 +68,7 @@ bo-k-args.aux K As Ts X R :- whd1 X X1, !,
   bo-k-args.aux K As Ts X1 R.
 
 
-pred map-pi i:any, o:list prop.
+pred map-pi any -> list (pred).
 map-pi (x\ []) [].
 map-pi (x\ [X x| XS x]) [pi x\ X x | YS] :- map-pi XS YS.
 
@@ -126,8 +126,8 @@ mk-clause N Lno Ity1 Ity2 X Todo Map C :- whd1 X X1, !,
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind mutual-spec type.
-type mutual-spec inductive -> string -> term -> term -> term -> term -> mutual-spec.
+data mutual-spec.
+symb mutual-spec : inductive -> string -> term -> term -> term -> term -> mutual-spec.
 
 func build-mutual-spec bool, string, inductive -> mutual-spec.
 build-mutual-spec Mutual Prefix GR (mutual-spec GR Prefix1 T T Arity Arity) :-
@@ -143,7 +143,7 @@ mutual-spec-apply-param A B (mutual-spec GR Prefix Ity1  Ity2  (prod _ _ F1) (pr
   coq.mk-app Ity2 [B] Ity2B.
 mutual-spec-apply-param _ _ _ _ :- stop "derive.map: mutual parameter mismatch".
 
-func mutual-map-clause mutual-spec, term -> prop.
+func mutual-map-clause mutual-spec, term -> (pred).
 mutual-map-clause (mutual-spec _ _ Ity1 Ity2 _ _) F (map-db Ity1 Ity2 F).
 
 pred bo-fix-aux list term, mutual-spec -> triple term term int.
@@ -202,7 +202,7 @@ bo-params N Lno ([S|_] as Specs) Focus Ps R :- N < Lno,
       bo-params N1 Lno Specs1 Focus [b|Ps] (Bo a b f).
 bo-params _ _ _ _ _ _ :- stop "derive.map: mutual indexed data types not supported".
 
-func add-mutual-map-consts list mutual-spec, list mutual-spec, int, int -> list prop.
+func add-mutual-map-consts list mutual-spec, list mutual-spec, int, int -> list (pred).
 add-mutual-map-consts _ [] _ _ [] :- !.
 add-mutual-map-consts All [S|SS] Lno Focus [map-done GR,Clause|CS] :- std.do! [
   S = mutual-spec GR Prefix T T Arity _,
@@ -220,14 +220,14 @@ add-mutual-map-consts All [S|SS] Lno Focus [map-done GR,Clause|CS] :- std.do! [
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-func main-mutual int, list inductive, string -> list prop.
+func main-mutual int, list inductive, string -> list (pred).
 main-mutual Lno GRS Prefix C :- std.do! [
   if (std.length GRS 1) (IsMutual = ff) (IsMutual = tt),
   std.map GRS (build-mutual-spec IsMutual Prefix) Specs,
   add-mutual-map-consts Specs Specs Lno 0 C
 ].
   
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main GR Prefix C :-
   coq.env.indt-block GR _ Lno Luno GRS _ _ _,
   assert! (Lno = Luno) "derive.map: Non-uniform parameters not supported",

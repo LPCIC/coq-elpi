@@ -13,7 +13,7 @@ main [trm TSkel] :-
   std.assert-ok! (coq.elaborate-skeleton TSkel Ty T) "input term illtyped",
   main-import-projections T Ty.
 
-pred main-import-projections i:term, i:term.
+pred main-import-projections term, term.
 main-import-projections T Ty :-
   std.assert! (coq.safe-dest-app Ty (global (indt I)) Args) "not an inductive term",
   std.assert! (coq.env.record? I PrimProjs) "not a record",
@@ -24,7 +24,7 @@ main-import-projections T Ty :-
      (std.forall Ps (declare-abbrev {std.append {coq.mk-n-holes NParams} [T]}))
      (std.forall Ps (declare-abbrev {std.append Args [T]})).
 
-pred declare-abbrev i:list term, i:option constant.
+pred declare-abbrev list term, option constant.
 declare-abbrev _ none.
 declare-abbrev Args (some Proj) :-
   coq.gref->id (const Proj) ID, % get the short name of the projection

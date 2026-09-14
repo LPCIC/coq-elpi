@@ -13,7 +13,7 @@ func informative. % loaded in the context if we can elim to Type
 
 % create (paramX.prove (is_T params) P IH)
 :index (1)
-func mk-paramX.prove-clause list term, term, term, term -> prop.
+func mk-paramX.prove-clause list term, term, term, term -> (pred).
 mk-paramX.prove-clause [_] T P IH (param1-functor-db T P IH).
 
 mk-paramX.prove-clause [_,_|Args] T P IH (pi x y\ C x y) :-
@@ -86,7 +86,7 @@ truncated-predicate-ty (prod N S T) (prod N S R) :-
   @pi-decl N S x\ truncated-predicate-ty (T x) (R x).
   
 % loads the context with the substitution "is_T params -> P"
-func mk-subst-clause term, term -> list prop.
+func mk-subst-clause term, term -> list (pred).
 mk-subst-clause Ity P C :-
  coq.safe-dest-app Ity IT ITArgs,
  C = [(copy IT P :- !),
@@ -117,7 +117,7 @@ params 0 Ity K KT Arity (fun `P` Pty p\ Bo p) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main GR Prefix [Clause] :- do! [
   T = global (indt GR),
 

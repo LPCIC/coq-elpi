@@ -59,14 +59,14 @@ Module ElpiBt.
   Elpi Accumulate lp:{{
     msolve A B :- coq.say A, coq.ltac.all (coq.ltac.open solve-aux) A B.
 
-    pred solve-aux i:goal, o:list sealed-goal.
+    pred solve-aux goal -> list sealed-goal.
     solve-aux (goal _ _ G _ _ as GG) L :-
       coq.say "Goal is" {coq.term->string G},
       solvee G S,
       coq.say "Solution for" {coq.term->string G} "is" {coq.term->string S},
       refine S GG L.
 
-    pred solvee o:term, o:term.
+    pred solvee -> term, term.
     solvee {{C 2}} {{i2}}.
     solvee {{C 1}} {{i1}}.
     solvee {{E 1}} {{e1}}. 

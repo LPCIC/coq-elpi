@@ -8,15 +8,15 @@ macro @pi-trm N T F :-
 namespace derive.fields {
 
 pred fields_t. % chose between fields_t and construct
-pred self o:term.
+pred self -> term.
 
 
-func std.stop-do! list prop ->.
+func std.stop-do! list (pred) ->.
 std.stop-do! [].
 std.stop-do! [P|PS] :- coq.say P, ((pi x\ stop x :- !, fail) ==> P), !, std.stop-do! PS.
 std.stop-do! [P|_] :- coq.say "STOP" P.
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main I Prefix AllCL :- std.do! [
   
   std.assert! (tag-for I Tag) "no tag for this inductive, run that derivation first",
@@ -112,13 +112,13 @@ fields.branch K _ Vars _ R :-
   coq.mk-app (global (indc B)) {std.append Params Vars} R.
 
 % ------------------------------------------------------------------------
-func box term, list constructor, eqb.eqType -> list prop.
+func box term, list constructor, eqb.eqType -> list (pred).
 box I KL Decl CL :- std.do! [
   box.aux Decl I ILDr,
   box.declare KL ILDr CL,
 ].
 
-func box.declare list constructor, list box-spec -> list prop.
+func box.declare list constructor, list box-spec -> list (pred).
 box.declare [] [] [].
 box.declare [K|Ks] [real-box I|Bs] [C|Cs] :-
   std.assert-ok! (coq.elaborate-indt-decl-skeleton I D) "ILD",
@@ -130,9 +130,9 @@ box.declare [K|Ks] [same-box K1|Bs] [box-for K IB KB|Cs] :-
   box-for K1 IB KB,
   box.declare Ks Bs Cs.
 
-kind box-spec type.
- type real-box indt-decl -> box-spec.
- type same-box constructor -> box-spec.
+data box-spec.
+ symb real-box : indt-decl -> box-spec.
+ symb same-box : constructor -> box-spec.
 
 func box.aux eqb.eqType, term -> list box-spec.
 box.aux (eqb.type-param F) I L :-
@@ -147,7 +147,7 @@ box.aux (eqb.value-param TY F) I L :-
 
 box.aux (eqb.inductive Ind F) I L :- pi x\ box.aux2 I Ind x (F x) L.
 
-pred args-of o:constructor, o:eqb.arguments.
+pred args-of -> constructor, eqb.arguments.
 
 :index(_ _ _ 2)
 func box.aux2 term, inductive, eqb.trm, list eqb.constructor -> list box-spec.
@@ -241,10 +241,10 @@ case-refl-rty Tag Fields Construct _ Vs _ {{ lp:Construct (lp:Tag lp:X) (lp:Fiel
 func case-refl-branch term, term, list term,list term -> term.
 case-refl-branch _ _ _ _ {{ refl_equal }}.
 
-func splay-over-positive term, list A, (func term -> term), term, (pred i:A, o:term) -> term.
+func splay-over-positive term, list A, (func term -> term), term, (pred A -> term) -> term.
 splay-over-positive X L DoRty Def DoBranch R :-
   splay-over-positive.aux X (x\x) L DoRty DoBranch Def R.
-func splay-over-positive.aux term, (term -> term), list A, (func term -> term), (pred i:A, o:term), term -> term.
+func splay-over-positive.aux term, (term -> term), list A, (func term -> term), (pred A -> term), term -> term.
 splay-over-positive.aux _ _ [] _ _ Def Def :- !.
 splay-over-positive.aux _ _ [X] _ DoBranch _ R :-  DoBranch X R, !.
 splay-over-positive.aux X XCtx KL DoRty DoBranch Def R :-
@@ -259,7 +259,7 @@ list-bitmask [] [] [].
 list-bitmask [X] [X] [].
 list-bitmask [X,Y|L] [X|A] [Y|B] :- list-bitmask L A B.
 
-func do-branch (term -> term), (func term -> term), (pred i:A, o:term), term, list A, term, term, list term, list term -> term.
+func do-branch (term -> term), (func term -> term), (pred A -> term), term, list A, term, term, list term, list term -> term.
 do-branch PCtx DoRty DoBranch Def [_|KS] {{ xO }} _ [P] _ R :- !,
   list-bitmask KS KODD _,
   splay-over-positive.aux P (x\ PCtx {{ xO lp:x }}) KODD DoRty DoBranch Def R.

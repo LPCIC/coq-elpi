@@ -941,15 +941,15 @@ Elpi Accumulate lp:{{
 % this directive lets you use short names
 shorten coq.ltac.{ open, thenl, all }.
 
-type intro open-tactic. % goal -> list sealed-goal
+symb intro : open-tactic. % goal -> list sealed-goal
 intro G GL :- refine {{ fun H => _ }} G GL.
 
-type set-arg-n-hyp int -> open-tactic.
+symb set-arg-n-hyp : int -> open-tactic.
 set-arg-n-hyp N (goal Ctx _ _ _ _ as G) [SG1] :-
   std.nth N Ctx (decl X _ _),
   coq.ltac.set-goal-arguments [trm X] G (seal G) SG1.
 
-type apply open-tactic.
+symb apply : open-tactic.
 apply (goal _ _ _ _ [trm T] as G) GL :- refine T G GL.
 
 msolve SG GL :-
@@ -1002,7 +1002,7 @@ optionally takes a bound to the search depth.
 Elpi Tactic default.
 Elpi Accumulate lp:{{
 
-  pred default i:term, i:int, o:term.
+  pred default term, int -> term.
 
   default _ 0 _ :- coq.ltac.fail _ "max search depth reached".
   default {{ nat }} _ {{ 46 }}.
@@ -1028,7 +1028,7 @@ Print bar.
 
 The grammar entries for Elpi tactics in terms take an arbitrary
 number of arguments with the limitation that they are all terms:
-you can't pass a string or an integer as one would normally do.
+you can't pass a string or an integer as one would normally d).
 
 Here we use Coq's primitive integers to pass the search depth
 (in a compact way).

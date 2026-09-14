@@ -390,7 +390,7 @@ Elpi Query lp:{{
 
 
 Elpi Db foo.db lp:{{ 
-  pred p o:int.
+  pred p -> int.
   p 1.
 }}.
 Elpi Accumulate foo.db lp:{{
@@ -410,7 +410,7 @@ Elpi query_foo.
 Elpi Command acc_foo.
 Elpi Accumulate Db Header foo.db.
 Elpi Accumulate lp:{{
-pred r i:list int.
+pred r list int.
 main _ :-
   coq.elpi.accumulate _ "foo.db" (clause _ _ (r [])).
 }}.
@@ -419,7 +419,7 @@ Elpi Accumulate Db foo.db.
 Fail Elpi acc_foo. (* since r has no type in foo.db *)
 
 
-Elpi File r.elpi lp:{{ pred r i:list int. }}.
+Elpi File r.elpi lp:{{ pred r list int. }}.
 
 Elpi Accumulate foo.db File r.elpi.
 

@@ -4,7 +4,7 @@ From elpi Require Import elpi.
    module type is sealed into a concrete module, per issue #989. *)
 
 Elpi Db known.db lp:{{
-  pred known o:gref.
+  pred known -> gref.
 }}.
 
 Elpi Command register.

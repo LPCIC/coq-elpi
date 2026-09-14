@@ -13,7 +13,7 @@ func if-verbose (func) ->.
 if-verbose P :- (get-option "verbose" tt ; get-option "recursive" tt), !, P.
 if-verbose _.
 
-pred dep o:string, o:string.
+pred dep -> string, string.
 dep X Y :- dep1 X Y.
 dep X Y :- dep1 X Z, dep Z Y.
 
@@ -26,13 +26,13 @@ func validate-only gref, list derive ->.
 validate-only T LD :- get-option "only" Map, !, std.forall Map (known-option T LD).
 validate-only _ _.
 
-func known-option gref, list derive, prop ->.
+func known-option gref, list derive, (pred) ->.
 known-option T L (get-option X _) :-
   if (std.mem! L (derive X _ _)) true
      (coq.error "Derivation" X "unknown or not applicable to input" T).
 
 :index (_ 1)
-func chain gref, list derive -> list prop.
+func chain gref, list derive -> list (pred).
 chain _ [] [].
 chain T [derive Name _ _|FS] CL :- not(selected Name), !,
   if-verbose (coq.say "Skipping derivation" Name "on" T "since the user did not select it"),
@@ -61,16 +61,16 @@ toposort L SL :-
   std.findall (dep1 _ _) Deps,
   topo L Deps SL.
 
-func not-a-src list prop, derive ->.
+func not-a-src list (pred), derive ->.
 not-a-src Deps (derive A _ _) :- not(std.mem! Deps (dep1 A _)).
 
 :index (1)
-func tgt-is-not-in list derive, prop ->.
+func tgt-is-not-in list derive, (pred) ->.
 tgt-is-not-in [] _.
 tgt-is-not-in [derive Tgt _ _|_] (dep1 _ Tgt) :- !, fail.
 tgt-is-not-in [_|L] D :- tgt-is-not-in L D.
 
-func topo list derive, list prop -> list derive.
+func topo list derive, list (pred) -> list derive.
 topo [] _ [] :- !.
 topo L Deps SL :-
   std.partition L (not-a-src Deps) LNoDeps Other,
@@ -79,14 +79,14 @@ topo L Deps SL :-
   topo Other NewDeps SOther,
   std.append LNoDeps SOther SL.
 
-func export? prop -> prop.
+func export? (pred) -> (pred).
 export? (export M) (coq.env.export-module M).
 
 func indt-or-const gref ->.
 indt-or-const (indt _).
 indt-or-const (const _).
 
-func main gref -> list prop.
+func main gref -> list (pred).
 main GR CL :- get-option "module" M, !,
   if (M = "") (coq.gref->id GR Mod) (Mod = M),
   if-verbose (coq.say "Starting module" Mod),
@@ -96,7 +96,7 @@ main GR CL :- get-option "module" M, !,
 main GR CL :-
   main-derive GR ff CL.
 
-func main-derive gref, bool -> list prop.
+func main-derive gref, bool -> list (pred).
 main-derive GR InModule CL :- get-option "recursive" tt, !,
   coq.env.dependencies GR _ AllDeps,
   coq.gref.set.elements AllDeps AllDepsL,
@@ -107,17 +107,17 @@ main-derive GR InModule CL :- get-option "recursive" tt, !,
 main-derive GR InModule CL :- main1 GR InModule CL.
 
 :index (_ 1)
-func main.aux bool, list gref, list prop -> list prop.
+func main.aux bool, list gref, list (pred) -> list (pred).
 main.aux _ [] X X.
 main.aux InModule [GR|GRS] Acc CL :-
   ((pi X\get-option "only" X :- !, fail) ==> Acc ==> main-derive GR InModule CL1),
   main.aux InModule GRS {std.append CL1 Acc} CL.
 
-func validate-recursive prop -> derive.
+func validate-recursive (pred) -> derive.
 validate-recursive (derivation _ _ tt _) _ :- get-option "recursive" tt, !,
   coq.error "Synterp actions not supported in recursive derive.".
 validate-recursive (derivation _ _ _ R) R.
-func main1 gref, bool -> list prop.
+func main1 gref, bool -> list (pred).
 main1 GR InModule CL :-
   if (get-option "prefix" PFX)
      (Prefix = PFX)
@@ -178,7 +178,7 @@ func set-indcs-implicits list constructor, list (list implicit_kind) ->.
 set-indcs-implicits KS Impls :-
   std.forall2 KS Impls set-indc-implicits.
 
-func decl+main.post string, indt-decl -> list prop.
+func decl+main.post string, indt-decl -> list (pred).
 decl+main.post ModName DS CL :- std.do! [
   coq.indt-decl->ids DS IDs,
   std.map IDs (module-indt ModName) IS,

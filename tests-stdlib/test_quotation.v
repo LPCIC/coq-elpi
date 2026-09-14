@@ -46,7 +46,7 @@ Elpi Query lp:{{ {{ lp:X }} = 3, coq.say X}}.
 
 Elpi Query lp:{{ {{ fun x => lp:X x }} = Y, coq.say Y}}.
 Elpi Program xxx lp:{{
-pred of i:term, o:term.
+pred of term -> term.
 of X T :- coq.typecheck X T ok.
 }}.
 Elpi Query lp:{{

@@ -6,7 +6,7 @@ shorten std.{assert!, do!}.
 
 namespace derive.eqOK {
 
-pred body i:int, i:term, i:term, i:term, o:term.
+pred body int, term, term, term -> term.
 
 body N (prod NA A a\ prod NF (A_eq a) (B a)) E TisT
        (fun NA A a\ fun NF (A_eq a) f\
@@ -26,7 +26,7 @@ body 0 (prod N S x\ prod _ _ _) E TisT (fun N S R) :-
   @pi-decl N S x\
     R x = {{ lp:E lp:x (lp:TisT lp:x) }}.
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main GR O [eqOK-done GR] :- do! [
   T = global (indt GR),
   coq.env.indt GR _ Lno _ _ _ _,

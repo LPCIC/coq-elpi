@@ -255,14 +255,14 @@ Abort.
 
 Elpi Tactic test_sideeff.
 Elpi Accumulate lp:{{
-  pred myexists i:goal, o:list sealed-goal.
+  pred myexists goal -> list sealed-goal.
   myexists (goal _ RawEv _ Ev _) GS1 :-
     RawEv = {{ ex_intro (fun x : nat => x = 1) _ _ }},
     coq.ltac.collect-goals Ev GS Shelved,
     std.append GS Shelved GS1,
     std.assert! (std.length GS1 2) "not 2 goals".
 
-  pred myrefl i:goal, o:list sealed-goal.
+  pred myrefl goal -> list sealed-goal.
   myrefl (goal _ _ _ P _ as G) GL :-
     std.assert! (var P) "second goal was not skipped",
     refine {{ eq_refl _ }} G GL.
@@ -301,7 +301,7 @@ Abort.
 
 Elpi Tactic test.m.
 Elpi Accumulate lp:{{
-  type type-arg open-tactic.
+  symb type-arg : open-tactic.
   type-arg (goal _ _ _ _ [trm T|_] as G) GL :-
     refine T G GL.
   type-arg (goal A B C D [X|R]) GL :-

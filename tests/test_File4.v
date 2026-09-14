@@ -1,9 +1,9 @@
 From elpi Require Import elpi.
 
-Elpi Db foo.db lp:{{ pred p o:int. }}.
+Elpi Db foo.db lp:{{ pred p -> int. }}.
 
 Elpi File common.code lp:{{
-  pred succ i:int, o:int.
+  pred succ int -> int.
   succ N M :- M is N + 1.
 }}.
 

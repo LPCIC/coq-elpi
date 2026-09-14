@@ -57,13 +57,13 @@ instantiate-replacement N Ty C L R L1 R1 :- std.do! [
   instantiate N Ty C R R1,
 ].
 
-pred instantiate i:name, i:term, i:term, i:argument, o:argument.
+pred instantiate name, term, term, argument -> argument.
 instantiate _ _ _ (open-trm 0 A) (open-trm 0 A) :- !.
 instantiate N T C (open-trm I F) (open-trm J F1) :- remove-binder-for N T C F F1, !,
   J is I - 1.
 instantiate _ _ _ X X.
 
-pred remove-binder-for i:name, i:term, i:term, i:term, o:term.
+pred remove-binder-for name, term, term, term -> term.
 % we found the binder
 remove-binder-for N _ C (fun N1 _ F) Res :- {coq.name->id N} = {coq.name->id N1}, !,
   % Remember that in Elpi all names are the same, eg `x` = `y`
@@ -146,7 +146,7 @@ conguence F G PFG {{ forall x, lp:(Ty x) }} [X|XS] [Y|YS] [PXY|PS] Q :-
 Elpi Tactic test_congruence.
 Elpi Accumulate File congruence.code.
 Elpi Accumulate lp:{{
-  pred mk-refl i:term, o:term.
+  pred mk-refl term -> term.
   mk-refl T {{ @refl_equal Type lp:T }} :- coq.typecheck-ty T _ ok, !. % we don't like Set
   mk-refl T {{ refl_equal lp:T }}.
 
@@ -202,7 +202,7 @@ replace _ _ (global _ as C) C {{ @refl_equal Type lp:C }} :- coq.typecheck-ty C 
 replace _ _ (global _ as C) C {{ refl_equal lp:C }} :- !.
 % we omit rules for primitive constants, fixpoints, let, forall, ...
 
-pred replace-list i:argument, i:argument, i:list term, o:list term, o:list term.
+pred replace-list argument, argument, list term -> list term, list term.
 replace-list _ _ [] [] [].
 replace-list L R [X|XS] [Y|YS] [P|PS] :- replace L R X Y P, replace-list L R XS YS PS.
 

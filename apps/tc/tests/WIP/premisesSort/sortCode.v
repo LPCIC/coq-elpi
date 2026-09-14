@@ -2,16 +2,16 @@
 From elpi Require Import tc.
 
 Elpi Accumulate tc.db lp:{{
-  pred get-pattern-fragment i:term, o:list term.
+  pred get-pattern-fragment term -> list term.
 
-  pred get-inout i:argument_mode, i:term, o:list term.
+  pred get-inout argument_mode, term -> list term.
   % TODO: the second arg may not be an (app L)
   get-inout AMode (app [global GR | L]) Res :- 
     std.drop-last 1 {tc-mode GR} Modes, 
     std.map2-filter L Modes (t\m\r\ pr AMode _ = m, r = t) Res.
   get-inout _ _ [].
 
-  pred input-must-have-predecessor i:term, i:term, i:list term, i:list term.
+  pred input-must-have-predecessor term, term, list term, list term.
   input-must-have-predecessor _ _ [] _ :- !.
   input-must-have-predecessor Instance Premise [Mode | Modes] Premises :- 
     std.exists Premises (p\ sigma MOut\ 
@@ -25,7 +25,7 @@ Elpi Accumulate tc.db lp:{{
 
   % CurrentType is the type of the current instance to get its input variables,
   % These variables should not create edges in the graph
-  pred sort-hypothesis i:term, i:term, i:list term, o:list int.
+  pred sort-hypothesis term, term, list term -> list int.
   sort-hypothesis Instance (app [_ | InputCurrentType]) L NL :-
     std.map-i L (i\x\r\ r = pr x i) LookupList,
     std.map L (premise\r\ sigma M M'\ get-inout in premise M, 
@@ -50,7 +50,7 @@ Elpi Accumulate tc.db lp:{{
       r = pr Output2Nb Deps2Nb) Graph, 
     coq.toposort Graph NL.
 
-  pred sort-and-compile-premises i:term, i:term, i:list term, i:list term, i:prop, o:list prop. 
+  pred sort-and-compile-premises term, term, list term, list term, (pred) -> list (pred). 
   sort-and-compile-premises Instance CurrentType Types Vars IsPositive Premises :- 
     sort-hypothesis Instance CurrentType Types TypesSortedIndexes,             % O (n^3)
     % std.map-i Types (i\e\r\ r = i) TypesSortedIndexes,
@@ -59,7 +59,7 @@ Elpi Accumulate tc.db lp:{{
     std.map2-filter SortedTypes SortedVars (t\v\r\ 
       compile-aux1 t v [] [] [] (not IsPositive) false r _) Premises.
 
-  pred compile-aux1 i:term, i:term, i:list term, i:list univ, i:list term, i:prop, i:prop, o:prop, o:bool.
+  pred compile-aux1 term, term, list term, list univ, list term, (pred), (pred) -> (pred), bool.
   :name "compiler-aux:start"
   compile-aux1 Ty I [] [X | XS] [] IsPositive IsHead (pi x\ C x) IsLeaf :- !,
     pi x\ copy (sort (typ X)) (sort (typ x)) => copy Ty (Ty1 x),

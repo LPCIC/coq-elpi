@@ -17,7 +17,7 @@ Register eqb_body as elpi.derive.eqb_body.
 Elpi Db derive.eqb.db lp:{{
   func whd1 term -> term.
   
-  pred eqb-done o:gref.
+  pred eqb-done -> gref.
 
   pred eqb-for
     o:term, % type1

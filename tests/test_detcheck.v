@@ -5,8 +5,8 @@ Elpi Db foo lp:{{/*(*/
   pred test o:pstring.
 /*)*/}}.
 Elpi File buggy_inline lp:{{/*(*/
-kind f type -> type.
-kind s type.
+data f A.
+data s.
 typeabbrev pstring (f s).
 /*)*/}}.
 Fail Elpi Accumulate foo File buggy_inline.

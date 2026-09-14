@@ -2,8 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pred derivation i:string, i:string, o:derive.
-pred export i:modpath.
-pred dep1 o:string, o:string.
-kind derive type.
-type derive string -> (func -> list (pred)) -> prop -> derive.
+pred derivation string, string -> derive.
+pred export modpath.
+pred dep1 -> string, string.
+data derive.
+symb derive : string -> (func -> list (pred)) -> prop -> derive.

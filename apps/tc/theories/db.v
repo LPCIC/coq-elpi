@@ -69,32 +69,32 @@ Elpi Db tc.db lp:{{
     % the type of search for a typeclass
     % deterministic :- no backtrack after having found a solution/fail
     % classic       :- the classic search, if a path is failing, we backtrack
-    kind search-mode type.
-    type deterministic  search-mode.
-    type classic        search-mode.
+    data search-mode.
+    symb deterministic : search-mode.
+    symb classic       : search-mode.
 
     % [instance Path InstGR ClassGR Locality], ClassGR is the class implemented by InstGR
     % Locality is either the empty list, or [@local!], or [@global!]
-    pred instance o:list string, o:gref, o:gref, o:list prop.
+    pred instance -> list string, gref, gref, list (pred).
 
     % [class ClassGR PredName SearchMode Modes], for each class GR, it contains
     % the name of its predicate and its SearchMode 
     :index (5)
-    pred class o:gref, o:string, o:search-mode, o:list string.
+    pred class -> gref, string, search-mode, list string.
 
     % pred on which we graft instances in the database
-    pred hook o:string.
+    pred hook -> string.
     :name "firstHook" hook "firstHook".
     :name "lastHook" hook "lastHook".
     
     % [unfold-constant C] constants to be unfolded before goal resolution
-    pred unfold-constant o:constant.
+    pred unfold-constant -> constant.
 
     % the set of instances that we are not yet able to compile, 
     % in majority they use universe polimorphism
-    pred banned o:gref.
+    pred banned -> gref.
 
-    pred pending-mode o:list string.
+    pred pending-mode -> list string.
 
     pred ho-link o:term, i:term, o:A.
     func link.eta term, term ->.

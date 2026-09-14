@@ -9,27 +9,27 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 
 Elpi Db derive.eqType.db lp:{{
 
-kind eqb.arguments type.
-kind eqb.trm type.
-kind eqb.eqType type.
-kind eqb.constructor type.
+data eqb.arguments.
+data eqb.trm.
+data eqb.eqType.
+data eqb.constructor.
 
-type eqb.app    gref -> eqb.trm -> list eqb.trm -> eqb.trm.
-type eqb.global gref -> eqb.trm.
+symb eqb.app    : gref -> eqb.trm -> list eqb.trm -> eqb.trm.
+symb eqb.global : gref -> eqb.trm.
 
-type eqb.regular    eqb.trm -> eqb.arguments -> eqb.arguments.
-type eqb.irrelevant eqb.trm -> eqb.arguments -> eqb.arguments.
-type eqb.dependent  eqb.trm -> (eqb.trm -> eqb.arguments) -> eqb.arguments.
-type eqb.stop       eqb.trm -> eqb.arguments.
+symb eqb.regular    : eqb.trm -> eqb.arguments -> eqb.arguments.
+symb eqb.irrelevant : eqb.trm -> eqb.arguments -> eqb.arguments.
+symb eqb.dependent  : eqb.trm -> (eqb.trm -> eqb.arguments) -> eqb.arguments.
+symb eqb.stop       : eqb.trm -> eqb.arguments.
 
-type eqb.type-param  (eqb.trm -> eqb.eqType) -> eqb.eqType.
-type eqb.value-param eqb.trm -> (eqb.trm -> eqb.eqType) -> eqb.eqType.
-type eqb.inductive   inductive -> (eqb.trm -> list eqb.constructor) -> eqb.eqType.
-type eqb.axiom       eqb.eqType.
+symb eqb.type-param  : (eqb.trm -> eqb.eqType) -> eqb.eqType.
+symb eqb.value-param : eqb.trm -> (eqb.trm -> eqb.eqType) -> eqb.eqType.
+symb eqb.inductive   : inductive -> (eqb.trm -> list eqb.constructor) -> eqb.eqType.
+symb eqb.axiom       : eqb.eqType.
 
-type eqb.constructor constructor -> eqb.arguments -> eqb.constructor.
+symb eqb.constructor : constructor -> eqb.arguments -> eqb.constructor.
 
-pred eqType i:gref, o:eqb.eqType.
+pred eqType gref -> eqb.eqType.
 eqType {{:gref PrimInt63.int }} eqb.axiom :- !.
 eqType {{:gref lib:elpi.pstring }} eqb.axiom :- !.
 

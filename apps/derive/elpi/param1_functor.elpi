@@ -15,7 +15,7 @@ param1-functor-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
 
 namespace derive.param1.functor {
 
-pred skip i:int. % position of a parameter that has to be skipped
+pred skip int. % position of a parameter that has to be skipped
 
 % Building the body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 func self -> term.
@@ -84,12 +84,12 @@ func bo-params
   list term % output parameters so far
   -> term. % map function
 
-func mk-rec-clause term, term, term, term -> prop.
+func mk-rec-clause term, term, term, term -> (pred).
 mk-rec-clause (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px\C x px) :- !,
   pi x px\ mk-rec-clause (P x px) {coq.mk-app T1 [x,px]} {coq.mk-app T2 [x,px]} {coq.mk-app F [x,px]} (C x px).
 mk-rec-clause (prod _ _ _\sort _) T1 T2 F (param1-functor-db T1 T2 F).
 
-func mk-rec-clause-app term, term, term, term -> prop.
+func mk-rec-clause-app term, term, term, term -> (pred).
 mk-rec-clause-app (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px py\C x px py) :- !,
   pi x px py\ mk-rec-clause-app (P x px) {coq.mk-app T1 [x,px]} {coq.mk-app T2 [x,py]} {coq.mk-app F [x,px]} (C x px py).
 mk-rec-clause-app (prod _ _ _\sort S) T1 T2 F (pi x\C x) :-
@@ -126,7 +126,7 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :-
     coq.mk-app Ity2 [a] Ity2A,
       decl a A Sty1 => bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) [a|Ps] (Bo a).
 
-func map-pi any -> list prop.
+func map-pi any -> list (pred).
 map-pi (x\ []) [] :- !.
 map-pi (x\ [X x| XS x]) [pi x\ X x | YS] :- map-pi XS YS.
 
@@ -195,8 +195,8 @@ mk-clause N Lno Ity1 Ity2 X Todo Map C I M CF :- whd1 X X1, !,
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind mutual-spec type.
-type mutual-spec inductive -> term -> term -> term -> term -> mutual-spec.
+data mutual-spec.
+symb mutual-spec : inductive -> term -> term -> term -> term -> mutual-spec.
 
 func mutual-spec inductive -> mutual-spec.
 mutual-spec GR (mutual-spec GRR T T Arity Arity) :-
@@ -242,7 +242,7 @@ func mutual-functor-ty mutual-spec -> term, int.
 mutual-functor-ty (mutual-spec _ Ity1 Ity2 Arity1 _) Ty Recno :-
   functor-fix-ty Arity1 Ity1 Ity2 0 [] Ty Recno.
 
-func mutual-functor-rec-clauses list mutual-spec, list term -> list prop.
+func mutual-functor-rec-clauses list mutual-spec, list term -> list (pred).
 mutual-functor-rec-clauses [] [] [].
 mutual-functor-rec-clauses [mutual-spec _ Ity1 Ity2 Arity1 _|SS] [F|FS] Clauses :-
   mk-rec-clause Arity1 Ity1 Ity2 F C,
@@ -461,7 +461,7 @@ body-mutual-params-ty N S Ty :- N > 0, !,
       body-mutual-params-ty M S1 (Rest a).
 body-mutual-params-ty _ _ _ :- stop "derive.param1_functor: wrong mutual shape".
 
-func add-mutual-functor-consts list mutual-spec, list mutual-spec, string, int, int -> list prop.
+func add-mutual-functor-consts list mutual-spec, list mutual-spec, string, int, int -> list (pred).
 add-mutual-functor-consts _ [] _ _ _ [].
 add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- std.do! [
   S = mutual-spec GRR T T Arity _,
@@ -475,7 +475,7 @@ add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- s
   add-mutual-functor-consts All SS Suffix Lno Focus1 CS
 ].
 
-func main-mutual list inductive, string -> list prop.
+func main-mutual list inductive, string -> list (pred).
 main-mutual GRS Suffix C :- std.do! [
   std.map GRS mutual-spec Specs,
   Specs = [First|_],
@@ -486,7 +486,7 @@ main-mutual GRS Suffix C :- std.do! [
   add-mutual-functor-consts Specs Specs Suffix Lno 0 C
 ].
 
-func main1 gref, gref, string -> list prop.
+func main1 gref, gref, string -> list (pred).
 main1 _ (indt GR) Suffix C :- do! [
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",
@@ -506,7 +506,7 @@ main1 _ (indt GR) Suffix C :- do! [
 ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-func main gref, gref, string -> list prop.
+func main gref, gref, string -> list (pred).
 main (indt I) _IsGR Suffix C :- coq.mutual? I, !,
   coq.mutual.members I TS,
   derive.param1.functor.main-mutual TS Suffix C.

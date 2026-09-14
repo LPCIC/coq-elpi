@@ -50,7 +50,7 @@ Elpi Query lp:{{
 }}.
 
 Elpi Accumulate lp:{{
-  pred fresh-ty o:term.
+  pred fresh-ty -> term.
   fresh-ty X :- X = {{Type}}.
 }}.
 Elpi Query lp:{{
@@ -101,7 +101,7 @@ Elpi Query lp:{{ {{bool}} = global (indt GR), coq.env.indt GR A B C D E F }}.
 Axiom nat_of_bool : bool -> nat.
 
 Elpi Accumulate lp:{{
-  pred coercible o:term, o:term, o:term, o:term.
+  pred coercible -> term, term, term, term.
   coerce {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
   coerced {{bool}} {{nat}} X {{nat_of_bool lp:X}}.
   coercible {{bool}} {{nat}} X {{nat_of_bool lp:X}}.

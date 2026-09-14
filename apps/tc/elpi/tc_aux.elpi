@@ -77,7 +77,7 @@ namespace tc {
     coq.TC.class? TC.
 
   % adds a clause to the tc.db DB at the passed grafting
-  func add-tc-db id, grafting, prop ->.
+  func add-tc-db id, grafting, (pred) ->.
   add-tc-db _          _     Clause :- not (ground_term Clause), coq.error "[TC] anomaly: open rule:" Clause, !.
   add-tc-db ClauseName Graft Clause :- coq.elpi.accumulate _ "tc.db" (clause ClauseName Graft Clause), !.
   add-tc-db _          _     Clause :- coq.error "cannot add " PR " to tc.db".
@@ -127,13 +127,13 @@ namespace tc {
         flexible term
   */
   :index (1 _ _ 1)
-  func make-tc.aux bool, term, prop, list prop -> prop.
+  func make-tc.aux bool, term, (pred), list (pred) -> (pred).
   make-tc.aux tt _ Head [] Head :- !.
   make-tc.aux ff Sol Head [] P :- !, P = if (var Sol) Head true.
   make-tc.aux tt _ Head Body (Head :- Body) :- !.
   make-tc.aux ff Sol Head Body P :- !, P = if (var Sol) (Body => Head) true.
 
-  func make-tc term, term, list prop, bool -> prop.
+  func make-tc term, term, list (pred), bool -> (pred).
   make-tc Goal Sol RuleBody IsPositive Rule :-
     coq.safe-dest-app Goal Class Args,
     get-TC-of-inst-type Class ClassGR,
@@ -156,7 +156,7 @@ namespace tc {
     std.fold SectionPath "" (e\acc\r\ r is acc ^ "." ^ e) Res,
     Res' is Res ^ Path.
 
-  func constant->redflag prop -> coq.redflag.
+  func constant->redflag (pred) -> coq.redflag.
   constant->redflag (tc.unfold-constant C) (coq.redflags.const C).
 
   func normalize-ty term -> term.
@@ -167,20 +167,20 @@ namespace tc {
     coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.delta | UnfoldRF] RF,
     @redflags! RF => coq.reduction.lazy.norm G1 G2.
 
-  func remove-clause string, prop, list prop ->.
+  func remove-clause string, (pred), list (pred) ->.
   remove-clause ClauseName P Locality :-
     %Locality => add-tc-db _ (remove ClauseName) P.
     Locality => add-tc-db _ (replace ClauseName) (P :- fail, !).
 
   % [section-var->decl.aux L R] auxiliary function for `section-var->decl`
-  func section-var->decl.aux list constant -> list prop.
+  func section-var->decl.aux list constant -> list (pred).
   section-var->decl.aux [] [].
   section-var->decl.aux [X|XS] [(decl (global (const X)) _ Ty)|YS] :-
     coq.env.typeof (const X) Ty,
     section-var->decl.aux XS YS.
 
   % [section-var->decl L] decl representing seciton variables with their types
-  func section-var->decl -> list prop.
+  func section-var->decl -> list (pred).
   section-var->decl L :-
     section-var->decl.aux {coq.env.section-variables} L.
 
@@ -192,35 +192,35 @@ namespace tc {
   func time-pp string, float ->.
   time-pp Msg Time :- !, coq.debug "[TC] - Time of" Msg "is" Time.
 
-  pred give-res i:prop, o:prop.
+  pred give-res (pred) -> (pred).
   give-res P true :- P.
   give-res _ fail.
 
-  pred time-res i:prop, o:float, o:prop.
+  pred time-res (pred) -> float, (pred).
   time-res P T Res :- std.time (give-res P Res) T.
 
-  func build-msg prop, string -> string.
+  func build-msg (pred), string -> string.
   build-msg true S S :- !.
   build-msg fail S S' :- S' is S ^ " fail".
 
-  pred time-it i:(list string -> prop), i:prop, i:string.
+  pred time-it (list string -> (pred)), (pred), string.
   time-it Opt P Msg :- time-is-active Opt, !, time-res P Time Res, build-msg Res Msg Msg', time-pp Msg' Time, Res.
   time-it _ P _ :- P.
 
-  kind range-arity type.
-  type r-ar nat -> nat -> range-arity.
+  data range-arity.
+  symb r-ar : nat -> nat -> range-arity.
 
-  type prod-range 
-    term ->          % The current qunatified uvar 
+  symb prod-range :
+    term ->          % The current qunatified uvar
     range-arity ->   % Its minimum and maximal application
     term.
 
-  type maybe-eta-tm 
+  symb maybe-eta-tm :
     term ->          % The current precompiled subterm
     list term ->     % The list of FV in the precomp subterm
     term.
 
-  type maybe-llam-tm 
+  symb maybe-llam-tm :
     term ->          % The current precompiled subterm: shape is app[app[X,PF],NPF]
     list term ->     % The eta-expanded version of X, from X^{len(PF)} to X^{len(PF)+len(NPF)}
     term.

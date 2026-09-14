@@ -130,7 +130,7 @@ set-goal-arguments A (goal Ctx1 _ _ _ _) (seal (goal Ctx2 REv2 Ty2 Ev2 _)) (seal
 
 % Tacticals ----------------------------------------------------------------
 
-pred try i:tactic, i:sealed-goal, o:list sealed-goal.
+pred try tactic, sealed-goal -> list sealed-goal.
 try T G GS :- T G GS.
 try _ G [G].
 
@@ -181,7 +181,7 @@ move-goal-argument C D (trm T) (trm T1) :-
   std.assert! (move-term Cr Dr T T1) "cannot move goal argument to the right context", !.
 
 :index(2)
-func move-term list prop, list prop, term -> term.
+func move-term list (pred), list (pred), term -> term.
 move-term [] _ T T1 :- copy T T1, !.
 move-term [decl X _ TX|C1] [decl Y _ TY|C2] T T1 :- std.do! [ copy TX TX1, same_term TX1 TY ], !,
   (copy X Y :- !) => move-term C1 C2 T T1.
@@ -197,7 +197,7 @@ distribute-nabla (x\ [X x| XS x]) [nabla X|R] :- (pi x\ occurs x (X x)), !,
   distribute-nabla XS R.
 distribute-nabla (x\ [X| XS x]) [X|R] :- distribute-nabla XS R.
 
-func not-already-assumed prop.
+func not-already-assumed (pred).
 not-already-assumed (decl X _ _Ty) :- not(decl X _ _ ; def X _ _ _).
 not-already-assumed (def X _ _Ty _Bo) :- not(decl X _ _ ; def X _ _ _).
 

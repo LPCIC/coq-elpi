@@ -4,7 +4,7 @@ From elpi_apps_tc_tests_stdlib Require Import eqSimplDef.
 Elpi Command len_test.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate lp:{{
-  pred counti i:gref, i:int.
+  pred counti gref, int.
   counti GR Len :-
     if (const _ = GR)
       (std.findall (tc.instance _ _ GR _) Cl,

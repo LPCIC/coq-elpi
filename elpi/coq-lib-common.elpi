@@ -22,7 +22,7 @@ stop S :- coq.error S. % halt S
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-func coq.parse-attributes list attribute, list attribute-signature -> list prop.
+func coq.parse-attributes list attribute, list attribute-signature -> list (pred).
 
 % Coq attribute parser, eg [#[attribute=value] Command]
 %
@@ -54,26 +54,32 @@ func coq.parse-attributes list attribute, list attribute-signature -> list prop.
 %   get-option "elpi.test" "yes"
 %   get-option "elpi.str" "some-string"
 
-kind attribute-signature type.
-type att string -> attribute-type -> attribute-signature.
-type att-ignore-unknown attribute-signature.
+data attribute-signature.
+symb att : string -> attribute-type -> attribute-signature.
+symb att-ignore-unknown : attribute-signature.
 
+% Not converted to `pred i:attribute-signature.`: callers invoke this with
+% the Type field of `att Name Type` left unbound to extract it (e.g.
+% `supported-attribute (att Name Type)` in coq.valid-str-attribute below),
+% relying on full unification. Elpi's `i:` mode instead *matches* the
+% argument, which may inspect but not instantiate a variable the caller
+% left unbound, so a moded declaration silently breaks this lookup.
 type supported-attribute attribute-signature -> prop.
 supported-attribute (att "elpi.loc" loc).
 supported-attribute (att Name string) :- rex_match "^elpi\\." Name.
 
-kind attribute-type type.
-type int attribute-type.
-type string attribute-type.
-type bool attribute-type.
-type oneof list attribute-mapping -> attribute-type.
-type attmap attribute-type.    % #[map(k1="v1",k2="v2")]
-type attlist attribute-type.   % #[set(b1,b2,b3)]
-type attlabel attribute-type.    % #[label( a(..), b, .. )] if #[label(a, b), a(..), ..]
-type loc attribute-type.
+data attribute-type.
+symb int : attribute-type.
+symb string : attribute-type.
+symb bool : attribute-type.
+symb oneof : list attribute-mapping -> attribute-type.
+symb attmap : attribute-type.    % #[map(k1="v1",k2="v2")]
+symb attlist : attribute-type.   % #[set(b1,b2,b3)]
+symb attlabel : attribute-type.    % #[label( a(..), b, .. )] if #[label(a, b), a(..), ..]
+symb loc : attribute-type.
 
-kind attribute-mapping type.
-type (`->) string -> any -> attribute-mapping.
+data attribute-mapping.
+symb (`->) : string -> any -> attribute-mapping.
 
 func coq.valid-str-attribute string, string -> option any, diagnostic.
 coq.valid-str-attribute Name Value V Diag :-
@@ -133,7 +139,7 @@ coq.parse-attributes L S O :-
   CS => parse-attributes.aux L "" O, !.
 
 :index (1)
-func parse-attributes.aux list attribute, string -> list prop.
+func parse-attributes.aux list attribute, string -> list (pred).
 parse-attributes.aux [] _ [].
 parse-attributes.aux [attribute S (node L)|AS] Prefix R :- 
   append-string Prefix S PS, supported-attribute (att PS attlist), !,

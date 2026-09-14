@@ -2,7 +2,7 @@ From elpi Require Import elpi.
 
 Elpi Db search.db lp:{{
 
-pred p i:int.
+pred p int.
 p 1.
 
 }}.
@@ -31,7 +31,7 @@ Elpi Query lp:{{
 Elpi Command declare_pred.
 Elpi Accumulate lp:{{
 
-pred make-args i:list argument, o:list (pair argument_mode string).
+pred make-args list argument -> list (pair argument_mode string).
 make-args [] [].
 make-args [str"i",str T|A] [pr in T|L] :- make-args A L.
 make-args [str"o",str T|A] [pr out T|L] :- make-args A L.

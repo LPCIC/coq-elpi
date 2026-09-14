@@ -76,13 +76,13 @@ build-iotared-clause T   (pr Proj Var) C :-
 % introduced in the clause are very similar.
 
 % missing in std
-pred cons_assoc_opt i:option A, i:B, i:list (pair A B), o:list (pair A B).
+pred cons_assoc_opt option A, B, list (pair A B) -> list (pair A B).
 cons_assoc_opt none _ X X.
 cons_assoc_opt (some A) B X [pr A B|X].
 
 % a package of data that we need to carry but rarely fully access
-kind info type.
-type info 
+data info.
+symb info :
     inductive % the record to expand
  -> gref % the term being expanded
  -> gref % the term being expanded and its expanded name
@@ -169,7 +169,7 @@ expand-spine (info _ GR NGR _ _ _) X Y AccL AccR Premises Clause :-
 
 % The entry point of the main algorithm, just fetchs some data and passes initial
 % values for the accumulators.
-pred expand-record i:inductive, i:gref, i:gref, i:term, o:term, o:prop.
+pred expand-record inductive, gref, gref, term -> term, (pred).
 expand-record R GR NGR X Y Clause :-
   std.assert! (coq.env.indt R tt 0 0 _ [K] [KTY]) "record is too complex for this example",
   coq.env.projections R Projs,
@@ -181,7 +181,7 @@ expand-record R GR NGR X Y Clause :-
 % the data base, and that clause has to mention the name of the constant to be
 % generated. Since we don't know it yet (Coq tells us in response to coq.env.add-const)
 % we postulate a name for that constant "nc" and later replace it with the real one "NC"
-pred expand-gref i:inductive, i:gref, i:string, o:prop.
+pred expand-gref inductive, gref, string -> (pred).
 expand-gref Record (const C) Name Clause :- !, std.do! [
   std.assert! (coq.env.const C (some Bo) _) "only transparent constants can be expanded",
   (pi nc\ expand-record Record (const C) nc Bo NewBo (NClause nc)),

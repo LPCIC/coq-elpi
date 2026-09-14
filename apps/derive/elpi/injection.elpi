@@ -6,7 +6,7 @@ shorten std.{append, drop, length, do!}.
 
 namespace ltac.injection {
 
-pred arg-i i:int, i:int, i:term, i:inductive, i:list term, i:int, i:constructor, i:list term,  i:term,  i:term,  i:term, o:list term.
+pred arg-i int, int, term, inductive, list term, int, constructor, list term, term, term, term -> list term.
 arg-i MAX MAX _ _ _ _ _ _ _ _ _ [] :- !.
 arg-i J MAX EQF GR TyArgs Pno GRK KArgs A B H R :- J < MAX,
   I is J + 1,
@@ -49,7 +49,7 @@ injection! H PL GR TyArgs GRK KArgs A B :- do! [
 ].
 
 % Main entry point with assertion that H can be injected
-pred injection i:term, i:term, i:term, o:list term.
+pred injection term, term, term -> list term.
 injection H EqAB _ PL :-
   if (injection? EqAB    GR TyArgs  GRK KArgs  A B)
      (injection! H PL    GR TyArgs  GRK KArgs  A B)

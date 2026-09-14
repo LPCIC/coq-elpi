@@ -71,7 +71,7 @@ distribute-abstraction Name Ty (x\[T x|L x]) [fun Name Ty T|L1] :-
   distribute-abstraction Name Ty L L1.
 
 % typechecks and declares the lens
-func declare-lens string, inductive, pair id constant, term -> prop.
+func declare-lens string, inductive, pair id constant, term -> (pred).
 declare-lens Prefix I (pr FieldName Proj) RawBody (lens-db I Proj C):-
   Name is Prefix ^ FieldName,
   coq.env.indt I _ Nparams _ _ _ _,
@@ -85,7 +85,7 @@ declare-lens Prefix I (pr FieldName Proj) RawBody (lens-db I Proj C):-
     (@global! => coq.arguments.set-implicit (const C) [Implicits, []])
     true.
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main I Prefix Clauses :- std.do! [
   coq.env.indt-decl I Decl, % easy to recurse on
   coq.env.projections I Projs,

@@ -960,10 +960,10 @@ let coq_synterp_builtins =
   [
     LPCode Rocq_elpi_builtins_arg_HOAS.code;
     LPDoc "Coq terms are not visible at synterp time, they are always holes";
-    LPCode "kind term type.";
-    LPCode "kind sealed-goal type.";
-    LPCode "kind gref type.";
-    LPCode "kind abbreviation type.";
+    LPCode "data term.";
+    LPCode "data sealed-goal.";
+    LPCode "data gref.";
+    LPCode "data abbreviation.";
     LPDoc "-- Parsing time APIs ----------------------------------------------------";
     MLData id;
     MLData modpath;

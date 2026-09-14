@@ -69,7 +69,7 @@ trivial-arity (arity T) _ (arity T).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main GR Suffix Clauses :- do! [
   coq.env.indt-decl GR Decl,
   the-suffix Suffix => invert Decl Decl1,
@@ -82,7 +82,7 @@ main GR Suffix Clauses :- do! [
   std.forall Clauses (c\coq.elpi.accumulate _ "derive.invert.db" (clause _ _ c))
 ].
 
-func mk-k-clause constructor, constructor -> prop.
+func mk-k-clause constructor, constructor -> (pred).
 mk-k-clause K1 K2 (invert-db (indc K1) (indc K2)).
 
 }

@@ -486,7 +486,7 @@ store-param-indc Suffix K KR :-
 %%%%%%%%%%%%%%%%%%%%%%%
 
 :index (1)
-func dispatch gref, string -> list prop.
+func dispatch gref, string -> list (pred).
 
 dispatch ((const GR) as C) Suffix Clauses :- do! [
   % We need to check both projection and primitive-projection: a non-primitive
@@ -634,7 +634,7 @@ dispatch (indt I as GR) Suffix Clauses :- !,
 dispatch (indc _) _ _ :-
   coq.error "derive.param2: cannot translate a constructor".
 
-func main gref, string -> list prop.
+func main gref, string -> list (pred).
 main T _ Clauses :-
   dispatch T "_R" Clauses.
 

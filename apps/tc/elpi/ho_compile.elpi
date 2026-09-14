@@ -10,11 +10,11 @@ namespace tc {
       % [name-pair H0 Hn Ar]
       % the variable H0 (applied 0 time) is associated to the variable Hn which is
       % applied Ar times.
-      pred name-pair o:term, o:term, o:nat.
+      pred name-pair -> term, term, nat.
 
       namespace decompile {
 
-        func decompile-term-aux term, pair (list term) (list prop) -> term, pair (list term) (list prop).
+        func decompile-term-aux term, pair (list term) (list (pred)) -> term, pair (list term) (list (pred)).
 
         decompile-term-aux X A Y A :- name X, !, X = Y, !. % avoid loading "decompile-term-aux x A x A" at binders
         decompile-term-aux (global _ as C) A C A :- !.
@@ -186,7 +186,7 @@ namespace tc {
 
       % Create spine of eta-links
       :index (_ _ 1)
-      func make-eta-link term, term, list (pair term name), list term, list prop -> prop.
+      func make-eta-link term, term, list (pair term name), list term, list (pred) -> (pred).
       make-eta-link P PTy [Hd] L Links (do [Link1|Links]) :- !,
         make-eta-link-aux P PTy Hd L Link1 _ _.
       make-eta-link P PTy [(pr B _ as Hd)|Tl] L Links (pi x\ decl x `x` PTy' => Res x) :- !,
@@ -196,9 +196,7 @@ namespace tc {
 
       % Accumulates pi for eta-links
       :index (_ 1)
-      func add-link-eta-dedup 
-        (func list prop -> prop),
-        range-arity, term, term, (list (pair term name)), list prop -> prop.
+      func add-link-eta-dedup (func list (pred) -> (pred)), range-arity, term, term, (list (pair term name)), list (pred) -> (pred).
       % Base case when the variable is always used at same arity
       add-link-eta-dedup F (r-ar _ z) _ _ [] PremR Clause :- !, 
         F PremR Clause.
@@ -233,15 +231,7 @@ namespace tc {
         compile-ty L L1 ProofHd IsPositive ITy ProofTlR PremR Clause. 
 
       :index (_ _ _ _ 1)
-      func compile-ty 
-        list term,
-        list term,
-        term,
-        bool,
-        term,
-        list term,
-        list prop
-        -> prop.
+      func compile-ty list term, list term, term, bool, term, list term, list (pred) -> (pred).
       compile-ty L L1 ProofHd IsPositive (tc.prod-range (prod N Ty Bo) Arity) ProofTlR PremR Clause :- !,
         std.do![
           if (IsPositive = tt) 
@@ -286,7 +276,7 @@ namespace tc {
         tc.make-tc Goal Proof Premises ff Clause1, 
         Clause = (do HOPremisesIn, Clause1, do HOPremisesOut).
 
-      func context goal-ctx -> list prop.
+      func context goal-ctx -> list (pred).
       context [] [].
       context [X | Xs] [Clause | ResTl] :-
         (decl Var _ Ty = X; def Var _ Ty _ = X),
@@ -303,7 +293,7 @@ namespace tc {
     context Ctx Clauses :-
       std.assert! (instance.context Ctx Clauses) "[TC] cannot compile context". 
 
-    func instance term, term -> prop.
+    func instance term, term -> (pred).
     instance Ty ProofHd Clause :-
       tc.time-it tc.oTC-time-compile-instance (
         tc.normalize-ty Ty Ty',
@@ -311,7 +301,7 @@ namespace tc {
         instance.main N Ty'' ProofHd UnivConst UnivInst Clause
       ) "Compile Instance", !.
 
-    func instance-gr gref -> prop.
+    func instance-gr gref -> (pred).
     % If the instance is polymorphic, we wrap its gref into the pglobal constructor
     instance-gr InstGR (pi x\ Clause x) :- coq.env.univpoly? InstGR _, !,
       coq.env.typeof InstGR Ty,
@@ -327,12 +317,12 @@ namespace tc {
       pred uvar-pair i:term, o:term, o:term.
 
       %                    Type     Var    Cnt    uvar-pair-list
-      func make-pairs-aux term, term -> list prop.
+      func make-pairs-aux term, term -> list (pred).
       make-pairs-aux (prod _ Ty Bo) V [pi x\ uvar-pair x Ty X' :- x == V, ! | L] :- !,
         pi x\ make-pairs-aux (Bo x) X' L.
       make-pairs-aux _ _ [].
 
-      func make-pairs list term -> list prop.
+      func make-pairs list term -> list (pred).
       make-pairs [] [] :- !.
       make-pairs [X|Xs] L :- !,
         coq.typecheck X Ty ok,
@@ -345,7 +335,7 @@ namespace tc {
       get-uva-pair-arity X [_|L] Z :- uvar-pair X _ Y, !, 
         get-uva-pair-arity Y L Z.
 
-      func decompile-problematic-term term, list prop -> term, list prop.
+      func decompile-problematic-term term, list (pred) -> term, list (pred).
       decompile-problematic-term (tc.maybe-eta-tm T S) L V [tc.link.eta V T' | L2] :-
         prune V S, !, fold-map T L T' L2.
 
@@ -380,13 +370,13 @@ namespace tc {
         fold-map Ty L Ty' L2,
         std.append L2 L1 L3.
 
-      func compile term, list prop -> term, list prop.
+      func compile term, list (pred) -> term, list (pred).
       compile T L T' L' :-
         (pi t l t' l'\ fold-map t l t' l' :- decompile-problematic-term t l t' l', !) =>
           fold-map T L T' L'.
 
       %                                  Uva      Binders      LinkEta 
-      func build-eta-links-of-vars-aux term, list term -> list prop.
+      func build-eta-links-of-vars-aux term, list term -> list (pred).
       build-eta-links-of-vars-aux Old L [Hd | Xs] :- 
         uvar-pair Old Ty Next, !,
         prune OldScope L,
@@ -402,7 +392,7 @@ namespace tc {
         Xs = Closed.
       build-eta-links-of-vars-aux _ _ [].
 
-      func build-eta-links-of-vars list term -> list prop.
+      func build-eta-links-of-vars list term -> list (pred).
       build-eta-links-of-vars [] [].
       build-eta-links-of-vars [V|Vars] L :-
         var V Hd S,

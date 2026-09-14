@@ -18,13 +18,13 @@
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
-external pred main i:list argument.
+builtin pred main i:list argument.
 
 % Commands with a non-trivial parsing phase can thread data between
 % from the parsing phase to the interp one in an untyped way using the
 % following two entrypoints
-external pred main-interp i:list argument, i:any.
-external pred main-synterp i:list argument, o:any.
+builtin pred main-interp i:list argument, i:any.
+builtin pred main-synterp i:list argument, o:any.
 
 % Commands starting/closing proofs have to use the following entrypoints.
 % The minimal working snippet is:
@@ -42,13 +42,13 @@ external pred main-synterp i:list argument, o:any.
 % a proof stated by a standard Rocq Lemma/Definition statement, the data from
 % the proof opening command is the lemma name, _GL is the empty list and P the
 % proof term.
-external pred main-interp-proof
+builtin pred main-interp-proof
   i:list argument,    % arguments passed to the command
   i:any,              % data from the parsing phase (defaults to _)
   o:term,             % proof data for the corresponding proof-closing command
   o:list sealed-goal, % the sequents to prove
   o:any.              % any data for the corresponding proof-closing command
-external pred main-interp-qed
+builtin pred main-interp-qed
   i:list argument,    % arguments passed to the command
   i:any,              % data from the parsing phase (defaults to _)
   i:term,             % proof data from the corresponding proof-opening command
@@ -56,37 +56,37 @@ external pred main-interp-qed
   i:any.              % any data from the corresponding proof-opening command
 
 pred usage.
-external func attributes -> list attribute.
+builtin func attributes -> list attribute.
 
 % see coq-lib.elpi for coq.parse-attributes generating the options below
-external pred get-option o:string, o:A.
+builtin pred get-option o:string, o:A.
 
 % The data type of arguments (for commands or tactics)
-kind argument type.
-external symbol int      : int    -> argument. % Eg. 1 -2.
-external symbol str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
-external symbol trm      : term   -> argument. % Eg. (t).
-external symbol open-trm : int -> term -> argument.
+data argument.
+builtin symb int      : int    -> argument. % Eg. 1 -2.
+builtin symb str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
+builtin symb trm      : term   -> argument. % Eg. (t).
+builtin symb open-trm : int -> term -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
 % Eg. Record or Inductive
-external symbol indt-decl : indt-decl -> argument.
+builtin symb indt-decl : indt-decl -> argument.
 % Eg. #[universes(polymorphic,...)] Record or Inductive
-external symbol upoly-indt-decl : indt-decl -> upoly-decl -> argument.
+builtin symb upoly-indt-decl : indt-decl -> upoly-decl -> argument.
 % Eg. Definition or Axiom (when the body is none)
-external symbol const-decl : id -> option term -> arity -> argument.
+builtin symb const-decl : id -> option term -> arity -> argument.
 % Eg. #[universes(polymorphic,...)] Definition or Axiom
-external symbol upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
+builtin symb upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
-external symbol ctx-decl : context-decl -> argument.
+builtin symb ctx-decl : context-decl -> argument.
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind indt-decl type.
-kind indc-decl type.
-kind record-decl type.
+data indt-decl.
+data indc-decl.
+data record-decl.
 
 % An arity is written, in Coq syntax, as:
 %    (x : T1) .. (xn : Tn) : S1 -> ... -> Sn -> U
@@ -107,20 +107,20 @@ kind record-decl type.
 %
 % See also the arity->term predicate in coq-lib.elpi
 
-kind arity type.
-external symbol parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "1".
-external symbol arity       : term -> arity.
+data arity.
+builtin symb parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "1".
+builtin symb arity       : term -> arity.
 
-external symbol parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
-external symbol inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
-external symbol minductive  : id -> bool -> arity -> (term -> indt-decl) -> indt-decl. % one type of a mutual block
-external symbol mblock      : list (list indc-decl) -> indt-decl. % constructor blocks for minductive declarations
-external symbol record      : id -> term -> id -> record-decl -> indt-decl.
+builtin symb parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
+builtin symb inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+builtin symb minductive  : id -> bool -> arity -> (term -> indt-decl) -> indt-decl. % one type of a mutual block
+builtin symb mblock      : list (list indc-decl) -> indt-decl. % constructor blocks for minductive declarations
+builtin symb record      : id -> term -> id -> record-decl -> indt-decl.
 
-external symbol constructor : id -> arity -> indc-decl.
+builtin symb constructor : id -> arity -> indc-decl.
 
-external symbol field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
-external symbol end-record  : record-decl.
+builtin symb field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
+builtin symb end-record  : record-decl.
 
 % Example.
 % Remark that A is a regular parameter; y is a non-uniform parameter and t
@@ -159,10 +159,10 @@ external symbol end-record  : record-decl.
 % version 1.4, in Coq this separator is optional, but not in Elpi).
 
 % Context declaration (used as an argument to Elpi commands)
-kind context-decl type.
+data context-decl.
 % Eg. (x : T) or (x := B), body is optional, type may be a variable
-external symbol context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
-external symbol context-end  : context-decl.
+builtin symb context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
+builtin symb context-end  : context-decl.
 
 typeabbrev field-attributes (list field-attribute).
 

@@ -66,14 +66,14 @@ reali (fix N Rno T F as Fix) FixR :- !, std.do! [
 
 namespace derive.param1 {
 
-pred reali-args o:list term, o:list term.
+pred reali-args -> list term, list term.
 reali-args [] [].
 reali-args [X|Xs] [X,XR|XsR] :- do! [
   reali X XR,
   reali-args Xs XsR
 ].
 
-pred reali-map o:list term, o:list term.
+pred reali-map -> list term, list term.
 reali-map [] [].
 reali-map [X|Xs] [XR|XsR] :- do! [
   reali X XR,
@@ -81,7 +81,7 @@ reali-map [X|Xs] [XR|XsR] :- do! [
 ].
 
 % helpers for match return type
-pred reali-match i:term, o:((term -> term) -> term).
+pred reali-match term -> ((term -> term) -> term).
 reali-match (fun N T B) PRM :- pi x\ not (B x = fun _ _ _), !, do! [
   reali T TR,
   (pi x xR\ reali x xR => reali (B x) (BR x xR)),
@@ -112,12 +112,12 @@ reali-store N X XR :- !,
   coq.env.add-const FNreali T1 T2 _ GR,
   @global! => coq.TC.declare-instance (const GR) 0.
 
-pred reali-store-indc i:string, i:constructor, i:constructor.
+pred reali-store-indc string, constructor, constructor.
 reali-store-indc Prefix K XR :-
   reali-store {calc (Prefix ^ {coq.gref->id (indc K)})} (global (indc K)) (global (indc XR)).
 
-kind raw-mindt-spec type.
-type raw-mindt-spec inductive -> id -> bool -> term -> list constructor -> list (pair constructor id) -> list term -> raw-mindt-spec.
+data raw-mindt-spec.
+symb raw-mindt-spec : inductive -> id -> bool -> term -> list constructor -> list (pair constructor id) -> list term -> raw-mindt-spec.
 
 func build-raw-mutual-spec string, inductive -> raw-mindt-spec.
 build-raw-mutual-spec Prefix GR (raw-mindt-spec GR FNewName IsInd Ty KNames KNamesR KTypes) :-
@@ -137,7 +137,7 @@ translate-mutual-spec (raw-mindt-spec GR    FNewName IsInd Ty    KNames  KNamesR
     reali ty tyr,
     coq.mk-app tyr [global (indc k)] r) KTypesR.
 
-func main-mblock list raw-mindt-spec, list raw-mindt-spec, list inductive -> list prop.
+func main-mblock list raw-mindt-spec, list raw-mindt-spec, list inductive -> list (pred).
 main-mblock All [] Acc Clauses :- !,
   rev Acc NewGRs,
   main-mblock-aux All NewGRs Clauses.
@@ -166,7 +166,7 @@ reali-store-mutual-indc [raw-mindt-spec _ FNewName _ _ KNames _ _|Raws] [RealGR|
   reali-store-mutual-indcs Prefix1 KNames RealKNames,
   reali-store-mutual-indc Raws RealGRs.
 
-func build-and-accumulate-clauses list raw-mindt-spec, list inductive -> list prop.
+func build-and-accumulate-clauses list raw-mindt-spec, list inductive -> list (pred).
 build-and-accumulate-clauses [] [] [].
 build-and-accumulate-clauses [raw-mindt-spec GR _ _ _ KNames _ _|Raws] [RealGR|RealGRs] Clauses :-
   coq.env.indt RealGR _ _ _ _ RealKNames _,
@@ -180,7 +180,7 @@ build-and-accumulate-clauses [raw-mindt-spec GR _ _ _ KNames _ _|Raws] [RealGR|R
   build-and-accumulate-clauses Raws RealGRs Rest,
   append[CDone, CReali, CRealiR | CK] Rest Clauses.
 
-func main-mblock-aux list raw-mindt-spec, list inductive -> list prop.
+func main-mblock-aux list raw-mindt-spec, list inductive -> list (pred).
 main-mblock-aux Raws NewGRs Clauses :- std.do! [
   map2 Raws NewGRs translate-mutual-spec Specs,
   coq.build-mindt-decl Specs 0 0 DeclR,
@@ -281,7 +281,7 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
 dispatch (indc _) _ _ :-
   coq.error "derive.param1: cannot translate a constructor".
 
-func main gref, string -> list prop.
+func main gref, string -> list (pred).
 main T _ Clauses :-
   dispatch T "is_" Clauses.
 

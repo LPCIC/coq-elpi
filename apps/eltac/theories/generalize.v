@@ -2,7 +2,7 @@ From elpi Require Export elpi.
 
 Elpi Tactic generalize.
 Elpi Accumulate lp:{{
-  pred occurs-hyp i:term, i:prop, o:term.
+  pred occurs-hyp term, (pred) -> term.
   occurs-hyp X (decl Y _ Ty) Y :- occurs X Ty.
   occurs-hyp X (def Y _ Ty Bo) Y :- occurs X Ty ; occurs X Bo.
 

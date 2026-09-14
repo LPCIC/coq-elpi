@@ -6,7 +6,7 @@ From elpi Require Import elpi.
     Let's start with a db containing international phone prefixes *)
 
 Elpi Db phonebook.db lp:{{ 
-  pred phone_prefix o:string, o:int.
+  pred phone_prefix -> string, int.
   phone_prefix "USA" 1.
 }}.
 
@@ -41,20 +41,20 @@ Elpi print_db France.
 
 Elpi Db food.db lp:{{
 
-  pred sweet o:string.
+  pred sweet -> string.
   sweet "apricot".
 
-  pred tasty o:string.
+  pred tasty -> string.
   tasty "salmon".
 
 }}.
 Elpi Command add_recipy.
 Elpi Accumulate Db food.db.
 Elpi Accumulate lp:{{
-  pred test-sweetness i:argument, o:prop.
+  pred test-sweetness argument -> (pred).
   test-sweetness (str X) (sweet X).
 
-  pred test-tastiness i:argument, o:prop.
+  pred test-tastiness argument -> (pred).
   test-tastiness (str X) (tasty X).
 
   main [str Name|Ingredients] :-

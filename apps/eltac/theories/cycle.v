@@ -3,11 +3,11 @@ From elpi Require Export elpi.
 Elpi Tactic cycle.
 Elpi Accumulate lp:{{
 
-  pred read-arg i:sealed-goal, o:list argument.
+  pred read-arg sealed-goal -> list argument.
   read-arg (nabla G) X :- pi x\ read-arg (G x) X.
   read-arg (seal (goal _ _ _ _ A)) A.
 
-  pred cycle i:int, i:list sealed-goal, o:list sealed-goal.
+  pred cycle int, list sealed-goal -> list sealed-goal.
   cycle N L PL :- N > 0,
     std.length L M,
     std.assert! (N < M) "not enough goals",

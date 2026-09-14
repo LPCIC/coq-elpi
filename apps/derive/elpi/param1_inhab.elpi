@@ -104,7 +104,7 @@ body-params _ IsT _ _ _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   stop M.
 
-func main gref, gref, string -> list prop.
+func main gref, gref, string -> list (pred).
 main _ (indt GR) Suffix [ClauseW, param1-inhab-done (indt GR)] :- do! [
 
   coq.env.indt GR Ind Lno Luno Arity K KT,

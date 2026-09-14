@@ -13,7 +13,7 @@ From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive
 
 Elpi Db derive.eqbOK.db lp:{{
 
-  pred eqbok-for o:gref, o:constant.
+  pred eqbok-for -> gref, constant.
 
 }}.
 

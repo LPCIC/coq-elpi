@@ -2,7 +2,7 @@ From elpi Require Import elpi.
 
 Elpi Command cmd.
 Elpi Db db lp:{{
-pred db? o:term.
+pred db? -> term.
 }}.
 
 Elpi Accumulate Db db.
