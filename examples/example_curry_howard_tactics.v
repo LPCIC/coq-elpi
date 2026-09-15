@@ -68,10 +68,10 @@ Elpi Accumulate lp:{{
   % Constructor
   pred kon i:goal, o:list sealed-goal.
   kon (goal _ _ Ty _ _ as G) GS :-
-    coq.safe-dest-app Ty (global (indt GR)) _,
+    coq.safe-dest-app Ty (global (indt GR) Uinst) _,
     coq.env.indt GR _ _ _ _ Ks Kt,
     std.exists2 Ks Kt (k\ t\
-      coq.saturate t (global (indc k)) P,
+      coq.saturate t {coq.env.global (indc k)} P,
       refine P G GS).
 
   % entry point; we assert no goals are left

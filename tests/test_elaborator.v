@@ -16,12 +16,12 @@ Elpi Bound Steps 10000.
 (* tests on full terms *)
 
 Elpi Query lp:{{
-  {{plus}} = global (const GR), coq.env.const GR (some B) T,
+  {{plus}} = global (const GR) _, coq.env.const GR (some B) T,
   of B TY RB.
 }}.
 
 Elpi Query lp:{{
-  {{plus_n_O}} = global (const GR), coq.env.const-body GR (some B),
+  {{plus_n_O}} = global (const GR) _, coq.env.const-body GR (some B),
   of B TY RB
 }}.
 
@@ -77,7 +77,9 @@ get-option "unif:greedy" tt => (
 
 Elpi Query lp:{{
   of {{ exists n : nat, n = 0  }} _ TY,
-  std.assert! (of {{ @ex_intro _ _ 0 p }} TY R) "Not searching all solutions".
+  coq.safe-dest-app TY (global _ Ui) _,
+  Hd = global {{:gref ex_intro}} Ui,
+  std.assert! (of {{ (lp:Hd _ _ 0 p) }} TY R) "Not searching all solutions".
 }}.
  
 Elpi Accumulate lp:{{
@@ -96,7 +98,7 @@ get-option "unif:greedy" tt => (
 (* -------------------------------------------------------------*)
 (* tests with coercions *)
 
-Elpi Query lp:{{ {{bool}} = global (indt GR), coq.env.indt GR A B C D E F }}.
+Elpi Query lp:{{ {{bool}} = global (indt GR) _, coq.env.indt GR A B C D E F }}.
 
 Axiom nat_of_bool : bool -> nat.
 
@@ -144,9 +146,9 @@ Axiom ring : Type.
 Axiom carr : ring -> Type.
 
 Elpi Accumulate lp:{{
-  coerce {{ring}} (sort _) X {{carr lp:X}}.
-  coerced {{ring}} (sort _) X {{carr lp:X}}.
-  coercible {{ring}} (sort _) X {{carr lp:X}}.
+  coerce (global {{:gref ring}} U) (sort _) X {{ lp:C lp:X }} :- C = global {{:gref carr}} U.
+  coerced (global {{:gref ring}} U) (sort _) X {{ lp:C lp:X }} :- C = global {{:gref carr}} U.
+  coercible (global {{:gref ring}} U) (sort _) X {{ lp:C lp:X }} :- C = global {{:gref carr}} U.  
 }}.
 
 Elpi Query lp:{{get-option "of:coerce" tt =>

@@ -262,8 +262,8 @@ Module MutualCoreNonFirst.
   Redirect "tmp" Check is_empty : is_forest empty.
   Redirect "tmp" Check is_cons : forall t, is_tree t -> forall f, is_forest f -> is_forest (cons t f).
   Redirect "tmp" Elpi Query derive.param1 lp:{{
-    reali (global {{:gref tree}}) _,
-    reali (global {{:gref forest}}) _
+    reali (global {{:gref tree}} _) _,
+    reali (global {{:gref forest}} _) _
   }}.
 End MutualCoreNonFirst.
 
@@ -279,7 +279,7 @@ Module MutualMetaFirst.
   Redirect "tmp" Check is_tree : pred tree.
   Redirect "tmp" Check is_forest : pred forest.
   Redirect "tmp" Elpi Query derive.param1 lp:{{
-    reali (global {{:gref tree}}) _,
-    reali (global {{:gref forest}}) _
+    reali (global {{:gref tree}} _) _,
+    reali (global {{:gref forest}} _) _
   }}.
 End MutualMetaFirst.

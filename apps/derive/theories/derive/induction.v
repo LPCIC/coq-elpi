@@ -12,7 +12,7 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive derive.param1 derive.param1_functor.
 
 Elpi Db derive.induction.db lp:{{
-pred induction-db i:inductive, o:term.
+pred induction-db i:inductive, o:gref.
 }}.
 #[superglobal] Elpi Accumulate derive.induction.db lp:{{
 

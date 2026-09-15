@@ -87,7 +87,7 @@ Elpi Command NES.List.
 }}.
 #[interp] Elpi Accumulate lp:{{
   pred pp-gref i:gref, o:coq.pp.
-  pp-gref GR PP :- coq.term->pp (global GR) PP.
+  pp-gref GR PP :- coq.term->pp (global GR _) PP.
 
   main-interp [str _] (pr DB Path) :- DB => nes.print-path Path pp-gref.
   main _ :- coq.error "usage: NES.List <DotSeparatedPath>".
@@ -109,7 +109,7 @@ Elpi Accumulate lp:{{
   pp-gref GR PP :- std.do! [
     coq.env.typeof GR Ty,
     PP = coq.pp.box (coq.pp.hov 2) [
-      {coq.term->pp (global GR)}, coq.pp.str " :", coq.pp.spc,
+      {coq.term->pp (global GR _)}, coq.pp.str " :", coq.pp.spc,
       {coq.term->pp Ty},
     ],
   ].

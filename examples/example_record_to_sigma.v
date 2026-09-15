@@ -41,7 +41,15 @@ main [indt-decl (record Name _Sort Kname Fields)] :-
   wrap-fields-ty Fields T,
   std.assert-ok! (coq.typecheck T Ty) "oops, wrap-fields-ty is bugged",
   coq.env.add-const Name T Ty _ C,
-  wrap-fields-bo Fields [] T (global (const C)) K KTy,
+  wrap-fields-bo Fields [] T {coq.env.global (const C)} K KTy,
+  std.assert-ok! (coq.typecheck K KTy) "oops, wrap-fields-bo is bugged",
+  coq.env.add-const Kname K KTy _ _.
+
+main [upoly-indt-decl (record Name _Sort Kname Fields) Udecl] :-
+  wrap-fields-ty Fields T,
+  std.assert-ok! (coq.typecheck T Ty) "oops, wrap-fields-ty is bugged",
+  coq.env.add-const Name T Ty _ C,
+  wrap-fields-bo Fields [] T {coq.env.global (const C)} K KTy,
   std.assert-ok! (coq.typecheck K KTy) "oops, wrap-fields-bo is bugged",
   coq.env.add-const Kname K KTy _ _.
 
@@ -49,6 +57,29 @@ main [indt-decl (record Name _Sort Kname Fields)] :-
 
 Elpi Export UM.expand.
 
+Module Mono.
+Unset Universe Polymorphism.
+(* From now on UM.expand is a regular command taking as the only argument
+   a record declaration. *)
+
+UM.expand #[universes(polymorphic=no)] Record foo := mk_foo {
+  f1 : Type;
+  f2 : f1 -> Type;
+  f3 : forall t : f1, f2 t -> bool
+}.
+
+Print foo.
+(* foo = {f1 : Type & {f2 : f1 -> Type & forall t : f1, f2 t -> bool}} : Type *)
+
+Print mk_foo.
+(* mk_foo = fun (f1 : Type) (f2 : f1 -> Type) (f3 : forall t : f1, f2 t -> bool) =>
+              existT (fun f4 : Type => {f5 : f4 -> Type & forall t : f4, f5 t -> bool}) f1
+                (existT (fun f4 : f1 -> Type => forall t : f1, f4 t -> bool) f2 f3)
+    : forall (f1 : Type) (f2 : f1 -> Type), (forall t : f1, f2 t -> bool) -> foo *)
+End Mono.
+
+Module Poly.
+  
 (* From now on UM.expand is a regular command taking as the only argument
    a record declaration. *)
 
@@ -66,3 +97,4 @@ Print mk_foo.
               existT (fun f4 : Type => {f5 : f4 -> Type & forall t : f4, f5 t -> bool}) f1
                 (existT (fun f4 : f1 -> Type => forall t : f1, f4 t -> bool) f2 f3)
     : forall (f1 : Type) (f2 : f1 -> Type), (forall t : f1, f2 t -> bool) -> foo *)
+End Poly.

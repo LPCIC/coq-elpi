@@ -7,7 +7,7 @@ Goal (forall x : nat, 1 + x = x + 1) ->
     forall y,  2 * ((y+y) + 1) = ((y + y)+1) * 2.
 Proof.
     intro H. 
-    intro x.
+    intro x. 
     eltac.rewrite H.
     eltac.rewrite mul_comm.
     exact eq_refl.

@@ -15,7 +15,7 @@ From elpi Require Export elpi.
 From elpi.apps Require Export  derive.param1.
 
 Elpi Db derive.param1.congr.db lp:{{
-  func param1-congr-db constructor -> term. 
+  func param1-congr-db constructor -> gref. 
   func param1-congr-done gref. 
 }}.
 

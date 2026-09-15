@@ -78,10 +78,10 @@ Elpi Query lp:{{ std.do! [
 
   std.assert-ok! (coq.elaborate-skeleton T _ T1) "does not typecheck",
   T1 = {{ fun u => SubType _ _ _ _ lp:(X u) _ }},
-  (pi u\ X u = app[global GR, u]) % Rocq <= 9.1
+  (pi u\ X u = app[global GR _, u]) % Rocq <= 9.1
   ;
-  (pi u\ X u = fun _ _ v\ fun _ _ w\ app[global GR, u, v, w]), % Rocq > 9.1
-  std.assert! (K = global GR, coq.locate "Ord" GR) "not the right constructor"
+  (pi u\ X u = fun _ _ v\ fun _ _ w\ app[global GR _, u, v, w]), % Rocq > 9.1
+  std.assert! (K = global GR _, coq.locate "Ord" GR) "not the right constructor"
 ]
 }}.
 

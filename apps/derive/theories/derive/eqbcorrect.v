@@ -69,14 +69,14 @@ Elpi Db derive.eqbcorrect.db lp:{{
     {{:gref uint63_eqb_refl}} = const R.
 
   :index(2)
-  pred correct-lemma-for i:term, o:term.
-  correct-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_correct }}.
-  correct-lemma-for {{ PrimString.string }} {{ @pstring_eqb_correct }}.
+  pred correct-lemma-for i:gref, o:gref.
+  correct-lemma-for {{:gref PrimInt63.int }} {{:gref uint63_eqb_correct }}.
+  correct-lemma-for {{:gref PrimString.string }} {{:gref pstring_eqb_correct }}.
 
   :index(2)
-  pred refl-lemma-for i:term, o:term.
-  refl-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_refl }}.
-  refl-lemma-for {{ PrimString.string }} {{ @pstring_eqb_refl }}.
+  pred refl-lemma-for i:gref, o:gref.
+  refl-lemma-for {{:gref PrimInt63.int }} {{:gref uint63_eqb_refl }}.
+  refl-lemma-for {{:gref PrimString.string }} {{:gref pstring_eqb_refl }}.
 
 }}.
 

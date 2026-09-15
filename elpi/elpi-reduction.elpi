@@ -10,7 +10,7 @@ func hd-beta term, stack -> term, stack.
 func hd-beta-zeta term, stack -> term, stack.
 func hd-beta-zeta-reduce term -> term.
 func whd term, stack -> term, stack.
-func whd-indc term -> constructor, stack.
+func whd-indc term -> constructor, univ-instance, stack.
 func unwind term, stack -> term.
 func whd1 term -> term.
 :index (_ 1) func coq.mk-app term, list term -> term.
@@ -44,34 +44,33 @@ whd (fun N T F) [B|C] X XC :- !,
   (pi x\ def x N T B => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
 whd (let N T B F) C X XC :- !,
   (pi x\ def x N T B => cache x BN_ => whd (F x) C (F1 x) (C1 x)), X = F1 B, XC = C1 B.
-whd (global (const GR)) C X XC :- unfold GR none C D DC, !, whd D DC X XC.
-whd (pglobal (const GR) I) C X XC :- unfold GR (some I) C D DC, !, whd D DC X XC.
-whd (primitive (proj _ N)) [A|C] X XC :- whd-indc A _ KA, !,
+whd (global (const GR) I) C X XC :- unfold GR (some I) C D DC, !, whd D DC X XC.
+whd (primitive (proj _ N)) [A|C] X XC :- whd-indc A _ _ KA, !,
   whd {proj-red KA N C} X XC.
-whd (global (const GR) as HD) C X XC :- coq.env.primitive? GR, !,
+whd (global (const GR) _I as HD) C X XC :- coq.env.primitive? GR, !,
   unwind HD C Orig,
   coq.reduction.lazy.whd_all Orig R,
   if (same_term Orig R) (X = HD, XC = C) (whd R [] X XC).
-whd (match A _ L) C X XC :- whd-indc A GR KA, !,
+whd (match A _ L) C X XC :- whd-indc A GR _ KA, !,
   whd {match-red GR KA L C} X XC.
-whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR KA, !,
-  whd {fix-red F Fix LA GR KA RA} X XC.
+whd (fix _ N _ F as Fix) C X XC :- nth-stack N C LA A RA, whd-indc A GR Ui KA, !,
+  whd {fix-red F Fix LA GR Ui KA RA} X XC.
 whd (mfix Fno N MF) C X XC :-
-  nth-stack N C LA A RA, whd-indc A GR KA, !,
-  whd-mfix MF MF 0 Fno LA GR KA RA X XC.
+  nth-stack N C LA A RA, whd-indc A GR Ui KA, !,
+  whd-mfix MF MF 0 Fno LA GR Ui KA RA X XC.
 whd N C X XC :- name N, def N _ _ V, !, cache-whd N VN V, whd VN C X XC.
 whd X C X C.
 
-func whd-mfix mfix-block, mfix-block, int, int, stack, constructor, stack, stack -> term, stack.
-whd-mfix (mfix-ty _ Rno _ F) MF Cur Fixno LA K KA RA X XC :-
-  whd-mfix (F (mfix Cur Rno MF)) MF {calc (Cur + 1)} Fixno LA K KA RA X XC.
-whd-mfix (mfix-bo Bs) _ _ Fixno LA K KA RA X XC :-
-  append LA [{coq.mk-app (global (indc K)) KA}|RA] ArgsWRedRecNo,
+func whd-mfix mfix-block, mfix-block, int, int, stack, constructor, univ-instance, stack, stack -> term, stack.
+whd-mfix (mfix-ty _ Rno _ F) MF Cur Fixno LA K Ui KA RA X XC :-
+  whd-mfix (F (mfix Cur Rno MF)) MF {calc (Cur + 1)} Fixno LA K Ui KA RA X XC.
+whd-mfix (mfix-bo Bs) _ _ Fixno LA K Ui KA RA X XC :-
+  append LA [{coq.mk-app (global (indc K) Ui) KA}|RA] ArgsWRedRecNo,
   std.nth Fixno Bs B,
   whd B ArgsWRedRecNo X XC.
 
 % assert A reduces to a constructor
-whd-indc A GR KA :- whd A [] VA C, !, not(var VA), (VA = global (indc GR); VA = pglobal (indc GR) _), !, KA = C.
+whd-indc A GR Ui KA :- whd A [] VA C, !, not(var VA), VA = global (indc GR) Ui, !, KA = C.
 
 % [whd1 T R] asserts progress was made in reducing T to R.
 whd1 T R :-
@@ -97,9 +96,9 @@ proj-red Args FieldNo C V C :-
 :index (1)
 func fix-red
   (term -> term), term,
-  list term, constructor, list term, list term -> term, stack. 
-fix-red F Fix LA GR KA RA X XC :-
-  append LA [{coq.mk-app (global (indc GR)) KA}|RA] ArgsWRedRecNo,
+  list term, constructor, univ-instance, list term, list term -> term, stack. 
+fix-red F Fix LA GR Ui KA RA X XC :-
+  append LA [{coq.mk-app (global (indc GR) Ui) KA}|RA] ArgsWRedRecNo,
   hd-beta {coq.mk-app (F Fix) ArgsWRedRecNo} [] X XC.
 
 :index (_ 2)

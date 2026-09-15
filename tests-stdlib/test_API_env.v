@@ -9,8 +9,8 @@ Elpi Command test.
 Elpi Query lp:{{
   coq.locate "plus" (const GR),
   coq.env.const GR (some BO) TY,
-  coq.locate "nat" GRNat, Nat = global GRNat,
-  coq.locate "S" GRSucc, Succ = global GRSucc,
+  coq.locate "nat" GRNat, Nat = global GRNat _,
+  coq.locate "S" GRSucc, Succ = global GRSucc _,
   TY = (prod _ Nat _\ prod _ Nat _\ Nat),
   BO = (fix _ 0 TY add\
          fun _ Nat n\ fun _ Nat m\
@@ -59,7 +59,7 @@ About add_equal.
 
 Elpi Query lp:{{
   coq.locate "False" F,
-  coq.env.add-axiom "myfalse" (global F) GR,
+  coq.env.add-axiom "myfalse" (global F _) GR,
   coq.env.opaque? GR,
   coq.env.const GR none _,
   coq.env.const-body GR none,

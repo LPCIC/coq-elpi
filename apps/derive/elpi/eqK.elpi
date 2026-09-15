@@ -16,10 +16,10 @@ func axiom-db term -> term, term.
 % same constructor, we use the bcongr lemma
 func branch term, term, term, list term, list term -> term.
 branch K1 K2 _ V _ R :-
-  coq.safe-dest-app K1 (global (indc GR)) Args1,
-  coq.safe-dest-app K2 (global (indc GR)) LArgs2, !, do! [
+  coq.safe-dest-app K1 (global (indc GR) _U1) Args1,
+  coq.safe-dest-app K2 (global (indc GR) _U2) LArgs2, !, do! [
   bcongr-db GR Lem,
-  call Lem Args1 LArgs2 V R,
+  call {coq.env.global Lem} Args1 LArgs2 V R,
 ].
 
 % different constructor, ReflectF + discriminate
@@ -51,7 +51,7 @@ args (prod _ S T) K R :- !,
     axiom-db x F h =>
     args (T x) {coq.mk-app K [x]} (Bo x h).
   
-args T K (fun `x` T R) :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
+args T K (fun `x` T R) :- (T = global (indt _) _ ; T = app[global (indt _) _|_]), !,
   eq-db T T Cmp,
   @pi-decl `x` T x\
     coq.build-match x T (oty Cmp K) (branch K) (R x).
@@ -90,9 +90,9 @@ param L (prod N S T) K R :- L > 0, !,
 func main-constructor int, string, constructor, term -> prop.
 main-constructor Lno Prefix K Kty C :- do! [
   assert! (bcongr-db K _) "derive.eqK: run derive.bcongr first",
-
+  coq.env.global (indc K) KT,
   % generate the K-split lemma
-  param Lno Kty (global (indc K)) RSkel,
+  param Lno Kty KT RSkel,
 
   % add to the environment
   std.assert-ok! (coq.elaborate-skeleton RSkel RT R) "derive.eqK generates illtyped term",
@@ -101,7 +101,7 @@ main-constructor Lno Prefix K Kty C :- do! [
   coq.env.add-const Name R RT @opaque! EqK,
 
   % add the clause to the db
-  C = (eqK-db K (global (const EqK)) :- !),
+  C = (eqK-db K (const EqK) :- !),
   coq.elpi.accumulate _ "derive.eqK.db" (clause _ (before "eqK-db:fail") C)
 ].
 

@@ -64,6 +64,11 @@ reali (fix N Rno T F as Fix) FixR :- !, std.do! [
   FixR = (let N T Fix f\ fix N1 RnoR (TRsubst f) xR\ EtaFixBody f xR),
 ].
 
+:name "reali:gref"
+reali T TR :- 
+  coq.env.global GRT T, !,
+  derive.param1.dispatch-gref GRT TR.
+
 namespace derive.param1 {
 
 pred reali-args o:list term, o:list term.
@@ -114,7 +119,7 @@ reali-store N X XR :- !,
 
 pred reali-store-indc i:string, i:constructor, i:constructor.
 reali-store-indc Prefix K XR :-
-  reali-store {calc (Prefix ^ {coq.gref->id (indc K)})} (global (indc K)) (global (indc XR)).
+  reali-store {calc (Prefix ^ {coq.gref->id (indc K)})} {coq.env.global (indc K)} {coq.env.global (indc XR)}.
 
 kind raw-mindt-spec type.
 type raw-mindt-spec inductive -> id -> bool -> term -> list constructor -> list (pair constructor id) -> list term -> raw-mindt-spec.
@@ -130,12 +135,12 @@ build-raw-mutual-spec Prefix GR (raw-mindt-spec GR FNewName IsInd Ty KNames KNam
 func translate-mutual-spec raw-mindt-spec, inductive -> coq.indt-spec.
 translate-mutual-spec (raw-mindt-spec GR    FNewName IsInd Ty    KNames  KNamesR KTypes) NewGR
                        (coq.indt-spec NewGR FNewName IsInd TyOut KNamesR KTypesR) :-
-  Ind = global (indt GR),
+  Ind = global (indt GR) Ui,
   reali Ty TyR,
   coq.mk-app TyR [Ind] TyOut,
   map2 KNames KTypes (k\ ty\ r\ sigma tyr\
     reali ty tyr,
-    coq.mk-app tyr [global (indc k)] r) KTypesR.
+    coq.mk-app tyr [global (indc k) Ui] r) KTypesR.
 
 func main-mblock list raw-mindt-spec, list raw-mindt-spec, list inductive -> list prop.
 main-mblock All [] Acc Clauses :- !,
@@ -143,19 +148,22 @@ main-mblock All [] Acc Clauses :- !,
   main-mblock-aux All NewGRs Clauses.
 main-mblock All [raw-mindt-spec GR _ _ _ _ _ _|Rest] Acc Clauses :-
   % a fresh name for each inductive
-  pi newGR\ (reali (global (indt GR)) (global (indt newGR)) :- !) => main-mblock All Rest [newGR|Acc] Clauses.
+  pi newGR\ (reali.gref (indt GR) (indt newGR) :- !) => main-mblock All Rest [newGR|Acc] Clauses.
+
+func reali-store-gr string, gref, gref -> .
+reali-store-gr Name X Y :- reali-store Name {coq.env.global X} {coq.env.global Y}.
 
 func reali-store-mutual-indt list raw-mindt-spec,  list inductive -> .
 reali-store-mutual-indt [] [].
 reali-store-mutual-indt [raw-mindt-spec GR FNewName _ _ _ _ _|MoreInd] [RealGR|MoreGR] :-
-  reali-store FNewName (global (indt GR)) (global (indt RealGR)),
+  reali-store-gr FNewName (indt GR) (indt RealGR),
   reali-store-mutual-indt MoreInd MoreGR.
 
 func reali-store-mutual-indcs string, list constructor, list constructor -> .
 reali-store-mutual-indcs _ [] [].
 reali-store-mutual-indcs Prefix [K|KS] [KR|KRS] :-
   N is Prefix ^ {coq.gref->id (indc K)},
-  reali-store N (global (indc K)) (global (indc KR)),
+  reali-store-gr N (indc K) (indc KR),
   reali-store-mutual-indcs Prefix KS KRS.
 
 func reali-store-mutual-indc list raw-mindt-spec, list inductive -> .
@@ -170,10 +178,10 @@ func build-and-accumulate-clauses list raw-mindt-spec, list inductive -> list pr
 build-and-accumulate-clauses [] [] [].
 build-and-accumulate-clauses [raw-mindt-spec GR _ _ _ KNames _ _|Raws] [RealGR|RealGRs] Clauses :-
   coq.env.indt RealGR _ _ _ _ RealKNames _,
-  map2 KNames RealKNames (a\ b\ r\ r = (reali (global (indc a)) (global (indc b)) :- !)) CK,
+  map2 KNames RealKNames (a\ b\ r\ r = (reali.gref (indc a) (indc b) :- !)) CK,
   CDone = reali-done (indt GR),
-  CReali = (reali (global (indt GR)) (global (indt RealGR)) :- !),
-  CRealiR = (realiR (global (indt GR)) (global (indt RealGR)) :- !),
+  CReali = (reali.gref (indt GR) (indt RealGR) :- !),
+  CRealiR = (pi u1 u2\ realiR (global (indt GR) u1) (global (indt RealGR) u2) :- !),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ _ CDone),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") CRealiR),
   std.forall [CReali|CK] (x\coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") x)),
@@ -207,7 +215,7 @@ func dispatch
   -> list prop.   % the clause
 
 dispatch (const GR) Prefix Clauses :- !, do! [
-  Term = global (const GR),
+  coq.env.global (const GR) Term,
   Name is Prefix ^ {coq.gref->id (const GR)},
   std.assert! (coq.env.const GR (some V) Ty) "param1: cannot handle axioms",
 
@@ -222,15 +230,13 @@ dispatch (const GR) Prefix Clauses :- !, do! [
 
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName VR TyRV _ TermR,
+  coq.env.global (const TermR) TermRU,
+  reali-store Name Term TermRU,
 
-  reali-store Name Term (global (const TermR)),
-
-  C1 = (reali Term (global (const TermR)) :- !),
+  C1 = (reali.gref (const GR) (const TermR) :- !),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
-  C2 = (realiR Term (global (const TermR)) :- !),
-  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ _ (reali-done (const GR))),
-  Clauses = [C1, C2, reali-done (const GR)]
+  Clauses = [reali-done (const GR), C1]
 ].
 
 dispatch (indt GR) Prefix Clauses :- coq.env.indt-block GR _ Lno Luno GRS _ _ _, std.length GRS N, N > 1, !, do! [
@@ -240,16 +246,17 @@ dispatch (indt GR) Prefix Clauses :- coq.env.indt-block GR _ Lno Luno GRS _ _ _,
 ].
 
 dispatch (indt GR) Prefix Clauses :- !, do! [
-  Ind = global (indt GR),
-  coq.env.indt GR _ _ Lno Ty Knames Ktypes,
+  coq.env.global (indt GR) Ind,
+  Ind = global (indt GR) Uinst,
+  @uinstance! Uinst => coq.env.indt GR _ _ Lno Ty Knames Ktypes,
 
   LnoR is 2 * Lno,
-
+  std.map Knames (k\r\ r = global (indc k) Uinst) Ks,
   pi new_name\ sigma KnamesR KtypesR TyR\ (
-    (reali Ind (global (indt new_name)) ==>
+    (reali.gref (indt GR) (indt new_name) ==>
       reali Ty TyR,
-      map2 Knames Ktypes (k\ ty\ r\ sigma tyr\
-        reali ty tyr, coq.subst-fun [global (indc k)] tyr r)
+      map2 Ks Ktypes (k\ ty\ r\ sigma tyr\
+        reali ty tyr, coq.subst-fun [k] tyr r)
       KtypesR),
     map Knames (prefix-indc Prefix) KnamesR,
 
@@ -262,24 +269,34 @@ dispatch (indt GR) Prefix Clauses :- !, do! [
   std.assert-ok! (coq.typecheck-indt-decl DeclR) "derive.param1 generates illtyped inductive",
 
   coq.env.add-indt DeclR GRR,
-
-  reali-store NewName Ind (global (indt GRR)),
+  reali-store NewName Ind {coq.env.global (indt GRR)},
   coq.env.indt GRR _ _ _ _ RealNamesR _,
   Prefix1 is NewName ^ "_",
   forall2 Knames RealNamesR (reali-store-indc Prefix1),
-  C1 = (reali Ind (global (indt GRR)) :- !),
+  C1 = (reali.gref (indt GR) (indt GRR) :- !),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") C1),
-  C2 = (realiR Ind (global (indt GRR)) :- !),
-  coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") C2),
-  map2 Knames RealNamesR (a\ b\ r\ r = (reali (global (indc a)) (global (indc b)) :- !)) CK,
+  map2 Knames RealNamesR (a\ b\ r\ r = (reali.gref (indc a) (indc b) :- !)) CK,
   forall CK (c\
     coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") c)),
   coq.elpi.accumulate _ "derive.param1.db" (clause _ _ (reali-done (indt GR))),
-  Clauses = [reali-done (indt GR), C1,C2|CK]
+  Clauses = [reali-done (indt GR), C1|CK]
 ].
 
 dispatch (indc _) _ _ :-
   coq.error "derive.param1: cannot translate a constructor".
+
+% helper to lift undeclared grefs to terms.
+func global-gref gref, gref -> term.
+global-gref (const _) GRR TR :- !,
+  coq.env.global GRR TR.
+% GRR is the yet undeclared param translation of _GT.
+global-gref _GT GRR (global GRR Ui_) :- !.
+
+% queries reali.gref and lifts answer to terms.
+func dispatch-gref gref -> term.
+dispatch-gref GRT TR :-
+  reali.gref GRT GRR, !,
+  global-gref GRT GRR TR.
 
 func main gref, string -> list prop.
 main T _ Clauses :-
