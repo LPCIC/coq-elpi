@@ -90,8 +90,9 @@ Elpi Accumulate lp:{{
 (*|
 
 The predicate :e:`age` has two arguments, the former is a person while
-the latter is an integer. The label :e:`o:` (standing for output)
-is a mode declaration, which we will explain later (ignore it for now).
+the latter is an integer. The arrow :e:`->` separates
+inputs (none here) from outputs. We will explain later the difference
+between inputs and outputs later.
 
 .. note:: :stdtype:`int` is the built-in data type of integers
 
@@ -523,14 +524,7 @@ The syntax
 
    func age person -> int. 
 
-desugars to
-
-.. code:: elpi
-
-   :functional                   % this is an attribute (a special comment)
-   pred age i:person, o:int.
-
-that asserts two things. First :e:`age` is expected to behave like a function.
+asserts two things. First :e:`age` is expected to behave like a function.
 Second its first argument is flagged with the *input mode*.
 
 Query arguments in input mode are *matched* against the rule's corresponding
@@ -553,8 +547,8 @@ Fail Elpi Query tutorial_functions lp:{{
 
 The query fails because :e:`P` (occurring in the query)
 does not match :e:`bob` nor :e:`mallory`: there is no way to
-make :e:`P = bob` hold without assigning :e:`P` but that is forbidden by
-the :e:`i:` directive in the signature of :e:`age`.
+make :e:`P = bob` hold without assigning :e:`P` but that is forbidden since
+the first argument of :e:`age` is flagged as input.
 
 .. note:: Pattern matching API
 
@@ -1029,9 +1023,9 @@ Indeed the first rule for add can be applied forever.
 If one exchanges the two rules in the program, then Elpi
 terminates picking :e:`z` for :e:`X`.
 
-We can use the mode directive in order to
-*match* arguments marked as :e:`i:` against the patterns
-in the head of rules, rather than unifying them.
+We can use flag the first two arguments of :e:`sum` as inputs
+so that queries are *matched* against the corresponding patterns
+in the head of rules.
 
 |*)
 
