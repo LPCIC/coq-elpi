@@ -735,43 +735,17 @@ end
 module GRMap = U.Map.Make(GROrd)
 module GRSet = U.Set.Make(GROrd)
 
-let globalc  = E.Constants.declare_global_symbol "global"
-let pglobalc  = E.Constants.declare_global_symbol "pglobal"
+let globalc = E.Constants.declare_global_symbol "global"
 
 module GrefCache = Hashtbl.Make(GlobRef.UserOrd)
 let cache = GrefCache.create 13
 
-let assert_in_coq_gref_consistent ~poly gr =
-  match Global.is_polymorphic gr, poly with
-  | true, true -> ()
-  | false, false -> ()
-  | true, false ->
-    U.type_error Printf.(sprintf "Universe polymorphic gref %s used with the 'global' term constructor" (GROrd.show gr))
-  | false, true ->
-    U.type_error Printf.(sprintf "Non universe polymorphic gref %s used with the 'pglobal' term constructor" (GROrd.show gr))
+let assert_in_elpi_gref_consistent gr inst =
+  let univs = Environ.universes_of_global (Global.env ()) gr in
+  if UVars.AbstractContext.size univs = UVars.Instance.length inst then ()
+  else
+    U.anomaly Printf.(sprintf "gref %s used with an instance of incompatible size" (GROrd.show gr))
 ;;
-
-let assert_in_elpi_gref_consistent ~poly gr =
-  match Global.is_polymorphic gr, poly with
-  | true, true -> ()
-  | false, false -> ()
-  | true, false ->
-    U.anomaly Printf.(sprintf "Universe polymorphic gref %s used with the 'global' term constructor" (GROrd.show gr))
-  | false, true ->
-    U.anomaly Printf.(sprintf "Non universe polymorphic gref %s used with the 'pglobal' term constructor" (GROrd.show gr))
-;;
-
-
-let in_elpi_gr ~depth s r =
-  assert_in_elpi_gref_consistent ~poly:false r;
-  try
-    GrefCache.find cache r
-  with Not_found ->
-    let s, t, gl = gref.API.Conversion.embed ~depth s r in
-    assert (gl = []);
-    let x = E.mkAppGlobal globalc t [] in
-    GrefCache.add cache r x;
-    x
 
 let in_elpiast_gref ~loc r =
   match r with
@@ -781,37 +755,34 @@ let in_elpiast_gref ~loc r =
   | GlobRef.ConstRef c -> A.mkAppGlobal ~loc ~hdloc:loc constc (constantina ~loc (Constant c)) []
 
 let in_elpiast_gr ~loc r =
-  assert_in_elpi_gref_consistent ~poly:false r;
-  A.mkAppGlobal ~loc  ~hdloc:loc globalc (in_elpiast_gref ~loc r) []
+  assert_in_elpi_gref_consistent r UVars.Instance.empty;
+  let i = uinstanceina ~loc UVars.Instance.empty in
+  A.mkAppGlobal ~loc  ~hdloc:loc globalc (in_elpiast_gref ~loc r) [i]
 
 let in_elpi_poly_gr ~depth s r i =
-  assert_in_elpi_gref_consistent ~poly:true r;
+  assert_in_elpi_gref_consistent r i;
   let open API.Conversion in
   let s, t, gl = gref.embed ~depth s r in
   assert (gl = []);
-  E.mkApp pglobalc t [i]
+  let i = uinstancein i in
+  E.mkApp globalc t [i]
 
 let in_elpiast_poly_gr ~loc r i =
-  assert_in_elpi_gref_consistent ~poly:true r;
   let t = in_elpiast_gref ~loc r in
-  A.mkAppGlobal ~loc ~hdloc:loc pglobalc t [i]
+  A.mkAppGlobal ~loc ~hdloc:loc globalc t [i]
 
 let in_elpi_poly_gr_instance ~depth s r i =
-  assert_in_elpi_gref_consistent ~poly:true r;
-  let open API.Conversion in
-  let s, i, gl = uinstance.embed ~depth s i in
-  assert (gl = []);
+  assert_in_elpi_gref_consistent r i;
   in_elpi_poly_gr ~depth s r i
-
 let in_elpiast_poly_gr_instance ~loc r i =
-  assert_in_elpi_gref_consistent ~poly:true r;
+  assert_in_elpi_gref_consistent r i;
+  let t = in_elpiast_gref ~loc r in
   let i = uinstanceina ~loc i in
-  in_elpiast_poly_gr ~loc r i
+  A.mkAppGlobal ~loc ~hdloc:loc globalc t [i]
   
 let in_coq_gref ~depth ~origin ~failsafe s t =
   try
     let s, t, gls = gref.API.Conversion.readback ~depth s t in
-    assert_in_coq_gref_consistent ~poly:false t;
     assert(gls = []);
     s, t
   with API.Conversion.TypeErr _ ->
@@ -1462,8 +1433,8 @@ let get_options ~depth hyps state =
       match E.look ~depth t with
       | E.UnifVar (head, args) -> VarInstance (head, args, depth)
       | _ ->
-        let _, i, gl = uinstance.Elpi.API.Conversion.readback ~depth state t in
-        assert (gl = []);
+        let state, i, gls =  uinstance.Elpi.API.Conversion.readback ~depth state t in
+        assert (gls = []);
         ConcreteInstance i
     end
     | _ -> NoInstance in
@@ -1680,7 +1651,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
           try state, E.mkConst @@ Names.Id.Map.find n coq_ctx.name2db
           with Not_found ->
             assert(List.mem n coq_ctx.section);
-            state, in_elpi_gr ~depth state (G.VarRef n)
+            state, in_elpi_poly_gr ~depth state (G.VarRef n) UVars.Instance.empty
          end
     | C.Meta _ -> nYI "constr2lp: Meta"
     | C.Evar (k,args) ->
@@ -1725,19 +1696,13 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, hd = aux ~depth env state hd in
          let state, args = CArray.fold_left_map (aux ~depth env) state args in
          state, in_elpi_app ~depth hd args
-    | C.Const(c,i) when Global.is_polymorphic (G.ConstRef c) ->
-         state, in_elpi_poly_gr_instance ~depth state (G.ConstRef c) (EC.EInstance.kind sigma i)
     | C.Const(c,i) ->
-         state, in_elpi_gr ~depth state (G.ConstRef c)
-    | C.Ind (ind, i) when Global.is_polymorphic (G.IndRef ind) ->
-         state, in_elpi_poly_gr_instance ~depth state (G.IndRef ind) (EC.EInstance.kind sigma i)
+         state, in_elpi_poly_gr_instance ~depth state (G.ConstRef c) (EC.EInstance.kind sigma i)
     | C.Ind (ind, i) ->
-         state, in_elpi_gr ~depth state (G.IndRef ind)
-    | C.Construct (construct, i) when Global.is_polymorphic (G.ConstructRef construct) ->
+         state, in_elpi_poly_gr_instance ~depth state (G.IndRef ind) (EC.EInstance.kind sigma i)
+    | C.Construct (construct, i) ->
          let gref = G.ConstructRef construct in
          state, in_elpi_poly_gr_instance ~depth state gref (EC.EInstance.kind sigma i)
-    | C.Construct (construct, i) ->
-         state, in_elpi_gr ~depth state (G.ConstructRef construct)
     | C.Case(ci, u, pms, rt, iv, t, bs) ->
          let (_, (rt,_), _, t, bs) = EConstr.expand_case env sigma (ci, u, pms, rt, iv, t, bs) in
          let state, t = aux ~depth env state t in
@@ -2112,7 +2077,7 @@ let uim = S.declare_component ~name:"rocq-elpi:evar-univ-instance-map" ~descript
     
 let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
   let open API.Conversion in
-  let uinstance_readback s i t =
+  let uinstance_readback s i gr =
     match E.look ~depth i with
     | E.UnifVar (b, args) ->
       let m = S.get uim s in
@@ -2120,25 +2085,32 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
         let u = UIM.host b m in
         s, u, []
       with Not_found ->
-        let u, ctx = UnivGen.fresh_global_instance (get_global_env s) t in
+        let u, ctx = UnivGen.fresh_global_instance (get_global_env s) gr in
         let s = update_sigma s (fun sigma -> evd_merge_ctx_set UState.univ_flexible_alg sigma ctx) in
         let u =
           match C.kind u with
           | C.Const (_, u) -> u
           | C.Ind (_, u) -> u
           | C.Construct (_, u) -> u
+          | C.Var _ -> UVars.Instance.empty
           | _ -> assert false
         in
         let s = S.update uim s (UIM.add b u) in
-        let s, prune_ev = prune_uvar s b args in
-        s, u, [prune_ev; API.Conversion.Unify (E.mkUnifVar b ~args s,uinstancein u)]
+        let ue = uinstancein u in
+        let s, b' = API.FlexibleData.Elpi.make s in
+        let uvar_pruned = E.mkUnifVar b' ~args:[] s in
+        s, u, [API.Conversion.Unify (i, uvar_pruned); API.Conversion.Unify (uvar_pruned,ue)]
       end
-    | _ -> uinstance.readback ~depth s i
+    | _ ->
+      let s, ri, gls = uinstance.Elpi.API.Conversion.readback ~depth s i in
+      let sigma = get_sigma s in
+      let eri = EConstr.EInstance.make ri in
+      s, EConstr.EInstance.kind sigma eri, gls
   in
   try
     let s, t, gls1 = gref.readback ~depth s t in
-    assert_in_coq_gref_consistent ~poly:true t;
     let s, i, gls2 = uinstance_readback s i t in
+    assert_in_elpi_gref_consistent t i;
     assert (gls1 = []);
     s, t, i, gls2
   with API.Conversion.TypeErr _ ->
@@ -2152,27 +2124,29 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
 
 
 type global_or_pglobal =
-  | Global of E.term option
   | PGlobal of E.term option * UVars.Instance.t option
   | NotGlobal
   | Var
 
-let is_global_or_pglobal ~depth t =
+let is_global_or_pglobal ~depth state t =
   let do_gr x =
     match E.look ~depth x with
     | E.UnifVar _ -> None
-    | _ -> Some x in
+    | _ -> Some x 
+  in
   let do_ui x =
     match E.look ~depth x with
-    | E.CData c when isuinstance c -> Some (uinstanceout c)
-    | _ -> None in
+    | E.UnifVar _ -> state, None, []
+    | _ -> 
+      let state, i, gls = uinstance.Elpi.API.Conversion.readback ~depth state x in
+      state, Some i, gls
+  in
   match E.look ~depth t with
-  | E.App(c,gr,[]) when c == globalc -> (Global(do_gr gr))
-  | E.App(c,gr,[]) when c == pglobalc -> (PGlobal(do_gr gr, None))
-  | E.App(c,gr,[ui]) when c == pglobalc -> (PGlobal(do_gr gr, do_ui ui))
-  | E.UnifVar _ -> Var
-  | _ -> NotGlobal
-  
+  | E.App(c,gr,[ui]) when c == globalc -> 
+    let state, ui, gls = do_ui ui in
+    state, (PGlobal(do_gr gr, ui)), gls
+  | E.UnifVar _ -> state, Var, []
+  | _ -> state, NotGlobal, []
 
 let rec of_elpi_ctx ~calldepth syntactic_constraints depth dbl2ctx state initial_coq_ctx =
 
@@ -2248,19 +2222,11 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       let state, u, gsl = sort.API.ContextualConversion.readback ~depth coq_ctx syntactic_constraints state p in
       state, EC.mkSort (EC.ESorts.make u), gsl
  (* constants *)
-  | E.App(c,d,[]) when globalc == c ->
-     let state, gr = in_coq_gref ~depth ~origin:t ~failsafe:coq_ctx.options.failsafe state d in
-     begin match gr with
-     | G.VarRef x -> state, EC.mkVar x, []
-     | G.ConstRef x -> state, EC.UnsafeMonomorphic.mkConst x, []
-     | G.ConstructRef x -> state, EC.UnsafeMonomorphic.mkConstruct x, []
-     | G.IndRef x -> state, EC.UnsafeMonomorphic.mkInd x, []
-     end
-  | E.App(c,d,[i]) when pglobalc == c ->
+  | E.App(c,d,[i]) when globalc == c ->
     let state, gr, i, gls =
       in_coq_poly_gref ~depth ~origin:t ~failsafe:coq_ctx.options.failsafe state d i in
     begin match gr with
-    | G.VarRef x -> assert false
+    | G.VarRef x -> assert (UVars.Instance.is_empty i); state, EC.mkVar x, gls
     | G.ConstRef x -> state, EC.mkConstU (x, EC.EInstance.make i), gls
     | G.ConstructRef x -> state, EC.mkConstructU (x, EC.EInstance.make i), gls
     | G.IndRef x -> state, EC.mkIndU (x, EC.EInstance.make i), gls

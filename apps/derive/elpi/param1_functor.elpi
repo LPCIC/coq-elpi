@@ -3,14 +3,14 @@
 /* ------------------------------------------------------------------------- */
 shorten std.{assert!, do!, length, split-at, drop-last, rev, append}.
 
-param1-functor-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
+param1-functor-db (app[global (indt GR1) U1|A1]) (app[global (indt GR2) U2|A2]) R :-
   coq.env.indt GR1 _ Lno1 _ _ _ _,
   coq.env.indt GR2 _ Lno2 _ _ _ _,
   {length A1} > Lno1, {length A2} > Lno2,
   split-at Lno1 A1 Args1 Points1,
   split-at Lno2 A2 Args2 Points2,
   Points1 = Points2, !,
-  param1-functor-db {coq.mk-app (global (indt GR1)) Args1} {coq.mk-app (global (indt GR2)) Args2} F,
+  param1-functor-db {coq.mk-app (global (indt GR1) U1) Args1} {coq.mk-app (global (indt GR2) U2) Args2} F,
   coq.mk-app F Points1 R.
 
 namespace derive.param1.functor {
@@ -55,9 +55,9 @@ bo-idx-rty Ps ItyArgs _ Vs _ R :-
 func bo-k-args list term, term, term, list term, list term -> term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
-  coq.safe-dest-app K (global (indc GR)) _,
-  coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
-  (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R).
+  coq.safe-dest-app K (global (indc GR) Ui) _,
+  (@uinstance! Ui => coq.env.typeof (indc GR) T), coq.subst-prod Params T KT,
+  (bo-k-args.aux {coq.mk-app (global (indc GR) Ui) Params} Args Tys KT R).
 
 func bo-k-args.aux term, list term, list term, term -> term.
 bo-k-args.aux K [A,PA|Args] [_,TPA|Types] {{ forall x (px : lp:(TPB x)), lp:(Ty x px) }} R :-
@@ -175,7 +175,7 @@ func mk-clause
   ->
   prop,
   prop. % clause for param1-functor-db
-mk-clause N N Ity1 Ity2 _ Todo Map I Mask (param1-functor-db Ity1 Ity2 Map :- [!|Todo]) (param1-functor-for I F MaskRev) :- !, coq.safe-dest-app Map (global F) _, std.rev Mask MaskRev.
+mk-clause N N Ity1 Ity2 _ Todo Map I Mask (param1-functor-db Ity1 Ity2 Map :- [!|Todo]) (param1-functor-for I F MaskRev) :- !, coq.safe-dest-app Map (global F _) _, std.rev Mask MaskRev.
 mk-clause N Lno Ity1 Ity2 {{ forall (a : lp:Ty) (pa : a -> Type), lp:(T a pa) }} Todo Map I M (pi x px py f\ C x px py f) CF :- whd Ty [] {{ Type }} [], !,
   N1 is N + 2,
   pi x px py f\ sigma Ity1x Ity2y Mapf\
@@ -200,8 +200,8 @@ symb mutual-spec : inductive -> term -> term -> term -> term -> mutual-spec.
 
 func mutual-spec inductive -> mutual-spec.
 mutual-spec GR (mutual-spec GRR T T Arity Arity) :-
-  reali (global (indt GR)) (global (indt GRR)),
-  T = global (indt GRR),
+  reali (global (indt GR) _) T,
+  T = global (indt GRR) Ui,
   coq.env.indt GRR _ _ _ Arity _ _.
 
 func mutual-spec-ind mutual-spec -> inductive.
@@ -343,7 +343,7 @@ mutual-functor-param1-k-args All Funs K _ Args Tys R :-
   R = fun `PB` {{ lp:A -> Type }} (PB\ fun `f` (Fty PB) (F\ Body PB F)),
   @pi-decl `PB` {{ lp:A -> Type }} PB\ @pi-decl `f` (Fty PB) F\ sigma GR KT KAPB\
     Fty PB = prod `z` A (z\ prod `_` (app [PA,z]) (_\ app [PB,z])),
-    coq.safe-dest-app K (global (indc GR)) _,
+    coq.safe-dest-app K (global (indc GR) _) _,
     coq.env.typeof (indc GR) KTy,
     coq.subst-prod [A,PB] KTy KT,
     coq.mk-app K [A,PB] KAPB,
@@ -469,7 +469,7 @@ add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- s
   std.assert! (body-mutual-params Lno All Focus R) "derive.param1_functor: failed to generate mutual term",
   std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped mutual term",
   coq.env.add-const Name R Rty @transparent! Funct,
-  mk-clause 0 Lno T T Arity [] (global (const Funct)) GRR [] Clause1 Clause2,
+  mk-clause 0 Lno T T Arity [] {coq.env.global (const Funct)} GRR [] Clause1 Clause2,
   std.forall [Clause1,Clause2] (x\coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ x)),
   Focus1 is Focus + 1,
   add-mutual-functor-consts All SS Suffix Lno Focus1 CS
@@ -488,19 +488,26 @@ main-mutual GRS Suffix C :- std.do! [
 
 func main1 gref, gref, string -> list (pred).
 main1 _ (indt GR) Suffix C :- do! [
-  coq.env.indt GR _Ind Lno Luno Arity _ _,
+  % generate map and add to the env
+  coq.env.global (indt GR) T,
+  T = global _ Ui,
+  @uinstance! Ui ==> coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",
 
-  % generate map and add to the env
-  T = global (indt GR),
-  bo-params 0 Lno T T Arity Arity [] R,
+  bo-params 0 Lno T T Arity Arity [] R,  
   std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R Rty @transparent! Funct,
 
   % generate clause and add to the db
-   mk-clause 0 Lno T T Arity [] (global (const Funct)) GR [] Clause1 Clause2,
+  coq.env.global (indt GR) T',
+  % We force different instances for the two inputs and the derived functoriality,
+  % which will result in properly generalized clauses (accumulate abstracts over the universes),
+  % not fixed to directly matching universes.
+  % typechecking the resulting term will define the universes of the derived functoriality, and force
+  % necessary unifications.
+  mk-clause 0 Lno T T' Arity [] {coq.env.global (const Funct)} GR [] Clause1 Clause2,
   C = [Clause1, Clause2],
   std.forall C (x\coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ x)),
 ].

@@ -776,8 +776,7 @@ Elpi Accumulate lp:{{
   main [const-decl Name Body _] :- coq.say "interp" Name ":=" Body.
 }}.
 
-
-Elpi hello_synterp Definition x := 2.
+Elpi hello_synterp #[universes(polymorphic=no)] Definition x := 2.
 
 (*|
 
@@ -911,7 +910,7 @@ Elpi Accumulate lp:{{
 
 
 
-Elpi put_inside 4 Definition foo (n : nat) := n + 2.
+Elpi put_inside 4 #[universes(polymorphic=no)] Definition foo (n : nat) := n + 2.
 
 Print Box.Box.Box.Box.foo.
 

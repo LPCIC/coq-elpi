@@ -170,7 +170,7 @@ Section prod_setoid.
     shorten tc-elpi_apps_tc_tests_stdlib.stdppInj.{tc-Inj2}.
     % shorten tc-stdppInj.{tc-Inj2}.
     tc-Inj2 A B C RA RB RC F S :-
-      RC = app [global {coq.locate "equiv"} | _],
+      RC = app [global {coq.locate "equiv"} _| _],
       Res = {{prod_relation _ _}},
       coq.unify-eq RC Res ok,
       tc-Inj2 A B C RA RB Res F S.

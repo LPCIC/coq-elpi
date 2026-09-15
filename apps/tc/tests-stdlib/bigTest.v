@@ -938,7 +938,7 @@ Section prod_setoid.
     % shorten tc-bigTest.{tc-Inj2}.
     :after "lastHook" 
     tc-Inj2 A B C RA RB RC F S :-
-      RC = app [global {coq.locate "equiv"} | _],
+      RC = app [global {coq.locate "equiv"} _| _],
       remove_equiv_prod_equiv RC RC',
       tc-Inj2 A B C RA RB RC' F S.
   }}.

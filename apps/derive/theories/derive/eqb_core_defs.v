@@ -40,22 +40,14 @@ Theorem bool_dec (b1 b2 : bool) : {b1 = b2} + {b1 <> b2}.
 Proof. decide equality. Qed.
 
 Section Section.
-Context {A B:Type}.
+Context {B:Type}.
 
-Variable tagA       : A -> positive.
 Variable tagB       : B -> positive.
 
 Variable fields_tA  : positive -> Type.
 Variable fields_tB  : positive -> Type.
 
-Variable fieldsA    : forall a, fields_tA (tagA a).
 Variable fieldsB    : forall a, fields_tB (tagB a).
-
-Variable constructA : forall t, fields_tA t -> option A.
-Variable constructB : forall t, fields_tB t -> option B.
-
-Variable constructPA : forall a, constructA (fieldsA a) = Some a.
-Variable constructPB : forall a, constructB (fieldsB a) = Some a.
 
 Variable eqb_fields : forall t, fields_tA t -> fields_tB t -> bool.
 

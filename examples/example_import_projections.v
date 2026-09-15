@@ -7,7 +7,7 @@ Elpi Accumulate lp:{{
 main [str S] :-
   coq.locate S GR,
   coq.env.typeof GR Ty,
-  main-import-projections (global GR) Ty.
+  main-import-projections {coq.env.global GR} Ty.
 main [trm TSkel] :-
   % input terms are not elaborated yet
   std.assert-ok! (coq.elaborate-skeleton TSkel Ty T) "input term illtyped",
@@ -15,7 +15,7 @@ main [trm TSkel] :-
 
 pred main-import-projections term, term.
 main-import-projections T Ty :-
-  std.assert! (coq.safe-dest-app Ty (global (indt I)) Args) "not an inductive term",
+  std.assert! (coq.safe-dest-app Ty (global (indt I) _) Args) "not an inductive term",
   std.assert! (coq.env.record? I PrimProjs) "not a record",
   coq.env.indt I _ _ NParams _ _ _,
   std.assert! (std.length Args NParams) "the record is not fully appplied",
@@ -29,14 +29,14 @@ declare-abbrev _ none.
 declare-abbrev Args (some Proj) :-
   coq.gref->id (const Proj) ID, % get the short name of the projection
   OnlyParsing = tt,
-  coq.mk-app (global (const Proj)) Args T, % handles the case Args = []
+  coq.mk-app {coq.env.global (const Proj)} Args T, % handles the case Args = []
   @local! ==> coq.notation.add-abbreviation ID 0 T OnlyParsing _.
 }}.
 
 Elpi Export import.projections. (* make the command available *)
  
 (**************************** usage examples *********************************)
-
+Unset Universe Polymorphism.
 Record r T (t : T) := Build {
   p1 : nat;
   p2 : t = t;

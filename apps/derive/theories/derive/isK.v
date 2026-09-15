@@ -12,7 +12,7 @@ From elpi.apps Require Import derive.
 
 (* Links the @gref of the constructor K to the isK constant *)
 Elpi Db derive.isK.db lp:{{
-  func isK-db constructor -> term.
+  func isK-db constructor -> gref.
 }}.
 #[superglobal] Elpi Accumulate derive.isK.db lp:{{
 

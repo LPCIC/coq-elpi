@@ -2096,8 +2096,7 @@ Supported attributes:
     InOut(B.ioarg (B.poly "gref"), "GR",
     InOut(B.ioarg (B.poly "term"), "T",
     Full(global, {|turns a global reference GR into a term, or viceversa.
-T = (global GR) or, if GR points to a universe polymorphic term,
-T = (pglobal GR I).
+T = (global GR I).
 Supported attributes:
 - @uinstance! I (default: fresh instance I)|}))),
   (fun gr t ~depth ({ options } as ctx) csts state ->
@@ -2115,30 +2114,39 @@ Supported attributes:
               end
           | _ -> state, None, []
     in
-    let state, gr_out, ui_in =
+    let state, gr_out, ui_in, glsu =
       match t with
-      | NoData -> state, None, None
+      | NoData -> state, None, None, []
       | Data maybe_t ->
-          match is_global_or_pglobal ~depth maybe_t with
+          let state, igs, gls = is_global_or_pglobal ~depth state maybe_t in
+          match igs with
           | NotGlobal -> raise No_clause
-          | Var -> state, None, None
-          | (Global maybe_gr) -> state, maybe_gr, None
-          | (PGlobal(maybe_gr,maybe_ui)) -> state, maybe_gr, maybe_ui
+          | Var -> state, None, None, gls
+          | (PGlobal(maybe_gr,maybe_ui)) -> state, maybe_gr, maybe_ui, gls
       in
     match gr_in, gr_out with
     | Some gr, _ ->
+        let state, gls = 
+          match gr_out with
+          | Some maybe_gr -> 
+            let state, gr', gls = gref.Conv.readback ~depth state maybe_gr in
+            if not (Names.GlobRef.CanOrd.equal gr gr') then raise No_clause
+            else state, gls
+          | None -> state, []
+        in
         let state, t, _, gls1 =
           compute_with_uinstance ~depth options state mk_global gr ui_in in
         let state, t, gls2 =
           closed_ground_term.CConv.embed ~depth ctx csts state t in
-        state, ?: None +! t, gls1 @ gls2
+        state, ?: None +! t, glsu @ gls @ gls1 @ gls2
     | None, Some maybe_gr ->
         let state, gr, gls = gref.Conv.readback ~depth state maybe_gr in
         let state, t, _, gls1 =
           compute_with_uinstance ~depth options state mk_global gr ui_in in
         let state, t, gls2 =
           closed_ground_term.CConv.embed ~depth ctx csts state t in
-        state, !: maybe_gr +! t, gls @ gls1 @ gls2
+        let maybe_t = match ui_in with Some _ -> None | None -> Some t in
+        state, !: maybe_gr +? maybe_t, glsu @ gls @ gls1 @ gls2
     | None, None -> err Pp.(str "coq.env.global: no input, all arguments are variables"))),
   DocAbove);
 
@@ -3201,6 +3209,16 @@ crafts a fresh, appropriate, universe instance and possibly unify that
 term (of the instance it contains) with another one.|};
 
   MLData uinstance;
+
+  MLCode(Pred("coq.empty-univ-instance?",
+    In(B.ioarg uinstance, "UI",
+    Read(global, "is the univ instance empty")),
+   (fun ui ~depth {env} _ state ->      
+      match ui with
+      | Data ui ->
+        if UVars.Instance.is_empty ui then () 
+        else raise No_clause
+      | NoData -> raise No_clause)), DocAbove);
 
   MLCode(Pred("coq.univ-instance",
     InOut(B.ioarg uinstance, "UI",
@@ -4903,6 +4921,17 @@ Supported attributes:
         ~clauses_for_later:clauses_for_later_interp
         ~accumulate_to_db:(get_accumulate_to_db_interp()) ~preprocess_clause
         ~scope ~dbname clauses ~depth ~options state)),
+  DocAbove);
+
+
+  MLCode(Pred("coq.elpi.abstract-clause-univs",    
+    In(B.poly "prop", "Clause",
+    Out(B.poly "prop", "AClause",
+    Full (global, {|
+Abstract universes of the clause as pi quantifications|} ))),
+    (fun clause _clauseo ~depth {options} _ state ->
+      let vars, cl = preprocess_clause ~depth clause in
+      state, !: cl, [])),
   DocAbove);
 
   MLData argument_mode;

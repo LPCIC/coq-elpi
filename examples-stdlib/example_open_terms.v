@@ -198,8 +198,8 @@ replace L R (app [HD|TS]) (app [HD|TS1]) Prf :-
 
 % base cases
 replace _ _ X X {{ refl_equal lp:X }} :- name X, !.
-replace _ _ (global _ as C) C {{ @refl_equal Type lp:C }} :- coq.typecheck-ty C _ ok, !. % we don't like Set
-replace _ _ (global _ as C) C {{ refl_equal lp:C }} :- !.
+replace _ _ (global _ _ as C) C {{ @refl_equal Type lp:C }} :- coq.typecheck-ty C _ ok, !. % we don't like Set
+replace _ _ (global _ _ as C) C {{ refl_equal lp:C }} :- !.
 % we omit rules for primitive constants, fixpoints, let, forall, ...
 
 pred replace-list argument, argument, list term -> list term, list term.

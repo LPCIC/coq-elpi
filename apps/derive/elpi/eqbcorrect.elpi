@@ -20,16 +20,23 @@ has-params? (eqb.value-param _ _).
 % eg: config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for
 pred config -> term, term, term, string, (pred term -> term).
 
+pred correct-lemma-for-t term -> term.
+correct-lemma-for-t (global X _) T :- correct-lemma-for X GR, coq.env.global GR T.
+
+pred refl-lemma-for-t term -> term.
+refl-lemma-for-t (global X _) T :- refl-lemma-for X GR, coq.env.global GR T.
+
 func main gref, string -> list (pred).
 main (indt I) Prefix CLs :- std.do! [
 
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
 
-  std.assert! (induction-db I Indu) "call derive.induction before",
- 
+  std.assert! (induction-db I GRIndu) "call derive.induction before",
+  coq.env.global GRIndu Indu,
+
   /* Correctness */
 
-  (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+  (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for-t =>
     common FI [] Indu R),
 
   %std.assert! (ground_term R) "ww",
@@ -40,20 +47,20 @@ main (indt I) Prefix CLs :- std.do! [
 
   if (has-params? FI) (
 
-    (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for =>
+    (config {{ @eqb_correct }} {{ @eqb_correct_on }} {{ @eqb_body_correct }} "eqb_correct_on__solver" correct-lemma-for-t =>
       common-aux FI [] Indu Rx),
 
     std.assert-ok! (coq.typecheck Rx Tyx) "derive.eqbcorrect: common-aux/corect generates ill typed term", 
     Namex is Prefix ^ "eqb_correct_aux",
     coq.ensure-fresh-global-id Namex FNamex,
     coq.env.add-const FNamex Rx Tyx @opaque! Correctx,
-    CL_CORRECT = [correct-lemma-for (global (indt I)) (global (const Correctx))]
+    CL_CORRECT = [correct-lemma-for (indt I) (const Correctx)]
 
-  ) (CL_CORRECT = [correct-lemma-for (global (indt I)) (global (const Correct))]),
+  ) (CL_CORRECT = [correct-lemma-for (indt I) (const Correct)]),
 
   /* Reflexivity */
 
-  (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+  (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for-t =>
     common FI [] Indu Rr),
 
   std.assert-ok! (coq.typecheck Rr Tyr) "derive.eqbcorrect: common/refl generates ill typed term", 
@@ -63,16 +70,16 @@ main (indt I) Prefix CLs :- std.do! [
 
   if (has-params? FI) (
 
-    (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for =>
+    (config {{ @eqb_reflexive }} {{ @eqb_refl_on }} {{ @eqb_body_refl }} "eqb_refl_on__solver" refl-lemma-for-t =>
       common-aux FI [] Indu Rrx),
 
     std.assert-ok! (coq.typecheck Rrx Tyrx) "derive.eqbcorrect: common-aux/refl generates ill typed term", 
     Namerx is Prefix ^ "eqb_refl_aux",
     coq.ensure-fresh-global-id Namerx FNamerx,
     coq.env.add-const FNamerx Rrx Tyrx @opaque! Reflx,
-    CL_REFL = [refl-lemma-for (global (indt I)) (global (const Reflx))]
+    CL_REFL = [refl-lemma-for (indt I) (const Reflx)]
 
-  ) (CL_REFL = [refl-lemma-for (global (indt I)) (global (const Refl))]),
+  ) (CL_REFL = [refl-lemma-for (indt I) (const Refl)]),
 
   /* Add the clauses in the database */
   std.flatten [ [ eqcorrect-for (indt I) Correct Refl ] , CL_CORRECT , CL_REFL ] CLs ,
@@ -81,21 +88,26 @@ main (indt I) Prefix CLs :- std.do! [
 
 ].
 main (const C) Prefix [Clause4, ClauseC, ClauseR] :- std.do! [
-  std.assert! (eqb-for (global (const C)) (global (const C)) F) "run eqb first",
-  coq.env.const C (some T) _,
+  coq.env.global (const C) TC,
+  std.assert! (eqb-for TC TC F) "run eqb first",
+  TC = global _ Ui,
+  (@uinstance! Ui => coq.env.const C (some T) _),
   search-eqcorrect-for T Correct Refl,
   std.assert-ok! (coq.typecheck Correct _) "eqbcorrect: illtyped correct",
   std.assert-ok! (coq.typecheck Refl _) "eqbcorrect: illtyped refl",
   NameR is Prefix ^ "eqb_refl",
   NameC is Prefix ^ "eqb_correct",
-  X = (global (const C) : term),
   coq.ensure-fresh-global-id NameR FNameR,
   coq.ensure-fresh-global-id NameC FNameC,
-  coq.env.add-const FNameC Correct {{ @eqb_correct  lp:X lp:F }} @transparent! CC,
-  coq.env.add-const FNameR Refl   {{ @eqb_reflexive lp:X lp:F }} @transparent! CR,
+  TyCorrect = {{ @eqb_correct  lp:X lp:F }},
+  std.assert-ok! (coq.typecheck Correct TyCorrect) "derive.eqbcorrect: eqcorrect-for generates ill typed term", 
+  coq.env.add-const FNameC Correct TyCorrect @transparent! CC,
+  ReflCorrect = {{ @eqb_reflexive lp:X lp:F }},
+  std.assert-ok! (coq.typecheck Refl ReflCorrect) "derive.eqbcorrect: eqcorrect-for generates ill typed term", 
+  coq.env.add-const FNameR Refl   ReflCorrect @transparent! CR,
   Clause4 = (eqcorrect-for (const C) CC CR),
-  ClauseC = (correct-lemma-for (global (const C)) (global (const CC))),
-  ClauseR = (refl-lemma-for    (global (const C)) (global (const CR))),
+  ClauseC = (correct-lemma-for (const C) (const CC)),
+  ClauseR = (refl-lemma-for    (const C) (const CR)),
   coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ Clause4),
   coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ ClauseC),
   coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ ClauseR),
@@ -105,14 +117,14 @@ main (indc _) _ _ :- stop "derive.eqbcorrect does not work on a constructor".
 %---------------------------------------------------------------------------
 
 func search-eqcorrect-for term -> term, term.
-search-eqcorrect-for (global (indt I)) (global (const C)) (global (const R)) :-
+search-eqcorrect-for (global (indt I) _) (global (const C) _) (global (const R) _) :-
   std.assert! (eqType (indt I) (eqb.inductive _ _)) "unknown or not applied enough type",
   eqcorrect-for (indt I) C R.
 
-search-eqcorrect-for (app[global (indt I)|Args]) CArgs RArgs :-
+search-eqcorrect-for (app[global (indt I) _|Args]) CArgs RArgs :-
   std.assert! (eqType (indt I) F) "unknown",
   eqcorrect-for (indt I) C R,
-  search-eqcorrect-apply F Args (global (const C)) (global (const R)) CArgs RArgs.
+  search-eqcorrect-apply F Args {coq.env.global (const C)} {coq.env.global (const R)} CArgs RArgs.
 
 func search-eqcorrect-apply eqb.eqType, list term, term, term -> term, term.
 search-eqcorrect-apply (eqb.type-param F) [T|Args] C R C1 R1 :-
@@ -178,21 +190,21 @@ common (eqb.value-param TY F) Params Ind O :- std.do! [
 common (eqb.inductive I Ks) ParamsRev Ind O :- std.do! [
   config _Pred Pred_on Pred_body _Solver Db,
   std.rev ParamsRev Params,
-  coq.mk-app (global (indt I)) Params Ty,
+  coq.mk-app {coq.env.global (indt I)} Params Ty,
 
   mk-eqb-for Ty Cmp,
   tag-for I TagC,
   fields-for I Fields_tC FieldsC ConstructC ConstructPC,
-  coq.mk-app (global (const TagC)) Params Tag,
-  coq.mk-app (global (const Fields_tC)) Params Fields_t,
-  coq.mk-app (global (const FieldsC)) Params Fields,
-  coq.mk-app (global (const ConstructC)) Params Construct,
-  coq.mk-app (global (const ConstructPC)) Params ConstructP,
+  coq.mk-app {coq.env.global (const TagC)} Params Tag,
+  coq.mk-app {coq.env.global (const Fields_tC)} Params Fields_t,
+  coq.mk-app {coq.env.global (const FieldsC)} Params Fields,
+  coq.mk-app {coq.env.global (const ConstructC)} Params Construct,
+  coq.mk-app {coq.env.global (const ConstructPC)} Params ConstructP,
   eqb-fields Ty Ty EqbFields,
   Common = ({{ lp:Pred_body lp:Ty lp:Tag lp:Fields_t lp:Fields lp:Construct lp:ConstructP lp:EqbFields }} : term),
   std.assert-ok! (coq.typecheck Common CommonTy) "WTF",
 
-  mk-reali (global (indt I)) IR, % param1-db, really
+  mk-reali {coq.env.global (indt I)} IR, % param1-db, really
   coq.safe-dest-app Ind _ RealiArgs,
   coq.mk-app IR RealiArgs TyR,
   std.assert! (param1-inhab-db TyR Is_full) "not trivially inhabited",
@@ -242,15 +254,15 @@ common-aux (eqb.value-param TY F) Params Ind O :- std.do! [
 common-aux (eqb.inductive I Ks) ParamsRev Ind O :- std.do! [
   config _Pred Pred_on Pred_body _Solver Db,
   std.rev ParamsRev Params,
-  coq.mk-app (global (indt I)) Params Ty,
+  coq.mk-app {coq.env.global (indt I)} Params Ty,
   mk-eqb-for Ty Cmp,
   tag-for I TagC,
   fields-for I Fields_tC FieldsC ConstructC ConstructPC,
-  coq.mk-app (global (const TagC)) Params Tag,
-  coq.mk-app (global (const Fields_tC)) Params Fields_t,
-  coq.mk-app (global (const FieldsC)) Params Fields,
-  coq.mk-app (global (const ConstructC)) Params Construct,
-  coq.mk-app (global (const ConstructPC)) Params ConstructP,
+  coq.mk-app {coq.env.global (const TagC)} Params Tag,
+  coq.mk-app {coq.env.global (const Fields_tC)} Params Fields_t,
+  coq.mk-app {coq.env.global (const FieldsC)} Params Fields,
+  coq.mk-app {coq.env.global (const ConstructC)} Params Construct,
+  coq.mk-app {coq.env.global (const ConstructPC)} Params ConstructP,
   eqb-fields Ty Ty EqbFields,
   Common = ({{ lp:Pred_body lp:Ty lp:Tag lp:Fields_t lp:Fields lp:Construct lp:ConstructP lp:EqbFields }} : term),
   std.assert-ok! (coq.typecheck Common CommonTy) "WTF",
@@ -266,7 +278,7 @@ common-aux (eqb.inductive I Ks) ParamsRev Ind O :- std.do! [
 
 func branch list term, eqb.constructor -> term.
 branch Params (eqb.constructor K Args) R :-
-  coq.mk-app (global (indc K)) Params KParams,
+  coq.mk-app {coq.env.global (indc K)} Params KParams,
   args Args KParams [] [] [] 0 R.
 
 :index (1)
@@ -419,16 +431,16 @@ prove Lemma T R :- search Lemma (prove Lemma) T R.
 func search (pred term -> term), (func term -> term), term -> term.
 search What Rec (app [GR|L] as GRL) R :- !, std.do! [
   What GR Aux,
-  mk-reali GR (global (indt ISGR)),
+  mk-reali GR (global (indt ISGR) _),
   param1-functor-for ISGR Funct BitMask, !,
-  apply-functor (global Funct) BitMask L Rec TOTO,
+  apply-functor {coq.env.global Funct} BitMask L Rec TOTO,
   apply-aux Aux L Aux1, 
   R = {{ fun (x : lp:GRL) H => lp:Aux1 x (lp:TOTO x H) }},
 ].
 % no params, no aux lemma (no reali argument)
-search What _Rec (global GR as GRL) {{ fun (x : lp:GRL) (_ : lp:IsGR x) => lp:R x }} :-
-  What (global GR) R,
-  mk-reali (global GR) IsGR, !.
+search What _Rec (global GR _ as GRL) {{ fun (x : lp:GRL) (_ : lp:IsGR x) => lp:R x }} :-
+  What {coq.env.global GR} R,
+  mk-reali {coq.env.global GR} IsGR, !.
 search What _ X _ :- coq.safe-dest-app X HD _, std.assert! (What HD _) "run eqbcorrect before".
 
 func apply-aux term, list term -> term.

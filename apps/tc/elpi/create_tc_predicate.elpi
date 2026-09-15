@@ -78,6 +78,14 @@ declare-class D :- !,
     [ att "mode" attlist, att "deterministic" bool ] Opts,
   Opts => declare-class-in-coq (indt I).
 
+func declare-class-poly indt-decl, upoly-decl ->. 
+declare-class-poly D UnivDecl :- !,
+  coq.upoly-decl->attribute (some UnivDecl) Poly!,
+  (Poly! => coq.env.add-indt D I),
+  coq.parse-attributes {attributes} 
+    [ att "mode" attlist, att "deterministic" bool ] Opts,
+  Opts => declare-class-in-coq (indt I).
+
 % Contains some instruction that are executed just after the creation of
 % the predicate for the class
 namespace eta-reduction-aux {

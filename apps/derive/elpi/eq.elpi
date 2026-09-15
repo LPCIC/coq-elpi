@@ -86,7 +86,7 @@ func bo-param
  term % Inductive type arity (parameters + indexes)
  -> term. % Comparison function
 
-bo-param 0 Ity Arity R :- coq.safe-dest-app Ity (global (indt GR)) _, coq.env.recursive? GR, !,
+bo-param 0 Ity Arity R :- coq.safe-dest-app Ity (global (indt GR) GRI) _, coq.env.recursive? GR, !,
   Boidx = fix `f` Recno Rty Rbo,
   (pi f\ decl f `f` Rty =>
     % We build the body (assuming the indexes are *not* the same)
@@ -171,12 +171,12 @@ main GR Name [Clause1, Clause2] :- do! [
   assert! (Lno = Luno) "derive.eq: Non-uniform parameters not supported",
 
   % we build the comparison function
-  bo-param Lno (global (indt GR)) Arity RSkel,
+  bo-param Lno (global (indt GR) GRI) Arity RSkel,
   std.assert-ok! (coq.elaborate-skeleton RSkel RT R) "derive.eq generates illtyped term",
   coq.env.add-const Name R RT _ Cmp,
 
   % we register it as a clause
-  mk-clause Lno Arity (eq-db (global (indt GR)) (global (indt GR)) (global (const Cmp)) :- [!]) Clause1,
+  mk-clause Lno Arity (pi gri cmpi\ eq-db (global (indt GR) gri) (global (indt GR) gri) (global (const Cmp) cmpi) :- [!]) Clause1,
   coq.elpi.accumulate _ "derive.eq.db" (clause _ (before "eq-db:fail") Clause1),
   Clause2 = eq-for GR Cmp,
   coq.elpi.accumulate _ "derive.eq.db" (clause _ _ Clause2),

@@ -27,7 +27,8 @@ arg _ _ _ _ _ [] _ [].
 arg I E X Y Ps [V|VS] Acc [R|RS] :-
   cast-db I T,
   take {calc (I )} Ps PsI,
-  coq.mk-app T {append {append PsI [X,Y,E]} {append {rev Acc} [V]}} R,
+  coq.env.global T Ti,
+  coq.mk-app Ti {append {append PsI [X,Y,E]} {append {rev Acc} [V]}} R,
   J is I + 1,
   arg J E X Y Ps VS [V|Acc] RS.
 
@@ -71,6 +72,6 @@ main N :-
   aux.body N N [] Bo,
   std.assert-ok! (coq.typecheck Bo Ty) "derive.cast generates illtyped term",
   coq.env.add-const Name Bo Ty _ C,
-  coq.elpi.accumulate _ "derive.cast.db" (clause _ _ (cast-db N (global (const C)))).
+  coq.elpi.accumulate _ "derive.cast.db" (clause _ _ (cast-db N (const C))).
 
 }

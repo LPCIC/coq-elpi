@@ -12,7 +12,7 @@ params (parameter ID _ Ty In) T Ti (fun Name Ty Out) :-
   coq.id->name ID Name,
   @pi-decl Name Ty p\
     params (In p) {coq.mk-app T [p]} {coq.mk-app Ti [p]} (Out p).
-params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :- coq.safe-dest-app T (global (indt GR)) _, coq.env.recursive? GR, !,
+params (inductive _ _ Arity _) T Ti (fix `rec` N FixTy FixBo) :- coq.safe-dest-app T (global (indt GR) _) _, coq.env.recursive? GR, !,
   coq.arity->term Arity Ty,
   compute-fix-ty Ty T Ti N FixTy,
   compute-fix-clause Ty T Ti N Prove,
@@ -45,14 +45,14 @@ mk-rty Ti _ Vars _ R :- std.appendR Idxs [_] Vars, !, coq.mk-app Ti Idxs R.
 
 func mk-branch term, term, list term, list term -> term.
 mk-branch K KTy Vars VarsTy R :- std.do! [
-  coq.safe-dest-app K (global (indc GR)) _,
-  coq.safe-dest-app KTy (global (indt I)) IArgs,
-  coq.env.indt I _ _ NP _ _ _,
+  coq.safe-dest-app K (global (indc GR) _) _,
+  coq.safe-dest-app KTy (global (indt I) Ui) IArgs,
+  (@uinstance! Ui => coq.env.indt I _ _ NP _ _ _),
   std.split-at NP IArgs Params IDX,
   Vars = RealArgs,
   VarsTy = RealArgsTy,
   assert! (invert-db (indc GR) InvK) "derive.idx2inv: No inverted constructor",
-  coq.mk-app {coq.mk-app (global InvK) Params} IDX K1,
+  coq.mk-app {coq.mk-app {coq.env.global InvK} Params} IDX K1,
   (pi H G P\ paramX.prove H G P :- param1-functor-db H G P) =!=>
   (pi X T\ paramX.cross T :- (pi M\stop M :- !, fail) => realiR X T) =!=>
     paramX.prove-args RealArgs RealArgsTy Args,
@@ -66,9 +66,9 @@ mk-refl E {{ @refl_equal _ lp:E }}.
 
 func main inductive, string -> list (pred).
 main GR Infix [Clause] :- do! [
-  T = global (indt GR),
+  coq.env.global (indt GR) T,
   assert! (invert-db (indt GR) (indt GRinv)) "derive.idx2inv: No inverted inductive",
-  Tinv = global (indt GRinv),
+  coq.env.global (indt GRinv) Tinv,
   Name is {coq.gref->id (indt GR)} ^ Infix ^ {coq.gref->id (indt GRinv)},
 
   coq.env.indt-decl GR D,

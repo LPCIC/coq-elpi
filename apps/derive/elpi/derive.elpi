@@ -42,13 +42,16 @@ chain T [derive Name _ AlreadyDone|FS] CL :- ((pi x\ stop x :- !, fail) ==> Alre
   chain T FS CL.
 chain T [derive Name F _|FS] CL :- get-option "only" _, !, % request this one
   if-verbose (coq.say "Derivation" Name "on" T),
-  (@dropunivs! ==> std.time (F C) Time),
+  % (@dropunivs! ==> std.time (F C) Time),
+  std.time (F C) Time,
   if-verbose (coq.say "Derivation" Name "on" T "took" Time),
   (C ==> chain T FS CS),
   std.append C CS CL.
 chain T [derive Name F _|FS] CL :- % all are selected, we can fail
   if-verbose (coq.say "Derivation" Name "on" T),
-  ((pi x\ stop x :- !, fail) ==> @dropunivs! ==> std.time (F C) Time), !,
+  ((pi x\ stop x :- !, fail) ==> 
+    %  @dropunivs! ==> 
+     std.time (F C) Time), !,
   if-verbose (coq.say "Derivation" Name "on" T "took" Time),
   (C ==> chain T FS CS),
   std.append C CS CL.
@@ -182,12 +185,12 @@ func decl+main.post string, indt-decl -> list (pred).
 decl+main.post ModName DS CL :- std.do! [
   coq.indt-decl->ids DS IDs,
   std.map IDs (module-indt ModName) IS,
-  std.map IS (i\r\ r = global (indt i)) ITS,
+  std.map IS (i\r\ coq.env.global (indt i) r) ITS,
   std.map IS (i\r\ coq.env.indt i _ _ _ _ r _) KBlocks,
   std.flatten KBlocks KS,
   std.map KS (k\r\ r = indc k) KGRS,
   std.map KGRS coq.gref->id KNS,
-  std.map KGRS (gr\r\ r = global gr) KTS,
+  std.map KGRS (gr\r\ coq.env.global gr r) KTS,
 
   std.append IDs KNS AliasNames,
   std.append ITS KTS AliasTerms,

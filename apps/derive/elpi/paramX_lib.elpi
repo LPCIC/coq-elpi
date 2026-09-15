@@ -20,7 +20,7 @@ mk-trivial-match Rno Prod Args F R :- Rno >= 0, whd1 Prod Prod1, !,
 mk-trivial-match -1 P RArgs F Match :- std.do! [
   RArgs = [RecArg|ROtherArgs],
   (decl RecArg _ T, unwind {whd T []} Twhd), % unneeded with elpi 1.13.7
-  coq.safe-dest-app Twhd (global (indt I)) IndArgs,
+  coq.safe-dest-app Twhd (global (indt I) _UI) IndArgs,
   coq.env.indt I _ Lno _ _ _ _,
   std.drop Lno IndArgs RIndArgs,
   coq.build-match RecArg T
@@ -114,7 +114,7 @@ translated-lno-gref _ _ 0 :- !.
 func translated-members list inductive -> list inductive.
 translated-members [] [].
 translated-members [I|IS] [IR|IRS] :-
-  reali (global (indt I)) (global (indt IR)),
+  reali ({coq.env.global (indt I)}) ({coq.env.global (indt IR)}),
   translated-members IS IRS.
 
 }

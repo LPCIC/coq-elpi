@@ -156,9 +156,7 @@ mk-equality (pr (open-trm 0 S) (open-trm 0 T)) S A T P A :- !,
 mk-equality _RW X A Z Y A :- name X,!,
 X = Z, {{@refl_equal _ lp:X}} = Y, !.
 
-mk-equality _RW (global _ as C) A C {{@refl_equal _ lp:C}} A :- !.
-
-mk-equality _RW (pglobal _ _ as C) A C {{@refl_equal _ lp:C}} A :- !.
+mk-equality _RW (global _ _ as C) A C {{@refl_equal _ lp:C}} A :- !.
 
 mk-equality _RW (sort _ as C) A C {{@refl_equal _ lp:C}} A :- !.
 

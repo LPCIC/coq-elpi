@@ -93,6 +93,10 @@ Elpi Accumulate lp:{{
   main [indt-decl D] :- !,
     get_name D TypeName,
     with-attributes (derive.main TypeName).
+  
+  main [upoly-indt-decl D _Udecl] :- !,
+    get_name D TypeName,
+    with-attributes (derive.main TypeName).
 
   main _.
 }}.
@@ -105,6 +109,10 @@ Elpi Accumulate lp:{{
     with-attributes (derive.main GR _).
 
   main [indt-decl D] :- !,
+    get_name D TypeName,
+    with-attributes (derive.decl+main TypeName D).
+
+  main [upoly-indt-decl D _Udecl] :- !,
     get_name D TypeName,
     with-attributes (derive.decl+main TypeName D).
 

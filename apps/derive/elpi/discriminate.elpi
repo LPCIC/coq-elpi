@@ -25,7 +25,7 @@ func discriminate! term, term, inductive, list term, constructor, term, term -> 
 discriminate! H G GR Args GRA A B PG :- do! [
   isK-db GRA IsKA,
   coq.env.global (indt GR) Ind,
-  coq.mk-app IsKA Args IsKAArgs,
+  coq.mk-app {coq.env.global IsKA} Args IsKAArgs,
   coq.mk-app Ind Args IndT,
   coq.mk-app {{lib:elpi.derive.eq_f}} [IndT, {{lib:elpi.bool}},IsKAArgs,A,B,H] Eq_isKA_isKB,
   coq.mk-app {{lib:elpi.bool_discr}} [Eq_isKA_isKB, G] PG

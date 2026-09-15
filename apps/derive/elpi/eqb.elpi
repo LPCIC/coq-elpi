@@ -14,19 +14,18 @@ derive.eqb.main (indt I) Prefix CL :- std.do! [
   Name is Prefix ^ "eqb_fields",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName R Rty ff C,
-  EQBF = (global (const C) : term),
+  coq.env.global (const C) EQBF,
 
   derive.eqb.eqb.main FI FI [] [] EQBF R1Skel,
-  std.assert-ok! (coq.elaborate-skeleton R1Skel R1ty R1) "derive.eqb generates illtyped term", % need elaborate for prim record
+  @keepunivs! => std.assert-ok! (coq.elaborate-skeleton R1Skel R1ty R1) "derive.eqb generates illtyped term", % need elaborate for prim record
   Name1 is Prefix ^ "eqb",
   coq.ensure-fresh-global-id Name1 FName1,
-  coq.env.add-const FName1 R1 R1ty ff C1,
-  EQB = (global (const C1) : term),
+  coq.env.add-const FName1 R1 R1ty ff C1,  
 
   % populate dbs
-  derive.eqb.eqbf.do-clause FI FI [] [] EQBF [] CL1,
-  derive.eqb.eqb.do-clause FI FI [] [] EQB [] CL2,
-  CL = [CL1,CL2,eqb-done (indt I)],
+  (pi u1 \ derive.eqb.eqbf.do-clause FI FI [] [] (global (const C) u1) [] (CL1 u1)),
+  (pi u2 \ derive.eqb.eqb.do-clause FI FI [] [] (global (const C1) u2) [] (CL2 u2)),
+  CL = [(pi u1\ CL1 u1),(pi u2\ CL2 u2),eqb-done (indt I)],
   std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ x)),
 ].
 derive.eqb.main (const C) Prefix CL :- std.do! [
@@ -34,9 +33,9 @@ derive.eqb.main (const C) Prefix CL :- std.do! [
   std.assert! (eqb-for T T EQB) "cannot derive eqb",
   Name is Prefix ^ "eqb",
   coq.ensure-fresh-global-id Name FName,
-  X = (global (const C) : term),
+  coq.env.global (const C) X,
   coq.env.add-const FName EQB {{ lp:X -> lp:X -> bool }} @transparent! EQBC,
-  CL = [eqb-done (const C), eqb-for (global (const C)) (global (const C)) (global (const EQBC))],
+  CL = [eqb-done (const C), eqb-for.ref (const C) (const C) (const EQBC)],
   std.forall CL (x\ coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") x)),
 ].
 % derive.eqb.main (indc _) _ _ :- stop "eqrive.eqb cannot be called on constructors".
@@ -59,16 +58,18 @@ main (eqb.value-param TYI FI) (eqb.value-param TYJ FJ) PI PJ EF {{ fun (x : lp:T
    main (FI xx) (FJ yy) [x|PI] [y|PJ] {coq.mk-app EF [x,y]} (R x y).
 
 main (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ EF {{ fix rec (x1 : lp:I) (x2 : lp:J) {struct x1} : bool := lp:(R rec x1 x2) }} :- coq.env.recursive? Ind, !,
-  coq.mk-app (global (indt Ind)) {std.rev PI} I,
-  coq.mk-app (global (indt Ind)) {std.rev PJ} J,
+  coq.env.global (indt Ind) IndU,
+  coq.mk-app IndU {std.rev PI} I,
+  coq.mk-app IndU {std.rev PJ} J,
   @pi-decl `rec` {{ lp:I -> lp:J -> bool }} rec\
   @pi-decl `x1` I x1\
   @pi-decl `x2` J x2\
     do-match x1 I x2 J {coq.mk-app EF [rec]} (R rec x1 x2).
 
 main (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ EF {{ fun (x1 : lp:I) (x2 : lp:J) => lp:(R x1 x2) }} :-
-  coq.mk-app (global (indt Ind)) {std.rev PI} I,
-  coq.mk-app (global (indt Ind)) {std.rev PJ} J,
+  coq.env.global (indt Ind) IndU,
+  coq.mk-app IndU {std.rev PI} I,
+  coq.mk-app IndU {std.rev PJ} J,
   @pi-decl `x1` I x1\
   @pi-decl `x2` J x2\
     do-match x1 I x2 J {coq.mk-app EF [{{fun (_ : lp:I) (_ : lp:J) => true}}]} (R x1 x2).
@@ -83,18 +84,20 @@ do-match X1 I X2 J F R :-
 
 % -----------------------------------------------------------------------------
 func do-branch term, term, term, term, term, list term, list term -> term.
-do-branch X2 J F K KTY Vars _ {{ @eqb_core_defs.eqb_body _ _ _ _ lp:FLDP lp:F lp:TAG lp:X lp:X2 }} :- std.do! [
-  coq.safe-dest-app KTY (global (indt I)) ParamsI,
+do-branch X2 J F K KTY Vars _ Term :- std.do! [
+  coq.safe-dest-app KTY (global (indt I) _Ui) ParamsI,
+  coq.typecheck-ty KTY S ok,
   std.assert! (fields-for I _ FLD _ _) "derive.eqb: run derive.fields before",
   coq.safe-dest-app J _ ParamsJ,
-  coq.mk-app (global (const FLD)) ParamsJ FLDP,
+  coq.mk-app {coq.env.global (const FLD)} ParamsJ FLDP,
 
   std.assert! (tag-for I T) "derive.eqb: run derive.tag before",
-  coq.mk-app (global (const T)) {std.append ParamsI [{coq.mk-app K Vars}]} TAG,
+  coq.mk-app {coq.env.global (const T)} {std.append ParamsI [{coq.mk-app K Vars}]} TAG,
 
-  coq.safe-dest-app K (global (indc KI)) _,
+  coq.safe-dest-app K (global (indc KI) _) _,
   std.assert! (box-for KI _ BK) "derive.eqb: run derive.fields before",
-  coq.mk-app (global (indc BK)) {std.append ParamsI Vars} X,
+  coq.mk-app {coq.env.global (indc BK)} {std.append ParamsI Vars} X,
+  Term = {{ @eqb_core_defs.eqb_body _ _ _ _ lp:FLDP lp:F lp:TAG lp:X lp:X2 }}
 ].
 
 % -----------------------------------------------------------------------------
@@ -111,9 +114,10 @@ do-clause (eqb.value-param _ AI) (eqb.value-param _ AJ) PI PJ F Todo (pi a b\ C 
   pi x a b\
     do-clause (AI x) (AJ x) [a|PI] [b|PJ] {coq.mk-app F [a,b]} Todo (C a b).
 
-do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (eqb-for I J F :- Todo) :-
-  coq.mk-app (global (indt Ind)) {std.rev PI} I,
-  coq.mk-app (global (indt Ind)) {std.rev PJ} J.
+do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (pi u1 u2\ eqb-for (I u1) (J u2) F :- Todo) :-
+  pi u1 u2\ 
+    coq.mk-app (global (indt Ind) u1) {std.rev PI} (I u1),
+    coq.mk-app (global (indt Ind) u2) {std.rev PJ} (J u2).
 
 
 }
@@ -140,11 +144,13 @@ main (eqb.value-param TYI FI) (eqb.value-param TYJ FJ) PI PJ {{ fun (x y : lp:T)
 main (eqb.inductive Ind F) (eqb.inductive Ind G) PI PJ {{ fun (rec : lp:I -> lp:J -> bool) (x : positive) => lp:(R rec x) }} :- std.do! [
   std.rev PI ParamsI,
   std.rev PJ ParamsJ,
-  coq.mk-app (global (indt Ind)) ParamsI I,
-  coq.mk-app (global (indt Ind)) ParamsJ J,
+  coq.env.global (indt Ind) GI,
+  coq.mk-app GI ParamsI I,
+  coq.mk-app GI ParamsJ J,
   std.assert! (fields-for Ind F_t _ _ _) "derive.eqb: run derive.fields before",
-  coq.mk-app (global (const F_t)) ParamsI Fields_t_I,
-  coq.mk-app (global (const F_t)) ParamsJ Fields_t_J,
+  coq.env.global (const F_t) FI,
+  coq.mk-app FI ParamsI Fields_t_I,
+  coq.mk-app FI ParamsJ Fields_t_J,
   (@pi-decl `rec` {{ lp:I -> lp:J -> bool }} rec\
   @pi-decl `x` {{ positive }} x\
   eqb-for I J rec =>
@@ -164,14 +170,15 @@ func fields list term, list term, pair eqb.constructor eqb.constructor -> term.
 
 fields ParamsI ParamsJ (pr (eqb.constructor K (eqb.stop _)) (eqb.constructor K (eqb.stop _))) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => true }} :- !, std.do! [
   std.assert! (box-for K IB _) "derive.eqb: run derive.fields before",
-  coq.mk-app (global (indt IB)) ParamsI BoxTy1,
-  coq.mk-app (global (indt IB)) ParamsJ BoxTy2,
+  coq.env.global (indt IB) IBT,
+  coq.mk-app IBT ParamsI BoxTy1,
+  coq.mk-app IBT ParamsJ BoxTy2,
 ].
 
 fields ParamsI ParamsJ (pr (eqb.constructor K Args) (eqb.constructor K Args2)) {{ fun (a  : lp:BoxTy1) (b : lp:BoxTy2) => lp:(R a b) }} :- std.do! [
   std.assert! (box-for K IB _) "derive.eqb: run derive.fields before",
-  coq.mk-app (global (indt IB)) ParamsI BoxTy1,
-  coq.mk-app (global (indt IB)) ParamsJ BoxTy2,
+  coq.mk-app {coq.env.global (indt IB)} ParamsI BoxTy1,
+  coq.mk-app {coq.env.global (indt IB)} ParamsJ BoxTy2,
   @pi-decl `a` BoxTy a\
   @pi-decl `b` BoxTy b\
     coq.build-match a BoxTy1 fields.rty1 (fields.branch1 b BoxTy2 Args Args2) (R a b)
@@ -193,9 +200,20 @@ func fields.branch2 eqb.arguments, eqb.arguments, list term, term, term, list te
 fields.branch2 Args Args2 VarsA _ _ VarsB _ R :-
 fields.aux Args Args2 VarsA VarsB R.
 
+func flexible-univs term -> term.
+flexible-univs (global GR X) (global GR X) :- var X, !. 
+flexible-univs (global GR _) (global GR X_) :- !. 
+% , add-constraint (coq.univ-instance.unify-eq GR GRU X) [X].
+flexible-univs (app [global GR X|Args]) (app [global GR X|Args]) :- var X, !.
+flexible-univs (app [global GR _|Args]) T :- !, coq.mk-app (global GR X_) {std.map Args flexible-univs} T.
+%  add-constraint (coq.univ-instance.unify-eq GR GRU X) [X].
+flexible-univs X X.
 
 func mk-eqb-for term, term -> term.
 mk-eqb-for T1 T2 R :- eqb-for T1 T2 R, !.
+mk-eqb-for T1 T2 R :- flexible-univs T1 T1', flexible-univs T2 T2',
+  not (same_term T1 T1'), not (same_term T2 T2'),
+  eqb-for T1' T2' R, !.
 mk-eqb-for T1 _ _ :- 
   Msg is "derive.eqb: missing boolean equality for " ^ {coq.term->string T1} ^ ", maybe use derive.eqb first",
   stop Msg.
@@ -235,10 +253,9 @@ do-clause (eqb.value-param _ AI) (eqb.value-param _ AJ) PI PJ F Todo (pi a b\ C 
   pi x a b\
     do-clause (AI x) (AJ x) [a|PI] [b|PJ] {coq.mk-app F [a,b]} Todo (C a b).
 
-do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (pi ela\ eqb-fields I J (F1 ela) :- [C ela|Todo]) :- !,
-  coq.mk-app (global (indt Ind)) {std.rev PI} I,
-  coq.mk-app (global (indt Ind)) {std.rev PJ} J,
-  pi ela\
-    (coq.mk-app F [ela] (F1 ela), C ela = eqb-for I J ela).
+do-clause (eqb.inductive Ind _) (eqb.inductive Ind _) PI PJ F Todo (pi u1 u2 ela\ eqb-fields (I u1) (J u2) (F1 u1 u2 ela) :- [C u1 u2 ela|Todo]) :- !,
+  pi u1 u2 ela\ coq.mk-app (global (indt Ind) u1) {std.rev PI} (I u1),
+  coq.mk-app (global (indt Ind) u2) {std.rev PJ} (J u2),
+  coq.mk-app F [ela] (F1 u1 u2 ela), C u1 u2 ela = eqb-for (I u1) (J u2) ela.
      
 }
