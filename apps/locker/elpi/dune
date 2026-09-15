@@ -1,6 +1,7 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.locker.elpi)
  (package rocq-elpi)
+ (generate_project_file)
  (theories elpi))
 
 (rule

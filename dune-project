@@ -1,7 +1,7 @@
-(lang dune 3.13)
-(using coq 0.8)
+(lang dune 3.21)
+(using rocq 0.11)
 (name rocq-elpi)
-;(generate_opam_files)
+(generate_opam_files)
 
 (source (github LPCIC/coq-elpi))
 (license LGPL-2.1-or-later)
@@ -30,51 +30,23 @@
    "logpath:elpi"))
  (depends
   (ocaml (>= 4.10.0))
-  (elpi (and (>= 3.0) (< 3.2.0~)))
-  ; (rocq-core (and (>= 9.0+rc1) (< 9.2~)))
+  (elpi (and (>= 3.7.1) (< 3.8.0~)))
+  (rocq-core (or (and (>= 9.0+rc1) (< 9.4~)) (= dev)))
   ppx_optcomp
   (ocaml-lsp-server :with-dev-setup)))
 
 (package
  (name rocq-elpi-json)
  (synopsis "Yojson bindings for rocq-elpi")
- (description "This package provides basic support for reading and writing json files from Elpi programs running in Rocq")
+ (description
+  "This package provides basic support for reading and writing json files \
+   from Elpi programs running in Rocq")
  (depends rocq-elpi yojson))
 
 (package
  (name rocq-elpi-xml)
  (synopsis "Xml-light bindings for rocq-elpi")
- (description "DThis package provides basic support for reading xml files from Elpi programs running in Rocq")
- (depends rocq-elpi yojson))
-
-(package
- (name rocq-elpi-tests)
- (synopsis "Technical package to run tests")
- (description "Do not install")
- (depends rocq-elpi))
-
-(package
- (name rocq-elpi-json-tests)
- (synopsis "Technical package to run tests")
- (description "Do not install")
- (depends rocq-elpi))
-
-(package
- (name rocq-elpi-xml-tests)
- (synopsis "Technical package to run tests")
- (description "Do not install")
- (depends rocq-elpi))
-
-(package
- (name rocq-elpi-tests-stdlib)
- (synopsis "Technical package to run tests depending on Stdlib")
- (description "Do not install")
- (depends rocq-elpi rocq-stdlib))
-
-(package
- (name coq-elpi)
- (allow_empty)
- (depends
-  coq-core
-  (rocq-elpi (= :version)))
- (synopsis "Compatibility metapackage for Elpi extension language after the Rocq renaming"))
+ (description
+  "This package provides basic support for reading xml files from Elpi \
+   programs running in Rocq")
+ (depends rocq-elpi xml-light))
