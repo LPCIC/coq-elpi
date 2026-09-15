@@ -837,7 +837,7 @@ in the :e:`same-ctx` predicate.
 Elpi Tactic undup.
 Elpi Accumulate lp:{{
 
-  pred same-goal i:sealed-goal, i:sealed-goal.
+  pred same-goal sealed-goal, sealed-goal.
   same-goal (nabla G1) (nabla G2) :-
     % TODO: proof variables could be permuted
     pi x\ same-goal (G1 x) (G2 x).
@@ -849,7 +849,7 @@ Elpi Accumulate lp:{{
     Ty1 == Ty2,
     P1 = P2.
 
-  pred same-ctx i:goal-ctx, i:goal-ctx.
+  pred same-ctx goal-ctx, goal-ctx.
   same-ctx [] [].
   same-ctx [decl V _ T1|C1] [decl V _ T2|C2] :-
     % TODO: we could compare up to permutation...
@@ -857,7 +857,7 @@ Elpi Accumulate lp:{{
     T1 == T2,
     same-ctx C1 C2.
 
-  pred undup i:sealed-goal, i:list sealed-goal, o:list sealed-goal.
+  pred undup sealed-goal, list sealed-goal -> list sealed-goal.
   undup _ [] [].
   undup G [G1|GN] GN :- same-goal G G1.
   undup G [G1|GN] [G1|GL] :- undup G GN GL.
@@ -904,7 +904,7 @@ tactic, here the precise type definition:
 
 .. code:: elpi
 
-   typeabbrev tactic (sealed-goal -> (list sealed-goal -> prop)).
+   typeabbrev tactic (pred sealed-goal -> list sealed-goal).
 
 A few tacticals can be found in the
 `elpi-ltac.elpi file <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi>`_.
@@ -912,7 +912,7 @@ For example this is the code of :libtac:`try`:
 
 .. code:: elpi
 
-   pred try i:tactic, i:sealed-goal, o:list sealed-goal.
+   pred try tactic, sealed-goal -> list sealed-goal.
    try T G GS :- T G GS.
    try _ G [G].
 

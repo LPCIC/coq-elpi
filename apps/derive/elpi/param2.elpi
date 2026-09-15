@@ -656,7 +656,7 @@ main_register I R :-
 :before "refiner-assign-evar"
   evar _ _ _ :- !.
 
-pred ctx->TC i:(list prop), o:(list (pair term term)).
+pred ctx->TC list (pred) -> list (pair term term).
 ctx->TC [] [] :- !.
 ctx->TC [decl X _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.
 ctx->TC [def X _ _ _ Ty |Xs] [pr X Ty|Is] :- !, ctx->TC Xs Is.

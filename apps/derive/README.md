@@ -527,10 +527,10 @@ We like to prefix these data bases name with `derive.`.
 ```coq
 Elpi Db derive.mydb.db lp:{{
   % [myder T D] links a type T to a derived concept D
-  pred myder o:gref, o:gref.
+  pred myder -> gref, gref.
 
   % [myder-done T] mean T was already derived
-  pred myder-done o:gref.
+  pred myder-done -> gref.
 }}.
 ```
 
@@ -613,7 +613,7 @@ look like so
 ```elpi
 namespace derive.myder {
 
-pred main i:gref, i:string, o:list prop.
+pred main gref, string -> list (pred).
 main GR Prefix Clauses :- std.do! [
   ... % synthesize Body and Type
   Name is Prefix ^ "myconcept",

@@ -51,7 +51,7 @@ is an implementation of `Eqb` for the type `bool`, their corresponding elpi
 representation will be:
 
 ```prolog 
-  pred tc-Eqb i:term, o:term.
+  pred tc-Eqb term -> term.
   tc-Eqb {{bool}} {{eqBool}}.
 ```
 
@@ -113,7 +113,7 @@ In this implementation, the elpi rule for the instance `a3` is:
     tc-A A C.
 ```
 
-The predicate `do-once i:prop` has 
+The predicate `do-once (pred)` has 
 
 ```prolog
 do-once P :- P, !.
@@ -230,7 +230,7 @@ can be added with respect to a particular grafting (see
 [here](https://github.com/FissoreD/coq-elpi/blob/a11558758de0a1283bd9224b618cc75e40f118fb/coq-builtin.elpi#L1679)). 
 
 Our strategy of instance insertion in the elpi database reposes on a predicate
-`pred hook o:string` having, by default, $1.001$ implementations each of them
+`pred hook -> string` having, by default, $1.001$ implementations each of them
 having a name going from `"0"` to `"1000"` (bounds included). Roughly what we
 have is the following:
 

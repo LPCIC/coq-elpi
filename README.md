@@ -318,17 +318,17 @@ corresponding interp-command. There are two ways for doing so.
 
 The first one is to use, as the main entry points, the following ones:
 ```
-pred main-synterp i:list argument, o:any.
-pred main-interp i:list argument, i:any.
+pred main-synterp list argument -> any.
+pred main-interp list argument, any.
 ```
 Unlike `main` the former outputs a datum while the latter receives it in input.
 During the synterp phase the API `coq.synterp-actions` lists the actions
 performed so far. An excerpt from the [coq-builtin-synterp](builtin-doc/coq-builtin-synterp.elpi) file:
 ```
 % Action executed during the parsing phase (aka synterp)
-kind synterp-action type.
-type begin-module id -> synterp-action.
-type end-module modpath -> synterp-action.
+data synterp-action.
+symb begin-module : id -> synterp-action.
+symb end-module : modpath -> synterp-action.
 ```
 The synterp-command can output data of that type, but also any other data it
 wishes.

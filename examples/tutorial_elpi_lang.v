@@ -997,7 +997,7 @@ data nat.
 symb z : nat.
 symb s : nat -> nat.
 
-pred add o:nat, o:nat, o:nat.
+pred add -> nat, nat, nat.
 
 add (s X) Y (s Z) :- add X Y Z.
 add z X X.
@@ -1041,7 +1041,7 @@ data nat.
 symb z : nat.
 symb s : nat -> nat.
 
-pred sum i:nat, i:nat, o:nat.
+pred sum nat, nat -> nat.
 
 sum (s X) Y (s Z) :- sum X Y Z.
 sum z X X.
@@ -1204,7 +1204,7 @@ and :stdlib:`std.rev` to build a palindrome:
 
 Elpi Program function lp:{{
 
-pred make-palindrome i:list A, o:list A.
+pred make-palindrome list A -> list A.
 
 make-palindrome L Result :-
   std.rev L TMP,
@@ -1233,7 +1233,7 @@ that contains them.
 
 Elpi Accumulate lp:{{
 
-pred make-palindrome2 i:list A, o:list A.
+pred make-palindrome2 list A -> list A.
 
 make-palindrome2 L Result :-
   std.append L {std.rev L} Result.
@@ -1301,17 +1301,17 @@ would do in a functional language by passing an anonymous function):
 
 Elpi Accumulate lp:{{
 
-pred bad i:list int, o:list int.
+pred bad list int -> list int.
 
 bad L Result :-
   std.map L (x\ r\ TMP is x + 1, r = TMP) Result.
 
-pred good i:list int, o:list int.
+pred good list int -> list int.
 good L Result :-
   std.map L good.aux Result.
 good.aux X R :- TMP is X + 1, R = TMP.
 
-pred good2 i:list int, o:list int.
+pred good2 list int -> list int.
 good2 L Result :-
   std.map L (x\ r\ sigma TMP\ TMP is x + 1, r = TMP) Result.
 
@@ -1347,7 +1347,7 @@ the occasion to clarify further the scope of variables.
 
 Elpi Accumulate lp:{{
 
-pred good3 i:list int, o:list int.
+pred good3 list int -> list int.
 good3 L Result :-
   pi aux\
     (pi TMP X R\ aux X R :- TMP is X + 1, R = TMP) ==>
@@ -1594,7 +1594,7 @@ given debug variable is set).
 Elpi Debug "DEBUG_MYPRED".
 Elpi Program debug lp:{{
 
-  pred mypred i:int.
+  pred mypred int.
 
   :if "DEBUG_MYPRED"
   mypred X :-

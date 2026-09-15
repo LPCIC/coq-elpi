@@ -654,7 +654,7 @@ get-option into other predicates typed in a more precise way. Eg:
 
 .. code:: elpi
 
-   pred get-my-option o:int.
+   pred get-my-option -> int.
    get-my-option I :- get-option "my-option-name" I.
 
 -----------------------------
@@ -833,8 +833,8 @@ and :e:`main-interp` entry points.
 
 .. code:: elpi
 
-    pred main-synterp i:list argument, o:any.
-    pred main-interp i:list argument, i:any.
+    pred main-synterp list argument -> any.
+    pred main-interp list argument, any.
 
 Unlike :e:`main` the former outputs a datum while the latter receives it
 in input. In the following command we create a (empty) module with a random
