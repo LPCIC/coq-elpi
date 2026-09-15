@@ -18,21 +18,25 @@ pointfree F A B R :-
   coq.mk-app HDB BB RIGHT, !,
   if (LEFT = RIGHT) (R = {{ fun _ x => x }}) (F LEFT RIGHT R).
 
-param1-functor-db {{ lib:elpi.derive.eq_axiom_at lp:A lp:F }}
-       {{ lib:elpi.derive.eq_axiom_at lp:_ lp:F }}
-       {{ fun (x : lp:A) (px : lib:elpi.derive.eq_axiom_at lp:A lp:F x) => px }} :- !.
+param1-functor-db HypTy HypTy2 R :- 
+  coq.safe-dest-app HypTy (global {{:gref lib:elpi.derive.eq_axiom_at}} _) [A, F],
+  coq.safe-dest-app HypTy2 (global {{:gref lib:elpi.derive.eq_axiom_at}} _) [_, _],
+  !, 
+  R = {{ fun (x : lp:A) (px : lib:elpi.derive.eq_axiom_at lp:A lp:F x) => px }}.
 
-param1-functor-db HypTy {{ lib:elpi.derive.eq_axiom_at lp:A lp:_ }}
+param1-functor-db HypTy HypTy2
              {{ fun (x : lp:A) (px : lp:(PA x)) => lp:(R x px) }} :-
   (pi x\ coq.mk-app HypTy [x] (PA x)),
 
-  coq.safe-dest-app HypTy (global (indt KR)) Args,
-  realiR (global KGR) (global (indt KR)), !,
-
+  coq.safe-dest-app HypTy KR Args,
+  realiR (global KGR _) KR, 
+  coq.safe-dest-app HypTy2 (global {{:gref lib:elpi.derive.eq_axiom_at}} _) [A, _],
+  !,
   Msg is "derive.eqcorrect: no eqcorrect for " ^ {coq.gref->string KGR},
-  assert! (eqcorrect-db KGR OK) Msg,
+  assert! (eqcorrect-db KGR OKGR) Msg,
+  coq.env.global OKGR OKT,
+  (derive.eqcorrect.mk-app-eqfun OKT Args OKLemma),
 
-  (derive.eqcorrect.mk-app-eqfun OK Args OKLemma),
   coq.typecheck OKLemma OKLemmaTy ok,
   % we do the HO inference of P in elpi, since Coq is unable to do it
   OKLemmaTy = (prod _ _ x\ prod _ (P x) _),
@@ -77,9 +81,10 @@ branches [Lemma | Lemmas] (prod _ S T) [P|PS] :-
 
 func eqK-lem list term, term -> term.
 eqK-lem Args K Lemma :-
-  coq.safe-dest-app K (global (indc Kname)) _,
+  coq.safe-dest-app K (global (indc Kname) _) _,
   eqK-db Kname Lem,
-  coq.mk-app Lem Args Lemma.
+  coq.env.global Lem LemT,
+  coq.mk-app LemT Args Lemma.
 
 func idx term, term, list term, term, list term -> term.
 idx (sort _) IT K IndP A R :- !,
@@ -117,18 +122,19 @@ params 0 Arity T K IndP A R :-
 
 func main inductive, string -> list prop.
 main GR Name [C] :- do! [
-  T = global (indt GR),
+  coq.env.global (indt GR) T,
+  T = global (indt GR) Ui,
   assert! (induction-db GR IndP) "derive.eqcorrect: use derive.induction first",
-  coq.env.indt GR Ind Lno _ Arity K _KT,
+  @uinstance! Ui => coq.env.indt GR Ind Lno _ Arity K _KT,
   assert! (Ind = tt) "derive.eqcorrect: co-inductive types not supported",
-
+  coq.env.global IndP IndPT,
   % derive and define the lemma
-  params Lno Arity T {std.map K (k\r\ r = global (indc k))} IndP [] CmpOK,
+  params Lno Arity T {std.map K (k\r\ r = global (indc k) Ui)} IndPT [] CmpOK,
   std.assert-ok! (coq.typecheck CmpOK CmpTy) "derive.eqcorrect generates illtyped term",
   coq.env.add-const Name CmpOK CmpTy @opaque! Thm,
 
   % add a clause to the db
-  C = (eqcorrect-db (indt GR) (global (const Thm)) :- !),
+  C = (eqcorrect-db (indt GR) (const Thm) :- !),
   coq.elpi.accumulate _ "derive.eqcorrect.db"
     (clause _ (before "eqcorrect-db:fail") C)
 ].

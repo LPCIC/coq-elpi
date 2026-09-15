@@ -17,7 +17,7 @@ Class FMap (X : Type -> Type).
 
 (* 
   Since the instance is polymorphic, then the proof of the compiled elpi rule
-  should be wrapped inside the pglobal constructor
+  should be wrapped inside the global constructor
 *)
 Polymorphic Instance tele_fmap {TT : tele} : FMap (tele_fun TT) := {}.
 

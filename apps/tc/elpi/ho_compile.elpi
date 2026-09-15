@@ -17,8 +17,7 @@ namespace tc {
         func decompile-term-aux term, pair (list term) (list prop) -> term, pair (list term) (list prop).
 
         decompile-term-aux X A Y A :- name X, !, X = Y, !. % avoid loading "decompile-term-aux x A x A" at binders
-        decompile-term-aux (global _ as C) A C A :- !.
-        decompile-term-aux (pglobal _ _ as T) L T' L :- !, copy T T', !.
+        decompile-term-aux (global _ _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (sort _ as T) L T' L :- !, copy T T', !.
         decompile-term-aux (uvar as X) L X L :- !.
         decompile-term-aux (primitive _ as P) L P L :- !.
@@ -116,7 +115,7 @@ namespace tc {
 
       }
 
-      % TODO: also replace (sort (typ X)) and (pglobal _ X) with holes in the place of X
+      % TODO: also replace (sort (typ X)) and (global _ X) with holes in the place of X
       func clean-term term -> term.
       clean-term A B :-
         (pi t s r \ copy (tc.maybe-eta-tm  t s) r :- !, copy t r, !) =>
@@ -138,12 +137,12 @@ namespace tc {
         pi x\ (copy (sort (typ Univ)) (sort (typ x)) :- !) => 
          main N Ty ProofHd UnivL UnivInstL (Clause x).
       main N Ty ProofHd [] [UnivInst | UnivInstL] (pi x\ Clause x) :- !,
-        pi x\ (copy (pglobal A UnivInst) (pglobal A x) :- !) => 
+        pi x\ (copy (global A UnivInst) (global A x) :- !) => 
           main N Ty ProofHd [] UnivInstL (Clause x).
 
 
       % Start to charge the right number of pi for the resulting clause:
-      % This number is equal to the number of problematic terms + number of subterms with shape `sort _` and `pglobal _ _` 
+      % This number is equal to the number of problematic terms + number of subterms with shape `sort _` and `global _ _` 
       func add-pi-problematic-terms
         nat,              % the number of pi to quantify
         list term,        % the list of quantified pi
@@ -312,13 +311,14 @@ namespace tc {
       ) "Compile Instance", !.
 
     func instance-gr gref -> prop.
-    % If the instance is polymorphic, we wrap its gref into the pglobal constructor
-    instance-gr InstGR (pi x\ Clause x) :- coq.env.univpoly? InstGR _, !,
-      coq.env.typeof InstGR Ty,
-      pi x\ tc.compile.instance Ty (pglobal InstGR x) (Clause x).
+    % If the instance is polymorphic, we wrap its gref into the global constructor
     instance-gr InstGR Clause :-
+      coq.env.univpoly? InstGR 0, !,
       coq.env.typeof InstGR Ty,
-      tc.compile.instance Ty (global InstGR) Clause.
+      tc.compile.instance Ty {coq.env.global InstGR} Clause.
+    instance-gr InstGR (pi x\ Clause x) :- !,
+      coq.env.typeof InstGR Ty,
+      pi x\ tc.compile.instance Ty (global InstGR x) (Clause x).
     
     namespace goal {
       % [uvar-pair V1 Ty V2] List of uvar for link-eta-dedup
@@ -379,6 +379,15 @@ namespace tc {
         close-term-no-prune-ty Lx Ty L1,
         fold-map Ty L Ty' L2,
         std.append L2 L1 L3.
+
+      pred unif-univ-constraint term, term.
+      unif-univ-constraint T1 T2 :- declare_constraint (tc.link.univ-poly T1 T2) [_].
+
+      decompile-problematic-term (global P UI as T) L T L :- 
+        coq.empty-univ-instance? UI, !.
+
+      decompile-problematic-term (global P Q as T) L (global P Q' as T') L' :-
+        L' = [unif-univ-constraint T T' | L].
 
       func compile term, list prop -> term, list prop.
       compile T L T' L' :-

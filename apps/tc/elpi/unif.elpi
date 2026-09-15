@@ -54,22 +54,26 @@ namespace tc{
 
     unif (primitive X) [] (primitive X) [] ff _ :- !.
 
-    unif (global (indt GR1)) C (global (indt GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
-    unif (global (indc GR1)) C (global (indc GR2)) D _ _ :- !, GR1 = GR2, unify-ctxs C D.
-    unif (pglobal (indt GR1) I1) C (pglobal (indt GR2) I2) D _ eq :- !,
+    unif (global (indt GR1) I1) C (global (indt GR2) I2) D _ eq :- !,
       GR1 = GR2,
       coq.univ-instance.unify-eq (indt GR1) I1 I2 ok,
       unify-ctxs C D.
-    unif (pglobal (indt GR1) I1) C (pglobal (indt GR2) I2) D _ leq :- !,
+    unif (global (indt GR1) I1) C (global (indt GR2) I2) D _ leq :- !,
       GR1 = GR2,
       coq.univ-instance.unify-leq (indt GR1) I1 I2 ok,
       unify-ctxs C D.
+    unif (global (indc GR1) I1) C (global (indc GR2) I2) D _ eq :- !,
+      GR1 = GR2,
+      coq.univ-instance.unify-eq (indc GR1) I1 I2 ok,
+      unify-ctxs C D.
+    unif (global (indc GR1) I1) C (global (indc GR2) I2) D _ leq :- !,
+      GR1 = GR2,
+      coq.univ-instance.unify-leq (indc GR1) I1 I2 ok,
+      unify-ctxs C D.
 
     % fast path for stuck term on the right
-    unif X C (global (indt _) as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
-    unif X C (global (indc _) as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
-    unif X C (pglobal (indt _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
-    unif X C (pglobal (indc _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+    unif X C (global (indt _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
+    unif X C (global (indc _) _ as T) D ff U :- !, unif T D {whd X C} tt U. % TODO:1
 
     % congruence rules TODO: is the of assumption really needed?
     unif (fun N T1 F1) [] (fun M T2 F2) [] _ _ :- !, ignore-failure! (N = M),
@@ -90,24 +94,22 @@ namespace tc{
       unify T1 T2 eq, unify B1 B2 eq,
       (@pi-def N T1 B1 x\ unify (F1 x) (F2 x) eq),
       unify-ctxs C1 C2, !.
-    unif (global (const GR)) C (global (const GR)) D _ _ :- unify-ctxs C D, !.
-    unif (pglobal (const GR) I1) C (pglobal (const GR) I2) D _ eq :-
+    unif (global (const GR) I1) C (global (const GR) I2) D _ eq :-
       coq.univ-instance.unify-eq (const GR) I1 I2 ok,
       unify-ctxs C D, !.
-    unif (pglobal (const GR) I1) C (pglobal (const GR) I2) D _ leq :-
+    unif (global (const GR) I1) C (global (const GR) I2) D _ leq :-
       coq.univ-instance.unify-leq (const GR) I1 I2 ok,
       unify-ctxs C D, !.
     unif X C T D _ _ :- name X, name T, X = T, unify-ctxs C D.
 
     % 1 step reduction  TODO:1
-    unif (global (const GR)) C T D M U :- unfold GR none C X1 C1, !, unif X1 C1 T D M U.
-    unif (pglobal (const GR) I) C T D M U :- unfold GR (some I) C X1 C1, !, unif X1 C1 T D M U.
+    unif (global (const GR) I) C T D M U :- unfold GR (some I) C X1 C1, !, unif X1 C1 T D M U.
     unif (let N TB B F) C1 T C2 M U :- !,
       @pi-def N TB B x\ unif {hd-beta (F x) C1} T C2 M U.
-    unif (match A _ L) C T D M U :- whd-indc A GR KA, !,
+    unif (match A _ L) C T D M U :- whd-indc A GR _Ui KA, !,
       unif {match-red GR KA L C} T D M U.
-    unif (fix _ N _ F as X) C T D M U :- nth-stack N C LA A RA, whd-indc A GR KA, !,
-      unif {fix-red F X LA GR KA RA} T D M U.
+    unif (fix _ N _ F as X) C T D M U :- nth-stack N C LA A RA, whd-indc A GR Ui KA, !,
+      unif {fix-red F X LA GR Ui KA RA} T D M U.
     unif X C T D M U :- name X, def X _ _ V, !, unif {hd-beta V C} T D M U.
       % TODO we could use _VN if nonflex
     % TODO:1 turn into (if reducible then reduce1 else fully-reduce2 tt)
@@ -144,8 +146,7 @@ namespace tc{
 
     % We use a keyd discipline, i.e. we only bind terms with a rigid head
     pred key i:term.
-    key (global _) :- !.
-    key (pglobal _ _) :- !.
+    key (global _ _) :- !.
     key C :- name C, !.
     key (primitive _) :- !.
 
@@ -168,8 +169,7 @@ namespace tc{
     pred bind i:term, o:term.
     bind X Y :- name X, X = Y, !.
     bind X Y :- name X, def X _ _ T, !, bind T Y.
-    bind (global _ as C) C :- !.
-    bind (pglobal _ _ as C) C :- !.
+    bind (global _ _ as C) C :- !.
     bind (sort _ as C) C :- !.
     bind (fix N Rno Ty F) (fix N Rno Ty1 F1) :- !,
       bind Ty Ty1, pi x\ decl x N Ty => bind (F x) (F1 x).

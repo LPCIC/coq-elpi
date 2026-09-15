@@ -29,8 +29,7 @@ kind term type.
 external symbol sort    : sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-external symbol global  : gref -> term.
-external symbol pglobal : gref -> univ-instance -> term.
+external symbol global : gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
 external symbol fun     : name -> term -> (term -> term) -> term.         % fun x : t =>

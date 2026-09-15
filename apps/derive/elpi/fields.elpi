@@ -22,30 +22,31 @@ main I Prefix AllCL :- std.do! [
   std.assert! (tag-for I Tag) "no tag for this inductive, run that derivation first",
 
   std.assert! (eqType(indt I) FI) "this inductive is not supported",
-  coq.env.indt I _ _ _ Arity KS _,
+  coq.env.global (indt I) Ind,
+  Ind = global _ Ui,
+  (@uinstance! Ui => coq.env.indt I _ _ _ Arity KS _),
+  box Ind KS FI CLB,
 
-  box (global (indt I)) KS FI CLB,
-
-  (CLB =!=> fields_t.main FI (global (indt I)) Body_t),
+  (CLB =!=> fields_t.main FI Ind Body_t),
   std.assert-ok! (coq.typecheck Body_t Ty_t) "derive.fields generates illtyped fields_t",
   Name_t is Prefix ^ "fields_t",
   coq.ensure-fresh-global-id Name_t FName_t,
   coq.env.add-const FName_t Body_t Ty_t ff Fields_t, 
 
-  (CLB =!=> fields.main FI (global (indt I)) (global (const Fields_t)) (global (const Tag)) BodySkel),
+  (CLB ==> fields.main FI Ind {coq.env.global (const Fields_t)} {coq.env.global (const Tag)} BodySkel),
   % we elaborate only for primitive records...
   std.assert-ok! (coq.elaborate-skeleton BodySkel Ty Body) "derive.fields generates illtyped fields",
   Name is Prefix ^ "fields",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName Body Ty ff Fields, 
 
-  (CLB =!=> construct.main FI (global (indt I)) Fields_t Body_c),
+  (CLB ==> construct.main FI Ind Fields_t Body_c),
   std.assert-ok! (coq.typecheck Body_c Ty_c) "derive.fields generates illtyped construct",
   Name_c is Prefix ^ "construct",
   coq.ensure-fresh-global-id Name_c FName_c,
   coq.env.add-const FName_c Body_c Ty_c ff Construct, 
 
-  coq.bind-ind-arity (global (indt I)) Arity (case-refl Tag Fields Construct) Body_PSkel,
+  coq.bind-ind-arity Ind Arity (case-refl Tag Fields Construct) Body_PSkel,
   std.assert-ok! (coq.elaborate-skeleton Body_PSkel Ty_P Body_P) "derive.fields generates illtyped constructP",
   Name_P is Prefix ^ "constructP",
   coq.ensure-fresh-global-id Name_P FName_P,
@@ -82,7 +83,7 @@ fields_t.rty _ {{ Type }}.
 
 func fields_t.k list term, eqb.constructor -> term.
 fields_t.k Params (eqb.constructor K _) T :-
-  box-for K I _, coq.mk-app (global (indt I)) Params T.
+  box-for K I _, coq.mk-app {coq.env.global (indt I)} Params T.
 
 % ----------------------------------------------------------------------
 func fields.main eqb.eqType, term, term, term -> term.
@@ -107,9 +108,9 @@ fields.rty F_t Tag _ Vars _ {{ lp:F_t (lp:Tag lp:X) }} :- std.last Vars X.
 
 func fields.branch term, term, list term, list term -> term.
 fields.branch K _ Vars _ R :-
-  coq.safe-dest-app K (global (indc C)) Params,
+  coq.safe-dest-app K (global (indc C) _) Params,
   box-for C _ B,
-  coq.mk-app (global (indc B)) {std.append Params Vars} R.
+  coq.mk-app {coq.env.global (indc B)} {std.append Params Vars} R.
 
 % ------------------------------------------------------------------------
 func box term, list constructor, eqb.eqType -> list prop.
@@ -191,7 +192,7 @@ construct.main (eqb.value-param TY F) I F_t {{ fun p : lp:Ty => lp:(R p) }} :-
 
 construct.main (eqb.inductive _ F) I F_t {{ fun p : lib:elpi.derive.positive => lp:(R p) }} :-
   coq.safe-dest-app I _ Params,
-  coq.mk-app (global (const F_t)) Params Fields_t,
+  coq.mk-app {coq.env.global (const F_t)} Params Fields_t,
   @pi-decl `p` {{ lib:elpi.derive.positive }} p\ pi i\
     splay-over-positive p (F i) (construct.rty1 Fields_t I)
       {{ fun (_:lib:elpi.derive.unit) => @None lp:I }}
@@ -204,15 +205,15 @@ construct.rty1 Fields_t I X {{ lp:Fields_t lp:X -> option lp:I }}.
 func construct.k term, list term, eqb.constructor -> term.
 construct.k _ Params (eqb.constructor K (eqb.stop _)) {{ fun b : lp:BoxTy => Some lp:B }} :- !,
   box-for K BT _,
-  coq.mk-app (global (indt BT)) Params BoxTy,
-  coq.mk-app (global (indc K)) Params B.
+  coq.mk-app {coq.env.global (indt BT)} Params BoxTy,
+  coq.mk-app {coq.env.global (indc K)} Params B.
 construct.k I Params (eqb.constructor K _) {{ fun b : lp:BoxTy => lp:(R b) }} :-
   box-for K BT _,
-  coq.mk-app (global (indt BT)) Params BoxTy,
+  coq.mk-app {coq.env.global (indt BT)} Params BoxTy,
   @pi-decl `b` BoxTy b\
     coq.build-match b BoxTy
     (construct.rty I)
-    (construct.branch {coq.mk-app (global (indc K)) Params})
+    (construct.branch {coq.mk-app {coq.env.global (indc K)} Params})
     (R b).
 
 func construct.rty term, term, list term, list term -> term.
@@ -226,9 +227,9 @@ construct.branch B _ _ Vars _ {{ Some lp:BVars }} :- coq.mk-app B Vars BVars.
 func case-refl constant, constant, constant, term, list term, list term -> term.
 case-refl Tag Fields Construct _ ParamsX Tys R :-
   std.appendR Params [X] ParamsX, !,
-  coq.mk-app (global (const Tag)) Params TP,
-  coq.mk-app (global (const Fields)) Params FP,
-  coq.mk-app (global (const Construct)) Params CP,
+  coq.mk-app {coq.env.global (const Tag)} Params TP,
+  coq.mk-app {coq.env.global (const Fields)} Params FP,
+  coq.mk-app {coq.env.global (const Construct)} Params CP,
   coq.build-match X {std.last Tys}
     (case-refl-rty TP FP CP)
     case-refl-branch
@@ -281,8 +282,8 @@ func repack-as-tuple constant, constant, term, list term, list term -> term.
 repack-as-tuple C_t Tag _ Vars Tys R :-
   std.appendR Params [X] Vars, !,
   std.last Tys XTy,
-  coq.mk-app (global (const C_t)) Params C_tp,
-  coq.mk-app (global (const Tag)) Params Tagp,
+  coq.mk-app {coq.env.global (const C_t)} Params C_tp,
+  coq.mk-app {coq.env.global (const Tag)} Params Tagp,
   coq.build-match X XTy (do-rty_t C_tp Tagp) args->tuple R.
 
 :index (1)

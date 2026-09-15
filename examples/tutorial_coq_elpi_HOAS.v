@@ -344,7 +344,7 @@ Of course quotations can nest.
 Elpi Query lp:{{
 
   coq.locate "S" S,
-  coq.say {{ 1 + lp:{{ app[global S, {{ 0 }} ]  }}   }}
+  coq.say {{ 1 + lp:{{ app[global S _, {{ 0 }} ]  }}   }}
 % elpi....  coq..     elpi...........  coq  elpi  coq
 
 }}.

@@ -26,7 +26,7 @@ pred discriminate! i:term, i:term, o:term, i:inductive, i:list term, i:construct
 discriminate! H G PG GR Args GRA A B :- do! [
   isK-db GRA IsKA,
   coq.env.global (indt GR) Ind,
-  coq.mk-app IsKA Args IsKAArgs,
+  coq.mk-app {coq.env.global IsKA} Args IsKAArgs,
   coq.mk-app Ind Args IndT,
   coq.mk-app {{lib:elpi.derive.eq_f}} [IndT, {{lib:elpi.bool}},IsKAArgs,A,B,H] Eq_isKA_isKB,
   coq.mk-app {{lib:elpi.bool_discr}} [Eq_isKA_isKB, G] PG

@@ -429,6 +429,8 @@ param-record-constr C NParams Ty CR Bo TyR :-
   coq.subst-fun [T, T] TyRUnsubst TyR,
 
   % Sanity check that the type of the shim has the type expected of a translation
+  std.assert-ok! (coq.typecheck-ty TyR _)
+    "param-record-constr: Ill-typed translated constructor shim",
   std.assert-ok! (coq.typecheck Bo TyR)
     "param-record-constr: Ill-typed translated constructor shim".
 
@@ -497,8 +499,9 @@ dispatch ((const GR) as C) Suffix Clauses :- do! [
   (not (coq.env.projection? GR _, coq.env.primitive-projection? _ GR _) ;
     coq.error "derive.param2: cannot translate a projection"),
   coq.env.global C Term,
+  Term = global C Uinst,
   NameR is {coq.gref->id C} ^ Suffix,
-  coq.env.const GR OBo Ty,
+  @uinstance! Uinst => coq.env.const GR OBo Ty,
   (OBo = (some X) ;
    std.fatal-error-w-data "Cannot translate local constant without body" GR),
 
@@ -512,11 +515,11 @@ dispatch ((const GR) as C) Suffix Clauses :- do! [
   std.assert-ok! (coq.unify-leq XRTy TyRTermTerm) "param2: constant does not have the right type",
 
   coq.ensure-fresh-global-id NameR FNameR,
-  coq.env.add-const FNameR XR TyRTermTerm _ TermR,
+  coq.env.add-const FNameR XR TyRTermTerm _ CR,
+  coq.env.global (const CR) TermR,
+  store-param NameR Term Term TermR,
 
-  store-param NameR Term Term {coq.env.global (const TermR)},
-
-  C1 = (param.gref C C (const TermR) :- !),
+  C1 = (param.gref C C (const CR) :- !),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ (before "param:fail") C1),
   coq.elpi.accumulate _ "derive.param2.db" (clause _ _ (param-done C)),
   Clauses = [param-done C, C1]

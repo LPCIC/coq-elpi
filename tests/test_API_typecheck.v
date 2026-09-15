@@ -50,11 +50,11 @@ Elpi Query lp:{{
 
 
 Elpi Query lp:{{
-  coq.locate "cons" GRCons, Cons = global GRCons,
-  coq.locate "nil" GRNil, Nil = global GRNil,
-  coq.locate "nat" GRNat, Nat = global GRNat,
-  coq.locate "O" GRZero, Zero = global GRZero,
-  coq.locate "list" GRList, List = global GRList,
+  coq.locate "cons" GRCons, coq.env.global GRCons Cons,
+  coq.locate "nil" GRNil, coq.env.global GRNil Nil,
+  coq.locate "nat" GRNat, coq.env.global GRNat Nat,
+  coq.locate "O" GRZero, coq.env.global GRZero Zero,
+  coq.locate "list" GRList, coq.env.global GRList List,
   L  = app [ Cons, _, Zero, app [ Nil, _ ]],
   LE = app [ Cons, Nat, Zero, app [ Nil, Nat ]],
   coq.typecheck L (app [ List, Nat ]) ok.

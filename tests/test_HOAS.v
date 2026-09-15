@@ -230,7 +230,7 @@ Module P'.
   }.
 
   Elpi Query  lp:{{
-    global (const C) = {{proj1}},
+    global (const C) _ = {{proj1}},
     coq.env.projection? C 1.
   }}.
 End P'.
@@ -248,7 +248,7 @@ Module P''.
   Elpi Query  lp:{{
     app[primitive (proj P _) | _] = {{X.(proj1 _)}},
     coq.env.primitive-projection? P C _,
-    global (const C) = {{proj1}}.
+    global (const C) _ = {{proj1}}.
   }}.
 
 End P''.
@@ -256,16 +256,16 @@ End P''.
 
 Elpi Command primitive_proj.
 Elpi Accumulate lp:{{
-  main [str Kind, trm (global (indt I)), trm T, int N, trm V] :- std.do! [
+  main [str Kind, trm (global (indt I) _), trm T, int N, trm V] :- std.do! [
     coq.env.projections I [_,_],
     coq.env.primitive-projections I [some (pr _ 1), some (pr _ 2)],
     coq.env.projections I [some P1, some P2],
     if (Kind = "primitive")
        (std.assert! (T = app[primitive (proj P N),A]) "not prim proj", coq.say P N A, coq.say {coq.term->string (primitive (proj P N))})
-       (std.assert! (T = app[global(const X), _, A], (X = P1 ; X = P2)) "not regular proj"), coq.say X A,
+       (std.assert! (T = app[global(const X) _, _, A], (X = P1 ; X = P2)) "not regular proj"), coq.say X A,
     coq.say {coq.term->string T},
     std.assert! ( {{:gref P.p1 }} = const C) "wrong gref",
-    std.assert! ( {{ @P.p1 }} = global (const C)) "wrong global",
+    std.assert! ( {{ @P.p1 }} = global (const C) _) "wrong global",
     coq.env.const C BO _,
     coq.say BO,
     std.assert! (unwind {whd T []} V) "wrong value",
@@ -318,8 +318,8 @@ Elpi Query lp:{{
 Universes u1 u2.
 
 Elpi Query lp:{{
-  coq.say {{ toto }},         % pglobal (const «toto») X
-  coq.say {{ toto@{u1 u2} }}, % pglobal (const «toto») «u1 u2»
+  coq.say {{ toto }},         % global (const «toto») X
+  coq.say {{ toto@{u1 u2} }}, % global (const «toto») «u1 u2»
   coq.say {coq.term->string {{ toto }}}.
 }}.
 
@@ -339,7 +339,7 @@ Polymorphic Variable n : nat.
 
 Elpi Query lp:{{
   coq.locate "F" GRF,
-  coq.typecheck (pglobal GRF I) TyF ok,
+  coq.typecheck (global GRF I) TyF ok,
   GRF = indt Ind,
 
   % coq.env.indt
@@ -366,7 +366,7 @@ Elpi Query lp:{{
   (@uinstance! A6 => coq.env.indt Ind _ _ _ _ K KTys6).
 
   coq.locate "Build_F" GRB,
-  coq.typecheck (pglobal GRB I2) TyB ok,
+  coq.typecheck (global GRB I2) TyB ok,
   GRB = indc B,
 
   % coq.env.indc
@@ -382,7 +382,7 @@ Elpi Query lp:{{
   (@uinstance! B1 => coq.env.indc B _ _ _ BTy3).
 
   coq.locate "t" GRt,
-  coq.typecheck (pglobal GRt I3) Tyt ok,
+  coq.typecheck (global GRt I3) Tyt ok,
   GRt = const T,
 
   % coq.env.const
@@ -504,8 +504,8 @@ End UPolyVar.
 
 Elpi Query lp:{{
   coq.locate "F" GRF,
-  coq.typecheck (pglobal GRF I1) _ ok,
-  coq.typecheck (pglobal GRF I2) _ ok,
+  coq.typecheck (global GRF I1) _ ok,
+  coq.typecheck (global GRF I2) _ ok,
   coq.say I1 I2,
   coq.univ.print,
   coq.univ-instance.unify-eq GRF I1 I2 ok,
@@ -515,8 +515,8 @@ Elpi Query lp:{{
 Elpi Query lp:{{
   coq.locate "F" GRF,
   coq.locate "fnat" GRfnat,
-  coq.typecheck (pglobal GRF I1) _ ok,
-  coq.typecheck (pglobal GRfnat I2) _ ok,
+  coq.typecheck (global GRF I1) _ ok,
+  coq.typecheck (global GRfnat I2) _ ok,
   coq.say I1 I2,
   coq.univ.print,
   coq.univ-instance.unify-eq GRF I1 I2 (error E),
@@ -526,44 +526,42 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
   coq.locate "F" GRF,
-  coq.typecheck (pglobal GRF I1) _ ok,
-  coq.univ-instance I1 UL1,
-  coq.univ-instance I1 [U],
-  coq.univ-instance I2 [U].
+  coq.typecheck (global GRF Uinst) _ ok,
+  coq.univ-instance Uinst [U]
 }}.
 
 Elpi Query lp:{{
   coq.locate "F" GRF,
-  coq.typecheck (pglobal GRF I1) _ ok,
-  coq.typecheck (pglobal GRF I2) _ ok,
-  coq.univ-instance I1 [L1],
-  coq.univ-instance I2 [L2],
+  coq.typecheck (global GRF Ui1) _ ok,
+  coq.typecheck (global GRF Ui2) _ ok,
+  coq.univ-instance Ui1 [L1],
+  coq.univ-instance Ui2 [L2],
   coq.univ.variable U1 L1,
   coq.univ.variable U2 L2,
   coq.sort.sup (typ U1) (typ U2),
-  coq.univ-instance.unify-eq GRF I1 I2 (error E),
+  coq.univ-instance.unify-eq GRF Ui1 Ui2 (error E),
   coq.say E.
 }}.
 
-Cumulative Polymorphic Record F2@{+x} (T : Type@{x}) := Build_F2 { t2 : T }.
+Cumulative Polymorphic Record F2@{x} (T : Type@{x}) := Build_F2 { t2 : T }.
 
 Elpi Query lp:{{
   coq.locate "F2" GRF,
-  coq.typecheck (pglobal GRF I1) _ ok,
-  coq.typecheck (pglobal GRF I2) _ ok,
+  coq.typecheck (global GRF I1) _ ok,
+  coq.typecheck (global GRF I2) _ ok,
   coq.univ-instance I1 [L1],
   coq.univ-instance I2 [L2],
   coq.univ.variable U1 L1,
   coq.univ.variable U2 L2,
   coq.sort.sup (typ U1) (typ U2),
   coq.univ.print,
-  coq.univ-instance.unify-leq GRF I1 I2 ok. % why does this add a = not a <= ?
+  coq.univ-instance.unify-leq GRF I1 I2 ok. % why does this add a = not a <= 
 }}.
 
 Elpi Query lp:{{
   coq.locate "F" GRF,
-  coq.env.global GRF (pglobal GRF I1),
-  coq.typecheck (pglobal GRF I2) _ ok,
+  coq.env.global GRF (global GRF I1),
+  coq.typecheck (global GRF I2) _ ok,
   coq.univ-instance I1 [L1],
   coq.univ-instance I2 [L2],
   coq.univ.variable U1 L1,
@@ -576,18 +574,13 @@ Elpi Query lp:{{
 
 Elpi Query lp:{{
   coq.locate "nat" GR,
-  coq.env.global GR (global GR)
+  coq.env.global GR (global GR _)
 }}.
 
 Elpi Query lp:{{
   coq.locate "F" GR,
-  coq.env.global GR (pglobal GR I)
-}}.
-
-
-Elpi Query lp:{{
-  coq.locate "F" GR,
-  not(coq.env.global GR (global GR))
+  coq.env.global GR (global GR Ui),
+  coq.univ-instance Ui [U]
 }}.
 
 Elpi Query lp:{{
@@ -598,12 +591,6 @@ Elpi Query lp:{{
   @uinstance! I => coq.say {coq.env.global GR1}.
 
 }}.
-
-Elpi Query lp:{{
-  coq.univ-instance I [U,U],
-  coq.say I
-}}.
-
 
 (*
 
@@ -663,7 +650,7 @@ Print tree.
 Elpi Query lp:{{
   std.do! [coq.env.begin-module "M" none, coq.env.end-module _]  
 }} lp:{{
-pglobal (indt I) _ = {{ tree }},
+global (indt I) _ = {{ tree }},
 coq.env.indt-decl I D,
 coq.env.begin-module "M" none,
 coq.say D,
@@ -947,7 +934,7 @@ Inductive i1 (A: Type) (B : Type) : (forall x : nat, x + 1 = x) -> Prop :=
 with i2 (A:Type) (B : Type) : Type := K21.
 
 Elpi Query lp:{{
-  {{ i1 }} = global (indt I),
+  {{ i1 }} = global (indt I) _,
   coq.env.indt-block I tt NP NUP [I,I2] SL KNL KTL,
   std.assert! (NP = 2) "NP",
   std.assert! (NUP = 2) "NUP",
@@ -983,7 +970,7 @@ Elpi Query lp:{{
   coq.string->name-irrelevant "n" Nwrong,
   coq.string->name-relevant "p" Pwrong,
   coq.typecheck-relevance
-    (prod Nwrong {{ nat }} _\ prod Pwrong (global (indt ST)) _\ {{ nat }}) T,
+    (prod Nwrong {{ nat }} _\ prod Pwrong {coq.env.global (indt ST)} _\ {{ nat }}) T,
   T = prod Nfixed _ F, pi n\
   F n = prod Pfixed _ _,
   coq.name.relevant? Nfixed Rn,

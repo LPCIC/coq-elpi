@@ -37,13 +37,13 @@ Qed.
 Register pstring_eq_correct as elpi.derive.pstring_eq_correct.
 
 Elpi Db derive.eqcorrect.db lp:{{
-  type eqcorrect-db gref -> term -> prop.
+  type eqcorrect-db gref -> gref -> prop.
 }}.
 #[superglobal] Elpi Accumulate derive.eqcorrect.db lp:{{
   
-eqcorrect-db {{:gref lib:num.int63.type }} {{ lib:elpi.derive.uint63_eq_correct }} :- !.
-eqcorrect-db {{:gref lib:elpi.pstring }} {{ lib:elpi.derive.pstring_eq_correct }} :- !.
-eqcorrect-db X _ :- {{ lib:num.float.type }} = global X, !, stop "float64 comparison is not syntactic".
+eqcorrect-db {{:gref lib:num.int63.type }} {{:gref lib:elpi.derive.uint63_eq_correct }} :- !.
+eqcorrect-db {{:gref lib:elpi.pstring }} {{:gref lib:elpi.derive.pstring_eq_correct }} :- !.
+eqcorrect-db X _ :- {{:gref lib:num.float.type }} = X, !, stop "float64 comparison is not syntactic".
 
 :name "eqcorrect-db:fail"
 eqcorrect-db T _ :-

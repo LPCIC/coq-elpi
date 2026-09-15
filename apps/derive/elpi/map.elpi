@@ -4,14 +4,15 @@
 
 shorten std.{split-at, length, rev, append, do!, drop-last, assert!}.
 
-map-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
+map-db (app[global (indt GR1) U1|A1]) (app[global (indt GR2) U2|A2]) R :-
   coq.env.indt GR1 _ Lno1 _ _ _ _,
   coq.env.indt GR2 _ Lno2 _ _ _ _,
   {length A1} > Lno1, {length A2} > Lno2,
   split-at Lno1 A1 Args1 Points1,
   split-at Lno2 A2 Args2 Points2,
   Points1 = Points2, !,
-  map-db {coq.mk-app (global (indt GR1)) Args1} {coq.mk-app (global (indt GR2)) Args2} F,
+  % coq.univ-instance.unify-eq (indt GR1) U1 U2 ok,
+  map-db {coq.mk-app (global (indt GR1) U1) Args1} {coq.mk-app (global (indt GR2) U2) Args2} F,
   coq.mk-app F Points1 R.
 
 namespace derive.map {
@@ -52,9 +53,9 @@ bo-idx-rty Ps ItyArgs _ Vs _ R :-
 pred bo-k-args i:list term, i:term,  i:term, i:list term, i:list term, o:term.
 bo-k-args ParamsRev K _ Args Tys R :-
   rev ParamsRev Params,
-  coq.safe-dest-app K (global (indc GR)) _,
-  coq.env.typeof (indc GR) T, coq.subst-prod Params T KT,
-  (bo-k-args.aux {coq.mk-app (global (indc GR)) Params} Args Tys KT R).
+  coq.safe-dest-app K (global (indc GR) Ui) _,
+  (@uinstance! Ui => coq.env.typeof (indc GR) T), coq.subst-prod Params T KT,
+  (bo-k-args.aux {coq.mk-app (global (indc GR) Ui) Params} Args Tys KT R).
 
 pred bo-k-args.aux i:term, i:list term, i:list term, i:term, o:term.
 bo-k-args.aux R [] [] _ R.
@@ -131,7 +132,7 @@ type mutual-spec inductive -> string -> term -> term -> term -> term -> mutual-s
 
 func build-mutual-spec bool, string, inductive -> mutual-spec.
 build-mutual-spec Mutual Prefix GR (mutual-spec GR Prefix1 T T Arity Arity) :-
-  T = global (indt GR),
+  T = global (indt GR) _,
   if (Mutual = tt) (Prefix1 is {coq.gref->id (indt GR)} ^ "_")
       (Prefix1 is Prefix),
   coq.env.indt GR _ _ _ Arity _ _.
@@ -211,7 +212,7 @@ add-mutual-map-consts All [S|SS] Lno Focus [map-done GR,Clause|CS] :- std.do! [
   Name is Prefix ^ "map",
   coq.ensure-fresh-global-id Name FName,
   coq.env.add-const FName R Ty @transparent! Funct,
-  mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause,
+  mk-clause 0 Lno T T Arity [] {coq.env.global (const Funct)} Clause,
   coq.elpi.accumulate _ "derive.map.db" (clause _ _ Clause),
   coq.elpi.accumulate _ "derive.map.db" (clause _ _ (map-done GR)),
   Focus1 is Focus + 1,

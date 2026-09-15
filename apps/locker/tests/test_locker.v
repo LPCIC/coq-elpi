@@ -1,6 +1,7 @@
 From Corelib Require Import ssreflect.
 From elpi.apps Require Import locker.
 
+Unset Universe Polymorphism.
 (* ----------------------- *)
 
 lock Definition d1 := 3.
@@ -89,6 +90,7 @@ Set Printing Universes.
 
 lock #[universes(polymorphic)] Definition id1@{u} (T : Type@{u}) (x : T) := x.
 About id1.
+About id1_unlock_subterm.
 Elpi Query lp:{{ coq.locate "id1" GR, coq.env.univpoly? GR 1 }}.
 
 
@@ -103,16 +105,15 @@ About up1.body.
 Elpi Query lp:{{ coq.locate "up1" GR, coq.env.univpoly? GR 1 }}.
 
 mlock #[universes(polymorphic=no)] Definition nup1 (T : Type) (x : T) := x.
-About nup1.body.
-Elpi Query lp:{{ coq.locate "nup1" GR, not(coq.env.univpoly? GR _) }}.
+About nup1.
+Elpi Query lp:{{ coq.locate "nup1" GR, not (coq.env.univpoly? GR 0) }}.
 
 mlock Definition up2@{u +} (T : Type@{u}) (W : Type) (x : T) := x.
 About up2.body.
 Elpi Query lp:{{ coq.locate "up2" GR, coq.env.univpoly? GR 2 }}.
 
-Fail mlock Definition up3@{u} (T : Type@{u}) (W : Type) (x : T) := x.
+mlock Definition up3@{u} (T : Type@{u}) (W : Type@{u}) (x : T) := x.
 
 (* #704 ----------------------- *)
-
 Set Universe Polymorphism.
 mlock Definition Bla (T : bool) : Type := nat.

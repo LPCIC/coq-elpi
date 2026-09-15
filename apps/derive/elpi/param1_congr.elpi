@@ -42,11 +42,11 @@ body-params N (prod X TX x\ prod P (PX x) (Ty x)) K1 K2 R RT :- N > 0,
 func main-k string, int, constructor, term -> prop.
 main-k Prefix Lno K KT Clause :- do! [
   Name is Prefix ^ {coq.gref->id (indc K)},
-  body-params Lno KT (global (indc K)) (global (indc K)) R RT_,
+  body-params Lno KT {coq.env.global (indc K)} {coq.env.global (indc K)} R RT_,
   % coq.say {coq.term->string R},
   coq.typecheck R RT ok,
   coq.env.add-const Name R RT @transparent! Cst,
-  Clause = param1-congr-db K (global (const Cst))
+  Clause = param1-congr-db K (const Cst)
 ].
 
 func main gref, gref, string -> list prop.

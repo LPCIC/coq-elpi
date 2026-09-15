@@ -16,7 +16,7 @@ Elpi Query lp:{{
   coq.locate "a" (const CA),
   coq.locate "b" (const CB),
   coq.locate "c" (const CC),
-  coq.env.const CC (some (global (const CB))) _,
+  coq.env.const CC (some {coq.env.global (const CB)}) _,
   coq.env.add-section-variable "d" _ {{ nat }} _,
   coq.env.add-section-variable "d1" _ {{ nat }} _,
   @local! => coq.env.add-const "e" {{ 3 }} {{ nat }} _ _.
@@ -35,7 +35,7 @@ Elpi Query lp:{{
   coq.env.begin-section "Foo",
   coq.env.add-section-variable "x" _ {{ nat }} X,
   coq.env.section-variables [X],
-  coq.env.add-const "fx" (global (const X)) _ _ _,
+  coq.env.add-const "fx" {coq.env.global (const X)} _ _ _,
   coq.env.end-section.
 }}.
 

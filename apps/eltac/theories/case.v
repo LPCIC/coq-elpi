@@ -16,7 +16,7 @@ Elpi Accumulate lp:{{
 
   solve (goal _ _ GTy _ [trm T] as G) NG :- !, std.do! [
     std.assert-ok! (coq.typecheck T Ty) "input term illtyped",
-    std.assert! (coq.safe-dest-app Ty (global (indt I)) Args) "the type is not inductive",
+    std.assert! (coq.safe-dest-app Ty (global (indt I) _) Args) "the type is not inductive",
     coq.env.indt I _ ParamsNo _ _ _ _,
     std.drop ParamsNo Args Idxs,
     std.append Idxs [T] ToAbstract,

@@ -114,18 +114,21 @@ body-params _ T _ _ :-
 
 func main gref, gref, string -> list prop.
 main _ (indt GR) Suffix [Clause,param1-trivial-done (indt GR)] :- do! [
-  coq.env.indt GR _ Lno _ Arity _ _,
-  body-params Lno (global (indt GR)) Arity R,
+  coq.env.global (indt GR) Ind,
+  Ind = global _ Ui,
+  @uinstance! Ui => coq.env.indt GR _ Lno _ Arity _ _,
+  body-params Lno Ind Arity R,
   % coq.say {coq.term->string R},
   std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
 
   Name is {coq.gref->id (indt GR)} ^ Suffix,
   coq.env.add-const Name R RT @transparent! Cst,
-  Clause  = (param1-trivial-db (global (indt GR)) (global (const Cst))),
+  Clause  = (param1-trivial-db.ref (indt GR) (const Cst)),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done (indt GR))),
 ].
-main (const _GR) (const IsGR) Suffix [Clause,param1-trivial-done (const IsGR)] :- do! [
+main (const GR) (const IsGR) Suffix [Clause,param1-trivial-done (const IsGR)] :- do! [
+  coq.env.const GR (some _T) _,
   coq.env.const IsGR (some IsT) _,
   Name is {coq.gref->id (const IsGR)} ^ Suffix,
 
@@ -133,7 +136,7 @@ main (const _GR) (const IsGR) Suffix [Clause,param1-trivial-done (const IsGR)] :
 
   std.assert-ok! (coq.typecheck R RT) "derive.param1_trivial generates illtyped term",
   coq.env.add-const Name R RT @transparent! Cst,
-  Clause  = (param1-trivial-db (global (const IsGR)) (global (const Cst))),
+  Clause  = (param1-trivial-db.ref (const IsGR) (const Cst)),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ Clause),
   coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-trivial-done (const IsGR))),
 

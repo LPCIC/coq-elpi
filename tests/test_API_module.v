@@ -70,9 +70,9 @@ Elpi Query lp:{{
        coq.env.begin-module "B" _,
          coq.env.add-const "y" {{3}} _ _ GRy,
        coq.env.end-module _,
-     coq.env.add-const "z" (global (const GRy)) _ _ _,
+     coq.env.add-const "z" {coq.env.global (const GRy)} _ _ _,
      coq.env.add-indt (inductive "i1" _ (arity {{Type}}) i\ []) I,
-     coq.env.add-const "i" (global (indt I)) _ _ _, % silly limitation in Coq
+     coq.env.add-const "i" {coq.env.global (indt I)} _ _ _, % silly limitation in Coq
    coq.env.end-module MP,
    coq.env.module MP L
    %coq.env.module-type MP_TA [TAz,TAi] % name is broken wrt =, don't use it!
@@ -102,7 +102,7 @@ Elpi Query lp:{{
    coq.locate-module-type "TA" MP_TA,
    coq.env.begin-module-functor "F" _ _,
    coq.env.import-module {coq.locate-module "a"},
-   coq.env.add-const "w" (global {coq.locate "z"}) _ _ _,
+   coq.env.add-const "w" (global {coq.locate "z"} _) _ _ _,
    coq.env.end-module _
  ]
 }}.

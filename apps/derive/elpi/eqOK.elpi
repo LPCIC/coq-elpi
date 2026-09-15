@@ -28,11 +28,13 @@ body 0 (prod N S x\ prod _ _ _) E TisT (fun N S R) :-
 
 func main inductive, string -> list prop.
 main GR O [eqOK-done GR] :- do! [
-  T = global (indt GR),
+  coq.env.global (indt GR) T,
   coq.env.indt GR _ Lno _ _ _ _,
 
-  assert! (eqcorrect-db (indt GR) E) "derive.eqOK: use derive.eqcorrect before",
-  coq.env.typeof {coq.term->gref E} ETy,
+  assert! (eqcorrect-db (indt GR) EGR) "derive.eqOK: use derive.eqcorrect before",
+  coq.env.global EGR E,
+  E = global _ Ui,
+  @uinstance! Ui => coq.env.typeof EGR ETy,
 
   assert! (reali T IsT) "derive.eqOK: use derive.param1 before",
   assert! (param1-inhab-db IsT TisT) "derive.eqOK: use derive.param1.inhab before",
