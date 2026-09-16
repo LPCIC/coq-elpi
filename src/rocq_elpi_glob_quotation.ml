@@ -615,7 +615,22 @@ let gterm2lpast ~pattern ~language state glob =
         (Array.to_list rnos) actual_names tys in
       let bos = List.map (gterm2lp state) bos in
       in_elpiast_mfix ~loc names_rnos_tys focus_idx bos)
-  | GRec _ -> nYI "(glob)HOAS non-struct fix/cofix"
+  | GRec(GCoFix 0,[|name|],[|tctx|],[|ty|],[|bo|]) ->
+      let ty = glob_intros_prod tctx ty in
+      let ty = gterm2lp state ty in
+      let bo = glob_intros tctx bo in
+      under_binder ~loc (EConstr.nameR name) ty None bo state ~k:(fun name t state ->
+        in_elpiast_cofix ~loc name ty (gterm2lp state bo))
+  | GRec(GCoFix focus_idx,names,tctxs,tys,bos) ->
+      let n_cofix = Array.length names in
+      let names = Array.map EConstr.nameR names |> Array.to_list in
+      let tys = Array.map2 glob_intros_prod tctxs tys in
+      let tys = Array.map (gterm2lp state) tys |> Array.to_list in
+      let bos = Array.map2 glob_intros tctxs bos |> Array.to_list in
+      under_binders ~loc names tys (List.init n_cofix (fun _ -> None)) bos state ~k:(fun actual_names bos state ->
+      let names_tys = List.combine actual_names tys in
+      let bos = List.map (gterm2lp state) bos in
+      in_elpiast_mcofix ~loc names_tys focus_idx bos)
   | GInt i -> in_elpiast_primitive ~loc (Uint63 i)
   | GFloat f -> in_elpiast_primitive ~loc (Float64 f)
   | GString s -> in_elpiast_primitive ~loc (Pstring s)

@@ -956,6 +956,35 @@ let in_elpi_mfix names_rnos_tys focus_idx bodies =
     names_rnos_tys inner in
   E.mkApp mfixc (CD.of_int focus_idx) [CD.of_int focus_recno; block]
 
+let cofixc = E.Constants.declare_global_symbol "cofix"
+
+let in_elpi_cofix name ty bo =
+  E.mkApp cofixc (in_elpi_name name) [ty; E.mkLam bo]
+
+let in_elpiast_cofix ~loc n ty bo =
+  A.mkAppGlobal ~loc ~hdloc:loc cofixc (in_elpiast_name ~loc n) [ty; A.mkLam ~loc (name_of_name ~loc n) bo]
+
+let mcofixc    = E.Constants.declare_global_symbol "mcofix"
+let mcofix_tyc = E.Constants.declare_global_symbol "mcofix-ty"
+let mcofix_boc = E.Constants.declare_global_symbol "mcofix-bo"
+
+let in_elpiast_mcofix ~loc names_tys focus_idx bodies =
+  let inner = A.mkAppGlobal ~loc ~hdloc:loc mcofix_boc (A.list_to_lp_list ~loc bodies) [] in
+  let block =
+    List.fold_right (fun (name, ty) acc ->
+      A.mkAppGlobal ~loc ~hdloc:loc mcofix_tyc (in_elpiast_name ~loc name)
+        [ty; A.mkLam ~loc (name_of_name ~loc name) acc])
+      names_tys inner in
+  A.mkAppGlobal ~loc ~hdloc:loc mcofixc (A.mkOpaque ~loc @@ CD.int.cino focus_idx) [block]
+
+let in_elpi_mcofix names_tys focus_idx bodies =
+  let inner = E.mkApp mcofix_boc (U.list_to_lp_list bodies) [] in
+  let block =
+    List.fold_right (fun (name, ty) acc ->
+      E.mkApp mcofix_tyc (in_elpi_name name) [ty; E.mkLam acc])
+    names_tys inner in
+  E.mkApp mcofixc (CD.of_int focus_idx) [block]
+
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
 
@@ -1768,7 +1797,23 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, t = aux ~depth env state t in
          let state, p = in_elpi_primitive ~depth state (Projection p) in
          state, in_elpi_app ~depth p [|t|]
-    | C.CoFix _ -> nYI "HOAS for cofix"
+    | C.CoFix(_,([| name |],[| typ0 |], [| bo |])) ->
+         let state, typ = aux ~depth env state typ0 in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
+         let state, bo = aux ~depth:(depth+1) env state bo in
+         state, in_elpi_cofix name typ bo
+    | C.CoFix(focus_idx,(names, tys, bos)) ->
+         let names = Array.to_list names in
+         let tys = Array.to_list tys in
+         let (n,state,env), names_tys =
+           CList.fold_left_map (fun (n,state,env) (name,typ0) ->
+             let state,typ = aux ~depth env state typ0 in
+             let typ = U.move ~from:depth ~to_:(depth+n) typ in
+             let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
+             (n+1,state,env), (name, typ))
+           (0,state,env) (List.combine names tys) in
+         let state, bos = CArray.fold_left_map (aux ~depth:(depth+n) env) state bos in
+         state, in_elpi_mcofix names_tys focus_idx (Array.to_list bos)
     | x -> in_elpi_primitive_value ~depth state x
   in
   debug Pp.(fun () ->
@@ -2435,6 +2480,61 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
         let typs  = Array.of_list (List.map (fun (_,_,t) -> t) defs) in
         state,
         EC.mkFix ((rnos, focus_idx),(names, typs, Array.of_list coq_bodies)),
+        gls_acc @ gls_bos
+      in
+      collect_ty ~depth state coq_ctx block_lp [] []
+
+ (* cofix *)
+  | E.App(c,name,[ty;bo]) when cofixc == c ->
+      let state, name, gl0 = in_coq_fresh_annot_name ~depth ~coq_ctx depth name state in
+      let state, ty, gl1 = aux ~depth state ~on_ty:true ty in
+      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
+      let state, bo, gl2 = aux_lam coq_ctx ~depth state bo in
+      state, EC.mkCoFix (0,([|name|],[|ty|],[|bo|])), gl0 @ gl1 @ gl2
+
+ (* mcofix *)
+  | E.App(c,focus_lp,[block_lp]) when mcofixc == c ->
+      let outer_ctx = coq_ctx in
+      let focus_idx = lp2int ~depth ~ctx:"mcofix focus" focus_lp in
+      let rec collect_ty ~depth state coq_ctx node defs gls_acc =
+        match E.look ~depth node with
+        | E.App(c2,name_lp,[ty_lp; rest_lam]) when mcofix_tyc == c2 ->
+          let state, name, gl0 = in_coq_fresh_annot_name ~depth ~coq_ctx depth name_lp state in
+          let state, ty, gl =
+            lp2constr ~calldepth syntactic_constraints outer_ctx
+              ~depth state ~on_ty:true ty_lp in
+          let coq_ctx = push_coq_ctx_local depth
+            (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
+          let defs = (name, ty) :: defs in
+          let gls_acc = gl0 @ gl @ gls_acc in
+          (match E.look ~depth rest_lam with
+           | E.Lam body -> collect_ty ~depth:(depth+1) state coq_ctx body defs gls_acc
+           | _ -> err Pp.(str"mcofix: expected lambda in mcofix-ty body"))
+        | E.App(c2,bodies_lp,[]) when mcofix_boc == c2 ->
+          finish_mcofix ~depth state coq_ctx (List.rev defs) bodies_lp gls_acc
+        | _ -> err Pp.(str"mcofix: expected mcofix-ty or mcofix-bo, got: " ++
+                       str (P.Debug.show_term node))
+      and finish_mcofix ~depth state coq_ctx defs bodies_lp gls_acc =
+        let n = List.length defs in
+        if focus_idx < 0 || focus_idx >= n then
+          err Pp.(str"mcofix: focus index out of range: " ++ int focus_idx);
+        let body_list = U.lp_list_to_list ~depth bodies_lp in
+        if List.length body_list <> n then
+          err Pp.(str"mcofix: expected " ++ int n ++ str" bodies, got " ++
+                  int (List.length body_list));
+        let state, coq_bodies, gls_bos =
+          List.fold_left (fun (state, bos, gls) bo_lp ->
+            let state, bo, gl =
+              lp2constr ~calldepth syntactic_constraints coq_ctx
+                ~depth state bo_lp in
+            (state, bo :: bos, gl @ gls)
+          ) (state, [], []) body_list
+        in
+        let coq_bodies = List.rev coq_bodies in
+        let names = Array.of_list (List.map fst defs) in
+        let typs  = Array.of_list (List.map snd defs) in
+        state,
+        EC.mkCoFix (focus_idx,(names, typs, Array.of_list coq_bodies)),
         gls_acc @ gls_bos
       in
       collect_ty ~depth state coq_ctx block_lp [] []

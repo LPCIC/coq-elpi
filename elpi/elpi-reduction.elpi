@@ -70,8 +70,25 @@ whd-mfix (mfix-bo Bs) _ _ Fixno LA K KA RA X XC :-
   std.nth Fixno Bs B,
   whd B ArgsWRedRecNo X XC.
 
+% cofix only unfolds when it is itself eliminated (match/proj), never on its
+% own: see whd-indc-val below, where the cofix/mcofix cases live.
+func mcofix-unroll mcofix-block, mcofix-block, int, int -> term.
+mcofix-unroll (mcofix-ty _ _ F) MF Cur Fixno R :-
+  mcofix-unroll (F (mcofix Cur MF)) MF {calc (Cur + 1)} Fixno R.
+mcofix-unroll (mcofix-bo Bs) _ _ Fixno R :-
+  std.nth Fixno Bs R.
+
 % assert A reduces to a constructor
-whd-indc A GR KA :- whd A [] VA C, !, not(var VA), (VA = global (indc GR); VA = pglobal (indc GR) _), !, KA = C.
+func whd-indc-val term, stack -> constructor, stack.
+whd-indc-val (global (indc GR)) C GR C :- !.
+whd-indc-val (pglobal (indc GR) _) C GR C :- !.
+whd-indc-val (cofix _ _ F as Self) C GR KA :- !,
+  whd-indc {unwind (F Self) C} GR KA.
+whd-indc-val (mcofix Fno MF) C GR KA :- !,
+  mcofix-unroll MF MF 0 Fno Body, !,
+  whd-indc {unwind Body C} GR KA.
+
+whd-indc A GR KA :- whd A [] VA C, !, not(var VA), whd-indc-val VA C GR KA.
 
 % [whd1 T R] asserts progress was made in reducing T to R.
 whd1 T R :-

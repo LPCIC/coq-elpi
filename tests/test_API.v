@@ -254,6 +254,8 @@ Fail Elpi halt.
 
 (**********************************************)
 
+CoInductive pp_stream := PPCons (h : nat) (t : pp_stream).
+
 Elpi Command test.pp.
 Elpi Accumulate lp:{{
 main _ :- std.do! [
@@ -262,6 +264,8 @@ main _ :- std.do! [
   @ppwidth! 15 => coq.say {coq.pp->string P},
   @ppall! => coq.say {coq.term->string {{ fix foo x y {struct x} := match x in bool with false => y | true => 3 end }} },
   @ppmost! => coq.say {coq.term->string {{ fix foo x y {struct x} := match x in bool with false => y | true => 3 end }} },
+  @ppall! => coq.say {coq.term->string {{ cofix f : pp_stream := PPCons 0 f }} },
+  @ppmost! => coq.say {coq.term->string {{ cofix f : pp_stream := PPCons 0 f }} },
 ].
 }}.
 Elpi test.pp.

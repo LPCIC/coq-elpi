@@ -689,7 +689,22 @@ let detype ?(keepunivs = false) env sigma t =
                Array.map (fun (bl, _, _) -> bl) v,
                Array.map (fun (_, _, ty) -> ty) v,
                Array.map (fun (_, bd, _) -> bd) v )
-    | CoFix _ -> nYI "cofix"
+    | CoFix (idx, (names, tys, bodies)) ->
+        let env, names =
+          list_map_acc
+            (fun env (n, ty) -> push_occurring_rel (LocalAssum (n, ty)) env)
+            env
+            (CList.combine (names|> CArray.to_list) (tys |> CArray.to_list))
+        in
+        let n = Array.length tys in
+        let v = CArray.map2 (fun c t -> share_names 0 [] env c (Vars.lift n t)) bodies tys in
+        DAst.make
+        @@ GRec
+             ( GCoFix idx,
+               CArray.map_of_list (function Names.Name.Name x -> x | _ -> assert false) (List.map Context.binder_name names),
+               Array.map (fun (bl, _, _) -> bl) v,
+               Array.map (fun (_, _, ty) -> ty) v,
+               Array.map (fun (_, bd, _) -> bd) v )
     | Case (ci, u, pms, p, iv, c, [| bl |]) when unknown_inductive = Names.GlobRef.IndRef ci.ci_ind ->
         let tomatch = aux env c in
         let map i br =

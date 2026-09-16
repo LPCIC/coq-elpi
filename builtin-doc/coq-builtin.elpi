@@ -230,7 +230,9 @@ builtin symb let     : name -> term -> term -> (term -> term) -> term. % let x :
 builtin symb app     : list term -> term.                   % app [hd|args]
 builtin symb match   : term -> term -> list term -> term.   % match t p [branch])
 builtin symb fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
-builtin symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno
+builtin symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno mfix-block
+builtin symb cofix   : name -> term -> (term -> term) -> term.        % cofix name ty bo
+builtin symb mcofix  : int -> mcofix-block -> term.       % mcofix block-idx mcofix-block
 
 builtin symb primitive : primitive-value -> term.
 
@@ -238,8 +240,9 @@ data mfix-block.
 builtin symb mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
 builtin symb mfix-bo : list term -> mfix-block.
 
-% NYI
-%type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
+kind mcofix-block type.
+builtin symb mcofix-ty : name -> term -> (term -> mcofix-block) -> mcofix-block. % mcofix-ty name ty rest
+builtin symb mcofix-bo : list term -> mcofix-block.
 
 % Notes about (match Scrutinee TypingFunction Branches) when
 %   Inductive i A : A -> nat -> Type := K : forall a : A, i A a 0
