@@ -283,6 +283,20 @@ let (pstringc, pstring) : Pstring.t Elpi.API.RawOpaqueData.cdata * Pstring.t Elp
 let pstring_of_string = Pstring.of_string
 let string_of_pstring = Pstring.to_string
 
+type array_data = EC.t array * EC.t * EC.t
+
+let (parrayc, parray) : array_data Elpi.API.RawOpaqueData.cdata * array_data Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
+  declare {
+    name = "parray";
+    doc = "";
+    pp = (fun fmt ((data,_,_) : array_data) -> Format.fprintf fmt "<array:%d>" (Array.length data));
+    compare = Stdlib.compare;
+    hash = Hashtbl.hash;
+    hconsed = false;
+    constants = [];
+  }
+
 let debug = CDebug.create ~name:"elpi" ()
 
 let elpitime_flag, elpitime = CDebug.create_full ~name:"elpitime" ()
@@ -689,7 +703,22 @@ let detype ?(keepunivs = false) env sigma t =
                Array.map (fun (bl, _, _) -> bl) v,
                Array.map (fun (_, _, ty) -> ty) v,
                Array.map (fun (_, bd, _) -> bd) v )
-    | CoFix _ -> nYI "cofix"
+    | CoFix (idx, (names, tys, bodies)) ->
+        let env, names =
+          list_map_acc
+            (fun env (n, ty) -> push_occurring_rel (LocalAssum (n, ty)) env)
+            env
+            (CList.combine (names|> CArray.to_list) (tys |> CArray.to_list))
+        in
+        let n = Array.length tys in
+        let v = CArray.map2 (fun c t -> share_names 0 [] env c (Vars.lift n t)) bodies tys in
+        DAst.make
+        @@ GRec
+             ( GCoFix idx,
+               CArray.map_of_list (function Names.Name.Name x -> x | _ -> assert false) (List.map Context.binder_name names),
+               Array.map (fun (bl, _, _) -> bl) v,
+               Array.map (fun (_, _, ty) -> ty) v,
+               Array.map (fun (_, bd, _) -> bd) v )
     | Case (ci, u, pms, p, iv, c, [| bl |]) when unknown_inductive = Names.GlobRef.IndRef ci.ci_ind ->
         let tomatch = aux env c in
         let map i br =
