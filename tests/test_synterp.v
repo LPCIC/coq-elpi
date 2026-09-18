@@ -92,7 +92,7 @@ Elpi module2 "B" "C".
 Check a.
 
 #[both] Elpi Db acc.db lp:{{
-pred p o:int.
+pred p -> int.
 }}.
 Elpi Command acc.
 #[both] Elpi Accumulate Db acc.db.
@@ -132,11 +132,11 @@ pr 1.
 
 Elpi Command test_data.
 #[synterp] Elpi Accumulate lp:{{
-  type foo int.
+  symb foo : int.
   main-synterp _ R :- R = foo. % std.do!.
 }}.
 #[interp] Elpi Accumulate lp:{{
-  type foo int.
+  symb foo : int.
   main-interp _ R :- std.assert! (std.any->string R "foo") "bug".
 }}.
 
@@ -146,8 +146,8 @@ test_data.
 
 
 
-Elpi Db db1 lp:{{ pred x i:int. }}.
-#[synterp] Elpi Db db2 lp:{{ pred x i:int. }}.
+Elpi Db db1 lp:{{ pred x int. }}.
+#[synterp] Elpi Db db2 lp:{{ pred x int. }}.
 Elpi Command bug.
 Elpi Accumulate Db db1.
 #[synterp] Elpi Accumulate Db db2.

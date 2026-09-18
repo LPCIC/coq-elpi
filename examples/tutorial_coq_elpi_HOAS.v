@@ -70,9 +70,9 @@ Let's start with the :type:`gref` data type (for global reference).
 
 .. code:: elpi
 
-   type const constant -> gref.
-   type indt inductive -> gref.
-   type indc constructor -> gref.
+   symb const : constant -> gref.
+   symb indt : inductive -> gref.
+   symb indc : constructor -> gref.
 
 :type:`constant`, :type:`inductive` and :type:`constructor` are Coq specific
 data types that are opaque to Elpi. Still the :type:`gref` data type lets you
@@ -130,7 +130,7 @@ actual :type:`term`.
 
 .. code:: elpi
 
-   type global gref -> term.
+   symb global : gref -> term.
 
 ----------------------------------
 Constructors :e:`app` and :e:`fun`
@@ -145,7 +145,7 @@ the representation of `1`.
 
 .. code:: elpi
 
-   type app   list term -> term.
+   symb app   : list term -> term.
 
 Let's move to binders!
 
@@ -167,7 +167,7 @@ the type of the bound variable `nat` and a function describing the body:
 
 .. code:: elpi
 
-   type fun  name -> term -> (term -> term) -> term.
+   symb fun  : name -> term -> (term -> term) -> term.
 
 .. note:: :type:`name` is just for pretty printing: in spite of carrying
    a value in the Coq world, it has no content in Elpi (like the unit type)
@@ -212,7 +212,7 @@ call is represented via a bound variable
 
 .. code:: elpi
 
-   type fix   name -> int -> term -> (term -> term) -> term.
+   symb fix   : name -> int -> term -> (term -> term) -> term.
 
 A :constructor:`match` constructor carries the term being inspected,
 the return clause
@@ -222,7 +222,7 @@ order of the constructors in the inductive type declaration.
 
 .. code:: elpi
 
-   type match term -> term -> list term -> term.
+   symb match : term -> term -> list term -> term.
 
 The return clause is represented as a Coq function expecting in input
 the indexes of the inductive type, the inspected term and generating the
@@ -253,9 +253,9 @@ The last term constructor worth discussing is :constructor:`sort`.
 
 .. code:: elpi
 
-   type sort  universe -> term.
-   type prop universe.
-   type typ univ -> universe.
+   symb sort  : universe -> term.
+   symb prop : universe.
+   symb typ : univ -> universe.
 
 The opaque type :type:`univ` is a universe level variable. Elpi holds a store of
 constraints among these variables and provides APIs named :e:`coq.univ.*` to

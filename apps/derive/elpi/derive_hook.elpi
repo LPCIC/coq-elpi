@@ -2,11 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-pred derivation i:gref, i:string, o:bool, o:derive.
-pred export i:modpath.
-pred dep1 o:string, o:string.
-kind derive type.
-type derive string -> (func -> list (pred)) -> prop -> derive.
+pred derivation gref, string -> bool, derive.
+pred export modpath.
+pred dep1 -> string, string.
+data derive.
+symb derive : string -> (func -> list (pred)) -> prop -> derive.
 
 % if a derivation fails it should end by calling stop, instead of coq.error,
 % so that derive can make the failure non fatal

@@ -2,11 +2,11 @@ From elpi Require Import elpi.
 
 Elpi Command test.
 Elpi Db foo lp:{{/*(*/
-  pred test o:pstring.
+  pred test -> pstring.
 /*)*/}}.
 Elpi File buggy_inline lp:{{/*(*/
-kind f type -> type.
-kind s type.
+data f A.
+data s.
 typeabbrev pstring (f s).
 /*)*/}}.
 Fail Elpi Accumulate foo File buggy_inline.

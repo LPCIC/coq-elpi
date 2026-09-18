@@ -6,10 +6,10 @@ Elpi Command generalize.
 Elpi Accumulate lp:{{
 
 % we add a new constructor to terms to represent terms to be abstracted
-type abs int -> term.
+symb abs : int -> term.
 
 % bind back abstracted subterms
-pred bind i:int, i:term, o:term.
+pred bind int, term -> term.
 bind M T T1 :- M > 0,
   T1 = {{ fun x => lp:(B x) }},   % we build a Coq "fun .. => "
   N is M - 1,

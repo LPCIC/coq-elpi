@@ -8,7 +8,7 @@ Elpi Db cs.db lp:{{
 % - [Proj] is the projector of some structure, applied to the structure's parameters if any
 % - [Rhs] the term to find a structure on.
 :index (0 6 6)
-pred cs i:goal-ctx, i:term, i:term, o:term.
+pred cs goal-ctx, term, term -> term.
 
 }}.
 

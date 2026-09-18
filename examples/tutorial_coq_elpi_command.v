@@ -282,7 +282,7 @@ Elpi Command constructors_num.
 
 Elpi Accumulate lp:{{
 
-pred int->nat i:int, o:term.
+pred int->nat int -> term.
 int->nat 0 {{ 0 }}.
 int->nat N {{ S lp:X }} :- M is N - 1, int->nat M X.
 
@@ -337,10 +337,10 @@ Elpi Command abstract.
 Elpi Accumulate lp:{{
 
   % a renaming function which adds a ' to an ident (a string)
-  pred prime i:id, o:id.
+  pred prime id -> id.
   prime S S1 :- S1 is S ^ "'".
 
-  pred id i:id, o:id.
+  pred id id -> id.
   id X X.
 
   main [str Ind, trm Param] :-
@@ -468,7 +468,7 @@ Let's define a Db.
 Elpi Db age.db lp:{{
 
   % A typical Db is made of one main predicate
-  pred age o:string, o:int.
+  pred age -> string, int.
 
   % the Db is empty for now, we put a rule giving a
   % descriptive error and we name that rule "age.fail".
@@ -571,7 +571,7 @@ Elpi Accumulate lp:{{
     std.findall (age _ _) Rules,
     std.forall Rules print-rule.
 
-  pred print-rule i:prop.
+  pred print-rule (pred).
   print-rule (age P N) :- coq.say P "is" N "years old".
   
 }}.
@@ -654,7 +654,7 @@ get-option into other predicates typed in a more precise way. Eg:
 
 .. code:: elpi
 
-   pred get-my-option o:int.
+   pred get-my-option -> int.
    get-my-option I :- get-option "my-option-name" I.
 
 -----------------------------
@@ -833,8 +833,8 @@ and :e:`main-interp` entry points.
 
 .. code:: elpi
 
-    pred main-synterp i:list argument, o:any.
-    pred main-interp i:list argument, i:any.
+    pred main-synterp list argument -> any.
+    pred main-interp list argument, any.
 
 Unlike :e:`main` the former outputs a datum while the latter receives it
 in input. In the following command we create a (empty) module with a random
@@ -876,9 +876,9 @@ An excerpt of the :type:`synterp-action`.
 .. code:: elpi
 
     % Action executed during the parsing phase (aka synterp)
-    kind synterp-action type.
-    type begin-module id -> synterp-action.
-    type end-module modpath -> synterp-action.
+    data synterp-action.
+    symb begin-module : id -> synterp-action.
+    symb end-module : modpath -> synterp-action.
 
 The following command creates a stack of modules and puts in there
 the given definition. The synterp phase saves the actions when the top of the

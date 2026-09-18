@@ -899,7 +899,7 @@ Section prod_setoid.
 
   Elpi Accumulate TC.Solver lp:{{
     
-    pred remove_equiv_prod_equiv i:term, o:term.
+    pred remove_equiv_prod_equiv term -> term.
     remove_equiv_prod_equiv T1 T3 :-
       T1 = {{@equiv _ (@prod_equiv _ _ _ _)}}, !,
       T2 = {{@prod_relation lp:F lp:G lp:A lp:B}},
@@ -1032,7 +1032,7 @@ End sum_relation.
 Global Instance sum_equiv `{Equiv A, Equiv B} : Equiv (A + B) := sum_relation (≡) (≡).
 
 Elpi Accumulate TC.Solver lp:{{
-    pred remove_equiv_sum_equiv i:term, o:term.
+    pred remove_equiv_sum_equiv term -> term.
     remove_equiv_sum_equiv T1 T3 :-
       T1 = {{@equiv _ (@sum_equiv _ _ _ _)}}, !,
       T2 = {{@sum_relation lp:F lp:G lp:A lp:B}},

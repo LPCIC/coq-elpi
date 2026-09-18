@@ -133,14 +133,14 @@ apply-idx.aux Ity X Bo R :- whd1 X X1, !,
 
 % Also used to load the context under the fix 
 :index (1)
-func quantify-eq-db-idx prop -> prop.
+func quantify-eq-db-idx (pred) -> (pred).
 quantify-eq-db-idx (pi x y\ C x y) (pi x y\ C1 x y) :-
   pi x y\ quantify-eq-db-idx (C x y) (C1 x y).
 quantify-eq-db-idx (eq-db A B C :- L)
                          (pi x y\ eq-db (A1 x) (B1 y) (C1 x y) :- L) :-
   pi x y\ coq.mk-app A [x] (A1 x), coq.mk-app B [y] (B1 y), coq.mk-app C [x,y] (C1 x y).
 
-func quantify-eq-db-param prop -> prop.
+func quantify-eq-db-param (pred) -> (pred).
 quantify-eq-db-param (pi x f\ C x f) (pi x f\ C1 x f) :-
   pi x f\ quantify-eq-db-param (C x f) (C1 x f).
 quantify-eq-db-param (eq-db A B C :- (L : list prop))
@@ -151,7 +151,7 @@ quantify-eq-db-param (eq-db A B C :- (L : list prop))
     coq.mk-app B [x] (B1 x),
     coq.mk-app C [x,f] (C1 x f).
 
-func mk-clause int, term, prop -> prop.
+func mk-clause int, term, (pred) -> (pred).
 mk-clause Lno (prod _ _ Tx) C R :- Lno > 0, !,
   Lno1 is Lno - 1,
   quantify-eq-db-param C C1,
@@ -164,7 +164,7 @@ mk-clause N T A B :- whd1 T T1, !, mk-clause N T1 A B.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main GR Name [Clause1, Clause2] :- do! [
   coq.env.indt GR Ind Lno Luno Arity _ _,
   assert! (Ind = tt)   "derive.eq: Coinductive types are not supported",

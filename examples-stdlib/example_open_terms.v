@@ -51,19 +51,19 @@ Elpi File instantiate.code lp:{{
 % [instantiate-replacement N Ty x L R L1 R1] is called when crossing
 % a goal binder for the variable x named N and of type Ty. The replacement
 % L with R  is instantiated (if possible) to  L1 with R1
-pred instantiate-replacement i:name, i:term, i:term, i:argument, i:argument, o:argument, o:argument.
+pred instantiate-replacement name, term, term, argument, argument -> argument, argument.
 instantiate-replacement N Ty C L R L1 R1 :- std.do! [
   instantiate N Ty C L L1,
   instantiate N Ty C R R1,
 ].
 
-pred instantiate i:name, i:term, i:term, i:argument, o:argument.
+pred instantiate name, term, term, argument -> argument.
 instantiate _ _ _ (open-trm 0 A) (open-trm 0 A) :- !.
 instantiate N T C (open-trm I F) (open-trm J F1) :- remove-binder-for N T C F F1, !,
   J is I - 1.
 instantiate _ _ _ X X.
 
-pred remove-binder-for i:name, i:term, i:term, i:term, o:term.
+pred remove-binder-for name, term, term, term -> term.
 % we found the binder
 remove-binder-for N _ C (fun N1 _ F) Res :- {coq.name->id N} = {coq.name->id N1}, !,
   % Remember that in Elpi all names are the same, eg `x` = `y`
@@ -132,7 +132,7 @@ Elpi File congruence.code lp:{{
 % [congruence F G PFG Ty XS YS PXYS R] starting from a proof PFG that F = G
 % it consumes X Y and PXY : X = Y to build a proof R : (F X = G Y). It needs to
 % look at the type of F (and G) in order to decide which congruence lemma to apply
-pred conguence i:term, i:term,  i:term, i:term, i:list term, i:list term, i: list term, o:term.
+pred conguence term, term, term, term, list term, list term, list term -> term.
 conguence _ _ P _ [] [] [] P :- !.
 conguence F G PFG {{ _ -> lp:Ty }} [X|XS] [Y|YS] [PXY|PS] Q :- !,
   PFXGY = {{ congrA _ _ lp:F lp:G lp:PFG lp:X lp:Y lp:PXY }},
@@ -146,7 +146,7 @@ conguence F G PFG {{ forall x, lp:(Ty x) }} [X|XS] [Y|YS] [PXY|PS] Q :-
 Elpi Tactic test_congruence.
 Elpi Accumulate File congruence.code.
 Elpi Accumulate lp:{{
-  pred mk-refl i:term, o:term.
+  pred mk-refl term -> term.
   mk-refl T {{ @refl_equal Type lp:T }} :- coq.typecheck-ty T _ ok, !. % we don't like Set
   mk-refl T {{ refl_equal lp:T }}.
 
@@ -176,7 +176,7 @@ Elpi Accumulate lp:{{
 % [replace L R X Y P] replaces L by R in X obtaining Y and
 % a proof P that X = Y. P will contain holes (sub goals) for sub proofs
 % of L = R.
-pred replace i:argument, i:argument, i:term, o:term, o:term.
+pred replace argument, argument, term -> term, term.
 
 % all binders are crossed and we find a term identical to L.
 % the proof is a hole of type L = R.
@@ -202,7 +202,7 @@ replace _ _ (global _ as C) C {{ @refl_equal Type lp:C }} :- coq.typecheck-ty C 
 replace _ _ (global _ as C) C {{ refl_equal lp:C }} :- !.
 % we omit rules for primitive constants, fixpoints, let, forall, ...
 
-pred replace-list i:argument, i:argument, i:list term, o:list term, o:list term.
+pred replace-list argument, argument, list term -> list term, list term.
 replace-list _ _ [] [] [].
 replace-list L R [X|XS] [Y|YS] [P|PS] :- replace L R X Y P, replace-list L R XS YS PS.
 

@@ -56,12 +56,14 @@ func mask-for term, list (pair term term) -> list int.
 mask-for T Args Mask :- occurs-list Args 0 T Mask.
 
 
-pred default-output i:int, % gather infos to generate the match
-  o:list int, % mask: the position of the arguments that occur in the type
-              % of the projected one
-  o:list (pair term term), % a context (term,type) of default values
-  o:term, % the default value for the projected argument
-  o:term. % its type
+pred default-output
+  int % gather infos to generate the match
+  ->
+  list int, % mask: the position of the arguments that occur in the type
+            % of the projected one
+  list (pair term term), % a context (term,type) of default values
+  term, % the default value for the projected argument
+  term. % its type
 
 func body-default % makes lambdas for all default arguments + the projected
   term, % constructor type (begin processed)
@@ -115,7 +117,7 @@ body-param X KTy IT N J K R :- whd1 X X1, whd1 KTy KTy1, !,
 
 % ---------------------------------------------------------------------
 
-func allK-projs string, int, int, int, term, term, constructor, term -> list prop.
+func allK-projs string, int, int, int, term, term, constructor, term -> list (pred).
 
 allK-projs _ J J _ _ _ _ _ [] :- !.
 
@@ -133,14 +135,14 @@ allK-projs Prefix J JN Paramsno Arity ITy K KTy Clauses :- do! [
   allK-projs Prefix J1 JN Paramsno Arity IT K KTy ClausesRest
 ].
 
-func for-K string, int, term, term,  constructor, term -> list prop.
+func for-K string, int, term, term, constructor, term -> list (pred).
 for-K Prefix Paramsno Arity IT K KT Clauses :- do! [
   coq.count-prods KT N,
   Argsno is N - Paramsno,
   allK-projs Prefix 0 Argsno Paramsno Arity IT K KT Clauses
 ].
 
-func main1 inductive, string -> list prop.
+func main1 inductive, string -> list (pred).
 main1 GR Prefix Clauses :- do! [
   coq.env.global (indt GR) T,
   coq.env.indt GR _ Paramsno _ Arity Kn Kt,
@@ -148,7 +150,7 @@ main1 GR Prefix Clauses :- do! [
   flatten ClausesList Clauses
 ].
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main T Prefix C :- coq.mutual? T, !,
   coq.mutual.members T TS,
   std.map TS (t\c\ sigma p n\ derive.mutual.selected-prefix T Prefix t p, n is p ^ "proj", main1 t n c) CS,

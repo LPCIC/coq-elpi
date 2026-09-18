@@ -73,7 +73,7 @@ mlock Definition foo : T := bo.
 Elpi Command mlock.
 Elpi Accumulate File locker.
 #[synterp] Elpi Accumulate lp:{{
-  pred synterp-action i:id.
+  pred synterp-action id.
   synterp-action ID :-
     Module is ID ^ "_Locked",
     coq.env.begin-module-type Module,

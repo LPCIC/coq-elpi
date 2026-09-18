@@ -70,8 +70,8 @@ namespace tc {
         coq.say "Charging" (copy Y X),
         (copy Y X :- !) => relocate Xs Ys T T'.
 
-      pred collect-store o:list prop.
-      func collect-store-aux list prop -> list prop.
+      pred collect-store -> list (pred).
+      func collect-store-aux list (pred) -> list (pred).
 
       collect-store L :- collect-store-aux [] L.
       collect-store-aux X L :- declare_constraint (collect-store-aux X L) [_].

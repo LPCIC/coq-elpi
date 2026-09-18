@@ -6,7 +6,7 @@ Elpi Command UM.expand.
 Elpi Accumulate lp:{{
 
 % From a record declaration to an iterated sigma type
-pred wrap-fields-ty i:record-decl, o:term.
+pred wrap-fields-ty record-decl -> term.
 wrap-fields-ty (field _ _ Ty _\ end-record) Ty.
 wrap-fields-ty (field _ Proj Ty Fields) {{ sigT lp:F }} :-
   coq.string->name Proj Name,
@@ -19,7 +19,7 @@ wrap-fields-ty (field _ Proj Ty Fields) {{ sigT lp:F }} :-
 %  Acc gathers arg1 .. argn while building the fun
 %  SigmaTypeDef is used to fill in the implicit arguments of existT
 %  SigmaTypeName is used for BuilderType = forall arg1 .. argn, SigmaTypeName
-pred wrap-fields-bo i:record-decl, i:list term, i:term, i:term, o:term, o:term.
+pred wrap-fields-bo record-decl, list term, term, term -> term, term.
 wrap-fields-bo end-record Acc SigTy Sig T Sig :-
   std.rev Acc Args,
   wrap-fields-bo.aux Args SigTy T.
@@ -27,7 +27,7 @@ wrap-fields-bo (field _ Proj Ty Fields) Acc SigTy Sig (fun Name Ty Bo) (prod Nam
   coq.string->name Proj Name,
   pi x\ decl x Name Ty ==> wrap-fields-bo (Fields x) [x|Acc] SigTy Sig (Bo x) (Tgt x).
 
-pred wrap-fields-bo.aux i:list term, i:term, o:term.
+pred wrap-fields-bo.aux list term, term -> term.
 wrap-fields-bo.aux [Last] _ Last.
 wrap-fields-bo.aux [X|XS] {{ sigT lp:F }} {{ existT lp:F lp:X lp:Rest }} :-
   F = fun _ _ G,

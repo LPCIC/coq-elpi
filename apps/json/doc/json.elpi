@@ -10,34 +10,34 @@
 % package.
 
 % Yojson.Basic.t
-kind json type.
-external symbol json.null : json = "1". 
-external symbol json.bool : bool -> json = "1". 
-external symbol json.int : int -> json = "1". 
-external symbol json.float : float -> json = "1". 
-external symbol json.string : string -> json = "1". 
-external symbol json.assoc : list (pair string json) -> json = "1".  % key value pairs. When generated from built-in predicates, keys are sorted
-external symbol json.list : list json -> json = "1". 
+builtin data json.
+builtin symb json.null   : json = "1". 
+builtin symb json.bool   : bool -> json = "1". 
+builtin symb json.int    : int -> json = "1". 
+builtin symb json.float  : float -> json = "1". 
+builtin symb json.string : string -> json = "1". 
+builtin symb json.assoc  : list (pair string json) -> json = "1".  % key value pairs. When generated from built-in predicates, keys are sorted
+builtin symb json.list   : list json -> json = "1". 
 
 % [json.from_file File J D] like Yojson.Basic.from_file reads J from File.
 % If D is error then J is not assigned.
-external func json.from_file string -> json, diagnostic.
+builtin func json.from_file string -> json, diagnostic.
 
 % [json.from_string String J D] like Yojson.Basic.from_string reads J from
 % String.
 % If D is error then J is not assigned.
-external func json.from_string string -> json, diagnostic.
+builtin func json.from_string string -> json, diagnostic.
 
 % [json.to_file File J D] like Yojson.Basic.to_file write J to File.
-external func json.to_file string, json -> diagnostic.
+builtin func json.to_file string, json -> diagnostic.
 
 % [json.to_string J S D] like Yojson.Basic.to_string write J to a compact
 % string S.
-external func json.to_string json -> string, diagnostic.
+builtin func json.to_string json -> string, diagnostic.
 
 % [json.pretty_to_string J S D] like Yojson.Basic.pretty_to_string write J
 % to a nice string S.
-external func json.pretty_to_string json -> string, diagnostic.
+builtin func json.pretty_to_string json -> string, diagnostic.
 
 % ------------------------------------------------------------------------
 

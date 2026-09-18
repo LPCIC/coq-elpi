@@ -22,10 +22,10 @@ Elpi Tactic abs_evars.
 Elpi Accumulate lp:{{
 
 % we add a new constructor to terms to represent terms to be abstracted
-type abs int -> term.
+symb abs : int -> term.
 
 % bind back abstracted subterms
-pred bind i:int, i:int, i:term, o:term.
+pred bind int, int, term -> term.
 bind I M T T1 :- M > I, !,
   T1 = {{ forall x, lp:(B x) }},   
   N is I + 1,
@@ -38,7 +38,7 @@ bind M M T T1 :- copy T T1.         % we perform all the replacements
 % the clause see is only generated for a term if it hasn't been seen before
 % the term might need to be typechecked first or main generates extra holes for the
 % type of the parameters
-pred abs-evars i:term, o:term, o:int.
+pred abs-evars term -> term, int.
 abs-evars T1 T3 M :- std.do! [
   % we put (abs N) in place of each occurrence of the same hole
   ((pi T Ty N N' M \ fold-map T N (abs M) M :- var T, not (seen? T _), !, coq.typecheck T Ty ok, fold-map Ty N _ N', M is N' + 1, seen! T M) ==>

@@ -5,10 +5,10 @@
 shorten std.{rev, append, ignore-failure!, mem, map2, split-at, map, assert!}.
 
 % Entry points
-pred unify-eq i:term, i:term.
-pred unify-list-eq i:list term, i:list term.
-pred unify-leq i:term, i:term.
-pred of i:term, o:term, o:term. % of Term Type(i/o) RefinedTerm
+pred unify-eq term, term.
+pred unify-list-eq list term, list term.
+pred unify-leq term, term.
+pred of term -> term, term. % of Term Type(i/o) RefinedTerm
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Reduction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,16 +36,16 @@ hd-beta-zeta (uvar as K) [A|AS] X C :- !, % auto-intro
 % NOTE: asymmetric rules are not ! otherwise the flip rule is killed
 % NOTE: whd are !
 % names: unif X C  T D M
-kind cumul type.
-type eq cumul.
-type leq cumul.
+data cumul.
+symb eq : cumul.
+symb leq : cumul.
 
 macro @tail-cut-if Option Hd Hyps :- (
   (Hd :- get-option Option tt,      Hyps, !),
   (Hd :- not(get-option Option tt), Hyps   )
 ).
 
-pred unif i:term, i:stack, i:term, i:stack, i:bool, i:cumul.
+pred unif term, stack, term, stack, bool, cumul.
 :if "DBG:unif"
 unif X CX Y CY D M :-
   coq.say {counter "run"} "unif" X CX "==" Y CY "(flipped?" D "cumul:" M ")", fail.
@@ -141,15 +141,15 @@ unif X C T D ff U :- !, unif T D X C tt U.
 %   print "Error: " {coq.term->string {unwind X C1}} "vs" {coq.term->string {unwind Y C2}}. %, halt.
 
 % Contexts happens to be lists, so we just reuse the code
-pred unify-list i:list term, i:list term.
+pred unify-list list term, list term.
 unify-list L1 L2 :- unify-ctxs L1 L2.
 
 % the entry points of rec calls: unify unify-ctxs
-pred unify-ctxs i:list term, i:list term.
+pred unify-ctxs list term, list term.
 unify-ctxs [] [].
 unify-ctxs [X|XS] [Y|YS] :- unify X Y eq, !, unify-ctxs XS YS.
 
-pred unify i:term, i:term, i:cumul.
+pred unify term, term, cumul.
 unify A B C :- unif {hd-beta A []} {hd-beta B []} ff C.
 
 %%%%%% entry points for clients %%%%%%%
@@ -162,13 +162,13 @@ unify-list-eq L1 L2 :- unify-list L1 L2.
 % Binding a list of terms (delift in Matita, invert subst in Coq) 
 
 % We use a keyd discipline, i.e. we only bind terms with a rigid head
-pred key i:term.
+pred key term.
 key (global _) :- !.
 key (pglobal _ _) :- !.
 key C :- name C, !.
 key (primitive _) :- !.
 
-pred bind-list i:list term, i:term, o:any.
+pred bind-list list term, term -> any.
 bind-list [] T T' :- bind T T1, T1 = T'.
 bind-list [app [C| AS] |VS] T R :- key C, !,
   pi x\
@@ -184,7 +184,7 @@ bind-list [C|VS] T R :- key C, !,
 bind-list [ _ |VS] T R :- !, pi x\ bind-list VS T (R x).
 
 % CAVEAT: (app FLEX), (match _ _ FLEX) are not terms!
-pred bind i:term, o:term.
+pred bind term -> term.
 bind X Y :- name X, X = Y, !.
 bind X Y :- name X, def X _ _ T, !, bind T Y.
 bind (global _ as C) C :- !.
@@ -211,15 +211,15 @@ bind (uvar M L) W :- map L bind L1, coq.mk-app-uvar M L1 W.
 
 
 
-pred bidir-app i:term, i:term, i:list term, o:term.
+pred bidir-app term, term, list term -> term.
 :name "of:bidirectional-app"
 bidir-app _ _ _ _.
 
-pred saturate-dummy i:term, o:term.
+pred saturate-dummy term -> term.
 saturate-dummy (prod _ _ F) R :- pi x\ saturate-dummy (F x) R.
 saturate-dummy X X.  
 
-pred ensure-prod.aux i:list A, i:term, o:term, o:bool.
+pred ensure-prod.aux list A, term -> term, bool.
 ensure-prod.aux [] X X _.
 ensure-prod.aux [_|Args] (prod N S T) (prod N S T1) NU :- !,
   pi x\ ensure-prod.aux Args (T x) (T1 x) NU.
@@ -231,13 +231,13 @@ ensure-prod.aux Args X R NU :-
 % TODO: do not fail if whd1 fails and the term is not flexible since it
 % may just need to be passed a concrete argument
 
-pred ensure-prod i:list A, i:term.
+pred ensure-prod list A, term.
 ensure-prod Args Ty :-
   ensure-prod.aux Args Ty R NeedsUnif,
   if (var NeedsUnif) true (of R _ R1, unify-eq Ty R1).
 
 
-pred eat-prod i:list term, i:term, i:term, o:list term, o:term, o:term.
+pred eat-prod list term, term, term -> list term, term, term.
 :if "DBG:of" eat-prod [] Hd Prod Adone Res ResTy :-
 coq.say "eat-prod" Hd {rev Adone} "==" Res ";" Prod "=<=" ResTy, fail.
 
@@ -291,13 +291,13 @@ of (match T Rty Bs) ResRtyInst (match ResT ResRty ResBs) :-
   of ResRtyRaw _ ResRty, unify-eq Rty ResRty,
   % Rty must type each branch
   map2 KsLArgs Kn (mk-bty Rty Lno) BsTy,
-  map2R Bs BsTy of ResBs,
+  map2R Bs of BsTy ResBs,
   % Outside type
   unify-leq {coq.mk-app ResRty {append RArgs [ResT]}} ResRtyInst.
 
-pred map2R i:list A, o:list B, i:(pred i:A, o:B, o:C), o:list C.
-map2R [] [] _ [].
-map2R [X|XS] [Y|YS] F [Z|ZS] :- F X Y Z, map2R XS YS F ZS.
+pred map2R list A, (pred A -> B, C) -> list B, list C.
+map2R [] _ [] [].
+map2R [X|XS] F [Y|YS] [Z|ZS] :- F X Y Z, map2R XS F YS ZS.
 
 of (let N Ty Bo F) TyFx (let N ResTy ResBo ResF) :-
   of Ty (sort _) ResTy, of Bo ResTy ResBo,
@@ -325,9 +325,9 @@ of (uvar as X) T Y :- !, evar X T Y.
 :before "default-assign-evar"
 evar X Ty S :- !, of X Ty S, !.
 
-pred coerce     o:term, o:term, o:term, o:term.
-pred coerced    i:term, i:term, i:term, o:term.
-pred coerceible i:term, o:term, i:term, o:term.
+pred coerce -> term, term, term, term.
+pred coerced term, term, term -> term.
+pred coerceible term, term -> term, term.
 of X T R :- get-option "of:coerce" tt, not (var T), of X XT Y, coerced XT T Y R.
 
 :if "DBG:of"
@@ -364,13 +364,13 @@ constraint declare-evar evar decl def cache rm-evar {
 
 
 % typing match %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-type mk-rty list term -> term -> term -> term -> prop. 
+func mk-rty list term, term, term -> term.
 mk-rty ARGS HD (prod N S T) (fun N S F) :- !,
   pi x\ mk-rty [x|ARGS] HD (T x) (F x).
 mk-rty ARGS HD _ (fun _ IndApp _FRESH) :-
   coq.mk-app HD {rev ARGS} IndApp.
 
-pred mk-bty i:term, i:int, i:term, i:constructor, o:term.
+pred mk-bty term, int, term, constructor -> term.
 mk-bty Rty Lno (prod N S T) Ki (prod N S B) :- !,
   pi x\ mk-bty Rty Lno (T x) Ki (B x).
 mk-bty Rty Lno T Ki AppRtyNorm :-
@@ -386,5 +386,5 @@ mk-bty Rty Lno T Ki AppRtyNorm :-
 
 % PTS sorts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pred pts i:sort, i:sort, o:sort.
+pred pts sort, sort -> sort.
 pts  X Y U :- coq.sort.pts-triple X Y U.

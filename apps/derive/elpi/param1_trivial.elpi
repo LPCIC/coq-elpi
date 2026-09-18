@@ -112,7 +112,7 @@ body-params _ T _ _ :-
             ". It does not look like a unary parametricity translation of an inductive with no indexes.",
   fail.
 
-func main gref, gref, string -> list prop.
+func main gref, gref, string -> list (pred).
 main _ (indt GR) Suffix [Clause,param1-trivial-done (indt GR)] :- do! [
   coq.env.indt GR _ Lno _ Arity _ _,
   body-params Lno (global (indt GR)) Arity R,

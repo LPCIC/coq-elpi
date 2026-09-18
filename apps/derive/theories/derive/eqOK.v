@@ -14,7 +14,7 @@ From elpi.apps Require Import derive.
 From elpi.apps Require Import derive.param1 derive.param1_congr derive.param1_trivial derive.eqK derive.eqcorrect.
 
 Elpi Db derive.eqOK.db lp:{{
-  pred eqOK-done i:inductive.
+  pred eqOK-done inductive.
 }}.
 
 

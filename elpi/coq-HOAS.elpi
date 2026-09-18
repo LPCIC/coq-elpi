@@ -11,11 +11,11 @@
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
 % msolve is for tactics that operate on multiple goals (called via all: ).
-external pred solve i:goal, o:list sealed-goal.
-external pred msolve i:list sealed-goal, o:list sealed-goal.
+builtin pred solve goal -> list sealed-goal.
+builtin pred msolve list sealed-goal -> list sealed-goal.
 
 % Extra arguments for tactics
-external symbol tac : ltac1-tactic -> argument.
+builtin symb tac : ltac1-tactic -> argument.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
@@ -24,30 +24,30 @@ external symbol tac : ltac1-tactic -> argument.
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % -- terms --------------------------------------------------------------------
-kind term type.
+data term.
 
-external symbol sort    : sort -> term. % Prop, Type@{i}
+builtin symb sort    : sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-external symbol global  : gref -> term.
-external symbol pglobal : gref -> univ-instance -> term.
+builtin symb global  : gref -> term.
+builtin symb pglobal : gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
-external symbol fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
-external symbol prod    : name -> term -> (term -> term) -> term.         % forall x : t,
-external symbol let     : name -> term -> term -> (term -> term) -> term. % let x : T := v in
+builtin symb fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
+builtin symb prod    : name -> term -> (term -> term) -> term.         % forall x : t,
+builtin symb let     : name -> term -> term -> (term -> term) -> term. % let x : T := v in
 
 % other term formers: function application, pattern matching and recursion
-external symbol app     : list term -> term.                   % app [hd|args]
-external symbol match   : term -> term -> list term -> term.   % match t p [branch])
-external symbol fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
-external symbol mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno
+builtin symb app     : list term -> term.                   % app [hd|args]
+builtin symb match   : term -> term -> list term -> term.   % match t p [branch])
+builtin symb fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+builtin symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno
 
-external symbol primitive : primitive-value -> term.
+builtin symb primitive : primitive-value -> term.
 
-kind mfix-block type.
-external symbol mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
-external symbol mfix-bo : list term -> mfix-block.
+data mfix-block.
+builtin symb mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
+builtin symb mfix-bo : list term -> mfix-block.
 
 % NYI
 %type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
@@ -106,11 +106,11 @@ macro @cast T TY :- (let `cast` TY T x\x).
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
 
-external func decl term -> name, term. % Var Name Ty
-external func def  term -> name, term, term. % Var Name Ty Bo
-external func cache term -> term.
+builtin func decl term -> name, term. % Var Name Ty
+builtin func def  term -> name, term, term. % Var Name Ty Bo
+builtin func cache term -> term.
 
-external func declare-evar list prop, term, term, term. % Ctx RawEvar Ty Evar
+builtin func declare-evar list (pred), term, term, term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-
@@ -120,7 +120,7 @@ declare-evar Ctx RawEv Ty Ev :-
 % to only contain decl, def, pp.  For now no handling rules for this set of
 % constraints other than one to remove a constraint
 
-external func rm-evar term, term.
+builtin func rm-evar term, term.
 rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
 rm-evar _ _.
 
@@ -142,7 +142,7 @@ constraint declare-evar evar def decl cache rm-evar {
 % elaborates to a term of type Ty that gets assigned to E.
 % In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
-external func evar term, term -> term. % Evar Ty RefinedSolution
+builtin func evar term, term -> term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- var S _ VL, !,
   prune T VL, prune X VL, declare_constraint (evar X T S) [X, S].
 
@@ -210,13 +210,13 @@ macro @holes! :- get-option "HOAS:holes" tt.
 %         (RawEvar x1 x2) (<g> x1 x2) (Evar x1 x2)
 %         (Arguments x1 x2))
 
-kind goal type.
-kind sealed-goal type.
-external symbol nabla : (term -> sealed-goal) -> sealed-goal.
-external symbol seal  : goal -> sealed-goal.
+data goal.
+data sealed-goal.
+builtin symb nabla : (term -> sealed-goal) -> sealed-goal.
+builtin symb seal  : goal -> sealed-goal.
 
 typeabbrev goal-ctx (list prop).
-external symbol goal : goal-ctx -> term -> term -> term -> list argument -> goal.
+builtin symb goal : goal-ctx -> term -> term -> term -> list argument -> goal.
 
 % A sealed-goal closes with nabla the bound names of a
 % 

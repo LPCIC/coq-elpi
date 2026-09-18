@@ -3,7 +3,7 @@ From elpi Require Import elpi.
 Elpi Tactic perf.
 Elpi Accumulate lp:{{
 
-pred loop i:int, i:prop.
+pred loop int, (pred).
 loop 0 _.
 loop M P :-
   N is M - 1,

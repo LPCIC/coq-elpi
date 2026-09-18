@@ -1,7 +1,7 @@
 From elpi.apps Require Import tc.
 
 Elpi Accumulate tc.db lp:{{
-  pred origial_tc o:int. 
+  pred origial_tc -> int. 
 }}.
 
 Elpi Command len_test.

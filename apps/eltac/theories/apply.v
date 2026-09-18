@@ -2,7 +2,7 @@ From elpi Require Export elpi.
 
 Elpi Tactic apply.
 Elpi Accumulate lp:{{
-    pred apply i:term, i:term, o:goal, o:list sealed-goal.
+    pred apply term, term -> goal, list sealed-goal.
 
     apply T _ G GL :- refine T G GL, !.
 

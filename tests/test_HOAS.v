@@ -66,7 +66,7 @@ Elpi Query lp:{{
   coq.env.end-section
 }}.
 
-Elpi Db univs.db lp:{{ pred u o:univ. }}.
+Elpi Db univs.db lp:{{ pred u -> univ. }}.
 Elpi Command test_u.
 Elpi Accumulate Db univs.db.
 Elpi Query lp:{{

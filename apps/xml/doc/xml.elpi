@@ -10,27 +10,27 @@
 % package.
 
 % Xml.xml
-kind xml type.
-external symbol xml.element : string -> list (pair string string) ->
-                              list xml -> xml = "1".  % Attributes are sorted by key
-external symbol xml.pcdata : string -> xml = "1". 
+builtin data xml.
+builtin symb xml.element : string -> list (pair string string) ->
+                           list xml -> xml = "1".  % Attributes are sorted by key
+builtin symb xml.pcdata  : string -> xml = "1". 
 
 % [xml.parse_file File XML D] like Xml.parse_file reads XML from File.
 % If D is error then XML is not assigned.
-external func xml.parse_file string -> xml, diagnostic.
+builtin func xml.parse_file string -> xml, diagnostic.
 
 % [xml.parse_string String XML D] like Xml.parse_string reads XML from
 % String.
 % If D is error then XML is not assigned.
-external func xml.parse_string string -> xml, diagnostic.
+builtin func xml.parse_string string -> xml, diagnostic.
 
 % [xml.to_string XML S D] like Xml.to_string write XML to a compact string
 % S.
-external func xml.to_string xml -> string, diagnostic.
+builtin func xml.to_string xml -> string, diagnostic.
 
 % [xml.to_string_fmt XML S D] like Xml.to_string_fmt write XML to a nice
 % string S.
-external func xml.to_string_fmt xml -> string, diagnostic.
+builtin func xml.to_string_fmt xml -> string, diagnostic.
 
 % ------------------------------------------------------------------------
 

@@ -4,13 +4,13 @@ Elpi Tactic data_passing.
 Elpi Accumulate lp:{{
   shorten coq.ltac.{ open , thenl , set-goal-arguments }.
 
-  pred dup i:goal, o:list sealed-goal.
+  pred dup goal -> list sealed-goal.
   dup (goal _ _ _ _ [trm T] as G) GS :-
     refine {{ _ lp:T }} G GL,
     std.map GL (set-goal-arguments [trm T] G) GS. % passing an argument to subgoals
     
 
-  pred clear i:goal, o:list sealed-goal.
+  pred clear goal -> list sealed-goal.
   clear (goal C _ _ E [trm T]) _ :-
     std.map C (x\r\x = decl r _ _) Names,
     std.filter Names (x\not (x = T)) InScope,

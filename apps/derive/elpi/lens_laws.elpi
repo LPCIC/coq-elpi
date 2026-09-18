@@ -4,7 +4,7 @@
 
 namespace derive.lens-laws {
 
-func declare-law1 string, prop.
+func declare-law1 string, (pred).
 declare-law1 Prefix (lens-db I FC C) :- std.do! [
   coq.env.indt-decl I Decl,
   law1 Decl (global (const C)) (global (indt I)) Bo,
@@ -25,7 +25,7 @@ law1-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.view_set_on lp:L lp:R }} :- std.la
 func law1-bo.aux term, term, list term, list term -> term.
 law1-bo.aux _ _ _ _ {{ fun x => lib:@elpi.erefl _ _ }}.
 
-func declare-law2 string, prop.
+func declare-law2 string, (pred).
 declare-law2 Prefix (lens-db I FC C) :- std.do! [
   coq.env.indt-decl I Decl,
   law2 Decl (global (const C)) (global (indt I)) Bo,
@@ -46,7 +46,7 @@ law2-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.set_set_on lp:L lp:R }} :- std.las
 func law2-bo.aux term, term, list term, list term -> term.
 law2-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 
-func declare-law3 string, prop.
+func declare-law3 string, (pred).
 declare-law3 Prefix (lens-db I FC C) :- std.do! [
   coq.env.indt-decl I Decl,
   law3 Decl (global (const C)) (global (indt I)) Bo,
@@ -67,7 +67,7 @@ law3-rty.aux L _ Vs _ {{ lib:elpi.derive.lens.set_view_on lp:L lp:R }} :- std.la
 func law3-bo.aux term, term, list term, list term -> term.
 law3-bo.aux _ _ _ _ {{ lib:@elpi.erefl _ _ }}.
 
-func declare-law4 string, prop, prop.
+func declare-law4 string, (pred), (pred).
 declare-law4 _ (lens-db I F C) (lens-db I F C) :- !.
 declare-law4 Prefix (lens-db I FC1 C1) (lens-db I FC2 C2) :- std.do! [
   coq.env.indt-decl I Decl,
@@ -90,7 +90,7 @@ law4-rty.aux L1 L2 _ Vs _ {{ lib:elpi.derive.lens.exchange_on lp:L1 lp:L2 lp:R }
 func law4-bo.aux term, term, list term, list term -> term.
 law4-bo.aux _ _ _ _ {{ fun x y => lib:@elpi.erefl _ _ }}.
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main I Prefix [lens-laws-done I] :- std.do! [
   std.findall (lens-db I F_ L_) Lenses,
   std.forall Lenses (declare-law1 Prefix),

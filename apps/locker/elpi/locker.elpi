@@ -52,7 +52,7 @@ module-lock ID Bo Arity UnivDecl :- std.do! [
     (UnivDecl1 = none),
 
   lock-module-type ID Ty Bo UnivDecl1 Signature,
-  lock-module-body Signature ID Ty Bo UnivDecl1 Symbol Module,
+  lock-module-body ID Ty Bo UnivDecl1 Signature Symbol Module,
 
   @global! => coq.notation.add-abbreviation ID 0 Symbol ff _,
 
@@ -77,9 +77,8 @@ lock-module-type ID Ty Bo UnivDecl M :- std.do! [
   coq.env.end-module-type M,
 ].
 
-:functional
-pred lock-module-body o:modtypath, i:id, i:term, i:term, i:option upoly-decl, o:term, o:modpath.
-lock-module-body Signature ID Ty Bo UnivDecl B M :- std.do! [
+func lock-module-body id, term, term, option upoly-decl -> modtypath, term, modpath.
+lock-module-body ID Ty Bo UnivDecl Signature B M :- std.do! [
   coq.env.begin-module ID (some Signature),
   if (UnivDecl = some UD) (coq.upoly-decl->attribute UD Poly!) (Poly! = true),
   Poly! => coq.env.add-const "body" Bo Ty @transparent! C,

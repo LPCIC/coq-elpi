@@ -4,7 +4,7 @@
 
 namespace derive {
 
-pred dep o:string, o:string.
+pred dep -> string, string.
 dep X Y :- dep1 X Y.
 dep X Y :- dep1 X Z, dep Z Y.
 
@@ -34,16 +34,16 @@ toposort L SL :-
   std.findall (dep1 _ _) Deps,
   topo L Deps SL.
 
-func not-a-src list prop, derive ->.
+func not-a-src list (pred), derive ->.
 not-a-src Deps (derive A _ _) :- not(std.mem! Deps (dep1 A _)).
 
 :index (1)
-func tgt-is-not-in list derive, prop ->.
+func tgt-is-not-in list derive, (pred) ->.
 tgt-is-not-in [] _.
 tgt-is-not-in [derive Tgt _ _|_] (dep1 _ Tgt) :- !, fail.
 tgt-is-not-in [_|L] D :- tgt-is-not-in L D.
 
-func topo list derive, list prop -> list derive.
+func topo list derive, list (pred) -> list derive.
 topo [] _ [] :- !.
 topo L Deps SL :-
   std.partition L (not-a-src Deps) LNoDeps Other,

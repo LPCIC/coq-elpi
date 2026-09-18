@@ -5,9 +5,9 @@ namespace tc {
 
     namespace instance {
       % Tells if the current name is a bound variables
-      pred is-name o:term.
+      pred is-name -> term.
       % Tells if the current name stands for a uvar
-      pred is-uvar o:term.
+      pred is-uvar -> term.
 
       :index (_ _ 1)
       func may-contract-to list term, term, term ->.
@@ -56,10 +56,10 @@ namespace tc {
       split-pf [X|Xs] Old [X|Ys] L :- is-name X, not (std.mem! Old X), !, split-pf Xs [X|Old] Ys L.
       split-pf Xs _ [] Xs.
 
-      kind positivity type.
-      type is_pos positivity.
-      type is_neg positivity.
-      type is_neg_fix positivity.
+      data positivity.
+      symb is_pos : positivity.
+      symb is_neg : positivity.
+      symb is_neg_fix : positivity.
 
       :index (1 _)
       func neg positivity -> positivity.

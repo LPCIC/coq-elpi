@@ -157,7 +157,7 @@ Module T3. Fail Elpi Db test3.db lp:{{ }}. End T3.
 (* scope grafted clauses, again and across files *)
 
 Elpi Db global.db lp:{{
-  pred declared o:string.
+  pred declared -> string.
 
   :name "init"
   declared _ :- fail.

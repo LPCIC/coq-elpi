@@ -59,8 +59,8 @@ Here we declare that :e:`person` is a type, and that
 
 Elpi Program tutorial lp:{{
 
-  kind person  type.
-  type mallory, bob, alice  person.
+  data person.
+  symb mallory, bob, alice : person.
 
 }}.
 
@@ -79,7 +79,7 @@ and three rules representing our knowledge about our terms.
 
 Elpi Accumulate lp:{{
 
-  pred age o:person, o:int.
+  pred age -> person, int.
 
   age mallory 23.
   age bob 23.
@@ -90,8 +90,9 @@ Elpi Accumulate lp:{{
 (*|
 
 The predicate :e:`age` has two arguments, the former is a person while
-the latter is an integer. The label :e:`o:` (standing for output)
-is a mode declaration, which we will explain later (ignore it for now).
+the latter is an integer. The arrow :e:`->` separates
+inputs (none here) from outputs. We will explain later the difference
+between inputs and outputs later.
 
 .. note:: :stdtype:`int` is the built-in data type of integers
 
@@ -315,7 +316,7 @@ in terms of the :e:`age` of :e:`P` and :e:`Q`.
 
 Elpi Accumulate lp:{{
 
-  pred older o:person, o:person.
+  pred older -> person, person.
   older P Q :- age P N, age Q M, N > M.
 
 }}.
@@ -389,8 +390,8 @@ i.e. associate only one "output" to a given "input".
 
 Elpi Program tutorial_functions lp:{{
 
-  kind person  type.
-  type mallory, bob, alice  person.
+  data person.
+  symb mallory, bob, alice : person.
 
   func age person -> int.
   age mallory 23.
@@ -473,7 +474,7 @@ The following code is rejected because the second condition does not hold.
 Fail Elpi Program tutorial_functions4 lp:{{
 
    func prime int -> . % code omitted
-   pred one_or_two o:int.
+   pred one_or_two -> int.
    one_or_two 1.
    one_or_two 2.
 
@@ -494,7 +495,7 @@ At the same time the code below is accepted.
 Elpi Program tutorial_functions5 lp:{{
 
    func prime int -> .
-   pred one_or_two o:int.
+   pred one_or_two -> int.
    one_or_two 1.
    one_or_two 2.
 
@@ -523,14 +524,7 @@ The syntax
 
    func age person -> int. 
 
-desugars to
-
-.. code:: elpi
-
-   :functional                   % this is an attribute (a special comment)
-   pred age i:person, o:int.
-
-that asserts two things. First :e:`age` is expected to behave like a function.
+asserts two things. First :e:`age` is expected to behave like a function.
 Second its first argument is flagged with the *input mode*.
 
 Query arguments in input mode are *matched* against the rule's corresponding
@@ -553,8 +547,8 @@ Fail Elpi Query tutorial_functions lp:{{
 
 The query fails because :e:`P` (occurring in the query)
 does not match :e:`bob` nor :e:`mallory`: there is no way to
-make :e:`P = bob` hold without assigning :e:`P` but that is forbidden by
-the :e:`i:` directive in the signature of :e:`age`.
+make :e:`P = bob` hold without assigning :e:`P` but that is forbidden since
+the first argument of :e:`age` is flagged as input.
 
 .. note:: Pattern matching API
 
@@ -626,10 +620,10 @@ that :e:`app` and :e:`fun` are constructors of that type.
 
 Elpi Program stlc lp:{{
 
-  kind  term  type.
+  data  term.
 
-  type  app   term -> term -> term.
-  type  fun   (term -> term) -> term.
+  symb  app   : term -> term -> term.
+  symb  fun   : (term -> term) -> term.
 
 }}.
 
@@ -681,7 +675,7 @@ as a comment.
 
 Elpi Accumulate lp:{{
 
-  pred whd i:term, o:term.
+  pred whd term -> term.
 
   % when the head "Hd" of an "app" (lication) is a
   % "fun" we substitute and continue
@@ -723,7 +717,7 @@ Another little test using global constants:
 |*)
 Elpi Accumulate lp:{{
 
-  type foo, bar term.
+  symb foo, bar : term.
 
 }}.
 
@@ -778,10 +772,10 @@ we provide two rules, one for each term constructor.
 
 Elpi Accumulate lp:{{
 
-  kind  ty   type.           % the data type of types
-  type  arr  ty -> ty -> ty. % our type constructor
+  data  ty.                    % the data type of types
+  symb  arr  : ty -> ty -> ty. % our type constructor
 
-  pred of i:term, o:ty. % the type checking algorithm
+  pred of term -> ty. % the type checking algorithm
 
   % for the app node we ensure the head is a function from
   % A to B, and that the argument is of type A
@@ -993,11 +987,11 @@ A simple example: Peano's addition:
 
 Elpi Program peano lp:{{
 
-kind nat type.
-type z nat.
-type s nat -> nat.
+data nat.
+symb z : nat.
+symb s : nat -> nat.
 
-pred add o:nat, o:nat, o:nat.
+pred add -> nat, nat, nat.
 
 add (s X) Y (s Z) :- add X Y Z.
 add z X X.
@@ -1029,19 +1023,19 @@ Indeed the first rule for add can be applied forever.
 If one exchanges the two rules in the program, then Elpi
 terminates picking :e:`z` for :e:`X`.
 
-We can use the mode directive in order to
-*match* arguments marked as :e:`i:` against the patterns
-in the head of rules, rather than unifying them.
+We can use flag the first two arguments of :e:`sum` as inputs
+so that queries are *matched* against the corresponding patterns
+in the head of rules.
 
 |*)
 
 Elpi Program peano2 lp:{{
 
-kind nat type.
-type z nat.
-type s nat -> nat.
+data nat.
+symb z : nat.
+symb s : nat -> nat.
 
-pred sum i:nat, i:nat, o:nat.
+pred sum nat, nat -> nat.
 
 sum (s X) Y (s Z) :- sum X Y Z.
 sum z X X.
@@ -1063,9 +1057,9 @@ syntactic constraints
 
 Elpi Program peano3 lp:{{
 
-kind nat type.
-type z nat.
-type s nat -> nat.
+data nat.
+symb z : nat.
+symb s : nat -> nat.
 
 func sum nat, nat -> nat.
 
@@ -1204,7 +1198,7 @@ and :stdlib:`std.rev` to build a palindrome:
 
 Elpi Program function lp:{{
 
-pred make-palindrome i:list A, o:list A.
+pred make-palindrome list A -> list A.
 
 make-palindrome L Result :-
   std.rev L TMP,
@@ -1233,7 +1227,7 @@ that contains them.
 
 Elpi Accumulate lp:{{
 
-pred make-palindrome2 i:list A, o:list A.
+pred make-palindrome2 list A -> list A.
 
 make-palindrome2 L Result :-
   std.append L {std.rev L} Result.
@@ -1301,17 +1295,17 @@ would do in a functional language by passing an anonymous function):
 
 Elpi Accumulate lp:{{
 
-pred bad i:list int, o:list int.
+pred bad list int -> list int.
 
 bad L Result :-
   std.map L (x\ r\ TMP is x + 1, r = TMP) Result.
 
-pred good i:list int, o:list int.
+pred good list int -> list int.
 good L Result :-
   std.map L good.aux Result.
 good.aux X R :- TMP is X + 1, R = TMP.
 
-pred good2 i:list int, o:list int.
+pred good2 list int -> list int.
 good2 L Result :-
   std.map L (x\ r\ sigma TMP\ TMP is x + 1, r = TMP) Result.
 
@@ -1347,7 +1341,7 @@ the occasion to clarify further the scope of variables.
 
 Elpi Accumulate lp:{{
 
-pred good3 i:list int, o:list int.
+pred good3 list int -> list int.
 good3 L Result :-
   pi aux\
     (pi TMP X R\ aux X R :- TMP is X + 1, R = TMP) ==>
@@ -1594,7 +1588,7 @@ given debug variable is set).
 Elpi Debug "DEBUG_MYPRED".
 Elpi Program debug lp:{{
 
-  pred mypred i:int.
+  pred mypred int.
 
   :if "DEBUG_MYPRED"
   mypred X :-

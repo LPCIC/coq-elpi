@@ -15,7 +15,7 @@ The `coercion` predicate lives in the database `coercion.db`
 % - [Inferred] is the type of [V]
 % - [Expected] is the type [V] should be coerced to
 % - [Res] is the result (of type [Expected])
-pred coercion i:goal-ctx, i:term, i:term, i:term, o:term.
+pred coercion goal-ctx, term, term, term -> term.
 ```
 
 By addings rules for this predicate one can recover from a type error, that is

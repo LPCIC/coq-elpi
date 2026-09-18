@@ -8,13 +8,13 @@ From elpi Require Import elpi.
 typeabbrev path (list string).
 
 :index (2)
-pred ns o:list string, o:modpath.
+pred ns -> list string, modpath.
 
 }}.
 
 #[synterp] Elpi Accumulate NES.db lp:{{
 
-pred open-ns o:string, o:list string.
+pred open-ns -> string, list string.
 :name "open-ns:begin"
 open-ns _ _ :- fail.
 
@@ -86,7 +86,7 @@ Elpi Command NES.List.
   main-synterp [str NS] (pr DB Path) :- nes.resolve NS Path, std.findall (ns O_ P_) DB.
 }}.
 #[interp] Elpi Accumulate lp:{{
-  pred pp-gref i:gref, o:coq.pp.
+  pred pp-gref gref -> coq.pp.
   pp-gref GR PP :- coq.term->pp (global GR) PP.
 
   main-interp [str _] (pr DB Path) :- DB => nes.print-path Path pp-gref.
@@ -105,7 +105,7 @@ Elpi Command NES.Print.
   main-synterp [str NS] (pr DB Path) :- nes.resolve NS Path, std.findall (ns O_ P_) DB.
 }}.
 Elpi Accumulate lp:{{
-  pred pp-gref i:gref, o:coq.pp.
+  pred pp-gref gref -> coq.pp.
   pp-gref GR PP :- std.do! [
     coq.env.typeof GR Ty,
     PP = coq.pp.box (coq.pp.hov 2) [

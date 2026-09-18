@@ -3,7 +3,7 @@ From elpi Require Export elpi.
 Elpi Tactic case.
 Elpi Accumulate lp:{{
 
-  pred mk-abstracted-goal i:list term, i:term,  i:term, i:list term, i:list term, o:term.
+  pred mk-abstracted-goal list term, term, term, list term, list term -> term.
   mk-abstracted-goal ToAbstract Goal  _IndSort Vars _VarsTys Out :-
     std.map2 ToAbstract Vars (t\v\r\ r = copy t v) Subst,
     % Non deterministically we abstract until we obtain a well typed term
@@ -11,7 +11,7 @@ Elpi Accumulate lp:{{
     coq.say "trying" {coq.term->string Out},
     coq.typecheck Out _ ok.
 
-  pred mk-empty-branches i:term, i:term, i:list term, i:list term, o:term.
+  pred mk-empty-branches term, term, list term, list term -> term.
   mk-empty-branches _K _KTy _Vars _VarsTys HOLE_.
 
   solve (goal _ _ GTy _ [trm T] as G) NG :- !, std.do! [

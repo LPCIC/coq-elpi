@@ -2,11 +2,11 @@
 /* ------------------------------------------------------------------------- */
 
 namespace tc {
-  kind enum type.
-  type path  string -> string -> enum.
-  type addInstPrio int -> string -> enum.
-  type tcOrInst list string -> enum.
-  type ignoreInstances, ignoreClasses  string -> list string -> enum.
+  data enum.
+  symb path : string -> string -> enum.
+  symb addInstPrio : int -> string -> enum.
+  symb tcOrInst : list string -> enum.
+  symb ignoreInstances, ignoreClasses : string -> list string -> enum.
 
   func parse list argument -> enum.
   parse [int N, str Instance] (addInstPrio N Instance) :- !.

@@ -2,7 +2,7 @@
 /* ------------------------------------------------------------------------- */
 
 namespace tc {
-  pred alias i:term, o:term.
+  pred alias term -> term.
 
   func replace-with-alias.aux list term -> list term, bool.
   replace-with-alias.aux [] [] ff.

@@ -2,7 +2,7 @@ From elpi Require Export elpi.
 
 Elpi Tactic clear.
 Elpi Accumulate lp:{{
-  pred not-hyp i:term, i:prop, o:term.
+  pred not-hyp term, (pred) -> term.
   not-hyp X (decl Y _ Ty) Y :- not (occurs X Ty), not (X = Y).
   not-hyp X (def Y _ Ty Bo) Y :- not (occurs X Ty ; occurs X Bo), not (X = Y).
 
@@ -19,7 +19,7 @@ Tactic Notation "eltac.clear" hyp(V) := elpi clear ltac_term:(V).
 
 Elpi Tactic clearbody.
 Elpi Accumulate lp:{{
-  pred drop-body i:list argument, i:prop, o:prop.
+  pred drop-body list argument, (pred) -> (pred).
   drop-body ToBeCleared (def V Name Ty _Bo) (decl V Name Ty) :- std.mem ToBeCleared (trm V), !.
   drop-body _ (decl _ _ _ as X) X.
   drop-body _ (def _ _ _ _ as X) X.

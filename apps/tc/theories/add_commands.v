@@ -71,7 +71,7 @@ Elpi Accumulate File tc_aux.
 Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
-  pred tc.add-all-classes i:list argument , i:tc.search-mode.
+  pred tc.add-all-classes list argument, tc.search-mode.
   tc.add-all-classes L S :-
     tc.time-it _ (std.forall {args->str-list L} (tc.add-class-str S)) "TC.AddClasses".
 
@@ -88,7 +88,7 @@ Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
 Elpi Accumulate File tc_aux.
 Elpi Accumulate lp:{{
-  pred tc.addHook i:grafting, i:string. 
+  pred tc.addHook grafting, string. 
   tc.addHook Grafting NewName :- 
     @global! => tc.add-tc-db NewName Grafting (tc.hook NewName).
 

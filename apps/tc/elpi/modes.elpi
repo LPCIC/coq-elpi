@@ -100,9 +100,9 @@ namespace tc {
     (pi hd T L\ fold-map T L _ [hd | L] :- var T hd _, !) =>
     fold-map T [] _ L.
 
-  pred evars o:term.
+  pred evars -> term.
 
-  func action-to-accumulate string, term -> list prop.
+  func action-to-accumulate string, term -> list (pred).
   action-to-accumulate _ T [evars HD] :- var T HD _, !.
   action-to-accumulate _ _ [].
 

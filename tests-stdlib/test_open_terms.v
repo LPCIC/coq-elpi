@@ -42,7 +42,7 @@ Elpi Tactic replace.
 
 Elpi Accumulate lp:{{
 
-pred preserve_bound_variables i:term o:term.
+pred preserve_bound_variables term -> term.
 
 preserve_bound_variables I O :-
   (((pi N T F N1 T1 F1 \
@@ -70,7 +70,7 @@ fresh-name N T M :-
   coq.ltac.fresh-id {coq.name->id N} T Mi,
   coq.id->name Mi M.
 
-pred mk-app-prf i:list term, i:list term, i: list term, o:term.
+pred mk-app-prf list term, list term, list term -> term.
 
 mk-app-prf [F, _] [F, _] [{{@refl_equal _ _}}, P] {{f_equal lp:F lp:P}} :-
   non-dependent-type F,!.
@@ -106,19 +106,18 @@ mk-app-prf [F1, A | Args1] [F2, B | Args2] [Pf, Pa | Ps] P :-
   mk-app-prf [app [F1, A] | Args1] [app [F2, B] | Args2]
     [{{app_prf lp:F1 lp:F2 lp:A lp:B lp:Pf lp:Pa}} | Ps] P.
 
-pred fold-map2 i:list term i:A i:(pred i:term, i:A, o:term, o:term, o:A)
-  o:list term o:list term o:A.
+pred fold-map2 list term, A, (pred term, A -> term, term, A)
+  -> list term, list term, A.
 
 fold-map2 [] A _ [] [] A.
 fold-map2 [T | L] A F [T1 | L1] [P1 | PL] A2 :-
   F T A T1 P1 A1, fold-map2 L A1 F L1 PL A2.
 
-pred instantiate_pair i:name, i:term, i:term, i:pair argument argument,
-    o:pair argument argument.
+pred instantiate_pair name, term, term, pair argument argument -> pair argument argument.
 
-pred instantiate i:name, i:term, i:term, i:argument, o:argument.
+pred instantiate name, term, term, argument -> argument.
 
-pred remove_one_unknown i:name, i:term, i:term, i:term, o:term.
+pred remove_one_unknown name, term, term, term -> term.
 
 % TODO : needs a fix in a rocq-elpi to detect if renaming has happened in
 % in the current context.
@@ -146,7 +145,7 @@ instantiate_pair N T C (pr A1 A2) (pr B1 B2) :-
   std.assert! (instantiate N T C A1 B1) "first instantiate failed",
   instantiate N T C A2 B2].
 
-pred mk-equality i:(pair argument argument), i:term i:A, o:term, o:term, o:A.
+pred mk-equality (pair argument argument), term, A -> term, term, A.
 
 mk-equality (pr (open-trm 0 S) (open-trm 0 T)) S A T P A :- !,
   TY = {{lp:S = lp:T}},
@@ -223,13 +222,13 @@ mk-equality RW (app L) A (app L1) Prf A1 :-
   fold-map2 L A (mk-equality RW) L1 P1 A1,
   mk-app-prf L L1 P1 Prf.
 
-pred non-dependent-type  i:term.
+pred non-dependent-type term.
 
 non-dependent-type F :-
   coq.typecheck F Ty ok,
   ndpt Ty.
 
-pred ndpt i:term.
+pred ndpt term.
 
 ndpt (prod _N _T F) :-
   pi c1 c2\ F c1  = F c2,!,
@@ -240,7 +239,7 @@ ndpt (prod _ _ _) :- !, fail.
 ndpt _ :- !.
 
 
-pred equal-app i:list term, i:list term, i:list term, o:term.
+pred equal-app list term, list term, list term -> term.
 
 equal-app  [F, A] [F1, A1] [Pf, Pa]
   {{app_prf lp:F lp:F1 lp:A lp:A1 lp:Pf lp:Pa}} :- !.

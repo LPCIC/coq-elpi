@@ -12,10 +12,10 @@ evar X Ty R :- var R, !, of X Ty R.
 :before "default-assign-evar"
 evar X Ty R :- not(var R), !, coq.typecheck R Ty ok, X = R.
 
-pred unify-eq i:term, i:term.
+pred unify-eq term, term.
 unify-eq A B :- coq.unify-eq A B ok.
 
-pred unify-leq i:term, i:term.
+pred unify-leq term, term.
 unify-leq A B :- coq.unify-leq A B ok.
 
 func of term -> term, term.

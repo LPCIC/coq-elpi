@@ -15,35 +15,35 @@ param1-functor-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-
 
 namespace derive.param1.functor {
 
-pred skip i:int. % position of a parameter that has to be skipped
+pred skip int. % position of a parameter that has to be skipped
 
 % Building the body %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 func self -> term.
 
-:functional
-pred bo-idx
-  i:term, % inductive arity (input)
-  i:term, % inductive type (input) applied to params & idx handled so far
-  i:term, % inductive type (output) applied to params & idx handled so far
-  i:int,  % current index no
-  o:int, % Recno
-  i:list term, % rev list of (output) parameters
-  o:term, % body
-  o:term. % type
+func bo-idx
+  term, % inductive arity (input)
+  term, % inductive type (input) applied to params & idx handled so far
+  term, % inductive type (output) applied to params & idx handled so far
+  int,  % current index no
+  list term % rev list of (output) parameters
+  ->
+  int, % Recno
+  term, % body
+  term. % type
 
-bo-idx (prod _ S1 T1) Ity1 Ity2 N M Ps (fun `x` S1 Bo) (prod `x` S1 Ty) :- !,
+bo-idx (prod _ S1 T1) Ity1 Ity2 N Ps M (fun `x` S1 Bo) (prod `x` S1 Ty) :- !,
   pi x\ sigma Ity1x Ity2x\
     coq.mk-app  Ity1 [x] Ity1x,
     coq.mk-app  Ity2 [x] Ity2x,
     N1 is N + 1,
-    decl x `x` S1 => bo-idx (T1 x) Ity1x Ity2x N1 M Ps (Bo x) (Ty x).
+    decl x `x` S1 => bo-idx (T1 x) Ity1x Ity2x N1 Ps M (Bo x) (Ty x).
 
-bo-idx (sort _) Ity1 Ity2 N N Ps (fun `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
+bo-idx (sort _) Ity1 Ity2 N Ps N (fun `x` Ity1 Bo) (prod `_` Ity1 _\ Ity2) :- !,
   @pi-decl `x` Ity1 x\
     coq.build-match x Ity1 (bo-idx-rty Ps Ity2) (bo-k-args Ps) (Bo x).
 
-bo-idx X Ity1 Ity2 N M Ps R1 R2 :- whd1 X X1, !,
-  bo-idx X1 Ity1 Ity2 N M Ps R1 R2.
+bo-idx X Ity1 Ity2 N Ps M R1 R2 :- whd1 X X1, !,
+  bo-idx X1 Ity1 Ity2 N Ps M R1 R2.
 
 func bo-idx-rty list term, term, term, list term, list term -> term.
 bo-idx-rty Ps ItyArgs _ Vs _ R :-
@@ -84,12 +84,12 @@ func bo-params
   list term % output parameters so far
   -> term. % map function
 
-func mk-rec-clause term, term, term, term -> prop.
+func mk-rec-clause term, term, term, term -> (pred).
 mk-rec-clause (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px\C x px) :- !,
   pi x px\ mk-rec-clause (P x px) {coq.mk-app T1 [x,px]} {coq.mk-app T2 [x,px]} {coq.mk-app F [x,px]} (C x px).
 mk-rec-clause (prod _ _ _\sort _) T1 T2 F (param1-functor-db T1 T2 F).
 
-func mk-rec-clause-app term, term, term, term -> prop.
+func mk-rec-clause-app term, term, term, term -> (pred).
 mk-rec-clause-app (prod _ _ x\prod _ _ (P x)) T1 T2 F (pi x px py\C x px py) :- !,
   pi x px py\ mk-rec-clause-app (P x px) {coq.mk-app T1 [x,px]} {coq.mk-app T2 [x,py]} {coq.mk-app F [x,px]} (C x px py).
 mk-rec-clause-app (prod _ _ _\sort S) T1 T2 F (pi x\C x) :-
@@ -100,13 +100,13 @@ bo-params Lno Lno Ity1 Ity2 A1 _ Ps (fix `f` Recno Fty Bo) :- !,
   @pi-decl `rec` Fty f\
       mk-rec-clause A1 Ity1 Ity2 f (C f),
       mk-rec-clause-app A1 Ity1 Ity2 f (D f),
-      (D f) =!=> (C f) =!=> bo-idx A1 Ity1 Ity2 0 Recno Ps (Bo f) Fty.
+      (D f) =!=> (C f) =!=> bo-idx A1 Ity1 Ity2 0 Ps Recno (Bo f) Fty.
 
 bo-params N Lno Ity1 Ity2 {{ forall (a : lp:T1) (p : a -> Type), lp:(Rty1 a p) }}
                           {{ forall (a : _) (p : a -> Type), lp:(Rty2 a p) }}
                           Ps R :- whd T1 [] {{ Type }} [], !,
   N1 is N + 2,
-  (pi a b f \ mk-map-ty a {{ lp:a -> Type }} b {{ lp:b -> Type }} (FAB a b) f _ (Clause a b f)),
+  (pi a b f \ mk-map-ty a {{ lp:a -> Type }} b {{ lp:b -> Type }} f (FAB a b) _ (Clause a b f)),
   R = {{ fun (a : Type) (pa pb : a -> Type) (f : forall x : a, pa x -> pb x) => lp:(Bo a pa pb f) }},
   pi a pa pb f\ sigma Ity1A Ity2A \
     coq.mk-app Ity1 [a,pa] Ity1A,
@@ -126,77 +126,77 @@ bo-params N Lno Ity1 Ity2 (prod A Sty1 Rty1) (prod _ _ Rty2) Ps R :-
     coq.mk-app Ity2 [a] Ity2A,
       decl a A Sty1 => bo-params N1 Lno Ity1A Ity2A (Rty1 a) (Rty2 a) [a|Ps] (Bo a).
 
-func map-pi any -> list prop.
+func map-pi any -> list (pred).
 map-pi (x\ []) [] :- !.
 map-pi (x\ [X x| XS x]) [pi x\ X x | YS] :- map-pi XS YS.
 
-:functional
-pred mk-map-ty
- i:term, % input variable
- i:term, % and its type
- i:term, % output variable
- i:term, % an its type
- o:term, % type of a mapping function from input to output
- i:term, % map function (having the type above)
- o:int,  % arity of the predicate
- o:list prop. % param1-functor-db clause for map function
-mk-map-ty A (prod _ SA T1) B (prod _ SB T2) (prod `x` SA x\ R x) F N C1 :-
+func mk-map-ty
+ term, % input variable
+ term, % and its type
+ term, % output variable
+ term, % an its type
+ term % map function (having the type above)
+ ->
+ term, % type of a mapping function from input to output
+ int,  % arity of the predicate
+ list prop. % param1-functor-db clause for map function
+mk-map-ty A (prod _ SA T1) B (prod _ SB T2) F (prod `x` SA x\ R x) N C1 :-
   param1-functor-db SA SB Fa, !,
   (pi x\ sigma Ax Fx BFx \
     coq.mk-app A [x] Ax, coq.mk-app Fa [x] Fx, coq.mk-app B [Fx] BFx,
-    mk-map-ty Ax (T1 x) BFx (T2 BFx) (R x) {coq.mk-app F [x]} M (C x),
+    mk-map-ty Ax (T1 x) BFx (T2 BFx) {coq.mk-app F [x]} (R x) M (C x),
     N is M + 1),
   map-pi C C1.
-mk-map-ty A (prod _ S1 T1) B (prod _ _ T2) (prod `x` S1 x\ R x) F N C1 :- !,
+mk-map-ty A (prod _ S1 T1) B (prod _ _ T2) F (prod `x` S1 x\ R x) N C1 :- !,
   (pi x\ sigma Ax Bx \ coq.mk-app A [x] Ax, coq.mk-app B [x] Bx,
-    mk-map-ty Ax (T1 x) Bx (T2 x) (R x) {coq.mk-app F [x]} M (C x),
+    mk-map-ty Ax (T1 x) Bx (T2 x) {coq.mk-app F [x]} (R x) M (C x),
     N is M + 1),
   map-pi C C1.
-mk-map-ty (app[X|XS] as A) _ (app[Y|YS] as B) _ (prod `x` A _\ B) (app [G|GS] as F) 0 [param1-functor-db PLA PLB PLF,param1-functor-db A B F] :- !,
+mk-map-ty (app[X|XS] as A) _ (app[Y|YS] as B) _ (app [G|GS] as F) (prod `x` A _\ B) 0 [param1-functor-db PLA PLB PLF,param1-functor-db A B F] :- !,
   drop-last 1 XS LA,
   drop-last 1 YS LB,
   drop-last 1 GS LF,
   coq.mk-app X LA PLA,
   coq.mk-app Y LB PLB,
   coq.mk-app G LF PLF.
-mk-map-ty A _ B _ (prod `x` A _\ B) F 0 [param1-functor-db A B F].
+mk-map-ty A _ B _ F (prod `x` A _\ B) 0 [param1-functor-db A B F].
 
 % Build a clause %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-:functional
-pred mk-clause
-  i:int, % current parameter
-  i:int, % number of parameters
-  i:term, % inductive type (input)
-  i:term, % inductive type (output)
-  i:term, % arity of the inductive
-  i:list (func), % premises of the clause
-  i:term, % map function
-  o:prop,
-  i:inductive,
-  i:list bool,
-  o:prop. % clause for param1-functor-db
-mk-clause N N Ity1 Ity2 _ Todo Map (param1-functor-db Ity1 Ity2 Map :- [!|Todo]) I Mask (param1-functor-for I F MaskRev) :- !, coq.safe-dest-app Map (global F) _, std.rev Mask MaskRev.
-mk-clause N Lno Ity1 Ity2 {{ forall (a : lp:Ty) (pa : a -> Type), lp:(T a pa) }} Todo Map (pi x px py f\ C x px py f) I M CF :- whd Ty [] {{ Type }} [], !,
+func mk-clause
+  int, % current parameter
+  int, % number of parameters
+  term, % inductive type (input)
+  term, % inductive type (output)
+  term, % arity of the inductive
+  list (func), % premises of the clause
+  term, % map function
+  inductive,
+  list bool
+  ->
+  prop,
+  prop. % clause for param1-functor-db
+mk-clause N N Ity1 Ity2 _ Todo Map I Mask (param1-functor-db Ity1 Ity2 Map :- [!|Todo]) (param1-functor-for I F MaskRev) :- !, coq.safe-dest-app Map (global F) _, std.rev Mask MaskRev.
+mk-clause N Lno Ity1 Ity2 {{ forall (a : lp:Ty) (pa : a -> Type), lp:(T a pa) }} Todo Map I M (pi x px py f\ C x px py f) CF :- whd Ty [] {{ Type }} [], !,
   N1 is N + 2,
   pi x px py f\ sigma Ity1x Ity2y Mapf\
     coq.mk-app Ity1 [x,px] Ity1x,
     coq.mk-app Ity2 [x,py] Ity2y,
     coq.mk-app Map [x,px,py,f] Mapf,
-    mk-clause N1 Lno Ity1x Ity2y (T x px) [param1-functor-db px py f|Todo] Mapf (C x px py f) I [tt,ff|M] CF.
-mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map (pi x\ C x) I M CF :- !,
+    mk-clause N1 Lno Ity1x Ity2y (T x px) [param1-functor-db px py f|Todo] Mapf I [tt,ff|M] (C x px py f) CF.
+mk-clause N Lno Ity1 Ity2 (prod _ _ T) Todo Map I M (pi x\ C x) CF :- !,
   N1 is N + 1,
   pi x\ sigma Ity1x Ity2x Mapf\
     coq.mk-app Ity1 [x] Ity1x,
     coq.mk-app Ity2 [x] Ity2x,
     coq.mk-app Map [x] Mapf,
-    mk-clause N1 Lno Ity1x Ity2x (T x) Todo Mapf (C x) I [ff|M] CF.
-mk-clause N Lno Ity1 Ity2 X Todo Map C I M CF :- whd1 X X1, !,
-  mk-clause N Lno Ity1 Ity2 X1 Todo Map C I M CF.
+    mk-clause N1 Lno Ity1x Ity2x (T x) Todo Mapf I [ff|M] (C x) CF.
+mk-clause N Lno Ity1 Ity2 X Todo Map I M C CF :- whd1 X X1, !,
+  mk-clause N Lno Ity1 Ity2 X1 Todo Map I M C CF.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kind mutual-spec type.
-type mutual-spec inductive -> term -> term -> term -> term -> mutual-spec.
+data mutual-spec.
+symb mutual-spec : inductive -> term -> term -> term -> term -> mutual-spec.
 
 func mutual-spec inductive -> mutual-spec.
 mutual-spec GR (mutual-spec GRR T T Arity Arity) :-
@@ -242,7 +242,7 @@ func mutual-functor-ty mutual-spec -> term, int.
 mutual-functor-ty (mutual-spec _ Ity1 Ity2 Arity1 _) Ty Recno :-
   functor-fix-ty Arity1 Ity1 Ity2 0 [] Ty Recno.
 
-func mutual-functor-rec-clauses list mutual-spec, list term -> list prop.
+func mutual-functor-rec-clauses list mutual-spec, list term -> list (pred).
 mutual-functor-rec-clauses [] [] [].
 mutual-functor-rec-clauses [mutual-spec _ Ity1 Ity2 Arity1 _|SS] [F|FS] Clauses :-
   mk-rec-clause Arity1 Ity1 Ity2 F C,
@@ -252,7 +252,7 @@ mutual-functor-rec-clauses [mutual-spec _ Ity1 Ity2 Arity1 _|SS] [F|FS] Clauses 
 
 func mutual-functor-body list term, mutual-spec -> term.
 mutual-functor-body Ps (mutual-spec _ Ity1 Ity2 Arity1 _ ) Body :-
-  std.assert! (bo-idx Arity1 Ity1 Ity2 0 _ Ps Body _) "derive.param1_functor: failed to build one mutual fix body".
+  std.assert! (bo-idx Arity1 Ity1 Ity2 0 Ps _ Body _) "derive.param1_functor: failed to build one mutual fix body".
 
 func mutual-functor-mfix-aux list term, list mutual-spec, list mutual-spec, list term -> mfix-block.
 mutual-functor-mfix-aux Ps All [] RevF (mfix-bo Bodies) :- !,
@@ -417,7 +417,7 @@ body-mutual-params-aux 0 Specs Focus Ps R :- !,
 body-mutual-params-aux N ([S|_] as Specs) Focus Ps R :- N > 0,
   mutual-spec-arity1 S {{ forall (a : lp:T1) (p : a -> Type), _ }}, whd T1 [] {{ Type }} [], !,
   M is N - 2,
-  pi a b f\ mk-map-ty a {{ lp:a -> Type }} b {{ lp:b -> Type }} (FAB a b) f _ (Clause a b f),
+  pi a b f\ mk-map-ty a {{ lp:a -> Type }} b {{ lp:b -> Type }} f (FAB a b) _ (Clause a b f),
   R = {{ fun (a : Type) (pa pb : a -> Type) (f : forall x : a, pa x -> pb x) => lp:(Bo a pa pb f) }},
   pi a pa pb f\
     sigma Specs1\
@@ -461,7 +461,7 @@ body-mutual-params-ty N S Ty :- N > 0, !,
       body-mutual-params-ty M S1 (Rest a).
 body-mutual-params-ty _ _ _ :- stop "derive.param1_functor: wrong mutual shape".
 
-func add-mutual-functor-consts list mutual-spec, list mutual-spec, string, int, int -> list prop.
+func add-mutual-functor-consts list mutual-spec, list mutual-spec, string, int, int -> list (pred).
 add-mutual-functor-consts _ [] _ _ _ [].
 add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- std.do! [
   S = mutual-spec GRR T T Arity _,
@@ -469,13 +469,13 @@ add-mutual-functor-consts All [S|SS] Suffix Lno Focus [Clause1, Clause2|CS] :- s
   std.assert! (body-mutual-params Lno All Focus R) "derive.param1_functor: failed to generate mutual term",
   std.assert-ok! (coq.typecheck R Rty) "derive.param1_functor generates illtyped mutual term",
   coq.env.add-const Name R Rty @transparent! Funct,
-  mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause1 GRR [] Clause2,
+  mk-clause 0 Lno T T Arity [] (global (const Funct)) GRR [] Clause1 Clause2,
   std.forall [Clause1,Clause2] (x\coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ x)),
   Focus1 is Focus + 1,
   add-mutual-functor-consts All SS Suffix Lno Focus1 CS
 ].
 
-func main-mutual list inductive, string -> list prop.
+func main-mutual list inductive, string -> list (pred).
 main-mutual GRS Suffix C :- std.do! [
   std.map GRS mutual-spec Specs,
   Specs = [First|_],
@@ -486,7 +486,7 @@ main-mutual GRS Suffix C :- std.do! [
   add-mutual-functor-consts Specs Specs Suffix Lno 0 C
 ].
 
-func main1 gref, gref, string -> list prop.
+func main1 gref, gref, string -> list (pred).
 main1 _ (indt GR) Suffix C :- do! [
   coq.env.indt GR _Ind Lno Luno Arity _ _,
   assert! (Lno = Luno) "derive.param1.functor: Non-uniform parameters not supported",
@@ -500,13 +500,13 @@ main1 _ (indt GR) Suffix C :- do! [
   coq.env.add-const Name R Rty @transparent! Funct,
 
   % generate clause and add to the db
-   mk-clause 0 Lno T T Arity [] (global (const Funct)) Clause1 GR [] Clause2,
+   mk-clause 0 Lno T T Arity [] (global (const Funct)) GR [] Clause1 Clause2,
   C = [Clause1, Clause2],
   std.forall C (x\coq.elpi.accumulate _ "derive.param1.functor.db" (clause _ _ x)),
 ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-func main gref, gref, string -> list prop.
+func main gref, gref, string -> list (pred).
 main (indt I) _IsGR Suffix C :- coq.mutual? I, !,
   coq.mutual.members I TS,
   derive.param1.functor.main-mutual TS Suffix C.

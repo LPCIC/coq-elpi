@@ -27,7 +27,7 @@ compute-fix-ty (prod N S Tgt) T Ti M (prod N S T1) :- !,
   @pi-decl N S x\ compute-fix-ty (Tgt x) {coq.mk-app T [x]} {coq.mk-app Ti [x]} J (T1 x), M is J + 1.
 compute-fix-ty _ S T 0 {{ lp:S -> lp:T }}.
 
-func compute-fix-clause term, term, term, int -> (term -> prop).
+func compute-fix-clause term, term, term, int -> (term -> (pred)).
 compute-fix-clause _ S T 1 (ih\ param1-functor-db S T ih) :- !.
 compute-fix-clause (prod N S Tgt) T Ti M (ih\ pi x\ C ih x) :- !,
   J is M - 1,
@@ -64,7 +64,7 @@ mk-branch K KTy Vars VarsTy R :- std.do! [
 func mk-refl term -> term.
 mk-refl E {{ @refl_equal _ lp:E }}.
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main GR Infix [Clause] :- do! [
   T = global (indt GR),
   assert! (invert-db (indt GR) (indt GRinv)) "derive.idx2inv: No inverted inductive",

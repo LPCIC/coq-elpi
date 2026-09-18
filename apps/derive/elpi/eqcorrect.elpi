@@ -98,7 +98,7 @@ idx _ _ _ _ _ _ :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Input paremeters and their equality tests
 
-pred params i:int, i:term, i:term, i:list term, i:term, i:list term, o:term.
+pred params int, term, term, list term, term, list term -> term.
 params L (prod N S T) I K IndP A R :- L > 0, !,
   M is L - 1,
   R = {{ fun (a : lp:S) (fa : a -> a -> bool) => lp:(Bo a fa) }},
@@ -115,7 +115,7 @@ params 0 Arity T K IndP A R :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main GR Name [C] :- do! [
   T = global (indt GR),
   assert! (induction-db GR IndP) "derive.eqcorrect: use derive.induction first",

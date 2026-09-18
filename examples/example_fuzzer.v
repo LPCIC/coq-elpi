@@ -46,7 +46,7 @@ Inductive eval  : forall {T: ty}, Exp  T -> Val T -> Prop :=
 Elpi Command fuzz.
 Elpi Accumulate lp:{{
 
-pred fuzz i:term, o:term.
+pred fuzz term -> term.
 
 % fuzzin rule: we look for a Coq term (?Op ?A ?B) and we turn it in (AND ?A ?B)
 % only if the new term is well typed.
@@ -72,7 +72,7 @@ fuzz (global X) (global X).
 
 % TODO: we should have clauses for all other type formers...
 
-pred rename-constructors i:constructor, o:pair constructor string.
+pred rename-constructors constructor -> pair constructor string.
 rename-constructors C (pr C C1) :-
   coq.gref->id (indc C) S,
   C1 is S ^ "1".

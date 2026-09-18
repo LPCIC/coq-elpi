@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 
 Elpi Db foo.db lp:{{
-  pred p o:int.    
+  pred p -> int.    
 }}.
 
 Elpi Command foo.

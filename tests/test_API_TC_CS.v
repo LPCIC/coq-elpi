@@ -58,7 +58,7 @@ Module hint_instance.
 
   Elpi Command test.
   Elpi Accumulate lp:{{
-    pred expected o:tc-instance.
+    pred expected -> tc-instance.
     expected (tc-instance {{:gref hint_c}} 0).
     expected (tc-instance {{:gref instance_c}} 0).
     expected (tc-instance {{:gref instance_g}} 4).
@@ -69,7 +69,7 @@ Module hint_instance.
     coq.TC.db-for {{:gref Test}} L,
     std.length L 4,               % there are 4 instances for Test
     std.findall (expected _) Exp, % get the expected prio
-    (Check: (pred i:prop)) = (x\ sigma Exp\ x = expected Exp, std.mem L Exp),
+    (Check: (pred (pred))) = (x\ sigma Exp\ x = expected Exp, std.mem L Exp),
     std.forall Exp Check.         % check each instance has the expected priority
   }}.
 

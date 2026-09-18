@@ -511,10 +511,10 @@ let sort : (Sorts.t, _ conv_context, API.Data.constraints) API.ContextualConvers
   ty = API.Conversion.TyName "sort";
   pp_doc = (fun fmt () ->
     Format.fprintf fmt "%% Sorts (kinds of types)\n";
-    Format.fprintf fmt "kind sort type.\n";
-    Format.fprintf fmt "external symbol prop  : sort.         %% impredicative sort of propositions\n";
-    Format.fprintf fmt "external symbol sprop : sort.         %% impredicative sort of propositions with definitional proof irrelevance\n";
-    Format.fprintf fmt "external symbol typ   : univ -> sort. %% predicative sort of data (carries a universe level)\n";
+    Format.fprintf fmt "builtin data sort.\n";
+    Format.fprintf fmt "builtin symb prop  : sort.         %% impredicative sort of propositions\n";
+    Format.fprintf fmt "builtin symb sprop : sort.         %% impredicative sort of propositions with definitional proof irrelevance\n";
+    Format.fprintf fmt "builtin symb typ   : univ -> sort. %% predicative sort of data (carries a universe level)\n";
   );
   pp = ppsort;
   embed = (fun ~depth { options } _ state s ->
@@ -681,10 +681,10 @@ let gref : Names.GlobRef.t API.Conversion.t = {
   API.Conversion.ty = API.Conversion.TyName "gref";
   pp_doc = (fun fmt () ->
     Format.fprintf fmt "%% Global objects: inductive types, inductive constructors, definitions@\n";
-    Format.fprintf fmt "kind gref type.@\n";
-    Format.fprintf fmt "external symbol const : constant    -> gref. %% Nat.add, List.append, ...@\n";
-    Format.fprintf fmt "external symbol indt  : inductive   -> gref. %% nat, list, ...@\n";
-    Format.fprintf fmt "external symbol indc  : constructor -> gref. %% O, S, nil, cons, ...@\n";
+    Format.fprintf fmt "builtin data gref.@\n";
+    Format.fprintf fmt "builtin symb const : constant    -> gref. %% Nat.add, List.append, ...@\n";
+    Format.fprintf fmt "builtin symb indt  : inductive   -> gref. %% nat, list, ...@\n";
+    Format.fprintf fmt "builtin symb indc  : constructor -> gref. %% O, S, nil, cons, ...@\n";
     );
   pp = (fun fmt x ->
     Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global x));

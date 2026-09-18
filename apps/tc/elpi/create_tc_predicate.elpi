@@ -6,7 +6,7 @@ shorten tc.{search-mode}.
 
 % The predicate of a class is local if inside a section and readded at section end.
 % This way, section variables are generalized
-func get-class-locality -> list prop. 
+func get-class-locality -> list (pred). 
 get-class-locality [@local!] :- coq.env.current-section-path [_ | _], !.
 get-class-locality [@global!].
 
@@ -24,7 +24,7 @@ add-class-gr SearchMode ClassGR SMR :-
   tc.gref->pred-name ClassGR PredName,
   get-class-locality Locality, 
   Locality => (
-    coq.elpi.add-predicate "tc.db" Indexing PredName EM,
+    coq.elpi.add-predicate ff "tc.db" Indexing PredName EM,
     tc.add-tc-db _ _ (tc.class ClassGR PredName SearchMode SM)).
 
 func add-class-str search-mode, string ->.
@@ -43,7 +43,7 @@ attr->modes CoqModes :-
   std.map RawModes tc.string->coq-mode CoqModes, !.
 attr->modes [].
 
-func get-key-from-option prop -> string. 
+func get-key-from-option (pred) -> string. 
 get-key-from-option (get-option A tt) A :- !.
 get-key-from-option (get-option "i" ff) "o" :- !.
 get-key-from-option (get-option "o" ff) "i" :- !.
@@ -94,7 +94,7 @@ namespace eta-reduction-aux {
   % premise where P is possibly eta-contructed at runtime. The absence of bang
   % in the first rule (after is-functional T) allows to get all rules for and
   % functional parameter through the std.findall in the main predicate below.
-  func compile gref, term, bool, list term -> prop.
+  func compile gref, term, bool, list term -> (pred).
   compile ClassGR (prod _ T Bo) ff L (pi name ty body\ Cl body ty name) :-
     is-functional T, !, pi name ty body x\ sigma Inp\
       Inp = (fun name ty body),

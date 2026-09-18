@@ -14,7 +14,7 @@ Elpi test.program1 "hello" x y.
 
 Elpi Command the_command.
 Elpi Accumulate lp:{{
-  pred mk-lem i:string.
+  pred mk-lem string.
   mk-lem Name :- std.do! [
     Lem = {{ (1 + 1 = 2)%nat }},
     std.assert-ok! (coq.elaborate-skeleton Lem _ ELem) "failed",

@@ -145,7 +145,7 @@ main _ :-
  coq.rename-indt-decl rename rename rename DECL DECL1,
  coq.env.add-indt DECL1 _.
 
-pred rename i:id, o:id.
+pred rename id -> id.
 rename K S :- S is K ^ "1".
 }}.
 Elpi Query indtest lp:{{ main _ }}.

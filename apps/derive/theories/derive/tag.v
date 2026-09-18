@@ -13,7 +13,7 @@ Elpi Db derive.tag.db lp:{{
 
 % this is how one registers the tag function to an inductive and let other
 % elpi commands use that piece of info
-pred tag-for o:inductive, o:constant.
+pred tag-for -> inductive, constant.
 
 }}.
 

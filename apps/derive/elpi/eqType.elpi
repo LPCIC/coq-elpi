@@ -114,7 +114,7 @@ valid-eqType (eqb.value-param _ F) [_|TS] D :- std.do-ok! D [
   (d\ pi x\ valid-eqType (F x) TS d),
 ].
 
-pred irrelevant? i:term, o:eqb.trm, o:diagnostic.
+pred irrelevant? term -> eqb.trm, diagnostic.
 irrelevant? (app [{{ @eq }}, global EqType, A, B]) (eqb.app EQ EQTYPE [A1,B1]) D :- std.do-ok! D [
   std.lift-ok (eqType EqType _) "Not an eqType", %eqb-for Bool Bool _,
   std.lift-ok ({{ @eq }} = global EQ) "",
@@ -170,10 +170,10 @@ validate-arguments (eqb.dependent T Args) D :- std.do-ok! D [
   (d\ pi x\ validate-arguments (Args x) d),
 ].
 
-func eqtype-clause inductive, eqb.eqType -> prop.
+func eqtype-clause inductive, eqb.eqType -> (pred).
 eqtype-clause I EQT (eqType (indt I) EQT).
 
-func main-mutual list inductive -> list prop.
+func main-mutual list inductive -> list (pred).
 main-mutual IS CL :- std.do! [
   std.map IS (i\eqt\ std.assert-ok! (translate-indt i eqt) "derive.eqType.ast: translate") EQTS,
   std.map2 IS EQTS eqtype-clause CL,
@@ -181,14 +181,14 @@ main-mutual IS CL :- std.do! [
   std.forall CL (c\ coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ c))
 ].
 
-func main1 inductive -> list prop.
+func main1 inductive -> list (pred).
 main1 I [C] :-
   std.assert-ok! (translate-indt I EQT) "derive.eqType.ast: translate",
   std.assert-ok! (validate-eqType EQT) "derive.eqType.ast: validate",
   C = (eqType (indt I) EQT),
   coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ C).
 
-func main inductive -> list prop.
+func main inductive -> list (pred).
 main T C :- coq.mutual? T, !,
   coq.mutual.members T TS,
   derive.eqType.ast.main-mutual TS C.

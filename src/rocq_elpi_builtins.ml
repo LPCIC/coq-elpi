@@ -2018,6 +2018,54 @@ let mis_is_recursive { Declarations.mind_recargs } =
 let mis_is_recursive = Inductiveops.mis_is_recursive
 [%%endif]
 
+let coq_elpi_add_predicate functional dbname indexing predname spec ~depth:_ ctx _ state =
+  let dbname = Rocq_elpi_utils.string_split_on_char '.' dbname in
+  let f = get_accumulate_text_to_db_interp () in
+  let local = ctx.options.local = Some true in
+  let super_global = ctx.options.local = Some false in
+  if local && super_global then CErrors.user_err Pp.(str "coq.elpi.add-predicate: @global! incompatible with @local!");
+  let indexing =
+    match indexing with
+    | B.Given str -> ":index ("^str^") "
+    | B.Unspec -> "" in
+  let inputs_precede_outputs =
+    let rec aux seen_output = function
+      | [] -> true
+      | (`Output,_) :: rest -> aux true rest
+      | (`Input,_) :: rest -> not seen_output && aux seen_output rest
+    in aux false spec in
+  let spec_text =
+    if inputs_precede_outputs then
+      (* every input comes before every output: use the modern
+         `pred Name In1, In2 -> Out1, Out2.` notation *)
+      let inputs, outputs = List.partition (fun (mode,_) -> mode = `Input) spec in
+      let pp l = String.concat ", " (List.map (fun (_,ty) -> "("^ty^")") l) in
+      match inputs, outputs with
+      | [], [] -> ""
+      | _, [] -> pp inputs
+      | [], _ -> "-> " ^ pp outputs
+      | _, _ -> pp inputs ^ " -> " ^ pp outputs
+    else
+      (* an input follows an output: -> cannot express interleaved modes,
+         fall back to the legacy `pred Name i:In1, o:Out1, i:In2.` notation *)
+      String.concat ", " (spec |> List.map (fun (mode,ty) ->
+        let mode =
+          match mode with
+          | `Input -> "i:"
+          | `Output -> "o:" in
+        mode ^ "(" ^ ty ^ ")")) in
+  let keyword, functional_attr =
+    if not functional then "pred", ""
+    else if inputs_precede_outputs then "func", ""
+    (* func requires all inputs before all outputs; fall back to the
+       attribute form, the only way to mark an interleaved pred functional *)
+    else "pred", ":functional " in
+  let text = functional_attr ^ indexing ^ keyword ^ " " ^ predname ^ " " ^ spec_text ^ "." in
+  let scope = if local then Local else if super_global then SuperGlobal else Regular in
+  let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
+  f ~loc dbname text scope;
+  state, (), []
+
 let coq_rest_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -2504,14 +2552,14 @@ Supported attributes:
   Rocq_elpi_builtins_synterp.current_section_path;
 
   LPCode {|% Deprecated, use coq.env.opaque?
-  pred coq.env.const-opaque? i:constant.
+  func coq.env.const-opaque? constant.
   coq.env.const-opaque? C :-
     coq.warning "elpi.deprecated" "elpi.const-opaque" "use coq.env.opaque? in place of coq.env.const-opaque?",
     coq.env.opaque? C.
   |};
 
   LPCode {|% Deprecated, use coq.env.primitive?
-  pred coq.env.const-primitive? i:constant.
+  func coq.env.const-primitive? constant.
   coq.env.const-primitive? C :-
     coq.warning "elpi.deprecated" "elpi.const-primitive" "use coq.env.primitive? in place of coq.env.const-primitive?",
     coq.env.primitive? C.
@@ -2636,7 +2684,7 @@ and the current module.
   DocAbove);
 
   LPCode {|
-pred coq.env.add-context i:context-decl.
+func coq.env.add-context context-decl.
 coq.env.add-context context-end.
 coq.env.add-context (context-item Name I Ty none Rest) :-
   coq.env.add-section-variable Name I Ty C,
@@ -3499,7 +3547,7 @@ NParams can always be omitted, since it is inferred.
   DocAbove);
 
   LPCode {|% Deprecated, use coq.env.projections
-pred coq.CS.canonical-projections i:inductive, o:list (option constant).
+func coq.CS.canonical-projections inductive -> list (option constant).
 coq.CS.canonical-projections I L :-
   coq.warning "elpi.deprecated" "elpi.canonical-projections" "use coq.env.projections in place of coq.CS.canonical-projections",
   coq.env.projections I L.
@@ -4225,14 +4273,14 @@ Supported attributes:
   DocAbove);
 
   LPCode {|% Deprecated, use coq.reduction.cbv.norm
-pred coq.reduction.cbv.whd_all i:term, o:term.
+func coq.reduction.cbv.whd_all term -> term.
 coq.reduction.cbv.whd_all T R :-
   coq.warning "elpi.deprecated" "elpi.cbv-whd-all" "use coq.reduction.cbv.norm in place of coq.reduction.cbv.whd_all",
   coq.reduction.cbv.norm T R.
 |};
 
   LPCode {|% Deprecated, use coq.reduction.vm.norm
-pred coq.reduction.vm.whd_all i:term, i:term, o:term.
+func coq.reduction.vm.whd_all term, term -> term.
 coq.reduction.vm.whd_all T TY R :-
   coq.warning "elpi.deprecated" "elpi.vm-whd-all" "use coq.reduction.vm.norm in place of coq.reduction.vm.whd_all",
   coq.reduction.vm.norm T TY R.
@@ -4860,40 +4908,21 @@ Supported attributes:
   MLData argument_mode;
 
   MLCode(Pred("coq.elpi.add-predicate",
+    In(B.bool,"Functional",
     In(B.string,"Db",
     In(B.unspec B.string,"Indexing",
     In(B.string,"PredName",
     In(B.list (B.pair argument_mode B.string),"Spec",
     Full(global,{|Declares a new predicate PredName in the data base Db.
-Indexing can be left unspecified. Spec gathers a mode and a
+Functional selects between the pred and func keywords (func requires
+all inputs to precede all outputs, and falls back to :functional pred
+otherwise). Indexing can be left unspecified. Spec gathers a mode and a
 type for each argument. CAVEAT: types and indexing are strings
 instead of proper data types; beware parsing errors are fatal.
 Supported attributes:
 - @local! (default: false, discard at the end of section or module)
-- @global! (default: false, always active|}))))),
-    (fun dbname indexing predname spec ~depth ctx _ state ->
-      let dbname = Rocq_elpi_utils.string_split_on_char '.' dbname in
-      let f = get_accumulate_text_to_db_interp () in
-      let local = ctx.options.local = Some true in
-      let super_global = ctx.options.local = Some false in
-      if local && super_global then CErrors.user_err Pp.(str "coq.elpi.add-predicate: @global! incompatible with @local!");
-      let indexing =
-        match indexing with
-        | B.Given str -> ":index ("^str^") "
-        | B.Unspec -> "" in
-      let spec = spec |> List.map (fun (mode,ty) ->
-        let mode =
-          match mode with
-          | `Input -> "i:"
-          | `Output -> "o:" in
-        mode ^ "(" ^ ty ^ ")") in
-      let spec = String.concat ", " spec in
-      let text = indexing ^ "pred " ^ predname ^ " " ^ spec ^ "." in
-      let scope = if local then Local else if super_global then SuperGlobal else Regular in
-      let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
-      f ~loc dbname text scope;
-      state, (), []
-      )),
+- @global! (default: false, always active|})))))),
+    coq_elpi_add_predicate),
   DocAbove);
 
   MLCode(Pred("coq.elpi.predicate?",

@@ -12,8 +12,8 @@ namespace derive.bcongr {
 
 % links an assumption to the two terms being compared and the boolean value
 % for them:   forall x y b (H : reflext (x = y) b), ----> (arg H x y b)
-kind arg type.
-type arg term -> term -> term -> term -> arg.
+data arg.
+symb arg : term -> term -> term -> term -> arg.
 
 func bo-args term, term, term, list arg -> term.
 
@@ -105,7 +105,7 @@ bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % for each constructor we generate the congruence lemma
 
-func main-constructor int, string, constructor, term -> prop.
+func main-constructor int, string, constructor, term -> (pred).
  
 main-constructor Lno Prefix K Kt Clause :- do! [
   Kn = global (indc K),
@@ -124,7 +124,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-func main inductive, string -> list prop.
+func main inductive, string -> list (pred).
 main GR Prefix Clauses :- do! [
   coq.env.indt GR Ind Lno _ _ Kns Ktys,
   assert! (Ind = tt)   "derive.bcongr: Coinductive types are not supported",

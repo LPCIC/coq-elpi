@@ -35,7 +35,7 @@ Register exchange as elpi.derive.lens.exchange.
 Register exchange_on as elpi.derive.lens.exchange_on.
 
 Elpi Db derive.lens_laws.db lp:{{
-  pred lens-laws-done i:inductive.
+  pred lens-laws-done inductive.
 }}.
 
 (* standalone *)

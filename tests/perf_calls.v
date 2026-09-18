@@ -5,7 +5,7 @@ Definition x := 3.
 Elpi Command perf.
 Elpi Accumulate lp:{{
 
-pred loop i:int, i:gref.
+pred loop int, gref.
 loop 0 _.
 loop M GR :-
   N is M - 1,

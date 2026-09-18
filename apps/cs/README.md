@@ -9,11 +9,11 @@ This app is experimental.
 The `cs` predicate lives in the database `cs.db`
 
 ```elpi
-% predicate [cs Ctx Lhs Rhs] used to unify Lhs with Rhs, with
+% predicate [cs Ctx Proj Rhs Sol] used to find Sol such that Proj Sol = Rhs, where
 % - [Ctx] is the context
-% - [Lhs] and [Rhs] are the terms to unify
-:index (0 6 6)
-pred cs i:goal-ctx, o:term, o:term.
+% - [Proj] is the projector of some structure, applied to the structure's parameters if any
+% - [Rhs] the term to find a structure on.
+pred cs goal-ctx, term, term-> term.
 ```
 
 By addings rules for this predicate one can recover from a CS instance search failure

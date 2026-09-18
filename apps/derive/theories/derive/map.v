@@ -13,8 +13,8 @@ From elpi.apps Require Import derive.
    eg. "map-db (list A) (list B) (list_map f_A_B)"
 *)
 Elpi Db derive.map.db lp:{{
-  pred map-done i:inductive.
-  pred map-db i:term, i:term, o:term.
+  pred map-done inductive.
+  pred map-db term, term -> term.
 }}.
 
 (* standalone command *)
