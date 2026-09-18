@@ -997,11 +997,13 @@ type primitive_value =
   | Float64 of Float64.t
   | Pstring of pstring
   | Projection of Projection.t
+  | Parray of array_data
 
 let ui63c = E.Constants.declare_global_symbol "uint63"
 let fl64c = E.Constants.declare_global_symbol "float64"
 let pstrc = E.Constants.declare_global_symbol "pstring"
 let projc = E.Constants.declare_global_symbol "proj"
+let parrc = E.Constants.declare_global_symbol "array"
 
 let uint63ina ~loc x =     A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc ui63c (A.mkOpaque ~loc (uint63c.cino x)) []) []
 let float64ina ~loc x =    A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc fl64c (A.mkOpaque ~loc (float64c.cino x)) []) []
@@ -1010,49 +1012,7 @@ let projectionina ~loc p =
   A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc projc
     (A.mkOpaque ~loc (projectionc.cino p)) [A.mkOpaque ~loc @@ CD.int.cino n]) []
 let pstringina ~loc x =    A.mkAppGlobal ~loc~hdloc:loc  primitivec (A.mkAppGlobal ~loc ~hdloc:loc pstrc (A.mkOpaque ~loc (pstringc.cino x)) []) []
-
-let primitive_value : primitive_value API.Conversion.t =
-  let module B = Rocq_elpi_utils in
-  let open API.AlgebraicData in  declare {
-  ty = API.Conversion.TyName "primitive-value";
-  doc = "Primitive values";
-  pp = (fun fmt -> function
-    | Uint63 i -> Format.fprintf fmt "%s" (Uint63.to_string i)
-    | Float64 f -> Format.fprintf fmt "%s" (Float64.to_string f)
-    | Pstring s -> Format.fprintf fmt "%s" (pp_pstring s)
-    | Projection p -> Format.fprintf fmt "%s" (Projection.to_string p));
-  constructors = [
-    K("uint63","unsigned integers over 63 bits",A(B.uint63,N),
-      B (fun x -> Uint63 x),
-      M (fun ~ok ~ko -> function Uint63 x -> ok x | _ -> ko ()));
-    K("float64","double precision foalting points",A(B.float64,N),
-      B (fun x -> Float64 x),
-      M (fun ~ok ~ko -> function Float64 x -> ok x | _ -> ko ()));
-    K("pstring","primitive string",A(B.pstring,N),
-      B (fun x -> Pstring x),
-      M (fun ~ok ~ko -> function Pstring x -> ok x | _ -> ko ()));
-    K("proj","primitive projection",A(B.projection,A(API.BuiltInData.int,N)),
-      B (fun p n -> Projection p),
-      M (fun ~ok ~ko -> function Projection p -> ok p Names.Projection.(arg p + npars p) | _ -> ko ()));
-  ]
-} |> API.ContextualConversion.(!<)
-  
-let in_elpi_primitive ~depth state i =
-  let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
-  state, E.mkApp primitivec i []
- 
-let in_elpiast_primitive ~loc = function
-  | Uint63 i -> uint63ina ~loc i
-  | Float64 f -> float64ina ~loc f
-  | Pstring s -> pstringina ~loc s
-  | Projection p -> projectionina ~loc p
-
-let in_elpi_primitive_value ~depth state = function
-| C.Int i ->    in_elpi_primitive ~depth state (Uint63 i)
-| C.Float f ->  in_elpi_primitive ~depth state (Float64 f)
-| C.String s -> in_elpi_primitive ~depth state (Pstring s)
-| C.Array _ -> nYI "HOAS for persistent arrays"
-| (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
+let parrayna ~loc x =    A.mkAppGlobal ~loc~hdloc:loc  primitivec (A.mkAppGlobal ~loc ~hdloc:loc parrc (A.mkOpaque ~loc (parrayc.cino x)) []) []
 
 (* ********************************* }}} ********************************** *)
 
@@ -1343,6 +1303,140 @@ let in_elpiast_sort ~loc state s =
 let get_sigma s = (S.get engine s).sigma
 let update_sigma s f = (S.update engine s (fun e -> { e with sigma = f e.sigma }))
 let get_global_env s = (S.get engine s).global_env
+
+let norm_assay s (x,y,z) = x,y,Evarutil.nf_evar (get_sigma s) z
+
+let primitive_value : primitive_value API.Conversion.t =
+  let module B = Rocq_elpi_utils in
+  let open API.AlgebraicData in  declare {
+  ty = API.Conversion.TyName "primitive-value";
+  doc = "Primitive values";
+  pp = (fun fmt -> function
+    | Uint63 i -> Format.fprintf fmt "%s" (Uint63.to_string i)
+    | Float64 f -> Format.fprintf fmt "%s" (Float64.to_string f)
+    | Pstring s -> Format.fprintf fmt "%s" (pp_pstring s)
+    | Projection p -> Format.fprintf fmt "%s" (Projection.to_string p)
+    | Parray (data,_,_) -> Format.fprintf fmt "<array:%d>" (Array.length data)
+    );
+  constructors = [
+    K("uint63","unsigned integers over 63 bits",A(B.uint63,N),
+      B (fun x -> Uint63 x),
+      M (fun ~ok ~ko -> function Uint63 x -> ok x | _ -> ko ()));
+    K("float64","double precision foalting points",A(B.float64,N),
+      B (fun x -> Float64 x),
+      M (fun ~ok ~ko -> function Float64 x -> ok x | _ -> ko ()));
+    K("pstring","primitive string",A(B.pstring,N),
+      B (fun x -> Pstring x),
+      M (fun ~ok ~ko -> function Pstring x -> ok x | _ -> ko ()));
+    K("proj","primitive projection",A(B.projection,A(API.BuiltInData.int,N)),
+      B (fun p n -> Projection p),
+      M (fun ~ok ~ko -> function Projection p -> ok p Names.Projection.(arg p + npars p) | _ -> ko ()));
+    K("array","primitive array",A(B.parray,N),
+      BS (fun p s -> s, Parray (norm_assay s p)),
+      M (fun ~ok ~ko -> function Parray p -> ok p | _ -> ko ()));
+  ]
+} |> API.ContextualConversion.(!<)
+  
+let in_elpi_primitive ~depth state i =
+  let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
+  state, E.mkApp primitivec i []
+
+let rec in_elpiast_primitive ~loc = function
+  | Uint63 i -> uint63ina ~loc i
+  | Float64 f -> float64ina ~loc f
+  | Pstring s -> pstringina ~loc s
+  | Projection p -> projectionina ~loc p
+  | Parray p -> parrayna ~loc p
+
+(* A single canonical universe instance is used for every primitive array we
+   build: since array elements are restricted to uint63/float64/pstring (or,
+   recursively, arrays thereof) and those are all Set-sorted, and Set is
+   cumulatively below every Type@{l}, Univ.Level.set always satisfies the
+   kernel's typing rule for Array(u,vals,def,ty) regardless of what universe
+   instance (if any) the original term used. This is what lets coq-elpi hide
+   the array's universe instance from elpi entirely. *)
+let canonical_array_instance = UVars.Instance.of_array ([||], [|Univ.Level.set|])
+let canonical_array_einstance = EC.EInstance.make canonical_array_instance
+
+(* Is t a literal uint63/float64/pstring, or (recursively) a primitive array
+   literal? Does not by itself guarantee t is ground/closed. *)
+let rec is_primitive_shaped sigma t = match EC.kind sigma t with
+  | C.Int _ | C.Float _ | C.String _ -> true
+  | C.Array (_, data, dflt, _ty) ->
+      Array.for_all (is_primitive_shaped sigma) data && is_primitive_shaped sigma dflt
+  | _ -> false
+
+let is_valid_primitive_value sigma t =
+  EC.Vars.closed0 sigma t && Evarutil.is_ground_term sigma t && is_primitive_shaped sigma t
+
+(* Does ty (a type) denote uint63/float64/pstring's type, or (recursively)
+   the primitive array type applied to such a type? Recognized via Rocq's
+   retroknowledge, i.e. exactly the constants Typeops.type_of_int/float/
+   string/array themselves produce. *)
+let describes_primitive_ty env sigma ty =
+  let retro = Environ.retroknowledge env in
+  let is_retro_const oc t = match oc, EC.kind sigma t with
+    | Some c, C.Const (c',_) -> Names.Constant.CanOrd.equal c c'
+    | _ -> false
+  in
+  let rec aux ty =
+    if is_retro_const retro.Retroknowledge.retro_int63 ty then true
+    else if is_retro_const retro.Retroknowledge.retro_float64 ty then true
+    else if is_retro_const retro.Retroknowledge.retro_string ty then true
+    else match EC.kind sigma ty with
+      | C.App (h, [|elem_ty|]) when is_retro_const retro.Retroknowledge.retro_array h -> aux elem_ty
+      | _ -> false
+  in aux ty
+
+let is_valid_primitive_ty env sigma ty =
+  EC.Vars.closed0 sigma ty && Evarutil.is_ground_term sigma ty && describes_primitive_ty env sigma ty
+
+(* The declared element type of a primitive array whose default/elements are
+   the given (already validated, already canonicalized via
+   canonicalize_primitive_value below) primitive value v. For a nested
+   array, the inner array's own (already canonical) stored type is reused
+   directly rather than re-derived. *)
+let ty_of_primitive_value env sigma v = match EC.kind sigma v with
+  | C.Int _ -> EC.of_constr (Typeops.type_of_int env)
+  | C.Float _ -> EC.of_constr (Typeops.type_of_float env)
+  | C.String _ -> EC.of_constr (Typeops.type_of_string env)
+  | C.Array (_,_,_,inner_ty) ->
+      EC.mkApp (EC.of_constr (Typeops.type_of_array env canonical_array_instance), [| inner_ty |])
+  | _ -> assert false (* caller must check is_valid_primitive_value first *)
+
+(* Rebuilds a (already validated via is_valid_primitive_value) primitive
+   value so that every array node, at every nesting depth, uses the
+   canonical universe instance and a freshly recomputed declared type.
+   This is necessary before storing a value inside an array_data: two Constr
+   representations of the very same logical array can differ in irrelevant
+   embedded universe metadata (e.g. distinct fresh universe variables picked
+   by different elaboration/reduction engines for the very same, always
+   Set-sorted, array type former), which would otherwise break the
+   structural equality used by the parray CData (see rocq_elpi_utils.ml). *)
+let rec canonicalize_primitive_value env sigma t = match EC.kind sigma t with
+  | C.Int _ | C.Float _ | C.String _ -> t
+  | C.Array (_, data, dflt, _ty) ->
+      let dflt = canonicalize_primitive_value env sigma dflt in
+      let data = Array.map (canonicalize_primitive_value env sigma) data in
+      EC.mkArray (canonical_array_einstance, data, dflt, ty_of_primitive_value env sigma dflt)
+  | _ -> assert false (* caller must check is_valid_primitive_value first *)
+let in_elpi_primitive_value ~depth ~env ~sigma state = function
+| C.Int i ->    in_elpi_primitive ~depth state (Uint63 i)
+| C.Float f ->  in_elpi_primitive ~depth state (Float64 f)
+| C.String s -> in_elpi_primitive ~depth state (Pstring s)
+| C.Array(ui,data,dflt,ty) ->
+    if fst (EC.EInstance.length ui) <> 0 then
+      err Pp.(str "primitive array: unexpected quality-polymorphic instance")
+    else if not (is_valid_primitive_ty env sigma ty) then
+      err Pp.(str "primitive array: element type is not one of the primitives coq-elpi supports (uint63/float64/pstring, or an array thereof)")
+    else if not (Array.for_all (is_valid_primitive_value sigma) data && is_valid_primitive_value sigma dflt) then
+      err Pp.(str "primitive array: an element or the default value is not a ground, closed, primitive value")
+    else
+      let dflt = canonicalize_primitive_value env sigma dflt in
+      let data = Array.map (canonicalize_primitive_value env sigma) data in
+      in_elpi_primitive ~depth state (Parray(data,dflt,ty_of_primitive_value env sigma dflt))
+| (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
+
 
 let declare_evc = E.Constants.declare_global_symbol "declare-evar"
 let rm_evarc = E.Constants.declare_global_symbol "rm-evar"
@@ -1814,7 +1908,7 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
            (0,state,env) (List.combine names tys) in
          let state, bos = CArray.fold_left_map (aux ~depth:(depth+n) env) state bos in
          state, in_elpi_mcofix names_tys focus_idx (Array.to_list bos)
-    | x -> in_elpi_primitive_value ~depth state x
+    | x -> in_elpi_primitive_value ~depth ~env ~sigma state x
   in
   debug Pp.(fun () ->
       str"term2lp: depth=" ++ int depth ++
@@ -2546,6 +2640,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       | Float64 f -> state, EC.mkFloat f, gls
       | Pstring s -> state, eC_mkString s, gls
       | Projection p -> state, EC.UnsafeMonomorphic.mkConst (get_projection_constant (get_global_env state) (Projection.repr p)), gls
+      | Parray (data,dflt,ty) -> state, EC.mkArray (canonical_array_einstance, data, dflt, ty), gls
       end
 
   (* evar *)

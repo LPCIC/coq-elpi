@@ -634,7 +634,21 @@ let gterm2lpast ~pattern ~language state glob =
   | GInt i -> in_elpiast_primitive ~loc (Uint63 i)
   | GFloat f -> in_elpiast_primitive ~loc (Float64 f)
   | GString s -> in_elpiast_primitive ~loc (Pstring s)
-  | GArray _ -> nYI "HOAS for persistent arrays"
+  | GArray (_ui, elts, dflt, _ty) ->
+      let env = (get_glob_env state).env and sigma = get_sigma state in
+      let rec econstr_of_literal g = match DAst.get g with
+        | GInt i -> EConstr.mkInt i
+        | GFloat f -> EConstr.mkFloat f
+        | GString s -> EConstr.mkString s
+        | GArray (_,elts,dflt,_) ->
+            let dflt = econstr_of_literal dflt in
+            let data = Array.map econstr_of_literal elts in
+            EConstr.mkArray (canonical_array_einstance, data, dflt, ty_of_primitive_value env sigma dflt)
+        | _ -> CErrors.user_err ~loc:coqloc Pp.(str "array literal in a quotation may only contain primitive uint63/float64/pstring/array literals, not arbitrary terms; build it with coq.primitive.array.* instead")
+      in
+      let dflt = econstr_of_literal dflt in
+      let data = Array.map econstr_of_literal elts in
+      in_elpiast_primitive ~loc (Parray (data, dflt, ty_of_primitive_value env sigma dflt))
   in
     gterm2lp state glob
 

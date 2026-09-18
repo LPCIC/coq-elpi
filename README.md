@@ -510,7 +510,7 @@ Arguments of type `uconstr` are passed raw.
 - [x] primitive integers
 - [x] primitive floats
 - [x] primitive strings
-- [ ] primitive arrays
+- [x] primitive arrays (of primitive values)
 - [x] universe polymorphism
 - [x] modules
 - [x] module types

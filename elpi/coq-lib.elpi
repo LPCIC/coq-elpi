@@ -917,3 +917,41 @@ selected-prefix Selected Prefix T Prefix :- Selected = T, !.
 selected-prefix _ _ T P :- P is {coq.gref->id (indt T)} ^ "_".
 
 }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Primitive arrays
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% [coq.primitive.array.fold F A Acc0 Acc] folds F, called with each index
+% and element of A in order, over the accumulator, starting from Acc0.
+func coq.primitive.array.fold (func int, term, A -> A), parray, A -> A.
+coq.primitive.array.fold F A Acc0 Acc :-
+  coq.primitive.array.size A N,
+  coq.primitive.array.fold.aux F A 0 N Acc0 Acc.
+
+func coq.primitive.array.fold.aux (func int, term, A -> A), parray, int, int, A -> A.
+coq.primitive.array.fold.aux _ _ I N Acc Acc :- I >= N, !.
+coq.primitive.array.fold.aux F A I N Acc0 Acc :-
+  coq.primitive.array.get A I X,
+  F I X Acc0 Acc1,
+  J is I + 1,
+  coq.primitive.array.fold.aux F A J N Acc1 Acc.
+
+% [coq.primitive.array.map F A A1] builds A1 by applying F to every element
+% of A (and, once, to A's default value, called with index -1).
+func coq.primitive.array.map (func int, term -> term), parray -> parray.
+coq.primitive.array.map F A A1 :-
+  coq.primitive.array.dflt A Def,
+  F -1 Def Def1,
+  coq.primitive.array.size A N,
+  coq.primitive.array.make N Def1 A0,
+  coq.primitive.array.map.aux F A A0 0 N A1.
+
+func coq.primitive.array.map.aux (func int, term -> term), parray, parray, int, int -> parray.
+coq.primitive.array.map.aux _ _ Acc I N Acc :- I >= N, !.
+coq.primitive.array.map.aux F A Acc0 I N Acc :-
+  coq.primitive.array.get A I X,
+  F I X Y,
+  coq.primitive.array.set Acc0 I Y Acc1,
+  J is I + 1,
+  coq.primitive.array.map.aux F A Acc1 J N Acc.

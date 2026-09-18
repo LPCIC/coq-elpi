@@ -251,9 +251,27 @@ type primitive_value =
   | Float64 of Float64.t
   | Pstring of pstring
   | Projection of Projection.t
+  | Parray of Rocq_elpi_utils.array_data
 val primitive_value : primitive_value Conversion.t
 val in_elpi_primitive : depth:int -> state -> primitive_value -> state * term
-val in_elpiast_primitive : loc:Ast.Loc.t -> primitive_value -> Ast.Term.t 
+val in_elpiast_primitive : loc:Ast.Loc.t -> primitive_value -> Ast.Term.t
+
+(* Is t a ground, closed, uint63/float64/pstring, or (recursively) a
+   primitive array thereof? *)
+val is_valid_primitive_value : Evd.evar_map -> EConstr.t -> bool
+(* The declared element type of a primitive array whose elements/default are
+   the given (already validated via is_valid_primitive_value) primitive
+   value. *)
+val ty_of_primitive_value : Environ.env -> Evd.evar_map -> EConstr.t -> EConstr.t
+(* Rebuilds a (already validated) primitive value so every array node, at
+   every nesting depth, uses the canonical universe instance and a freshly
+   recomputed declared type. Must be applied before storing a value as an
+   array element/default (see rocq_elpi_HOAS.ml for why). *)
+val canonicalize_primitive_value : Environ.env -> Evd.evar_map -> EConstr.t -> EConstr.t
+(* The single universe instance used for every primitive array coq-elpi
+   builds (see rocq_elpi_HOAS.ml for why this is always valid). *)
+val canonical_array_instance : UVars.Instance.t
+val canonical_array_einstance : EConstr.EInstance.t
 
 val uinstance : UVars.Instance.t Conversion.t
 

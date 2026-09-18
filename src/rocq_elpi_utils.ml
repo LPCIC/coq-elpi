@@ -283,6 +283,20 @@ let (pstringc, pstring) : Pstring.t Elpi.API.RawOpaqueData.cdata * Pstring.t Elp
 let pstring_of_string = Pstring.of_string
 let string_of_pstring = Pstring.to_string
 
+type array_data = EC.t array * EC.t * EC.t
+
+let (parrayc, parray) : array_data Elpi.API.RawOpaqueData.cdata * array_data Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
+  declare {
+    name = "parray";
+    doc = "";
+    pp = (fun fmt ((data,_,_) : array_data) -> Format.fprintf fmt "<array:%d>" (Array.length data));
+    compare = Stdlib.compare;
+    hash = Hashtbl.hash;
+    hconsed = false;
+    constants = [];
+  }
+
 let debug = CDebug.create ~name:"elpi" ()
 
 let elpitime_flag, elpitime = CDebug.create_full ~name:"elpitime" ()

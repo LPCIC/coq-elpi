@@ -3,6 +3,18 @@
 
 ### HOAS:
 - New `cofix` and `mcofix`
+- New `primitive (array A)` term constructor for Rocq's primitive persistent
+  arrays, restricted to arrays whose elements and default value are
+  themselves uint63, float64, pstring, or (recursively) another primitive
+  array
+
+### API:
+- New `coq.primitive.array.make`, `coq.primitive.array.size`,
+  `coq.primitive.array.get`, `coq.primitive.array.set`,
+  `coq.primitive.array.dflt`, `coq.list->parray`, `coq.parray->list`
+
+### LIB:
+- New `coq.primitive.array.fold`, `coq.primitive.array.map`
 
 # [3.5.1] 04/09/2026
 
