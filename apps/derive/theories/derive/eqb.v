@@ -9,8 +9,8 @@ From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
 From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
 
-Require Import eqb_core_defs.
-Require Import eqType_ast tag fields.
+From elpi.apps Require Import eqb_core_defs.
+From elpi.apps Require Import eqType_ast tag fields.
 
 Register eqb_body as elpi.derive.eqb_body.
 
@@ -24,6 +24,11 @@ Elpi Db derive.eqb.db lp:{{
     o:term, % type2
     o:term. % comparison function
   
+  pred eqb-for.ref
+    o:gref, % type1
+    o:gref, % type2
+    o:gref. % comparison function
+  
   pred eqb-fields
     o:term, % type1
     o:term, % type2
@@ -35,7 +40,13 @@ Elpi Db derive.eqb.db lp:{{
 
   :name "eqb-for:whd"
   eqb-for T1 T2 X :- whd1 T1 T1', !, eqb-for T1' T2 X. 
-  eqb-for T1 T2 X :- whd1 T2 T2', !, eqb-for T1 T2' X. 
+  eqb-for T1 T2 X :- whd1 T2 T2', !, eqb-for T1 T2' X.
+
+  eqb-for T1 T2 X :- 
+    coq.env.global GR1 T1,
+    coq.env.global GR2 T2,
+    eqb-for.ref GR1 GR2 GRE, 
+    coq.env.global GRE X.
   
 }}.
 

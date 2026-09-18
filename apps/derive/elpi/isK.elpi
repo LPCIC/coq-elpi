@@ -31,13 +31,14 @@ body K _ Vars Tys R :-
 func main-K string, term, term, constructor -> (pred).
 main-K Prefix Ity Arity GRK Clause :-
   coq.env.global (indc GRK) K,
+  K = (global (indc GRK) GRI),
   coq.bind-ind-arity Ity Arity (body K) TSek,
   (@keepunivs! => std.assert-ok! (coq.elaborate-skeleton TSek Ty T) "derive.isK generates illtyped term"),
   Name is Prefix ^ {coq.gref->id (indc GRK)},
   coq.ensure-fresh-global-id Name NameF,
   coq.env.add-const NameF T Ty _ IsK,
 
-  Clause = (isK-db GRK (global (const IsK)) :- !).
+  Clause = (isK-db GRK (const IsK) :- !).
 func main1 inductive, string -> list (pred).
 main1 GR Prefix Clauses :-
   coq.env.global (indt GR) T,

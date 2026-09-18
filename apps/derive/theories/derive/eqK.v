@@ -35,7 +35,7 @@ Register bool_discr as elpi.bool_discr.
 
 Elpi Db derive.eqK.db lp:{{
 
-func eqK-db constructor -> term.
+func eqK-db constructor -> gref.
 
 }}.
 #[superglobal] Elpi Accumulate derive.eqK.db lp:{{

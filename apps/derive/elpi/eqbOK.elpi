@@ -57,14 +57,14 @@ main (indt I) Prefix [CL] :- std.do! [
   std.assert! (eqType (indt I) FI) "this inductive is not supported",
   std.assert! (eqcorrect-for (indt I) Correct Refl) "run eqbcorrect before",
 
-  add-reflect FI (global (const Correct)) (global (const Refl)) Breflect,
+  add-reflect FI {coq.env.global (const Correct)} {coq.env.global (const Refl)} Breflect,
 
   std.assert-ok! (coq.typecheck Breflect Treflect) "eqbOK generates illtyped term", 
   coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
   coq.env.add-const Namerf Breflect Treflect @opaque! Reflect,
 
 
-  add-sumbool FI (global (const Reflect)) Breflect_sb,
+  add-sumbool FI {coq.env.global (const Reflect)} Breflect_sb,
   std.assert-ok! (coq.typecheck Breflect_sb Treflect_sb) "eqbOK generates illtyped term", 
   coq.ensure-fresh-global-id (Prefix ^ "eqb_OK_sumbool") Namerf_sb,
   coq.env.add-const Namerf_sb Breflect_sb Treflect_sb @opaque! Reflect_sb,
@@ -77,14 +77,15 @@ main (indt I) Prefix [CL] :- std.do! [
 
 ].
 main (const C) Prefix [CL] :- std.do! [
-  std.assert! (eqb-for (global (const C)) (global (const C)) F) "run eqb before",
+  coq.env.global (const C) X,
+    std.assert! (eqb-for X X F) "run eqb before",
   std.assert! (eqcorrect-for (const C) Correct Refl) "run eqbcorrect before",
-  add-reflect (eqb.inductive _ _) (global (const Correct)) (global (const Refl)) Breflect,
-
-  std.assert-ok! (coq.typecheck Breflect _) "eqbOK generates illtyped term", 
+  add-reflect (eqb.inductive _ _) {coq.env.global (const Correct)} {coq.env.global (const Refl)} Breflect,
+  BreflectTy = {{ forall a b : lp:X, lib:elpi.reflect (@eq lp:X a b) (lp:F a b) }},
+  std.assert-ok! (coq.typecheck Breflect BreflectTy) "eqbOK generates illtyped term", 
   coq.ensure-fresh-global-id (Prefix ^ "eqb_OK") Namerf,
-  X = (global (const C) : term),
-  coq.env.add-const Namerf Breflect {{ forall a b : lp:X, lib:elpi.reflect (@eq lp:X a b) (lp:F a b) }} @opaque! Reflect,
+
+  coq.env.add-const Namerf Breflect BreflectTy @opaque! Reflect,
   CL = eqbok-for (const C) Reflect,
   coq.elpi.accumulate _ "derive.eqbOK.db" (clause _ _ CL),
   coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ (eqType (const C) eqb.axiom)),

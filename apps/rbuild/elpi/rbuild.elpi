@@ -6,7 +6,7 @@ unresolved_record->list {{ More _ lp:X lp:XS }} [X|Rest] :- unresolved_record->l
 
 func find constant, list term -> term, list term.
 find C [ {{ Label _ _ lp:P lp:T }}  |TS] T TS :-
-  coq.safe-dest-app P (global (const C)) _, !.
+  coq.safe-dest-app P (global (const C) _) _, !.
 find C [X|XS] T [X|YS] :- find C XS T YS.
 
 func check-no-label list term.
@@ -33,11 +33,10 @@ reorder [] L ACC [] :- check-no-label L,
 
 func find-constructor term -> term, list (option constant).
 find-constructor Ty KParams PL :- not(var Ty), !,
-  coq.safe-dest-app Ty Hd _,
-  coq.env.global (indt I) Hd,
+  coq.safe-dest-app Ty (global (indt I) Ui) _,
   coq.env.indt I _ N _ _ [K] _,
   coq.mk-n-holes N Params,
-  coq.mk-app {coq.env.global (indc K)} Params KParams,
+  coq.mk-app (global (indc K) Ui) Params KParams,
   coq.env.projections I PL.
 
 func find-inductive list term -> term.
@@ -46,13 +45,11 @@ find-inductive [_|XS] S :- find-inductive XS S.
   
 func focus term, list constant -> term.
 focus {{ ssrfun.catcomp lp:G lp:F }} Acc R :- !,
-  coq.safe-dest-app G P _,
-  coq.env.global (const PC) P,
+  coq.safe-dest-app G (global (const PC) _) _,
   coq.env.projection? PC _,
   focus F [PC|Acc] R.
 focus G Acc R :-
-  coq.safe-dest-app G P _,
-  coq.env.global (const PC) P,
+  coq.safe-dest-app G (global (const PC) _) _,
   coq.env.projection? PC _,
   compose-lens [PC|Acc] R.
 

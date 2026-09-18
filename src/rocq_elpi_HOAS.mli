@@ -177,8 +177,6 @@ val goal2lp : depth:int -> constraints -> State.t -> full conv_context -> Evar.t
 val unspec2opt : 'a Elpi.Builtin.unspec -> 'a option
 val opt2unspec : 'a option -> 'a Elpi.Builtin.unspec
 
-val in_elpi_gr : depth:int -> State.t -> Names.GlobRef.t -> term
-val in_elpi_poly_gr : depth:int -> State.t -> Names.GlobRef.t -> term -> term
 val in_elpi_poly_gr_instance : depth:int -> State.t -> Names.GlobRef.t -> UVars.Instance.t -> term
 val in_elpi_flex_sort : term -> term
 val in_elpi_sort : depth:int -> 'a conv_context -> constraints -> state -> Sorts.t -> state * term * Conversion.extra_goals
@@ -251,8 +249,6 @@ val primitive_value : primitive_value Conversion.t
 val in_elpi_primitive : depth:int -> state -> primitive_value -> state * term
 val in_elpiast_primitive : loc:Ast.Loc.t -> primitive_value -> Ast.Term.t 
 
-val uinstance : UVars.Instance.t Conversion.t
-
 [%%if coq = "9.0" || coq = "9.1"]
 val universe_constraint : Univ.univ_constraint Conversion.t
 [%%else]
@@ -260,6 +256,7 @@ val universe_constraint : Univ.UnivConstraint.t Conversion.t
 [%%endif]
 
 val universe_variance : (Univ.Level.t * UVars.Variance.t option) Conversion.t
+
 type any_universe_decl =
   | NonCumul of universe_decl
   | Cumul of universe_decl_cumul
@@ -288,6 +285,10 @@ val univ : Univ.Universe.t Conversion.t
 val isuniv : RawOpaqueData.t -> bool
 val univout : RawOpaqueData.t -> Univ.Universe.t
 
+val uinstance : UVars.Instance.t Conversion.t
+val isuinstance : RawOpaqueData.t -> bool
+val uinstanceout : RawOpaqueData.t -> UVars.Instance.t
+
 val is_sort : depth:int -> term -> bool
 val is_prod : depth:int -> term -> (term * term) option (* ty, bo @ depth+1 *)
 val is_let : depth:int -> term -> (term * term * term) option (* ty, d, bo @ depth+1 *)
@@ -298,11 +299,10 @@ val nameout : RawOpaqueData.t -> annot_name
 val name : annot_name Conversion.t
 
 type global_or_pglobal =
-  | Global of term option
   | PGlobal of term option * UVars.Instance.t option
   | NotGlobal
   | Var
-val is_global_or_pglobal : depth:int -> term -> global_or_pglobal
+val is_global_or_pglobal : depth:int -> state -> term -> state * global_or_pglobal * Conversion.extra_goals
 
 val in_elpi_modpath : ty:bool -> Names.ModPath.t -> term
 val is_modpath : depth:int -> term -> bool

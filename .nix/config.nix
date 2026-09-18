@@ -20,6 +20,16 @@ let
   common-bundles = listToAttrs (forEach master (p:
     { name = p; value.override.version = "master"; }))
   // {
+    hierarchy-builder.override.version = "mattam82:pglobal-global";
+    # math-comp's repo used to be named "mathcomp" (nixpkgs still fetches it
+    # under that name, relying on GitHub's rename redirect); mattam82's fork
+    # only exists under the current name, so the repo must be set explicitly.
+    mathcomp.override.version.location = {
+      owner = "mattam82";
+      repo = "math-comp";
+      rev = "pglobal-global";
+    };
+
     rocq-elpi.override.elpi-version = default-elpi-version;
     rocq-elpi-tests.job = true;
     rocq-elpi-tests-stdlib.job = true;

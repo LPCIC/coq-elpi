@@ -29,8 +29,7 @@ data term.
 builtin symb sort    : sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-builtin symb global  : gref -> term.
-builtin symb pglobal : gref -> univ-instance -> term.
+builtin symb global : gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
 builtin symb fun     : name -> term -> (term -> term) -> term.         % fun x : t =>

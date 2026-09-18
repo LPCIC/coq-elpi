@@ -102,15 +102,14 @@ Elpi Accumulate lp:{{
      GrRefl = const R,
      GrCorrect = const C,
      coq.elpi.accumulate _ "derive.eqb.db" (clause _ _ (eqb-done GrType)),
-     coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") (eqb-for (global GrType) (global GrType) (global GrEqb))),
+     coq.elpi.accumulate _ "derive.eqb.db" (clause _ (before "eqb-for:whd") (eqb-for.ref GrType GrType GrEqb)),
      coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (eqcorrect-for GrType C R)),
-     coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (correct-lemma-for (global GrType) (global GrCorrect))),
-     coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (refl-lemma-for (global GrType) (global GrRefl))),
+     coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (correct-lemma-for GrType GrCorrect)),
+     coq.elpi.accumulate _ "derive.eqbcorrect.db" (clause _ _ (refl-lemma-for GrType GrRefl)),
      coq.elpi.accumulate _ "derive.eqType.db" (clause _ _ (eqType GrType eqb.axiom)),
      coq.elpi.accumulate _ "derive.param1.db" (clause _ _ (reali-done GrType)),
-     coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") (reali (global GrType) (global GRisT) :- !)),
-     coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "realiR:fail") (realiR (global GrType) (global GRisT) :- !)),
-     coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-inhab-db (global GRisT) (global GRisTinhab))).
+     coq.elpi.accumulate _ "derive.param1.db" (clause _ (before "reali:fail") (reali.gref GrType GRisT :- !)),
+     coq.elpi.accumulate _ "derive.param1.trivial.db" (clause _ _ (param1-inhab-db.ref GRisT GRisTinhab)).
   main _ :- coq.error "usage: derive.eqbOK.register_axiom T is_T is_T_inhab eqb eqb_correct eqb_refl.".
 }}.
 Elpi Export derive.eqbOK.register_axiom.

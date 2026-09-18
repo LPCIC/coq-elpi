@@ -218,8 +218,7 @@ data term.
 builtin symb sort    : sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-builtin symb global  : gref -> term.
-builtin symb pglobal : gref -> univ-instance -> term.
+builtin symb global : gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
 builtin symb fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
@@ -670,8 +669,7 @@ builtin func coq.env.typeof gref -> term.
 
 % [coq.env.global GR T] turns a global reference GR into a term, or
 % viceversa.
-% T = (global GR) or, if GR points to a universe polymorphic term,
-% T = (pglobal GR I).
+% T = (global GR I).
 % Supported attributes:
 % - @uinstance! I (default: fresh instance I)
 builtin func coq.env.global -> gref, term.
@@ -1122,6 +1120,9 @@ builtin func coq.univ.variable.of-term term -> coq.univ.variable.set.
 % Universes level instance for a universe-polymorphic constant
 kind univ-instance type.
 
+
+% [coq.empty-univ-instance? UI] is the univ instance empty
+builtin func coq.empty-univ-instance? univ-instance.
 
 % [coq.univ-instance UI UL] relates a univ-instance UI and a list of
 % universe level variables UL
@@ -2024,6 +2025,10 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 % - @global! (default: false, always active, only if Scope is
 % execution-site, discouraged)
 builtin func coq.elpi.accumulate-clauses scope, id, list clause.
+
+% [coq.elpi.abstract-clause-univs Clause AClause] 
+% Abstract universes of the clause as pi quantifications
+builtin func coq.elpi.abstract-clause-univs prop -> prop.
 
 % Specify if a predicate argument is in input or output mode
 builtin data argument_mode.

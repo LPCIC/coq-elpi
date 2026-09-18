@@ -85,8 +85,7 @@ undup-same [_|Xs] Ys :- undup-same Xs Ys.
 :index (1)
 func is-coq-term any ->.
 is-coq-term (sort _).
-is-coq-term (global _).
-is-coq-term (pglobal _ _).
+is-coq-term (global _ _).
 is-coq-term (app _).
 is-coq-term (fun _ _ _).
 is-coq-term (prod _ _ _ ). 

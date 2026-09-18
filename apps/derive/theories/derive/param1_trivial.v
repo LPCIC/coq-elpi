@@ -20,10 +20,12 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
 
   func param1-trivial-done gref ->.
   type param1-trivial-db term -> term -> prop.
+  type param1-trivial-db.ref gref -> gref -> prop.
   type param1-trivial-db-args list term -> list term -> prop.
 
   func param1-inhab-done gref ->.
   type param1-inhab-db term -> term -> prop.
+  type param1-inhab-db.ref gref -> gref -> prop.
   type param1-inhab-db-args list term -> list term -> prop.
 
 }}.
@@ -45,6 +47,10 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
     param1-inhab-db Hd P, !,
     param1-inhab-db-args Args PArgs.
   
+  param1-inhab-db (global X _) Y :- 
+    param1-inhab-db.ref X GRY,
+    coq.env.global GRY Y, !.
+
   param1-inhab-db-args [] [].
   param1-inhab-db-args [T,P|Args] R :-
     std.assert-ok! (coq.typecheck T Ty) "param1-inhab-db: cannot work illtyped term",
@@ -52,6 +58,11 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
        (param1-inhab-db P Q, R = [T,P,Q|PArgs], param1-inhab-db-args Args PArgs)
        (R = [T,P|PArgs], param1-inhab-db-args Args PArgs).
    
+
+  param1-inhab-db (global X _) Y :- 
+    param1-inhab-db.ref X GRY,
+    coq.env.global GRY Y, !.
+
   :name "param1:trivial:start"
   param1-trivial-db (fun `f` (prod `_` S _\ T) f\
               prod `x` S x\ prod `px` (RS x) _)
@@ -74,6 +85,10 @@ From elpi.apps Require Import derive.param1 derive.param1_congr.
       (param1-trivial-db P Q, R = [T,P,Q|PArgs], param1-trivial-db-args Args PArgs)
       (R = [T,P|PArgs], param1-trivial-db-args Args PArgs).
 
+  param1-trivial-db (global X _) Y :- 
+    param1-trivial-db.ref X GRY,
+    coq.env.global GRY Y, !.
+
 }}.
   
 
@@ -90,10 +105,11 @@ Elpi Accumulate File param1_inhab.
 Elpi Accumulate File param1_trivial.
 Elpi Accumulate lp:{{
   main [str I] :- coq.locate I IsGR, !,
-    realiR T {coq.env.global IsGR},
-    coq.env.global GR T,
+    std.spy-do! [ reali.gref GR IsGR,
+    %  T {coq.env.global IsGR},
+    % coq.env.global GR T,
     derive.param1.inhab.main GR IsGR "_inhab" CL,
-    CL =!=> derive.param1.trivial.main GR IsGR "_trivial" _.
+    CL =!=> derive.param1.trivial.main GR IsGR "_trivial" _ ].
   main _ :- usage.
 
   usage :-
@@ -191,7 +207,7 @@ Definition is_float64_trivial : trivial PrimFloat.float is_float64 :=
     (fun y => match y with float64 i => eq_refl end).
 Register is_float64_trivial as elpi.derive.is_float64_trivial.
 
-Definition is_pstring_trivial : trivial lib:elpi.pstring is_pstring :=
+Definition is_pstring_trivial : trivial PrimString.string is_pstring :=
   fun x => contracts _ is_pstring x (is_pstring_inhab x)
     (fun y => match y with pstring i => eq_refl end).
 Register is_pstring_trivial as elpi.derive.is_pstring_trivial.

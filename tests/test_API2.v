@@ -148,10 +148,10 @@ Definition times := plus.
 
 Elpi Query lp:{{
 
-  {{ plus }} = global (const C1),
+  {{ plus }} = global (const C1) _,
   coq.hints.opaque C1 "core" X1,
   std.assert!(X1 = @opaque!) "wrong opaque plus",
-  {{ times }} = global (const C2),
+  {{ times }} = global (const C2) _,
   coq.hints.opaque C2 "core" X2,
   std.assert!(X2 = @transparent!) "wrong opaque times"
 
@@ -161,7 +161,7 @@ Definition x := 3.
 
 Elpi Query lp:{{
   std.do! [
-    {{ x }} = global (const C1),
+    {{ x }} = global (const C1) _,
     coq.hints.opaque C1 "core" @opaque!,
     coq.hints.set-opaque C1 "core" @transparent!,
     coq.hints.opaque C1 "core" @transparent!,
@@ -175,7 +175,7 @@ Elpi Query lp:{{
   std.do! [coq.env.begin-module "xx" none, coq.env.end-module XX, coq.env.import-module XX ]
 }} lp:{{
   std.do! [
-    {{ x }} = global (const C1),
+    {{ x }} = global (const C1) _,
     coq.hints.opaque C1 "core" @opaque!,
     coq.env.begin-module "xx" _,
     (@local! ==> coq.hints.set-opaque C1 "core" @transparent!),
@@ -191,7 +191,7 @@ Elpi Query lp:{{
   std.do! [coq.env.begin-module "xx2" none, coq.env.end-module XX, coq.env.import-module XX]
 }} lp:{{
   std.do! [
-    {{ x }} = global (const C1),
+    {{ x }} = global (const C1) _,
     coq.hints.opaque C1 "core" @opaque!,
     coq.env.begin-module "xx2" _,
     coq.hints.set-opaque C1 "core" @transparent!,
@@ -209,7 +209,7 @@ Elpi Query lp:{{
     std.do! [coq.env.begin-module "xx3" none, coq.env.end-module _]
 }} lp:{{
   std.do! [
-    {{ x }} = global (const C1),
+    {{ x }} = global (const C1) _,
     coq.hints.opaque C1 "core" @opaque!,
     coq.env.begin-module "xx3" _,
     (@global! => coq.hints.set-opaque C1 "core" @transparent!),
@@ -220,7 +220,7 @@ Elpi Query lp:{{
 }}.
 Fail Elpi Query lp:{{
 
-  {{ x }} = global (const C1),
+  {{ x }} = global (const C1) _,
   coq.hints.opaque C1 "corexx" T
 
 }}.
@@ -249,7 +249,7 @@ Goal 0 = 1. solve [debug eauto with xxx]. Abort.
 *)
 
 (* ------------- functor application ---------------- *)
-
+Unset Universe Polymorphism.
 (*Module Type T. Axiom Inline(1) T : Type. End T.*)
 Elpi Query lp:{{
   std.do! [ coq.env.begin-module-type "T", coq.env.end-module-type _, ]
@@ -266,7 +266,7 @@ Elpi Query lp:{{
 }} lp:{{
   coq.env.begin-module-functor "F" _ _,
   coq.locate "P.T" GR,
-  coq.env.add-const "id" (fun `a` (global GR) a\ a) _ _ _,
+  coq.env.add-const "id" (fun `a` (global GR UI) a\ a) _ _ _,
   coq.env.end-module _.
 
 }}.
@@ -319,7 +319,7 @@ Elpi Query lp:{{
 
   coq.env.begin-module-type-functor "FT" _,
   coq.locate "P.T" GR,
-  coq.env.add-axiom "idT" (prod _ (global GR) _\ (global GR)) _,
+  coq.env.add-axiom "idT" (prod _ (global GR _) _\ (global GR _)) _,
   coq.env.end-module-type _.
 
 }}.

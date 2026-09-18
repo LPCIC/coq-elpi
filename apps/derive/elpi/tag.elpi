@@ -25,7 +25,8 @@ main1 I Prefix CL :- do! [
 
   % build   fun params (x : I params) => ... do-match ...
   coq.env.indt I _ _ _ Arity _ _,
-  bind-ind-arity (global (indt I)) Arity do-match BodyR,
+  coq.env.global (indt I) Ind,
+  bind-ind-arity Ind Arity do-match BodyR,
 
   % typecheck (and infer univ constraints)
   std.assert-ok! (elaborate-skeleton BodyR Ty Body) "derive.tag generates illtyped code",

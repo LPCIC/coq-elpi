@@ -91,10 +91,9 @@ namespace tc {
         get-range-arity-aux T Ty R,
         (pi x\ get-range-arity-aux T (B x) R1),
         min-max-nat R R1 R2.
-      get-range-arity-aux _ (global _) @max-min :- !.
       get-range-arity-aux _ uvar @max-min :- !.
       get-range-arity-aux _ (sort _) @max-min :- !.
-      get-range-arity-aux _ (pglobal _ _) @max-min :- !.
+      get-range-arity-aux _ (global _ _) @max-min :- !.
       get-range-arity-aux X (let _ T Ty B) R4 :- !,
         get-range-arity-aux X Ty R1,
         get-range-arity-aux X T R2,
@@ -110,8 +109,7 @@ namespace tc {
       :index (_ 1)
       func precompile-aux positivity, term, nat -> term, nat.
       precompile-aux _ X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
-      precompile-aux _ (global _ as C) A C A :- !.
-      precompile-aux _ (pglobal _ _ as C) A C A :- !.
+      precompile-aux _ (global _ _ as C) A C A :- !.
       precompile-aux _ (sort _ as C) A C A :- !.
 
       % Detect maybe-eta term
@@ -163,7 +161,7 @@ namespace tc {
 
       func get-univ-instances term -> list univ-instance.
       get-univ-instances T L :-
-        (pi x L\ fold-map (pglobal _ x) L _ [x | L] :- !) => fold-map T [] _ L, !.
+        (pi x L\ fold-map (global _ x) L _ [x | L] :- not (coq.empty-univ-instance? x), !) => fold-map T [] _ L, !.
 
       func get-univ term -> list univ.
       get-univ T L :-
@@ -237,8 +235,7 @@ namespace tc {
 
       func precompile-aux term, list term -> term, list term.
       precompile-aux X A Y A :- name X, !, X = Y, !. % avoid loading "precompile-aux x A x A" at binders
-      precompile-aux (global _ as C) A C A :- !.
-      precompile-aux (pglobal _ _ as C) A C A :- !.
+      precompile-aux (global _ _ as C) A C A :- !.
       precompile-aux (sort _ as C) A C A :- !.
 
       % Detect maybe-eta term

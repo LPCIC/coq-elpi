@@ -1673,6 +1673,33 @@ builtin func sys.getcwd -> string, diagnostic.
 % system error.
 builtin func sys.readdir string -> list string, diagnostic.
 
+% [sys.chdir DirPath Diagnostic] is like [Sys.chdir]. It succeeds if
+% [Diagnostic = ok] and the current working directory is updated to
+% [DirPath] or [Diagnostic = error Msg] and [Msg] describes an encountered
+% system error.
+external func sys.chdir string -> diagnostic.
+
+% [sys.mkdir DirPath Permissions Diagnostic] is like [Sys.mkdir]. It
+% succeeds if [Diagnostic = ok] and the directory [DirPath] is created or
+% [Diagnostic = error Msg] and [Msg] describes an encountered system error.
+external func sys.mkdir string, int -> diagnostic.
+
+% [sys.rmdir DirPath Diagnostic] is like [Sys.rmdir]. It succeeds if
+% [Diagnostic = ok] and the directory [DirPath] is removed or [Diagnostic =
+% error Msg] and [Msg] describes an encountered system error.
+external func sys.rmdir string -> diagnostic.
+
+% [sys.getcwd DirPath Diagnostic] is like [Sys.getcwd]. It succeeds if
+% [Diagnostic = ok] and [DirPath] is the current working directory or
+% [Diagnostic = error Msg] and [Msg] describes an encountered system error.
+external func sys.getcwd -> string, diagnostic.
+
+% [sys.readdir DirPath Contents Diagnostic] is like [Sys.readdir]. It
+% succeeds if [Diagnostic = ok] and [Contents] is the list of files in
+% [DirPath] or [Diagnostic = error Msg] and [Msg] describes an encountered
+% system error.
+external func sys.readdir string -> list string, diagnostic.
+
 %  -- Unix --
 
 % gathers the standard file descriptors or a process

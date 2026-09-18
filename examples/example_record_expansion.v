@@ -39,8 +39,7 @@ Elpi Accumulate record.expand.db lp:{{
 shorten std.{ map }.
 
 :name "expand:start"
-expand (global _ as C) C :- !.
-expand (pglobal _ _ as C) C :- !.
+expand (global _ _ as C) C :- !.
 expand (sort _ as C) C :- !.
 expand (fun N T F) (fun N T1 F1) :- !,
   expand T T1, pi x\ expand x x ==> expand (F x) (F1 x).
@@ -166,12 +165,13 @@ expand-spine Info (let Name Ty V Bo) AccL AccR Premises (let Name Ty1 V1 Bo1) (p
 expand-spine (info _ GR NGR _ _ _) X AccL AccR Premises Y Clause :-
   expand X Y, !,
   % we build "app[f,x1..xn|rest]"
-  (pi rest1\ coq.mk-app (global GR)  {std.append {std.rev AccL} rest1} (L rest1)),
-  (pi rest2\ coq.mk-app (global NGR) {std.append {std.rev AccR} rest2} (R rest2)),
+  coq.env.global GR (global GR GRI),
+  (pi rest1\ coq.mk-app (global GR GRI) {std.append {std.rev AccL} rest1} (L rest1)),
+  (pi ngri\ pi rest2\ coq.mk-app (global NGR ngri) {std.append {std.rev AccR} rest2} (R ngri rest2)),
   % we can now build the clause "expand (app[f,L1..Ln|Rest1]) (app[f1,R1..Rn|Rest2])"
   % here we quantify only the tails, the other variables were quantified during
   % expand-*
-  Clause = (pi rest1 rest2\ expand (L rest1) (R rest2) :- [!, std.map rest1 expand rest2 | Premises]).
+  Clause = (pi ngri rest1 rest2\ expand (L rest1) (R ngri rest2) :- [!, std.map rest1 expand rest2 | Premises]).
 
 % The entry point of the main algorithm, just fetchs some data and passes initial
 % values for the accumulators.
@@ -214,6 +214,7 @@ main [str R, str In, str Prefix] :- !,
 main _ :- coq.error "usage: Elpi record.expand record_name global_term prefix".
 }}.
 
+Unset Universe Polymorphism.
 
 Record r := { T :> Type; X := T; op : T -> X -> bool }.
 
@@ -223,8 +224,9 @@ Definition f b (t : r) (q := negb b) := fix rec (l1 l2 : list t) :=
   | cons x xs, cons y ys => andb (op _ x y) (rec xs ys)
   | _, _ => q
   end.
-
-Elpi record.expand r f "expanded_". 
+Set Debug "backtrace".
+Elpi record.expand r f "expanded_".
+Set Printing Universes.
 Print f.
 Print expanded_f.
 

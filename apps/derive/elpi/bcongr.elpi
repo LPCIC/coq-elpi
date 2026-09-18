@@ -30,7 +30,7 @@ bo-args (prod N S T) K1 K2 Hs (fun `x` S x\ fun `y` S y\ fun `b` {{bool}} b\ R x
       (Body x y b h)
   ].
 
-bo-args T K1 K2 HsRev Bo :- (T = global (indt _) ; T = app[global (indt _)|_]), !,
+bo-args T K1 K2 HsRev Bo :- (T = global (indt _) _ ; T = app[global (indt _) _|_]), !,
   rev HsRev Hs,
   mk-conj Hs Conj,
   Concl = {{ lib:elpi.reflect (lib:@elpi.eq lp:T lp:K1 lp:K2) lp:Conj }},
@@ -108,7 +108,7 @@ bo-param N K T R :- whd1 T T1, !, bo-param N K T1 R.
 func main-constructor int, string, constructor, term -> (pred).
  
 main-constructor Lno Prefix K Kt Clause :- do! [
-  Kn = global (indc K),
+  coq.env.global (indc K) Kn,
   % we build the comparison function
   bo-param Lno Kn Kt R,
   std.assert-ok! (coq.typecheck R RT) "derive.bcongr generates illtyped term",
@@ -117,7 +117,7 @@ main-constructor Lno Prefix K Kt Clause :- do! [
   coq.env.add-const FName R RT @opaque! Cong,
 
   % we register it as a clause
-  Clause = (bcongr-db K (global (const Cong)) :- !),
+  Clause = (bcongr-db K (const Cong) :- !),
   coq.elpi.accumulate _ "derive.bcongr.db"
     (clause _ (before "bcongr-db:fail") Clause)
 ].

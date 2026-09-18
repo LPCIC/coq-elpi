@@ -68,7 +68,7 @@ fuzz (prod N S T) (prod N S1 T1) :-
 fuzz (app L) (app L1) :- std.map L fuzz L1.
 
 % rule for global constants
-fuzz (global X) (global X).
+fuzz (global X Ui) (global X Ui).
 
 % TODO: we should have clauses for all other type formers...
 
