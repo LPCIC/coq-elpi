@@ -1,7 +1,7 @@
 with builtins; with (import <nixpkgs> {}).lib;
 let
-  default-elpi-version = "3.7.1";
-  min-elpi-version = "3.7.1";
+  default-elpi-version = "v3.8.0";
+  min-elpi-version = "v3.8.0";
   master = [
     "hierarchy-builder"
     "mathcomp"
