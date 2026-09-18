@@ -57,7 +57,17 @@ let
     ConCert.job = false;
 
     ITree.job = false;  # only a dependency of jasmin
-}; in
+};
+  # Elpi >= 3.8.0 needs atdgen-runtime to build its "trace.atd" library, but
+  # nixpkgs only lists it in elpi's buildInputs, not propagatedBuildInputs,
+  # so consumers like rocq-elpi never see it on their OCAMLPATH. Propagate it.
+  ocaml-common-bundles = {
+    elpi.overrideAttrs = old: {
+      propagatedBuildInputs = (old.propagatedBuildInputs or []) ++
+        filter (p: (p.pname or null) == "atdgen-runtime") old.buildInputs;
+    };
+  };
+in
 {
   format = "1.0.0";
   attribute = "rocq-elpi";
@@ -71,6 +81,7 @@ let
       micromega-plugin.job = false;
       mathcomp-algebra-tactics.override.version = "master";
     };
+    "rocq-9.1".ocamlPackages = ocaml-common-bundles;
 
     "rocq-9.2".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.2";
@@ -80,6 +91,7 @@ let
       mathcomp-zify.job = false;  # not available yet
       jasmin.job = false;  # not available yet
     };
+    "rocq-9.2".ocamlPackages = ocaml-common-bundles;
 
     "rocq-9.3".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.3";
@@ -92,6 +104,7 @@ let
       mathcomp-word.job = false;  # not available yet
       trakt.job = false;  # not available yet
     };
+    "rocq-9.3".ocamlPackages = ocaml-common-bundles;
 
     "rocq-master".rocqPackages = common-bundles // {
       rocq-core.override.version = "master";
@@ -102,6 +115,7 @@ let
       bignums.override.version = "master";
       jasmin.job = false;
     };
+    "rocq-master".ocamlPackages = ocaml-common-bundles;
 
   } // optionalAttrs (min-elpi-version != default-elpi-version) {
     "rocq-master-min-elpi".rocqPackages = common-bundles // {
@@ -112,6 +126,7 @@ let
       stdlib.override.version = "master";
       jasmin.job = false;
     };
+    "rocq-master-min-elpi".ocamlPackages = ocaml-common-bundles;
   };
 
   cachix.coq = {};
