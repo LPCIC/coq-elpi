@@ -283,6 +283,83 @@ let (pstringc, pstring) : Pstring.t Elpi.API.RawOpaqueData.cdata * Pstring.t Elp
 let pstring_of_string = Pstring.of_string
 let string_of_pstring = Pstring.to_string
 
+type array_element_ty = Int | Float | Pstring | Array of array_element_ty
+
+let rec pp_array_element_ty = function
+  | Int -> "uint63" | Float -> "float64" | Pstring -> "pstring"
+  | Array t -> Printf.sprintf "array %s" (pp_array_element_ty t)
+
+type array_data = EC.t array * EC.t * array_element_ty
+
+(* array_data's elements/default are always ground (no evars, checked at
+   construction time - see rocq_elpi_HOAS.ml's is_valid_primitive_value), so
+   comparing/hashing them needs no evar_map. We deliberately ignore the
+   universe instance. *)
+let primitive_constr_tag = function
+  | Constr.Int _ -> 0 | Constr.Float _ -> 1 | Constr.String _ -> 2 | Constr.Array _ -> 3
+  | _ -> 4 (* not reachable for a validated primitive value, kept for exhaustiveness *)
+
+let array_compare cmp a b =
+  let la = Array.length a and lb = Array.length b in
+  let c = Stdlib.compare la lb in
+  if c <> 0 then c else
+  let rec aux i = if i >= la then 0 else
+    let c = cmp a.(i) b.(i) in
+    if c <> 0 then c else aux (i+1)
+  in aux 0
+
+let rec compare_primitive_constr a b =
+  if a == b then 0 else
+  match Constr.kind a, Constr.kind b with
+  | Constr.Int x, Constr.Int y -> Uint63.compare x y
+  | Constr.Float x, Constr.Float y -> Float64.total_compare x y
+  | Constr.String x, Constr.String y -> Pstring.compare x y
+  | Constr.Array (_,d1,v1,_), Constr.Array (_,d2,v2,_) ->
+      if d1 == d2 then compare_primitive_constr v1 v2
+      else
+        let c = array_compare compare_primitive_constr d1 d2 in
+        if c <> 0 then c else compare_primitive_constr v1 v2
+  | x, y -> Stdlib.compare (primitive_constr_tag x) (primitive_constr_tag y)
+
+let rec hash_primitive_constr a = match Constr.kind a with
+  | Constr.Int x -> Hashtbl.hash (0, Uint63.hash x)
+  | Constr.Float x -> Hashtbl.hash (1, Float64.hash x)
+  | Constr.String x -> Hashtbl.hash (2, Pstring.hash x)
+  | Constr.Array (_,d,v,_) ->
+      Array.fold_left (fun acc x -> Hashtbl.hash (acc, hash_primitive_constr x))
+        (Hashtbl.hash (3, hash_primitive_constr v)) d
+  | _ -> Hashtbl.hash 4
+
+let compare_econstr (a : EC.t) (b : EC.t) =
+  if a == b then 0 else compare_primitive_constr (EC.Unsafe.to_constr a) (EC.Unsafe.to_constr b)
+
+let hash_econstr (a : EC.t) = hash_primitive_constr (EC.Unsafe.to_constr a)
+
+let compare_array_data ((d1,v1,t1) as a1 : array_data) ((d2,v2,t2) as a2 : array_data) =
+  if a1 == a2 then 0 else
+  let c = Stdlib.compare t1 t2 in
+  if c <> 0 then c else
+  if d1 == d2 then compare_econstr v1 v2
+  else
+    let c = array_compare compare_econstr d1 d2 in
+    if c <> 0 then c else compare_econstr v1 v2
+
+let hash_array_data ((d,v,t) : array_data) =
+  Array.fold_left (fun acc x -> Hashtbl.hash (acc, hash_econstr x))
+    (Hashtbl.hash (t, hash_econstr v)) d
+
+let (parrayc, parray) : array_data Elpi.API.RawOpaqueData.cdata * array_data Elpi.API.Conversion.t =
+  let open Elpi.API.RawOpaqueData in
+  declare {
+    name = "parray";
+    doc = "";
+    pp = (fun fmt ((data,_,ty) : array_data) -> Format.fprintf fmt "<array:%d:%s>" (Array.length data) (pp_array_element_ty ty));
+    compare = compare_array_data;
+    hash = hash_array_data;
+    hconsed = false;
+    constants = [];
+  }
+
 let debug = CDebug.create ~name:"elpi" ()
 
 let elpitime_flag, elpitime = CDebug.create_full ~name:"elpitime" ()
@@ -689,7 +766,22 @@ let detype ?(keepunivs = false) env sigma t =
                Array.map (fun (bl, _, _) -> bl) v,
                Array.map (fun (_, _, ty) -> ty) v,
                Array.map (fun (_, bd, _) -> bd) v )
-    | CoFix _ -> nYI "cofix"
+    | CoFix (idx, (names, tys, bodies)) ->
+        let env, names =
+          list_map_acc
+            (fun env (n, ty) -> push_occurring_rel (LocalAssum (n, ty)) env)
+            env
+            (CList.combine (names|> CArray.to_list) (tys |> CArray.to_list))
+        in
+        let n = Array.length tys in
+        let v = CArray.map2 (fun c t -> share_names 0 [] env c (Vars.lift n t)) bodies tys in
+        DAst.make
+        @@ GRec
+             ( GCoFix idx,
+               CArray.map_of_list (function Names.Name.Name x -> x | _ -> assert false) (List.map Context.binder_name names),
+               Array.map (fun (bl, _, _) -> bl) v,
+               Array.map (fun (_, _, ty) -> ty) v,
+               Array.map (fun (_, bd, _) -> bd) v )
     | Case (ci, u, pms, p, iv, c, [| bl |]) when unknown_inductive = Names.GlobRef.IndRef ci.ci_ind ->
         let tomatch = aux env c in
         let map i br =

@@ -230,7 +230,9 @@ builtin symb let     : name -> term -> term -> (term -> term) -> term. % let x :
 builtin symb app     : list term -> term.                   % app [hd|args]
 builtin symb match   : term -> term -> list term -> term.   % match t p [branch])
 builtin symb fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
-builtin symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno
+builtin symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno mfix-block
+builtin symb cofix   : name -> term -> (term -> term) -> term.        % cofix name ty bo
+builtin symb mcofix  : int -> mcofix-block -> term.       % mcofix block-idx mcofix-block
 
 builtin symb primitive : primitive-value -> term.
 
@@ -238,8 +240,9 @@ data mfix-block.
 builtin symb mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
 builtin symb mfix-bo : list term -> mfix-block.
 
-% NYI
-%type cofix name -> term -> (term -> term) -> term. % cofix name ty bo
+data mcofix-block.
+builtin symb mcofix-ty : name -> term -> (term -> mcofix-block) -> mcofix-block. % mcofix-ty name ty rest
+builtin symb mcofix-bo : list term -> mcofix-block.
 
 % Notes about (match Scrutinee TypingFunction Branches) when
 %   Inductive i A : A -> nat -> Type := K : forall a : A, i A a 0
@@ -609,15 +612,15 @@ builtin func coq.version -> string, int, int, int.
 % [@bla].
 
 % Global constant name
-kind constant type.
+data constant.
 
 
 % Inductive type name
-kind inductive type.
+data inductive.
 
 
 % Inductive constructor name
-kind constructor type.
+data constructor.
 
 
 % Global objects: inductive types, inductive constructors, definitions
@@ -632,11 +635,11 @@ typeabbrev id string.
 
 
 % Name of a module /*E*/
-kind modpath type.
+data modpath.
 
 
 % Name of a module type /*E*/
-kind modtypath type.
+data modtypath.
 
 
 % Result of coq.locate-all
@@ -1043,7 +1046,7 @@ builtin func coq.env.primitive-projection? -> projection, constant, int.
 % phase unnecessary.
 
 % universe level (algebraic: max, +1, univ.variable)
-kind univ type.
+data univ.
 
 
 % Sorts (kinds of types)
@@ -1092,7 +1095,7 @@ builtin func coq.univ.constraints -> list univ-constraint.
 % -- Universe variables ------
 
 % universe level variable
-kind univ.variable type.
+data univ.variable.
 
 
 % [coq.univ.variable U L] relates a univ.variable L to a univ U
@@ -1120,7 +1123,7 @@ builtin func coq.univ.variable.of-term term -> coq.univ.variable.set.
 % term (of the instance it contains) with another one.
 
 % Universes level instance for a universe-polymorphic constant
-kind univ-instance type.
+data univ-instance.
 
 
 % [coq.univ-instance UI UL] relates a univ-instance UI and a list of
@@ -1170,16 +1173,19 @@ builtin symb upoly-decl-cumul : list univ-variance -> bool ->
 
 % -- Primitive --------------------------------------------------------
 
-kind uint63 type.
+data uint63.
 
 
-kind float64 type.
+data float64.
 
 
-kind pstring type.
+data pstring.
 
 
-kind projection type.
+data projection.
+
+
+data parray.
 
 
 % Primitive values
@@ -1188,6 +1194,7 @@ builtin symb uint63  : uint63 -> primitive-value = "1".  % unsigned integers ove
 builtin symb float64 : float64 -> primitive-value = "1".  % double precision foalting points
 builtin symb pstring : pstring -> primitive-value = "1".  % primitive string
 builtin symb proj    : projection -> int -> primitive-value = "1".  % primitive projection
+builtin symb array   : parray -> primitive-value = "1".  % primitive array
 
 % [coq.uint63->int U I] Transforms a primitive unsigned integer U into an
 % elpi integer I. Fails if it does not fit.
@@ -1218,6 +1225,35 @@ builtin func coq.pstring->string pstring -> string.
 % string. It fails if the lenght of S is greater than the maximal primitive
 % string length.
 builtin func coq.string->pstring string -> pstring.
+
+% [coq.primitive.array.make Size Default A] Creates a primitive array of
+% size Size filled with Default. Raises an error if Default is not a
+% primitive value (uint63/float64/pstring, or an array thereof).
+builtin func coq.primitive.array.make int, term -> parray.
+
+% [coq.primitive.array.size A Size] Size of a primitive array.
+builtin func coq.primitive.array.size parray -> int.
+
+% [coq.primitive.array.dflt A Default] The default value of a primitive
+% array.
+builtin func coq.primitive.array.dflt parray -> term.
+
+% [coq.primitive.array.get A I X] Gets the I-th element of A. If I is out of
+% bounds, X is A's default value.
+builtin func coq.primitive.array.get parray, int -> term.
+
+% [coq.primitive.array.set A I X A1] Sets the I-th element of A to X,
+% returning the updated array A1. If I is out of bounds, A1 = A. Raises an
+% error if X is not a primitive value of the same kind as A's elements.
+builtin func coq.primitive.array.set parray, int, term -> parray.
+
+% [coq.list->parray Default L A] Builds a primitive array from L with
+% default Default. Raises an error if Default or any element of L is not a
+% primitive value, or if they don't all share the same kind.
+builtin func coq.list->parray term, list term -> parray.
+
+% [coq.parray->list A L] L is the list of elements of A, in order.
+builtin func coq.parray->list parray -> list term.
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1456,7 +1492,7 @@ builtin func coq.arguments.reset-simplification gref.
 builtin func coq.locate-abbreviation id -> abbreviation.
 
 % Name of an abbreviation
-kind abbreviation type.
+data abbreviation.
 
 
 % [coq.notation.add-abbreviation Name Nargs Body OnlyParsing Abbreviation]
@@ -1569,7 +1605,7 @@ builtin symb coq.redflags.const : constant -> coq.redflag = "1".  % enable/disab
 builtin symb coq.redflags.proj  : projection -> coq.redflag = "1".  % enable/disable unfolding
 
 % Set of flags for lazy, cbv, ... reductions
-kind coq.redflags type.
+data coq.redflags.
 
 builtin symb coq.redflags.nored : coq.redflags = "1".
 builtin symb coq.redflags.zeta : coq.redflags = "1".
@@ -1669,7 +1705,7 @@ builtin func coq.strategy.get constant -> conversion_strategy.
 % -- Coq's tactics --------------------------------------------
 
 % LTac1 tactic expression
-kind ltac1-tactic type.
+data ltac1-tactic.
 
 
 % [coq.ltac.fail Level ...] Interrupts the Elpi program and calls Ltac's
@@ -1818,7 +1854,7 @@ builtin func coq.option.add list string, coq.option, bool.
 % between backticks, e.g. `x` or `_` for anonymous. Important: these are
 % just printing hints with no meaning, hence in elpi two name are always
 % related: `x` = `y`
-kind name type.
+data name.
 
 
 % [coq.name-suffix Name Suffix NameSuffix] suffixes a Name with a string or
@@ -2070,7 +2106,7 @@ builtin symb import-module             : modpath -> synterp-action = "1".
 builtin symb export-module             : modpath -> synterp-action = "1". 
 
 % Synterp action group
-kind group type.
+data group.
 
 
 % [coq.next-synterp-action A] Get the next action performed during parsing

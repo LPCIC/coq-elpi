@@ -501,17 +501,16 @@ Arguments of type `uconstr` are passed raw.
 
 - [x] functional core (fun, forall, match, application, let-in, sorts)
 - [x] evars (unification variables)
-- [x] single Inductive and CoInductive types (including parameters, non-uniform
-      parameters, indexes)
-- [ ] mutual Inductive and CoInductive types
-- [x] fixpoints
-- [ ] mutual fixpoints
-- [ ] cofixpoints
+- [x] Inductive types (including mutual)
+- [x] CoInductive types (including mutual)
+- [x] fixpoints (including mutual)
+- [x] cofixpoints (including mutual)
 - [x] primitive records
 - [x] primitive projections
 - [x] primitive integers
 - [x] primitive floats
-- [ ] primitive arrays
+- [x] primitive strings
+- [x] primitive arrays (of primitive values)
 - [x] universe polymorphism
 - [x] modules
 - [x] module types

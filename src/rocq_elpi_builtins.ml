@@ -3267,6 +3267,7 @@ declared as cumulative.|};
   MLData Rocq_elpi_utils.float64;
   MLData Rocq_elpi_utils.pstring;
   MLData Rocq_elpi_utils.projection;
+  MLData Rocq_elpi_utils.parray;
   MLData primitive_value;
 
   MLCode(Pred("coq.uint63->int",
@@ -3339,6 +3340,85 @@ declared as cumulative.|};
        match pstring_of_string s with
        | Some s -> !: s
        | None -> raise No_clause)),
+  DocAbove);
+
+  MLCode(Pred("coq.primitive.array.make",
+    In(B.int,"Size",
+    CIn(closed_ground_term,"Default",
+    Out(Rocq_elpi_utils.parray,"A",
+    Read(global, "Creates a primitive array of size Size filled with Default. Raises an error if Default is not a primitive value (uint63/float64/pstring, or an array thereof).")))),
+    (fun size default _ ~depth _ _ state ->
+       let sigma = get_sigma state in
+       if not (is_valid_primitive_value sigma default) then
+         U.type_error "coq.primitive.array.make: Default is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
+       else
+         !: (Array.make (max size 0) default, default, classify_primitive_value sigma default))),
+  DocAbove);
+
+  MLCode(Pred("coq.primitive.array.size",
+    In(Rocq_elpi_utils.parray,"A",
+    Out(B.int,"Size",
+    Easy "Size of a primitive array.")),
+    (fun (data,_,_) _ ~depth:_ -> !: (Array.length data))),
+  DocAbove);
+
+  MLCode(Pred("coq.primitive.array.dflt",
+    In(Rocq_elpi_utils.parray,"A",
+    COut(closed_ground_term,"Default",
+    Read(global, "The default value of a primitive array."))),
+    (fun (_,dflt,_) _ ~depth _ _ state -> !: dflt)),
+  DocAbove);
+
+  MLCode(Pred("coq.primitive.array.get",
+    In(Rocq_elpi_utils.parray,"A",
+    In(B.int,"I",
+    COut(closed_ground_term,"X",
+    Read(global, "Gets the I-th element of A. If I is out of bounds, X is A's default value.")))),
+    (fun (data,dflt,_) i _ ~depth _ _ state ->
+       !: (if i < 0 || i >= Array.length data then dflt else data.(i)))),
+  DocAbove);
+
+  MLCode(Pred("coq.primitive.array.set",
+    In(Rocq_elpi_utils.parray,"A",
+    In(B.int,"I",
+    CIn(closed_ground_term,"X",
+    Out(Rocq_elpi_utils.parray,"A1",
+    Read(global, "Sets the I-th element of A to X, returning the updated array A1. If I is out of bounds, A1 = A. Raises an error if X is not a primitive value of the same kind as A's elements."))))),
+    (fun (data,dflt,ty) i x _ ~depth _ _ state ->
+       let env = get_global_env state and sigma = get_sigma state in
+       if i < 0 || i >= Array.length data then !: (data,dflt,ty)
+       else if not (is_valid_primitive_value sigma x) then
+         U.type_error "coq.primitive.array.set: X is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
+       else if classify_primitive_value sigma x <> ty
+       then U.type_error (Printf.sprintf "coq.primitive.array.set: %s is not a primitive value of the expected kind %s"
+              (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma x))
+              (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma (econstr_of_array_element_ty env ty))))
+       else let data1 = Array.copy data in data1.(i) <- x; !: (data1,dflt,ty))),
+  DocAbove);
+
+  MLCode(Pred("coq.list->parray",
+    CIn(closed_ground_term,"Default",
+    CIn(B.listC closed_ground_term,"L",
+    Out(Rocq_elpi_utils.parray,"A",
+    Read(global, "Builds a primitive array from L with default Default. Raises an error if Default or any element of L is not a primitive value, or if they don't all share the same kind.")))),
+    (fun default l _ ~depth _ _ state ->
+       let sigma = get_sigma state in
+       if not (is_valid_primitive_value sigma default) then
+         U.type_error "coq.list->parray: Default is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
+       else if not (List.for_all (is_valid_primitive_value sigma) l) then
+         U.type_error "coq.list->parray: an element of L is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
+       else
+         let ty = classify_primitive_value sigma default in
+         if List.for_all (fun x -> classify_primitive_value sigma x = ty) l
+         then !: (Array.of_list l, default, ty)
+         else U.type_error "coq.list->parray: not all elements of L share the same type as Default")),
+  DocAbove);
+
+  MLCode(Pred("coq.parray->list",
+    In(Rocq_elpi_utils.parray,"A",
+    COut(B.listC closed_ground_term,"L",
+    Read(global, "L is the list of elements of A, in order."))),
+    (fun (data,_,_) _ ~depth _ _ state -> !: (Array.to_list data))),
   DocAbove);
 
   LPCode {|

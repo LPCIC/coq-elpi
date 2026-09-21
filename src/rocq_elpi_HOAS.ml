@@ -956,6 +956,35 @@ let in_elpi_mfix names_rnos_tys focus_idx bodies =
     names_rnos_tys inner in
   E.mkApp mfixc (CD.of_int focus_idx) [CD.of_int focus_recno; block]
 
+let cofixc = E.Constants.declare_global_symbol "cofix"
+
+let in_elpi_cofix name ty bo =
+  E.mkApp cofixc (in_elpi_name name) [ty; E.mkLam bo]
+
+let in_elpiast_cofix ~loc n ty bo =
+  A.mkAppGlobal ~loc ~hdloc:loc cofixc (in_elpiast_name ~loc n) [ty; A.mkLam ~loc (name_of_name ~loc n) bo]
+
+let mcofixc    = E.Constants.declare_global_symbol "mcofix"
+let mcofix_tyc = E.Constants.declare_global_symbol "mcofix-ty"
+let mcofix_boc = E.Constants.declare_global_symbol "mcofix-bo"
+
+let in_elpiast_mcofix ~loc names_tys focus_idx bodies =
+  let inner = A.mkAppGlobal ~loc ~hdloc:loc mcofix_boc (A.list_to_lp_list ~loc bodies) [] in
+  let block =
+    List.fold_right (fun (name, ty) acc ->
+      A.mkAppGlobal ~loc ~hdloc:loc mcofix_tyc (in_elpiast_name ~loc name)
+        [ty; A.mkLam ~loc (name_of_name ~loc name) acc])
+      names_tys inner in
+  A.mkAppGlobal ~loc ~hdloc:loc mcofixc (A.mkOpaque ~loc @@ CD.int.cino focus_idx) [block]
+
+let in_elpi_mcofix names_tys focus_idx bodies =
+  let inner = E.mkApp mcofix_boc (U.list_to_lp_list bodies) [] in
+  let block =
+    List.fold_right (fun (name, ty) acc ->
+      E.mkApp mcofix_tyc (in_elpi_name name) [ty; E.mkLam acc])
+    names_tys inner in
+  E.mkApp mcofixc (CD.of_int focus_idx) [block]
+
 let primitivec   = E.Constants.declare_global_symbol "primitive"
 
 
@@ -968,11 +997,13 @@ type primitive_value =
   | Float64 of Float64.t
   | Pstring of pstring
   | Projection of Projection.t
+  | Parray of array_data
 
 let ui63c = E.Constants.declare_global_symbol "uint63"
 let fl64c = E.Constants.declare_global_symbol "float64"
 let pstrc = E.Constants.declare_global_symbol "pstring"
 let projc = E.Constants.declare_global_symbol "proj"
+let parrc = E.Constants.declare_global_symbol "array"
 
 let uint63ina ~loc x =     A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc ui63c (A.mkOpaque ~loc (uint63c.cino x)) []) []
 let float64ina ~loc x =    A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc fl64c (A.mkOpaque ~loc (float64c.cino x)) []) []
@@ -981,49 +1012,7 @@ let projectionina ~loc p =
   A.mkAppGlobal ~loc ~hdloc:loc primitivec (A.mkAppGlobal ~loc ~hdloc:loc projc
     (A.mkOpaque ~loc (projectionc.cino p)) [A.mkOpaque ~loc @@ CD.int.cino n]) []
 let pstringina ~loc x =    A.mkAppGlobal ~loc~hdloc:loc  primitivec (A.mkAppGlobal ~loc ~hdloc:loc pstrc (A.mkOpaque ~loc (pstringc.cino x)) []) []
-
-let primitive_value : primitive_value API.Conversion.t =
-  let module B = Rocq_elpi_utils in
-  let open API.AlgebraicData in  declare {
-  ty = API.Conversion.TyName "primitive-value";
-  doc = "Primitive values";
-  pp = (fun fmt -> function
-    | Uint63 i -> Format.fprintf fmt "%s" (Uint63.to_string i)
-    | Float64 f -> Format.fprintf fmt "%s" (Float64.to_string f)
-    | Pstring s -> Format.fprintf fmt "%s" (pp_pstring s)
-    | Projection p -> Format.fprintf fmt "%s" (Projection.to_string p));
-  constructors = [
-    K("uint63","unsigned integers over 63 bits",A(B.uint63,N),
-      B (fun x -> Uint63 x),
-      M (fun ~ok ~ko -> function Uint63 x -> ok x | _ -> ko ()));
-    K("float64","double precision foalting points",A(B.float64,N),
-      B (fun x -> Float64 x),
-      M (fun ~ok ~ko -> function Float64 x -> ok x | _ -> ko ()));
-    K("pstring","primitive string",A(B.pstring,N),
-      B (fun x -> Pstring x),
-      M (fun ~ok ~ko -> function Pstring x -> ok x | _ -> ko ()));
-    K("proj","primitive projection",A(B.projection,A(API.BuiltInData.int,N)),
-      B (fun p n -> Projection p),
-      M (fun ~ok ~ko -> function Projection p -> ok p Names.Projection.(arg p + npars p) | _ -> ko ()));
-  ]
-} |> API.ContextualConversion.(!<)
-  
-let in_elpi_primitive ~depth state i =
-  let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
-  state, E.mkApp primitivec i []
- 
-let in_elpiast_primitive ~loc = function
-  | Uint63 i -> uint63ina ~loc i
-  | Float64 f -> float64ina ~loc f
-  | Pstring s -> pstringina ~loc s
-  | Projection p -> projectionina ~loc p
-
-let in_elpi_primitive_value ~depth state = function
-| C.Int i ->    in_elpi_primitive ~depth state (Uint63 i)
-| C.Float f ->  in_elpi_primitive ~depth state (Float64 f)
-| C.String s -> in_elpi_primitive ~depth state (Pstring s)
-| C.Array _ -> nYI "HOAS for persistent arrays"
-| (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
+let parrayna ~loc x =    A.mkAppGlobal ~loc~hdloc:loc  primitivec (A.mkAppGlobal ~loc ~hdloc:loc parrc (A.mkOpaque ~loc (parrayc.cino x)) []) []
 
 (* ********************************* }}} ********************************** *)
 
@@ -1314,6 +1303,120 @@ let in_elpiast_sort ~loc state s =
 let get_sigma s = (S.get engine s).sigma
 let update_sigma s f = (S.update engine s (fun e -> { e with sigma = f e.sigma }))
 let get_global_env s = (S.get engine s).global_env
+
+let norm_array s (x,y,z) =
+  let sigma = get_sigma s in
+  Array.map (Evarutil.nf_evar sigma) x, Evarutil.nf_evar sigma y, z
+
+let primitive_value : primitive_value API.Conversion.t =
+  let module B = Rocq_elpi_utils in
+  let open API.AlgebraicData in  declare {
+  ty = API.Conversion.TyName "primitive-value";
+  doc = "Primitive values";
+  pp = (fun fmt -> function
+    | Uint63 i -> Format.fprintf fmt "%s" (Uint63.to_string i)
+    | Float64 f -> Format.fprintf fmt "%s" (Float64.to_string f)
+    | Pstring s -> Format.fprintf fmt "%s" (pp_pstring s)
+    | Projection p -> Format.fprintf fmt "%s" (Projection.to_string p)
+    | Parray (data,_,_) -> Format.fprintf fmt "<array:%d>" (Array.length data)
+    );
+  constructors = [
+    K("uint63","unsigned integers over 63 bits",A(B.uint63,N),
+      B (fun x -> Uint63 x),
+      M (fun ~ok ~ko -> function Uint63 x -> ok x | _ -> ko ()));
+    K("float64","double precision foalting points",A(B.float64,N),
+      B (fun x -> Float64 x),
+      M (fun ~ok ~ko -> function Float64 x -> ok x | _ -> ko ()));
+    K("pstring","primitive string",A(B.pstring,N),
+      B (fun x -> Pstring x),
+      M (fun ~ok ~ko -> function Pstring x -> ok x | _ -> ko ()));
+    K("proj","primitive projection",A(B.projection,A(API.BuiltInData.int,N)),
+      B (fun p n -> Projection p),
+      M (fun ~ok ~ko -> function Projection p -> ok p Names.Projection.(arg p + npars p) | _ -> ko ()));
+    K("array","primitive array",A(B.parray,N),
+      BS (fun p s -> s, Parray (norm_array s p)),
+      M (fun ~ok ~ko -> function Parray p -> ok p | _ -> ko ()));
+  ]
+} |> API.ContextualConversion.(!<)
+  
+let in_elpi_primitive ~depth state i =
+  let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
+  state, E.mkApp primitivec i []
+
+let in_elpiast_primitive ~loc = function
+  | Uint63 i -> uint63ina ~loc i
+  | Float64 f -> float64ina ~loc f
+  | Pstring s -> pstringina ~loc s
+  | Projection p -> projectionina ~loc p
+  | Parray p -> parrayna ~loc p
+
+let canonical_array_instance = UVars.Instance.of_array ([||], [|Univ.Level.set|])
+let canonical_array_einstance = EC.EInstance.make canonical_array_instance
+
+let rec is_primitive_shaped sigma t = match EC.kind sigma t with
+  | C.Int _ | C.Float _ | C.String _ -> true
+  | C.Array (_, data, dflt, _ty) ->
+      Array.for_all (is_primitive_shaped sigma) data && is_primitive_shaped sigma dflt
+  | _ -> false
+
+let is_valid_primitive_value sigma t =
+  EC.Vars.closed0 sigma t && Evarutil.is_ground_term sigma t && is_primitive_shaped sigma t
+
+[%%if coq = "9.0"]
+let get_retroknowledge env = env.Environ.retroknowledge
+[%%else]
+let get_retroknowledge env = Environ.retroknowledge env
+[%%endif]
+
+let describes_primitive_ty env sigma ty : Rocq_elpi_utils.array_element_ty option =
+  let retro = get_retroknowledge env in
+  let is_retro_const oc t = match oc, EC.kind sigma t with
+    | Some c, C.Const (c',_) -> Names.Constant.CanOrd.equal c c'
+    | _ -> false
+  in
+  let rec aux ty =
+    if is_retro_const retro.Retroknowledge.retro_int63 ty then Some Rocq_elpi_utils.Int
+    else if is_retro_const retro.Retroknowledge.retro_float64 ty then Some Rocq_elpi_utils.Float
+    else if is_retro_const retro.Retroknowledge.retro_string ty then Some Rocq_elpi_utils.Pstring
+    else match EC.kind sigma ty with
+      | C.App (h, [|elem_ty|]) when is_retro_const retro.Retroknowledge.retro_array h ->
+          (match aux elem_ty with Some t -> Some (Rocq_elpi_utils.Array t) | None -> None)
+      | _ -> None
+  in aux ty
+
+let parse_primitive_ty env sigma ty =
+  if EC.Vars.closed0 sigma ty && Evarutil.is_ground_term sigma ty
+  then describes_primitive_ty env sigma ty else None
+
+let rec classify_primitive_value sigma v : Rocq_elpi_utils.array_element_ty = match EC.kind sigma v with
+  | C.Int _ -> Int
+  | C.Float _ -> Float
+  | C.String _ -> Pstring
+  | C.Array (_,_,dflt,_) -> Array (classify_primitive_value sigma dflt)
+  | _ -> assert false (* caller must check is_valid_primitive_value first *)
+
+let rec econstr_of_array_element_ty env : Rocq_elpi_utils.array_element_ty -> EC.t = function
+  | Int -> EC.of_constr (Typeops.type_of_int env)
+  | Float -> EC.of_constr (Typeops.type_of_float env)
+  | Pstring -> EC.of_constr (Typeops.type_of_string env)
+  | Array t -> EC.mkApp (EC.of_constr (Typeops.type_of_array env canonical_array_instance), [| econstr_of_array_element_ty env t |])
+
+let in_elpi_primitive_value ~depth ~env ~sigma state = function
+| C.Int i ->    in_elpi_primitive ~depth state (Uint63 i)
+| C.Float f ->  in_elpi_primitive ~depth state (Float64 f)
+| C.String s -> in_elpi_primitive ~depth state (Pstring s)
+| C.Array(ui,data,dflt,ty) ->
+    if fst (UVars.Instance.length (EC.EInstance.kind sigma ui)) <> 0 then
+      err Pp.(str "primitive array: unexpected quality-polymorphic instance")
+    else (match parse_primitive_ty env sigma ty with
+    | None -> err Pp.(str "primitive array: element type is not one of the supported primitive types (uint63/float64/pstring, or an array thereof)")
+    | Some elem_ty ->
+      if not (Array.for_all (is_valid_primitive_value sigma) data && is_valid_primitive_value sigma dflt) then
+        err Pp.(str "primitive array: an element or the default value is not a ground, closed, primitive value")
+      else
+        in_elpi_primitive ~depth state (Parray(data,dflt,elem_ty)))
+| (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
+
 
 let declare_evc = E.Constants.declare_global_symbol "declare-evar"
 let rm_evarc = E.Constants.declare_global_symbol "rm-evar"
@@ -1768,8 +1871,24 @@ let rec constr2lp coq_ctx ~calldepth ~depth state t =
          let state, t = aux ~depth env state t in
          let state, p = in_elpi_primitive ~depth state (Projection p) in
          state, in_elpi_app ~depth p [|t|]
-    | C.CoFix _ -> nYI "HOAS for cofix"
-    | x -> in_elpi_primitive_value ~depth state x
+    | C.CoFix(_,([| name |],[| typ0 |], [| bo |])) ->
+         let state, typ = aux ~depth env state typ0 in
+         let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
+         let state, bo = aux ~depth:(depth+1) env state bo in
+         state, in_elpi_cofix name typ bo
+    | C.CoFix(focus_idx,(names, tys, bos)) ->
+         let names = Array.to_list names in
+         let tys = Array.to_list tys in
+         let (n,state,env), names_tys =
+           CList.fold_left_map (fun (n,state,env) (name,typ0) ->
+             let state,typ = aux ~depth env state typ0 in
+             let typ = U.move ~from:depth ~to_:(depth+n) typ in
+             let env = EConstr.push_rel Context.Rel.Declaration.(LocalAssum(name,typ0)) env in
+             (n+1,state,env), (name, typ))
+           (0,state,env) (List.combine names tys) in
+         let state, bos = CArray.fold_left_map (aux ~depth:(depth+n) env) state bos in
+         state, in_elpi_mcofix names_tys focus_idx (Array.to_list bos)
+    | x -> in_elpi_primitive_value ~depth ~env ~sigma state x
   in
   debug Pp.(fun () ->
       str"term2lp: depth=" ++ int depth ++
@@ -2439,6 +2558,61 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       in
       collect_ty ~depth state coq_ctx block_lp [] []
 
+ (* cofix *)
+  | E.App(c,name,[ty;bo]) when cofixc == c ->
+      let state, name, gl0 = in_coq_fresh_annot_name ~depth ~coq_ctx depth name state in
+      let state, ty, gl1 = aux ~depth state ~on_ty:true ty in
+      let coq_ctx = push_coq_ctx_local depth (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
+      let state, bo, gl2 = aux_lam coq_ctx ~depth state bo in
+      state, EC.mkCoFix (0,([|name|],[|ty|],[|bo|])), gl0 @ gl1 @ gl2
+
+ (* mcofix *)
+  | E.App(c,focus_lp,[block_lp]) when mcofixc == c ->
+      let outer_ctx = coq_ctx in
+      let focus_idx = lp2int ~depth ~ctx:"mcofix focus" focus_lp in
+      let rec collect_ty ~depth state coq_ctx node defs gls_acc =
+        match E.look ~depth node with
+        | E.App(c2,name_lp,[ty_lp; rest_lam]) when mcofix_tyc == c2 ->
+          let state, name, gl0 = in_coq_fresh_annot_name ~depth ~coq_ctx depth name_lp state in
+          let state, ty, gl =
+            lp2constr ~calldepth syntactic_constraints outer_ctx
+              ~depth state ~on_ty:true ty_lp in
+          let coq_ctx = push_coq_ctx_local depth
+            (Context.Rel.Declaration.LocalAssum(name,ty)) coq_ctx in
+          let defs = (name, ty) :: defs in
+          let gls_acc = gl0 @ gl @ gls_acc in
+          (match E.look ~depth rest_lam with
+           | E.Lam body -> collect_ty ~depth:(depth+1) state coq_ctx body defs gls_acc
+           | _ -> err Pp.(str"mcofix: expected lambda in mcofix-ty body"))
+        | E.App(c2,bodies_lp,[]) when mcofix_boc == c2 ->
+          finish_mcofix ~depth state coq_ctx (List.rev defs) bodies_lp gls_acc
+        | _ -> err Pp.(str"mcofix: expected mcofix-ty or mcofix-bo, got: " ++
+                       str (P.Debug.show_term node))
+      and finish_mcofix ~depth state coq_ctx defs bodies_lp gls_acc =
+        let n = List.length defs in
+        if focus_idx < 0 || focus_idx >= n then
+          err Pp.(str"mcofix: focus index out of range: " ++ int focus_idx);
+        let body_list = U.lp_list_to_list ~depth bodies_lp in
+        if List.length body_list <> n then
+          err Pp.(str"mcofix: expected " ++ int n ++ str" bodies, got " ++
+                  int (List.length body_list));
+        let state, coq_bodies, gls_bos =
+          List.fold_left (fun (state, bos, gls) bo_lp ->
+            let state, bo, gl =
+              lp2constr ~calldepth syntactic_constraints coq_ctx
+                ~depth state bo_lp in
+            (state, bo :: bos, gl @ gls)
+          ) (state, [], []) body_list
+        in
+        let coq_bodies = List.rev coq_bodies in
+        let names = Array.of_list (List.map fst defs) in
+        let typs  = Array.of_list (List.map snd defs) in
+        state,
+        EC.mkCoFix (focus_idx,(names, typs, Array.of_list coq_bodies)),
+        gls_acc @ gls_bos
+      in
+      collect_ty ~depth state coq_ctx block_lp [] []
+
   | E.App(c,v,[]) when primitivec == c ->
       let state, v, gls = primitive_value.API.Conversion.readback ~depth state v in
       begin match v with
@@ -2446,6 +2620,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       | Float64 f -> state, EC.mkFloat f, gls
       | Pstring s -> state, eC_mkString s, gls
       | Projection p -> state, EC.UnsafeMonomorphic.mkConst (get_projection_constant (get_global_env state) (Projection.repr p)), gls
+      | Parray (data,dflt,ty) -> state, EC.mkArray (canonical_array_einstance, data, dflt, econstr_of_array_element_ty (get_global_env state) ty), gls
       end
 
   (* evar *)

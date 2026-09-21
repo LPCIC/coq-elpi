@@ -1021,3 +1021,141 @@ Elpi Query lp:{{
   coq.env.add-const "sprop_after_fix" Body1 _ @transparent! _.
 }}.
 
+(* -------- CoFix / MCoFix -------- *)
+
+CoInductive stream := SCons (h : nat) (t : stream).
+
+CoFixpoint ones' : stream := SCons 1 ones'.
+
+CoFixpoint zeros : stream := SCons 0 ones
+with ones : stream := SCons 1 zeros.
+
+Elpi Command test_cofix.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  coq.term->gref T (const C),
+  coq.env.const C (some Body) _Ty,
+  std.assert! (Body = cofix _ _ _) "expected cofix",
+  coq.elaborate-skeleton Body ETy _ ok,
+  coq.say {coq.gref->string (const C)} ":" {coq.term->string ETy}.
+}}.
+
+Elpi test_cofix (ones').
+
+Elpi Command test_mcofix.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  coq.term->gref T (const C),
+  coq.env.const C (some Body) _Ty,
+  std.assert! (Body = mcofix _ _) "expected mcofix",
+  coq.elaborate-skeleton Body ETy _ ok,
+  coq.say {coq.gref->string (const C)} ":" {coq.term->string ETy}.
+}}.
+
+Elpi test_mcofix (zeros).
+Elpi test_mcofix (ones).
+
+Elpi Command test_cofix_copy.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  coq.term->gref T (const C),
+  coq.env.const C (some Body) _Ty,
+  copy Body Body1,
+  std.assert! (Body = Body1) "copy of cofix changed the term",
+  coq.say "copy ok for" {coq.gref->string (const C)}.
+}}.
+
+Elpi test_cofix_copy (ones').
+Elpi test_cofix_copy (zeros).
+Elpi test_cofix_copy (ones).
+
+(* constr2lp must read all mutual-cofixpoint component types in the
+   original outer context, before pushing any self-reference. *)
+Elpi Command test_cofix_constr2lp_outer_ref.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  copy T T1,
+  std.assert-ok! (coq.typecheck T1 _) "copy of cofix under binders is illtyped".
+}}.
+
+Elpi test_cofix_constr2lp_outer_ref
+  (fun (d : nat) => cofix f : stream := SCons d f).
+
+Elpi Command test_mcofix_constr2lp_outer_ref.
+Elpi Accumulate lp:{{
+main [trm T] :-
+  copy T T1,
+  std.assert-ok! (coq.typecheck T1 _) "copy of mcofix under binders is illtyped".
+}}.
+
+Elpi test_mcofix_constr2lp_outer_ref
+  (fun (d1 d2 : nat) =>
+     cofix f : stream := SCons d1 g
+     with g : stream := SCons d2 f
+     for f).
+
+(* cofix component types must be read in the outer context, before
+   self-refs are pushed. Unlike mfix, there is no rno to double-check. *)
+Elpi Command test_cofix_outer_ref.
+Elpi Accumulate lp:{{
+main _ :-
+  T = fun `d` {{ nat }} (dv\
+        cofix `f` {{ stream }} (fv\ {{ SCons lp:dv lp:fv }})),
+  coq.typecheck T _ ok.
+}}.
+
+Elpi test_cofix_outer_ref.
+
+Elpi Command test_mcofix_outer_ref.
+Elpi Accumulate lp:{{
+main _ :-
+  T = fun `d1` {{ nat }} (d1v\
+        fun `d2` {{ nat }} (d2v\
+          mcofix 0
+            (mcofix-ty `f` {{ stream }} (fv\
+              mcofix-ty `g` {{ stream }} (gv\
+                mcofix-bo [
+                  {{ SCons lp:d1v lp:gv }},
+                  {{ SCons lp:d2v lp:fv }}
+                ]))))),
+  coq.typecheck T _ ok.
+}}.
+
+Elpi test_mcofix_outer_ref.
+
+(* a single cofix reduces when it is the scrutinee of a match *)
+Elpi Query lp:{{
+  sigma Term Stack Reduct\
+    whd {{ match ones' with SCons h t => h end }} [] Term Stack,
+    unwind Term Stack Reduct,
+    coq.unify-eq Reduct {{ 1 }} ok
+}}.
+
+(* a mutual cofix reduces when it is the scrutinee of a match, for every
+   focused component, not just the first *)
+Elpi Query lp:{{
+  sigma Term Stack Reduct\
+    whd {{ match zeros with SCons h t => h end }} [] Term Stack,
+    unwind Term Stack Reduct,
+    coq.unify-eq Reduct {{ 0 }} ok
+}}.
+
+Elpi Query lp:{{
+  sigma Term Stack Reduct\
+    whd {{ match ones with SCons h t => h end }} [] Term Stack,
+    unwind Term Stack Reduct,
+    coq.unify-eq Reduct {{ 1 }} ok
+}}.
+
+(* Same, for the binders of a cofix: [Q], the type of [y], is shifted by the
+   cofix's own binder [f] and its extra argument [n]. *)
+Definition sprop_before_cofix (P : SProp) (Q : Type) (q : Q) : nat -> stream :=
+  cofix f (n : nat) : stream := (fun y : Q => ones') q.
+
+Elpi Query lp:{{
+  coq.locate "sprop_before_cofix" (const C),
+  coq.env.const C (some Body) _,
+  coq.typecheck-relevance Body Body1,
+  coq.env.add-const "sprop_after_cofix" Body1 _ @transparent! _.
+}}.
+
