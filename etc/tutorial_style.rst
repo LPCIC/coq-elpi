@@ -3,7 +3,7 @@
 :alectryon/pygments/coq/tacn: elpi
 
 .. role:: elpi-api(ghref)
-   :pattern: ^(% \[$name|(external )?(pred|func) $name)
+   :pattern: ^(% \[$name|(external )?(pred|func) $name|(builtin )?(pred|func) $name)
 
 .. role:: lib(elpi-api)
    :src: LPCIC coq-elpi master elpi/coq-lib.elpi
@@ -32,7 +32,7 @@
    :src: LPCIC coq-elpi master builtin-doc/elpi-builtin.elpi
 
 .. role:: elpi-type(ghref)
-   :pattern: ^(kind $name|typeabbrev $name|(external )?symbol $name)
+   :pattern: ^((builtin )?data $name|kind $name|typeabbrev $name|(external )?symb(ol)? $name|(builtin )?symb(ol)? $name)
 
 .. role:: type(elpi-type)
    :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
@@ -48,7 +48,7 @@
 
 
 .. role:: elpi-constructor(ghref)
-   :pattern: ^(type $name|(external )?symbol $name)
+   :pattern: ^(type $name|(external )?symb(ol)? $name|(builtin )?symb(ol)? $name)
 
 .. role:: constructor(elpi-constructor)
    :src: LPCIC coq-elpi master builtin-doc/coq-builtin.elpi
