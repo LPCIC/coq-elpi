@@ -1341,7 +1341,7 @@ let in_elpi_primitive ~depth state i =
   let state, i, _ = primitive_value.API.Conversion.embed ~depth state i in
   state, E.mkApp primitivec i []
 
-let rec in_elpiast_primitive ~loc = function
+let in_elpiast_primitive ~loc = function
   | Uint63 i -> uint63ina ~loc i
   | Float64 f -> float64ina ~loc f
   | Pstring s -> pstringina ~loc s
