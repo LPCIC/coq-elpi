@@ -274,8 +274,8 @@ Here we declare that <code class="e elpi">person</code> is a type, and that
 <code class="e elpi">mallory</code>, <code class="e elpi">bob</code> and <code class="e elpi">alice</code> are terms of that type.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> tutorial <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">kind</span><span class="w"> </span><span class=" -ElpiFunction">person</span><span class="w">  </span><span class="kt">type</span>.
-<span class="w">  </span><span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">mallory, bob, alice</span><span class="w">  </span><span class="kt">person</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">data</span><span class="w"> </span><span class=" -ElpiFunction">person</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">mallory, bob, alice</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">person</span>.
 
 <span class="si">}}</span>.</span></span></pre><p>An Elpi program is made of rules that declare
 when predicates hold and that are accumulated one after the
@@ -286,19 +286,20 @@ of the current <code class="highlight coq"><span class="n">tutorial</span></code
 and three rules representing our knowledge about our terms.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">age</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">person</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">int</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">age</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">person</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">int</span>.
 
 <span class="w">  </span>age<span class="w"> </span>mallory<span class="w"> </span><span class="mi">23</span>.
 <span class="w">  </span>age<span class="w"> </span>bob<span class="w"> </span><span class="mi">23</span>.
 <span class="w">  </span>age<span class="w"> </span>alice<span class="w"> </span><span class="mi">20</span>.
 
 <span class="si">}}</span>.</span></span></pre><p>The predicate <code class="e elpi">age</code> has two arguments, the former is a person while
-the latter is an integer. The label <code class="e elpi">o<span class="k-ElpiKeyword">:</span></code> (standing for output)
-is a mode declaration, which we will explain later (ignore it for now).</p>
+the latter is an integer. The arrow <code class="e elpi"><span class="k-ElpiKeyword">-&gt;</span></code> separates
+inputs (none here) from outputs. We will explain later the difference
+between inputs and outputs later.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p><a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L30">int</a> is the built-in data type of integers</p>
-<p class="last">Integers come with usual arithmetic operators, see the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L93">calc</a> built-in.</p>
+<p><a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L30">int</a> is the built-in data type of integers</p>
+<p class="last">Integers come with usual arithmetic operators, see the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L93">calc</a> built-in.</p>
 </div>
 <p>In order to run our program we have to write a query,
 i.e. a predicate expression containing variables such as:</p>
@@ -326,14 +327,14 @@ predicate expressions.</p>
 
 <span class="w">  </span>age<span class="w"> </span>alice<span class="w"> </span><span class=" -ElpiVariable">A</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>coq.say<span class="w"> </span><span class="s2">"The age of alice is"</span><span class="w"> </span><span class=" -ElpiVariable">A</span>
 
-<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The age of alice <span class="k">is</span> <span class="mi">20</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">A = <span class="mi">20</span></blockquote></div></div></small></span></pre><p><a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/coq-builtin.elpi#L575">coq.say</a> is a built-in predicate provided by Coq-Elpi which
+<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The age of alice <span class="k">is</span> <span class="mi">20</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">A = <span class="mi">20</span></blockquote></div></div></small></span></pre><p><a class="reference external builtin ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/coq-builtin.elpi#L579">coq.say</a> is a built-in predicate provided by Coq-Elpi which
 prints its arguments.
 You can look at the output buffer of Coq to see the value for <code class="e elpi"><span class="n-ElpiVariable">A</span></code> or hover
 or toggle the little bubble after <code class="highlight coq"><span class="o">}}.</span></code> if you are reading the tutorial with a
 web browser.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p><a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L33">string</a> is a built-in data type</p>
+<p><a class="reference external stdtype ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L33">string</a> is a built-in data type</p>
 <p class="last">Strings are delimited by double quotes and <tt class="docutils literal">\</tt> is the escape symbol.</p>
 </div>
 <p>The predicate <code class="e elpi">age</code> represents a <em>relation</em> (in contrast to a function)
@@ -455,7 +456,7 @@ in terms of the <code class="e elpi">age</code> of <code class="e elpi"><span cl
 </div>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">older</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">person</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">person</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">older</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">person</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">person</span>.
 <span class="w">  </span>older<span class="w"> </span><span class=" -ElpiVariable">P</span><span class="w"> </span><span class=" -ElpiVariable">Q</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>age<span class="w"> </span><span class=" -ElpiVariable">P</span><span class="w"> </span><span class=" -ElpiVariable">N</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>age<span class="w"> </span><span class=" -ElpiVariable">Q</span><span class="w"> </span><span class=" -ElpiVariable">M</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class=" -ElpiVariable">N</span><span class="w"> </span><span class="k k-ElpiKeyword">&gt;</span><span class="w"> </span><span class=" -ElpiVariable">M</span>.
 
 <span class="si">}}</span>.</span></span></pre><p>The rule reads: <code class="e elpi"><span class="n-ElpiVariable">P</span></code> is older than <code class="e elpi"><span class="n-ElpiVariable">Q</span></code> if
@@ -502,8 +503,8 @@ once takes <code class="e elpi">bob</code> and another time takes <code class="e
 i.e. associate only one &quot;output&quot; to a given &quot;input&quot;.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> tutorial_functions <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">kind</span><span class="w"> </span><span class=" -ElpiFunction">person</span><span class="w">  </span><span class="kt">type</span>.
-<span class="w">  </span><span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">mallory, bob, alice</span><span class="w">  </span><span class="kt">person</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">data</span><span class="w"> </span><span class=" -ElpiFunction">person</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">mallory, bob, alice</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">person</span>.
 
 <span class="w">  </span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class=" -ElpiFunction">age</span><span class="w"> </span><span class="kt">person</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">int</span>.
 <span class="w">  </span>age<span class="w"> </span>mallory<span class="w"> </span><span class="mi">23</span>.
@@ -520,7 +521,7 @@ person a single age (or fail if the person has no rule for it).</p>
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">Mutual exclusion violated <span class="k">for</span> rules of predicate age.
 Offending rule <span class="k">is</span>: age mallory <span class="mi">24</span>
 This rule overlaps <span class="k">with</span>:
-- rule <span class="nb">at</span> File <span class="s2">"(stdin)"</span>, line <span class="mi">19</span>, column <span class="mi">2</span>, characters <span class="mi">1174</span>-<span class="mi">1188</span>:
+- rule <span class="nb">at</span> File <span class="s2">"(stdin)"</span>, line <span class="mi">19</span>, column <span class="mi">2</span>, characters <span class="mi">1162</span>-<span class="mi">1176</span>:
 This may break the determinacy of the predicate. To <span class="kp">solve</span> the problem, add a <span class="nb">cut</span> <span class="k">in</span> its body.
 </blockquote></div></div></small></span></pre><p>In this case it is easy to tell that the two rules overlap: both
 apply to a query like <code class="e elpi">age<span class="w"> </span>mallory<span class="w"> </span><span class="n-ElpiVariable">A</span></code>.</p>
@@ -537,7 +538,7 @@ this legit function is rejected.</p>
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">Mutual exclusion violated <span class="k">for</span> rules of predicate f.
 Offending rule <span class="k">is</span>: f <span class="mi">16</span> A0 :- A0 <span class="k">is</span> <span class="mi">3</span> * A1
 This rule overlaps <span class="k">with</span>:
-- rule <span class="nb">at</span> File <span class="s2">"(stdin)"</span>, line <span class="mi">20</span>, column <span class="mi">3</span>, characters <span class="mi">1398</span>-<span class="mi">1426</span>:
+- rule <span class="nb">at</span> File <span class="s2">"(stdin)"</span>, line <span class="mi">20</span>, column <span class="mi">3</span>, characters <span class="mi">1386</span>-<span class="mi">1414</span>:
 This may break the determinacy of the predicate. To <span class="kp">solve</span> the problem, add a <span class="nb">cut</span> <span class="k">in</span> its body.
 </blockquote></div></div></small></span></pre><p>In order to accept this function Elpi would need to deduce that 16 is not
 a prime number, and also deduce that <code class="e elpi">prime</code> is really implementing a
@@ -564,7 +565,7 @@ rules: when the cut operator is reached the other rules are discarded.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input alectryon-failed" for="tutorial-elpi-lang-v-chk9"><span class="kn">Elpi</span> <span class="kn">Program</span> tutorial_functions4 <span class="si">lp:{{</span>
 
 <span class="w">   </span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class=" -ElpiFunction">prime</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span>.<span class="w"> </span><span class="c">% code omitted</span>
-<span class="w">   </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">one_or_two</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">int</span>.
+<span class="w">   </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">one_or_two</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">int</span>.
 <span class="w">   </span>one_or_two<span class="w"> </span><span class="mi">1</span>.
 <span class="w">   </span>one_or_two<span class="w"> </span><span class="mi">2</span>.
 
@@ -574,16 +575,16 @@ rules: when the cut operator is reached the other rules are discarded.</p>
 
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">DetCheck: Found relational atom (one_or_two Y) <span class="k">in</span> the body of function f.
 Offending term: (one_or_two Y) 
- - Inferred: Rel 
- - Expected: Det
+ - Inferred: (pred) 
+ - Expected: (func)
 Contained <span class="k">in</span>: (prime X , ! , one_or_two Y) 
- - Inferred: Rel 
- - Expected: Det</blockquote></div></div></small></span></pre><p>Since <code class="e elpi">one_or_two</code> can produce many results, also <code class="e elpi">f</code> can.</p>
+ - Inferred: (pred) 
+ - Expected: (func)</blockquote></div></div></small></span></pre><p>Since <code class="e elpi">one_or_two</code> can produce many results, also <code class="e elpi">f</code> can.</p>
 <p>At the same time the code below is accepted.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> tutorial_functions5 <span class="si">lp:{{</span>
 
 <span class="w">   </span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class=" -ElpiFunction">prime</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span>.
-<span class="w">   </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">one_or_two</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">int</span>.
+<span class="w">   </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">one_or_two</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">int</span>.
 <span class="w">   </span>one_or_two<span class="w"> </span><span class="mi">1</span>.
 <span class="w">   </span>one_or_two<span class="w"> </span><span class="mi">2</span>.
 
@@ -603,12 +604,7 @@ first result given by the predicate <code class="e elpi">one_or_two</code>).</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">func</span><span class="w"> </span><span class="n-ElpiFunction">age</span><span class="w"> </span><span class="kt">person</span><span class="w"> </span><span class="k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">int</span>.<span class="w"> </span>
 </pre>
-<p>desugars to</p>
-<pre class="code elpi literal-block">
-<span class="k-ElpiMode">:functional</span><span class="w">                   </span><span class="c">% this is an attribute (a special comment)
-</span><span class="k-ElpiKeyword">pred</span><span class="w"> </span><span class="n-ElpiFunction">age</span><span class="w"> </span><span class="k-ElpiMode">i:</span><span class="kt">person</span><span class="k-ElpiMode">,</span><span class="w"> </span><span class="k-ElpiMode">o:</span><span class="kt">int</span>.
-</pre>
-<p>that asserts two things. First <code class="e elpi">age</code> is expected to behave like a function.
+<p>asserts two things. First <code class="e elpi">age</code> is expected to behave like a function.
 Second its first argument is flagged with the <em>input mode</em>.</p>
 <p>Query arguments in input mode are <em>matched</em> against the rule's corresponding
 argument that we call a <em>pattern</em>.
@@ -625,13 +621,13 @@ For example:</p>
 error message. Please report this inconvenience to the authors of the
 program.</blockquote></div></div></small></span></pre><p>The query fails because <code class="e elpi"><span class="n-ElpiVariable">P</span></code> (occurring in the query)
 does not match <code class="e elpi">bob</code> nor <code class="e elpi">mallory</code>: there is no way to
-make <code class="e elpi"><span class="n-ElpiVariable">P</span><span class="w"> </span><span class="k-ElpiKeyword">=</span><span class="w"> </span>bob</code> hold without assigning <code class="e elpi"><span class="n-ElpiVariable">P</span></code> but that is forbidden by
-the <code class="e elpi">i<span class="k-ElpiKeyword">:</span></code> directive in the signature of <code class="e elpi">age</code>.</p>
+make <code class="e elpi"><span class="n-ElpiVariable">P</span><span class="w"> </span><span class="k-ElpiKeyword">=</span><span class="w"> </span>bob</code> hold without assigning <code class="e elpi"><span class="n-ElpiVariable">P</span></code> but that is forbidden since
+the first argument of <code class="e elpi">age</code> is flagged as input.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p>Pattern matching API</p>
-<p>As unification is available via the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L20">(=)</a>, pattern matching
-is available via <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L22">pattern_match</a>.</p>
+<p>As unification is available via the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L20">(=)</a>, pattern matching
+is available via <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L22">pattern_match</a>.</p>
 <pre class="code elpi last literal-block">
 f<span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k-ElpiKeyword">=</span><span class="w"> </span>f<span class="w"> </span><span class="n-ElpiVariable">X</span><span class="w"> </span><span class="c">% ok
 </span>f<span class="w"> </span><span class="n-ElpiVariable">X</span><span class="w"> </span><span class="k-ElpiKeyword">=</span><span class="w"> </span>f<span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="c">% ok
@@ -644,7 +640,7 @@ is that it will prevent to use the predicate in the other direction, e.g. to
 find any person of age 23. For that one would need a different predicate,
 since Elpi does not support multiple signatures for the same symbol.
 We often use the <code class="highlight coq"><span class="n">R</span></code> suffix to denote the non-function version of a predicate,
-for example see <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L549">std.append</a> and <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L553">std.appendR</a>.</p>
+for example see <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L549">std.append</a> and <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L553">std.appendR</a>.</p>
 </div>
 </div>
 </div>
@@ -683,10 +679,10 @@ typed λ-calculus. We call this program <code class="highlight coq"><span class=
 that <code class="e elpi">app</code> and <code class="e elpi">fun</code> are constructors of that type.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> stlc <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">kind</span><span class="w">  </span><span class=" -ElpiFunction">term</span><span class="w">  </span><span class="kt">type</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">data</span><span class="w">  </span><span class=" -ElpiFunction">term</span>.
 
-<span class="w">  </span><span class="k k-ElpiKeyword">type</span><span class="w">  </span><span class=" -ElpiFunction">app</span><span class="w">   </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
-<span class="w">  </span><span class="k k-ElpiKeyword">type</span><span class="w">  </span><span class=" -ElpiFunction">fun</span><span class="w">   </span><span class="kt">(term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term)</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">symb</span><span class="w">  </span><span class=" -ElpiFunction">app</span><span class="w">   </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">symb</span><span class="w">  </span><span class=" -ElpiFunction">fun</span><span class="w">   </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">(term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term)</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
 
 <span class="si">}}</span>.</span></span></pre><p>The constructor <code class="e elpi">app</code> takes two terms
 while <code class="e elpi">fun</code> only one (of functional type).</p>
@@ -723,7 +719,7 @@ explain what input means precisely later, for now just think about it
 as a comment.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">whd</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">term</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">whd</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
 
 <span class="w">  </span><span class="c">% when the head "Hd" of an "app" (lication) is a</span>
 <span class="w">  </span><span class="c">% "fun" we substitute and continue</span>
@@ -751,7 +747,7 @@ rule.</p>
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="k">λ</span><span class="nv">x</span>.x ~&gt; <span class="k">fun</span> <span class="nv">c0</span> \ c0</blockquote><blockquote class="alectryon-message">(<span class="k">λ</span><span class="nv">x</span>.x) (<span class="k">λ</span><span class="nv">x</span>.x) ~&gt; <span class="k">fun</span> <span class="nv">c0</span> \ c0</blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">I = <span class="k">fun</span> <span class="nv">c0</span> \ c0</blockquote><blockquote class="alectryon-message">T = <span class="k">fun</span> <span class="nv">c0</span> \ c0</blockquote><blockquote class="alectryon-message">T1 = <span class="k">fun</span> <span class="nv">c0</span> \ c0</blockquote></div></div></small></span></pre><p>Another little test using global constants:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">foo, bar</span><span class="w"> </span><span class="kt">term</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">foo, bar</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">term</span>.
 
 <span class="si">}}</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-txt">
@@ -788,10 +784,10 @@ We then declare a new predicate <code class="e elpi">of</code> (for &quot;type o
 we provide two rules, one for each term constructor.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">kind</span><span class="w">  </span><span class=" -ElpiFunction">ty</span><span class="w">   </span><span class="kt">type</span>.<span class="w">           </span><span class="c">% the data type of types</span>
-<span class="w">  </span><span class="k k-ElpiKeyword">type</span><span class="w">  </span><span class=" -ElpiFunction">arr</span><span class="w">  </span><span class="kt">ty</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">ty</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">ty</span>.<span class="w"> </span><span class="c">% our type constructor</span>
+<span class="w">  </span><span class="k k-ElpiKeyword">data</span><span class="w">  </span><span class=" -ElpiFunction">ty</span>.<span class="w">                    </span><span class="c">% the data type of types</span>
+<span class="w">  </span><span class="k k-ElpiKeyword">symb</span><span class="w">  </span><span class=" -ElpiFunction">arr</span><span class="w">  </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">ty</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">ty</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">ty</span>.<span class="w"> </span><span class="c">% our type constructor</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">of</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">ty</span>.<span class="w"> </span><span class="c">% the type checking algorithm</span>
+<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">of</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">ty</span>.<span class="w"> </span><span class="c">% the type checking algorithm</span>
 
 <span class="w">  </span><span class="c">% for the app node we ensure the head is a function from</span>
 <span class="w">  </span><span class="c">% A to B, and that the argument is of type A</span>
@@ -959,11 +955,11 @@ is matched, rather than unified).</p>
 <p>A simple example: Peano's addition:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> peano <span class="si">lp:{{</span>
 
-<span class="k k-ElpiKeyword">kind</span><span class="w"> </span><span class=" -ElpiFunction">nat</span><span class="w"> </span><span class="kt">type</span>.
-<span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">z</span><span class="w"> </span><span class="kt">nat</span>.
-<span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">s</span><span class="w"> </span><span class="kt">nat</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">nat</span>.
+<span class="k k-ElpiKeyword">data</span><span class="w"> </span><span class=" -ElpiFunction">nat</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">z</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">nat</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">s</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">nat</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">nat</span>.
 
-<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">add</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">nat</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">nat</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">nat</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">add</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">nat</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">nat</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">nat</span>.
 
 add<span class="w"> </span><span class="p">(</span>s<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="p">)</span><span class="w"> </span><span class=" -ElpiVariable">Y</span><span class="w"> </span><span class="p">(</span>s<span class="w"> </span><span class=" -ElpiVariable">Z</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>add<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class=" -ElpiVariable">Y</span><span class="w"> </span><span class=" -ElpiVariable">Z</span>.
 add<span class="w"> </span>z<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class=" -ElpiVariable">X</span>.
@@ -983,16 +979,16 @@ order of the rules for <code class="e elpi">add</code> Elpi can either diverge o
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Bound</span> <span class="kn">Steps</span> <span class="mi">0</span>.</span></span></pre><p>Indeed the first rule for add can be applied forever.
 If one exchanges the two rules in the program, then Elpi
 terminates picking <code class="e elpi">z</code> for <code class="e elpi"><span class="n-ElpiVariable">X</span></code>.</p>
-<p>We can use the mode directive in order to
-<em>match</em> arguments marked as <code class="e elpi">i<span class="k-ElpiKeyword">:</span></code> against the patterns
-in the head of rules, rather than unifying them.</p>
+<p>We can use flag the first two arguments of <code class="e elpi">sum</code> as inputs
+so that queries are <em>matched</em> against the corresponding patterns
+in the head of rules.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> peano2 <span class="si">lp:{{</span>
 
-<span class="k k-ElpiKeyword">kind</span><span class="w"> </span><span class=" -ElpiFunction">nat</span><span class="w"> </span><span class="kt">type</span>.
-<span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">z</span><span class="w"> </span><span class="kt">nat</span>.
-<span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">s</span><span class="w"> </span><span class="kt">nat</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">nat</span>.
+<span class="k k-ElpiKeyword">data</span><span class="w"> </span><span class=" -ElpiFunction">nat</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">z</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">nat</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">s</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">nat</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">nat</span>.
 
-<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">sum</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">nat</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">nat</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">nat</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">sum</span><span class="w"> </span><span class="kt">nat</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">nat</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">nat</span>.
 
 sum<span class="w"> </span><span class="p">(</span>s<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="p">)</span><span class="w"> </span><span class=" -ElpiVariable">Y</span><span class="w"> </span><span class="p">(</span>s<span class="w"> </span><span class=" -ElpiVariable">Z</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>sum<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class=" -ElpiVariable">Y</span><span class="w"> </span><span class=" -ElpiVariable">Z</span>.
 sum<span class="w"> </span>z<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class=" -ElpiVariable">X</span>.
@@ -1006,9 +1002,9 @@ sum<span class="w"> </span><span class=" -ElpiVariable">_</span><span class="w">
 syntactic constraints</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> peano3 <span class="si">lp:{{</span>
 
-<span class="k k-ElpiKeyword">kind</span><span class="w"> </span><span class=" -ElpiFunction">nat</span><span class="w"> </span><span class="kt">type</span>.
-<span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">z</span><span class="w"> </span><span class="kt">nat</span>.
-<span class="k k-ElpiKeyword">type</span><span class="w"> </span><span class=" -ElpiFunction">s</span><span class="w"> </span><span class="kt">nat</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">nat</span>.
+<span class="k k-ElpiKeyword">data</span><span class="w"> </span><span class=" -ElpiFunction">nat</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">z</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">nat</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class=" -ElpiFunction">s</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">nat</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">nat</span>.
 
 <span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class=" -ElpiFunction">sum</span><span class="w"> </span><span class="kt">nat</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">nat</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">nat</span>.
 
@@ -1099,11 +1095,11 @@ typical of functional programming are available, with some caveats.</p>
 <div class="section" id="spilling-relation-composition">
 <h2><a class="toc-backref" href="#toc-entry-14">Spilling (relation composition)</a></h2>
 <p>Chaining &quot;relations&quot; can be painful, especially when
-they look like functions. Here we use <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L549">std.append</a>
-and <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L534">std.rev</a> to build a palindrome:</p>
+they look like functions. Here we use <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L549">std.append</a>
+and <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L534">std.rev</a> to build a palindrome:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> function <span class="si">lp:{{</span>
 
-<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">make-palindrome</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">make-palindrome</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span>.
 
 make-palindrome<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class=" -ElpiVariable">Result</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span>
 <span class="w">  </span>std.rev<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span><span class="k k-ElpiKeyword">,</span>
@@ -1123,7 +1119,7 @@ said to be spilled out and placed just before the predicate
 that contains them.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
-<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">make-palindrome2</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">make-palindrome2</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span>.
 
 make-palindrome2<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class=" -ElpiVariable">Result</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span>
 <span class="w">  </span>std.append<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span>{std.rev<span class="w"> </span><span class=" -ElpiVariable">L</span>} <span class=" -ElpiVariable">Result</span>.
@@ -1140,20 +1136,20 @@ Actually the latter is elaborated into the former.</p>
 <div class="section" id="apis-for-built-in-data">
 <h2><a class="toc-backref" href="#toc-entry-15">APIs for built-in data</a></h2>
 <p>Functions about built-in data types are available via the
-<a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L93">calc</a> predicate or its infix version <code class="e elpi"><span class="k-ElpiKeyword">is</span></code>. Example:</p>
+<a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L93">calc</a> predicate or its infix version <code class="e elpi"><span class="k-ElpiKeyword">is</span></code>. Example:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1d" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1d"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span>
 
 <span class="w">   </span>calc<span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="s2">"result "</span><span class="w"> </span><span class="k k-ElpiKeyword">^</span><span class="w"> </span><span class="s2">"="</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class=" -ElpiVariable">X</span><span class="k k-ElpiKeyword">,</span>
 <span class="w">   </span><span class=" -ElpiVariable">Y</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="k k-ElpiKeyword">+</span><span class="w"> </span><span class="mi">2</span><span class="k k-ElpiKeyword">,</span>
 <span class="w">   </span>coq.say<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class=" -ElpiVariable">Y</span><span class="w"> </span>
 
-<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">result = <span class="mi">5</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">X = result =</blockquote><blockquote class="alectryon-message">Y = <span class="mi">5</span></blockquote></div></div></small></span></pre><p>The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L93">calc</a> predicate works nicely with spilling:</p>
+<span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">result = <span class="mi">5</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">X = result =</blockquote><blockquote class="alectryon-message">Y = <span class="mi">5</span></blockquote></div></div></small></span></pre><p>The <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L93">calc</a> predicate works nicely with spilling:</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="tutorial-elpi-lang-v-chk1e" style="display: none" type="checkbox"><label class="alectryon-input" for="tutorial-elpi-lang-v-chk1e"><span class="kn">Elpi</span> <span class="kn">Query</span> <span class="si">lp:{{</span><span class="w"> </span>coq.say<span class="w"> </span><span class="s2">"result ="</span><span class="w"> </span>{calc<span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="w"> </span><span class="k k-ElpiKeyword">+</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span>} <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">result = <span class="mi">5</span></blockquote><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">%spill1_87 = <span class="mi">5</span></blockquote></div></div></small></span></pre></div>
 <div class="section" id="allocation-of-variables">
 <h2><a class="toc-backref" href="#toc-entry-16">Allocation of variables</a></h2>
 <p>The language lets one use λ-abstraction also to write anonymous rules
 but one has to be wary of where variables are bound (allocated really).</p>
-<p>In our example we use the higher order predicate <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L597">std.map</a>:</p>
+<p>In our example we use the higher order predicate <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L597">std.map</a>:</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">func</span><span class="w"> </span><span class="n-ElpiFunction">std.map</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span><span class="k-ElpiMode">,</span><span class="w"> </span><span class="k-ElpiMode">(</span><span class="k-ElpiKeyword">func</span><span class="w"> </span><span class="kt">A</span><span class="w"> </span><span class="k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">B</span><span class="k-ElpiMode">)</span><span class="w"> </span><span class="k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">B</span>.
 </pre>
@@ -1163,17 +1159,17 @@ is the one of a predicate relating <code class="e elpi"><span class="n-ElpiVaria
 would do in a functional language by passing an anonymous function):</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
-<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">bad</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">bad</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span>.
 
 bad<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class=" -ElpiVariable">Result</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span>
 <span class="w">  </span>std.map<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class="p">(</span><span class=" -ElpiVariable">x\</span><span class="w"> </span><span class=" -ElpiVariable">r\</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span>x<span class="w"> </span><span class="k k-ElpiKeyword">+</span><span class="w"> </span><span class="mi">1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>r<span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span><span class="p">)</span><span class="w"> </span><span class=" -ElpiVariable">Result</span>.
 
-<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">good</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">good</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span>.
 good<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class=" -ElpiVariable">Result</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span>
 <span class="w">  </span>std.map<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span>good.aux<span class="w"> </span><span class=" -ElpiVariable">Result</span>.
 good.aux<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class=" -ElpiVariable">R</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class="k k-ElpiKeyword">+</span><span class="w"> </span><span class="mi">1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class=" -ElpiVariable">R</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span>.
 
-<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">good2</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">good2</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span>.
 good2<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class=" -ElpiVariable">Result</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span>
 <span class="w">  </span>std.map<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class="p">(</span><span class=" -ElpiVariable">x\</span><span class="w"> </span><span class=" -ElpiVariable">r\</span><span class="w"> </span><span class="k k-ElpiKeyword">sigma</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span>\<span class="w"> </span><span class=" -ElpiVariable">TMP</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span>x<span class="w"> </span><span class="k k-ElpiKeyword">+</span><span class="w"> </span><span class="mi">1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>r<span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span><span class="p">)</span><span class="w"> </span><span class=" -ElpiVariable">Result</span>.
 
@@ -1186,7 +1182,7 @@ good2<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w
 <span class="w">  </span>good2<span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="mi">1</span><span class="k k-ElpiKeyword">,</span><span class="mi">2</span><span class="k k-ElpiKeyword">,</span><span class="mi">3</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class=" -ElpiVariable">R3</span>
 
 <span class="si">}}</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="kn">Query</span> assignments:</blockquote><blockquote class="alectryon-message">R1 = X0</blockquote><blockquote class="alectryon-message">R2 = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</blockquote><blockquote class="alectryon-message">R3 = [<span class="mi">2</span>, <span class="mi">3</span>, <span class="mi">4</span>]</blockquote></div></div></small></span></pre><p>The problem with <code class="e elpi">bad</code> is that <code class="e elpi"><span class="n-ElpiVariable">TMP</span></code> is fresh each time the rule
-is used, but not every time the anonymous rule passed to <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L597">map</a>
+is used, but not every time the anonymous rule passed to <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L597">map</a>
 is used. Technically <code class="e elpi"><span class="n-ElpiVariable">TMP</span></code> is quantified (allocated) where <code class="e elpi"><span class="n-ElpiVariable">L</span></code>
 and <code class="e elpi"><span class="n-ElpiVariable">Result</span></code> are.</p>
 <p>There are two ways to quantify <code class="e elpi"><span class="n-ElpiVariable">TMP</span></code> correctly, that is inside the
@@ -1202,7 +1198,7 @@ declaration warning</p>
 the occasion to clarify further the scope of variables.</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="si">lp:{{</span>
 
-<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">good3</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">o:</span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">good3</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">int</span>.
 good3<span class="w"> </span><span class=" -ElpiVariable">L</span><span class="w"> </span><span class=" -ElpiVariable">Result</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span>
 <span class="w">  </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class=" -ElpiVariable">aux</span>\
 <span class="w">    </span><span class="p">(</span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class=" -ElpiVariable">TMP X R</span>\<span class="w"> </span>aux<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class=" -ElpiVariable">R</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class="k k-ElpiKeyword">+</span><span class="w"> </span><span class="mi">1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class=" -ElpiVariable">R</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class=" -ElpiVariable">TMP</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">==&gt;</span>
@@ -1381,7 +1377,7 @@ given debug variable is set).</p>
 <pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> Debug <span class="s2">"DEBUG_MYPRED"</span>.</span><span class="alectryon-wsp">
 </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Elpi</span> <span class="kn">Program</span> <span class="kn">debug</span> <span class="si">lp:{{</span>
 
-<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">mypred</span><span class="w"> </span><span class="k k-ElpiMode">i:</span><span class="kt">int</span>.
+<span class="w">  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class=" -ElpiFunction">mypred</span><span class="w"> </span><span class="kt">int</span>.
 
 <span class="w">  </span><span class="k k-ElpiMode">:if</span><span class="w"> </span><span class="s2">"DEBUG_MYPRED"</span>
 <span class="w">  </span>mypred<span class="w"> </span><span class=" -ElpiVariable">X</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span>
@@ -1485,7 +1481,7 @@ may forget to use it. Elpi provides two mechanisms to help with that.</p>
 <p>The former one is functional predicates: by declaring a predicate as
 functional one is typically forced to use cut. This is the recommended
 way of writing code since Elpi 3.0.</p>
-<p>The latter mechanism is the e <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L753">std.do!</a> predicate that can
+<p>The latter mechanism is the e <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L753">std.do!</a> predicate that can
 be used as follows.</p>
 <pre class="code elpi literal-block">
 <span class="k-ElpiKeyword">pred</span><span class="w"> </span><span class="n-ElpiFunction">not-a-backtracking-one</span>.<span class="w">
@@ -1498,8 +1494,8 @@ be used as follows.</p>
 <p>In the example above once <code class="e elpi">condition</code> holds we start a sequence of
 steps which we will not reconsider. Locally, backtracking is still
 available, e.g. between <code class="e elpi">generate</code> and <code class="e elpi">test</code>.</p>
-<p>See also the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L766">std.spy-do!</a> predicate which prints each and every step,
-and the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/699a4ca2527c8a605189ff0231ec8951dce58dc6/builtin-doc/elpi-builtin.elpi#L508">std.spy</a> one which can be used to spy on a single one.</p>
+<p>See also the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L766">std.spy-do!</a> predicate which prints each and every step,
+and the <a class="reference external stdlib ghref" href="https://github.com/LPCIC/coq-elpi/blob/c0b5f35a7ce9e359ac3386bad0a38220ee00faf1/builtin-doc/elpi-builtin.elpi#L508">std.spy</a> one which can be used to spy on a single one.</p>
 </div>
 <div class="section" id="unification-variables-v-s-imperative-variables">
 <h2><a class="toc-backref" href="#toc-entry-26">Unification variables v.s. Imperative variables</a></h2>
@@ -1540,7 +1536,7 @@ You can continue by reading the one about the
 <h1>Docutils System Messages</h1>
 <div class="system-message">
 <p class="system-message-title">System Message: WARNING/2 (<tt class="docutils">examples/tutorial_elpi_lang.v</tt>, line 224)</p>
-Toplevel input, characters 8610-8626
+Toplevel input, characters 8576-8592
 The standard λProlog infix operator for implication =&gt; has higher precedence
 than conjunction. This means that 'A =&gt; B, C' reads '(A =&gt; B), C'.
 This is a common mistake since it makes A only available to B (and not to C
