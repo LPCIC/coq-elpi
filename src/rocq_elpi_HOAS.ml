@@ -1304,7 +1304,9 @@ let get_sigma s = (S.get engine s).sigma
 let update_sigma s f = (S.update engine s (fun e -> { e with sigma = f e.sigma }))
 let get_global_env s = (S.get engine s).global_env
 
-let norm_assay s (x,y,z) = x,y,Evarutil.nf_evar (get_sigma s) z
+let norm_array s (x,y,z) =
+  let sigma = get_sigma s in
+  Array.map (Evarutil.nf_evar sigma) x, Evarutil.nf_evar sigma y, z
 
 let primitive_value : primitive_value API.Conversion.t =
   let module B = Rocq_elpi_utils in
@@ -1332,7 +1334,7 @@ let primitive_value : primitive_value API.Conversion.t =
       B (fun p n -> Projection p),
       M (fun ~ok ~ko -> function Projection p -> ok p Names.Projection.(arg p + npars p) | _ -> ko ()));
     K("array","primitive array",A(B.parray,N),
-      BS (fun p s -> s, Parray (norm_assay s p)),
+      BS (fun p s -> s, Parray (norm_array s p)),
       M (fun ~ok ~ko -> function Parray p -> ok p | _ -> ko ()));
   ]
 } |> API.ContextualConversion.(!<)
@@ -1348,18 +1350,9 @@ let in_elpiast_primitive ~loc = function
   | Projection p -> projectionina ~loc p
   | Parray p -> parrayna ~loc p
 
-(* A single canonical universe instance is used for every primitive array we
-   build: since array elements are restricted to uint63/float64/pstring (or,
-   recursively, arrays thereof) and those are all Set-sorted, and Set is
-   cumulatively below every Type@{l}, Univ.Level.set always satisfies the
-   kernel's typing rule for Array(u,vals,def,ty) regardless of what universe
-   instance (if any) the original term used. This is what lets coq-elpi hide
-   the array's universe instance from elpi entirely. *)
 let canonical_array_instance = UVars.Instance.of_array ([||], [|Univ.Level.set|])
 let canonical_array_einstance = EC.EInstance.make canonical_array_instance
 
-(* Is t a literal uint63/float64/pstring, or (recursively) a primitive array
-   literal? Does not by itself guarantee t is ground/closed. *)
 let rec is_primitive_shaped sigma t = match EC.kind sigma t with
   | C.Int _ | C.Float _ | C.String _ -> true
   | C.Array (_, data, dflt, _ty) ->
@@ -1369,63 +1362,45 @@ let rec is_primitive_shaped sigma t = match EC.kind sigma t with
 let is_valid_primitive_value sigma t =
   EC.Vars.closed0 sigma t && Evarutil.is_ground_term sigma t && is_primitive_shaped sigma t
 
-(* Does ty (a type) denote uint63/float64/pstring's type, or (recursively)
-   the primitive array type applied to such a type? Recognized via Rocq's
-   retroknowledge, i.e. exactly the constants Typeops.type_of_int/float/
-   string/array themselves produce. *)
 [%%if coq = "9.0"]
 let get_retroknowledge env = env.Environ.retroknowledge
 [%%else]
 let get_retroknowledge env = Environ.retroknowledge env
 [%%endif]
 
-let describes_primitive_ty env sigma ty =
+let describes_primitive_ty env sigma ty : Rocq_elpi_utils.array_element_ty option =
   let retro = get_retroknowledge env in
   let is_retro_const oc t = match oc, EC.kind sigma t with
     | Some c, C.Const (c',_) -> Names.Constant.CanOrd.equal c c'
     | _ -> false
   in
   let rec aux ty =
-    if is_retro_const retro.Retroknowledge.retro_int63 ty then true
-    else if is_retro_const retro.Retroknowledge.retro_float64 ty then true
-    else if is_retro_const retro.Retroknowledge.retro_string ty then true
+    if is_retro_const retro.Retroknowledge.retro_int63 ty then Some Rocq_elpi_utils.Int
+    else if is_retro_const retro.Retroknowledge.retro_float64 ty then Some Rocq_elpi_utils.Float
+    else if is_retro_const retro.Retroknowledge.retro_string ty then Some Rocq_elpi_utils.Pstring
     else match EC.kind sigma ty with
-      | C.App (h, [|elem_ty|]) when is_retro_const retro.Retroknowledge.retro_array h -> aux elem_ty
-      | _ -> false
+      | C.App (h, [|elem_ty|]) when is_retro_const retro.Retroknowledge.retro_array h ->
+          (match aux elem_ty with Some t -> Some (Rocq_elpi_utils.Array t) | None -> None)
+      | _ -> None
   in aux ty
 
-let is_valid_primitive_ty env sigma ty =
-  EC.Vars.closed0 sigma ty && Evarutil.is_ground_term sigma ty && describes_primitive_ty env sigma ty
+let parse_primitive_ty env sigma ty =
+  if EC.Vars.closed0 sigma ty && Evarutil.is_ground_term sigma ty
+  then describes_primitive_ty env sigma ty else None
 
-(* The declared element type of a primitive array whose default/elements are
-   the given (already validated, already canonicalized via
-   canonicalize_primitive_value below) primitive value v. For a nested
-   array, the inner array's own (already canonical) stored type is reused
-   directly rather than re-derived. *)
-let ty_of_primitive_value env sigma v = match EC.kind sigma v with
-  | C.Int _ -> EC.of_constr (Typeops.type_of_int env)
-  | C.Float _ -> EC.of_constr (Typeops.type_of_float env)
-  | C.String _ -> EC.of_constr (Typeops.type_of_string env)
-  | C.Array (_,_,_,inner_ty) ->
-      EC.mkApp (EC.of_constr (Typeops.type_of_array env canonical_array_instance), [| inner_ty |])
+let rec classify_primitive_value sigma v : Rocq_elpi_utils.array_element_ty = match EC.kind sigma v with
+  | C.Int _ -> Int
+  | C.Float _ -> Float
+  | C.String _ -> Pstring
+  | C.Array (_,_,dflt,_) -> Array (classify_primitive_value sigma dflt)
   | _ -> assert false (* caller must check is_valid_primitive_value first *)
 
-(* Rebuilds a (already validated via is_valid_primitive_value) primitive
-   value so that every array node, at every nesting depth, uses the
-   canonical universe instance and a freshly recomputed declared type.
-   This is necessary before storing a value inside an array_data: two Constr
-   representations of the very same logical array can differ in irrelevant
-   embedded universe metadata (e.g. distinct fresh universe variables picked
-   by different elaboration/reduction engines for the very same, always
-   Set-sorted, array type former), which would otherwise break the
-   structural equality used by the parray CData (see rocq_elpi_utils.ml). *)
-let rec canonicalize_primitive_value env sigma t = match EC.kind sigma t with
-  | C.Int _ | C.Float _ | C.String _ -> t
-  | C.Array (_, data, dflt, _ty) ->
-      let dflt = canonicalize_primitive_value env sigma dflt in
-      let data = Array.map (canonicalize_primitive_value env sigma) data in
-      EC.mkArray (canonical_array_einstance, data, dflt, ty_of_primitive_value env sigma dflt)
-  | _ -> assert false (* caller must check is_valid_primitive_value first *)
+let rec econstr_of_array_element_ty env : Rocq_elpi_utils.array_element_ty -> EC.t = function
+  | Int -> EC.of_constr (Typeops.type_of_int env)
+  | Float -> EC.of_constr (Typeops.type_of_float env)
+  | Pstring -> EC.of_constr (Typeops.type_of_string env)
+  | Array t -> EC.mkApp (EC.of_constr (Typeops.type_of_array env canonical_array_instance), [| econstr_of_array_element_ty env t |])
+
 let in_elpi_primitive_value ~depth ~env ~sigma state = function
 | C.Int i ->    in_elpi_primitive ~depth state (Uint63 i)
 | C.Float f ->  in_elpi_primitive ~depth state (Float64 f)
@@ -1433,14 +1408,13 @@ let in_elpi_primitive_value ~depth ~env ~sigma state = function
 | C.Array(ui,data,dflt,ty) ->
     if fst (UVars.Instance.length (EC.EInstance.kind sigma ui)) <> 0 then
       err Pp.(str "primitive array: unexpected quality-polymorphic instance")
-    else if not (is_valid_primitive_ty env sigma ty) then
-      err Pp.(str "primitive array: element type is not one of the primitives coq-elpi supports (uint63/float64/pstring, or an array thereof)")
-    else if not (Array.for_all (is_valid_primitive_value sigma) data && is_valid_primitive_value sigma dflt) then
-      err Pp.(str "primitive array: an element or the default value is not a ground, closed, primitive value")
-    else
-      let dflt = canonicalize_primitive_value env sigma dflt in
-      let data = Array.map (canonicalize_primitive_value env sigma) data in
-      in_elpi_primitive ~depth state (Parray(data,dflt,ty_of_primitive_value env sigma dflt))
+    else (match parse_primitive_ty env sigma ty with
+    | None -> err Pp.(str "primitive array: element type is not one of the supported primitive types (uint63/float64/pstring, or an array thereof)")
+    | Some elem_ty ->
+      if not (Array.for_all (is_valid_primitive_value sigma) data && is_valid_primitive_value sigma dflt) then
+        err Pp.(str "primitive array: an element or the default value is not a ground, closed, primitive value")
+      else
+        in_elpi_primitive ~depth state (Parray(data,dflt,elem_ty)))
 | (C.Fix _ | C.CoFix _ | C.Lambda _ | C.App _ | C.Prod _ | C.Case _ | C.Cast _ | C.Construct _ | C.LetIn _ | C.Ind _ | C.Meta _ | C.Rel _ | C.Var _ | C.Proj _ | C.Evar _ | C.Sort _ | C.Const _) -> assert false
 
 
@@ -2646,7 +2620,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
       | Float64 f -> state, EC.mkFloat f, gls
       | Pstring s -> state, eC_mkString s, gls
       | Projection p -> state, EC.UnsafeMonomorphic.mkConst (get_projection_constant (get_global_env state) (Projection.repr p)), gls
-      | Parray (data,dflt,ty) -> state, EC.mkArray (canonical_array_einstance, data, dflt, ty), gls
+      | Parray (data,dflt,ty) -> state, EC.mkArray (canonical_array_einstance, data, dflt, econstr_of_array_element_ty (get_global_env state) ty), gls
       end
 
   (* evar *)

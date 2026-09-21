@@ -3348,12 +3348,11 @@ declared as cumulative.|};
     Out(Rocq_elpi_utils.parray,"A",
     Read(global, "Creates a primitive array of size Size filled with Default. Raises an error if Default is not a primitive value (uint63/float64/pstring, or an array thereof).")))),
     (fun size default _ ~depth _ _ state ->
-       let env = get_global_env state and sigma = get_sigma state in
+       let sigma = get_sigma state in
        if not (is_valid_primitive_value sigma default) then
          U.type_error "coq.primitive.array.make: Default is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
        else
-         let default = canonicalize_primitive_value env sigma default in
-         !: (Array.make (max size 0) default, default, ty_of_primitive_value env sigma default))),
+         !: (Array.make (max size 0) default, default, classify_primitive_value sigma default))),
   DocAbove);
 
   MLCode(Pred("coq.primitive.array.size",
@@ -3390,13 +3389,11 @@ declared as cumulative.|};
        if i < 0 || i >= Array.length data then !: (data,dflt,ty)
        else if not (is_valid_primitive_value sigma x) then
          U.type_error "coq.primitive.array.set: X is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
-       else
-         let x = canonicalize_primitive_value env sigma x in
-         if not (EConstr.eq_constr sigma (ty_of_primitive_value env sigma x) ty)
-         then U.type_error (Printf.sprintf "coq.primitive.array.set: %s is not a primitive value of the expected kind %s"
-                (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma x))
-                (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma ty)))
-         else let data1 = Array.copy data in data1.(i) <- x; !: (data1,dflt,ty))),
+       else if classify_primitive_value sigma x <> ty
+       then U.type_error (Printf.sprintf "coq.primitive.array.set: %s is not a primitive value of the expected kind %s"
+              (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma x))
+              (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma (econstr_of_array_element_ty env ty))))
+       else let data1 = Array.copy data in data1.(i) <- x; !: (data1,dflt,ty))),
   DocAbove);
 
   MLCode(Pred("coq.list->parray",
@@ -3405,16 +3402,14 @@ declared as cumulative.|};
     Out(Rocq_elpi_utils.parray,"A",
     Read(global, "Builds a primitive array from L with default Default. Raises an error if Default or any element of L is not a primitive value, or if they don't all share the same kind.")))),
     (fun default l _ ~depth _ _ state ->
-       let env = get_global_env state and sigma = get_sigma state in
+       let sigma = get_sigma state in
        if not (is_valid_primitive_value sigma default) then
          U.type_error "coq.list->parray: Default is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
        else if not (List.for_all (is_valid_primitive_value sigma) l) then
          U.type_error "coq.list->parray: an element of L is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
        else
-         let default = canonicalize_primitive_value env sigma default in
-         let ty = ty_of_primitive_value env sigma default in
-         let l = List.map (canonicalize_primitive_value env sigma) l in
-         if List.for_all (fun x -> EConstr.eq_constr sigma (ty_of_primitive_value env sigma x) ty) l
+         let ty = classify_primitive_value sigma default in
+         if List.for_all (fun x -> classify_primitive_value sigma x = ty) l
          then !: (Array.of_list l, default, ty)
          else U.type_error "coq.list->parray: not all elements of L share the same type as Default")),
   DocAbove);

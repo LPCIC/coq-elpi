@@ -55,7 +55,9 @@ val uint63c : Uint63.t Elpi.API.RawOpaqueData.cdata
 val float64c : Float64.t Elpi.API.RawOpaqueData.cdata
 val projectionc : Names.Projection.t Elpi.API.RawOpaqueData.cdata
 val pstringc : Pstring.t Elpi.API.RawOpaqueData.cdata
-type array_data = EConstr.t array * EConstr.t * EConstr.t
+type array_element_ty = Int | Float | Pstring | Array of array_element_ty
+val pp_array_element_ty : array_element_ty -> string
+type array_data = EConstr.t array * EConstr.t * array_element_ty
 val parray : array_data Elpi.API.Conversion.t
 val parrayc : array_data Elpi.API.RawOpaqueData.cdata
 

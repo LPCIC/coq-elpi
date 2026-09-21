@@ -643,12 +643,12 @@ let gterm2lpast ~pattern ~language state glob =
         | GArray (_,elts,dflt,_) ->
             let dflt = econstr_of_literal dflt in
             let data = Array.map econstr_of_literal elts in
-            EConstr.mkArray (canonical_array_einstance, data, dflt, ty_of_primitive_value env sigma dflt)
+            EConstr.mkArray (canonical_array_einstance, data, dflt, econstr_of_array_element_ty env (classify_primitive_value sigma dflt))
         | _ -> CErrors.user_err ~loc:coqloc Pp.(str "array literal in a quotation may only contain primitive uint63/float64/pstring/array literals, not arbitrary terms; build it with coq.primitive.array.* instead")
       in
       let dflt = econstr_of_literal dflt in
       let data = Array.map econstr_of_literal elts in
-      in_elpiast_primitive ~loc (Parray (data, dflt, ty_of_primitive_value env sigma dflt))
+      in_elpiast_primitive ~loc (Parray (data, dflt, classify_primitive_value sigma dflt))
   in
     gterm2lp state glob
 
