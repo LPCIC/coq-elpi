@@ -1373,8 +1373,14 @@ let is_valid_primitive_value sigma t =
    the primitive array type applied to such a type? Recognized via Rocq's
    retroknowledge, i.e. exactly the constants Typeops.type_of_int/float/
    string/array themselves produce. *)
+[%%if coq = "9.0"]
+let get_retroknowledge env = env.Environ.retroknowledge
+[%%else]
+let get_retroknowledge env = Environ.retroknowledge env
+[%%endif]
+
 let describes_primitive_ty env sigma ty =
-  let retro = Environ.retroknowledge env in
+  let retro = get_retroknowledge env in
   let is_retro_const oc t = match oc, EC.kind sigma t with
     | Some c, C.Const (c',_) -> Names.Constant.CanOrd.equal c c'
     | _ -> false
@@ -1425,7 +1431,7 @@ let in_elpi_primitive_value ~depth ~env ~sigma state = function
 | C.Float f ->  in_elpi_primitive ~depth state (Float64 f)
 | C.String s -> in_elpi_primitive ~depth state (Pstring s)
 | C.Array(ui,data,dflt,ty) ->
-    if fst (EC.EInstance.length ui) <> 0 then
+    if fst (UVars.Instance.length (EC.EInstance.kind sigma ui)) <> 0 then
       err Pp.(str "primitive array: unexpected quality-polymorphic instance")
     else if not (is_valid_primitive_ty env sigma ty) then
       err Pp.(str "primitive array: element type is not one of the primitives coq-elpi supports (uint63/float64/pstring, or an array thereof)")
