@@ -1239,14 +1239,12 @@ builtin func coq.primitive.array.size parray -> int.
 builtin func coq.primitive.array.dflt parray -> term.
 
 % [coq.primitive.array.get A I X] Gets the I-th element of A. If I is out of
-% bounds, X is A's default value (matching PArray.get's Gallina semantics).
+% bounds, X is A's default value.
 builtin func coq.primitive.array.get parray, int -> term.
 
 % [coq.primitive.array.set A I X A1] Sets the I-th element of A to X,
-% returning the updated array A1 (persistent update: a fresh copy is made).
-% If I is out of bounds, A1 = A unchanged (matching PArray.set's Gallina
-% semantics). Raises an error if X is not a primitive value of the same kind
-% as A's elements.
+% returning the updated array A1. If I is out of bounds, A1 = A. Raises an
+% error if X is not a primitive value of the same kind as A's elements.
 builtin func coq.primitive.array.set parray, int, term -> parray.
 
 % [coq.list->parray Default L A] Builds a primitive array from L with
@@ -1254,8 +1252,7 @@ builtin func coq.primitive.array.set parray, int, term -> parray.
 % primitive value, or if they don't all share the same kind.
 builtin func coq.list->parray term, list term -> parray.
 
-% [coq.parray->list A L] L is the list of elements of A, in order (the
-% default value is not included; use coq.primitive.array.dflt).
+% [coq.parray->list A L] L is the list of elements of A, in order.
 builtin func coq.parray->list parray -> list term.
 
 

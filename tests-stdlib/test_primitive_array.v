@@ -95,9 +95,9 @@ main _ :-
     [primitive (uint63 {coq.int->uint63 1}),
      primitive (uint63 {coq.int->uint63 2}),
      primitive (uint63 {coq.int->uint63 3})] A,
-  coq.primitive.array.fold sum-cb A 0 Sum,
+  coq.primitive.array.fold A sum-cb 0 Sum,
   std.assert! (Sum = 6) "fold sum",
-  coq.primitive.array.map double-cb A A1,
+  coq.primitive.array.map A double-cb A1,
   std.assert! (coq.parray->list A1
     [primitive (uint63 {coq.int->uint63 2}),
      primitive (uint63 {coq.int->uint63 4}),

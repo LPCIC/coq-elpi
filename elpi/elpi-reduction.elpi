@@ -70,8 +70,6 @@ whd-mfix (mfix-bo Bs) _ _ Fixno LA K KA RA X XC :-
   std.nth Fixno Bs B,
   whd B ArgsWRedRecNo X XC.
 
-% cofix only unfolds when it is itself eliminated (match/proj), never on its
-% own: see whd-indc-val below, where the cofix/mcofix cases live.
 func mcofix-unroll mcofix-block, mcofix-block, int, int -> term.
 mcofix-unroll (mcofix-ty _ _ F) MF Cur Fixno R :-
   mcofix-unroll (F (mcofix Cur MF)) MF {calc (Cur + 1)} Fixno R.

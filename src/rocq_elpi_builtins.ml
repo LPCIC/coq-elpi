@@ -3374,7 +3374,7 @@ declared as cumulative.|};
     In(Rocq_elpi_utils.parray,"A",
     In(B.int,"I",
     COut(closed_ground_term,"X",
-    Read(global, "Gets the I-th element of A. If I is out of bounds, X is A's default value (matching PArray.get's Gallina semantics).")))),
+    Read(global, "Gets the I-th element of A. If I is out of bounds, X is A's default value.")))),
     (fun (data,dflt,_) i _ ~depth _ _ state ->
        !: (if i < 0 || i >= Array.length data then dflt else data.(i)))),
   DocAbove);
@@ -3384,7 +3384,7 @@ declared as cumulative.|};
     In(B.int,"I",
     CIn(closed_ground_term,"X",
     Out(Rocq_elpi_utils.parray,"A1",
-    Read(global, "Sets the I-th element of A to X, returning the updated array A1 (persistent update: a fresh copy is made). If I is out of bounds, A1 = A unchanged (matching PArray.set's Gallina semantics). Raises an error if X is not a primitive value of the same kind as A's elements."))))),
+    Read(global, "Sets the I-th element of A to X, returning the updated array A1. If I is out of bounds, A1 = A. Raises an error if X is not a primitive value of the same kind as A's elements."))))),
     (fun (data,dflt,ty) i x _ ~depth _ _ state ->
        let env = get_global_env state and sigma = get_sigma state in
        if i < 0 || i >= Array.length data then !: (data,dflt,ty)
@@ -3393,7 +3393,9 @@ declared as cumulative.|};
        else
          let x = canonicalize_primitive_value env sigma x in
          if not (EConstr.eq_constr sigma (ty_of_primitive_value env sigma x) ty)
-         then U.type_error "coq.primitive.array.set: X's primitive kind does not match A's elements"
+         then U.type_error (Printf.sprintf "coq.primitive.array.set: %s is not a primitive value of the expected kind %s"
+                (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma x))
+                (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma ty)))
          else let data1 = Array.copy data in data1.(i) <- x; !: (data1,dflt,ty))),
   DocAbove);
 
@@ -3414,13 +3416,13 @@ declared as cumulative.|};
          let l = List.map (canonicalize_primitive_value env sigma) l in
          if List.for_all (fun x -> EConstr.eq_constr sigma (ty_of_primitive_value env sigma x) ty) l
          then !: (Array.of_list l, default, ty)
-         else U.type_error "coq.list->parray: not all elements of L share the same primitive kind as Default")),
+         else U.type_error "coq.list->parray: not all elements of L share the same type as Default")),
   DocAbove);
 
   MLCode(Pred("coq.parray->list",
     In(Rocq_elpi_utils.parray,"A",
     COut(B.listC closed_ground_term,"L",
-    Read(global, "L is the list of elements of A, in order (the default value is not included; use coq.primitive.array.dflt)."))),
+    Read(global, "L is the list of elements of A, in order."))),
     (fun (data,_,_) _ ~depth _ _ state -> !: (Array.to_list data))),
   DocAbove);
 
