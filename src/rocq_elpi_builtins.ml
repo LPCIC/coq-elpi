@@ -3081,6 +3081,17 @@ phase unnecessary.|};
      state, !: u, [])),
   DocAbove);
 
+  MLCode(Pred("coq.univ.add-section",
+    Out(univ, "U",
+    Full(unit_ctx, "A fresh section polymorphic universe.")),
+  (fun _ ~depth _ _ state ->
+    let state, (l, u) = new_univ_level_variable state in
+    let ctx = UVars.UContext.make { quals = [||]; univs = [|Anonymous|] }
+                (UVars.Instance.of_array ([||], [| l |]), PConstraints.empty) in
+    Global.push_section_context ctx;
+    state, !: u, [])),
+  DocAbove);
+
   MLCode(Pred("coq.univ.alg-super",
     In(univ,"U",
     Out(univ,"V",
