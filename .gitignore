@@ -32,6 +32,10 @@ src/rocq_elpi_vernacular_syntax.ml
 src/rocq_elpi_arg_syntax.ml
 src/rocq_elpi_builtins_HOAS.ml
 doc/
+docs/source/
+docs/build/
+docsenv/
+docs/base/__pycache__/
 
 Makefile.coq
 Makefile.coq.conf

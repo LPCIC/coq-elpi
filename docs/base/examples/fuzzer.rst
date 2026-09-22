@@ -1,0 +1,107 @@
+Fuzzer
+======
+
+Sketches a program to alter an inductive type while preserving its well
+typedness. It makes nothing useful per se, but shows how to map a term and
+call the type checker deep inside it.
+
+This example is an intrinsically typed data type and semantics, from Software
+Foundations. We devise a command to fuzz the semantics by flipping some
+operators, locally checking that the fuzzing produces well typed terms,
+reducing a bit the nondeterminism of the fuzzer.
+
+.. rocqtop:: in reset
+
+   From elpi Require Import elpi.
+
+.. rocqtop:: all
+
+   Inductive ty := B | N.
+
+   Inductive Exp : ty -> Type :=
+   | NUM  : nat -> Exp N
+   | BOOL  : bool -> Exp B
+   | PLUS : Exp N -> Exp N -> Exp N
+   | AND : Exp B -> Exp B -> Exp B
+   | OR : Exp B -> Exp B-> Exp B
+   | EQ : Exp N -> Exp N -> Exp B.
+
+   Inductive Val : ty -> Set :=
+      | iNv : nat -> Val N
+      | iBv : bool -> Val B.
+
+   Inductive eval  : forall {T: ty}, Exp  T -> Val T -> Prop :=
+      | E_Num n :
+          eval (NUM  n) (iNv n)
+      | E_Bool b :
+          eval (BOOL  b) (iBv b)
+      | E_Plus e1 e2 n1 n2 :
+          eval e1 (iNv n1) ->
+          eval e2 (iNv n2) ->
+          eval (PLUS e1 e2) (iNv (n1 + n2))
+      | E_AND e1 e2 b1 b2 :
+          eval e1 (iBv b1) ->
+          eval e2 (iBv b2) ->
+          eval (AND e1 e2) (iBv (b1 && b2))
+      | E_OR e1 e2 b1 b2 :
+          eval e1 (iBv b1) ->
+          eval e2 (iBv b2) ->
+          eval (OR e1 e2) (iBv (b1 || b2))
+     | E_EQ e1 e2 n1 n2 :
+          eval e1 (iNv n1) ->
+          eval e2 (iNv n2) ->
+          eval (EQ e1 e2) (iBv (Nat.eqb n1 n2)).
+
+   Elpi Command fuzz.
+   Elpi Accumulate lp:{{
+
+   pred fuzz term -> term.
+
+   % fuzzin rule: we look for a Rocq term (?Op ?A ?B) and we turn it in (AND ?A ?B)
+   % only if the new term is well typed.
+   fuzz {{ lp:Op lp:A lp:B }} Fuzzed :-
+     coq.say "DEBUG: attempt at fuzzing binary op:" Op,
+     fuzz A A1, fuzz B B1,
+     Fuzzed = {{ AND lp:A1 lp:B1 }},
+     coq.typecheck Fuzzed _ ok, % we don't care about the type, only that it is ok
+     coq.say "DEBUG: fuzzed!".
+
+   % rule for the dependent function space
+   fuzz (prod N S T) (prod N S1 T1) :-
+     fuzz S S1,
+     % we load the context with types for x and y, as well as the fact that
+     % we fuzz x to y
+     pi x y\ decl x N S ==> decl y N S1 ==> fuzz x y ==> fuzz (T x) (T1 y).
+
+   % rule for application
+   fuzz (app L) (app L1) :- std.map L fuzz L1.
+
+   % rule for global constants
+   fuzz (global X) (global X).
+
+   % TODO: we should have clauses for all other type formers...
+
+   pred rename-constructors constructor -> pair constructor string.
+   rename-constructors C (pr C C1) :-
+     coq.gref->id (indc C) S,
+     C1 is S ^ "1".
+
+   main [str IN, str OUT ] :-
+     % locate the inductive
+     coq.locate IN (indt I),
+     % fetch all its data, in particulat the types of the constructors
+     coq.env.indt I B NP NPU A KN KT,
+     % fuzz all constructor types
+     std.map KT fuzz KT1,
+     % we rename them, otherwise Rocq complains the names are already used
+     std.map KN rename-constructors KN1,
+     % declare the new inductive
+     coq.build-indt-decl (coq.indt-spec I OUT B A KN1 KT1) NP NPU  Decl,
+     coq.env.add-indt Decl _.
+
+   }}.
+
+   Elpi fuzz eval eval1.
+
+   (* let's print our new, broken, semantics ;-) *)
+   Print eval1.
