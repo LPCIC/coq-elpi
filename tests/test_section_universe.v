@@ -19,7 +19,7 @@ Inductive MonoEmpty@{u} : Type@{u} :=.
 Elpi Accumulate lp:{{
   main _ :-
     coq.env.begin-section "S",
-    coq.univ.add-section U,
+    coq.univ.add-section "v" U,
     coq.univ.variable U UV,
     coq.univ-instance UI [UV],
     Ty = sort (typ U),
@@ -45,8 +45,8 @@ Fail Elpi Query "coq.univ.add-section U".
 Set Printing Universes.
 Print F.
 (*
-  F@{u} =
-  fun T1 T2 : Type@{u} => T1 -> T2 -> PolyEmpty@{u} -> MonoEmpty -> Type@{u}
-      : Type@{u} -> Type@{u} -> Type@{max(MonoEmpty.u,u+1)}
-  (* u |=  *)
+  F@{v} =
+  fun T1 T2 : Type@{v} => T1 -> T2 -> PolyEmpty@{v} -> MonoEmpty -> Type@{v}
+      : Type@{v} -> Type@{v} -> Type@{max(MonoEmpty.u,v+1)}
+  (* v |=  *)
 *)
