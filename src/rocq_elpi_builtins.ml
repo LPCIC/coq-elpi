@@ -3081,6 +3081,21 @@ phase unnecessary.|};
      state, !: u, [])),
   DocAbove);
 
+  MLCode(Pred("coq.univ.add-section",
+    In(B.unspec id, "Name",
+    Out(univ, "U",
+    Full(unit_ctx, "A fresh section polymorphic universe. The name may be unspecified, in which case one is generated."))),
+  (fun name _ ~depth _ _ state ->
+    let name, name' = match name with
+      | Given n -> let id = Id.of_string n in Some id, Name id
+      | Unspec -> None, Anonymous in
+    let state, (l, u) = new_univ_level_variable ?name state in
+    let ctx = UVars.UContext.make { quals = [||]; univs = [| name' |] }
+                (UVars.Instance.of_array ([||], [| l |]), PConstraints.empty) in
+    Global.push_section_context ctx;
+    state, !: u, [])),
+  DocAbove);
+
   MLCode(Pred("coq.univ.alg-super",
     In(univ,"U",
     Out(univ,"V",
