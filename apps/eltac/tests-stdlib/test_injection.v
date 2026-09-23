@@ -34,7 +34,7 @@ Qed.
 Set Universe Polymorphism.
 Unset Universe Minimization ToSet.
 Module UnivPoly.
-  Inductive List (A : Type) := Nil | Cons (a : A) (ls : List).
+  Inductive List (A : Type) := Nil | Cons (a : A) (ls : List A).
   Elpi derive.projK List.
   Goal forall (u1 u2 : unit), (Cons u1 (Nil _) = Cons u2 (Nil _)) -> u1 = u2.
     intros u1 u2 e.
