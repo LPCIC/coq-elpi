@@ -381,9 +381,6 @@ let gterm2lpast ~pattern ~language state glob =
   let coqloc = Option.default dummy_loc loc in
   let loc = Rocq_elpi_utils.of_coq_loc coqloc in
   match (DAst.get_thunk v) (*.CAst.v*) with
-  | GRef(GlobRef.ConstRef p,_ul) when Structures.PrimitiveProjections.mem p ->
-      let hd = in_elpiast_gr ~loc (GlobRef.ConstRef p) in
-      hd
   | GRef(gr, ul) when Global.is_polymorphic gr ->
     begin match ul with
     | None ->
