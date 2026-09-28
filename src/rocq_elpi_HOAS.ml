@@ -4358,11 +4358,47 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,mind,(i_imp
   let ind = { params; decl } in
   hoas_ind2lp ~depth coq_ctx state ind
 ;;
-let upoly_decl_of ~depth state ~loose_udecl mie =
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let ucontext_of_mind_entry _ubinders mie =
   let open Entries in
   match mie.mind_entry_universes with
   | Template_ind_entry _ -> nYI "template polymorphic inductives"
-  | Polymorphic_ind_entry uc ->
+  | Polymorphic_ind_entry uc -> Some uc
+  | Monomorphic_ind_entry -> None
+
+let unabstract_mind_entry _ubinders mie = mie
+[%%else]
+let ucontext_of_mind_entry ubinders mie =
+  let open Entries in
+  match mie.mind_entry_universes with
+  | Template_ind_entry _ -> nYI "template polymorphic inductives"
+  | Monomorphic_ind_entry -> None
+  | Polymorphic_ind_entry _ ->
+    begin match fst ubinders with
+    | UState.Polymorphic_entry uc -> Some uc
+    | UState.Monomorphic_entry _ ->
+        CErrors.anomaly Pp.(str"universe polymorphic inductive entry with monomorphic universes")
+    end
+
+let unabstract_mind_entry ubinders mie =
+  let open Entries in
+  match ucontext_of_mind_entry ubinders mie with
+  | None -> mie
+  | Some uc ->
+    let inst = UVars.UContext.instance uc in
+    let one_ind ind = { ind with
+      mind_entry_arity = Vars.subst_instance_constr inst ind.mind_entry_arity;
+      mind_entry_lc = List.map (Vars.subst_instance_constr inst) ind.mind_entry_lc } in
+    { mie with
+      mind_entry_params = Vars.subst_instance_context inst mie.mind_entry_params;
+      mind_entry_inds = List.map one_ind mie.mind_entry_inds }
+[%%endif]
+
+let upoly_decl_of ~depth state ~loose_udecl mie upoly =
+  let open Entries in
+  match upoly with
+  | None -> state, (fun i -> E.mkApp ideclc i []), []
+  | Some uc ->
     let qvars, vars = UVars.Instance.to_array @@ UVars.UContext.instance uc in
     if not (CArray.is_empty qvars) then nYI "sort poly inductives"
     else
@@ -4378,7 +4414,6 @@ let upoly_decl_of ~depth state ~loose_udecl mie =
           let state, up, gls = universe_decl.API.Conversion.embed ~depth state (Cumul((uv,loose_udecl),(csts,loose_udecl))) in
           state, (fun i -> E.mkApp uideclc i [up]), gls
       end
-  | Monomorphic_ind_entry -> state, (fun i -> E.mkApp ideclc i []), []
 
 [%%if coq = "9.0" || coq = "9.1"]
 let merge_ucontext sigma cs =
@@ -4402,12 +4437,13 @@ let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   let state =
     S.update engine state (fun e ->
       { e with sigma = merge_universe_context_set UState.univ_flexible e.sigma uctx}) in
-  let state = match mie.mind_entry_universes with
-    | Template_ind_entry _ -> nYI "template polymorphic inductives"
-    | Monomorphic_ind_entry -> state
-    | Polymorphic_ind_entry cs -> S.update engine state (fun e ->
+  let upoly = ucontext_of_mind_entry univ_binders mie in
+  let mie = unabstract_mind_entry univ_binders mie in
+  let state = match upoly with
+    | None -> state
+    | Some cs -> S.update engine state (fun e ->
         { e with sigma = merge_ucontext e.sigma cs }) (* ???? *) in
-  let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie in
+  let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie upoly in
   let allparams = mie.mind_entry_params in
   let allparams = Vars.lift_rel_context indno allparams in
   let kind = mie.mind_entry_finite in
@@ -4472,13 +4508,14 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
       S.update engine state (fun e ->
         { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma ctx})) state in
 
-  let state = match mie.mind_entry_universes with
-    | Template_ind_entry _ -> nYI "template polymorphic inductives"
-    | Monomorphic_ind_entry -> state
-    | Polymorphic_ind_entry cs -> S.update engine state (fun e ->
+  let upoly = ucontext_of_mind_entry ubinders mie in
+  let mie = unabstract_mind_entry ubinders mie in
+  let state = match upoly with
+    | None -> state
+    | Some cs -> S.update engine state (fun e ->
       { e with sigma = merge_ucontext e.sigma cs }) (* ???? *) in
-  
-  let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie in
+
+  let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie upoly in
 
   let params = mie.mind_entry_params in
   let params = Vars.lift_rel_context indno params in
@@ -4541,13 +4578,14 @@ let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl (decl:Record.R
         { e with sigma = merge_universe_context_set UState.univ_flexible e.sigma decl.entry.global_univs})
   in
 
-  let state = match mie.mind_entry_universes with
-    | Template_ind_entry _ -> nYI "template polymorphic inductives"
-    | Monomorphic_ind_entry -> state
-    | Polymorphic_ind_entry cs -> S.update engine state (fun e ->
+  let upoly = ucontext_of_mind_entry decl.entry.ubinders mie in
+  let mie = unabstract_mind_entry decl.entry.ubinders mie in
+  let state = match upoly with
+    | None -> state
+    | Some cs -> S.update engine state (fun e ->
       { e with sigma = merge_ucontext e.sigma cs }) (* ???? *) in
 
-  let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie in
+  let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie upoly in
 
   let params = mie.mind_entry_params in
   let params = Vars.lift_rel_context indno params in
