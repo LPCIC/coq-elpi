@@ -1074,6 +1074,10 @@ builtin func coq.univ.print.
 % [coq.univ.new U] A fresh universe.
 builtin func coq.univ.new -> univ.
 
+% [coq.univ.add-section Name U] A fresh section polymorphic universe. The
+% name may be unspecified, in which case one is generated.
+builtin func coq.univ.add-section id -> univ.
+
 % [coq.univ.alg-super U V] relates a univ U to its algebraic successor V,
 % that is U+1 and not any V s.t. U < V
 builtin func coq.univ.alg-super univ -> univ.

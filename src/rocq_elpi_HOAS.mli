@@ -387,7 +387,7 @@ val show_coq_elpi_engine_mapping : State.t -> string
 
 val type_of_global : state -> GlobRef.t -> UVars.Instance.t option -> state * (EConstr.t * UVars.Instance.t)
 val minimize_universes : state -> state
-val new_univ_level_variable : ?flexible:bool -> state -> state * (Univ.Level.t * Univ.Universe.t)
+val new_univ_level_variable : ?flexible:bool -> ?name:Names.Id.t -> state -> state * (Univ.Level.t * Univ.Universe.t)
 val constraint_eq : Sorts.t -> Sorts.t -> UnivProblem.t
 val constraint_leq : Sorts.t -> Sorts.t -> UnivProblem.t
 val add_universe_constraint : state -> UnivProblem.t -> state
