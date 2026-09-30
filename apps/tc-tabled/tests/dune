@@ -1,0 +1,8 @@
+(coq.theory
+ (name elpi.apps.tc_tabled.tests)
+ (flags :standard -async-proofs-cache force)
+ (package rocq-elpi-tests)
+ (theories elpi elpi.apps.tc elpi.apps.tc_tabled))
+
+(include_subdirs qualified)
+(dirs :standard \ WIP)
