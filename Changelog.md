@@ -12,6 +12,8 @@
 - New `coq.primitive.array.make`, `coq.primitive.array.size`,
   `coq.primitive.array.get`, `coq.primitive.array.set`,
   `coq.primitive.array.dflt`, `coq.list->parray`, `coq.parray->list`
+- Change `coq.arguments.scope` and `coq.arguments.set-scope`
+  according to https://github.com/rocq-prover/rocq/pull/22545
 
 ### LIB:
 - New `coq.primitive.array.fold`, `coq.primitive.array.map`

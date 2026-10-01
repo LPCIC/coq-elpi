@@ -649,6 +649,36 @@ let find_arguments_scope env c =
   CNotation.find_arguments_scope env c
 [%%endif]
 
+[%%if coq = "9.0" || coq= "9.1" || coq= "9.2" || coq= "9.3"]
+let find_arguments_scope env gref =
+  List.map (List.map (fun sc -> Constrexpr.DelimOnlyTmpScope, sc))
+    (find_arguments_scope env gref)
+[%%endif]
+
+[%%if coq = "9.0" || coq= "9.1" || coq= "9.2" || coq= "9.3"]
+let declare_arguments_scope local gref scopes =
+  let scopes = scopes |> List.map (List.map (fun (_, k) ->
+    try ignore (CNotation.find_scope k); k
+    with CErrors.UserError _ -> CNotation.find_delimiters_scope k)) in
+  CNotation.declare_arguments_scope local gref scopes
+[%%else]
+let declare_arguments_scope local gref scopes =
+  let tr (d, sc) = match d with
+    | true -> Constrexpr.DelimOnlyTmpScope, sc
+    | false -> Constrexpr.DelimUnboundedScope, sc in
+  let scopes = scopes |> List.map (List.map (fun dk ->
+    let d, k as dk = tr dk in
+    try ignore (CNotation.find_scope k); dk
+    with CErrors.UserError _ -> d, CNotation.find_delimiters_scope k)) in
+  CNotation.declare_arguments_scope local gref scopes
+[%%endif]
+
+[%%if coq = "9.0" || coq= "9.1" || coq= "9.2" || coq= "9.3"]
+let empty_subscopes = [], []
+[%%else]
+let empty_subscopes = []
+[%%endif]
+
 type type_class_instance = {
   implementation : GlobRef.t;
   priority : int;
@@ -3797,26 +3827,31 @@ Supported attributes:
 
   MLCode(Pred("coq.arguments.scope",
     In(gref,"GR",
-    Out(list (list id),"Scopes",
-    Read (global, "reads the notation scope of the arguments of a global reference. See also the %scope modifier for the Arguments command"))),
-  (fun gref _ ~depth { env } _ _ -> !: (find_arguments_scope env gref))),
+    Out(list (list (pair bool id)),"Scopes",
+    Read (global,
+{|reads the notation scope of the arguments of a global reference.
+true means %_scope whereas false means %scope.
+See also the %_scope and %scope modifiers for the Arguments command|}))),
+  (fun gref _ ~depth { env } _ _ ->
+    let tr (d, sc) = match d with
+      | Constrexpr.DelimOnlyTmpScope -> true, sc
+      | Constrexpr.DelimUnboundedScope -> false, sc in
+    !: (List.map (List.map tr) (find_arguments_scope env gref)))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-scope",
     In(gref,"GR",
-    In(list (list id),"Scopes",
+    In(list (list (pair bool id)),"Scopes",
     Full(global,
 {|sets the notation scope of the arguments of a global reference.
 Scope can be a scope name or its delimiter.
-See also the %scope modifier for the Arguments command.
+true means %_scope whereas false means %scope.
+See also the %_scope and %scope modifiers for the Arguments command.
 Supported attributes:
 - @global! (default: false)|}))),
   (fun gref scopes ~depth { options } _ -> grab_global_env "coq.arguments.set-scope" (fun state ->
      let local = options.local <> Some false in
-     let scopes = scopes |> List.map (List.map (fun k ->
-        try ignore (CNotation.find_scope k); k
-        with CErrors.UserError _ -> CNotation.find_delimiters_scope k)) in
-     CNotation.declare_arguments_scope local gref scopes;
+     declare_arguments_scope local gref scopes;
      Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
@@ -3900,7 +3935,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
-               (id, ((Notation_ops.constr_some_level,([],[])),Id.Set.empty,Notation_term.NtnTypeConstr)) :: vars in
+               (id, ((Notation_ops.constr_some_level, empty_subscopes),Id.Set.empty,Notation_term.NtnTypeConstr)) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
