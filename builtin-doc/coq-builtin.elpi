@@ -1445,18 +1445,27 @@ builtin func coq.arguments.name gref -> list (option id).
 % - @global! (default: false)
 builtin func coq.arguments.set-name gref, list (option id).
 
+% Notation scope depth
+builtin data scope-depth.
+builtin symb deep    : scope-depth = "1". 
+builtin symb shallow : scope-depth = "1". 
+
 % [coq.arguments.scope GR Scopes] reads the notation scope of the arguments
-% of a global reference. See also the %scope modifier for the Arguments
-% command
-builtin func coq.arguments.scope gref -> list (list id).
+% of a global reference.
+% shallow is written %_scope in Rocq whereas deep is written %scope.
+% See also the %_scope and %scope modifiers for the Arguments command
+builtin func coq.arguments.scope gref -> list (list (pair scope-depth id)).
 
 % [coq.arguments.set-scope GR Scopes] sets the notation scope of the
 % arguments of a global reference.
 % Scope can be a scope name or its delimiter.
-% See also the %scope modifier for the Arguments command.
+% shallow is written %_scope in Rocq whereas deep is written %scope.
+% See also the %_scope and %scope modifiers for the Arguments
+% command.
 % Supported attributes:
 % - @global! (default: false)
-builtin func coq.arguments.set-scope gref, list (list id).
+builtin func coq.arguments.set-scope gref, 
+                                    list (list (pair scope-depth id)).
 
 % Strategy for simplification tactics
 builtin data simplification_strategy.
