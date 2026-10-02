@@ -588,6 +588,22 @@ let declare_scheme_for local k x gr =
   DeclareScheme.declare_scheme local k (x, for_scheme gr)
 [%%endif]
 
+type scope_depth = Deep | Shallow
+
+let scope_depth =
+  let open Conv in let open API.AlgebraicData in let open Structures.ValuePattern in declare {
+  ty = TyName "scope-depth";
+  doc = "Notation scope depth";
+  pp = (fun fmt -> function
+    | Deep -> Format.fprintf fmt "Deep"
+    | Shallow -> Format.fprintf fmt "Shallow");
+  constructors = [
+    K("deep","",N, B Deep, M (fun ~ok ~ko -> function Deep -> ok | _ -> ko ()));
+    K("shallow","",N, B Shallow, M (fun ~ok ~ko -> function Shallow -> ok | _ -> ko ()));
+  ]
+} |> CConv.(!<)
+
+
 let cs_pattern =
   let open Conv in let open API.AlgebraicData in let open Structures.ValuePattern in declare {
   ty = TyName "cs-pattern";
@@ -664,8 +680,8 @@ let declare_arguments_scope local gref scopes =
 [%%else]
 let declare_arguments_scope local gref scopes =
   let tr (d, sc) = match d with
-    | true -> Constrexpr.DelimOnlyTmpScope, sc
-    | false -> Constrexpr.DelimUnboundedScope, sc in
+    | Shallow -> Constrexpr.DelimOnlyTmpScope, sc
+    | Deep -> Constrexpr.DelimUnboundedScope, sc in
   let scopes = scopes |> List.map (List.map (fun dk ->
     let d, k as dk = tr dk in
     try ignore (CNotation.find_scope k); dk
@@ -3825,27 +3841,29 @@ Supported attributes:
      Univ.ContextSet.empty, state, (), []))),
   DocAbove);
 
+  MLData scope_depth;
+
   MLCode(Pred("coq.arguments.scope",
     In(gref,"GR",
-    Out(list (list (pair bool id)),"Scopes",
+    Out(list (list (pair scope_depth id)),"Scopes",
     Read (global,
 {|reads the notation scope of the arguments of a global reference.
-true means %_scope whereas false means %scope.
+shallow is written %_scope in Rocq whereas deep is written %scope.
 See also the %_scope and %scope modifiers for the Arguments command|}))),
   (fun gref _ ~depth { env } _ _ ->
     let tr (d, sc) = match d with
-      | Constrexpr.DelimOnlyTmpScope -> true, sc
-      | Constrexpr.DelimUnboundedScope -> false, sc in
+      | Constrexpr.DelimOnlyTmpScope -> Shallow, sc
+      | Constrexpr.DelimUnboundedScope -> Deep, sc in
     !: (List.map (List.map tr) (find_arguments_scope env gref)))),
   DocAbove);
 
   MLCode(Pred("coq.arguments.set-scope",
     In(gref,"GR",
-    In(list (list (pair bool id)),"Scopes",
+    In(list (list (pair scope_depth id)),"Scopes",
     Full(global,
 {|sets the notation scope of the arguments of a global reference.
 Scope can be a scope name or its delimiter.
-true means %_scope whereas false means %scope.
+shallow is written %_scope in Rocq whereas deep is written %scope.
 See also the %_scope and %scope modifiers for the Arguments command.
 Supported attributes:
 - @global! (default: false)|}))),
