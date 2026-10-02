@@ -88,6 +88,25 @@ doc:
 			$(tut) &&) true
 	@cp etc/tracer.png doc/
 
+# Sphinx-based reference manual (docs/base -> docs/source -> docs/build).
+# `.. rocqtop::` blocks in docs/base/**/*.rst run through a real `rocq top`
+# with rocq-elpi loaded, so rocq-elpi must be installed into the opam switch
+# `rocq top` resolves against (not just dune-built-in-place), and
+# builtin-doc/*.elpi must exist on disk (read by docs/base/_roles_elpi.py).
+refman-build:
+	$(call dune,build) -p rocq-elpi @install
+	$(call dune,build) builtin-doc
+	$(call dune,install) rocq-elpi
+	rm -rf docs/source docs/build
+	cp -r docs/base docs/source
+	sed -i "s/@@VERSION@@/$$(git describe --always)/" docs/source/conf.py
+	sphinx-build -q -W -b html docs/source docs/build
+.PHONY: refman-build
+
+refman-serve: refman-build
+	cd docs/build && python3 -m http.server 8000
+.PHONY: refman-serve
+
 clean:
 	$(call dune,clean)
 .PHONY: clean

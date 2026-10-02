@@ -33,4 +33,5 @@
     "ocaml.server.args": [
         "--fallback-read-dot-merlin"
     ],
+    "vscode-as-git-mergetool.settingsAssistantOnStartup": false,
 }
