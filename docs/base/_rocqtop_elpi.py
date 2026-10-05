@@ -288,7 +288,7 @@ def highlight_using_pygments(sentence):
 
 class RocqtopDirective(Directive):
     """A reST directive to describe interactions with rocq top.
-    See docs/base/README.rst for the directive's options.
+    See docs/base/README.md for the directive's options.
     """
     has_content = True
     required_arguments = 1
