@@ -59,6 +59,10 @@ jobs:
         cp -r doc/. site/
         mkdir -p site/refman
         cp -r docs/build/. site/refman/
+        rm -rf site/refman/.doctrees
+        # Without this GitHub Pages runs Jekyll, which drops every path
+        # starting with "_" (Sphinx's _static, _images, _sources): no CSS/JS.
+        touch site/.nojekyll
 
     - name: Save artifact
       uses: actions/upload-artifact@v4
