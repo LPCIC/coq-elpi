@@ -1,0 +1,1214 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HOAS for Rocq terms &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Writing commands in Elpi" href="coq-commands.html" />
+    <link rel="prev" title="The Elpi programming language" href="elpi-lang.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">HOAS for Rocq terms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hoas-for-gallina">HOAS for Gallina</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#constructor-global">Constructor <code class="code elpi docutils literal notranslate"><span class="pre">global</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#constructors-app-and-fun">Constructors <code class="code elpi docutils literal notranslate"><span class="pre">app</span></code> and <code class="code elpi docutils literal notranslate"><span class="pre">fun</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#constructors-fix-and-match">Constructors <code class="code elpi docutils literal notranslate"><span class="pre">fix</span></code> and <code class="code elpi docutils literal notranslate"><span class="pre">match</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#constructor-sort">Constructor <code class="code elpi docutils literal notranslate"><span class="pre">sort</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#quotations-and-antiquotations">Quotations and Antiquotations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-context">The context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#holes-implicit-arguments">Holes (implicit arguments)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#outside-the-pattern-fragment">Outside the pattern fragment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">HOAS for Rocq terms</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/coq-hoas.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hoas-for-rocq-terms">
+<h1><a class="toc-backref" href="#id1" role="doc-backlink">HOAS for Rocq terms</a><a class="headerlink" href="#hoas-for-rocq-terms" title="Link to this heading"></a></h1>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>An <a class="reference external" href="https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_HOAS.html">Alectryon-rendered version</a> of this
+tutorial, from before its migration to this manual, is also available.</p>
+</div>
+<p>This tutorial focuses on the integration of Elpi within Rocq, in particular
+it describes how Rocq terms are exposed to Elpi programs and how Rocq APIs can
+be called.</p>
+<p>This tutorial assumes the reader is familiar with Elpi and HOAS; if it is not
+the case, please take a look at the <a class="reference internal" href="elpi-lang.html"><span class="doc">The Elpi programming language</span></a> tutorial first.</p>
+<nav class="contents" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#hoas-for-rocq-terms" id="id1">HOAS for Rocq terms</a></p>
+<ul>
+<li><p><a class="reference internal" href="#hoas-for-gallina" id="id2">HOAS for Gallina</a></p>
+<ul>
+<li><p><a class="reference internal" href="#constructor-global" id="id3">Constructor <code class="code elpi docutils literal notranslate"><span class="pre">global</span></code></a></p></li>
+<li><p><a class="reference internal" href="#constructors-app-and-fun" id="id4">Constructors <code class="code elpi docutils literal notranslate"><span class="pre">app</span></code> and <code class="code elpi docutils literal notranslate"><span class="pre">fun</span></code></a></p></li>
+<li><p><a class="reference internal" href="#constructors-fix-and-match" id="id5">Constructors <code class="code elpi docutils literal notranslate"><span class="pre">fix</span></code> and <code class="code elpi docutils literal notranslate"><span class="pre">match</span></code></a></p></li>
+<li><p><a class="reference internal" href="#constructor-sort" id="id6">Constructor <code class="code elpi docutils literal notranslate"><span class="pre">sort</span></code></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#quotations-and-antiquotations" id="id7">Quotations and Antiquotations</a></p></li>
+<li><p><a class="reference internal" href="#the-context" id="id8">The context</a></p></li>
+<li><p><a class="reference internal" href="#holes-implicit-arguments" id="id9">Holes (implicit arguments)</a></p>
+<ul>
+<li><p><a class="reference internal" href="#outside-the-pattern-fragment" id="id10">Outside the pattern fragment</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="hoas-for-gallina">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">HOAS for Gallina</a><a class="headerlink" href="#hoas-for-gallina" title="Link to this heading"></a></h2>
+<div class="rocqtop literal-block highlight rocqtop-hidden docutils container">
+<span class="rocqtop-reset"></span><dl>
+<dt class="rocqtop-hidden"><span class="kn">Set Warnings</span><span> </span><span class="s2">&quot;</span><span class="s2">-elpi.linear-variable</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dt class="rocqtop-hidden"><span class="kn">From</span><span> </span><span class="nb">elpi</span><span> </span><span class="kn">Require Import</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file ppx_deriving.runtime (implicit dependency) ... done]
+[Loading ML file re (implicit dependency) ... done]
+[Loading ML file re.str (implicit dependency) ... done]
+[Loading ML file elpi.util (implicit dependency) ... done]
+[Loading ML file elpi.lexer_config (implicit dependency) ... done]
+[Loading ML file menhirLib (implicit dependency) ... done]
+[Loading ML file stdlib-shims (implicit dependency) ... done]
+[Loading ML file elpi.parser (implicit dependency) ... done]
+[Loading ML file camlp-streams (implicit dependency) ... done]
+[Loading ML file easy-format (implicit dependency) ... done]
+[Loading ML file biniou (implicit dependency) ... done]
+[Loading ML file yojson (implicit dependency) ... done]
+[Loading ML file atdgen-runtime (implicit dependency) ... done]
+[Loading ML file elpi.trace.atd (implicit dependency) ... done]
+[Loading ML file elpi.trace.runtime (implicit dependency) ... done]
+[Loading ML file elpi.runtime (implicit dependency) ... done]
+[Loading ML file elpi.compiler (implicit dependency) ... done]
+[Loading ML file elpi (implicit dependency) ... done]
+[Loading ML file rocq-elpi.elpi ... done]
+</span></dd>
+<dt class="rocqtop-hidden"><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">tutorial_HOAS</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>The full syntax of Rocq terms can be found in
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi">coq-builtin.elpi</a>
+together with a detailed documentation of the encoding of contexts and the
+APIs one can use to interact with Rocq. This tutorial, and the two more
+that focus on commands and tactics, are a gentle introduction to all that.</p>
+<p>We defer to later quotations and antiquotations: syntactic features that
+let one write terms in Rocq's native syntax. Here we focus on the abstract
+syntax tree of Rocq terms.</p>
+<section id="constructor-global">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Constructor <code class="code elpi docutils literal notranslate"><span class="pre">global</span></code></a><a class="headerlink" href="#constructor-global" title="Link to this heading"></a></h3>
+<p>Let's start with the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L627"><code class="docutils literal notranslate"><span class="pre">gref</span></code></a> data type (for global reference).</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">const</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">constant</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">gref</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">indt</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">inductive</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">gref</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">indc</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">constructor</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">gref</span>.
+</pre></div>
+</div>
+<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L615"><code class="docutils literal notranslate"><span class="pre">constant</span></code></a>, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L131"><code class="docutils literal notranslate"><span class="pre">inductive</span></code></a> and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L136"><code class="docutils literal notranslate"><span class="pre">constructor</span></code></a> are Rocq specific
+data types that are opaque to Elpi. Still the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L627"><code class="docutils literal notranslate"><span class="pre">gref</span></code></a> data type lets you
+see what these names point to (a constant, and inductive type or a
+constructor).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>keyword <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">builtin</span></span><span class="whitespace"> </span><span class="pre">symbol</span></code></p>
+<p>Starting with Elpi 3.0 symbols like <code class="code elpi docutils literal notranslate"><span class="pre">const</span></code>, <code class="code elpi docutils literal notranslate"><span class="pre">indt</span></code> and
+<code class="code elpi docutils literal notranslate"><span class="pre">indc</span></code> are declared using the keyword <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">builtin</span></span><span class="whitespace"> </span><span class="pre">symbol</span></code>,
+rather than <code class="code elpi docutils literal notranslate"><span class="pre">type</span></code>, since they are coming from Rocq.</p>
+</div>
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L652"><code class="docutils literal notranslate"><span class="pre">coq.locate</span></code></a> API resolves a string to a <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L627"><code class="docutils literal notranslate"><span class="pre">gref</span></code></a>.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">nat</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">GRnat</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">S</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">GRs</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">plus</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">GRplus</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Query assignments:
+  GRnat = indt «nat»
+  GRplus = const «Nat.add»
+  GRs = indc «S»
+</span></dd>
+</dl>
+</div>
+<p>The <code class="code elpi docutils literal notranslate"><span class="pre">coq.env</span><span class="operator"><span class="pre">.</span></span><span class="keyword elpikeyword"><span class="pre">*</span></span></code> family of APIs lets one access the
+environment of well typed Rocq terms that have a global name.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">x</span><span> </span><span class="o">:=</span><span> </span><span class="mi">2</span><span class="o">.</span><span>
+</span></dt><dd><span>x is defined
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">x</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">GR</span><span class="k k-ElpiKeyword">,</span><span class="w">
+
+  </span><span class="c">% all global references have a type
+</span><span class="w">  </span><span>coq.env.typeof</span><span class="w"> </span><span class="n n-ElpiVariable">GR</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="k k-ElpiKeyword">,</span><span class="w">
+
+  </span><span class="c">% destruct GR to obtain its constant part C
+</span><span class="w">  </span><span class="n n-ElpiVariable">GR</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span>const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="k k-ElpiKeyword">,</span><span class="w">
+
+  </span><span class="c">% constants may have a body, do have a type
+</span><span class="w">  </span><span>coq.env.const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span>some</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">TyC</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Query assignments:
+  Bo = app [global (indc «S»), app [global (indc «S»), global (indc «O»)]]
+  C = «x»
+  GR = const «x»
+  Ty = global (indt «nat»)
+  TyC = global (indt «nat»)
+</span></dd>
+</dl>
+</div>
+<p>An expression like <code class="code elpi docutils literal notranslate"><span class="pre">indt</span><span class="whitespace"> </span><span class="operator"><span class="pre">«</span></span><span class="pre">nat</span><span class="operator"><span class="pre">»</span></span></code> is not a Rocq term (or better a type) yet.</p>
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L221"><code class="docutils literal notranslate"><span class="pre">global</span></code></a> term constructor turns a <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L627"><code class="docutils literal notranslate"><span class="pre">gref</span></code></a> into an
+actual <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L216"><code class="docutils literal notranslate"><span class="pre">term</span></code></a>.</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">global</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">gref</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+</pre></div>
+</div>
+</section>
+<section id="constructors-app-and-fun">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">Constructors <code class="code elpi docutils literal notranslate"><span class="pre">app</span></code> and <code class="code elpi docutils literal notranslate"><span class="pre">fun</span></code></a><a class="headerlink" href="#constructors-app-and-fun" title="Link to this heading"></a></h3>
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L230"><code class="docutils literal notranslate"><span class="pre">app</span></code></a> term constructor takes a list of terms and builds
+the (n-ary) application. The first term is the head, while the others
+are the arguments.</p>
+<p>For example <code class="code elpi docutils literal notranslate"><span class="pre">app</span><span class="whitespace"> </span><span class="keyword elpikeyword"><span class="pre">[</span></span><span class="pre">global</span><span class="whitespace"> </span><span class="punctuation"><span class="pre">(</span></span><span class="pre">indc</span><span class="whitespace"> </span><span class="operator"><span class="pre">«</span></span><span class="name elpivariable"><span class="pre">S</span></span><span class="operator"><span class="pre">»</span></span><span class="punctuation"><span class="pre">)</span></span><span class="keyword elpikeyword"><span class="pre">,</span></span><span class="whitespace"> </span><span class="pre">global</span><span class="whitespace"> </span><span class="punctuation"><span class="pre">(</span></span><span class="pre">indc</span><span class="whitespace"> </span><span class="operator"><span class="pre">«</span></span><span class="name elpivariable"><span class="pre">O</span></span><span class="operator"><span class="pre">»</span></span><span class="punctuation"><span class="pre">)</span></span><span class="keyword elpikeyword"><span class="pre">]</span></span></code> is
+the representation of <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">app</span><span class="w">   </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+</pre></div>
+</div>
+<p>Let's move to binders!</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">f</span><span> </span><span class="o">:=</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span class="o">.</span><span>
+</span></dt><dd><span>f is defined
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">f</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span>const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.env.const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span>some</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Query assignments:
+  Bo = fun `x:r` (global (indt «nat»)) c0 \ c0
+  C = «f»
+</span></dd>
+</dl>
+</div>
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L225"><code class="docutils literal notranslate"><span class="pre">fun</span></code></a> constructor carries a pretty printing hint <code class="docutils literal notranslate"><span class="pre">`x`</span></code>,
+the type of the bound variable <code class="docutils literal notranslate"><span class="pre">nat</span></code> and a function describing the body:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">fun</span><span class="w">  </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">name</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">(term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term)</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1857"><code class="docutils literal notranslate"><span class="pre">name</span></code></a> is just for pretty printing: in spite of carrying
+a value in the Rocq world, it has no content in Elpi (like the unit type)</p>
+<p>Elpi terms of type <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1857"><code class="docutils literal notranslate"><span class="pre">name</span></code></a> are just identifiers
+written between <code class="docutils literal notranslate"><span class="pre">`</span></code> (backticks).</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span>`foo`</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span>`bar`</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="w">    </span><span class="c">% names don't matter
+</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Query assignments:
+  B = X0
+  T = X1
+</span></dd>
+</dl>
+</div>
+<p>API such as <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1860"><code class="docutils literal notranslate"><span class="pre">coq.name-suffix</span></code></a> lets one craft a family of
+names starting from one, eg <code class="docutils literal notranslate"><span class="pre">coq.name-suffix</span> <span class="pre">`H`</span> <span class="pre">1</span> <span class="pre">N</span></code> sets <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">N</span></span></code>
+to <code class="docutils literal notranslate"><span class="pre">`H1`</span></code>.</p>
+</div>
+</section>
+<section id="constructors-fix-and-match">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Constructors <code class="code elpi docutils literal notranslate"><span class="pre">fix</span></code> and <code class="code elpi docutils literal notranslate"><span class="pre">match</span></code></a><a class="headerlink" href="#constructors-fix-and-match" title="Link to this heading"></a></h3>
+<p>The other binders <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L226"><code class="docutils literal notranslate"><span class="pre">prod</span></code></a> (Rocq's <code class="docutils literal notranslate"><span class="pre">forall</span></code>, AKA <code class="docutils literal notranslate"><span class="pre">Π</span></code>) and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L227"><code class="docutils literal notranslate"><span class="pre">let</span></code></a> are similar,
+so let's rather focus on <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L232"><code class="docutils literal notranslate"><span class="pre">fix</span></code></a> here.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">plus</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span>const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.env.const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span>some</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Query assignments:
+  Bo = fix `add:r` 0 
+ (prod `n:r` (global (indt «nat»)) c0 \
+   prod `m:r` (global (indt «nat»)) c1 \ global (indt «nat»)) c0 \
+ fun `n:r` (global (indt «nat»)) c1 \
+  fun `m:r` (global (indt «nat»)) c2 \
+   match c1 (fun `n:r` (global (indt «nat»)) c3 \ global (indt «nat»)) 
+    [c2, 
+     fun `p:r` (global (indt «nat»)) c3 \
+      app [global (indc «S»), app [c0, c3, c2]]]
+  C = «Nat.add»
+</span></dd>
+</dl>
+</div>
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L232"><code class="docutils literal notranslate"><span class="pre">fix</span></code></a> constructor carries a pretty printing hint,
+the number of the recursive argument (starting at <code class="code elpi docutils literal notranslate"><span class="literal number integer"><span class="pre">0</span></span></code>), the type
+of the recursive function and finally the body where the recursive
+call is represented via a bound variable</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">fix</span><span class="w">   </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">name</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">(term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term)</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+</pre></div>
+</div>
+<p>A <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L231"><code class="docutils literal notranslate"><span class="pre">match</span></code></a> constructor carries the term being inspected,
+the return clause
+and a list of branches. Each branch is a Rocq function expecting in input
+the arguments of the corresponding constructor. The order follows the
+order of the constructors in the inductive type declaration.</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">match</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+</pre></div>
+</div>
+<p>The return clause is represented as a Rocq function expecting in input
+the indexes of the inductive type, the inspected term and generating the
+type of the branches.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">m</span><span> </span><span class="o">(</span><span class="nv">h</span><span> </span><span class="o">:</span><span> </span><span class="mi">0</span><span> </span><span class="o">=</span><span> </span><span class="mi">1</span><span> </span><span class="o">)</span><span> </span><span class="nv">P</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span> </span><span class="mi">0</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">P</span><span> </span><span class="mi">1</span><span> </span><span class="o">:</span><span class="o">=</span><span>
+  </span><span class="k">match</span><span> </span><span class="n">h</span><span> </span><span class="k">as</span><span> </span><span class="n">e</span><span> </span><span class="k">in</span><span> </span><span class="n">eq</span><span> </span><span class="n">_</span><span> </span><span class="n">x</span><span> </span><span class="k">return</span><span> </span><span class="n">P</span><span> </span><span class="mi">0</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">P</span><span> </span><span class="n">x</span><span>
+  </span><span class="k">with</span><span> </span><span class="n">eq_refl</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="k">fun</span><span> </span><span class="o">(</span><span class="nv">p</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span> </span><span class="mi">0</span><span class="o">)</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">p</span><span> </span><span class="k">end</span><span class="o">.</span><span>
+</span></dt><dd><span>m is defined
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">m</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span>const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+</span><span>coq.env.const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span>some</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">h\</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">p\</span><span class="w"> </span><span class="k k-ElpiKeyword">match</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">RT</span><span class="w"> </span><span>h</span><span class="w"> </span><span>p</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">,</span><span class="w">
+</span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">The return type of m is:</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">RT</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>The return type of m is: c0 \ c1 \
+fun `x:r` (global (indt «nat»)) c2 \
+ fun `e:r` 
+  (app [global (indt «eq»), global (indt «nat»), global (indc «O»), c2]) 
+  c3 \ prod `_:r` (app [c1, global (indc «O»)]) c4 \ app [c1, c2]
+Query assignments:
+  C = «m»
+  RT = c0 \ c1 \
+fun `x:r` (global (indt «nat»)) c2 \
+ fun `e:r` 
+  (app [global (indt «eq»), global (indt «nat»), global (indc «O»), c2]) 
+  c3 \ prod `_:r` (app [c1, global (indc «O»)]) c4 \ app [c1, c2]
+</span></dd>
+</dl>
+</div>
+</section>
+<section id="constructor-sort">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">Constructor <code class="code elpi docutils literal notranslate"><span class="pre">sort</span></code></a><a class="headerlink" href="#constructor-sort" title="Link to this heading"></a></h3>
+<p>The last term constructor worth discussing is <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L218"><code class="docutils literal notranslate"><span class="pre">sort</span></code></a>.</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">sort</span><span class="w">  </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">universe</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">prop</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">universe</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">typ</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">univ</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">universe</span>.
+</pre></div>
+</div>
+<p>The opaque type <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1049"><code class="docutils literal notranslate"><span class="pre">univ</span></code></a> is a universe level variable. Elpi holds a store of
+constraints among these variables and provides APIs named <code class="code elpi docutils literal notranslate"><span class="pre">coq.univ</span><span class="operator"><span class="pre">.</span></span><span class="keyword elpikeyword"><span class="pre">*</span></span></code> to
+impose constraints.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.sort.sup</span><span class="w"> </span><span class="n n-ElpiVariable">U</span><span class="w"> </span><span class="n n-ElpiVariable">U1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="n n-ElpiVariable">U</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">&lt;</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">U1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% This constraint can't be allowed in the store!
+</span><span class="w">  </span><span>not</span><span class="p">(</span><span>coq.sort.leq</span><span class="w"> </span><span class="n n-ElpiVariable">U1</span><span class="w"> </span><span class="n n-ElpiVariable">U</span><span class="p">)</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>X0 &lt; X1
+</span><span class="ansi-fg-white ansi-bg-magenta ansi-bold">Debug:</span><span> Cannot enforce Top.29 &lt;= Top.28 because Top.28 &lt; Top.29
+Query assignments:
+  U = X0
+  U1 = X1
+Universe constraints:
+UNIVERSES:
+ {Top.29 Top.28} |= Top.28 &lt; Top.29
+ALGEBRAIC UNIVERSES:
+ {}
+FLEXIBLE UNIVERSES:
+ 
+SORTS:
+  |= Prop -&gt; SProp
+     Type -&gt; Prop
+          -&gt; SProp
+     
+WEAK CONSTRAINTS:
+ 
+
+</span></dd>
+</dl>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>the user is not expected to declare universe constraints by hand</p>
+<p>The type checking primitives update the store of constraints
+automatically and put Rocq universe variables in place of Elpi's unification
+variables (<code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">U</span></span></code> and <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">V</span></span></code> below).</p>
+</div>
+<p>Let's play a bit more with universe constraints using the
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1547"><code class="docutils literal notranslate"><span class="pre">coq.typecheck</span></code></a> API:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">ID</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span>`x`</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">sort</span><span class="w"> </span><span class="p">(</span><span>typ</span><span class="w"> </span><span class="n n-ElpiVariable">U</span><span class="p">)</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">x\</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">sort</span><span class="w"> </span><span class="p">(</span><span>typ</span><span class="w"> </span><span class="n n-ElpiVariable">U</span><span class="p">)</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="c">% the same U as before
+</span><span class="w">  </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">sort</span><span class="w"> </span><span class="p">(</span><span>typ</span><span class="w"> </span><span class="n n-ElpiVariable">V</span><span class="p">)</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">(id b) is:</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">app</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">ID</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+
+  </span><span class="c">% error, since U : U is not valid
+</span><span class="w">  </span><span>coq.typecheck</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">app</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">ID</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="p">(</span><span>error</span><span class="w"> </span><span class="n n-ElpiVariable">ErrMsg</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">(id a) is illtyped:</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">ErrMsg</span><span class="k k-ElpiKeyword">,</span><span class="w">
+
+  </span><span class="c">% ok, since V : U is possible
+</span><span class="w">  </span><span>coq.typecheck</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">app</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">ID</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+
+  </span><span class="c">% remark: U and V are now Rocq's univ with constraints
+</span><span class="w">  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">after typing (id b) is:</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">app</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">ID</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">:</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.univ.print</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>(id b) is: app [fun `x:r` (sort (typ X0)) c0 \ c0, sort (typ X1)]
+(id a) is illtyped: 
+Illegal application: 
+The term &quot;fun x : Type =&gt; x&quot; of type &quot;Type -&gt; Type&quot;
+cannot be applied to the term
+ &quot;Type&quot; : &quot;Type&quot;
+This term has type &quot;Type&#64;{Top.30+1}&quot; which should be a subtype of
+ &quot;Type&#64;{Top.30}&quot;.
+(universe inconsistency: Cannot enforce Top.30 &lt; Top.30 because Top.30
+= Top.30)
+after typing (id b) is: 
+app [fun `x:r` (sort (typ «Top.30»)) c0 \ c0, sort (typ «Top.31»)] : 
+sort (typ «Top.30»)
+Universe constraints: UNIVERSES:
+                       {Top.31 Top.30} |= Top.31 &lt; Top.30
+                      ALGEBRAIC UNIVERSES:
+                       {Top.31 Top.30}
+                      FLEXIBLE UNIVERSES:
+                       Top.31
+                       Top.30
+                      SORTS:
+                        |= Prop -&gt; SProp
+                           Type -&gt; Prop
+                                -&gt; SProp
+                           
+                      WEAK CONSTRAINTS:
+                       
+                      
+Query assignments:
+  A = sort (typ «Top.30»)
+  B = sort (typ «Top.31»)
+  ErrMsg = Illegal application: 
+The term &quot;fun x : Type =&gt; x&quot; of type &quot;Type -&gt; Type&quot;
+cannot be applied to the term
+ &quot;Type&quot; : &quot;Type&quot;
+This term has type &quot;Type&#64;{Top.30+1}&quot; which should be a subtype of
+ &quot;Type&#64;{Top.30}&quot;.
+(universe inconsistency: Cannot enforce Top.30 &lt; Top.30 because Top.30
+= Top.30)
+  ID = fun `x:r` (sort (typ «Top.30»)) c0 \ c0
+  T = sort (typ «Top.30»)
+  U = «Top.30»
+  V = «Top.31»
+Universe constraints:
+UNIVERSES:
+ {Top.31 Top.30} |= Top.31 &lt; Top.30
+ALGEBRAIC UNIVERSES:
+ {Top.31 Top.30}
+FLEXIBLE UNIVERSES:
+ Top.31
+ Top.30
+SORTS:
+  |= Prop -&gt; SProp
+     Type -&gt; Prop
+          -&gt; SProp
+     
+WEAK CONSTRAINTS:
+ 
+
+</span></dd>
+</dl>
+</div>
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L295"><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code></a> data type is used by <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1547"><code class="docutils literal notranslate"><span class="pre">coq.typecheck</span></code></a> to
+tell if the term is well typed. The constructor <code class="code elpi docutils literal notranslate"><span class="pre">ok</span></code> signals success, while
+<code class="code elpi docutils literal notranslate"><span class="pre">error</span></code> carries an error message. In case of success universe constraints
+are added to the store.</p>
+</section>
+</section>
+<section id="quotations-and-antiquotations">
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Quotations and Antiquotations</a><a class="headerlink" href="#quotations-and-antiquotations" title="Link to this heading"></a></h2>
+<p>Writing Gallina terms as we did so far is surely possible but very verbose
+and unhandy. Elpi provides a system of quotations and antiquotations to
+let one take advantage of the Rocq parser to write terms.</p>
+<p>The antiquotation, from Rocq to Elpi, is written <code class="docutils literal notranslate"><span class="pre">lp:{{</span> <span class="pre">...</span> <span class="pre">}}</span></code> and we have
+been using it since the beginning of the tutorial. The quotation from
+Elpi to Rocq is written <code class="code elpi docutils literal notranslate"><span class="literal string interpol"><span class="pre">{{</span></span><span class="operator"><span class="pre">:</span></span><span class="name"><span class="pre">coq</span></span> <span class="operator"><span class="pre">...</span></span> <span class="literal string interpol"><span class="pre">}}</span></span></code> or also just <code class="code elpi docutils literal notranslate"><span class="literal string interpol"><span class="pre">{{</span></span><span class="whitespace"> </span><span class="operator"><span class="pre">...</span></span> <span class="literal string interpol"><span class="pre">}}</span></span></code> since
+the <code class="docutils literal notranslate"><span class="pre">:coq</span></code> is the default quotation (Rocq has no default quotation, hence you always need
+to write <code class="docutils literal notranslate"><span class="pre">lp:</span></code> there).</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="c">% the &quot;:coq&quot; flag is optional
+</span><span class="w">  </span><span>coq.say</span><span class="w"> </span><span class="si">{{:coq</span><span> </span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="mi">2</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">=</span><span class="s2">&quot;</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="mi">2</span><span> </span><span class="si">}}</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>app
+ [global (const «Nat.add»), 
+  app [global (indc «S»), global (indc «O»)], 
+  app [global (indc «S»), app [global (indc «S»), global (indc «O»)]]] 
+= 
+app
+ [global (const «Nat.add»), 
+  app [global (indc «S»), global (indc «O»)], 
+  app [global (indc «S»), app [global (indc «S»), global (indc «O»)]]]
+</span></dd>
+</dl>
+</div>
+<p>Of course quotations can nest.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">S</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span class="k k-ElpiKeyword">app</span><span class="k k-ElpiKeyword">[</span><span class="k k-ElpiKeyword">global</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="mi">0</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">]</span><span class="w">  </span><span class="si">}}</span><span>   </span><span class="si">}}</span><span class="w">
+</span><span class="c">% elpi....  coq..     elpi...........  coq  elpi  coq
+</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>app
+ [global (const «Nat.add»), 
+  app [global (indc «S»), global (indc «O»)], 
+  app [global (indc «S»), global (indc «O»)]]
+Query assignments:
+  S = indc «S»
+</span></dd>
+</dl>
+</div>
+<p>One rule governs bound variables:</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>if a variable is bound in a language, Rocq or Elpi,
+then the variable is only visible in that language (not in the other one).</p>
+</div>
+<p>The following example is horrible but proves this point. In real code
+you are encouraged to pick appropriate names for your variables, avoiding
+gratuitous (visual) clashes.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.say</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span>`x`</span><span class="w"> </span><span class="si">{{</span><span class="n">nat</span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">x\</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="si">}}</span><span> </span><span class="si">}}</span><span class="p">)</span><span class="w">
+</span><span class="c">%                          e         c          c         e
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>fun `x:r` (global (indt «nat»)) c0 \
+ fun `x:r` (global (indt «nat»)) c1 \
+  app [global (const «Nat.add»), c1, c0]
+</span></dd>
+</dl>
+</div>
+<p>A commodity quotation without parentheses let's one quote identifiers
+omitting the curly braces.
+That is <code class="docutils literal notranslate"><span class="pre">lp:{{</span> <span class="pre">ident</span> <span class="pre">}}</span></code> can be written just <code class="docutils literal notranslate"><span class="pre">lp:ident</span></code>.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.say</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span>`x`</span><span class="w"> </span><span class="si">{{</span><span class="n">nat</span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">x\</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">x</span><span> </span><span class="si">}}</span><span class="p">)</span><span class="w">
+</span><span class="c">%                          e         c          c      e
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>fun `x:r` (global (indt «nat»)) c0 \
+ fun `x:r` (global (indt «nat»)) c1 \
+  app [global (const «Nat.add»), c1, c0]
+</span></dd>
+</dl>
+</div>
+<p>It is quite frequent to put Rocq variables in the scope of an Elpi
+unification variable, and this can be done by simply writing
+<code class="docutils literal notranslate"><span class="pre">lp:(X</span> <span class="pre">a</span> <span class="pre">b)</span></code> which is a shorthand for <code class="docutils literal notranslate"><span class="pre">lp:{{</span> <span class="pre">X</span> <span class="pre">{{</span> <span class="pre">a</span> <span class="pre">}}</span> <span class="pre">{{</span> <span class="pre">b</span> <span class="pre">}}</span> <span class="pre">}}</span></code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>writing <code class="docutils literal notranslate"><span class="pre">lp:X</span> <span class="pre">a</span> <span class="pre">b</span></code> (without parentheses) would result in a
+Rocq application, not an Elpi one</p>
+</div>
+<p>Let's play a bit with these shorthands:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">x\</span><span class="n n-ElpiVariable">y\</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">y</span><span> </span><span class="o">+</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">x</span><span> </span><span class="si">}}</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="c">% x and y live in Elpi
+</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">a</span><span> </span><span class="nv">b</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="si">lp:</span><span class="si">(</span><span class="n n-ElpiVariable">X</span><span> a b</span><span class="si">)</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="c">% a and b live in Rocq
+</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>fun `a:r` (global (indt «nat»)) c0 \
+ fun `b:r` (global (indt «nat»)) c1 \
+  app [global (const «Nat.add»), c1, c0]
+Query assignments:
+  X = c0 \ c1 \
+app [global (const «Nat.add»), c1, c0]
+</span></dd>
+</dl>
+</div>
+<p>Another commodity quotation lets one access the coqlib
+feature introduced in Rocq 8.10.</p>
+<p>Rocqlib gives you an indirection between your code and the actual name
+of constants.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Register</span><span> </span><span class="n">Corelib</span><span class="o">.</span><span class="n">Init</span><span class="o">.</span><span class="n">Datatypes</span><span class="o">.</span><span class="n">nat</span><span> </span><span class="k">as</span><span> </span><span class="n">my</span><span class="o">.</span><span class="n">N</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Register</span><span> </span><span class="n">Corelib</span><span class="o">.</span><span class="n">Init</span><span class="o">.</span><span class="n">Logic</span><span class="o">.</span><span class="n">eq</span><span> </span><span class="k">as</span><span> </span><span class="n">my</span><span class="o">.</span><span class="n">eq</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.say</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">a</span><span> </span><span class="nv">b</span><span> </span><span class="o">:</span><span> </span><span class="n">lib</span><span class="o">:</span><span class="n">my</span><span class="o">.</span><span class="n">N</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">lib</span><span class="o">:</span><span class="o">&#64;</span><span class="n">my</span><span class="o">.</span><span class="n">eq</span><span> </span><span class="n">lib</span><span class="o">:</span><span class="n">my</span><span class="o">.</span><span class="n">N</span><span> </span><span class="n">a</span><span> </span><span class="n">b</span><span> </span><span class="si">}}</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>fun `a:r` (global (indt «nat»)) c0 \
+ fun `b:r` (global (indt «nat»)) c1 \
+  app [global (indt «eq»), global (indt «nat»), c0, c1]
+</span></dd>
+</dl>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The (optional) <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> in <code class="docutils literal notranslate"><span class="pre">lib:&#64;some.name</span></code> disables implicit arguments.</p>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">{{:gref</span> <span class="pre">..</span> <span class="pre">}}</span></code> quotation lets one build the gref data type, instead of the
+term one. It supports <code class="docutils literal notranslate"><span class="pre">lib:</span></code> as well.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>coq.say</span><span class="w"> </span><span class="si">{{:gref</span><span>  </span><span class="n">nat</span><span>  </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="si">{{:gref</span><span>  </span><span class="n">lib</span><span class="o">:</span><span class="n">my</span><span class="o">.</span><span class="n">N</span><span>  </span><span class="si">}}</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>indt «nat»
+indt «nat»
+</span></dd>
+</dl>
+</div>
+<p>The last thing to keep in mind when using quotations is that implicit
+arguments are inserted (according to the <code class="docutils literal notranslate"><span class="pre">Arguments</span></code> setting in Rocq)
+but not synthesized automatically.</p>
+<p>It is the job of the type checker or elaborator to synthesize them.
+We shall see more on this in the section on <a class="reference internal" href="#holes-implicit-arguments">Holes (implicit arguments)</a>.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span>`ax`</span><span class="w"> </span><span class="si">{{</span><span class="n">nat</span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">a\</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">b</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">a</span><span> </span><span class="o">=</span><span> </span><span class="n">b</span><span> </span><span class="si">}}</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">before:</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">after:</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>before: 
+fun `ax:r` (global (indt «nat»)) c0 \
+ fun `b:r` (global (indt «nat»)) c1 \
+  app [global (indt «eq»), X0 c1, c0, c1]
+after: 
+fun `ax:r` (global (indt «nat»)) c0 \
+ fun `b:r` (global (indt «nat»)) c1 \
+  app [global (indt «eq»), global (indt «nat»), c0, c1]
+Query assignments:
+  T = fun `ax:r` (global (indt «nat»)) c0 \
+ fun `b:r` (global (indt «nat»)) c1 \
+  app [global (indt «eq»), global (indt «nat»), c0, c1]
+  X1_ = c0 \
+global (indt «nat»)
+Universe constraints:
+UNIVERSES:
+ {Top.33 Top.32} |= Top.33 &lt; Top.32
+                    Set &lt;= Top.33
+ALGEBRAIC UNIVERSES:
+ {}
+FLEXIBLE UNIVERSES:
+ Top.33
+SORTS:
+ α6 := Type
+ α7 |= α6 &lt;-&gt; Type
+       Prop -&gt; SProp
+       Type -&gt; α7
+            -&gt; Prop
+            -&gt; SProp
+       
+WEAK CONSTRAINTS:
+ 
+
+</span></dd>
+</dl>
+</div>
+</section>
+<section id="the-context">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">The context</a><a class="headerlink" href="#the-context" title="Link to this heading"></a></h2>
+<p>The context of Elpi (the hypothetical program made of rules loaded
+via <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">=&gt;</span></span></code>) is taken into account by the Rocq APIs. In particular every time
+a bound variable is crossed, the programmer <em>must</em> load in the context a
+rule attaching to that variable a type. There are a few facilities to
+do that, but let's first see what happens if one forgets it.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Fail</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x</span><span>\</span><span class="w">
+    </span><span>coq.typecheck</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Bo</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+Bound variable c0 not found in the Coq context:
+Mapping from DBL:
+  
+
+Named:
+  
+Rel:
+  
+Did you forget to load some hypotheses with =&gt; ?
+</span></dd>
+</dl>
+</div>
+<p>This fatal error says that <code class="code elpi docutils literal notranslate"><span class="pre">x</span></code> in <code class="code elpi docutils literal notranslate"><span class="punctuation"><span class="pre">(</span></span><span class="name elpivariable"><span class="pre">Bo</span></span><span class="whitespace"> </span><span class="pre">x</span><span class="punctuation"><span class="pre">)</span></span></code> is unknown to Rocq.
+It is
+a variable postulated in Elpi, but it's type, <code class="docutils literal notranslate"><span class="pre">nat</span></code>, was lost. There
+is nothing wrong per se in using <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">pi</span></span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">x</span></span><span class="pre">\</span><span class="whitespace"> </span></code> as we did if we don't call Rocq
+APIs under it. But if we do, we have to record the type of <code class="code elpi docutils literal notranslate"><span class="pre">x</span></code> somewhere.</p>
+<p>In some sense Elpi's way of traversing a binder is similar to a Zipper.
+The context of Elpi must record the part of the Zipper context that is
+relevant for binders.</p>
+<p>The two predicates <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L301"><code class="docutils literal notranslate"><span class="pre">decl</span></code></a> and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L302"><code class="docutils literal notranslate"><span class="pre">def</span></code></a> are used
+for that purpose:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class="n n-ElpiFunction">decl</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">name</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span>.<span class="w">       </span><span class="c">% Var Name Ty</span>
+<span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class="n n-ElpiFunction">def</span><span class="w">  </span><span class="kt">term</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">name</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span>.<span class="w"> </span><span class="c">% Var Name Ty Bo</span>
+</pre></div>
+</div>
+<p>where <code class="code elpi docutils literal notranslate"><span class="pre">def</span></code> is used to cross a <code class="code elpi docutils literal notranslate"><span class="pre">let</span></code>.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x</span><span>\</span><span class="w">
+    </span><span>decl</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w">
+      </span><span>coq.typecheck</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Bo</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Query assignments:
+  Bo = c0 \
+app
+ [global (const «Nat.add»), c0, 
+  app [global (indc «S»), global (indc «O»)]]
+  N = `x:r`
+  T = fun `x:r` (global (indt «nat»)) c0 \
+ app
+  [global (const «Nat.add»), c0, 
+   app [global (indc «S»), global (indc «O»)]]
+  Ty = global (indt «nat»)
+</span></dd>
+</dl>
+</div>
+<p>In order to ease this task, Rocq-Elpi provides a few commodity macros such as
+<code class="docutils literal notranslate"><span class="pre">&#64;pi-decl</span></code>:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>macro<span class="w"> </span><span class="k k-ElpiKeyword">@</span>pi-decl<span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x</span>\<span class="w"> </span>decl<span class="w"> </span>x<span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">==&gt;</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span>x<span class="o">.</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>the precedence of lambda abstraction <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">x\</span></span><span class="whitespace"> </span></code> lets you write the
+following code without parentheses for <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">F</span></span></code>.</p>
+</div>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w">  </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="k k-ElpiKeyword">&#64;</span><span>pi-decl</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">x\</span><span class="w">
+      </span><span>coq.typecheck</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Bo</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Query assignments:
+  Bo = c0 \
+app
+ [global (const «Nat.add»), c0, 
+  app [global (indc «S»), global (indc «O»)]]
+  N = `x:r`
+  T = fun `x:r` (global (indt «nat»)) c0 \
+ app
+  [global (const «Nat.add»), c0, 
+   app [global (indc «S»), global (indc «O»)]]
+  Ty = global (indt «nat»)
+</span></dd>
+</dl>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">&#64;</span></span><span class="pre">pi-decl</span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">N</span></span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">Ty</span></span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">x\</span></span><span class="whitespace"> </span></code> takes arguments in the same order of <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L225"><code class="docutils literal notranslate"><span class="pre">fun</span></code></a> and
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L226"><code class="docutils literal notranslate"><span class="pre">prod</span></code></a>, while
+<code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">&#64;</span></span><span class="pre">pi-def</span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">N</span></span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">Ty</span></span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">Bo</span></span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">x\</span></span><span class="whitespace"> </span></code> takes arguments in the same order of <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L227"><code class="docutils literal notranslate"><span class="pre">let</span></code></a>.</p>
+</div>
+</section>
+<section id="holes-implicit-arguments">
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">Holes (implicit arguments)</a><a class="headerlink" href="#holes-implicit-arguments" title="Link to this heading"></a></h2>
+<p>An &quot;Evar&quot; (Rocq slang for existentially quantified meta variable) is
+represented as a Elpi unification variable and a typing constraint.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+    </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">raw T =</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.sigma.print</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">--------------------------------</span><span class="s2">&quot;</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">nat</span><span> </span><span class="si">}}</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.sigma.print</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>raw T = X0
+
+SHELF:
+FUTURE GOALS STACK:
+ 
+
+Rocq-Elpi mapping:
+RAW:
+ELAB:
+
+--------------------------------
+ evar X0 (global (indt «nat»)) X0  /* suspended on X0 */
+EVARS:
+ ?X11==[ |- nat] (internal placeholder) {?e0}
+ ?X10==[ |- =&gt; nat] (internal placeholder)
+
+SHELF:
+FUTURE GOALS STACK:
+ ?X11
+
+Rocq-Elpi mapping:
+RAW:
+?X11 &lt;-&gt; X0 ELAB:
+?X11 &lt;-&gt; X0 
+Query assignments:
+  T = X0
+  X2_ = X0
+Syntactic constraints:
+ evar X0 (global (indt «nat»)) X0  /* suspended on X0 */
+Universe constraints:
+UNIVERSES:
+ {Top.34} |= Set &lt;= Top.34
+ALGEBRAIC UNIVERSES:
+ {}
+FLEXIBLE UNIVERSES:
+ 
+SORTS:
+ α8 := Type |= α8 &lt;-&gt; Type
+               Prop -&gt; SProp
+               Type -&gt; Prop
+                    -&gt; SProp
+               
+WEAK CONSTRAINTS:
+ 
+
+</span></dd>
+</dl>
+</div>
+<p>Before the call to <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1547"><code class="docutils literal notranslate"><span class="pre">coq.typecheck</span></code></a>, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1543"><code class="docutils literal notranslate"><span class="pre">coq.sigma.print</span></code></a>
+prints nothing interesting, while after the call (see the output above) it
+also prints a syntactic constraint stating that a hole is linked to a Rocq
+evar and is expected to have type <code class="docutils literal notranslate"><span class="pre">nat</span></code>.</p>
+<p>Now the bijective mapping from Rocq evars to Elpi's unification variables is
+not empty anymore, as the <code class="docutils literal notranslate"><span class="pre">Rocq-Elpi</span> <span class="pre">mapping:</span></code> line above shows.</p>
+<p>Note that Rocq's evar identifiers are of the form <code class="docutils literal notranslate"><span class="pre">?X&lt;n&gt;</span></code>, while the Elpi ones
+have no leading <code class="docutils literal notranslate"><span class="pre">?</span></code>. The <code class="docutils literal notranslate"><span class="pre">EVARS:</span></code> line of the output above shows that Rocq's
+Evar map assigns that evar the type <code class="docutils literal notranslate"><span class="pre">nat</span></code>.</p>
+<p>The intuition is that Rocq's Evar map (AKA sigma or evd), which assigns
+typing judgement to evars, is represented with Elpi constraints which carry
+the same piece of info.</p>
+<p>Naked Elpi unification variables, when passed to Rocq's API, are
+automatically linked to a Rocq evar. We postpone the explanation of the
+difference &quot;raw&quot; and &quot;elab&quot; unification variables to the chapter about
+tactics, here the second copy of the hole variable in the evar constraint
+plays no role.</p>
+<p>Now, what about the typing context?</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">raw T =</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="k k-ElpiKeyword">&#64;</span><span>pi-decl</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">x\</span><span class="w">
+      </span><span>coq.typecheck</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Bo</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">nat</span><span> </span><span class="si">}}</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+      </span><span>coq.sigma.print</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>raw T = 
+fun `x:r` (global (indt «nat»)) c0 \
+ app [global (const «Nat.add»), c0, X0 c0]
+ {c0 c1} : decl c1 `x:r` (global (indt «nat»))
+   ?- evar (X0 c1) (global (indt «nat»)) (X0 c1)  /* suspended on X0 */
+EVARS:
+ ?X13==[x |- nat] (internal placeholder) {?e0}
+ ?X12==[x |- =&gt; nat] (internal placeholder)
+
+SHELF:
+FUTURE GOALS STACK:
+ ?X13
+
+Rocq-Elpi mapping:
+RAW:
+?X13 &lt;-&gt; X0 ELAB:
+?X13 &lt;-&gt; X0 
+Query assignments:
+  Bo = c0 \
+app [global (const «Nat.add»), c0, X0 c0]
+  N = `x:r`
+  T = fun `x:r` (global (indt «nat»)) c0 \
+ app [global (const «Nat.add»), c0, X0 c0]
+  Ty = global (indt «nat»)
+  X3_ = X0
+Syntactic constraints:
+ {c0 c1} : decl c1 `x:r` (global (indt «nat»))
+   ?- evar (X0 c1) (global (indt «nat»)) (X0 c1)  /* suspended on X0 */
+Universe constraints:
+UNIVERSES:
+ {Top.35} |= Set &lt;= Top.35
+ALGEBRAIC UNIVERSES:
+ {}
+FLEXIBLE UNIVERSES:
+ 
+SORTS:
+ α9 := Type |= α9 &lt;-&gt; Type
+               Prop -&gt; SProp
+               Type -&gt; Prop
+                    -&gt; SProp
+               
+WEAK CONSTRAINTS:
+ 
+
+</span></dd>
+</dl>
+</div>
+<p>In the value of raw <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">T</span></span></code> we can see that the hole in <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">_</span></code>, which occurs under the
+binder <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">c0\</span></span><span class="whitespace"> </span></code>, is represented by an Elpi unification variable <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span><span class="whitespace"> </span><span class="pre">c0</span></code>, that
+means that <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span></code> sees <code class="code elpi docutils literal notranslate"><span class="pre">c0</span></code> (<code class="code elpi docutils literal notranslate"><span class="pre">c0</span></code> is in the scope of <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span></code>).</p>
+<p>The constraint is this time a bit more complex: as shown above, <code class="docutils literal notranslate"><span class="pre">{...}</span></code> is
+the set of names (not necessarily minimized) used in the constraint, while
+<code class="docutils literal notranslate"><span class="pre">?-</span></code> separates the assumptions (the context) from the conclusion (the
+suspended goal).</p>
+<p>As shown by the mapping and evar-map lines of the output above, both Elpi's
+constraint and Rocq's evar map record a context with a variable <code class="code elpi docutils literal notranslate"><span class="pre">x</span></code> (of
+type <code class="docutils literal notranslate"><span class="pre">nat</span></code>) which is in the scope of the hole.</p>
+<p>Unless one is writing a tactic, Elpi's constraints are just used to
+represent the evar map. When a term is assigned to a variable
+the corresponding constraint is dropped. When one is writing a tactic,
+things are wired up so that assigning a term to an Elpi variable
+representing an evar resumes a type checking goal to ensure the term has
+the expected type.
+We will explain this in detail in the tutorial about tactics.</p>
+<section id="outside-the-pattern-fragment">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Outside the pattern fragment</a><a class="headerlink" href="#outside-the-pattern-fragment" title="Link to this heading"></a></h3>
+<p>This encoding of evars is such that the programmer does not need to care
+much about them: no need to carry around an assignment/typing map like the
+Evar map, no need to declare new variables there, etc. The programmer
+can freely call Rocq API passing an Elpi term containing holes.</p>
+<p>There is one limitation, though. The rest of this tutorial describes it
+and introduces a few APIs and options to deal with it.</p>
+<p>The limitation is that the automatic declaration and mapping
+does not work in all situations. In particular it only works for Elpi
+unification variables which are in the pattern fragment, which mean
+that they are applied only to distinct names (bound variables).</p>
+<p>This is the case for all the <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">_</span> <span class="pre">}}</span></code> one writes inside quotations, for
+example, but it is not hard to craft a term outside this fragment.
+In particular we can use Elpi's substitution (function application) to
+put an arbitrary term in place of a bound variable.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Fail</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% remark the hole sees x
+</span><span class="w">  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% 1 is the offending term we put in place of x
+</span><span class="w">  </span><span class="n n-ElpiVariable">Bo1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="mi">1</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% Bo1 is outside the pattern fragment
+</span><span class="w">  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Bo1 (not in pattern fragment) =</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Bo1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% boom
+</span><span class="w">  </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">Bo1</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">nat</span><span> </span><span class="si">}}</span><span class="w"> </span><span>ok</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Bo1 (not in pattern fragment) = 
+app
+ [global (const «Nat.add»), 
+  app [global (indc «S»), global (indc «O»)], 
+  X0 (app [global (indc «S»), global (indc «O»)])]
+The command has indeed failed with message:
+Flexible term outside pattern fragment:
+X0 (app [global (indc «S»), global (indc «O»)])
+</span></dd>
+</dl>
+</div>
+<p>This snippet fails hard, as shown above: the term <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Bo1</span></span></code> contains a term
+outside the pattern fragment, the second argument of <code class="docutils literal notranslate"><span class="pre">plus</span></code>, which is
+obtained by replacing <code class="code elpi docutils literal notranslate"><span class="pre">c0</span></code> with <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">1</span> <span class="pre">}}</span></code> in <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span><span class="whitespace"> </span><span class="pre">c0</span></code>.</p>
+<p>While programming Rocq extensions in Elpi, it may happen that we want to
+use a Rocq term as a syntax tree (with holes) and we need to apply
+substitutions to it but we don't really care about the scope of holes.
+We would like these holes to stay <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">_</span> <span class="pre">}}</span></code> (a fresh hole which sees the
+entire context of bound variables). In some sense, we would like <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">_</span> <span class="pre">}}</span></code>
+to be a special dummy constant, to be turned into an actual hole on the
+fly when needed.</p>
+<p>This use case is perfectly legitimate and is supported by all APIs taking
+terms in input thanks to the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L369"><code class="docutils literal notranslate"><span class="pre">&#64;holes!</span></code></a> option.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">Bo1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="mi">1</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Bo1 before =</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Bo1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% by loading this rule in the context, we set
+</span><span class="w">  </span><span class="c">% the option for the APIs called under it
+</span><span class="w">  </span><span class="p">(</span><span class="k k-ElpiKeyword">&#64;</span><span>holes!</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w"> </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">Bo1</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">nat</span><span> </span><span class="si">}}</span><span class="w"> </span><span>ok</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Bo1 after =</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Bo1</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Bo1 before = 
+app
+ [global (const «Nat.add»), 
+  app [global (indc «S»), global (indc «O»)], 
+  X0 (app [global (indc «S»), global (indc «O»)])]
+Bo1 after = 
+app
+ [global (const «Nat.add»), 
+  app [global (indc «S»), global (indc «O»)], X1]
+Query assignments:
+  Bo = c0 \
+app [global (const «Nat.add»), c0, X1]
+  Bo1 = app
+ [global (const «Nat.add»), 
+  app [global (indc «S»), global (indc «O»)], X1]
+  N = `x:r`
+  T = fun `x:r` (global (indt «nat»)) c0 \
+ app [global (const «Nat.add»), c0, X1]
+  Ty = global (indt «nat»)
+  X5_ = c0 \
+X1
+Syntactic constraints:
+ evar X1 (global (indt «nat»)) X1  /* suspended on X1 */
+Universe constraints:
+UNIVERSES:
+ {Top.36} |= Set &lt;= Top.36
+ALGEBRAIC UNIVERSES:
+ {}
+FLEXIBLE UNIVERSES:
+ 
+SORTS:
+ α10 := Type |= α10 &lt;-&gt; Type
+                Prop -&gt; SProp
+                Type -&gt; Prop
+                     -&gt; SProp
+                
+WEAK CONSTRAINTS:
+ 
+
+</span></dd>
+</dl>
+</div>
+<p>Note that after the call to <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1547"><code class="docutils literal notranslate"><span class="pre">coq.typecheck</span></code></a>, the hole variable is
+assigned a term where the offending argument has been pruned (discarded), as
+shown by the <code class="docutils literal notranslate"><span class="pre">Bo1</span> <span class="pre">after</span></code> line above.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All APIs taking a term support the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L369"><code class="docutils literal notranslate"><span class="pre">&#64;holes!</span></code></a> option.</p>
+</div>
+<p>In addition to the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L369"><code class="docutils literal notranslate"><span class="pre">&#64;holes!</span></code></a> option, there is a class of APIs which can
+deal with terms outside the pattern fragment. These APIs take in input a term
+<em>skeleton</em>. A skeleton is not modified in place, as <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1547"><code class="docutils literal notranslate"><span class="pre">coq.typecheck</span></code></a>
+does with its first argument, but is rather elaborated to a term related to it.</p>
+<p>In some sense APIs taking a skeleton are more powerful, because they can
+modify the structure of the term, eg. insert a coercions, but are less
+precise, in the sense that the relation between the input and the output
+terms is not straightforward (it's not unification).</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Coercion</span><span> </span><span class="nf">nat2bool</span><span> </span><span class="n">n</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="k">match</span><span> </span><span class="n">n</span><span> </span><span class="k">with</span><span> </span><span class="n">O</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">false</span><span> </span><span class="o">|</span><span> </span><span class="n">_</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">true</span><span> </span><span class="k">end</span><span class="o">.</span><span>
+</span></dt><dd><span>nat2bool is defined
+nat2bool is now a coercion
+</span></dd>
+<dt><span class="kn">Open Scope</span><span> </span><span class="n">bool_scope</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">&amp;</span><span class="o">&amp;</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">Bo1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="n n-ElpiVariable">Bo</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="mi">1</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.elaborate-skeleton</span><span class="w"> </span><span class="n n-ElpiVariable">Bo1</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">bool</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">Bo2</span><span class="w"> </span><span>ok</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dd><span>Query assignments:
+  Bo = c0 \
+app [global (const «andb»), c0, X0 c0]
+  Bo1 = app
+ [global (const «andb»), app [global (indc «S»), global (indc «O»)], 
+  X0 (app [global (indc «S»), global (indc «O»)])]
+  Bo2 = app
+ [global (const «andb»), 
+  app
+   [global (const «nat2bool»), 
+    app [global (indc «S»), global (indc «O»)]], X1]
+  N = `x:r`
+  T = fun `x:r` (global (indt «nat»)) c0 \
+ app [global (const «andb»), c0, X0 c0]
+  Ty = global (indt «nat»)
+  X6_ = X0
+Syntactic constraints:
+ evar X2 (global (indt «bool»)) X1  /* suspended on X2, X1 */
+</span></dd>
+</dl>
+</div>
+<p>Here <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Bo2</span></span></code> is obtained by taking <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Bo1</span></span></code>, considering all
+unification variables as holes and all <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">Type</span> <span class="pre">}}</span></code> levels as fresh
+(the are none in this example), and running Rocq's elaborator on it.</p>
+<p>The result is a term with a similar structure (skeleton), but a coercion
+is inserted to make <code class="code elpi docutils literal notranslate"><span class="pre">x</span></code> fit as a boolean value, and a fresh hole is
+put in place of the term <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span><span class="whitespace"> </span><span class="punctuation"><span class="pre">(</span></span><span class="pre">app</span><span class="whitespace"> </span><span class="keyword elpikeyword"><span class="pre">[</span></span><span class="pre">global</span><span class="whitespace"> </span><span class="punctuation"><span class="pre">(</span></span><span class="pre">indc</span><span class="whitespace"> </span><span class="operator"><span class="pre">«</span></span><span class="name elpivariable"><span class="pre">S</span></span><span class="operator"><span class="pre">»</span></span><span class="punctuation"><span class="pre">)</span></span><span class="keyword elpikeyword"><span class="pre">,</span></span><span class="whitespace"> </span><span class="pre">global</span><span class="whitespace"> </span><span class="punctuation"><span class="pre">(</span></span><span class="pre">indc</span><span class="whitespace"> </span><span class="operator"><span class="pre">«</span></span><span class="name elpivariable"><span class="pre">O</span></span><span class="operator"><span class="pre">»</span></span><span class="punctuation"><span class="pre">)</span></span><span class="keyword elpikeyword"><span class="pre">]</span></span><span class="punctuation"><span class="pre">)</span></span></code>
+which is left untouched.</p>
+<p>Skeletons and their APIs are described in more details in the tutorial
+on commands.</p>
+<p>That is all for this tutorial. You can continue by reading the tutorial
+about <a class="reference internal" href="coq-commands.html"><span class="doc">Writing commands in Elpi</span></a> or the one about <a class="reference internal" href="coq-tactics.html"><span class="doc">Writing tactics in Elpi</span></a>.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="elpi-lang.html" class="btn btn-neutral float-left" title="The Elpi programming language" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="coq-commands.html" class="btn btn-neutral float-right" title="Writing commands in Elpi" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

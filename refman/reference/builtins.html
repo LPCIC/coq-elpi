@@ -1,0 +1,171 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Builtins and relevant files &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="../examples/index.html" />
+    <link rel="prev" title="Invocation of Elpi code" href="invocation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Builtins and relevant files</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/builtins.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="builtins-and-relevant-files">
+<h1>Builtins and relevant files<a class="headerlink" href="#builtins-and-relevant-files" title="Link to this heading"></a></h1>
+<p>Rocq-Elpi's API surface (the predicates and data types Elpi code can use to
+interact with Rocq) is documented in a handful of generated/hand-written
+<code class="docutils literal notranslate"><span class="pre">.elpi</span></code> files. Throughout this manual, inline references like
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L579"><code class="docutils literal notranslate"><span class="pre">coq.say</span></code></a> or <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L216"><code class="docutils literal notranslate"><span class="pre">term</span></code></a> link directly to the declaration of a
+predicate/type inside these files, at the commit the manual was built from.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi">coq-builtin.elpi</a>
+documents the HOAS encoding of Rocq terms and the API to access Rocq.
+Example roles: <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L579"><code class="docutils literal notranslate"><span class="pre">coq.say</span></code></a>, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L216"><code class="docutils literal notranslate"><span class="pre">term</span></code></a>, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L230"><code class="docutils literal notranslate"><span class="pre">app</span></code></a>,
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L185"><code class="docutils literal notranslate"><span class="pre">&#64;global!</span></code></a>.</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin-synterp.elpi">coq-builtin-synterp.elpi</a>
+documents APIs to interact with Rocq at parsing time. Example role:
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin-synterp.elpi#L19"><code class="docutils literal notranslate"><span class="pre">coq.say</span></code></a>.</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/elpi-builtin.elpi">elpi-builtin.elpi</a>
+documents Elpi's standard library, you may look here for list processing
+code. Example roles: <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L753"><code class="docutils literal notranslate"><span class="pre">std.do!</span></code></a> (the <code class="docutils literal notranslate"><span class="pre">std.</span></code> prefix is stripped
+before lookup), <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L9"><code class="docutils literal notranslate"><span class="pre">true</span></code></a> (no prefix stripped), <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L30"><code class="docutils literal notranslate"><span class="pre">int</span></code></a>,
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L51"><code class="docutils literal notranslate"><span class="pre">uvar</span></code></a>, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L475"><code class="docutils literal notranslate"><span class="pre">std</span></code></a>.</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib.elpi">coq-lib.elpi</a>
+provides some utilities to manipulate Rocq terms; it is an addendum to
+coq-builtin. Example roles: <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib.elpi#L24"><code class="docutils literal notranslate"><span class="pre">coq.subst-prod</span></code></a>, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib.elpi#L245"><code class="docutils literal notranslate"><span class="pre">coq.indt-spec</span></code></a>.</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/coq-lib-common.elpi">coq-lib-common.elpi</a>.
+Example roles: <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib-common.elpi#L25"><code class="docutils literal notranslate"><span class="pre">coq.parse-attributes</span></code></a>,
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib-common.elpi#L57"><code class="docutils literal notranslate"><span class="pre">attribute-signature</span></code></a>.</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-reduction.elpi">elpi-reduction.elpi</a>.
+Example role: <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-reduction.elpi#L9"><code class="docutils literal notranslate"><span class="pre">hd-beta</span></code></a>.</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi">elpi-ltac.elpi</a>
+the <code class="docutils literal notranslate"><span class="pre">coq.ltac.*</span></code> bridge to Ltac1. Example role: <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a> (the
+<code class="docutils literal notranslate"><span class="pre">coq.ltac.</span></code> prefix is stripped before lookup, e.g. this links to
+<code class="docutils literal notranslate"><span class="pre">coq.ltac.refine</span></code>).</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi">elpi-command-template.elpi</a>
+provides the pre-loaded code for <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Command</span></code> (execution phase) and
+<code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Tactic</span></code>.</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template-synterp.elpi">elpi-command-template-synterp.elpi</a>
+provides the pre-loaded code for <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Command</span></code> (parsing phase).</p></li>
+<li><p><a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi">elpi-tactic-template.elpi</a>
+provides the pre-loaded code for <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Tactic</span></code> (note tactics also load
+elpi-command-template.elpi above).</p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="invocation.html" class="btn btn-neutral float-left" title="Invocation of Elpi code" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../examples/index.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

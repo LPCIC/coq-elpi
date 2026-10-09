@@ -1,0 +1,582 @@
+More tactic examples and the proof engine
+=============================================
+
+.. seealso::
+   An `Alectryon-rendered version
+   <https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html>`_ of
+   this tutorial (together with :doc:`coq-tactics`), from before its
+   migration to this manual, is also available.
+
+This page continues :doc:`coq-tactics`, with more tactic examples, a deep
+dive into the proof engine, and tactics usable inside terms.
+
+.. contents::
+
+.. rocqtop:: none reset
+
+   Set Warnings "-elpi.linear-variable".
+   From elpi Require Import elpi.
+
+   (* re-declared from coq-tactics.rst, used again further down *)
+   Elpi Tactic blind.
+   Elpi Accumulate lp:{{
+     solve (goal _ Trigger _ _ _) [] :- Trigger = {{0}}.
+     solve (goal _ Trigger _ _ _) [] :- Trigger = {{I}}.
+   }}.
+
+Examples
+-----------
+
+Let's code ``assumption`` in Elpi
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``assumption`` is a very simple tactic: we look up in the proof
+context for an hypothesis which unifies with the goal.
+Recall that ``Ctx`` is made of :builtin:`decl` and :builtin:`def`
+(here, for simplicity, we ignore the latter case).
+
+.. rocqtop:: all
+
+   Elpi Tactic assumption.
+   Elpi Accumulate lp:{{
+     solve (goal Ctx _ Ty _ _ as G) GL :-
+       % H is the name for hyp, Ty is the goal
+       std.mem Ctx (decl H _ Ty),
+       refine H G GL.
+     solve _ _ :-
+       coq.ltac.fail _ "no such hypothesis".
+   }}.
+
+   Lemma test_assumption  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
+   Proof.
+   split.
+   elpi assumption.
+   Fail elpi assumption.
+   Abort.
+
+As we hinted before, Elpi's equality is alpha equivalence. In the second
+goal the assumption has type ``Q`` but the goal has type ``id Q`` which is
+convertible (unifiable, for Rocq's unification) to ``Q``.
+
+Let's improve our tactic by looking for an assumption which is unifiable with
+the goal, and not just alpha convertible. The :builtin:`coq.unify-leq`
+calls Rocq's unification for types (on which cumulativity applies, hence the
+``-leq`` suffix). The :stdlib:`std.mem` utility, thanks to backtracking,
+eventually finds an hypothesis that satisfies the following predicate
+(ie unifies with the goal).
+
+.. rocqtop:: all
+
+   Elpi Tactic assumption2.
+   Elpi Accumulate lp:{{
+     solve (goal Ctx _ Ty _ _ as G) GL :-
+       % std.mem is backtracking (std.mem! would stop at the first hit)
+       std.mem Ctx (decl H _ Ty'), coq.unify-leq Ty' Ty ok,
+       refine H G GL.
+     solve _ _ :-
+       coq.ltac.fail _ "no such hypothesis".
+   }}.
+
+   Lemma test_assumption2  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
+   Proof.
+   split.
+   all: elpi assumption2.
+   Qed.
+
+:libtac:`refine` does unify the type of goal with the type of the term,
+hence we can simplify the code further. We obtain a
+tactic very similar to our initial ``blind`` tactic, which picks
+candidates from the context rather than from the program itself.
+
+.. rocqtop:: all
+
+   Elpi Tactic assumption3.
+   Elpi Accumulate lp:{{
+     solve (goal Ctx _ _ _ _ as G) GL :-
+       std.mem Ctx (decl H _ _),
+       refine H G GL.
+     solve _ _ :-
+       coq.ltac.fail _ "no such hypothesis".
+   }}.
+
+   Lemma test_assumption3  (P Q : Prop) (p : P) (q : Q) : P /\ id Q.
+   Proof.
+   split.
+   all: elpi assumption3.
+   Qed.
+
+Let's code ``set`` in Elpi
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``set`` tactic takes a term, possibly with holes, and
+makes a let-in out of it.
+
+It gives us the occasion to explain the :lib:`copy` utility.
+
+.. rocqtop:: all
+
+   Elpi Tactic find.
+   Elpi Accumulate lp:{{
+
+   solve (goal _ _ T _ [trm X]) _ :-
+     pi x\
+       ((copy X x :- !) ==> copy T (Tabs x)),
+       if (occurs x (Tabs x))
+          (coq.say "found" {coq.term->string X})
+          (coq.ltac.fail _ "not found").
+   }}.
+
+   Lemma test_find (P Q : Prop) : (P /\ P) \/ (P /\ Q).
+   Proof.
+   elpi find (P).
+   Fail elpi find (Q /\ _).
+   elpi find (P /\ _).
+   Abort.
+
+This first approximation only prints the term it found, or better the first
+instance of the given term.
+
+Now lets focus on :lib:`copy`. An excerpt:
+
+.. code-block:: elpi
+
+   copy X X :- name X.     % checks X is a bound variable
+   copy (global _ as C) C.
+   copy (fun N T F) (fun N T1 F1).
+     copy T T1, pi x\ copy (F x) (F1 x).
+   copy (app L) (app L1) :- !, std.map L copy L1.
+
+Copy implements the identity: it builds, recursively, a copy of the first
+term into the second argument. Unless one loads in the context a new rule,
+which takes precedence over the identity ones. Here we load:
+
+.. code-block:: elpi
+
+    copy X x
+
+which, at run time, looks like
+
+.. code-block:: elpi
+
+    copy (app [global (indt «andn»), sort prop, sort prop, c0, X0 c0 c1]) c2
+
+and that rule masks the one for :constructor:`app` when the
+sub-term being copied matches ``(P /\ _)``. The first time this rule
+is used :e:`X0` is assigned, making the rule represent the term ``(P /\ P)``.
+
+Now let's refine the tactic to build a let-in, and complain if the
+desired name is already taken.
+
+.. note::
+   The last call below intentionally reuses the name ``"x"``, which
+   triggers ``coq.warn``'s "is already taken" message; the ``warn`` option
+   keeps that expected warning from being escalated to a hard error, as is
+   the default in this manual.
+
+.. rocqtop:: all warn
+
+   Elpi Tactic set.
+   Elpi Accumulate lp:{{
+
+   solve (goal _ _ T _ [str ID, trm X] as G) GL :-
+     pi x\
+       ((copy X x :- !) ==> copy T (Tabs x)),
+       if (occurs x (Tabs x))
+          (if (coq.ltac.id-free? ID G) true
+              (coq.warn ID "is already taken, Elpi will make a name up"),
+           coq.id->name ID Name,
+           Hole x = {{ _ : lp:{{ Tabs x }} }}, % a hole with a type
+           refine (let Name _ X x\ Hole x) G GL)
+          (coq.ltac.fail _ "not found").
+
+   }}.
+
+   Lemma test_set (P Q : Prop) : (P /\ P) \/ (P /\ Q).
+   Proof.
+   elpi set "x" (P).
+   unfold x.
+   Fail elpi set "x" (Q /\ _).
+   elpi set "x" (P /\ _).
+   Abort.
+
+For more examples of (basic) tactics written in Elpi see the
+`eltac app <https://github.com/LPCIC/coq-elpi/tree/master/apps/eltac>`_.
+
+.. rocqtop:: none
+
+   (* `Set Warnings` replaces the whole configuration rather than merging
+      into it, so the `warn` option's own before/after
+      "default"/"+default" bracketing above wiped out the
+      "-elpi.linear-variable" suppression set at the top of this page;
+      re-apply it here. *)
+   Set Warnings "-elpi.linear-variable".
+
+The proof engine
+--------------------
+
+In this section we dive into the details of the proof engine, that is
+how goals are represented in Elpi and how things are wired up behind the scenes.
+
+Let's inspect the proof state a bit deeper:
+
+.. rocqtop:: all
+   :assert: (?=.*evar \(X1 c0\).*suspended on X1, X0)(?=.*EVARS:.*\?X\d+==\[x \|- x \+ 1 = 0\])(?=.*Rocq-Elpi mapping:.*RAW:.*\?X\d+ <-> .*X1.*ELAB:.*\?X\d+ <-> .*X0)
+
+   Elpi Tactic show_more.
+   Elpi Accumulate lp:{{
+
+     solve (goal Ctx _Trigger Type Proof _) _ :-
+       coq.say "Goal:" Ctx "|-" Proof ":" Type,
+       coq.say "Proof state:",
+       coq.sigma.print.
+
+   }}.
+
+   Lemma test_show_more x : x + 1 = 0.
+   elpi show_more.
+   Abort.
+
+In addition to the goal we print the Elpi and Rocq proof state,
+plus the link between them.
+The proof state is the collection of goals together with their types.
+
+On the Elpi side this state is represented by constraints for the :e:`evar`
+predicate, as shown in the ``evar`` line of the output above: one can
+recognize the set of bound variables ``{c0}``, the hypothetical
+context of rules about these variable (that also corresponds to the proof
+context), and finally the suspended goal :e:`evar (X1 c0) .. (X0 c0)`.
+
+The set of constraints on ``evar`` represents the Rocq data structure called
+sigma (sometimes also called evd or evar_map) that is used to
+represent the proof state in Rocq. It is printed just afterwards, and the
+``Rocq-Elpi mapping:`` line further down links the two together.
+
+Here the Rocq evar shown in the ``EVARS:`` line is linked with Elpi's :e:`X0`
+and :e:`X1` from the ``Rocq-Elpi mapping:`` line above.
+:e:`X1` represents the goal (the trigger) while :e:`X0` represent the proof.
+The meaning of the :e:`evar` Elpi predicate linking the two is that the term
+assigned to the trigger :e:`X1` has to be elaborated to the final proof term
+:e:`X0`, that should be a well typed term of type ``x + 1 = 0``.
+This means that when an Elpi tactic assigns a value to :e:`X1` some procedure to
+turn that value into :e:`X0` is triggered. That procedure is called
+elaboration and it is currently implemented by calling the
+:builtin:`coq.elaborate-skeleton` API.
+
+Given this set up, it is impossible to use a term of the wrong type as a
+Proof. Let's rewrite the ``split`` tactic without using :libtac:`refine`.
+
+.. rocqtop:: all
+
+   Elpi Tactic split_ll.
+   Elpi Accumulate lp:{{
+     solve (goal Ctx Trigger {{ lp:A /\ lp:B }} Proof []) GL :- !,
+       Trigger = {{ conj _ _ }}, % triggers elaboration, filling Proof
+       Proof = {{ conj lp:Pa lp:Pb }},
+       GL = [seal G1, seal G2],
+       G1 = goal Ctx _ A Pa [],
+       G2 = goal Ctx _ B Pb [].
+     solve _ _ :-
+       coq.ltac.fail _ "not a conjunction".
+   }}.
+
+   Lemma test_split_ll : exists t : Prop, True /\ True /\ t.
+   Proof.
+   eexists.
+   repeat elpi split_ll.
+   all: elpi blind.
+   Qed.
+
+Crafting by hand the list of subgoal is not easy.
+In particular here we did not set up the new trigger for :e:`Pa` and :e:`Pb`,
+nor seal the goals appropriately (we did not bind proof variables).
+
+The :builtin:`coq.ltac.collect-goals` API helps us doing this.
+
+.. rocqtop:: all
+
+   Elpi Tactic split_ll_bis.
+   Elpi Accumulate lp:{{
+     solve (goal Ctx Trigger {{ lp:A /\ lp:B }} Proof []) GL :- !,
+       % this triggers the elaboration
+       Trigger = {{ conj _ _ }},
+       % we only take main goals
+       coq.ltac.collect-goals Proof GL _ShelvedGL.
+     solve _ _ :-
+       coq.ltac.fail _ "not a conjunction".
+   }}.
+
+   Lemma test_split_ll_bis : exists t : Prop, True /\ True /\ t.
+   Proof.
+   eexists.
+   repeat elpi split_ll_bis.
+   all: elpi blind.
+   Qed.
+
+At the light of that, :libtac:`refine` is simply:
+
+.. code-block:: elpi
+
+     refine T (goal _ RawEv _ Ev _) GS :-
+       RawEv = T, coq.ltac.collect-goals Ev GS _.
+
+Now that we know the low level plumbing, we can use :libtac:`refine` ;-)
+
+The only detail we still have to explain is what exactly a
+:type:`sealed-goal` is. A sealed goal wraps into a single object all
+the proof variables and the assumptions about them, making this object easy
+(or better, sound) to pass around.
+
+multi-goal tactics
+~~~~~~~~~~~~~~~~~~~~~
+
+Since Rocq 8.4 tactics can see more than one goal (multi-goal tactics).
+You can access this feature by using ``all:`` goal selector:
+
+* if the tactic is a regular one, it will be used on each goal independently
+* if the tactic is a multi-goal one, it will receive all goals
+
+In Elpi you can implement a multi-goal tactic by providing a rule for
+the :builtin:`msolve` predicate. Since such a tactic will need to manipulate
+multiple goals, potentially living in different proof context, it receives
+a list of :type:`sealed-goal`, a data type which seals a goal and
+its proof context.
+
+.. rocqtop:: all
+   :assert: (?=.*#goals = \d+)(?=.*nabla)
+
+   Elpi Tactic ngoals.
+   Elpi Accumulate lp:{{
+
+     msolve GL _ :-
+       coq.say "#goals =" {std.length GL},
+       coq.say GL.
+
+   }}.
+
+   Lemma test_undup (P Q : Prop) : P /\ Q.
+   Proof.
+   split.
+   all: elpi ngoals.
+   Abort.
+
+This simple tactic prints the number of goals it receives, as well as
+the list itself, as shown in the output above: :constructor:`nabla` binds
+all proof variables, then :constructor:`seal` holds a regular goal, which
+in turn carries the proof context.
+
+In order to operate inside a goal one can use the :libtac:`coq.ltac.open` utility,
+which postulates all proof variables using :e:`pi x\ ` and loads the proof
+context using :e:`=>`.
+
+Operating on multiple goals at the same time is doable, but not easy.
+In particular the two proof context have to be related in some way.
+
+The following simple multi goal tactic shrinks the list of goals by
+removing duplicates. As one can see, there is much room for improvement
+in the :e:`same-ctx` predicate.
+
+.. rocqtop:: all
+   :assert: (?=.*conj \?Goal \(conj \?Goal0 \?Goal1\))(?=.*conj \?Goal \(conj \?Goal0 \?Goal\))
+
+   Elpi Tactic undup.
+   Elpi Accumulate lp:{{
+
+     pred same-goal sealed-goal, sealed-goal.
+     same-goal (nabla G1) (nabla G2) :-
+       % TODO: proof variables could be permuted
+       pi x\ same-goal (G1 x) (G2 x).
+     same-goal (seal (goal Ctx1 _ Ty1 P1 _) as G1)
+               (seal (goal Ctx2 _ Ty2 P2 _) as G2) :-
+       same-ctx Ctx1 Ctx2,
+       % this is an elpi builtin, aka same_term, which does not
+       % unify but rather compare two terms without assigning variables
+       Ty1 == Ty2,
+       P1 = P2.
+
+     pred same-ctx goal-ctx, goal-ctx.
+     same-ctx [] [].
+     same-ctx [decl V _ T1|C1] [decl V _ T2|C2] :-
+       % TODO: we could compare up to permutation...
+       % TODO: we could try to relate def and decl
+       T1 == T2,
+       same-ctx C1 C2.
+
+     pred undup sealed-goal, list sealed-goal -> list sealed-goal.
+     undup _ [] [].
+     undup G [G1|GN] GN :- same-goal G G1.
+     undup G [G1|GN] [G1|GL] :- undup G GN GL.
+
+     msolve [G1|GS] [G1|GL] :-
+       % TODO: we could find all duplicates, not just
+       % copies of the first goal...
+       undup G1 GS GL.
+
+   }}.
+
+   Lemma test_undup (P Q : Prop) (p : P) (q : Q) : P /\ Q /\ P.
+   Proof.
+   repeat split.
+   Show Proof.
+   all: elpi undup.
+   Show  Proof.
+   - apply p.
+   - apply q.
+   Qed.
+
+The two calls to show proof display (see the output above), respectively
+before and after ``all: elpi undup``: the proof term is the same but for
+the fact that after the tactic the first and last missing subterm
+(incomplete proof tree branch) are represented by the same hole. Indeed by
+solving one, we can also solve the other.
+
+LCF tacticals
+~~~~~~~~~~~~~~~
+
+On the notion of sealed-goal it is easy to define the usual LCF combinators,
+also known as Ltac tacticals. Tacticals usually take in input one or more
+tactic, here the precise type definition:
+
+.. code-block:: elpi
+
+   typeabbrev tactic (pred sealed-goal -> list sealed-goal).
+
+A few tacticals can be found in the
+`elpi-ltac.elpi file <https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi>`_.
+For example this is the code of :libtac:`try`:
+
+.. code-block:: elpi
+
+   pred try tactic, sealed-goal -> list sealed-goal.
+   try T G GS :- T G GS.
+   try _ G [G].
+
+Setting arguments for a tactic
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As we hinted before, tactic arguments are attached to the goal since
+they can mention proof variables. So the Ltac code:
+
+.. code-block:: coq
+
+    intro H; apply H.
+
+has to be seen as 3 steps, starting from a goal ``G``:
+
+* introduction of ``H``, obtaining ``G1``
+* setting the argument ``H``, obtaining ``G2``
+* calling apply, obtaining ``G3``
+
+.. rocqtop:: all
+
+   Elpi Tactic argpass.
+   Elpi Accumulate lp:{{
+
+   % this directive lets you use short names
+   shorten coq.ltac.{ open, thenl, all }.
+
+   symb intro : open-tactic. % goal -> list sealed-goal
+   intro G GL :- refine {{ fun H => _ }} G GL.
+
+   symb set-arg-n-hyp : int -> open-tactic.
+   set-arg-n-hyp N (goal Ctx _ _ _ _ as G) [SG1] :-
+     std.nth N Ctx (decl X _ _),
+     coq.ltac.set-goal-arguments [trm X] G (seal G) SG1.
+
+   symb apply : open-tactic.
+   apply (goal _ _ _ _ [trm T] as G) GL :- refine T G GL.
+
+   msolve SG GL :-
+     all (thenl [ open intro,
+                  open (set-arg-n-hyp 0),
+                  open apply ]) SG GL.
+
+   }}.
+
+   Lemma test_argpass (P : Prop) : P -> P.
+   Proof.
+   elpi argpass.
+   Qed.
+
+Of course the tactic playing the role of ``intro`` could communicate back
+a datum to be passed to what follows
+
+.. code-block:: elpi
+
+     thenl [ open (tac1 Datum), open (tac2 Datum) ]
+
+but the binder structure of :type:`sealed-goal` would prevent :e:`Datum`
+to mention proof variables, that would otherwise escape the sealing.
+
+The utility :libtac:`set-goal-arguments`:
+
+.. code-block:: elpi
+
+     coq.ltac.set-goal-arguments Args G G1 G1wArgs
+
+tries to move :e:`Args` from the context of :e:`G` to the one of :e:`G1`.
+Relating the two proof contexts is not obvious: you may need to write your
+own procedure if the two contexts are very distant.
+
+Tactics in terms
+--------------------
+
+Elpi tactics can be used inside terms via the usual ``ltac:(...)``
+quotation, but can also be exported to the term grammar.
+
+Here we write a simple tactic for default values, which
+optionally takes a bound to the search depth.
+
+.. rocqtop:: all
+
+   Elpi Tactic default.
+   Elpi Accumulate lp:{{
+
+     pred default term, int -> term.
+
+     default _ 0 _ :- coq.ltac.fail _ "max search depth reached".
+     default {{ nat }} _ {{ 46 }}.
+     default {{ bool }} _ {{ false }}.
+     default {{ list lp:A }} Max {{ cons lp:D nil }} :-
+       Max' is Max - 1, default A Max' D.
+
+     solve (goal _ _ T _ [] as G) GL :-
+       default T 9999 P,
+       refine P G GL.
+
+   }}.
+
+   Elpi Export default.
+
+   Definition foo : nat := default.
+   Print foo.
+
+   Definition bar : list bool := default.
+   Print bar.
+
+The grammar entries for Elpi tactics in terms take an arbitrary
+number of arguments with the limitation that they are all terms:
+you can't pass a string or an integer as one would normally do.
+
+Here we use Rocq's primitive integers to pass the search depth
+(in a compact way).
+
+.. rocqtop:: all
+
+   Elpi Accumulate default lp:{{
+     solve (goal _ _ T _ [trm (primitive (uint63 Max))] as G) GL :-
+       coq.uint63->int Max MaxI,
+       default T MaxI P,
+       refine P G GL.
+   }}.
+
+   From Corelib Require Import PrimInt63.
+   Open Scope uint63_scope.
+
+   Fail Definition baz : list nat := default 1.
+
+   Definition baz : list nat := default 2.
+   Print baz.
+
+That is all folks! If you want to go one level deeper and add a new
+builtin data type or predicate implemented directly in OCaml, see
+:doc:`plugin`.

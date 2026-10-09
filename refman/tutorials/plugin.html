@@ -1,0 +1,478 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adding builtin predicates via an OCaml plugin &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Vernacular commands" href="../reference/vernacular.html" />
+    <link rel="prev" title="More tactic examples and the proof engine" href="coq-tactics-advanced.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding builtin predicates via an OCaml plugin</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#project-layout">Project layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-ocaml-side-a-new-data-type-and-a-new-predicate">The OCaml side: a new data type and a new predicate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#loading-the-plugin-from-rocq">Loading the plugin from Rocq</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-companion-elpi-library">A companion Elpi library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generating-reference-documentation-for-the-new-builtins">Generating reference documentation for the new builtins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-the-plugin">Using the plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-and-testing">Building and testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Adding builtin predicates via an OCaml plugin</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/plugin.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="adding-builtin-predicates-via-an-ocaml-plugin">
+<h1><a class="toc-backref" href="#id1" role="doc-backlink">Adding builtin predicates via an OCaml plugin</a><a class="headerlink" href="#adding-builtin-predicates-via-an-ocaml-plugin" title="Link to this heading"></a></h1>
+<p>Everything in the previous tutorials extends Rocq from <em>within</em> Elpi: new
+commands, tactics and Db-backed state are all written in Elpi itself,
+loaded by the <code class="docutils literal notranslate"><span class="pre">rocq-elpi</span></code> plugin that ships with Rocq-Elpi. Sometimes,
+though, you want to give Elpi a new <em>builtin</em> data type or predicate that
+is implemented in OCaml directly -- typically to wrap an existing OCaml
+library, to get at data structures or algorithms that would be awkward to
+write in Elpi, or for performance.</p>
+<p>This chapter walks through a complete, minimal scaffold for exactly that: a
+standalone opam package, built on top of <code class="docutils literal notranslate"><span class="pre">rocq-elpi</span></code>, that adds a new
+Elpi data type <code class="docutils literal notranslate"><span class="pre">myType</span></code> and a new predicate <code class="docutils literal notranslate"><span class="pre">compute</span></code> implemented in
+OCaml. The full, up to date source lives in the repository under
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/tree/master/examples/example_plugin">examples/example_plugin</a>;
+this chapter reproduces and explains it.</p>
+<nav class="contents" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#adding-builtin-predicates-via-an-ocaml-plugin" id="id1">Adding builtin predicates via an OCaml plugin</a></p>
+<ul>
+<li><p><a class="reference internal" href="#project-layout" id="id2">Project layout</a></p></li>
+<li><p><a class="reference internal" href="#the-ocaml-side-a-new-data-type-and-a-new-predicate" id="id3">The OCaml side: a new data type and a new predicate</a></p></li>
+<li><p><a class="reference internal" href="#loading-the-plugin-from-rocq" id="id4">Loading the plugin from Rocq</a></p></li>
+<li><p><a class="reference internal" href="#a-companion-elpi-library" id="id5">A companion Elpi library</a></p></li>
+<li><p><a class="reference internal" href="#generating-reference-documentation-for-the-new-builtins" id="id6">Generating reference documentation for the new builtins</a></p></li>
+<li><p><a class="reference internal" href="#using-the-plugin" id="id7">Using the plugin</a></p></li>
+<li><p><a class="reference internal" href="#building-and-testing" id="id8">Building and testing</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="project-layout">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Project layout</a><a class="headerlink" href="#project-layout" title="Link to this heading"></a></h2>
+<p>A plugin is its own dune package, separate from the project(s) that will
+use it:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>example_plugin/
+  dune-project
+  myExtension.opam            (generated by dune from dune-project)
+  myExtension-tests.opam      (generated by dune from dune-project)
+  src/
+    dune
+    my_extension_plugin.mlpack
+    my_extension_ocaml_code.ml   -- the OCaml side of the new builtins
+  theories/
+    dune
+    Loader.v                     -- loads the plugin into Rocq
+  elpi/
+    dune
+    my-extension-elpi-code.elpi  -- companion Elpi library code
+  doc/
+    dune
+    gen_doc.ml                   -- generates myExtension.elpi (reference doc)
+  tests/
+    dune
+    test.v                       -- exercises the new builtins from Rocq
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">dune-project</span></code> declares the package(s) and their dependency on
+<code class="docutils literal notranslate"><span class="pre">rocq-elpi</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>(lang dune 3.13)
+(using coq 0.8)
+(name Ext)
+
+(generate_opam_files true)
+
+(source (github username/reponame))
+(authors &quot;Author Name &lt;author@example.com&gt;&quot;)
+(maintainers &quot;Maintainer Name &lt;maintainer@example.com&gt;&quot;)
+(license LICENSE)
+(documentation https://url/to/documentation)
+
+(package
+ (name myExtension)
+ (synopsis &quot;myExtension adds extra Elpi datatypes and APIs&quot;)
+ (description &quot;This package provides some extra goodies&quot;)
+ (depends rocq-elpi))
+
+(package
+ (name myExtension-tests)
+ (synopsis &quot;myExtension tests - do not install&quot;)
+ (description &quot;myExtension tests - do not install&quot;)
+ (depends rocq-elpi))
+</pre></div>
+</div>
+<p>Splitting the tests into their own package keeps them from being pulled in
+(and built) by users who just want to <em>use</em> the plugin, matching the
+convention already used by <code class="docutils literal notranslate"><span class="pre">rocq-elpi</span></code> itself (see <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/rocq-elpi.opam">rocq-elpi.opam</a> and its
+sibling test packages).</p>
+</section>
+<section id="the-ocaml-side-a-new-data-type-and-a-new-predicate">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">The OCaml side: a new data type and a new predicate</a><a class="headerlink" href="#the-ocaml-side-a-new-data-type-and-a-new-predicate" title="Link to this heading"></a></h2>
+<p>The new builtins live in an ordinary OCaml library, <code class="docutils literal notranslate"><span class="pre">src/</span></code>, which
+depends on the <code class="docutils literal notranslate"><span class="pre">elpi</span></code> package (the Elpi library itself, not <code class="docutils literal notranslate"><span class="pre">rocq-elpi</span></code>
+-- new builtins are plain Elpi builtins, they don't need anything
+Rocq-specific unless they manipulate Rocq terms):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>; src/dune
+(library
+ (name myExtension_plugin)
+ (public_name myExtension.plugin)
+ (libraries elpi))
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">src/my_extension_ocaml_code.ml</span></code> is where the actual work happens. First,
+an ordinary OCaml algebraic data type:</p>
+<div class="highlight-ocaml notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="nc">API</span> <span class="o">=</span> <span class="nn">Elpi</span><span class="p">.</span><span class="nc">API</span>
+<span class="k">module</span> <span class="nc">E</span> <span class="o">=</span> <span class="nn">API</span><span class="p">.</span><span class="nc">RawData</span>
+
+<span class="c">(* An algebraic data type with the API we want to expose: myType and compute *)</span>
+<span class="k">type</span> <span class="n">myType</span> <span class="o">=</span> <span class="nc">Constant</span> <span class="o">:</span> <span class="kt">int</span> <span class="o">-&gt;</span> <span class="n">myType</span> <span class="o">|</span> <span class="nc">SumOf</span> <span class="o">:</span> <span class="o">(</span><span class="n">myType</span> <span class="o">*</span> <span class="n">myType</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">myType</span>
+<span class="k">let</span> <span class="k">rec</span> <span class="n">compute</span> <span class="o">(</span><span class="n">s</span> <span class="o">:</span> <span class="n">myType</span><span class="o">)</span> <span class="o">=</span> <span class="k">match</span> <span class="n">s</span> <span class="k">with</span>
+  <span class="o">|</span> <span class="nc">Constant</span> <span class="n">n</span> <span class="o">-&gt;</span> <span class="n">n</span>
+  <span class="o">|</span> <span class="nc">SumOf</span> <span class="o">(</span><span class="n">s1</span><span class="o">,</span> <span class="n">s2</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">compute</span> <span class="n">s1</span> <span class="o">+</span> <span class="n">compute</span> <span class="n">s2</span>
+</pre></div>
+</div>
+<p>Then, the Elpi-facing declarations. First the data type itself, via
+<code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">AlgebraicData</span></span><span class="operator"><span class="pre">.</span></span><span class="pre">declare</span></code>, which builds the <em>embed</em>/<em>readback</em> functions
+translating between the OCaml type and its Elpi representation
+automatically from a description of its constructors:</p>
+<div class="highlight-ocaml notranslate"><div class="highlight"><pre><span></span><span class="c">(* Declaring the elpi symbol corresponding to the constructors of myType</span>
+<span class="c">   is optional, only needed if one uses the RawData APIs *)</span>
+<span class="k">let</span> <span class="n">constant</span> <span class="o">=</span> <span class="nn">E</span><span class="p">.</span><span class="nn">Constants</span><span class="p">.</span><span class="n">declare_global_symbol</span> <span class="s2">&quot;constant&quot;</span>
+<span class="k">let</span> <span class="n">sumof</span> <span class="o">=</span> <span class="nn">E</span><span class="p">.</span><span class="nn">Constants</span><span class="p">.</span><span class="n">declare_global_symbol</span> <span class="s2">&quot;sumof&quot;</span>
+
+<span class="c">(* declaring the embed/readback function linking OCaml and Elpi *)</span>
+<span class="k">let</span> <span class="n">myType</span> <span class="o">:</span> <span class="n">myType</span> <span class="nn">API</span><span class="p">.</span><span class="nn">Conversion</span><span class="p">.</span><span class="n">t</span> <span class="o">=</span> <span class="nn">API</span><span class="p">.</span><span class="o">(</span><span class="nn">AlgebraicData</span><span class="p">.</span><span class="n">declare</span> <span class="o">{</span>
+  <span class="n">ty</span> <span class="o">=</span> <span class="nc">TyName</span> <span class="s2">&quot;myType&quot;</span><span class="o">;</span>
+  <span class="n">doc</span> <span class="o">=</span> <span class="s2">&quot;description for the new elpi type&quot;</span><span class="o">;</span>
+  <span class="n">pp</span> <span class="o">=</span> <span class="o">(</span><span class="k">fun</span> <span class="n">fmt</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="nn">Format</span><span class="p">.</span><span class="n">fprintf</span> <span class="n">fmt</span> <span class="s2">&quot;&lt;todo&gt;&quot;</span><span class="o">);</span>
+  <span class="n">constructors</span> <span class="o">=</span> <span class="o">[</span>
+   <span class="nc">K</span><span class="o">(</span><span class="s2">&quot;constant&quot;</span><span class="o">,</span><span class="s2">&quot;&quot;</span><span class="o">,</span><span class="nc">A</span><span class="o">(</span><span class="nn">BuiltInData</span><span class="p">.</span><span class="n">int</span><span class="o">,</span> <span class="nc">N</span><span class="o">),</span>
+     <span class="nc">B</span> <span class="o">(</span><span class="k">fun</span> <span class="n">x</span> <span class="o">-&gt;</span> <span class="nc">Constant</span> <span class="n">x</span><span class="o">),</span>
+     <span class="nc">M</span> <span class="o">(</span><span class="k">fun</span> <span class="o">~</span><span class="n">ok</span> <span class="o">~</span><span class="n">ko</span>  <span class="n">t</span> <span class="o">-&gt;</span> <span class="k">match</span> <span class="n">t</span> <span class="k">with</span> <span class="nc">Constant</span> <span class="n">n</span> <span class="o">-&gt;</span> <span class="n">ok</span> <span class="n">n</span> <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="n">ko</span> <span class="bp">()</span><span class="o">));</span>
+   <span class="nc">K</span><span class="o">(</span><span class="s2">&quot;sumof&quot;</span><span class="o">,</span><span class="s2">&quot;&quot;</span><span class="o">,</span><span class="nc">S</span><span class="o">(</span><span class="nc">S</span><span class="o">(</span><span class="nc">N</span><span class="o">)),</span>
+     <span class="nc">B</span> <span class="o">(</span><span class="k">fun</span> <span class="n">x</span> <span class="n">y</span> <span class="o">-&gt;</span> <span class="nc">SumOf</span> <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)),</span>
+     <span class="nc">M</span> <span class="o">(</span><span class="k">fun</span> <span class="o">~</span><span class="n">ok</span> <span class="o">~</span><span class="n">ko</span> <span class="n">t</span> <span class="o">-&gt;</span> <span class="k">match</span> <span class="n">t</span> <span class="k">with</span> <span class="nc">SumOf</span> <span class="o">(</span><span class="n">x</span><span class="o">,</span><span class="n">y</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">ok</span> <span class="n">x</span> <span class="n">y</span> <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="n">ko</span> <span class="bp">()</span><span class="o">))</span>
+<span class="o">]</span>
+<span class="o">}</span> <span class="o">|&gt;</span> <span class="nn">ContextualConversion</span><span class="p">.</span><span class="o">(!&lt;))</span>
+</pre></div>
+</div>
+<p>Each constructor is described by a <code class="docutils literal notranslate"><span class="pre">K</span></code> entry: its Elpi-visible name, a
+docstring, the shape of its arguments (<code class="docutils literal notranslate"><span class="pre">A</span></code> for an atomic argument of a
+given type, <code class="docutils literal notranslate"><span class="pre">S</span></code> for a sub-term of the type itself, <code class="docutils literal notranslate"><span class="pre">N</span></code> to terminate the
+argument list), a <code class="docutils literal notranslate"><span class="pre">B</span></code> uild function (OCaml constructor -&gt; the value) and a
+<code class="docutils literal notranslate"><span class="pre">M</span></code> atch function (the value -&gt; OCaml constructor, or failure via <code class="docutils literal notranslate"><span class="pre">ko</span></code>).</p>
+<p>Next, the new predicate itself, via <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">MLCode</span></span></code>/<code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Pred</span></span></code>:</p>
+<div class="highlight-ocaml notranslate"><div class="highlight"><pre><span></span><span class="c">(* declaring a new API *)</span>
+<span class="k">let</span> <span class="n">compute_api</span> <span class="o">=</span>
+  <span class="nn">API</span><span class="p">.</span><span class="nn">BuiltIn</span><span class="p">.</span><span class="nc">MLCode</span><span class="o">(</span><span class="nc">Pred</span><span class="o">(</span><span class="s2">&quot;compute&quot;</span><span class="o">,</span>
+    <span class="nc">In</span><span class="o">(</span><span class="n">myType</span><span class="o">,</span> <span class="s2">&quot;Expression&quot;</span><span class="o">,</span>
+    <span class="nc">Out</span><span class="o">(</span><span class="n">myType</span><span class="o">,</span> <span class="s2">&quot;Result&quot;</span><span class="o">,</span>
+    <span class="nc">Easy</span><span class="o">(</span><span class="s2">&quot;Result is the normal form of Expression&quot;</span><span class="o">))),</span>
+    <span class="c">(* The implementation of the API is the result of compute *)</span>
+      <span class="o">(</span><span class="k">fun</span> <span class="n">a</span> <span class="o">_</span> <span class="o">~</span><span class="n">depth</span><span class="o">:_</span> <span class="o">-&gt;</span> <span class="bp">()</span><span class="o">,</span> <span class="nc">Some</span> <span class="o">(</span><span class="nc">Constant</span> <span class="o">(</span><span class="n">compute</span> <span class="n">a</span><span class="o">)))),</span>
+    <span class="nc">DocAbove</span><span class="o">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">In</span></code>/<code class="docutils literal notranslate"><span class="pre">Out</span></code> describe the predicate's argument modes (matching the
+<code class="docutils literal notranslate"><span class="pre">-&gt;</span></code> notation used throughout this manual's own <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L216"><code class="docutils literal notranslate"><span class="pre">term</span></code></a>/etc. API
+documentation), each paired with the <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Conversion</span></span><span class="operator"><span class="pre">.</span></span><span class="pre">t</span></code> value that knows how
+to translate it and a short docstring; the last argument to <code class="docutils literal notranslate"><span class="pre">In</span></code>/<code class="docutils literal notranslate"><span class="pre">Out</span></code>
+is either another mode-annotated argument or, once the signature is
+complete, the actual OCaml implementation together with its own docstring.</p>
+<p>Finally, both are registered together under the name of the <code class="docutils literal notranslate"><span class="pre">.elpi</span></code> file
+they should appear to come from (this is purely for documentation and
+error-message purposes -- nothing is actually read from disk):</p>
+<div class="highlight-ocaml notranslate"><div class="highlight"><pre><span></span><span class="c">(* we declare the name of the file in which the new builtins are declared</span>
+<span class="c">   and the exported stuff (data types and predicates) *)</span>
+<span class="k">let</span> <span class="n">builtins</span> <span class="o">=</span> <span class="nn">API</span><span class="p">.</span><span class="nn">BuiltIn</span><span class="p">.</span><span class="n">declare</span> <span class="o">~</span><span class="n">file_name</span><span class="o">:</span><span class="s2">&quot;myExtension.elpi&quot;</span> <span class="o">[</span>
+  <span class="nc">MLData</span> <span class="n">myType</span><span class="o">;</span>
+  <span class="n">compute_api</span>
+<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="loading-the-plugin-from-rocq">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Loading the plugin from Rocq</a><a class="headerlink" href="#loading-the-plugin-from-rocq" title="Link to this heading"></a></h2>
+<p>The plugin is an OCaml findlib library, so Rocq needs to be told to load
+it, exactly like any other Rocq plugin -- this is the one place that <em>is</em>
+Rocq-specific:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>; theories/dune
+(coq.theory
+ (name myExtension)
+ (theories elpi_elpi elpi myExtension.lib)
+ (plugins myExtension.plugin)
+ (package myExtension))
+
+(include_subdirs qualified)
+</pre></div>
+</div>
+<div class="highlight-coq notranslate"><div class="highlight"><pre><span></span><span class="c">(* theories/Loader.v *)</span>
+<span class="kn">Declare ML Module</span> <span class="s2">&quot;myExtension.plugin&quot;</span><span class="o">.</span>
+
+<span class="kn">From</span> <span class="nb">elpi</span> <span class="kn">Require Import</span> <span class="nb">elpi</span><span class="o">.</span>
+
+<span class="kn">From</span> <span class="n">myExtension</span><span class="o">.</span><span class="n">lib</span> <span class="n">Extra</span> <span class="n">Dependency</span> <span class="s2">&quot;my-extension-elpi-code.elpi&quot;</span> <span class="k">as</span> <span class="n">myExtensionLib</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>A downstream user of the plugin just needs <code class="docutils literal notranslate"><span class="pre">From</span> <span class="pre">myExtension</span> <span class="pre">Require</span>
+<span class="pre">Import</span> <span class="pre">Loader.</span></code> to get both the OCaml builtins and (see below) the
+companion Elpi library code declared as an accumulable dependency.</p>
+</section>
+<section id="a-companion-elpi-library">
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">A companion Elpi library</a><a class="headerlink" href="#a-companion-elpi-library" title="Link to this heading"></a></h2>
+<p>Not everything needs to be implemented in OCaml: it is often convenient to
+ship a small Elpi library alongside the OCaml builtins, for code that is
+just as easily (or more maintainably) written directly in Elpi. Here, a
+tiny library converting between Elpi integers and Rocq's unary <code class="docutils literal notranslate"><span class="pre">nat</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>; elpi/dune
+(coq.theory
+ (name myExtension.lib)
+ (theories elpi)
+ (plugins myExtension.plugin)
+ (package myExtension))
+
+(include_subdirs qualified)
+
+; this rule is needed for loading elpi files as extra deps
+(rule
+ (target dummy.v)
+ (deps (glob_files *.elpi))
+ (action
+  (with-stdout-to %{target}
+   (progn (run rocq_elpi_shafile %{deps})))))
+</pre></div>
+</div>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class="n n-ElpiFunction">int2nat</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+int2nat<span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="si">{{</span><span class="mi">0</span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span>
+int2nat<span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="si">{{</span><span class="n">S</span> <span class="si">lp:</span><span class="n n-ElpiVariable">R</span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="k k-ElpiKeyword">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">N&#39;</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="k k-ElpiKeyword">-</span><span class="w"> </span><span class="mi">1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>int2nat<span class="w"> </span><span class="n n-ElpiVariable">N&#39;</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="o">.</span>
+
+<span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class="n n-ElpiFunction">nat2int</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">int</span>.
+nat2int<span class="w"> </span><span class="si">{{</span><span class="mi">0</span><span class="si">}}</span><span class="w"> </span><span class="mi">0</span><span class="o">.</span>
+nat2int<span class="w"> </span><span class="si">{{</span><span class="n">S</span> <span class="si">lp:</span><span class="n n-ElpiVariable">R</span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>nat2int<span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="n n-ElpiVariable">N&#39;</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="n n-ElpiVariable">N&#39;</span><span class="w"> </span><span class="k k-ElpiKeyword">+</span><span class="w"> </span><span class="mi">1</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>This is exactly the <code class="docutils literal notranslate"><span class="pre">Extra</span> <span class="pre">Dependency</span></code>/<code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Accumulate</span> <span class="pre">File</span></code> mechanism
+described in <a class="reference internal" href="coq-commands.html"><span class="doc">Writing commands in Elpi</span></a>: the <code class="docutils literal notranslate"><span class="pre">.elpi</span></code> file is declared as an
+accumulable dependency (<code class="docutils literal notranslate"><span class="pre">myExtensionLib</span></code>, in <code class="docutils literal notranslate"><span class="pre">Loader.v</span></code> above) by the
+plugin's own theories, and downstream code accumulates it by name -- see
+<code class="docutils literal notranslate"><span class="pre">tests/test.v</span></code> below.</p>
+</section>
+<section id="generating-reference-documentation-for-the-new-builtins">
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Generating reference documentation for the new builtins</a><a class="headerlink" href="#generating-reference-documentation-for-the-new-builtins" title="Link to this heading"></a></h2>
+<p>The same mechanism this manual itself uses to link <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L579"><code class="docutils literal notranslate"><span class="pre">coq.say</span></code></a> and
+friends to their declaration (see <a class="reference internal" href="../reference/builtins.html"><span class="doc">Builtins and relevant files</span></a>) is available
+to plugins: <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">API</span></span><span class="operator"><span class="pre">.</span></span><span class="name elpivariable"><span class="pre">BuiltIn</span></span><span class="operator"><span class="pre">.</span></span><span class="pre">document_file</span></code> renders every declared builtin's
+docstring into a <code class="docutils literal notranslate"><span class="pre">.elpi</span></code> file with the same <code class="docutils literal notranslate"><span class="pre">pred</span></code>/<code class="docutils literal notranslate"><span class="pre">data</span></code> syntax as
+<code class="docutils literal notranslate"><span class="pre">builtin-doc/coq-builtin.elpi</span></code>.</p>
+<div class="highlight-ocaml notranslate"><div class="highlight"><pre><span></span><span class="c">(* doc/gen_doc.ml *)</span>
+<span class="k">let</span> <span class="o">_</span> <span class="o">=</span> <span class="nn">Elpi</span><span class="p">.</span><span class="nn">API</span><span class="p">.</span><span class="nn">BuiltIn</span><span class="p">.</span><span class="n">document_file</span> <span class="o">~</span><span class="n">header</span><span class="o">:</span><span class="s2">&quot;% Generated&quot;</span>
+  <span class="nn">MyExtension_plugin</span><span class="p">.</span><span class="nn">My_extension_ocaml_code</span><span class="p">.</span><span class="n">builtins</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>; doc/dune
+(executable
+ (name gen_doc)
+ (libraries myExtension.plugin))
+
+(rule
+ ; myExtension.elpi contains the doc of the builtins defined in the myExtension plugin
+ (targets myExtension.elpi)
+ (deps gen_doc.exe)
+ (mode promote)
+ (action (run ./gen_doc.exe)))
+</pre></div>
+</div>
+<p>Running this (<code class="docutils literal notranslate"><span class="pre">dune</span> <span class="pre">build</span> <span class="pre">doc/myExtension.elpi</span></code>, or just <code class="docutils literal notranslate"><span class="pre">dune</span> <span class="pre">build</span></code>,
+since <code class="docutils literal notranslate"><span class="pre">(mode</span> <span class="pre">promote)</span></code> writes the result back into the source tree)
+produces:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="c">% description for the new elpi type</span>
+<span class="k k-ElpiKeyword">builtin data</span><span class="w"> </span><span class="n n-ElpiFunction">myType</span>.
+<span class="k k-ElpiKeyword">builtin symb</span><span class="w"> </span><span class="n n-ElpiFunction">constant</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">myType</span><span class="w"> </span><span class="kt">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>.
+<span class="k k-ElpiKeyword">builtin symb</span><span class="w"> </span><span class="n n-ElpiFunction">sumof</span><span class="w">    </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">myType</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">myType</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">myType</span><span class="w"> </span><span class="kt">=</span><span class="w"> </span><span class="s2">&quot;1&quot;</span>.
+
+<span class="c">% [compute Expression Result] Result is the normal form of Expression</span>
+<span class="k k-ElpiKeyword">builtin func</span><span class="w"> </span><span class="n n-ElpiFunction">compute</span><span class="w"> </span><span class="kt">myType</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">myType</span>.
+</pre></div>
+</div>
+</section>
+<section id="using-the-plugin">
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Using the plugin</a><a class="headerlink" href="#using-the-plugin" title="Link to this heading"></a></h2>
+<p>Downstream code loads the plugin's loader, the companion Elpi library
+(via its <code class="docutils literal notranslate"><span class="pre">Extra</span> <span class="pre">Dependency</span></code> name), and the generated documentation file
+(via <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Accumulate</span> <span class="pre">Plugin</span></code>, which loads a <code class="docutils literal notranslate"><span class="pre">.elpi</span></code> file that was
+declared through <code class="docutils literal notranslate"><span class="pre">BuiltIn.declare</span></code>'s <code class="docutils literal notranslate"><span class="pre">file_name</span></code> rather than through
+<code class="docutils literal notranslate"><span class="pre">Extra</span> <span class="pre">Dependency</span></code>):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>; tests/dune
+(coq.theory
+ (name myExtension.tests)
+ (package myExtension-tests)
+ (theories elpi_elpi elpi myExtension myExtension.lib))
+
+(include_subdirs qualified)
+</pre></div>
+</div>
+<div class="highlight-coq notranslate"><div class="highlight"><pre><span></span><span class="c">(* tests/test.v *)</span>
+<span class="kn">From</span> <span class="nb">elpi</span> <span class="kn">Require Import</span> <span class="nb">elpi</span><span class="o">.</span>
+
+<span class="kn">From</span> <span class="n">myExtension</span> <span class="kn">Require Import</span> <span class="n">Loader</span><span class="o">.</span>
+<span class="kn">From</span> <span class="n">myExtension</span><span class="o">.</span><span class="n">lib</span> <span class="n">Extra</span> <span class="n">Dependency</span> <span class="s2">&quot;my-extension-elpi-code.elpi&quot;</span> <span class="k">as</span> <span class="n">myExtensionLib</span><span class="o">.</span>
+
+<span class="kn">Elpi</span> <span class="kn">Command</span> <span class="n">test</span><span class="o">.</span>
+<span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="n">Plugin</span> <span class="s2">&quot;myExtension.elpi&quot;</span><span class="o">.</span>
+<span class="kn">Elpi</span> <span class="kn">Accumulate</span> <span class="n">File</span> <span class="n">myExtensionLib</span><span class="o">.</span>
+<span class="kn">Elpi</span> <span class="kn">Accumulate</span>  <span class="si">lp:{{</span>
+
+<span class="w">  </span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class="n n-ElpiFunction">encode</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">myType</span>.
+<span class="w">  </span>encode<span class="w"> </span><span class="si">{{lp:</span><span class="n n-ElpiVariable">X</span> <span class="o">+</span> <span class="si">lp:</span><span class="n n-ElpiVariable">Y</span><span class="si">}}</span><span class="w"> </span><span class="p">(</span>sumof<span class="w"> </span><span class="n n-ElpiVariable">X1</span><span class="w"> </span><span class="n n-ElpiVariable">Y1</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>encode<span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">X1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>encode<span class="w"> </span><span class="n n-ElpiVariable">Y</span><span class="w"> </span><span class="n n-ElpiVariable">Y1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span>
+<span class="w">  </span>encode<span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="p">(</span>constant<span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>nat2int<span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span>
+<span class="w">  </span>encode<span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>coq.error<span class="w"> </span><span class="s2">&quot;This Rocq test does not fit myType&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="o">.</span>
+
+<span class="w">  </span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class="n n-ElpiFunction">decode</span><span class="w"> </span><span class="kt">myType</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">term</span>.
+<span class="w">  </span>decode<span class="w"> </span><span class="p">(</span>constant<span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>int2nat<span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span>
+<span class="w">  </span>decode<span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>coq.error<span class="w"> </span><span class="s2">&quot;Not in normal form&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="o">.</span>
+<span class="si">}}</span><span class="o">.</span>
+
+<span class="kn">Elpi</span> <span class="kn">Query</span>  <span class="si">lp:{{</span>
+<span class="w">  </span>encode<span class="w"> </span><span class="si">{{</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">,</span>
+
+<span class="w">  </span>compute<span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">Z</span><span class="k k-ElpiKeyword">,</span>
+
+<span class="w">  </span>decode<span class="w"> </span><span class="n n-ElpiVariable">Z</span><span class="w"> </span><span class="si">{{</span> <span class="mi">5</span> <span class="si">}}</span><span class="o">.</span>
+<span class="si">}}</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>This command converts the Rocq term <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">+</span> <span class="pre">3</span></code> into <code class="docutils literal notranslate"><span class="pre">myType</span></code> (<code class="docutils literal notranslate"><span class="pre">sumof</span>
+<span class="pre">(constant</span> <span class="pre">2)</span> <span class="pre">(constant</span> <span class="pre">3)</span></code>), calls the new OCaml-implemented <code class="docutils literal notranslate"><span class="pre">compute</span></code>
+predicate to normalize it to <code class="docutils literal notranslate"><span class="pre">constant</span> <span class="pre">5</span></code>, and converts that back into
+the Rocq term <code class="docutils literal notranslate"><span class="pre">5</span></code> -- exercising the data type conversion, the OCaml
+predicate, and the companion Elpi library all in one query.</p>
+</section>
+<section id="building-and-testing">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Building and testing</a><a class="headerlink" href="#building-and-testing" title="Link to this heading"></a></h2>
+<p>Being an ordinary dune package, the scaffold builds and tests the usual
+way, from the <code class="docutils literal notranslate"><span class="pre">example_plugin</span></code> directory:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>dune<span class="w"> </span>build
+<span class="gp">$ </span>dune<span class="w"> </span>build<span class="w"> </span>@runtest
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="coq-tactics-advanced.html" class="btn btn-neutral float-left" title="More tactic examples and the proof engine" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../reference/vernacular.html" class="btn btn-neutral float-right" title="Vernacular commands" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

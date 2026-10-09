@@ -1,0 +1,542 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polishing a command &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Writing tactics in Elpi" href="coq-tactics.html" />
+    <link rel="prev" title="Writing commands in Elpi" href="coq-commands.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Polishing a command</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#extending-the-command-grammar">Extending the command grammar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#attributes">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reporting-errors">Reporting errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parsing-and-execution">Parsing and Execution</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Polishing a command</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/coq-commands-advanced.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="polishing-a-command">
+<h1><a class="toc-backref" href="#id1" role="doc-backlink">Polishing a command</a><a class="headerlink" href="#polishing-a-command" title="Link to this heading"></a></h1>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>An <a class="reference external" href="https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html">Alectryon-rendered version</a> of
+this tutorial (together with <a class="reference internal" href="coq-commands.html"><span class="doc">Writing commands in Elpi</span></a>), from before its
+migration to this manual, is also available.</p>
+</div>
+<p>This page continues <a class="reference internal" href="coq-commands.html"><span class="doc">Writing commands in Elpi</span></a>, covering attributes, extending the
+command grammar, error reporting, and the separation between parsing and
+execution.</p>
+<nav class="contents" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#polishing-a-command" id="id1">Polishing a command</a></p>
+<ul>
+<li><p><a class="reference internal" href="#extending-the-command-grammar" id="id2">Extending the command grammar</a></p></li>
+<li><p><a class="reference internal" href="#attributes" id="id3">Attributes</a></p></li>
+<li><p><a class="reference internal" href="#reporting-errors" id="id4">Reporting errors</a></p></li>
+<li><p><a class="reference internal" href="#parsing-and-execution" id="id5">Parsing and Execution</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<div class="rocqtop literal-block highlight rocqtop-hidden docutils container">
+<span class="rocqtop-reset"></span><dl>
+<dt class="rocqtop-hidden"><span class="kn">Set Warnings</span><span> </span><span class="s2">&quot;</span><span class="s2">-elpi.linear-variable</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dt class="rocqtop-hidden"><span class="kn">From</span><span> </span><span class="nb">elpi</span><span> </span><span class="kn">Require Import</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file ppx_deriving.runtime (implicit dependency) ... done]
+[Loading ML file re (implicit dependency) ... done]
+[Loading ML file re.str (implicit dependency) ... done]
+[Loading ML file elpi.util (implicit dependency) ... done]
+[Loading ML file elpi.lexer_config (implicit dependency) ... done]
+[Loading ML file menhirLib (implicit dependency) ... done]
+[Loading ML file stdlib-shims (implicit dependency) ... done]
+[Loading ML file elpi.parser (implicit dependency) ... done]
+[Loading ML file camlp-streams (implicit dependency) ... done]
+[Loading ML file easy-format (implicit dependency) ... done]
+[Loading ML file biniou (implicit dependency) ... done]
+[Loading ML file yojson (implicit dependency) ... done]
+[Loading ML file atdgen-runtime (implicit dependency) ... done]
+[Loading ML file elpi.trace.atd (implicit dependency) ... done]
+[Loading ML file elpi.trace.runtime (implicit dependency) ... done]
+[Loading ML file elpi.runtime (implicit dependency) ... done]
+[Loading ML file elpi.compiler (implicit dependency) ... done]
+[Loading ML file elpi (implicit dependency) ... done]
+[Loading ML file rocq-elpi.elpi ... done]
+</span></dd>
+</dl>
+</div>
+<p>The details do make the difference, some times.</p>
+<section id="extending-the-command-grammar">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Extending the command grammar</a><a class="headerlink" href="#extending-the-command-grammar" title="Link to this heading"></a></h2>
+<p>Elpi programs can be exported as regular Rocq commands, so that the
+final user does not need to type <code class="docutils literal notranslate"><span class="pre">Elpi</span></code> to invoke them.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">Say</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.say</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="o">.</span><span class="w"> </span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Export</span><span> </span><span class="n">Say</span><span class="o">.</span><span> </span><span class="c">(*</span><span class="c"> extend the Rocq command grammar </span><span class="c">*)</span><span>
+</span></dt><dt><span class="n">Say</span><span> </span><span class="s2">&quot;</span><span class="s2">That is all folks!</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dd><span>That is all folks!
+</span></dd>
+</dl>
+</div>
+<p>Not yet...</p>
+<p>Rocq offers no equivalent of <code class="docutils literal notranslate"><span class="pre">Tactic</span> <span class="pre">Notation</span></code> for commands.
+Still Elpi commands accept any symbol or keyword as strings.
+It is up to the programmer to catch and report parse errors.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">Go</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">Src</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>str</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">=&gt;</span><span class="s2">&quot;</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">Tgt</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>str</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">/</span><span class="s2">&quot;</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">going from</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Src</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">to</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Tgt</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">via</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="o">.</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.error</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Parse error! Use: go &lt;from&gt; =&gt; &lt;to&gt; / &lt;via&gt;</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Export</span><span> </span><span class="n">Go</span><span class="o">.</span><span>
+</span></dt><dt><span class="n">Go</span><span> </span><span class="n">source</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">target</span><span> </span><span class="o">/</span><span> </span><span class="n">plane</span><span class="o">.</span><span>
+</span></dt><dd><span>going from source to target via plane
+</span></dd>
+<dt><span class="kn">Fail</span><span> </span><span class="n">Go</span><span> </span><span class="n">nowhere</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+Parse error! Use: go &lt;from&gt; =&gt; &lt;to&gt; / &lt;via&gt;
+</span></dd>
+</dl>
+</div>
+</section>
+<section id="attributes">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Attributes</a><a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<p>Elpi programs can be prefixed with attributes, like <code class="docutils literal notranslate"><span class="pre">#[local]</span></code>.
+Attributes are not passed as arguments but rather as a rule in the context,
+a bit like the option <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">&#64;</span></span><span class="pre">holes!</span></code> we have seen before.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">attr</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>main</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>attributes</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="c">% we fetch the list of attributes from the context
+</span><span class="w">    </span><span>coq.say</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Export</span><span> </span><span class="n">attr</span><span class="o">.</span><span>
+</span></dt><dt><span class="o">#</span><span class="o">[</span><span class="n">this</span><span class="o">,</span><span> </span><span class="n">more</span><span class="o">(</span><span class="n">stuff</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">33</span><span class="s2">&quot;</span><span class="o">)</span><span class="o">]</span><span> </span><span class="n">attr</span><span class="o">.</span><span>
+</span></dt><dd><span>[attribute elpi.loc 
+  (leaf-loc File &quot;(stdin)&quot;, line 20, column 0, characters 782-813:), 
+ attribute elpi.phase (leaf-str interp), attribute this (leaf-str ), 
+ attribute more (node [attribute stuff (leaf-str 33)])]
+</span></dd>
+</dl>
+</div>
+<p>The first attribute, <code class="code elpi docutils literal notranslate"><span class="pre">elpi.loc</span></code> is always present and corresponds to the
+location in the source file of the command. Then we find an attribute for
+<code class="code elpi docutils literal notranslate"><span class="literal string double"><span class="pre">&quot;this&quot;</span></span></code> holding the empty string and an attribute for <code class="code elpi docutils literal notranslate"><span class="literal string double"><span class="pre">&quot;more.stuff&quot;</span></span></code> holding
+the string <code class="code elpi docutils literal notranslate"><span class="literal string double"><span class="pre">&quot;33&quot;</span></span></code>.</p>
+<p>Attributes are usually validated (parsed) and turned into regular options
+using <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib-common.elpi#L25"><code class="docutils literal notranslate"><span class="pre">coq.parse-attributes</span></code></a> and a description of their types using
+the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib-common.elpi#L72"><code class="docutils literal notranslate"><span class="pre">attribute-type</span></code></a> data type:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">parse_attr</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">some-code</span><span>.</span><span class="w">
+  </span><span>some-code</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>get-option</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">more.stuff</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>get-option</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">this</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>coq.say</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="o">.</span><span class="w">
+
+  </span><span>main</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>attributes</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.parse-attributes</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="w">
+      </span><span>att</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">this</span><span class="s2">&quot;</span><span class="w"> </span><span>bool</span><span class="k k-ElpiKeyword">,</span><span class="w">
+      </span><span>att</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">more.stuff</span><span class="s2">&quot;</span><span class="w"> </span><span>int</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">Opts</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">options=</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Opts</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="p">(</span><span class="n n-ElpiVariable">Opts</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w"> </span><span>some-code</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Export</span><span> </span><span class="n">parse_attr</span><span class="o">.</span><span>
+</span></dt><dt><span class="o">#</span><span class="o">[</span><span class="n">this</span><span class="o">,</span><span> </span><span class="n">more</span><span class="o">(</span><span class="n">stuff</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">33</span><span class="s2">&quot;</span><span class="o">)</span><span class="o">]</span><span> </span><span class="n">parse_attr</span><span class="o">.</span><span>
+</span></dt><dd><span>options= 
+[get-option elpi.loc File &quot;(stdin)&quot;, line 24, column 0, characters 1165-1202:, 
+ get-option elpi.phase interp, get-option this tt, get-option more.stuff 33]
+33 tt
+</span></dd>
+<dt><span class="kn">Fail</span><span> </span><span class="o">#</span><span class="o">[</span><span class="n">unknown</span><span class="o">]</span><span> </span><span class="n">parse_attr</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+Attribute unknown is not supported
+</span></dd>
+</dl>
+</div>
+<p>Note that <code class="code elpi docutils literal notranslate"><span class="pre">get-option</span></code> links a string with a datum of type <code class="code elpi docutils literal notranslate"><span class="pre">any</span></code>, which means
+no type checking is performed on it. It is recommended to wrap calls to
+get-option into other predicates typed in a more precise way. Eg:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">get-my-option</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">int</span>.
+get-my-option<span class="w"> </span><span class="n n-ElpiVariable">I</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>get-option<span class="w"> </span><span class="s2">&quot;my-option-name&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">I</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+<section id="reporting-errors">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Reporting errors</a><a class="headerlink" href="#reporting-errors" title="Link to this heading"></a></h2>
+<p>Good Elpi programs should fail reporting intelligible error messages,
+as the previous one.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">bad</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="o">.</span><span class="w"> </span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Export</span><span> </span><span class="n">bad</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Fail</span><span> </span><span class="n">bad</span><span> </span><span class="mi">1</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+The elpi tactic/command bad failed without giving a specific error message.
+Please report this inconvenience to the authors of the program.
+</span></dd>
+</dl>
+</div>
+<p>If they just fail, as shown above, they produce a rather generic error
+message. You should use the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L594"><code class="docutils literal notranslate"><span class="pre">coq.error</span></code></a> API or the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L498"><code class="docutils literal notranslate"><span class="pre">assert!</span></code></a> one
+to abort a program. There is a dedicated <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1711"><code class="docutils literal notranslate"><span class="pre">coq.ltac.fail</span></code></a> API to abort
+tactics.</p>
+<p>Warnings can be reported using the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L588"><code class="docutils literal notranslate"><span class="pre">coq.warning</span></code></a> which lets you
+pick a name and category. In turn these can be used to disable or make fatal
+your warnings (as any other Rocq warning).</p>
+</section>
+<section id="parsing-and-execution">
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">Parsing and Execution</a><a class="headerlink" href="#parsing-and-execution" title="Link to this heading"></a></h2>
+<p>Since version 8.18 Rocq has separate parsing and execution phases,
+respectively called synterp and interp.</p>
+<p>Since Rocq has an extensible grammar the parsing phase is not entirely
+performed by the parser: after parsing one sentence Rocq evaluates its
+synterp action. The synterp actions of a command like <code class="docutils literal notranslate"><span class="pre">Import</span> <span class="pre">A.</span></code> are
+the subset of its effect which affect parsing, like enabling a notation.
+Later, during the execution phase, Rocq evaluates its
+interp actions, which include effects like putting lemma in scope or
+enabling type class instances etc. Synterp actions are quick, if only because
+they don't really manipulate Rocq terms, hence no type checking and the like.</p>
+<p>Being able to parse an entire document quickly
+is important for developing reactive
+user interfaces, but requires some extra work when defining new commands,
+in particular to identify their synterp.
+Each command defined with Rocq-Elpi is split into two programs,
+one running during the parsing phase and the other one during the execution
+phase. Each API that affects the parser, i.e. APIs dealing with modules
+and sections like begin/end-module or import/export, is available to both the
+synterp and the interp program under the same name, but its actual effect is
+limited to what concerns the current phase. Hence all these APIs have to be
+called at <em>both</em> synterp and interp time and <em>in the same order</em>.</p>
+<p>At synterp time the data types and the APIs are restricted, in particular
+Rocq terms are not available. When a command argument contains a term, that
+term is replaced by <code class="docutils literal notranslate"><span class="pre">_</span></code> at synterp time. In the following example, the synterp
+program can see the name of the definition and the fact that a body was given,
+but not the value of the body.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">hello_synterp</span><span class="o">.</span><span>
+</span></dt><dt><span class="o">#</span><span class="o">[</span><span class="n">synterp</span><span class="o">]</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>const-decl</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="n n-ElpiVariable">Body</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">synterp</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">:=</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Body</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>const-decl</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="n n-ElpiVariable">Body</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">interp</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">:=</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Body</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">hello_synterp</span><span> </span><span class="kn">Definition</span><span> </span><span class="nf">x</span><span> </span><span class="o">:=</span><span> </span><span class="mi">2</span><span class="o">.</span><span>
+</span></dt><dd><span>synterp x := some _
+interp x := 
+some
+ (app [global (indc «S»), app [global (indc «S»), global (indc «O»)]])
+</span></dd>
+</dl>
+</div>
+<p>This simple command has no real synterp action, one could safely remove
+the synterp code. On the contrary when a command performs actions affecting
+the parser then it must come equipped with some synterp code performing
+the corresponding actions.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Module</span><span> </span><span class="nf">Notations</span><span class="o">.</span><span>
+</span></dt><dd><span>Interactive Module Notations started
+</span></dd>
+<dt><span class="kn">Notation</span><span> </span><span class="s2">&quot;</span><span class="s2">x '&gt;&gt;' y</span><span class="s2">&quot;</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">&gt;</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="o">(</span><span class="kn">at level</span><span> </span><span class="mi">40</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Definition</span><span> </span><span class="nf">w</span><span> </span><span class="o">:=</span><span> </span><span class="mi">3</span><span class="o">.</span><span>
+</span></dt><dd><span>w is defined
+</span></dd>
+<dt><span class="kn">End</span><span> </span><span class="nf">Notations</span><span class="o">.</span><span>
+</span></dt><dd><span>Module Notations is defined
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">import_module</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.locate-module</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.import-module</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.locate</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">w</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span>const</span><span class="w"> </span><span class="n n-ElpiVariable">GR</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.const</span><span class="w"> </span><span class="n n-ElpiVariable">GR</span><span class="w"> </span><span class="p">(</span><span>some</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="mi">3</span><span> </span><span class="si">}}</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Fail</span><span> </span><span class="kn">Elpi</span><span> </span><span class="n">import_module</span><span> </span><span class="n">Notations</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+The command did perform no (more) actions during the parsing phase (aka
+synterp), while during the execution phase (aka interp) it tried to perform a
+import-module action. Interp actions must match synterp actions. For example
+if a module was imported during the synterp phase, then it must also be
+imported during the interp one.
+The command lacks code for the synterp phase. In order to add code to this
+phase use '#[synterp] Elpi Accumulate'. See also
+https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html#parsing-and-execution
+</span></dd>
+</dl>
+</div>
+<p>Elpi reports a descriptive error message if actions affecting the parser are
+not declared in the synterp code of the command.</p>
+<p>Thanks to the synterp code below, Rocq can parse the document without even looking
+at the interp code.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl class="simple">
+<dt><span class="c">(*</span><span class="c"> oops, we forgot to declare code for the synterp phase. Here it is </span><span class="c">*)</span><span>
+</span><span class="o">#</span><span class="o">[</span><span class="n">synterp</span><span class="o">]</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.locate-module</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.import-module</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Sometimes it is necessary to pass data from the synterp code to the interp one.
+Passing data can be done in two ways. the former is by using the <code class="code elpi docutils literal notranslate"><span class="pre">main-synterp</span></code>
+and <code class="code elpi docutils literal notranslate"><span class="pre">main-interp</span></code> entry points.</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">main-synterp</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">argument</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">any</span>.
+<span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">main-interp</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">argument</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">any</span>.
+</pre></div>
+</div>
+<p>Unlike <code class="code elpi docutils literal notranslate"><span class="pre">main</span></code> the former outputs a datum while the latter receives it
+in input. In the following command we create a (empty) module with a random
+name. Even if the name is random, the two phases need to agree on it, hence
+we pass the name from one to the other.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">mk_random_module</span><span class="o">.</span><span>
+</span></dt><dt><span class="o">#</span><span class="o">[</span><span class="n">synterp</span><span class="o">]</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main-synterp</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>random.self_init</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>random.int</span><span class="w"> </span><span class="mi">99</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Module</span><span class="s2">&quot;</span><span class="w"> </span><span class="k k-ElpiKeyword">^</span><span class="w"> </span><span>{</span><span>std.any-&gt;string</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span>}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.begin-module</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span>none</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.end-module</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main-interp</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.env.begin-module</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span>none</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.end-module</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">The module is</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">mk_random_module</span><span class="o">.</span><span>
+</span></dt><dd><span>The module is «Top.Module22»
+</span></dd>
+</dl>
+</div>
+<p>If the only data to be passed to the interp phase is the list of
+synterp actions, then a few APIs can come in handy.
+The synterp phase has access to the API <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin-synterp.elpi#L423"><code class="docutils literal notranslate"><span class="pre">coq.synterp-actions</span></code></a>
+that lists the actions performed so far. The interp phase can use
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib.elpi#L879"><code class="docutils literal notranslate"><span class="pre">coq.replay-synterp-action</span></code></a> and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L2112"><code class="docutils literal notranslate"><span class="pre">coq.next-synterp-action</span></code></a> to
+replay an action or peek the next one to be performed.</p>
+<p>An excerpt of the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L2094"><code class="docutils literal notranslate"><span class="pre">synterp-action</span></code></a>.</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="c">% Action executed during the parsing phase (aka synterp)</span>
+<span class="k k-ElpiKeyword">data</span><span class="w"> </span><span class="n n-ElpiFunction">synterp-action</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">begin-module</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">id</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">synterp-action</span>.
+<span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">end-module</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">modpath</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">synterp-action</span>.
+</pre></div>
+</div>
+<p>The following command creates a stack of modules and puts in there
+the given definition. The synterp phase saves the actions when the top of the
+stack is reached, and passes them to the interp phase that replays them before
+putting a definition inside. Finally the interp phase replays all the missing
+actions.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">put_inside</span><span class="o">.</span><span>
+</span></dt><dt><span class="o">#</span><span class="o">[</span><span class="n">synterp</span><span class="o">]</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main-synterp</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>int</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">ActionsUpToNow</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="k k-ElpiKeyword">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="k k-ElpiKeyword">-</span><span class="w"> </span><span class="mi">1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.begin-module</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Box</span><span class="s2">&quot;</span><span class="w"> </span><span>none</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>main-synterp</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>int</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">ActionsUpToNow</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.end-module</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="o">.</span><span class="w">
+  </span><span>main-synterp</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>int</span><span class="w"> </span><span class="mi">0</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">ActionsUpToNow</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.synterp-actions</span><span class="w"> </span><span class="n n-ElpiVariable">ActionsUpToNow</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main-interp</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>int</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>const-decl</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="p">(</span><span>some</span><span class="w"> </span><span class="n n-ElpiVariable">BO</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">Before</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>std.forall</span><span class="w"> </span><span class="n n-ElpiVariable">Before</span><span class="w"> </span><span>coq.replay-synterp-action</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.add-const</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="n n-ElpiVariable">BO</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>replay-missing</span><span class="o">.</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">replay-missing</span><span>.</span><span class="w">
+  </span><span>replay-missing</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.replay-synterp-action</span><span class="w"> </span><span>{</span><span>coq.next-synterp-action</span><span>}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>replay-missing</span><span class="o">.</span><span class="w">
+  </span><span>replay-missing</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">put_inside</span><span> </span><span class="mi">4</span><span> </span><span class="kn">Definition</span><span> </span><span class="nf">foo</span><span> </span><span class="o">(</span><span class="nv">n</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span class="o">)</span><span> </span><span class="o">:=</span><span> </span><span class="n">n</span><span> </span><span class="o">+</span><span> </span><span class="mi">2</span><span class="o">.</span><span>
+</span></dt><dd><span>foo is defined
+</span></dd>
+<dt><span class="kn">Print</span><span> </span><span class="n">Box</span><span class="o">.</span><span class="n">Box</span><span class="o">.</span><span class="n">Box</span><span class="o">.</span><span class="n">Box</span><span class="o">.</span><span class="n">foo</span><span class="o">.</span><span>
+</span></dt><dd><span>Box.Box.Box.Box.foo = </span><span class="ansi-bold">fun</span><span> n : nat =&gt; n</span><span> +</span><span> 2
+     : nat</span><span> -&gt;</span><span> nat
+
+Arguments </span><span class="ansi-fg-light-magenta">Box</span><span>.</span><span class="ansi-fg-light-magenta">Box</span><span>.</span><span class="ansi-fg-light-magenta">Box</span><span>.</span><span class="ansi-fg-light-magenta">Box</span><span>.</span><span class="ansi-fg-light-green">foo</span><span> n%_nat_scope
+</span></dd>
+</dl>
+</div>
+<p>This last example delegates to the synterp phase the creation of an arbitrary
+complex module structure, a structure the interp phase does not need to be aware
+of. The data passed to the interp phase is sufficient to replicate it without
+too much effort.</p>
+<p>Finally, as regular commands, data bases can be used to store a state which
+is available at subsequent calls. Data bases used in the two phases live
+in different name spaces, and are only available to the corresponding phase.
+The <code class="docutils literal notranslate"><span class="pre">#[synterp]</span></code> attribute tells <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Db</span></code> to create a data base for the
+synterp phase. Here a simple command saving a state in the synterp phase.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="o">#</span><span class="o">[</span><span class="n">synterp</span><span class="o">]</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Db</span><span> </span><span class="n">counter</span><span class="o">.</span><span class="n">db</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">tick</span><span>.</span><span class="w"> </span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">mk_next_module</span><span class="o">.</span><span>
+</span></dt><dt><span class="o">#</span><span class="o">[</span><span class="n">synterp</span><span class="o">]</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="kn">Db</span><span> </span><span class="n">counter</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span>
+</span></dt><dt><span class="o">#</span><span class="o">[</span><span class="n">synterp</span><span class="o">]</span><span> </span><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>std.findall</span><span class="w"> </span><span>tick</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>std.length</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">NextModule</span><span class="s2">&quot;</span><span class="w"> </span><span class="k k-ElpiKeyword">^</span><span class="w"> </span><span>{</span><span>std.any-&gt;string</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span>}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.begin-module</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span>none</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.env.end-module</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.elpi.accumulate</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">counter.db</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span>clause</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>tick</span><span class="p">)</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>replay-missing</span><span class="o">.</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">replay-missing</span><span>.</span><span class="w">
+  </span><span>replay-missing</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.replay-synterp-action</span><span class="w"> </span><span>{</span><span>coq.next-synterp-action</span><span>}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>replay-missing</span><span class="o">.</span><span class="w">
+  </span><span>replay-missing</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">mk_next_module</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">mk_next_module</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">mk_next_module</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Print Module</span><span> </span><span class="n">NextModule2</span><span class="o">.</span><span>
+</span></dt><dd><span class="ansi-bold">Module</span><span> NextModule2 := </span><span class="ansi-bold">Struct</span><span>  </span><span class="ansi-bold">End</span><span>
+</span></dd>
+</dl>
+</div>
+<p>This is really the end, unless you want to learn more about writing
+tactics in Elpi, in that case look at <a class="reference internal" href="coq-tactics.html"><span class="doc">Writing tactics in Elpi</span></a> ;-)</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="coq-commands.html" class="btn btn-neutral float-left" title="Writing commands in Elpi" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="coq-tactics.html" class="btn btn-neutral float-right" title="Writing tactics in Elpi" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,182 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting started &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=61ed4235" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The Elpi programming language" href="tutorials/elpi-lang.html" />
+    <link rel="prev" title="Rocq-Elpi" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing">Installing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tutorials">Tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Getting started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/getting-started.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
+<p>Rocq-Elpi is a Rocq plugin embedding <a class="reference external" href="https://github.com/LPCIC/elpi">Elpi</a>, an implementation of a dialect of
+λProlog, a programming language well suited to manipulate abstract syntax
+trees containing binders and unification variables.</p>
+<p>Rocq-Elpi lets one define new commands and tactics in Elpi. For that purpose
+it provides an embedding of Rocq's terms into λProlog using the
+Higher-Order Abstract Syntax approach (<a class="reference external" href="https://en.wikipedia.org/wiki/Higher-order_abstract_syntax">HOAS</a>). It also
+exports to Elpi a comprehensive set of Rocq's primitives, so that one can
+print a message, access the environment of theorems and data types, define
+a new constant, declare implicit arguments, type class instances, and so
+on. For convenience it also provides quotations and anti-quotations for
+Rocq's syntax, so that one can write <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">nat</span> <span class="pre">-&gt;</span> <span class="pre">lp:X</span> <span class="pre">}}</span></code> in the middle of
+an Elpi program instead of the equivalent AST.</p>
+<section id="installing">
+<h2>Installing<a class="headerlink" href="#installing" title="Link to this heading"></a></h2>
+<p>Rocq-Elpi is available on <a class="reference external" href="https://opam.ocaml.org/">opam</a> as <code class="docutils literal notranslate"><span class="pre">rocq-elpi</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opam</span> <span class="n">install</span> <span class="n">rocq</span><span class="o">-</span><span class="n">elpi</span>
+</pre></div>
+</div>
+<p>Once installed, load it in a <code class="docutils literal notranslate"><span class="pre">.v</span></code> file with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">From</span> <span class="n">elpi</span> <span class="n">Require</span> <span class="n">Import</span> <span class="n">elpi</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+<section id="tutorials">
+<h2>Tutorials<a class="headerlink" href="#tutorials" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="tutorials/elpi-lang.html"><span class="doc">The Elpi programming language</span></a> -- an Elpi tutorial; there is nothing
+Rocq-specific in it even though it uses Rocq to step through the examples.
+Start here if you have never used λProlog or a HOAS-based language
+before.</p></li>
+<li><p><a class="reference internal" href="tutorials/coq-hoas.html"><span class="doc">HOAS for Rocq terms</span></a> -- how Rocq terms are represented in Elpi, how
+to inspect them and call Rocq APIs under a context of binders, and how
+holes (&quot;evars&quot;) are represented. Assumes familiarity with Elpi.</p></li>
+<li><p><a class="reference internal" href="tutorials/coq-commands.html"><span class="doc">Writing commands in Elpi</span></a> (and <a class="reference internal" href="tutorials/coq-commands-advanced.html"><span class="doc">Polishing a command</span></a>)
+-- how to write commands, including how to store state across calls via
+Dbs and how to handle command arguments. Assumes familiarity with Elpi
+and the HOAS of Rocq terms.</p></li>
+<li><p><a class="reference internal" href="tutorials/coq-tactics.html"><span class="doc">Writing tactics in Elpi</span></a> (and <a class="reference internal" href="tutorials/coq-tactics-advanced.html"><span class="doc">More tactic examples and the proof engine</span></a>)
+-- how goals and tactics are represented, how to handle tactic arguments,
+and how to define tactic notations. Assumes familiarity with Elpi and the
+HOAS of Rocq terms.</p></li>
+</ul>
+<p>See <a class="reference internal" href="examples/index.html"><span class="doc">Examples</span></a> for a cookbook of short, self-contained, live-tested
+examples, and <a class="reference internal" href="reference/vernacular.html"><span class="doc">Vernacular commands</span></a> for the vernacular command
+reference.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Rocq-Elpi" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorials/elpi-lang.html" class="btn btn-neutral float-right" title="The Elpi programming language" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

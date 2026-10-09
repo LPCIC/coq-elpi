@@ -1,0 +1,999 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reflexive tactic &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Applications written in Rocq-Elpi" href="../apps.html" />
+    <link rel="prev" title="Open terms" href="open-terms.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data-base.html">Data bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-expansion.html">Record expansion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-to-sigma.html">Record to sigma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fuzzer.html">Fuzzer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curry-howard-tactics.html">Curry-Howard tactics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalize.html">Generalize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abs-evars.html">Closing terms with holes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="import-projections.html">Record import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction-surgery.html">Reduction surgery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="open-terms.html">Open terms</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Reflexive tactic</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">Reflexive tactic</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/reflexive-tactic.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="reflexive-tactic">
+<h1>Reflexive tactic<a class="headerlink" href="#reflexive-tactic" title="Link to this heading"></a></h1>
+<p>Builds a reflexive tactic solving equalities in a monoid. We use Elpi to:</p>
+<ul class="simple">
+<li><p>reify an expression into a syntax tree</p></li>
+<li><p>query a Db of known monoids</p></li>
+<li><p>call a few Ltac primitives in order to apply the correctness theorem</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This example depends on Rocq's <code class="docutils literal notranslate"><span class="pre">Stdlib</span></code> theories (and <code class="docutils literal notranslate"><span class="pre">ssreflect</span></code>),
+unlike the other cookbook examples.</p>
+</div>
+<p>This module contains the reflexive normalizer and its correctness proof (not
+the point of this demo -- the proofs are not the interesting part):</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span class="rocqtop-reset"></span><dl>
+<dt><span class="kn">From</span><span> </span><span class="nb">elpi</span><span> </span><span class="kn">Require</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file ppx_deriving.runtime (implicit dependency) ... done]
+[Loading ML file re (implicit dependency) ... done]
+[Loading ML file re.str (implicit dependency) ... done]
+[Loading ML file elpi.util (implicit dependency) ... done]
+[Loading ML file elpi.lexer_config (implicit dependency) ... done]
+[Loading ML file menhirLib (implicit dependency) ... done]
+[Loading ML file stdlib-shims (implicit dependency) ... done]
+[Loading ML file elpi.parser (implicit dependency) ... done]
+[Loading ML file camlp-streams (implicit dependency) ... done]
+[Loading ML file easy-format (implicit dependency) ... done]
+[Loading ML file biniou (implicit dependency) ... done]
+[Loading ML file yojson (implicit dependency) ... done]
+[Loading ML file atdgen-runtime (implicit dependency) ... done]
+[Loading ML file elpi.trace.atd (implicit dependency) ... done]
+[Loading ML file elpi.trace.runtime (implicit dependency) ... done]
+[Loading ML file elpi.runtime (implicit dependency) ... done]
+[Loading ML file elpi.compiler (implicit dependency) ... done]
+[Loading ML file elpi (implicit dependency) ... done]
+[Loading ML file rocq-elpi.elpi ... done]
+</span></dd>
+<dt><span class="kn">From</span><span> </span><span class="n">Stdlib</span><span> </span><span class="kn">Require</span><span> </span><span class="n">Arith</span><span> </span><span class="n">ZArith</span><span> </span><span class="n">Psatz</span><span> </span><span class="n">List</span><span> </span><span class="n">ssreflect</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file rocq-runtime.plugins.ring ... done]
+[Loading ML file rocq-runtime.plugins.zify ... done]
+[Loading ML file rocq-runtime.plugins.micromega_core ... done]
+[Loading ML file rocq-runtime.plugins.micromega ... done]
+[Loading ML file rocq-runtime.plugins.btauto ... done]
+[Loading ML file rocq-runtime.plugins.nsatz_core ... done]
+[Loading ML file rocq-runtime.plugins.nsatz ... done]
+[Loading ML file rocq-runtime.plugins.ssrmatching ... done]
+[Loading ML file rocq-runtime.plugins.ssreflect ... done]
+</span></dd>
+<dt><span class="kn">Import</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Import</span><span> </span><span class="n">Arith</span><span> </span><span class="n">ZArith</span><span> </span><span class="n">Psatz</span><span> </span><span class="n">List</span><span> </span><span class="n">ssreflect</span><span class="o">.</span><span>
+</span></dt></dl>
+<span></span><dl>
+<dt><span class="kn">Module</span><span> </span><span class="nf">MonoidTheory</span><span class="o">.</span><span>
+</span></dt><dd><span>Interactive Module MonoidTheory started
+</span></dd>
+<dt><span class="c">(*</span><span class="c"> The syntax of terms </span><span class="c">*)</span><span>
+</span><span class="kn">Inductive</span><span> </span><span class="nf">lang</span><span> </span><span class="o">:=</span><span>
+</span><span class="o">|</span><span> </span><span class="n">var</span><span> </span><span class="o">(</span><span class="n">i</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span class="o">)</span><span>        </span><span class="c">(*</span><span class="c"> i-th variable in the context </span><span class="c">*)</span><span>
+</span><span class="o">|</span><span> </span><span class="n">zero</span><span> </span><span class="o">:</span><span> </span><span class="n">lang</span><span>          </span><span class="c">(*</span><span class="c"> Neutral element </span><span class="c">*)</span><span>
+</span><span class="o">|</span><span> </span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="n">y</span><span> </span><span class="o">:</span><span> </span><span class="n">lang</span><span class="o">)</span><span class="o">.</span><span>    </span><span class="c">(*</span><span class="c"> binary operation </span><span class="c">*)</span><span>
+</span></dt><dd><span>lang is defined
+lang_rect is defined
+lang_ind is defined
+lang_rec is defined
+lang_sind is defined
+</span></dd>
+<dt><span class="c">(*</span><span class="c"> Interpretation to T </span><span class="c">*)</span><span>
+</span><span class="kn">Fixpoint</span><span> </span><span class="nf">interp</span><span> </span><span class="nv">T</span><span> </span><span class="o">(</span><span class="nv">e</span><span> </span><span class="o">:</span><span> </span><span class="n">T</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">op</span><span> </span><span class="o">:</span><span> </span><span class="n">T</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">T</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">T</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">gamma</span><span> </span><span class="o">:</span><span> </span><span class="n">list</span><span> </span><span class="n">T</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">t</span><span> </span><span class="o">:</span><span> </span><span class="n">lang</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="n">T</span><span> </span><span class="o">:</span><span class="o">=</span><span>
+  </span><span class="k">match</span><span> </span><span class="n">t</span><span> </span><span class="k">with</span><span>
+  </span><span class="o">|</span><span> </span><span class="n">var</span><span> </span><span class="n">v</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">nth</span><span> </span><span class="n">v</span><span> </span><span class="n">gamma</span><span> </span><span class="n">e</span><span>
+  </span><span class="o">|</span><span> </span><span class="n">zero</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">e</span><span>
+  </span><span class="o">|</span><span> </span><span class="n">add</span><span> </span><span class="n">x</span><span> </span><span class="n">y</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">op</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">e</span><span> </span><span class="n">op</span><span> </span><span class="n">gamma</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">e</span><span> </span><span class="n">op</span><span> </span><span class="n">gamma</span><span> </span><span class="n">y</span><span class="o">)</span><span>
+  </span><span class="k">end</span><span class="o">.</span><span>
+</span></dt><dd><span>interp is defined
+interp is recursively defined (guarded on 5th argument)
+</span></dd>
+<dt><span class="c">(*</span><span class="c"> normalization of parentheses and units </span><span class="c">*)</span><span>
+</span><span class="kn">Fixpoint</span><span> </span><span class="nf">normAx</span><span> </span><span class="nv">t1</span><span> </span><span class="nv">acc</span><span> </span><span class="o">:=</span><span>
+  </span><span class="k">match</span><span> </span><span class="n">t1</span><span> </span><span class="k">with</span><span>
+  </span><span class="o">|</span><span> </span><span class="n">add</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">normAx</span><span> </span><span class="n">t1</span><span> </span><span class="o">(</span><span class="n">normAx</span><span> </span><span class="n">t2</span><span> </span><span class="n">acc</span><span class="o">)</span><span>
+  </span><span class="o">|</span><span> </span><span class="n">_</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">add</span><span> </span><span class="n">t1</span><span> </span><span class="n">acc</span><span>
+  </span><span class="k">end</span><span class="o">.</span><span>
+</span></dt><dd><span>normAx is defined
+normAx is recursively defined (guarded on 1st argument)
+</span></dd>
+<dt><span class="kn">Fixpoint</span><span> </span><span class="nf">normA</span><span> </span><span class="nv">t</span><span> </span><span class="o">:=</span><span>
+  </span><span class="k">match</span><span> </span><span class="n">t</span><span> </span><span class="k">with</span><span>
+  </span><span class="o">|</span><span> </span><span class="n">add</span><span> </span><span class="n">s1</span><span> </span><span class="n">s2</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">normAx</span><span> </span><span class="n">s1</span><span> </span><span class="o">(</span><span class="n">normA</span><span> </span><span class="n">s2</span><span class="o">)</span><span>
+  </span><span class="o">|</span><span> </span><span class="n">_</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">t</span><span>
+  </span><span class="k">end</span><span class="o">.</span><span>
+</span></dt><dd><span>normA is defined
+normA is recursively defined (guarded on 1st argument)
+</span></dd>
+<dt><span class="kn">Fixpoint</span><span> </span><span class="nf">norm1</span><span> </span><span class="nv">t</span><span> </span><span class="o">:=</span><span>
+ </span><span class="k">match</span><span> </span><span class="n">t</span><span> </span><span class="k">with</span><span>
+ </span><span class="o">|</span><span> </span><span class="n">var</span><span> </span><span class="n">_</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">t</span><span>
+ </span><span class="o">|</span><span> </span><span class="n">zero</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">t</span><span>
+ </span><span class="o">|</span><span> </span><span class="n">add</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span>
+    </span><span class="k">match</span><span> </span><span class="n">norm1</span><span> </span><span class="n">t1</span><span> </span><span class="k">with</span><span>
+    </span><span class="o">|</span><span> </span><span class="n">zero</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">norm1</span><span> </span><span class="n">t2</span><span>
+    </span><span class="o">|</span><span> </span><span class="n">t1</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span>
+        </span><span class="k">match</span><span> </span><span class="n">norm1</span><span> </span><span class="n">t2</span><span> </span><span class="k">with</span><span>
+        </span><span class="o">|</span><span> </span><span class="n">zero</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">t1</span><span>
+        </span><span class="o">|</span><span> </span><span class="n">t2</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">add</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span>
+        </span><span class="k">end</span><span>
+    </span><span class="k">end</span><span>
+ </span><span class="k">end</span><span class="o">.</span><span>
+</span></dt><dd><span>norm1 is defined
+norm1 is recursively defined (guarded on 1st argument)
+</span></dd>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">norm</span><span> </span><span class="nv">t</span><span> </span><span class="o">:=</span><span> </span><span class="n">normA</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">t</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>norm is defined
+</span></dd>
+<dt><span class="kn">Section</span><span> </span><span class="nf">assoc_reflection_proofs</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Variable</span><span> </span><span class="nv">T</span><span> </span><span class="o">:</span><span> </span><span class="kt">Type</span><span class="o">.</span><span>
+</span></dt><dd><span>T is declared
+</span></dd>
+<dt><span class="kn">Variable</span><span> </span><span class="nv">unit</span><span> </span><span class="o">:</span><span> </span><span class="n">T</span><span class="o">.</span><span>
+</span></dt><dd><span>unit is declared
+</span></dd>
+<dt><span class="kn">Variable</span><span> </span><span class="nv">op</span><span> </span><span class="o">:</span><span> </span><span class="n">T</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">T</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">T</span><span class="o">.</span><span>
+</span></dt><dd><span>op is declared
+</span></dd>
+<dt><span class="kn">Hypothesis</span><span> </span><span class="nv">op_assoc</span><span> </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="nv">a</span><span> </span><span class="nv">b</span><span> </span><span class="nv">c</span><span class="o">,</span><span> </span><span class="n">op</span><span> </span><span class="n">a</span><span> </span><span class="o">(</span><span class="n">op</span><span> </span><span class="n">b</span><span> </span><span class="n">c</span><span class="o">)</span><span> </span><span class="o">=</span><span> </span><span class="n">op</span><span> </span><span class="o">(</span><span class="n">op</span><span> </span><span class="n">a</span><span> </span><span class="n">b</span><span class="o">)</span><span> </span><span class="n">c</span><span class="o">.</span><span>
+</span></dt><dd><span>op_assoc is declared
+</span></dd>
+<dt><span class="kn">Hypothesis</span><span> </span><span class="nv">unit_l</span><span> </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="nv">a</span><span class="o">,</span><span> </span><span class="n">op</span><span> </span><span class="n">unit</span><span> </span><span class="n">a</span><span> </span><span class="o">=</span><span> </span><span class="n">a</span><span class="o">.</span><span>
+</span></dt><dd><span>unit_l is declared
+</span></dd>
+<dt><span class="kn">Hypothesis</span><span> </span><span class="nv">unit_r</span><span> </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="nv">a</span><span class="o">,</span><span> </span><span class="n">op</span><span> </span><span class="n">a</span><span> </span><span class="n">unit</span><span> </span><span class="o">=</span><span> </span><span class="n">a</span><span class="o">.</span><span>
+</span></dt><dd><span>unit_r is declared
+</span></dd>
+<dt><span class="kn">Lemma</span><span> </span><span class="nf">normAxA</span><span> </span><span class="nv">t1</span><span> </span><span class="nv">t2</span><span> </span><span class="o">:</span><span> </span><span class="n">normAx</span><span> </span><span class="n">t1</span><span> </span><span class="o">(</span><span class="n">normA</span><span> </span><span class="n">t2</span><span class="o">)</span><span> </span><span class="o">=</span><span> </span><span class="n">normA</span><span> </span><span class="o">(</span><span class="n">add</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  t1, t2 : lang
+  ============================
+  normAx t1 (normA t2)</span><span> =</span><span> normA (add t1 t2)
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span> </span><span class="bp">by</span><span> </span><span class="o">[</span><span class="o">]</span><span class="o">.</span><span> </span><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dd><span>
+No more goals.
+
+</span></dd>
+<dt><span class="kn">Lemma</span><span> </span><span class="nf">normAx_add</span><span> </span><span class="o">{</span><span class="nv">t1</span><span> </span><span class="nv">t2</span><span> </span><span class="nv">s</span><span class="o">}</span><span> </span><span class="o">:</span><span> </span><span class="n">normAx</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span> </span><span class="o">=</span><span> </span><span class="n">s</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="k">exists</span><span> </span><span class="nv">s1</span><span> </span><span class="nv">s2</span><span class="o">,</span><span> </span><span class="n">s</span><span> </span><span class="o">=</span><span> </span><span class="n">add</span><span> </span><span class="n">s1</span><span> </span><span class="n">s2</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  t1, t2, s : lang
+  ============================
+  normAx t1 t2</span><span> =</span><span> s</span><span> -&gt;</span><span> </span><span>exists</span><span> s1 s2 : lang</span><span>,</span><span> s</span><span> =</span><span> add s1 s2
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">elim</span><span class="o">:</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span> </span><span class="n">s</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">=</span><span> </span><span class="o">[</span><span class="n">i</span><span class="o">|</span><span class="o">|</span><span class="n">w1</span><span> </span><span class="n">H1</span><span> </span><span class="n">w2</span><span> </span><span class="n">H2</span><span class="o">]</span><span> </span><span class="n">t2</span><span> </span><span class="n">s</span><span> </span><span class="o">&lt;</span><span class="o">-</span><span class="o">;</span><span> </span><span class="kp">try</span><span> </span><span class="bp">by</span><span> </span><span class="kp">do</span><span> </span><span class="mi">2</span><span> </span><span class="nb">eexists</span><span class="o">;</span><span> </span><span class="bp">reflexivity</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  w1 : lang
+  H1 :
+    </span><span class="ansi-bold">forall</span><span> t2 s : lang,
+    normAx w1 t2</span><span> =</span><span> s</span><span> -&gt;</span><span> </span><span>exists</span><span> s1 s2 : lang</span><span>,</span><span> s</span><span> =</span><span> add s1 s2
+  w2 : lang
+  H2 :
+    </span><span class="ansi-bold">forall</span><span> t2 s : lang,
+    normAx w2 t2</span><span> =</span><span> s</span><span> -&gt;</span><span> </span><span>exists</span><span> s1 s2 : lang</span><span>,</span><span> s</span><span> =</span><span> add s1 s2
+  t2, s : lang
+  ============================
+  </span><span>exists</span><span> s1 s2 : lang</span><span>,</span><span> normAx w1 (normAx w2 t2)</span><span> =</span><span> add s1 s2
+</span></dd>
+<dt><span class="bp">by</span><span> </span><span class="nb">case</span><span> </span><span class="n">E</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">normAx</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span class="o">)</span><span class="o">;</span><span> </span><span class="nb">case</span><span class="o">/</span><span class="n">H1</span><span class="o">:</span><span> </span><span class="n">E</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">s1</span><span> </span><span class="o">[</span><span class="n">s2</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span class="o">]</span><span class="o">;</span><span> </span><span class="kp">do</span><span> </span><span class="mi">2</span><span> </span><span class="nb">eexists</span><span class="o">;</span><span> </span><span class="bp">reflexivity</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">norm1_zero</span><span> </span><span class="o">{</span><span class="nv">l</span><span> </span><span class="nv">t</span><span class="o">}</span><span> </span><span class="o">:</span><span> </span><span class="n">norm1</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">zero</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">unit</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t : lang
+  ============================
+  norm1 t</span><span> =</span><span> zero</span><span> -&gt;</span><span> interp T unit op l t</span><span> =</span><span> unit
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="bp">by</span><span> </span><span class="nb">elim</span><span class="o">:</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">|</span><span class="o">|</span><span class="n">s1</span><span> </span><span class="o">+</span><span> </span><span class="n">s2</span><span class="o">]</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span class="o">;</span><span> </span><span class="nb">case</span><span> </span><span class="n">E1</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">s1</span><span class="o">)</span><span class="o">;</span><span> </span><span class="nb">case</span><span> </span><span class="n">E2</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">s2</span><span class="o">)</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">/</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">norm_zero</span><span> </span><span class="o">{</span><span class="nv">l</span><span> </span><span class="nv">t</span><span class="o">}</span><span> </span><span class="o">:</span><span> </span><span class="n">norm</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">zero</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">unit</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t : lang
+  ============================
+  norm t</span><span> =</span><span> zero</span><span> -&gt;</span><span> interp T unit op l t</span><span> =</span><span> unit
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">rewrite</span><span> </span><span class="o">/</span><span class="n">norm</span><span class="o">;</span><span> </span><span class="nb">case</span><span> </span><span class="n">E</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">t</span><span class="o">)</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">|</span><span class="o">|</span><span class="n">x</span><span> </span><span class="n">y</span><span class="o">]</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">;</span><span> </span><span class="kp">first</span><span> </span><span class="bp">by</span><span> </span><span class="nb">rewrite</span><span> </span><span class="o">(</span><span class="n">norm1_zero</span><span> </span><span class="n">E</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t, x, y : lang
+  E : norm1 t</span><span> =</span><span> add x y
+  ============================
+  normA (add x y)</span><span> =</span><span> zero</span><span> -&gt;</span><span> interp T unit op l t</span><span> =</span><span> unit
+</span></dd>
+<dt><span class="bp">by</span><span> </span><span class="nb">move</span><span class="o">/</span><span class="n">normAx_add</span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">]</span><span> </span><span class="o">?</span><span> </span><span class="o">[</span><span class="o">]</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">norm1_var</span><span> </span><span class="o">{</span><span class="nv">l</span><span> </span><span class="nv">t</span><span> </span><span class="nv">j</span><span class="o">}</span><span> </span><span class="o">:</span><span> </span><span class="n">norm1</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">var</span><span> </span><span class="n">j</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">nth</span><span> </span><span class="n">j</span><span> </span><span class="n">l</span><span> </span><span class="n">unit</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t : lang
+  j : nat
+  ============================
+  norm1 t</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l t</span><span> =</span><span> nth j l unit
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">elim</span><span class="o">:</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="n">i</span><span> </span><span class="o">[</span><span class="o">-</span><span class="o">&gt;</span><span class="o">]</span><span class="o">|</span><span class="o">|</span><span class="n">s1</span><span> </span><span class="o">+</span><span> </span><span class="n">s2</span><span class="o">]</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span class="o">;</span><span> </span><span class="nb">case</span><span> </span><span class="n">E1</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">s1</span><span class="o">)</span><span class="o">;</span><span> </span><span class="nb">case</span><span> </span><span class="n">E2</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">s2</span><span class="o">)</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span class="o">.</span><span>
+</span></dt><dd><span>2 goals
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  j : nat
+  s1, s2 : lang
+  _i_ : nat
+  E1 : norm1 s1</span><span> =</span><span> var _i_
+  E2 : norm1 s2</span><span> =</span><span> zero
+  ============================
+  (var _i_</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l s1</span><span> =</span><span> nth j l unit)</span><span> -&gt;</span><span>
+  (zero</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l s2</span><span> =</span><span> nth j l unit)</span><span> -&gt;</span><span>
+  var _i_</span><span> =</span><span> var j</span><span> -&gt;</span><span>
+  op (interp T unit op l s1) (interp T unit op l s2)</span><span> =</span><span> nth j l unit
+
+goal 2 is:
+ (zero</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l s1</span><span> =</span><span> nth j l unit)</span><span> -&gt;</span><span>
+ (var _i_</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l s2</span><span> =</span><span> nth j l unit)</span><span> -&gt;</span><span>
+ var _i_</span><span> =</span><span> var j</span><span> -&gt;</span><span>
+ op (interp T unit op l s1) (interp T unit op l s2)</span><span> =</span><span> nth j l unit
+</span></dd>
+<dt><span>  </span><span class="bp">by</span><span> </span><span class="nb">rewrite</span><span> </span><span class="o">(</span><span class="n">norm1_zero</span><span> </span><span class="n">E2</span><span class="o">)</span><span> </span><span class="n">unit_r</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">+</span><span> </span><span class="n">_</span><span> </span><span class="n">H</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  j : nat
+  s1, s2 : lang
+  E1 : norm1 s1</span><span> =</span><span> zero
+  _i_ : nat
+  E2 : norm1 s2</span><span> =</span><span> var _i_
+  ============================
+  (zero</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l s1</span><span> =</span><span> nth j l unit)</span><span> -&gt;</span><span>
+  (var _i_</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l s2</span><span> =</span><span> nth j l unit)</span><span> -&gt;</span><span>
+  var _i_</span><span> =</span><span> var j</span><span> -&gt;</span><span>
+  op (interp T unit op l s1) (interp T unit op l s2)</span><span> =</span><span> nth j l unit
+</span></dd>
+<dt><span class="bp">by</span><span> </span><span class="nb">rewrite</span><span> </span><span class="o">(</span><span class="n">norm1_zero</span><span> </span><span class="n">E1</span><span class="o">)</span><span> </span><span class="n">unit_l</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">_</span><span> </span><span class="o">+</span><span> </span><span class="n">H</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">norm_var</span><span> </span><span class="o">{</span><span class="nv">l</span><span> </span><span class="nv">t</span><span> </span><span class="nv">j</span><span class="o">}</span><span> </span><span class="o">:</span><span> </span><span class="n">norm</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">var</span><span> </span><span class="n">j</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">nth</span><span> </span><span class="n">j</span><span> </span><span class="n">l</span><span> </span><span class="n">unit</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t : lang
+  j : nat
+  ============================
+  norm t</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l t</span><span> =</span><span> nth j l unit
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">rewrite</span><span> </span><span class="o">/</span><span class="n">norm</span><span class="o">;</span><span> </span><span class="nb">case</span><span> </span><span class="n">E</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">t</span><span class="o">)</span><span class="o">;</span><span> </span><span class="nb">rewrite</span><span> </span><span class="o">/</span><span class="o">=</span><span> </span><span class="o">?</span><span class="o">(</span><span class="n">norm1_var</span><span> </span><span class="n">E</span><span class="o">)</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">;</span><span> </span><span class="kp">first</span><span> </span><span class="bp">by</span><span> </span><span class="nb">move</span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">-</span><span class="o">&gt;</span><span class="o">]</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t : lang
+  j : nat
+  _x_, _y_ : lang
+  E : norm1 t</span><span> =</span><span> add _x_ _y_
+  ============================
+  normAx _x_ (normA _y_)</span><span> =</span><span> var j</span><span> -&gt;</span><span> interp T unit op l t</span><span> =</span><span> nth j l unit
+</span></dd>
+<dt><span class="bp">by</span><span> </span><span class="nb">move</span><span class="o">/</span><span class="n">normAx_add</span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">]</span><span> </span><span class="o">?</span><span> </span><span class="o">[</span><span class="o">]</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">norm1_add</span><span> </span><span class="o">{</span><span class="nv">l</span><span> </span><span class="nv">t</span><span> </span><span class="nv">s1</span><span> </span><span class="nv">s2</span><span class="o">}</span><span> </span><span class="o">:</span><span> </span><span class="n">norm1</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">add</span><span> </span><span class="n">s1</span><span> </span><span class="n">s2</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">op</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">s1</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">s2</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t, s1, s2 : lang
+  ============================
+  norm1 t</span><span> =</span><span> add s1 s2</span><span> -&gt;</span><span>
+  interp T unit op l t</span><span> =</span><span> op (interp T unit op l s1) (interp T unit op l s2)
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">elim</span><span class="o">:</span><span> </span><span class="n">t</span><span> </span><span class="n">s1</span><span> </span><span class="n">s2</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">|</span><span class="o">|</span><span class="n">w1</span><span> </span><span class="o">+</span><span> </span><span class="n">w2</span><span> </span><span class="o">+</span><span> </span><span class="n">s1</span><span> </span><span class="n">s2</span><span class="o">]</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  w1, w2, s1, s2 : lang
+  ============================
+  (</span><span class="ansi-bold">forall</span><span> s3 s4 : lang,
+   norm1 w1</span><span> =</span><span> add s3 s4</span><span> -&gt;</span><span>
+   interp T unit op l w1</span><span> =</span><span> op (interp T unit op l s3) (interp T unit op l s4))</span><span> -&gt;</span><span>
+  (</span><span class="ansi-bold">forall</span><span> s3 s4 : lang,
+   norm1 w2</span><span> =</span><span> add s3 s4</span><span> -&gt;</span><span>
+   interp T unit op l w2</span><span> =</span><span> op (interp T unit op l s3) (interp T unit op l s4))</span><span> -&gt;</span><span>
+  </span><span class="ansi-bold">match</span><span> norm1 w1 </span><span class="ansi-bold">with</span><span>
+  | var i =&gt;
+      </span><span class="ansi-bold">match</span><span> norm1 w2 </span><span class="ansi-bold">with</span><span>
+      | var i0 =&gt; add (var i) (var i0)
+      | zero =&gt; var i
+      | add x y =&gt; add (var i) (add x y)
+      </span><span class="ansi-bold">end</span><span>
+  | zero =&gt; norm1 w2
+  | add x y =&gt;
+      </span><span class="ansi-bold">match</span><span> norm1 w2 </span><span class="ansi-bold">with</span><span>
+      | var i =&gt; add (add x y) (var i)
+      | zero =&gt; add x y
+      | add x0 y0 =&gt; add (add x y) (add x0 y0)
+      </span><span class="ansi-bold">end</span><span>
+  </span><span class="ansi-bold">end</span><span> =</span><span> add s1 s2</span><span> -&gt;</span><span>
+  op (interp T unit op l w1) (interp T unit op l w2)</span><span> =</span><span>
+  op (interp T unit op l s1) (interp T unit op l s2)
+</span></dd>
+<dt><span class="bp">by</span><span> </span><span class="nb">case</span><span> </span><span class="n">E1</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">w1</span><span class="o">)</span><span class="o">;</span><span> </span><span class="nb">case</span><span> </span><span class="n">E2</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">w2</span><span class="o">)</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span> </span><span class="o">+</span><span class="o">+</span><span> </span><span class="o">[</span><span class="o">&lt;</span><span class="o">-</span><span> </span><span class="o">&lt;</span><span class="o">-</span><span class="o">]</span><span> </span><span class="o">/</span><span class="o">=</span><span class="o">;</span><span>
+  </span><span class="kp">do</span><span> </span><span class="mi">2</span><span class="o">!</span><span> </span><span class="o">[</span><span> </span><span class="nb">move</span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">(</span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="o">(</span><span class="n">refl_equal</span><span> </span><span class="n">_</span><span class="o">)</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="o">|</span><span> </span><span class="nb">move</span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">_</span><span class="o">]</span><span class="o">;</span><span>
+  </span><span class="nb">rewrite</span><span> </span><span class="o">?</span><span class="o">(</span><span class="n">norm1_zero</span><span> </span><span class="n">E1</span><span class="o">)</span><span> </span><span class="o">?</span><span class="o">(</span><span class="n">norm1_zero</span><span> </span><span class="n">E2</span><span class="o">)</span><span> </span><span class="o">?</span><span class="o">(</span><span class="n">norm1_var</span><span> </span><span class="n">E1</span><span class="o">)</span><span> </span><span class="o">?</span><span class="o">(</span><span class="n">norm1_var</span><span> </span><span class="n">E2</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">normAxP</span><span> </span><span class="o">{</span><span class="nv">l</span><span> </span><span class="nv">t1</span><span> </span><span class="nv">t2</span><span class="o">}</span><span> </span><span class="o">:</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="o">(</span><span class="n">normAx</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span class="o">)</span><span> </span><span class="o">=</span><span> </span><span class="n">op</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t1</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t2</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t1, t2 : lang
+  ============================
+  interp T unit op l (normAx t1 t2)</span><span> =</span><span>
+  op (interp T unit op l t1) (interp T unit op l t2)
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span> </span><span class="bp">by</span><span> </span><span class="nb">elim</span><span class="o">:</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">|</span><span class="o">|</span><span class="n">s1</span><span> </span><span class="n">Hs1</span><span> </span><span class="n">s2</span><span> </span><span class="n">Hs2</span><span class="o">]</span><span> </span><span class="n">t2</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span class="o">;</span><span> </span><span class="nb">rewrite</span><span> </span><span class="n">Hs1</span><span> </span><span class="n">Hs2</span><span> </span><span class="o">!</span><span class="n">op_assoc</span><span class="o">.</span><span> </span><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dd><span>
+No more goals.
+
+</span></dd>
+<dt><span class="kn">Lemma</span><span> </span><span class="nf">normAP</span><span> </span><span class="o">{</span><span class="nv">l</span><span class="o">}</span><span> </span><span class="nv">t</span><span> </span><span class="o">:</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="o">(</span><span class="n">normA</span><span> </span><span class="n">t</span><span class="o">)</span><span> </span><span class="o">=</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t : lang
+  ============================
+  interp T unit op l (normA t)</span><span> =</span><span> interp T unit op l t
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span> </span><span class="bp">by</span><span> </span><span class="nb">elim</span><span class="o">:</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span> </span><span class="n">x</span><span> </span><span class="n">Hx</span><span> </span><span class="n">y</span><span> </span><span class="n">Hy</span><span class="o">;</span><span> </span><span class="nb">rewrite</span><span> </span><span class="n">normAxP</span><span> </span><span class="n">Hy</span><span class="o">.</span><span> </span><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dd><span>
+No more goals.
+
+</span></dd>
+<dt><span class="kn">Lemma</span><span> </span><span class="nf">norm_add</span><span> </span><span class="o">{</span><span class="nv">l</span><span> </span><span class="nv">t</span><span> </span><span class="nv">s1</span><span> </span><span class="nv">s2</span><span class="o">}</span><span> </span><span class="o">:</span><span> </span><span class="n">norm</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">add</span><span> </span><span class="n">s1</span><span> </span><span class="n">s2</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t</span><span> </span><span class="o">=</span><span> </span><span class="n">op</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">s1</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">s2</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t, s1, s2 : lang
+  ============================
+  norm t</span><span> =</span><span> add s1 s2</span><span> -&gt;</span><span>
+  interp T unit op l t</span><span> =</span><span> op (interp T unit op l s1) (interp T unit op l s2)
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">rewrite</span><span> </span><span class="o">/</span><span class="n">norm</span><span class="o">;</span><span> </span><span class="nb">case</span><span> </span><span class="n">E</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm1</span><span> </span><span class="n">t</span><span class="o">)</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">|</span><span class="o">|</span><span class="n">x</span><span> </span><span class="n">y</span><span class="o">]</span><span class="o">;</span><span> </span><span class="nb">rewrite</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span> </span><span class="o">(</span><span class="n">norm1_add</span><span> </span><span class="n">E</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t, s1, s2, x, y : lang
+  E : norm1 t</span><span> =</span><span> add x y
+  ============================
+  normAx x (normA y)</span><span> =</span><span> add s1 s2</span><span> -&gt;</span><span>
+  op (interp T unit op l x) (interp T unit op l y)</span><span> =</span><span>
+  op (interp T unit op l s1) (interp T unit op l s2)
+</span></dd>
+<dt><span class="nb">elim</span><span class="o">:</span><span> </span><span class="n">x</span><span> </span><span class="n">y</span><span> </span><span class="n">s1</span><span> </span><span class="n">s2</span><span> </span><span class="o">{</span><span class="n">E</span><span class="o">}</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span> </span><span class="o">[</span><span class="o">&gt;</span><span class="o">[</span><span class="o">&lt;</span><span class="o">-</span><span> </span><span class="o">&lt;</span><span class="o">-</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span class="o">]</span><span class="o">|</span><span class="o">&gt;</span><span class="o">[</span><span class="o">&lt;</span><span class="o">-</span><span> </span><span class="o">&lt;</span><span class="o">-</span><span class="o">]</span><span class="o">|</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">y</span><span> </span><span class="o">+</span><span> </span><span class="n">w</span><span> </span><span class="n">s1</span><span> </span><span class="n">s2</span><span class="o">]</span><span class="o">;</span><span> </span><span class="nb">rewrite</span><span> </span><span class="nl">?normAP</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">=</span><span> </span><span class="nl">?unit_l</span><span> </span><span class="o">/</span><span class="o">/</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t, x, y, w, s1, s2 : lang
+  ============================
+  (</span><span class="ansi-bold">forall</span><span> y0 s3 s4 : lang,
+   normAx x (normA y0)</span><span> =</span><span> add s3 s4</span><span> -&gt;</span><span>
+   op (interp T unit op l x) (interp T unit op l y0)</span><span> =</span><span>
+   op (interp T unit op l s3) (interp T unit op l s4))</span><span> -&gt;</span><span>
+  (</span><span class="ansi-bold">forall</span><span> y0 s3 s4 : lang,
+   normAx y (normA y0)</span><span> =</span><span> add s3 s4</span><span> -&gt;</span><span>
+   op (interp T unit op l y) (interp T unit op l y0)</span><span> =</span><span>
+   op (interp T unit op l s3) (interp T unit op l s4))</span><span> -&gt;</span><span>
+  normAx x (normAx y (normA w))</span><span> =</span><span> add s1 s2</span><span> -&gt;</span><span>
+  op (op (interp T unit op l x) (interp T unit op l y))
+    (interp T unit op l w)</span><span> =</span><span>
+  op (interp T unit op l s1) (interp T unit op l s2)
+</span></dd>
+<dt><span class="bp">by</span><span> </span><span class="nb">rewrite</span><span> </span><span class="n">normAxA</span><span> </span><span class="o">-</span><span class="o">!</span><span class="n">op_assoc</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">+</span><span class="o">+</span><span> </span><span class="n">E</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">/</span><span class="o">(</span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="n">E</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">normP_</span><span> </span><span class="nv">l</span><span> </span><span class="nv">t1</span><span> </span><span class="nv">t2</span><span> </span><span class="o">:</span><span> </span><span class="n">norm</span><span> </span><span class="n">t1</span><span> </span><span class="o">=</span><span> </span><span class="n">norm</span><span> </span><span class="n">t2</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t1</span><span> </span><span class="o">=</span><span> </span><span class="n">interp</span><span> </span><span class="n">T</span><span> </span><span class="n">unit</span><span> </span><span class="n">op</span><span> </span><span class="n">l</span><span> </span><span class="n">t2</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t1, t2 : lang
+  ============================
+  norm t1</span><span> =</span><span> norm t2</span><span> -&gt;</span><span> interp T unit op l t1</span><span> =</span><span> interp T unit op l t2
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">case</span><span> </span><span class="n">E</span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">norm</span><span> </span><span class="n">t2</span><span class="o">)</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">?</span><span class="o">|</span><span class="o">|</span><span class="o">?</span><span class="o">?</span><span class="o">]</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="o">[</span><span class="o">/</span><span class="n">norm_var</span><span class="o">|</span><span class="o">/</span><span class="n">norm_zero</span><span class="o">|</span><span class="o">/</span><span class="n">norm_add</span><span class="o">]</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span class="o">.</span><span>
+</span></dt><dd><span>3 goals
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t1, t2 : lang
+  _i_ : nat
+  E : norm t2</span><span> =</span><span> var _i_
+  ============================
+  nth _i_ l unit</span><span> =</span><span> interp T unit op l t2
+
+goal 2 is:
+ unit</span><span> =</span><span> interp T unit op l t2
+goal 3 is:
+ op (interp T unit op l _x_) (interp T unit op l _y_)</span><span> =</span><span> interp T unit op l t2
+</span></dd>
+<dt><span>  </span><span class="bp">by</span><span> </span><span class="nb">rewrite</span><span> </span><span class="o">(</span><span class="n">norm_var</span><span> </span><span class="n">E</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>2 goals
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t1, t2 : lang
+  E : norm t2</span><span> =</span><span> zero
+  ============================
+  unit</span><span> =</span><span> interp T unit op l t2
+
+goal 2 is:
+ op (interp T unit op l _x_) (interp T unit op l _y_)</span><span> =</span><span> interp T unit op l t2
+</span></dd>
+<dt><span>  </span><span class="bp">by</span><span> </span><span class="nb">rewrite</span><span> </span><span class="o">(</span><span class="n">norm_zero</span><span> </span><span class="n">E</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  unit : T
+  op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T
+  op_assoc : </span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c
+  unit_l : </span><span class="ansi-bold">forall</span><span> a : T, op unit a</span><span> =</span><span> a
+  unit_r : </span><span class="ansi-bold">forall</span><span> a : T, op a unit</span><span> =</span><span> a
+  l : list T
+  t1, t2, _x_, _y_ : lang
+  E : norm t2</span><span> =</span><span> add _x_ _y_
+  ============================
+  op (interp T unit op l _x_) (interp T unit op l _y_)</span><span> =</span><span>
+  interp T unit op l t2
+</span></dd>
+<dt><span class="bp">by</span><span> </span><span class="nb">rewrite</span><span> </span><span class="o">(</span><span class="n">norm_add</span><span> </span><span class="n">E</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">End</span><span> </span><span class="nf">assoc_reflection_proofs</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">End</span><span> </span><span class="nf">MonoidTheory</span><span class="o">.</span><span>
+</span></dt><dd><span>Module MonoidTheory is defined
+</span></dd>
+</dl>
+</div>
+<p>Now, let's build the tactic. This is the correctness theorem of our
+normalizer:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Import</span><span> </span><span class="n">MonoidTheory</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Definition</span><span> </span><span class="nf">normP</span><span> </span><span class="o">{</span><span class="nv">T</span><span> </span><span class="nv">e</span><span> </span><span class="nv">op</span><span> </span><span class="nv">gamma</span><span> </span><span class="nv">t1</span><span> </span><span class="nv">t2</span><span class="o">}</span><span> </span><span class="nv">p1</span><span> </span><span class="nv">p2</span><span> </span><span class="nv">p3</span><span> </span><span class="nv">H</span><span> </span><span class="o">:=</span><span> </span><span class="o">&#64;</span><span class="n">normP_</span><span> </span><span class="n">T</span><span> </span><span class="n">e</span><span> </span><span class="n">op</span><span> </span><span class="n">p1</span><span> </span><span class="n">p2</span><span> </span><span class="n">p3</span><span> </span><span class="n">gamma</span><span> </span><span class="n">t1</span><span> </span><span class="n">t2</span><span> </span><span class="n">H</span><span class="o">.</span><span>
+</span></dt><dd><span>normP is defined
+</span></dd>
+<dt><span class="kn">About</span><span> </span><span class="n">normP</span><span class="o">.</span><span>
+</span></dt><dd><span>normP :
+</span><span class="ansi-bold">forall</span><span> {T : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>} {e : T} {op : T</span><span> -&gt;</span><span> T</span><span> -&gt;</span><span> T} {gamma : list T} {t1 t2 : lang},
+(</span><span class="ansi-bold">forall</span><span> a b c : T, op a (op b c)</span><span> =</span><span> op (op a b) c)</span><span> -&gt;</span><span>
+(</span><span class="ansi-bold">forall</span><span> a : T, op e a</span><span> =</span><span> a)</span><span> -&gt;</span><span>
+(</span><span class="ansi-bold">forall</span><span> a : T, op a e</span><span> =</span><span> a)</span><span> -&gt;</span><span>
+norm t1</span><span> =</span><span> norm t2</span><span> -&gt;</span><span> interp T e op gamma t1</span><span> =</span><span> interp T e op gamma t2
+
+normP is not universe polymorphic
+Arguments </span><span class="ansi-fg-light-green">normP</span><span> {T}%_type_scope {e} {op}%_function_scope 
+  {gamma}%_list_scope {t1 t2} (p1 p2 p3)%_function_scope 
+  H
+normP is transparent
+Expands to: Constant Top.normP
+Declared in toplevel input, characters 4071-4076
+</span></dd>
+<dt><span class="kn">Open Scope</span><span> </span><span class="n">Z_scope</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Goal</span><span> </span><span class="k">forall</span><span> </span><span class="nv">x</span><span> </span><span class="nv">y</span><span> </span><span class="nv">z</span><span> </span><span class="nv">t</span><span class="o">,</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="o">+</span><span> </span><span class="o">(</span><span class="n">z</span><span> </span><span class="o">+</span><span> </span><span class="mi">0</span><span> </span><span class="o">+</span><span> </span><span class="n">t</span><span class="o">)</span><span> </span><span class="o">=</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="o">(</span><span class="n">y</span><span> </span><span class="o">+</span><span> </span><span class="n">z</span><span class="o">)</span><span> </span><span class="o">+</span><span> </span><span class="n">t</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> x y z t : Z, x</span><span> +</span><span> y</span><span> +</span><span> (z</span><span> +</span><span> 0</span><span> +</span><span> t)</span><span> =</span><span> x</span><span> +</span><span> (y</span><span> +</span><span> z)</span><span> +</span><span> t
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">intros</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x, y, z, t : Z
+  ============================
+  x</span><span> +</span><span> y</span><span> +</span><span> (z</span><span> +</span><span> 0</span><span> +</span><span> t)</span><span> =</span><span> x</span><span> +</span><span> (y</span><span> +</span><span> z)</span><span> +</span><span> t
+</span></dd>
+<dt><span class="nb">change</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="n">Z</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">zero</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">x</span><span class="o">:</span><span class="o">:</span><span class="n">y</span><span class="o">:</span><span class="o">:</span><span class="n">z</span><span class="o">:</span><span class="o">:</span><span class="n">t</span><span class="o">:</span><span class="o">:</span><span class="n">nil</span><span class="o">)</span><span>
+             </span><span class="o">(</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">var</span><span> </span><span class="mi">0</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">var</span><span> </span><span class="mi">1</span><span class="o">)</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">var</span><span> </span><span class="mi">2</span><span class="o">)</span><span> </span><span class="n">zero</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">var</span><span> </span><span class="mi">3</span><span class="o">)</span><span class="o">)</span><span class="o">)</span><span>
+        </span><span class="o">=</span><span>
+        </span><span class="n">interp</span><span> </span><span class="n">Z</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">zero</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">x</span><span class="o">:</span><span class="o">:</span><span class="n">y</span><span class="o">:</span><span class="o">:</span><span class="n">z</span><span class="o">:</span><span class="o">:</span><span class="n">t</span><span class="o">:</span><span class="o">:</span><span class="n">nil</span><span class="o">)</span><span>
+              </span><span class="o">(</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">var</span><span> </span><span class="mi">0</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">add</span><span> </span><span class="o">(</span><span class="n">var</span><span> </span><span class="mi">1</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">var</span><span> </span><span class="mi">2</span><span class="o">)</span><span class="o">)</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">var</span><span> </span><span class="mi">3</span><span class="o">)</span><span class="o">)</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x, y, z, t : Z
+  ============================
+  interp Z </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">zero</span><span> </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">add</span><span> (x </span><span>:: </span><span>y </span><span>:: </span><span>z </span><span>:: </span><span>t </span><span>:: </span><span>nil)
+    (add (add (var 0) (var 1)) (add (add (var 2) zero) (var 3)))</span><span> =</span><span>
+  interp Z </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">zero</span><span> </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">add</span><span> (x </span><span>:: </span><span>y </span><span>:: </span><span>z </span><span>:: </span><span>t </span><span>:: </span><span>nil)
+    (add (add (var 0) (add (var 1) (var 2))) (var 3))
+</span></dd>
+<dt><span class="nb">apply</span><span class="o">:</span><span> </span><span class="n">normP</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_assoc</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_0_l</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_0_r</span><span> </span><span class="n">_</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x, y, z, t : Z
+  ============================
+  norm (add (add (var 0) (var 1)) (add (add (var 2) zero) (var 3)))</span><span> =</span><span>
+  norm (add (add (var 0) (add (var 1) (var 2))) (var 3))
+</span></dd>
+<dt><span class="bp">reflexivity</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Now let's implement a tactic that does the <code class="docutils literal notranslate"><span class="pre">change</span></code> step (reification) and
+applies the correctness lemma for us:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl class="simple">
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Db</span><span> </span><span class="n">monoid</span><span class="o">.</span><span class="n">db</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">is_monoid</span><span class="w">
+    </span><span class="kt">term</span><span class="w"> </span><span class="c">% type
+</span><span class="w">    </span><span class="kt">-&gt;</span><span class="w">
+    </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="c">% zero
+</span><span class="w">    </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="c">% op
+</span><span class="w">    </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="c">% assoc
+</span><span class="w">    </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="c">% unit_l
+</span><span class="w">    </span><span class="kt">term</span><span>.</span><span class="w"> </span><span class="c">% unit_r
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">monoid</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="kn">Db</span><span> </span><span class="n">monoid</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span class="c">% [mem L X N] asserts that X is at position N in L.
+</span><span class="c">% The list is open-ended, that is it terminates with an Elpi unification
+</span><span class="c">% variable, so that the list can be extended with new elements if needed.
+</span><span class="c">% e.g. mem (3 :: L) 4 N ---&gt; L = 4 :: L1, N = 1
+</span><span class="c">% Note: we build a Rocq list, since we have to generate that anyway. We could
+</span><span class="c">% use an Elpi list or any other data structure here, but then we would need
+</span><span class="c">% to convert back anyway.
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">mem</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+</span><span>mem</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">X</span><span> </span><span class="o">:</span><span class="o">:</span><span> </span><span class="n">_</span><span>     </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">O</span><span>      </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w">
+</span><span>mem</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">_</span><span>    </span><span class="o">:</span><span class="o">:</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">XS</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">S</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">N</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>mem</span><span class="w"> </span><span class="n n-ElpiVariable">XS</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% Give that [mem] works with open ended lists we need a way to close it (assign
+</span><span class="c">% nil to the tail) at the very end of reification.
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">close</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+</span><span>close</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">nil</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w">
+</span><span>close</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">_</span><span> </span><span class="o">:</span><span class="o">:</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">XS</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>close</span><span class="w"> </span><span class="n n-ElpiVariable">XS</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% [quote Zero Op T AstT L] recognizes Zero and Op in T and generates the
+</span><span class="c">% corresponding AstT using the &quot;context&quot; L for variables standing for
+</span><span class="c">% terms that are not Zero nor Op
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">quote</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+</span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="w">  </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Op</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T1</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T2</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">add</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">R1</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">R2</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="w"> </span><span class="n n-ElpiVariable">T1</span><span class="w"> </span><span class="n n-ElpiVariable">R1</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="w"> </span><span class="n n-ElpiVariable">T2</span><span class="w"> </span><span class="n n-ElpiVariable">R2</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="o">.</span><span class="w">
+</span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w">   </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">zero</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w">
+</span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w">    </span><span class="n n-ElpiVariable">_</span><span class="w">   </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">var</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">R</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>mem</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% This preliminary version of the tactic takes as arguments the monoid signature
+</span><span class="c">% and changes the goal [A = B] into [interp L AstA = interp L AstB]
+</span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="o">&#64;</span><span class="n">eq</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">A</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">B</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>trm</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>trm</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="n n-ElpiVariable">AstA</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="n n-ElpiVariable">AstB</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>close</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% We are very low level here, we assign a term directly to the goal handler
+</span><span class="w">  </span><span class="c">% while one could use ltac primitives (as we do later)
+</span><span class="w">  </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span>   </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Zero</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Op</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">L</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">AstA</span><span class="o">)</span><span>
+          </span><span class="o">=</span><span> </span><span class="o">(</span><span class="n">interp</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Zero</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Op</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">L</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">AstB</span><span class="o">)</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% This implements the &quot;change&quot; tactic
+</span><span class="w">  </span><span>refine</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="o">(</span><span class="n">_</span><span> </span><span class="o">:</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Ty</span><span class="o">)</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="o">.</span><span class="w">
+
+</span><span class="k k-ElpiMode">:name</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">error</span><span class="s2">&quot;</span><span class="w">
+</span><span>solve</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.error</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Not an equality / no signature provided</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Tactic</span><span> </span><span class="kn">Notation</span><span> </span><span class="s2">&quot;</span><span class="s2">monoid</span><span class="s2">&quot;</span><span> </span><span class="kp">constr</span><span class="o">(</span><span class="n">zero</span><span class="o">)</span><span> </span><span class="kp">constr</span><span class="o">(</span><span class="n">add</span><span class="o">)</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">monoid</span><span> </span><span class="o">(</span><span class="n">zero</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">add</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Let's test the tactic:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Goal</span><span> </span><span class="k">forall</span><span> </span><span class="nv">x</span><span> </span><span class="nv">y</span><span> </span><span class="nv">z</span><span> </span><span class="nv">t</span><span class="o">,</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="o">+</span><span> </span><span class="o">(</span><span class="n">z</span><span> </span><span class="o">+</span><span> </span><span class="mi">0</span><span> </span><span class="o">+</span><span> </span><span class="n">t</span><span class="o">)</span><span> </span><span class="o">=</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="o">(</span><span class="n">y</span><span> </span><span class="o">+</span><span> </span><span class="n">z</span><span class="o">)</span><span> </span><span class="o">+</span><span> </span><span class="n">t</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> x y z t : Z, x</span><span> +</span><span> y</span><span> +</span><span> (z</span><span> +</span><span> 0</span><span> +</span><span> t)</span><span> =</span><span> x</span><span> +</span><span> (y</span><span> +</span><span> z)</span><span> +</span><span> t
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span>  </span><span class="nb">intros</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x, y, z, t : Z
+  ============================
+  x</span><span> +</span><span> y</span><span> +</span><span> (z</span><span> +</span><span> 0</span><span> +</span><span> t)</span><span> =</span><span> x</span><span> +</span><span> (y</span><span> +</span><span> z)</span><span> +</span><span> t
+</span></dd>
+<dt><span>  </span><span class="n">monoid</span><span> </span><span class="mi">0</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x, y, z, t : Z
+  ============================
+  interp Z 0 </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">add</span><span> (x </span><span>:: </span><span>y </span><span>:: </span><span>z </span><span>:: </span><span>t </span><span>:: </span><span>nil)
+    (add (add (var 0) (var 1)) (add (add (var 2) zero) (var 3)))</span><span> =</span><span>
+  interp Z 0 </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">add</span><span> (x </span><span>:: </span><span>y </span><span>:: </span><span>z </span><span>:: </span><span>t </span><span>:: </span><span>nil)
+    (add (add (var 0) (add (var 1) (var 2))) (var 3))
+</span></dd>
+<dt><span>  </span><span class="c">(*</span><span class="c"> OK, the goal was reified for us, we can use normP now </span><span class="c">*)</span><span>
+  </span><span class="nb">apply</span><span class="o">:</span><span> </span><span class="n">normP</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_assoc</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_0_l</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_0_r</span><span> </span><span class="n">_</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x, y, z, t : Z
+  ============================
+  norm (add (add (var 0) (var 1)) (add (add (var 2) zero) (var 3)))</span><span> =</span><span>
+  norm (add (add (var 0) (add (var 1) (var 2))) (var 3))
+</span></dd>
+<dt><span>  </span><span class="bp">reflexivity</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Now let's register the monoid for <code class="docutils literal notranslate"><span class="pre">Z</span></code> in the Db:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl class="simple">
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="n">monoid</span><span class="o">.</span><span class="n">db</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>is_monoid</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">Z</span><span> </span><span class="si">}}</span><span class="w">
+            </span><span class="si">{{</span><span> </span><span class="mi">0</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add</span><span> </span><span class="si">}}</span><span class="w">
+            </span><span class="si">{{</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_assoc</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_0_l</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">add_0_r</span><span> </span><span class="si">}}</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Now let's improve the tactic. This time we don't expect the signature but
+rather look it up in the Db:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Ltac</span><span> </span><span class="nf">my_compute</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="nb">vm_compute</span><span class="o">.</span><span>
+</span></dt><dd><span>my_compute is defined
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="n">monoid</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span class="k k-ElpiMode">:before</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">error</span><span class="s2">&quot;</span><span class="w">
+</span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="o">&#64;</span><span class="n">eq</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">A</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">B</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>is_monoid</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="w"> </span><span class="n n-ElpiVariable">Assoc</span><span class="w"> </span><span class="n n-ElpiVariable">Ul</span><span class="w"> </span><span class="n n-ElpiVariable">Ur</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="n n-ElpiVariable">AstA</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>quote</span><span class="w"> </span><span class="n n-ElpiVariable">Zero</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="n n-ElpiVariable">AstB</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>close</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% This time we use higher level combinators, closer to the standard ltac1 ones
+</span><span class="w">  </span><span>refine</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="o">&#64;</span><span class="n">normP</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Zero</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Op</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">L</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">AstA</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">AstB</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Assoc</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Ul</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Ur</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">SubG</span><span class="k k-ElpiKeyword">]</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.ltac.thenl</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="w">
+    </span><span>coq.ltac</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">my_compute</span><span class="s2">&quot;</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="c">% https://github.com/coq/coq/issues/10769
+</span><span class="w">    </span><span>coq.ltac</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">reflexivity</span><span class="s2">&quot;</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">SubG</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Tactic</span><span> </span><span class="kn">Notation</span><span> </span><span class="s2">&quot;</span><span class="s2">monoid</span><span class="s2">&quot;</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">monoid</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Let's test it once more:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Goal</span><span> </span><span class="k">forall</span><span> </span><span class="nv">x</span><span> </span><span class="nv">y</span><span> </span><span class="nv">z</span><span> </span><span class="nv">t</span><span class="o">,</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="o">+</span><span> </span><span class="o">(</span><span class="n">z</span><span> </span><span class="o">+</span><span> </span><span class="mi">0</span><span> </span><span class="o">+</span><span> </span><span class="n">t</span><span class="o">)</span><span> </span><span class="o">=</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="o">(</span><span class="n">y</span><span> </span><span class="o">+</span><span> </span><span class="n">z</span><span class="o">)</span><span> </span><span class="o">+</span><span> </span><span class="n">t</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> x y z t : Z, x</span><span> +</span><span> y</span><span> +</span><span> (z</span><span> +</span><span> 0</span><span> +</span><span> t)</span><span> =</span><span> x</span><span> +</span><span> (y</span><span> +</span><span> z)</span><span> +</span><span> t
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span>  </span><span class="nb">intros</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x, y, z, t : Z
+  ============================
+  x</span><span> +</span><span> y</span><span> +</span><span> (z</span><span> +</span><span> 0</span><span> +</span><span> t)</span><span> =</span><span> x</span><span> +</span><span> (y</span><span> +</span><span> z)</span><span> +</span><span> t
+</span></dd>
+<dt><span>  </span><span class="n">monoid</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span>  </span><span class="kn">Show Proof</span><span class="o">.</span><span>
+</span></dt><dd><span>(</span><span class="ansi-bold">fun</span><span> x y z t : Z =&gt;
+ normP </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">add_assoc</span><span> </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">add_0_l</span><span> </span><span class="ansi-fg-light-magenta">Z</span><span>.</span><span class="ansi-fg-light-green">add_0_r</span><span>
+   (eq_refl
+    &lt;:
+    norm (add (add (var 0) (var 1)) (add (add (var 2) zero) (var 3)))</span><span> =</span><span>
+    norm (add (add (var 0) (add (var 1) (var 2))) (var 3))))
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="n">monoid</span><span class="o">.</span><span class="n">db</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>is_monoid</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">Z</span><span> </span><span class="si">}}</span><span class="w">
+            </span><span class="si">{{</span><span> </span><span class="mi">1</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">mul</span><span> </span><span class="si">}}</span><span class="w">
+            </span><span class="si">{{</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">mul_assoc</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">mul_1_l</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">Z</span><span class="o">.</span><span class="n">mul_1_r</span><span> </span><span class="si">}}</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Goal</span><span> </span><span class="k">forall</span><span> </span><span class="nv">x</span><span> </span><span class="nv">y</span><span> </span><span class="nv">z</span><span> </span><span class="nv">t</span><span class="o">,</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">*</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="o">*</span><span> </span><span class="o">(</span><span class="mi">1</span><span> </span><span class="o">*</span><span> </span><span class="o">(</span><span class="n">z</span><span> </span><span class="o">+</span><span> </span><span class="n">t</span><span class="o">)</span><span class="o">)</span><span> </span><span class="o">=</span><span> </span><span class="n">x</span><span> </span><span class="o">*</span><span> </span><span class="n">y</span><span> </span><span class="o">*</span><span> </span><span class="o">(</span><span class="n">z</span><span> </span><span class="o">+</span><span> </span><span class="n">t</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> x y z t : Z, x</span><span> *</span><span> y</span><span> *</span><span> (1</span><span> *</span><span> (z</span><span> +</span><span> t))</span><span> =</span><span> x</span><span> *</span><span> y</span><span> *</span><span> (z</span><span> +</span><span> t)
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span>  </span><span class="nb">intros</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x, y, z, t : Z
+  ============================
+  x</span><span> *</span><span> y</span><span> *</span><span> (1</span><span> *</span><span> (z</span><span> +</span><span> t))</span><span> =</span><span> x</span><span> *</span><span> y</span><span> *</span><span> (z</span><span> +</span><span> t)
+</span></dd>
+<dt><span>  </span><span class="n">monoid</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="open-terms.html" class="btn btn-neutral float-left" title="Open terms" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../apps.html" class="btn btn-neutral float-right" title="Applications written in Rocq-Elpi" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

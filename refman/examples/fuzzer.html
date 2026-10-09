@@ -1,0 +1,323 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fuzzer &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Curry-Howard tactics" href="curry-howard-tactics.html" />
+    <link rel="prev" title="Record to sigma" href="record-to-sigma.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data-base.html">Data bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-expansion.html">Record expansion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-to-sigma.html">Record to sigma</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Fuzzer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curry-howard-tactics.html">Curry-Howard tactics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalize.html">Generalize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abs-evars.html">Closing terms with holes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="import-projections.html">Record import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction-surgery.html">Reduction surgery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="open-terms.html">Open terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reflexive-tactic.html">Reflexive tactic</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">Fuzzer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/fuzzer.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fuzzer">
+<h1>Fuzzer<a class="headerlink" href="#fuzzer" title="Link to this heading"></a></h1>
+<p>Sketches a program to alter an inductive type while preserving its well
+typedness. It makes nothing useful per se, but shows how to map a term and
+call the type checker deep inside it.</p>
+<p>This example is an intrinsically typed data type and semantics, from Software
+Foundations. We devise a command to fuzz the semantics by flipping some
+operators, locally checking that the fuzzing produces well typed terms,
+reducing a bit the nondeterminism of the fuzzer.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span class="rocqtop-reset"></span><dl>
+<dt><span class="kn">From</span><span> </span><span class="nb">elpi</span><span> </span><span class="kn">Require Import</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file ppx_deriving.runtime (implicit dependency) ... done]
+[Loading ML file re (implicit dependency) ... done]
+[Loading ML file re.str (implicit dependency) ... done]
+[Loading ML file elpi.util (implicit dependency) ... done]
+[Loading ML file elpi.lexer_config (implicit dependency) ... done]
+[Loading ML file menhirLib (implicit dependency) ... done]
+[Loading ML file stdlib-shims (implicit dependency) ... done]
+[Loading ML file elpi.parser (implicit dependency) ... done]
+[Loading ML file camlp-streams (implicit dependency) ... done]
+[Loading ML file easy-format (implicit dependency) ... done]
+[Loading ML file biniou (implicit dependency) ... done]
+[Loading ML file yojson (implicit dependency) ... done]
+[Loading ML file atdgen-runtime (implicit dependency) ... done]
+[Loading ML file elpi.trace.atd (implicit dependency) ... done]
+[Loading ML file elpi.trace.runtime (implicit dependency) ... done]
+[Loading ML file elpi.runtime (implicit dependency) ... done]
+[Loading ML file elpi.compiler (implicit dependency) ... done]
+[Loading ML file elpi (implicit dependency) ... done]
+[Loading ML file rocq-elpi.elpi ... done]
+</span></dd>
+</dl>
+<span></span><dl>
+<dt><span class="kn">Inductive</span><span> </span><span class="nf">ty</span><span> </span><span class="o">:=</span><span> </span><span class="n">B</span><span> </span><span class="o">|</span><span> </span><span class="n">N</span><span class="o">.</span><span>
+</span></dt><dd><span>ty is defined
+ty_rect is defined
+ty_ind is defined
+ty_rec is defined
+ty_sind is defined
+</span></dd>
+<dt><span class="kn">Inductive</span><span> </span><span class="nf">Exp</span><span> </span><span class="o">:</span><span> </span><span class="n">ty</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="kt">Type</span><span> </span><span class="o">:</span><span class="o">=</span><span>
+</span><span class="o">|</span><span> </span><span class="n">NUM</span><span>  </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">N</span><span>
+</span><span class="o">|</span><span> </span><span class="n">BOOL</span><span>  </span><span class="o">:</span><span> </span><span class="n">bool</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">B</span><span>
+</span><span class="o">|</span><span> </span><span class="n">PLUS</span><span> </span><span class="o">:</span><span> </span><span class="n">Exp</span><span> </span><span class="n">N</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">N</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">N</span><span>
+</span><span class="o">|</span><span> </span><span class="n">AND</span><span> </span><span class="o">:</span><span> </span><span class="n">Exp</span><span> </span><span class="n">B</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">B</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">B</span><span>
+</span><span class="o">|</span><span> </span><span class="n">OR</span><span> </span><span class="o">:</span><span> </span><span class="n">Exp</span><span> </span><span class="n">B</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">B</span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">B</span><span>
+</span><span class="o">|</span><span> </span><span class="n">EQ</span><span> </span><span class="o">:</span><span> </span><span class="n">Exp</span><span> </span><span class="n">N</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">N</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Exp</span><span> </span><span class="n">B</span><span class="o">.</span><span>
+</span></dt><dd><span>Exp is defined
+Exp_rect is defined
+Exp_ind is defined
+Exp_rec is defined
+Exp_sind is defined
+</span></dd>
+<dt><span class="kn">Inductive</span><span> </span><span class="nf">Val</span><span> </span><span class="o">:</span><span> </span><span class="n">ty</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="kt">Set</span><span> </span><span class="o">:</span><span class="o">=</span><span>
+   </span><span class="o">|</span><span> </span><span class="n">iNv</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Val</span><span> </span><span class="n">N</span><span>
+   </span><span class="o">|</span><span> </span><span class="n">iBv</span><span> </span><span class="o">:</span><span> </span><span class="n">bool</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Val</span><span> </span><span class="n">B</span><span class="o">.</span><span>
+</span></dt><dd><span>Val is defined
+Val_rect is defined
+Val_ind is defined
+Val_rec is defined
+Val_sind is defined
+</span></dd>
+<dt><span class="kn">Inductive</span><span> </span><span class="nf">eval</span><span>  </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="o">{</span><span class="nv">T</span><span class="o">:</span><span> </span><span class="n">ty</span><span class="o">}</span><span class="o">,</span><span> </span><span class="n">Exp</span><span>  </span><span class="n">T</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">Val</span><span> </span><span class="n">T</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="kt">Prop</span><span> </span><span class="o">:</span><span class="o">=</span><span>
+   </span><span class="o">|</span><span> </span><span class="n">E_Num</span><span> </span><span class="n">n</span><span> </span><span class="o">:</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="o">(</span><span class="n">NUM</span><span>  </span><span class="n">n</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">iNv</span><span> </span><span class="n">n</span><span class="o">)</span><span>
+   </span><span class="o">|</span><span> </span><span class="n">E_Bool</span><span> </span><span class="n">b</span><span> </span><span class="o">:</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="o">(</span><span class="n">BOOL</span><span>  </span><span class="n">b</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">iBv</span><span> </span><span class="n">b</span><span class="o">)</span><span>
+   </span><span class="o">|</span><span> </span><span class="n">E_Plus</span><span> </span><span class="n">e1</span><span> </span><span class="n">e2</span><span> </span><span class="n">n1</span><span> </span><span class="n">n2</span><span> </span><span class="o">:</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="n">e1</span><span> </span><span class="o">(</span><span class="n">iNv</span><span> </span><span class="n">n1</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="n">e2</span><span> </span><span class="o">(</span><span class="n">iNv</span><span> </span><span class="n">n2</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="o">(</span><span class="n">PLUS</span><span> </span><span class="n">e1</span><span> </span><span class="n">e2</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">iNv</span><span> </span><span class="o">(</span><span class="n">n1</span><span> </span><span class="o">+</span><span> </span><span class="n">n2</span><span class="o">)</span><span class="o">)</span><span>
+   </span><span class="o">|</span><span> </span><span class="n">E_AND</span><span> </span><span class="n">e1</span><span> </span><span class="n">e2</span><span> </span><span class="n">b1</span><span> </span><span class="n">b2</span><span> </span><span class="o">:</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="n">e1</span><span> </span><span class="o">(</span><span class="n">iBv</span><span> </span><span class="n">b1</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="n">e2</span><span> </span><span class="o">(</span><span class="n">iBv</span><span> </span><span class="n">b2</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="o">(</span><span class="n">AND</span><span> </span><span class="n">e1</span><span> </span><span class="n">e2</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">iBv</span><span> </span><span class="o">(</span><span class="n">b1</span><span> </span><span class="o">&amp;</span><span class="o">&amp;</span><span> </span><span class="n">b2</span><span class="o">)</span><span class="o">)</span><span>
+   </span><span class="o">|</span><span> </span><span class="n">E_OR</span><span> </span><span class="n">e1</span><span> </span><span class="n">e2</span><span> </span><span class="n">b1</span><span> </span><span class="n">b2</span><span> </span><span class="o">:</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="n">e1</span><span> </span><span class="o">(</span><span class="n">iBv</span><span> </span><span class="n">b1</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="n">e2</span><span> </span><span class="o">(</span><span class="n">iBv</span><span> </span><span class="n">b2</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="o">(</span><span class="n">OR</span><span> </span><span class="n">e1</span><span> </span><span class="n">e2</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">iBv</span><span> </span><span class="o">(</span><span class="n">b1</span><span> </span><span class="o">|</span><span class="o">|</span><span> </span><span class="n">b2</span><span class="o">)</span><span class="o">)</span><span>
+  </span><span class="o">|</span><span> </span><span class="n">E_EQ</span><span> </span><span class="n">e1</span><span> </span><span class="n">e2</span><span> </span><span class="n">n1</span><span> </span><span class="n">n2</span><span> </span><span class="o">:</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="n">e1</span><span> </span><span class="o">(</span><span class="n">iNv</span><span> </span><span class="n">n1</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="n">e2</span><span> </span><span class="o">(</span><span class="n">iNv</span><span> </span><span class="n">n2</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span>
+       </span><span class="kp">eval</span><span> </span><span class="o">(</span><span class="n">EQ</span><span> </span><span class="n">e1</span><span> </span><span class="n">e2</span><span class="o">)</span><span> </span><span class="o">(</span><span class="n">iBv</span><span> </span><span class="o">(</span><span class="n">Nat</span><span class="o">.</span><span class="n">eqb</span><span> </span><span class="n">n1</span><span> </span><span class="n">n2</span><span class="o">)</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>eval is defined
+eval_ind is defined
+eval_sind is defined
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">fuzz</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">fuzz</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+
+</span><span class="c">% fuzzin rule: we look for a Rocq term (?Op ?A ?B) and we turn it in (AND ?A ?B)
+</span><span class="c">% only if the new term is well typed.
+</span><span>fuzz</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Op</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">A</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">B</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">Fuzzed</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">DEBUG: attempt at fuzzing binary op:</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Op</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>fuzz</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="n n-ElpiVariable">A1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>fuzz</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="n n-ElpiVariable">B1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">Fuzzed</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">AND</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">A1</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">B1</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">Fuzzed</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="c">% we don't care about the type, only that it is ok
+</span><span class="w">  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">DEBUG: fuzzed!</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% rule for the dependent function space
+</span><span>fuzz</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">prod</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">prod</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">S1</span><span class="w"> </span><span class="n n-ElpiVariable">T1</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>fuzz</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="w"> </span><span class="n n-ElpiVariable">S1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% we load the context with types for x and y, as well as the fact that
+</span><span class="w">  </span><span class="c">% we fuzz x to y
+</span><span class="w">  </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x y</span><span>\</span><span class="w"> </span><span>decl</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w"> </span><span>decl</span><span class="w"> </span><span>y</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">S1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w"> </span><span>fuzz</span><span class="w"> </span><span>x</span><span class="w"> </span><span>y</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w"> </span><span>fuzz</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">T1</span><span class="w"> </span><span>y</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% rule for application
+</span><span>fuzz</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">app</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">app</span><span class="w"> </span><span class="n n-ElpiVariable">L1</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>std.map</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span>fuzz</span><span class="w"> </span><span class="n n-ElpiVariable">L1</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% rule for global constants
+</span><span>fuzz</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">global</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">global</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% TODO: we should have clauses for all other type formers...
+</span><span class="w">
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">rename-constructors</span><span class="w"> </span><span class="kt">constructor</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">pair</span><span class="w"> </span><span class="kt">constructor</span><span class="w"> </span><span class="kt">string</span><span>.</span><span class="w">
+</span><span>rename-constructors</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span>pr</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="n n-ElpiVariable">C1</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>coq.gref-&gt;id</span><span class="w"> </span><span class="p">(</span><span>indc</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">C1</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="w"> </span><span class="k k-ElpiKeyword">^</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">1</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+
+</span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">IN</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">OUT</span><span class="w"> </span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span class="c">% locate the inductive
+</span><span class="w">  </span><span>coq.locate</span><span class="w"> </span><span class="n n-ElpiVariable">IN</span><span class="w"> </span><span class="p">(</span><span>indt</span><span class="w"> </span><span class="n n-ElpiVariable">I</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% fetch all its data, in particulat the types of the constructors
+</span><span class="w">  </span><span>coq.env.indt</span><span class="w"> </span><span class="n n-ElpiVariable">I</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="n n-ElpiVariable">NP</span><span class="w"> </span><span class="n n-ElpiVariable">NPU</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="n n-ElpiVariable">KN</span><span class="w"> </span><span class="n n-ElpiVariable">KT</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% fuzz all constructor types
+</span><span class="w">  </span><span>std.map</span><span class="w"> </span><span class="n n-ElpiVariable">KT</span><span class="w"> </span><span>fuzz</span><span class="w"> </span><span class="n n-ElpiVariable">KT1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% we rename them, otherwise Rocq complains the names are already used
+</span><span class="w">  </span><span>std.map</span><span class="w"> </span><span class="n n-ElpiVariable">KN</span><span class="w"> </span><span>rename-constructors</span><span class="w"> </span><span class="n n-ElpiVariable">KN1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% declare the new inductive
+</span><span class="w">  </span><span>coq.build-indt-decl</span><span class="w"> </span><span class="p">(</span><span>coq.indt-spec</span><span class="w"> </span><span class="n n-ElpiVariable">I</span><span class="w"> </span><span class="n n-ElpiVariable">OUT</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="n n-ElpiVariable">KN1</span><span class="w"> </span><span class="n n-ElpiVariable">KT1</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">NP</span><span class="w"> </span><span class="n n-ElpiVariable">NPU</span><span class="w">  </span><span class="n n-ElpiVariable">Decl</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.env.add-indt</span><span class="w"> </span><span class="n n-ElpiVariable">Decl</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">fuzz</span><span> </span><span class="kp">eval</span><span> </span><span class="n">eval1</span><span class="o">.</span><span>
+</span></dt><dd><span>DEBUG: attempt at fuzzing binary op: global (indc «PLUS»)
+DEBUG: attempt at fuzzing binary op: global (const «Nat.add»)
+DEBUG: attempt at fuzzing binary op: global (indc «AND»)
+DEBUG: fuzzed!
+DEBUG: attempt at fuzzing binary op: global (const «andb»)
+DEBUG: attempt at fuzzing binary op: global (indc «OR»)
+DEBUG: fuzzed!
+DEBUG: attempt at fuzzing binary op: global (const «orb»)
+DEBUG: attempt at fuzzing binary op: global (indc «EQ»)
+DEBUG: attempt at fuzzing binary op: global (const «Nat.eqb»)
+eval1 is defined
+eval1_ind is defined
+eval1_sind is defined
+</span></dd>
+<dt><span class="c">(*</span><span class="c"> let's print our new, broken, semantics ;-</span><span class="c">)</span><span class="c"> </span><span class="c">*)</span><span>
+</span><span class="kn">Print</span><span> </span><span class="n">eval1</span><span class="o">.</span><span>
+</span></dt><dd><span class="ansi-fg-light-red ansi-bold">Inductive</span><span> eval1 : </span><span class="ansi-bold">forall</span><span> T : ty, Exp T</span><span> -&gt;</span><span> Val T</span><span> -&gt;</span><span> </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span> :=
+    E_Num1 : </span><span class="ansi-bold">forall</span><span> n : nat, eval1 N (NUM n) (iNv n)
+  | E_Bool1 : </span><span class="ansi-bold">forall</span><span> b : bool, eval1 B (BOOL b) (iBv b)
+  | E_Plus1 : </span><span class="ansi-bold">forall</span><span> (e1 e2 : Exp N) (n1 n2 : nat),
+              eval1 N e1 (iNv n1)</span><span> -&gt;</span><span>
+              eval1 N e2 (iNv n2)</span><span> -&gt;</span><span> eval1 N (PLUS e1 e2) (iNv (n1</span><span> +</span><span> n2))
+  | E_AND1 : </span><span class="ansi-bold">forall</span><span> (e1 e2 : Exp B) (b1 b2 : bool),
+             eval1 B e1 (iBv b1)</span><span> -&gt;</span><span>
+             eval1 B e2 (iBv b2)</span><span> -&gt;</span><span> eval1 B (AND e1 e2) (iBv (b1</span><span> &amp;&amp;</span><span> b2))
+  | E_OR1 : </span><span class="ansi-bold">forall</span><span> (e1 e2 : Exp B) (b1 b2 : bool),
+            eval1 B e1 (iBv b1)</span><span> -&gt;</span><span>
+            eval1 B e2 (iBv b2)</span><span> -&gt;</span><span> eval1 B (AND e1 e2) (iBv (b1 </span><span>|| </span><span>b2))
+  | E_EQ1 : </span><span class="ansi-bold">forall</span><span> (e1 e2 : Exp N) (n1 n2 : nat),
+            eval1 N e1 (iNv n1)</span><span> -&gt;</span><span>
+            eval1 N e2 (iNv n2)</span><span> -&gt;</span><span> eval1 B (EQ e1 e2) (iBv (</span><span class="ansi-fg-light-magenta">Nat</span><span>.</span><span class="ansi-fg-light-green">eqb</span><span> n1 n2)).
+
+Arguments </span><span class="ansi-fg-light-green">eval1</span><span> T _ _
+Arguments </span><span class="ansi-fg-light-green">E_Num1</span><span> n%_nat_scope
+Arguments </span><span class="ansi-fg-light-green">E_Bool1</span><span> b%_bool_scope
+Arguments </span><span class="ansi-fg-light-green">E_Plus1</span><span> e1 e2 (n1 n2)%_nat_scope _ _
+Arguments </span><span class="ansi-fg-light-green">E_AND1</span><span> e1 e2 (b1 b2)%_bool_scope _ _
+Arguments </span><span class="ansi-fg-light-green">E_OR1</span><span> e1 e2 (b1 b2)%_bool_scope _ _
+Arguments </span><span class="ansi-fg-light-green">E_EQ1</span><span> e1 e2 (n1 n2)%_nat_scope _ _
+</span></dd>
+</dl>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="record-to-sigma.html" class="btn btn-neutral float-left" title="Record to sigma" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="curry-howard-tactics.html" class="btn btn-neutral float-right" title="Curry-Howard tactics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

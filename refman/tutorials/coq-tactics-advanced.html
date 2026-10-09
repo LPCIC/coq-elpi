@@ -1,0 +1,1024 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>More tactic examples and the proof engine &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Adding builtin predicates via an OCaml plugin" href="plugin.html" />
+    <link rel="prev" title="Writing tactics in Elpi" href="coq-tactics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">More tactic examples and the proof engine</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#let-s-code-assumption-in-elpi">Let's code <code class="docutils literal notranslate"><span class="pre">assumption</span></code> in Elpi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#let-s-code-set-in-elpi">Let's code <code class="docutils literal notranslate"><span class="pre">set</span></code> in Elpi</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-proof-engine">The proof engine</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#multi-goal-tactics">multi-goal tactics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lcf-tacticals">LCF tacticals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setting-arguments-for-a-tactic">Setting arguments for a tactic</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#tactics-in-terms">Tactics in terms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">More tactic examples and the proof engine</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/coq-tactics-advanced.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="more-tactic-examples-and-the-proof-engine">
+<h1><a class="toc-backref" href="#id1" role="doc-backlink">More tactic examples and the proof engine</a><a class="headerlink" href="#more-tactic-examples-and-the-proof-engine" title="Link to this heading"></a></h1>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>An <a class="reference external" href="https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_tactic.html">Alectryon-rendered version</a> of
+this tutorial (together with <a class="reference internal" href="coq-tactics.html"><span class="doc">Writing tactics in Elpi</span></a>), from before its
+migration to this manual, is also available.</p>
+</div>
+<p>This page continues <a class="reference internal" href="coq-tactics.html"><span class="doc">Writing tactics in Elpi</span></a>, with more tactic examples, a deep
+dive into the proof engine, and tactics usable inside terms.</p>
+<nav class="contents" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#more-tactic-examples-and-the-proof-engine" id="id1">More tactic examples and the proof engine</a></p>
+<ul>
+<li><p><a class="reference internal" href="#examples" id="id2">Examples</a></p>
+<ul>
+<li><p><a class="reference internal" href="#let-s-code-assumption-in-elpi" id="id3">Let's code <code class="docutils literal notranslate"><span class="pre">assumption</span></code> in Elpi</a></p></li>
+<li><p><a class="reference internal" href="#let-s-code-set-in-elpi" id="id4">Let's code <code class="docutils literal notranslate"><span class="pre">set</span></code> in Elpi</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#the-proof-engine" id="id5">The proof engine</a></p>
+<ul>
+<li><p><a class="reference internal" href="#multi-goal-tactics" id="id6">multi-goal tactics</a></p></li>
+<li><p><a class="reference internal" href="#lcf-tacticals" id="id7">LCF tacticals</a></p></li>
+<li><p><a class="reference internal" href="#setting-arguments-for-a-tactic" id="id8">Setting arguments for a tactic</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#tactics-in-terms" id="id9">Tactics in terms</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<div class="rocqtop literal-block highlight rocqtop-hidden docutils container">
+<span class="rocqtop-reset"></span><dl>
+<dt class="rocqtop-hidden"><span class="kn">Set Warnings</span><span> </span><span class="s2">&quot;</span><span class="s2">-elpi.linear-variable</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dt class="rocqtop-hidden"><span class="kn">From</span><span> </span><span class="nb">elpi</span><span> </span><span class="kn">Require Import</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file ppx_deriving.runtime (implicit dependency) ... done]
+[Loading ML file re (implicit dependency) ... done]
+[Loading ML file re.str (implicit dependency) ... done]
+[Loading ML file elpi.util (implicit dependency) ... done]
+[Loading ML file elpi.lexer_config (implicit dependency) ... done]
+[Loading ML file menhirLib (implicit dependency) ... done]
+[Loading ML file stdlib-shims (implicit dependency) ... done]
+[Loading ML file elpi.parser (implicit dependency) ... done]
+[Loading ML file camlp-streams (implicit dependency) ... done]
+[Loading ML file easy-format (implicit dependency) ... done]
+[Loading ML file biniou (implicit dependency) ... done]
+[Loading ML file yojson (implicit dependency) ... done]
+[Loading ML file atdgen-runtime (implicit dependency) ... done]
+[Loading ML file elpi.trace.atd (implicit dependency) ... done]
+[Loading ML file elpi.trace.runtime (implicit dependency) ... done]
+[Loading ML file elpi.runtime (implicit dependency) ... done]
+[Loading ML file elpi.compiler (implicit dependency) ... done]
+[Loading ML file elpi (implicit dependency) ... done]
+[Loading ML file rocq-elpi.elpi ... done]
+</span></dd>
+<dt class="rocqtop-hidden"><span class="c">(*</span><span class="c"> re-declared from coq-tactics.rst, used again further down </span><span class="c">*)</span><span>
+</span><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">blind</span><span class="o">.</span><span>
+</span></dt><dt class="rocqtop-hidden"><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Trigger</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="n n-ElpiVariable">Trigger</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span class="mi">0</span><span class="si">}}</span><span class="o">.</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Trigger</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="n n-ElpiVariable">Trigger</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span class="n">I</span><span class="si">}}</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<section id="examples">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Examples</a><a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<section id="let-s-code-assumption-in-elpi">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Let's code <code class="docutils literal notranslate"><span class="pre">assumption</span></code> in Elpi</a><a class="headerlink" href="#let-s-code-assumption-in-elpi" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">assumption</span></code> is a very simple tactic: we look up in the proof
+context for an hypothesis which unifies with the goal.
+Recall that <code class="docutils literal notranslate"><span class="pre">Ctx</span></code> is made of <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L301"><code class="docutils literal notranslate"><span class="pre">decl</span></code></a> and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L302"><code class="docutils literal notranslate"><span class="pre">def</span></code></a>
+(here, for simplicity, we ignore the latter case).</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="bp">assumption</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span class="c">% H is the name for hyp, Ty is the goal
+</span><span class="w">    </span><span>std.mem</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="p">(</span><span>decl</span><span class="w"> </span><span class="n n-ElpiVariable">H</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>refine</span><span class="w"> </span><span class="n n-ElpiVariable">H</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.ltac.fail</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">no such hypothesis</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_assumption</span><span>  </span><span class="o">(</span><span class="nv">P</span><span> </span><span class="nv">Q</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">p</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">q</span><span> </span><span class="o">:</span><span> </span><span class="n">Q</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">id</span><span> </span><span class="n">Q</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P</span><span> /\</span><span> id Q
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">split</span><span class="o">.</span><span>
+</span></dt><dd><span>2 goals
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P
+
+goal 2 is:
+ id Q
+</span></dd>
+<dt><span class="nb">elpi</span><span> </span><span class="bp">assumption</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  id Q
+</span></dd>
+<dt><span class="kn">Fail</span><span> </span><span class="nb">elpi</span><span> </span><span class="bp">assumption</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+Tactic failure: no such hypothesis.
+</span></dd>
+<dt><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>As we hinted before, Elpi's equality is alpha equivalence. In the second
+goal the assumption has type <code class="docutils literal notranslate"><span class="pre">Q</span></code> but the goal has type <code class="docutils literal notranslate"><span class="pre">id</span> <span class="pre">Q</span></code> which is
+convertible (unifiable, for Rocq's unification) to <code class="docutils literal notranslate"><span class="pre">Q</span></code>.</p>
+<p>Let's improve our tactic by looking for an assumption which is unifiable with
+the goal, and not just alpha convertible. The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1570"><code class="docutils literal notranslate"><span class="pre">coq.unify-leq</span></code></a>
+calls Rocq's unification for types (on which cumulativity applies, hence the
+<code class="docutils literal notranslate"><span class="pre">-leq</span></code> suffix). The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L656"><code class="docutils literal notranslate"><span class="pre">std.mem</span></code></a> utility, thanks to backtracking,
+eventually finds an hypothesis that satisfies the following predicate
+(ie unifies with the goal).</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">assumption2</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span class="c">% std.mem is backtracking (std.mem! would stop at the first hit)
+</span><span class="w">    </span><span>std.mem</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="p">(</span><span>decl</span><span class="w"> </span><span class="n n-ElpiVariable">H</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Ty'</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>coq.unify-leq</span><span class="w"> </span><span class="n n-ElpiVariable">Ty'</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>refine</span><span class="w"> </span><span class="n n-ElpiVariable">H</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.ltac.fail</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">no such hypothesis</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_assumption2</span><span>  </span><span class="o">(</span><span class="nv">P</span><span> </span><span class="nv">Q</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">p</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">q</span><span> </span><span class="o">:</span><span> </span><span class="n">Q</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">id</span><span> </span><span class="n">Q</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P</span><span> /\</span><span> id Q
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">split</span><span class="o">.</span><span>
+</span></dt><dd><span>2 goals
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P
+
+goal 2 is:
+ id Q
+</span></dd>
+<dt><span class="kp">all</span><span class="o">:</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">assumption2</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a> does unify the type of goal with the type of the term,
+hence we can simplify the code further. We obtain a
+tactic very similar to our initial <code class="docutils literal notranslate"><span class="pre">blind</span></code> tactic, which picks
+candidates from the context rather than from the program itself.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">assumption3</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>std.mem</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="p">(</span><span>decl</span><span class="w"> </span><span class="n n-ElpiVariable">H</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>refine</span><span class="w"> </span><span class="n n-ElpiVariable">H</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.ltac.fail</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">no such hypothesis</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_assumption3</span><span>  </span><span class="o">(</span><span class="nv">P</span><span> </span><span class="nv">Q</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">p</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">q</span><span> </span><span class="o">:</span><span> </span><span class="n">Q</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">id</span><span> </span><span class="n">Q</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P</span><span> /\</span><span> id Q
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">split</span><span class="o">.</span><span>
+</span></dt><dd><span>2 goals
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P
+
+goal 2 is:
+ id Q
+</span></dd>
+<dt><span class="kp">all</span><span class="o">:</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">assumption3</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+</section>
+<section id="let-s-code-set-in-elpi">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">Let's code <code class="docutils literal notranslate"><span class="pre">set</span></code> in Elpi</a><a class="headerlink" href="#let-s-code-set-in-elpi" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">set</span></code> tactic takes a term, possibly with holes, and
+makes a let-in out of it.</p>
+<p>It gives us the occasion to explain the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib.elpi#L86"><code class="docutils literal notranslate"><span class="pre">copy</span></code></a> utility.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">find</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>trm</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x</span><span>\</span><span class="w">
+    </span><span class="p">(</span><span class="p">(</span><span>copy</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w"> </span><span>copy</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Tabs</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>if</span><span class="w"> </span><span class="p">(</span><span>occurs</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Tabs</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="p">)</span><span class="w">
+       </span><span class="p">(</span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">found</span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>coq.term-&gt;string</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span>}</span><span class="p">)</span><span class="w">
+       </span><span class="p">(</span><span>coq.ltac.fail</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">not found</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_find</span><span> </span><span class="o">(</span><span class="nv">P</span><span> </span><span class="nv">Q</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">P</span><span class="o">)</span><span> </span><span class="o">\</span><span class="o">/</span><span> </span><span class="o">(</span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">Q</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  ============================
+  P</span><span> /\</span><span> P</span><span> \/</span><span> P</span><span> /\</span><span> Q
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">elpi</span><span> </span><span class="n">find</span><span> </span><span class="o">(</span><span class="n">P</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>found P
+</span></dd>
+<dt><span class="kn">Fail</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">find</span><span> </span><span class="o">(</span><span class="n">Q</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">_</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+Tactic failure: not found.
+</span></dd>
+<dt><span class="nb">elpi</span><span> </span><span class="n">find</span><span> </span><span class="o">(</span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">_</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>found P /\ P
+</span></dd>
+<dt><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>This first approximation only prints the term it found, or better the first
+instance of the given term.</p>
+<p>Now lets focus on <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib.elpi#L86"><code class="docutils literal notranslate"><span class="pre">copy</span></code></a>. An excerpt:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>copy<span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>name<span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="o">.</span><span class="w">     </span><span class="c">% checks X is a bound variable</span>
+copy<span class="w"> </span><span class="p">(</span>global<span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="o">.</span>
+copy<span class="w"> </span><span class="p">(</span>fun<span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="p">)</span><span class="w"> </span><span class="p">(</span>fun<span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T1</span><span class="w"> </span><span class="n n-ElpiVariable">F1</span><span class="p">)</span><span class="o">.</span>
+<span class="w">  </span>copy<span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">T1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x</span>\<span class="w"> </span>copy<span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">F</span><span class="w"> </span>x<span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">F1</span><span class="w"> </span>x<span class="p">)</span><span class="o">.</span>
+copy<span class="w"> </span><span class="p">(</span>app<span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="p">)</span><span class="w"> </span><span class="p">(</span>app<span class="w"> </span><span class="n n-ElpiVariable">L1</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!,</span><span class="w"> </span>std.map<span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span>copy<span class="w"> </span><span class="n n-ElpiVariable">L1</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Copy implements the identity: it builds, recursively, a copy of the first
+term into the second argument. Unless one loads in the context a new rule,
+which takes precedence over the identity ones. Here we load:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>copy<span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span>x
+</pre></div>
+</div>
+<p>which, at run time, looks like</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>copy<span class="w"> </span><span class="p">(</span>app<span class="w"> </span><span class="k k-ElpiKeyword">[</span>global<span class="w"> </span><span class="p">(</span>indt<span class="w"> </span><span class="o">«</span>andn<span class="o">»</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>sort<span class="w"> </span>prop<span class="k k-ElpiKeyword">,</span><span class="w"> </span>sort<span class="w"> </span>prop<span class="k k-ElpiKeyword">,</span><span class="w"> </span>c0<span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="n n-ElpiVariable">X0</span><span class="w"> </span>c0<span class="w"> </span>c1<span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span>c2
+</pre></div>
+</div>
+<p>and that rule masks the one for <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L230"><code class="docutils literal notranslate"><span class="pre">app</span></code></a> when the
+sub-term being copied matches <code class="docutils literal notranslate"><span class="pre">(P</span> <span class="pre">/\</span> <span class="pre">_)</span></code>. The first time this rule
+is used <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span></code> is assigned, making the rule represent the term <code class="docutils literal notranslate"><span class="pre">(P</span> <span class="pre">/\</span> <span class="pre">P)</span></code>.</p>
+<p>Now let's refine the tactic to build a let-in, and complain if the
+desired name is already taken.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The last call below intentionally reuses the name <code class="docutils literal notranslate"><span class="pre">&quot;x&quot;</span></code>, which
+triggers <code class="docutils literal notranslate"><span class="pre">coq.warn</span></code>'s &quot;is already taken&quot; message; the <code class="docutils literal notranslate"><span class="pre">warn</span></code> option
+keeps that expected warning from being escalated to a hard error, as is
+the default in this manual.</p>
+</div>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="nb">set</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">ID</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>trm</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x</span><span>\</span><span class="w">
+    </span><span class="p">(</span><span class="p">(</span><span>copy</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w"> </span><span>copy</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Tabs</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>if</span><span class="w"> </span><span class="p">(</span><span>occurs</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Tabs</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="p">)</span><span class="w">
+       </span><span class="p">(</span><span>if</span><span class="w"> </span><span class="p">(</span><span>coq.ltac.id-free?</span><span class="w"> </span><span class="n n-ElpiVariable">ID</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span>true</span><span class="w">
+           </span><span class="p">(</span><span>coq.warn</span><span class="w"> </span><span class="n n-ElpiVariable">ID</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">is already taken, Elpi will make a name up</span><span class="s2">&quot;</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+        </span><span>coq.id-&gt;name</span><span class="w"> </span><span class="n n-ElpiVariable">ID</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="k k-ElpiKeyword">,</span><span class="w">
+        </span><span class="n n-ElpiVariable">Hole</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">_</span><span> </span><span class="o">:</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span class="n n-ElpiVariable">Tabs</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="si">}}</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="c">% a hole with a type
+</span><span class="w">        </span><span>refine</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">let</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">x\</span><span class="w"> </span><span class="n n-ElpiVariable">Hole</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="p">)</span><span class="w">
+       </span><span class="p">(</span><span>coq.ltac.fail</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">not found</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_set</span><span> </span><span class="o">(</span><span class="nv">P</span><span> </span><span class="nv">Q</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">P</span><span class="o">)</span><span> </span><span class="o">\</span><span class="o">/</span><span> </span><span class="o">(</span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">Q</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  ============================
+  P</span><span> /\</span><span> P</span><span> \/</span><span> P</span><span> /\</span><span> Q
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">elpi</span><span> </span><span class="nb">set</span><span> </span><span class="s2">&quot;</span><span class="s2">x</span><span class="s2">&quot;</span><span> </span><span class="o">(</span><span class="n">P</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  x := P : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  ============================
+  x</span><span> /\</span><span> x</span><span> \/</span><span> x</span><span> /\</span><span> Q
+</span></dd>
+<dt><span class="nb">unfold</span><span> </span><span class="n">x</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  x := P : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  ============================
+  P</span><span> /\</span><span> P</span><span> \/</span><span> P</span><span> /\</span><span> Q
+</span></dd>
+<dt><span class="kn">Fail</span><span> </span><span class="nb">elpi</span><span> </span><span class="nb">set</span><span> </span><span class="s2">&quot;</span><span class="s2">x</span><span class="s2">&quot;</span><span> </span><span class="o">(</span><span class="n">Q</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">_</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+Tactic failure: not found.
+</span></dd>
+<dt><span class="nb">elpi</span><span> </span><span class="nb">set</span><span> </span><span class="s2">&quot;</span><span class="s2">x</span><span class="s2">&quot;</span><span> </span><span class="o">(</span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">_</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>Toplevel input, characters 0-22:
+&gt; elpi set &quot;x&quot; (P /\ _).
+&gt; ^^^^^^^^^^^^^^^^^^^^^^
+</span><span class="ansi-fg-white ansi-bg-yellow ansi-bold">Warning:</span><span> x is already taken, Elpi will make a name up [lib,elpi,default]
+1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  x := P : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  elpi_ctx_entry_4_ := P</span><span> /\</span><span> P : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  ============================
+  elpi_ctx_entry_4_</span><span> \/</span><span> P</span><span> /\</span><span> Q
+</span></dd>
+<dt><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>For more examples of (basic) tactics written in Elpi see the
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/tree/master/apps/eltac">eltac app</a>.</p>
+<div class="rocqtop literal-block highlight rocqtop-hidden docutils container">
+<span></span><dl class="simple">
+<dt class="rocqtop-hidden"><span class="c">(*</span><span class="c"> `Set Warnings` replaces the whole configuration rather than merging
+   into it, so the `warn` option's own before/after
+   &quot;default&quot;/&quot;+default&quot; bracketing above wiped out the
+   &quot;-elpi.linear-variable&quot; suppression set at the top of this page;
+   re-apply it here. </span><span class="c">*)</span><span>
+</span><span class="kn">Set Warnings</span><span> </span><span class="s2">&quot;</span><span class="s2">-elpi.linear-variable</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+</section>
+</section>
+<section id="the-proof-engine">
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">The proof engine</a><a class="headerlink" href="#the-proof-engine" title="Link to this heading"></a></h2>
+<p>In this section we dive into the details of the proof engine, that is
+how goals are represented in Elpi and how things are wired up behind the scenes.</p>
+<p>Let's inspect the proof state a bit deeper:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">show_more</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">_Trigger</span><span class="w"> </span><span class="n n-ElpiVariable">Type</span><span class="w"> </span><span class="n n-ElpiVariable">Proof</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Goal:</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">|-</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Proof</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">:</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">Type</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Proof state:</span><span class="s2">&quot;</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.sigma.print</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_show_more</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span> </span><span class="o">=</span><span> </span><span class="mi">0</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x : nat
+  ============================
+  x</span><span> +</span><span> 1</span><span> =</span><span> 0
+</span></dd>
+<dt><span class="nb">elpi</span><span> </span><span class="n">show_more</span><span class="o">.</span><span>
+</span></dt><dd><span>Goal: [decl c0 `x:r` (global (indt «nat»))] |- X0 c0 : 
+app
+ [global (indt «eq»), global (indt «nat»), 
+  app
+   [global (const «Nat.add»), c0, 
+    app [global (indc «S»), global (indc «O»)]], global (indc «O»)]
+Proof state:
+ {c0} : decl c0 `x:r` (global (indt «nat»))
+   ?- evar (X1 c0) 
+       (app
+         [global (indt «eq»), global (indt «nat»), 
+          app
+           [global (const «Nat.add»), c0, 
+            app [global (indc «S»), global (indc «O»)]], 
+          global (indc «O»)]) (X0 c0)  /* suspended on X1, X0 */
+EVARS:
+ ?X28==[x |- x + 1 = 0] (goal evar) {?Goal}
+ ?X27==[ |- =&gt; fun x : nat =&gt; ?Goal] (goal evar)
+ ?X26==[x |- =&gt; nat] (parameter A of eq)
+ ?X25==[ |- =&gt; nat] (type of x)
+
+SHELF:||
+FUTURE GOALS STACK:
+ ||||
+
+Rocq-Elpi mapping:
+RAW:
+?X28 &lt;-&gt; c0 \ X1 c0 ELAB:
+?X28 &lt;-&gt; X0 
+</span></dd>
+<dt><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>In addition to the goal we print the Elpi and Rocq proof state,
+plus the link between them.
+The proof state is the collection of goals together with their types.</p>
+<p>On the Elpi side this state is represented by constraints for the <code class="code elpi docutils literal notranslate"><span class="pre">evar</span></code>
+predicate, as shown in the <code class="docutils literal notranslate"><span class="pre">evar</span></code> line of the output above: one can
+recognize the set of bound variables <code class="docutils literal notranslate"><span class="pre">{c0}</span></code>, the hypothetical
+context of rules about these variable (that also corresponds to the proof
+context), and finally the suspended goal <code class="code elpi docutils literal notranslate"><span class="pre">evar</span><span class="whitespace"> </span><span class="punctuation"><span class="pre">(</span></span><span class="name elpivariable"><span class="pre">X1</span></span><span class="whitespace"> </span><span class="pre">c0</span><span class="punctuation"><span class="pre">)</span></span><span class="whitespace"> </span><span class="operator"><span class="pre">..</span></span><span class="whitespace"> </span><span class="punctuation"><span class="pre">(</span></span><span class="name elpivariable"><span class="pre">X0</span></span><span class="whitespace"> </span><span class="pre">c0</span><span class="punctuation"><span class="pre">)</span></span></code>.</p>
+<p>The set of constraints on <code class="docutils literal notranslate"><span class="pre">evar</span></code> represents the Rocq data structure called
+sigma (sometimes also called evd or evar_map) that is used to
+represent the proof state in Rocq. It is printed just afterwards, and the
+<code class="docutils literal notranslate"><span class="pre">Rocq-Elpi</span> <span class="pre">mapping:</span></code> line further down links the two together.</p>
+<p>Here the Rocq evar shown in the <code class="docutils literal notranslate"><span class="pre">EVARS:</span></code> line is linked with Elpi's <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span></code>
+and <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X1</span></span></code> from the <code class="docutils literal notranslate"><span class="pre">Rocq-Elpi</span> <span class="pre">mapping:</span></code> line above.
+<code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X1</span></span></code> represents the goal (the trigger) while <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span></code> represent the proof.
+The meaning of the <code class="code elpi docutils literal notranslate"><span class="pre">evar</span></code> Elpi predicate linking the two is that the term
+assigned to the trigger <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X1</span></span></code> has to be elaborated to the final proof term
+<code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span></code>, that should be a well typed term of type <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">0</span></code>.
+This means that when an Elpi tactic assigns a value to <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X1</span></span></code> some procedure to
+turn that value into <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span></code> is triggered. That procedure is called
+elaboration and it is currently implemented by calling the
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1574"><code class="docutils literal notranslate"><span class="pre">coq.elaborate-skeleton</span></code></a> API.</p>
+<p>Given this set up, it is impossible to use a term of the wrong type as a
+Proof. Let's rewrite the <code class="docutils literal notranslate"><span class="pre">split</span></code> tactic without using <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a>.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">split_ll</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">Trigger</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">A</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">B</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">Proof</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="n n-ElpiVariable">Trigger</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">conj</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="c">% triggers elaboration, filling Proof
+</span><span class="w">    </span><span class="n n-ElpiVariable">Proof</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">conj</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Pa</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Pb</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>seal</span><span class="w"> </span><span class="n n-ElpiVariable">G1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>seal</span><span class="w"> </span><span class="n n-ElpiVariable">G2</span><span class="k k-ElpiKeyword">]</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="n n-ElpiVariable">G1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="n n-ElpiVariable">Pa</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="n n-ElpiVariable">G2</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="n n-ElpiVariable">Pb</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="o">.</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.ltac.fail</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">not a conjunction</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_split_ll</span><span> </span><span class="o">:</span><span> </span><span class="k">exists</span><span> </span><span class="nv">t</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">,</span><span> </span><span class="kt">True</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="kt">True</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">t</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span>exists</span><span> t : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>,</span><span> True</span><span> /\</span><span> True</span><span> /\</span><span> t
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">eexists</span><span class="o">.</span><span>
+</span></dt><dd><span>1 focused goal (shelved: 1)
+  
+  ============================
+  True</span><span> /\</span><span> True</span><span> /\</span><span> </span><span class="ansi-fg-light-blue">?t</span><span>
+</span></dd>
+<dt><span class="kp">repeat</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">split_ll</span><span class="o">.</span><span>
+</span></dt><dd><span>3 focused goals (shelved: 2)
+  
+  ============================
+  True
+
+goal 2 is:
+ True
+goal 3 is:
+ </span><span class="ansi-fg-light-blue">?t</span><span>
+</span></dd>
+<dt><span class="kp">all</span><span class="o">:</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">blind</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Crafting by hand the list of subgoal is not easy.
+In particular here we did not set up the new trigger for <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Pa</span></span></code> and <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Pb</span></span></code>,
+nor seal the goals appropriately (we did not bind proof variables).</p>
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1729"><code class="docutils literal notranslate"><span class="pre">coq.ltac.collect-goals</span></code></a> API helps us doing this.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">split_ll_bis</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">Trigger</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">A</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">B</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">Proof</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="c">% this triggers the elaboration
+</span><span class="w">    </span><span class="n n-ElpiVariable">Trigger</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">conj</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="c">% we only take main goals
+</span><span class="w">    </span><span>coq.ltac.collect-goals</span><span class="w"> </span><span class="n n-ElpiVariable">Proof</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="n n-ElpiVariable">_ShelvedGL</span><span class="o">.</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.ltac.fail</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">not a conjunction</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_split_ll_bis</span><span> </span><span class="o">:</span><span> </span><span class="k">exists</span><span> </span><span class="nv">t</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">,</span><span> </span><span class="kt">True</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="kt">True</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">t</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span>exists</span><span> t : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>,</span><span> True</span><span> /\</span><span> True</span><span> /\</span><span> t
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">eexists</span><span class="o">.</span><span>
+</span></dt><dd><span>1 focused goal (shelved: 1)
+  
+  ============================
+  True</span><span> /\</span><span> True</span><span> /\</span><span> </span><span class="ansi-fg-light-blue">?t</span><span>
+</span></dd>
+<dt><span class="kp">repeat</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">split_ll_bis</span><span class="o">.</span><span>
+</span></dt><dd><span>3 focused goals (shelved: 2)
+  
+  ============================
+  True
+
+goal 2 is:
+ True
+goal 3 is:
+ </span><span class="ansi-fg-light-blue">?t</span><span>
+</span></dd>
+<dt><span class="kp">all</span><span class="o">:</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">blind</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>At the light of that, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a> is simply:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>refine<span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="p">(</span>goal<span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">RawEv</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Ev</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span>
+<span class="w">  </span><span class="n n-ElpiVariable">RawEv</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>coq.ltac.collect-goals<span class="w"> </span><span class="n n-ElpiVariable">Ev</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Now that we know the low level plumbing, we can use <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a> ;-)</p>
+<p>The only detail we still have to explain is what exactly a
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L406"><code class="docutils literal notranslate"><span class="pre">sealed-goal</span></code></a> is. A sealed goal wraps into a single object all
+the proof variables and the assumptions about them, making this object easy
+(or better, sound) to pass around.</p>
+<section id="multi-goal-tactics">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">multi-goal tactics</a><a class="headerlink" href="#multi-goal-tactics" title="Link to this heading"></a></h3>
+<p>Since Rocq 8.4 tactics can see more than one goal (multi-goal tactics).
+You can access this feature by using <code class="docutils literal notranslate"><span class="pre">all:</span></code> goal selector:</p>
+<ul class="simple">
+<li><p>if the tactic is a regular one, it will be used on each goal independently</p></li>
+<li><p>if the tactic is a multi-goal one, it will receive all goals</p></li>
+</ul>
+<p>In Elpi you can implement a multi-goal tactic by providing a rule for
+the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L204"><code class="docutils literal notranslate"><span class="pre">msolve</span></code></a> predicate. Since such a tactic will need to manipulate
+multiple goals, potentially living in different proof context, it receives
+a list of <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L406"><code class="docutils literal notranslate"><span class="pre">sealed-goal</span></code></a>, a data type which seals a goal and
+its proof context.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">ngoals</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span>msolve</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">#goals =</span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>std.length</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span>}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_undup</span><span> </span><span class="o">(</span><span class="nv">P</span><span> </span><span class="nv">Q</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">Q</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  ============================
+  P</span><span> /\</span><span> Q
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">split</span><span class="o">.</span><span>
+</span></dt><dd><span>2 goals
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  ============================
+  P
+
+goal 2 is:
+ Q
+</span></dd>
+<dt><span class="kp">all</span><span class="o">:</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">ngoals</span><span class="o">.</span><span>
+</span></dt><dd><span>#goals = 2
+[nabla c0 \
+  nabla c1 \
+   seal
+    (goal [decl c1 `Q:r` (sort prop), decl c0 `P:r` (sort prop)] (X0 c0 c1) 
+      c0 (X1 c0 c1) []), 
+ nabla c0 \
+  nabla c1 \
+   seal
+    (goal [decl c1 `Q:r` (sort prop), decl c0 `P:r` (sort prop)] (X2 c0 c1) 
+      c1 (X3 c0 c1) [])]
+</span></dd>
+<dt><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>This simple tactic prints the number of goals it receives, as well as
+the list itself, as shown in the output above: <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L407"><code class="docutils literal notranslate"><span class="pre">nabla</span></code></a> binds
+all proof variables, then <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L408"><code class="docutils literal notranslate"><span class="pre">seal</span></code></a> holds a regular goal, which
+in turn carries the proof context.</p>
+<p>In order to operate inside a goal one can use the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L159"><code class="docutils literal notranslate"><span class="pre">coq.ltac.open</span></code></a> utility,
+which postulates all proof variables using <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">pi</span></span><span class="whitespace"> </span><span class="name elpivariable"><span class="pre">x</span></span><span class="pre">\</span><span class="whitespace"> </span></code> and loads the proof
+context using <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">=&gt;</span></span></code>.</p>
+<p>Operating on multiple goals at the same time is doable, but not easy.
+In particular the two proof context have to be related in some way.</p>
+<p>The following simple multi goal tactic shrinks the list of goals by
+removing duplicates. As one can see, there is much room for improvement
+in the <code class="code elpi docutils literal notranslate"><span class="pre">same-ctx</span></code> predicate.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">undup</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">same-goal</span><span class="w"> </span><span class="kt">sealed-goal</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">sealed-goal</span><span>.</span><span class="w">
+  </span><span>same-goal</span><span class="w"> </span><span class="p">(</span><span>nabla</span><span class="w"> </span><span class="n n-ElpiVariable">G1</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>nabla</span><span class="w"> </span><span class="n n-ElpiVariable">G2</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span class="c">% TODO: proof variables could be permuted
+</span><span class="w">    </span><span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x</span><span>\</span><span class="w"> </span><span>same-goal</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">G1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">G2</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="o">.</span><span class="w">
+  </span><span>same-goal</span><span class="w"> </span><span class="p">(</span><span>seal</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx1</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Ty1</span><span class="w"> </span><span class="n n-ElpiVariable">P1</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G1</span><span class="p">)</span><span class="w">
+            </span><span class="p">(</span><span>seal</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx2</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Ty2</span><span class="w"> </span><span class="n n-ElpiVariable">P2</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G2</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>same-ctx</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx1</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx2</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="c">% this is an elpi builtin, aka same_term, which does not
+</span><span class="w">    </span><span class="c">% unify but rather compare two terms without assigning variables
+</span><span class="w">    </span><span class="n n-ElpiVariable">Ty1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="n n-ElpiVariable">Ty2</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="n n-ElpiVariable">P1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="n n-ElpiVariable">P2</span><span class="o">.</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">same-ctx</span><span class="w"> </span><span class="kt">goal-ctx</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">goal-ctx</span><span>.</span><span class="w">
+  </span><span>same-ctx</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="o">.</span><span class="w">
+  </span><span>same-ctx</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>decl</span><span class="w"> </span><span class="n n-ElpiVariable">V</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">T1</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">C1</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>decl</span><span class="w"> </span><span class="n n-ElpiVariable">V</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">T2</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">C2</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span class="c">% TODO: we could compare up to permutation...
+</span><span class="w">    </span><span class="c">% TODO: we could try to relate def and decl
+</span><span class="w">    </span><span class="n n-ElpiVariable">T1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="n n-ElpiVariable">T2</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>same-ctx</span><span class="w"> </span><span class="n n-ElpiVariable">C1</span><span class="w"> </span><span class="n n-ElpiVariable">C2</span><span class="o">.</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">undup</span><span class="w"> </span><span class="kt">sealed-goal</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">sealed-goal</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">sealed-goal</span><span>.</span><span class="w">
+  </span><span>undup</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="o">.</span><span class="w">
+  </span><span>undup</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">G1</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">GN</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">GN</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>same-goal</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">G1</span><span class="o">.</span><span class="w">
+  </span><span>undup</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">G1</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">GN</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">G1</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">GL</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>undup</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GN</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+
+  </span><span>msolve</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">G1</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">GS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">G1</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">GL</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span class="c">% TODO: we could find all duplicates, not just
+</span><span class="w">    </span><span class="c">% copies of the first goal...
+</span><span class="w">    </span><span>undup</span><span class="w"> </span><span class="n n-ElpiVariable">G1</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_undup</span><span> </span><span class="o">(</span><span class="nv">P</span><span> </span><span class="nv">Q</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">p</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">q</span><span> </span><span class="o">:</span><span> </span><span class="n">Q</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">Q</span><span> </span><span class="o">/</span><span class="o">\</span><span> </span><span class="n">P</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P</span><span> /\</span><span> Q</span><span> /\</span><span> P
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="kp">repeat</span><span> </span><span class="nb">split</span><span class="o">.</span><span>
+</span></dt><dd><span>3 goals
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P
+
+goal 2 is:
+ Q
+goal 3 is:
+ P
+</span></dd>
+<dt><span class="kn">Show Proof</span><span class="o">.</span><span>
+</span></dt><dd><span>(</span><span class="ansi-bold">fun</span><span> (P Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>) (p : P) (q : Q) =&gt; conj </span><span class="ansi-fg-light-blue">?Goal</span><span> (conj </span><span class="ansi-fg-light-blue">?Goal0</span><span> </span><span class="ansi-fg-light-blue">?Goal1</span><span>))
+</span></dd>
+<dt><span class="kp">all</span><span class="o">:</span><span> </span><span class="nb">elpi</span><span> </span><span class="n">undup</span><span class="o">.</span><span>
+</span></dt><dd><span>2 goals
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P
+
+goal 2 is:
+ Q
+</span></dd>
+<dt><span class="kn">Show</span><span>  </span><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dd><span>(</span><span class="ansi-bold">fun</span><span> (P Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>) (p : P) (q : Q) =&gt; conj </span><span class="ansi-fg-light-blue">?Goal</span><span> (conj </span><span class="ansi-fg-light-blue">?Goal0</span><span> </span><span class="ansi-fg-light-blue">?Goal</span><span>))
+</span></dd>
+<dt><span class="o">-</span><span> </span><span class="nb">apply</span><span> </span><span class="n">p</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  P
+
+This subproof is complete, but there are some unfocused goals.
+Focus next goal with bullet -.
+
+1 goal
+
+goal 1 is:
+ Q
+</span></dd>
+<dt><span class="o">-</span><span> </span><span class="nb">apply</span><span> </span><span class="n">q</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P, Q : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  p : P
+  q : Q
+  ============================
+  Q
+
+No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>The two calls to show proof display (see the output above), respectively
+before and after <code class="docutils literal notranslate"><span class="pre">all:</span> <span class="pre">elpi</span> <span class="pre">undup</span></code>: the proof term is the same but for
+the fact that after the tactic the first and last missing subterm
+(incomplete proof tree branch) are represented by the same hole. Indeed by
+solving one, we can also solve the other.</p>
+</section>
+<section id="lcf-tacticals">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">LCF tacticals</a><a class="headerlink" href="#lcf-tacticals" title="Link to this heading"></a></h3>
+<p>On the notion of sealed-goal it is easy to define the usual LCF combinators,
+also known as Ltac tacticals. Tacticals usually take in input one or more
+tactic, here the precise type definition:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">typeabbrev</span><span class="w"> </span><span class="n n-ElpiFunction">tactic</span><span class="w"> </span><span class="kt">(pred</span><span class="w"> </span><span class="kt">sealed-goal</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">sealed-goal)</span>.
+</pre></div>
+</div>
+<p>A few tacticals can be found in the
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi">elpi-ltac.elpi file</a>.
+For example this is the code of <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L133"><code class="docutils literal notranslate"><span class="pre">try</span></code></a>:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">try</span><span class="w"> </span><span class="kt">tactic</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">sealed-goal</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">sealed-goal</span>.
+try<span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="o">.</span>
+try<span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">G</span><span class="k k-ElpiKeyword">]</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+<section id="setting-arguments-for-a-tactic">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Setting arguments for a tactic</a><a class="headerlink" href="#setting-arguments-for-a-tactic" title="Link to this heading"></a></h3>
+<p>As we hinted before, tactic arguments are attached to the goal since
+they can mention proof variables. So the Ltac code:</p>
+<div class="highlight-coq notranslate"><div class="highlight"><pre><span></span><span class="nb">intro</span> <span class="n">H</span><span class="o">;</span> <span class="nb">apply</span> <span class="n">H</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>has to be seen as 3 steps, starting from a goal <code class="docutils literal notranslate"><span class="pre">G</span></code>:</p>
+<ul class="simple">
+<li><p>introduction of <code class="docutils literal notranslate"><span class="pre">H</span></code>, obtaining <code class="docutils literal notranslate"><span class="pre">G1</span></code></p></li>
+<li><p>setting the argument <code class="docutils literal notranslate"><span class="pre">H</span></code>, obtaining <code class="docutils literal notranslate"><span class="pre">G2</span></code></p></li>
+<li><p>calling apply, obtaining <code class="docutils literal notranslate"><span class="pre">G3</span></code></p></li>
+</ul>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">argpass</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span class="c">% this directive lets you use short names
+</span><span class="k k-ElpiKeyword">shorten</span><span class="w"> </span><span>coq.ltac.</span><span>{</span><span class="w"> </span><span>open</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>thenl</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>all</span><span class="w"> </span><span>}</span><span class="o">.</span><span class="w">
+
+</span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">intro</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">open-tactic</span><span>.</span><span class="w"> </span><span class="c">% goal -&gt; list sealed-goal
+</span><span>intro</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>refine</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">fun</span><span> </span><span class="nv">H</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+
+</span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">set-arg-n-hyp</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">open-tactic</span><span>.</span><span class="w">
+</span><span>set-arg-n-hyp</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">SG1</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>std.nth</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ctx</span><span class="w"> </span><span class="p">(</span><span>decl</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.ltac.set-goal-arguments</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>trm</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="p">(</span><span>seal</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">SG1</span><span class="o">.</span><span class="w">
+
+</span><span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">apply</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">open-tactic</span><span>.</span><span class="w">
+</span><span>apply</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>trm</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>refine</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+
+</span><span>msolve</span><span class="w"> </span><span class="n n-ElpiVariable">SG</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>all</span><span class="w"> </span><span class="p">(</span><span>thenl</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="w"> </span><span>open</span><span class="w"> </span><span>intro</span><span class="k k-ElpiKeyword">,</span><span class="w">
+               </span><span>open</span><span class="w"> </span><span class="p">(</span><span>set-arg-n-hyp</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+               </span><span>open</span><span class="w"> </span><span>apply</span><span class="w"> </span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">SG</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">test_argpass</span><span> </span><span class="o">(</span><span class="nv">P</span><span> </span><span class="o">:</span><span> </span><span class="kt">Prop</span><span class="o">)</span><span> </span><span class="o">:</span><span> </span><span class="n">P</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">P</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  P : </span><span class="ansi-fg-yellow ansi-bold">Prop</span><span>
+  ============================
+  P</span><span> -&gt;</span><span> P
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span class="nb">elpi</span><span> </span><span class="n">argpass</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Of course the tactic playing the role of <code class="docutils literal notranslate"><span class="pre">intro</span></code> could communicate back
+a datum to be passed to what follows</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>thenl<span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="w"> </span>open<span class="w"> </span><span class="p">(</span>tac1<span class="w"> </span><span class="n n-ElpiVariable">Datum</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span>open<span class="w"> </span><span class="p">(</span>tac2<span class="w"> </span><span class="n n-ElpiVariable">Datum</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">]</span>
+</pre></div>
+</div>
+<p>but the binder structure of <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L406"><code class="docutils literal notranslate"><span class="pre">sealed-goal</span></code></a> would prevent <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Datum</span></span></code>
+to mention proof variables, that would otherwise escape the sealing.</p>
+<p>The utility <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L124"><code class="docutils literal notranslate"><span class="pre">set-goal-arguments</span></code></a>:</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>coq.ltac.set-goal-arguments<span class="w"> </span><span class="n n-ElpiVariable">Args</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">G1</span><span class="w"> </span><span class="n n-ElpiVariable">G1wArgs</span>
+</pre></div>
+</div>
+<p>tries to move <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Args</span></span></code> from the context of <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">G</span></span></code> to the one of <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">G1</span></span></code>.
+Relating the two proof contexts is not obvious: you may need to write your
+own procedure if the two contexts are very distant.</p>
+</section>
+</section>
+<section id="tactics-in-terms">
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">Tactics in terms</a><a class="headerlink" href="#tactics-in-terms" title="Link to this heading"></a></h2>
+<p>Elpi tactics can be used inside terms via the usual <code class="docutils literal notranslate"><span class="pre">ltac:(...)</span></code>
+quotation, but can also be exported to the term grammar.</p>
+<p>Here we write a simple tactic for default values, which
+optionally takes a bound to the search depth.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">default</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">default</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+
+  </span><span>default</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.ltac.fail</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">max search depth reached</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+  </span><span>default</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">nat</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="mi">46</span><span> </span><span class="si">}}</span><span class="o">.</span><span class="w">
+  </span><span>default</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">bool</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">false</span><span> </span><span class="si">}}</span><span class="o">.</span><span class="w">
+  </span><span>default</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">list</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">A</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">Max</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">cons</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">D</span><span> </span><span class="n">nil</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span class="n n-ElpiVariable">Max'</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="n n-ElpiVariable">Max</span><span class="w"> </span><span class="k k-ElpiKeyword">-</span><span class="w"> </span><span class="mi">1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>default</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="n n-ElpiVariable">Max'</span><span class="w"> </span><span class="n n-ElpiVariable">D</span><span class="o">.</span><span class="w">
+
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>default</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="mi">9999</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>refine</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Export</span><span> </span><span class="n">default</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Definition</span><span> </span><span class="nf">foo</span><span> </span><span class="o">:</span><span> </span><span class="n">nat</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="n">default</span><span class="o">.</span><span>
+</span></dt><dd><span>foo is defined
+</span></dd>
+<dt><span class="kn">Print</span><span> </span><span class="n">foo</span><span class="o">.</span><span>
+</span></dt><dd><span>foo = 46
+     : nat
+</span></dd>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">bar</span><span> </span><span class="o">:</span><span> </span><span class="n">list</span><span> </span><span class="n">bool</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="n">default</span><span class="o">.</span><span>
+</span></dt><dd><span>bar is defined
+</span></dd>
+<dt><span class="kn">Print</span><span> </span><span class="n">bar</span><span class="o">.</span><span>
+</span></dt><dd><span>bar = (false </span><span>:: </span><span>nil)%list
+     : list bool
+</span></dd>
+</dl>
+</div>
+<p>The grammar entries for Elpi tactics in terms take an arbitrary
+number of arguments with the limitation that they are all terms:
+you can't pass a string or an integer as one would normally do.</p>
+<p>Here we use Rocq's primitive integers to pass the search depth
+(in a compact way).</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="n">default</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>trm</span><span class="w"> </span><span class="p">(</span><span>primitive</span><span class="w"> </span><span class="p">(</span><span>uint63</span><span class="w"> </span><span class="n n-ElpiVariable">Max</span><span class="p">)</span><span class="p">)</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.uint63-&gt;int</span><span class="w"> </span><span class="n n-ElpiVariable">Max</span><span class="w"> </span><span class="n n-ElpiVariable">MaxI</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>default</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">MaxI</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>refine</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">From</span><span> </span><span class="n">Corelib</span><span> </span><span class="kn">Require Import</span><span> </span><span class="n">PrimInt63</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Open Scope</span><span> </span><span class="n">uint63_scope</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Fail</span><span> </span><span class="kn">Definition</span><span> </span><span class="nf">baz</span><span> </span><span class="o">:</span><span> </span><span class="n">list</span><span> </span><span class="n">nat</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="n">default</span><span> </span><span class="mi">1</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+Tactic failure: max search depth reached.
+</span></dd>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">baz</span><span> </span><span class="o">:</span><span> </span><span class="n">list</span><span> </span><span class="n">nat</span><span> </span><span class="o">:</span><span class="o">=</span><span> </span><span class="n">default</span><span> </span><span class="mi">2</span><span class="o">.</span><span>
+</span></dt><dd><span>baz is defined
+</span></dd>
+<dt><span class="kn">Print</span><span> </span><span class="n">baz</span><span class="o">.</span><span>
+</span></dt><dd><span>baz = (46%nat </span><span>:: </span><span>nil)%list
+     : list nat
+</span></dd>
+</dl>
+</div>
+<p>That is all folks! If you want to go one level deeper and add a new
+builtin data type or predicate implemented directly in OCaml, see
+<a class="reference internal" href="plugin.html"><span class="doc">Adding builtin predicates via an OCaml plugin</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="coq-tactics.html" class="btn btn-neutral float-left" title="Writing tactics in Elpi" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plugin.html" class="btn btn-neutral float-right" title="Adding builtin predicates via an OCaml plugin" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invocation of Elpi code &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Builtins and relevant files" href="builtins.html" />
+    <link rel="prev" title="Separation of parsing from execution" href="synterp-interp.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Invocation of Elpi code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ltac-variables">Ltac variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#attributes">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#terms-as-arguments">Terms as arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing-debugging">Testing/debugging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Invocation of Elpi code</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/invocation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="invocation-of-elpi-code">
+<h1>Invocation of Elpi code<a class="headerlink" href="#invocation-of-elpi-code" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">&lt;qname&gt;</span> <span class="pre">&lt;argument&gt;*.</span></code> invokes the <code class="docutils literal notranslate"><span class="pre">main</span></code> predicate of the
+<code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> program passing a possible empty list of arguments. This is
+how you invoke a command.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">elpi</span> <span class="pre">&lt;qname&gt;</span> <span class="pre">&lt;argument&gt;*.</span></code> invokes the <code class="docutils literal notranslate"><span class="pre">solve</span></code> predicate of the
+<code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> program passing a possible empty list of arguments and the
+current goal. This is how you invoke a tactic.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Export</span> <span class="pre">&lt;qname&gt;</span> <span class="pre">[As</span> <span class="pre">&lt;other-qname&gt;]</span></code> makes it possible to invoke
+command <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> (or <code class="docutils literal notranslate"><span class="pre">&lt;other-qname&gt;</span></code> if given) without the <code class="docutils literal notranslate"><span class="pre">Elpi</span></code>
+prefix, or invoke tactic <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> in the middle of a term just writing
+<code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span> <span class="pre">args</span></code> instead of <code class="docutils literal notranslate"><span class="pre">ltac:(elpi</span> <span class="pre">&lt;qname&gt;</span> <span class="pre">args)</span></code>. Note that in the
+case of tactics, all arguments are considered to be terms. Moreover,
+remember that one can use <code class="docutils literal notranslate"><span class="pre">Tactic</span> <span class="pre">Notation</span></code> to give the tactic a better
+syntax and a shorter name when used in the middle of a proof script.
+Commands can declare the behavior of starting/ending a proof by,
+respectively, using <code class="docutils literal notranslate"><span class="pre">#[proof=&quot;begin&quot;]</span> <span class="pre">Elpi</span> <span class="pre">Export</span> <span class="pre">..</span></code> and
+<code class="docutils literal notranslate"><span class="pre">#[proof=&quot;end&quot;]</span> <span class="pre">Elpi</span> <span class="pre">Export</span> <span class="pre">..</span></code>. Starting the proof can depend on the
+presence of an attribute, for example
+<code class="docutils literal notranslate"><span class="pre">#[proof(begin_if=&quot;interactive&quot;)]</span> <span class="pre">Elpi</span> <span class="pre">Export</span> <span class="pre">foo</span></code> will make <code class="docutils literal notranslate"><span class="pre">foo</span></code> not
+open a proof, while <code class="docutils literal notranslate"><span class="pre">#[interactive]</span> <span class="pre">foo</span></code> will open a proof. See also the
+<code class="docutils literal notranslate"><span class="pre">main-interp-proof</span></code> and <code class="docutils literal notranslate"><span class="pre">main-interp-qed</span></code> entry points in
+<a class="reference internal" href="builtins.html"><span class="doc">Builtins and relevant files</span></a>.</p></li>
+</ul>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;argument&gt;</span></code> can be:</p>
+<ul class="simple">
+<li><p>a number, e.g. <code class="docutils literal notranslate"><span class="pre">3</span></code>, represented in Elpi as <code class="docutils literal notranslate"><span class="pre">(int</span> <span class="pre">3)</span></code></p></li>
+<li><p>a string, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;foo&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">bar.baz</span></code>, represented in Elpi as
+<code class="docutils literal notranslate"><span class="pre">(str</span> <span class="pre">&quot;foo&quot;)</span></code> and <code class="docutils literal notranslate"><span class="pre">(str</span> <span class="pre">&quot;bar.baz&quot;)</span></code>. Rocq keywords and symbols are
+recognized as strings, e.g. <code class="docutils literal notranslate"><span class="pre">=&gt;</span></code> requires no quotes. Quotes are
+necessary if the string contains a space or a character that is not
+accepted for qualified identifiers, or if the string is <code class="docutils literal notranslate"><span class="pre">Definition</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Axiom</span></code>, <code class="docutils literal notranslate"><span class="pre">Record</span></code>, <code class="docutils literal notranslate"><span class="pre">Structure</span></code>, <code class="docutils literal notranslate"><span class="pre">Inductive</span></code>, <code class="docutils literal notranslate"><span class="pre">CoInductive</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Variant</span></code> or <code class="docutils literal notranslate"><span class="pre">Context</span></code>.</p></li>
+<li><p>a term, e.g. <code class="docutils literal notranslate"><span class="pre">(3)</span></code> or <code class="docutils literal notranslate"><span class="pre">(f</span> <span class="pre">x)</span></code>, represented in Elpi as <code class="docutils literal notranslate"><span class="pre">(trm</span> <span class="pre">...)</span></code>.
+Note that terms always require parentheses, that is <code class="docutils literal notranslate"><span class="pre">3</span></code> is a number
+while <code class="docutils literal notranslate"><span class="pre">(3)</span></code> is a Rocq term and depending on the context could be a
+natural number (i.e. <code class="docutils literal notranslate"><span class="pre">S</span> <span class="pre">(S</span> <span class="pre">(S</span> <span class="pre">O))</span></code>) or a <code class="docutils literal notranslate"><span class="pre">Z</span></code> or ... See also the
+sections below on terms as arguments and Ltac variables.</p></li>
+</ul>
+<p>Commands also accept the following arguments (the syntax is as close as
+possible to the Rocq one: <code class="docutils literal notranslate"><span class="pre">[...]</span></code> means optional, <code class="docutils literal notranslate"><span class="pre">*</span></code> means 0 or more).
+See the <code class="docutils literal notranslate"><span class="pre">argument</span></code> data type in <a class="reference internal" href="builtins.html"><span class="doc">Builtins and relevant files</span></a> for their HOAS encoding.
+See also the section on terms as arguments below.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Definition</span></code> <em>name</em> <em>binder</em>* [<code class="docutils literal notranslate"><span class="pre">:</span></code> <em>term</em>] <code class="docutils literal notranslate"><span class="pre">:=</span></code> <em>term</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Axiom</span></code> <em>name</em> <code class="docutils literal notranslate"><span class="pre">:</span></code> <em>term</em></p></li>
+<li><p>[ <code class="docutils literal notranslate"><span class="pre">Record</span></code> | <code class="docutils literal notranslate"><span class="pre">Structure</span></code> ] <em>name</em> <em>binder</em>* [<code class="docutils literal notranslate"><span class="pre">:</span></code> <em>sort</em>] <code class="docutils literal notranslate"><span class="pre">:=</span></code>
+[<em>name</em>] <code class="docutils literal notranslate"><span class="pre">{</span></code> <em>name</em> <code class="docutils literal notranslate"><span class="pre">:</span></code> <em>term</em> <code class="docutils literal notranslate"><span class="pre">;</span></code> * <code class="docutils literal notranslate"><span class="pre">}</span></code></p></li>
+<li><p>[ <code class="docutils literal notranslate"><span class="pre">Inductive</span></code> | <code class="docutils literal notranslate"><span class="pre">CoInductive</span></code> | <code class="docutils literal notranslate"><span class="pre">Variant</span></code> ] <em>name</em> <em>binder</em>*
+[<code class="docutils literal notranslate"><span class="pre">|</span></code> <em>binder</em>*] [<code class="docutils literal notranslate"><span class="pre">:</span></code> <em>term</em>] <code class="docutils literal notranslate"><span class="pre">:=</span></code> <code class="docutils literal notranslate"><span class="pre">|</span></code> <em>name</em> <em>binder</em>* <code class="docutils literal notranslate"><span class="pre">:</span></code> <em>term</em> *</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Context</span></code> <em>binder</em>*</p></li>
+</ul>
+<section id="ltac-variables">
+<h2>Ltac variables<a class="headerlink" href="#ltac-variables" title="Link to this heading"></a></h2>
+<p>Tactics also accept Ltac variables as follows:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ltac_string:(v)</span></code> (for <code class="docutils literal notranslate"><span class="pre">v</span></code> of type <code class="docutils literal notranslate"><span class="pre">string</span></code> or <code class="docutils literal notranslate"><span class="pre">ident</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ltac_int:(v)</span></code> (for <code class="docutils literal notranslate"><span class="pre">v</span></code> of type <code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">integer</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ltac_term:(v)</span></code> (for <code class="docutils literal notranslate"><span class="pre">v</span></code> of type <code class="docutils literal notranslate"><span class="pre">constr</span></code> or <code class="docutils literal notranslate"><span class="pre">open_constr</span></code> or
+<code class="docutils literal notranslate"><span class="pre">uconstr</span></code> or <code class="docutils literal notranslate"><span class="pre">hyp</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ltac_open_term:(v)</span></code> (for <code class="docutils literal notranslate"><span class="pre">v</span></code> of type <code class="docutils literal notranslate"><span class="pre">uconstr</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ltac_(string|int|term|open_term)_list:(v)</span></code> (for <code class="docutils literal notranslate"><span class="pre">v</span></code> of type <code class="docutils literal notranslate"><span class="pre">list</span></code>
+of ...)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ltac_tactic:(t)</span></code> (for <code class="docutils literal notranslate"><span class="pre">t</span></code> of type <code class="docutils literal notranslate"><span class="pre">tactic</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ltac_attributes:(v)</span></code> (for <code class="docutils literal notranslate"><span class="pre">v</span></code> of type <code class="docutils literal notranslate"><span class="pre">attributes</span></code>)</p></li>
+</ul>
+<p>For example:</p>
+<div class="highlight-coq notranslate"><div class="highlight"><pre><span></span><span class="kn">Tactic</span> <span class="kn">Notation</span> <span class="s2">&quot;tac&quot;</span> <span class="n">string</span><span class="o">(</span><span class="n">X</span><span class="o">)</span> <span class="kn">ident</span><span class="o">(</span><span class="n">Y</span><span class="o">)</span> <span class="n">int</span><span class="o">(</span><span class="n">Z</span><span class="o">)</span> <span class="n">hyp</span><span class="o">(</span><span class="n">T</span><span class="o">)</span> <span class="n">constr_list</span><span class="o">(</span><span class="n">L</span><span class="o">)</span> <span class="n">simple_intropattern_list</span><span class="o">(</span><span class="n">P</span><span class="o">)</span> <span class="kp">uconstr</span><span class="o">(</span><span class="n">U</span><span class="o">)</span> <span class="n">tactic</span><span class="o">(</span><span class="n">TA</span><span class="o">)</span> <span class="o">:=</span>
+  <span class="nb">elpi</span> <span class="n">tac</span> <span class="n">ltac_string</span><span class="o">:(</span><span class="n">X</span><span class="o">)</span> <span class="n">ltac_string</span><span class="o">:(</span><span class="n">Y</span><span class="o">)</span> <span class="n">ltac_int</span><span class="o">:(</span><span class="n">Z</span><span class="o">)</span> <span class="n">ltac_term</span><span class="o">:(</span><span class="n">T</span><span class="o">)</span> <span class="n">ltac_term_list</span><span class="o">:(</span><span class="n">L</span><span class="o">)</span> <span class="n">ltac_tactic</span><span class="o">:(</span><span class="nb">intros</span> <span class="n">P</span><span class="o">)</span> <span class="n">ltac_open_term</span><span class="o">:(</span><span class="n">U</span><span class="o">)</span> <span class="n">ltac_tactic</span><span class="o">:(</span><span class="n">TA</span><span class="o">).</span>
+</pre></div>
+</div>
+<p>lets one write <code class="docutils literal notranslate"><span class="pre">tac</span> <span class="pre">&quot;a&quot;</span> <span class="pre">b</span> <span class="pre">3</span> <span class="pre">H</span> <span class="pre">t1</span> <span class="pre">t2</span> <span class="pre">t3</span> <span class="pre">[|m]</span> <span class="pre">u</span> <span class="pre">ta</span></code> in any Ltac context.
+Arguments are first interpreted by Ltac according to the types declared in
+the tactic notation and then injected in the corresponding Elpi argument.
+For example <code class="docutils literal notranslate"><span class="pre">H</span></code> must be an existing hypothesis, since it is typed with the
+<code class="docutils literal notranslate"><span class="pre">hyp</span></code> Ltac type, but in Elpi it will appear as a term, e.g. <code class="docutils literal notranslate"><span class="pre">trm</span> <span class="pre">c0</span></code>.
+Similarly <code class="docutils literal notranslate"><span class="pre">t1</span></code>, <code class="docutils literal notranslate"><span class="pre">t2</span></code> and <code class="docutils literal notranslate"><span class="pre">t3</span></code> are checked to be well typed and to
+contain no unresolved implicit arguments, since this is what the <code class="docutils literal notranslate"><span class="pre">constr</span></code>
+Ltac type means. If they were typed as <code class="docutils literal notranslate"><span class="pre">open_constr</span></code> or <code class="docutils literal notranslate"><span class="pre">uconstr</span></code>, the
+last or both checks would be respectively skipped. In any case they are
+passed to the Elpi code as <code class="docutils literal notranslate"><span class="pre">trm</span> <span class="pre">...</span></code>. Both <code class="docutils literal notranslate"><span class="pre">&quot;a&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code> are passed to
+Elpi as <code class="docutils literal notranslate"><span class="pre">str</span> <span class="pre">...</span></code>. Argument <code class="docutils literal notranslate"><span class="pre">U</span></code> flagged as <code class="docutils literal notranslate"><span class="pre">ltac_open_term</span></code> can mention
+free variables. The Elpi tactic receives <code class="docutils literal notranslate"><span class="pre">open-trm</span> <span class="pre">N</span> <span class="pre">F</span></code> where <code class="docutils literal notranslate"><span class="pre">N</span></code> is the
+number of free variables in <code class="docutils literal notranslate"><span class="pre">U</span></code> and <code class="docutils literal notranslate"><span class="pre">F</span></code> is <code class="docutils literal notranslate"><span class="pre">fun</span> <span class="pre">x1</span> <span class="pre">=&gt;</span> <span class="pre">...</span> <span class="pre">fun</span> <span class="pre">xN</span> <span class="pre">=&gt;</span> <span class="pre">U</span></code>.
+Argument <code class="docutils literal notranslate"><span class="pre">TA</span></code> is received as <code class="docutils literal notranslate"><span class="pre">tac</span> <span class="pre">T</span></code> where <code class="docutils literal notranslate"><span class="pre">T</span></code> is an (opaque) tactic
+that can be called via the <code class="docutils literal notranslate"><span class="pre">coq.ltac.*</span></code> APIs. Finally, <code class="docutils literal notranslate"><span class="pre">ltac_term:(T)</span></code>
+and <code class="docutils literal notranslate"><span class="pre">(T)</span></code> are <em>not</em> synonyms: the former must be used when defining tactic
+notations, the latter when invoking elpi tactics directly. <code class="docutils literal notranslate"><span class="pre">\`(T)</span></code> can be
+used to pass an open term to <code class="docutils literal notranslate"><span class="pre">elpi</span> <span class="pre">tactic</span> <span class="pre">...</span></code>.</p>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<p>Attributes are supported in both commands and tactics. Examples:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">#[</span> <span class="pre">att</span> <span class="pre">]</span> <span class="pre">Elpi</span> <span class="pre">cmd</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#[</span> <span class="pre">att</span> <span class="pre">]</span> <span class="pre">cmd</span></code> for a command <code class="docutils literal notranslate"><span class="pre">cmd</span></code> exported via <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Export</span> <span class="pre">cmd</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#[</span> <span class="pre">att</span> <span class="pre">]</span> <span class="pre">elpi</span> <span class="pre">tac</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Tactic</span> <span class="pre">Notation</span> <span class="pre">...</span> <span class="pre">attributes(A)</span> <span class="pre">...</span> <span class="pre">:=</span> <span class="pre">ltac_attributes:(A)</span> <span class="pre">elpi</span> <span class="pre">tac</span></code>.
+Due to a parsing conflict in Rocq's grammar, at the time of writing this
+code:</p>
+<div class="highlight-coq notranslate"><div class="highlight"><pre><span></span><span class="kn">Tactic</span> <span class="kn">Notation</span> <span class="s2">&quot;#[&quot;</span> <span class="n">attributes</span><span class="o">(</span><span class="n">A</span><span class="o">)</span> <span class="s2">&quot;]&quot;</span> <span class="s2">&quot;tac&quot;</span> <span class="o">:=</span>
+  <span class="n">ltac_attributes</span><span class="o">:(</span><span class="n">A</span><span class="o">)</span> <span class="nb">elpi</span> <span class="n">tac</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>has the following limitation:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">#[</span> <span class="pre">att</span> <span class="pre">]</span> <span class="pre">tac.</span></code> does not parse</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(#[</span> <span class="pre">att</span> <span class="pre">]</span> <span class="pre">tac).</span></code> works</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">idtac;</span> <span class="pre">#[</span> <span class="pre">att</span> <span class="pre">]</span> <span class="pre">tac.</span></code> works</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="terms-as-arguments">
+<h2>Terms as arguments<a class="headerlink" href="#terms-as-arguments" title="Link to this heading"></a></h2>
+<p>Since version 1.15, terms passed to Elpi commands via <code class="docutils literal notranslate"><span class="pre">(term)</span></code> or via a
+declaration (like <code class="docutils literal notranslate"><span class="pre">Record</span></code>, <code class="docutils literal notranslate"><span class="pre">Inductive</span></code> ...) are in elaborated format by
+default. This means that all Rocq notational facilities are available, like
+deep pattern matching, or tactics in terms. One can use the attribute
+<code class="docutils literal notranslate"><span class="pre">#[arguments(raw)]</span></code> to declare a command which instead takes arguments in
+raw format. In that case, notations are unfolded, implicit arguments are
+expanded (holes <code class="docutils literal notranslate"><span class="pre">_</span></code> are added) and lexical analysis is performed (global
+names and bound names are identified, holes are applied to bound names in
+scope), but deep pattern matching or tactics in terms are not supported, and
+in particular type checking/inference is not performed. One can use the
+<code class="docutils literal notranslate"><span class="pre">coq.typecheck</span></code> or <code class="docutils literal notranslate"><span class="pre">coq.elaborate-skeleton</span></code> APIs to fill in implicit
+arguments and insert coercions on raw terms.</p>
+<p>Terms passed to Elpi tactics via tactic notations can be forced to be
+elaborated beforehand by declaring the parameters to be of type <code class="docutils literal notranslate"><span class="pre">constr</span></code>
+or <code class="docutils literal notranslate"><span class="pre">open_constr</span></code>. Arguments of type <code class="docutils literal notranslate"><span class="pre">uconstr</span></code> are passed raw.</p>
+</section>
+<section id="testing-debugging">
+<h2>Testing/debugging<a class="headerlink" href="#testing-debugging" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Query</span> <span class="pre">[&lt;qname&gt;]</span> <span class="pre">&lt;code&gt;</span></code> runs <code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> in the current program (or
+in <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> if specified).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Query</span> <span class="pre">[&lt;qname&gt;]</span> <span class="pre">&lt;synterp-code&gt;</span> <span class="pre">&lt;interp-code&gt;</span></code> runs
+<code class="docutils literal notranslate"><span class="pre">&lt;synterp-code&gt;</span></code> in the current (synterp) program (or in <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> if
+specified) and <code class="docutils literal notranslate"><span class="pre">&lt;interp-code&gt;</span></code> in the current program (or <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">elpi</span> <span class="pre">query</span> <span class="pre">[&lt;qname&gt;]</span> <span class="pre">&lt;string&gt;</span> <span class="pre">&lt;argument&gt;*</span></code> runs the <code class="docutils literal notranslate"><span class="pre">&lt;string&gt;</span></code>
+predicate (that must have the same signature as the default predicate
+<code class="docutils literal notranslate"><span class="pre">solve</span></code>).</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="synterp-interp.html" class="btn btn-neutral float-left" title="Separation of parsing from execution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="builtins.html" class="btn btn-neutral float-right" title="Builtins and relevant files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

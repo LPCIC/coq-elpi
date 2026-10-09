@@ -1,0 +1,530 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Open terms &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reflexive tactic" href="reflexive-tactic.html" />
+    <link rel="prev" title="Reduction surgery" href="reduction-surgery.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data-base.html">Data bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-expansion.html">Record expansion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-to-sigma.html">Record to sigma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fuzzer.html">Fuzzer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curry-howard-tactics.html">Curry-Howard tactics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalize.html">Generalize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abs-evars.html">Closing terms with holes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="import-projections.html">Record import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction-surgery.html">Reduction surgery</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Open terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reflexive-tactic.html">Reflexive tactic</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">Open terms</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/open-terms.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="open-terms">
+<h1>Open terms<a class="headerlink" href="#open-terms" title="Link to this heading"></a></h1>
+<p>Implements a tactic like <code class="docutils literal notranslate"><span class="pre">replace</span></code> that receives terms containing free
+variables, i.e. variables bound in the goal but not in the proof context.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This example depends on Rocq's <code class="docutils literal notranslate"><span class="pre">Stdlib</span></code> theories, unlike the other
+cookbook examples.</p>
+</div>
+<div class="rocqtop literal-block highlight docutils container">
+<span class="rocqtop-reset"></span><dl>
+<dt><span class="kn">From</span><span> </span><span class="nb">elpi</span><span> </span><span class="kn">Require Import</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file ppx_deriving.runtime (implicit dependency) ... done]
+[Loading ML file re (implicit dependency) ... done]
+[Loading ML file re.str (implicit dependency) ... done]
+[Loading ML file elpi.util (implicit dependency) ... done]
+[Loading ML file elpi.lexer_config (implicit dependency) ... done]
+[Loading ML file menhirLib (implicit dependency) ... done]
+[Loading ML file stdlib-shims (implicit dependency) ... done]
+[Loading ML file elpi.parser (implicit dependency) ... done]
+[Loading ML file camlp-streams (implicit dependency) ... done]
+[Loading ML file easy-format (implicit dependency) ... done]
+[Loading ML file biniou (implicit dependency) ... done]
+[Loading ML file yojson (implicit dependency) ... done]
+[Loading ML file atdgen-runtime (implicit dependency) ... done]
+[Loading ML file elpi.trace.atd (implicit dependency) ... done]
+[Loading ML file elpi.trace.runtime (implicit dependency) ... done]
+[Loading ML file elpi.runtime (implicit dependency) ... done]
+[Loading ML file elpi.compiler (implicit dependency) ... done]
+[Loading ML file elpi (implicit dependency) ... done]
+[Loading ML file rocq-elpi.elpi ... done]
+</span></dd>
+<dt><span class="kn">From</span><span> </span><span class="n">Stdlib</span><span> </span><span class="kn">Require Import</span><span> </span><span class="n">Arith</span><span> </span><span class="n">ZArith</span><span> </span><span class="n">List</span><span> </span><span class="n">FunctionalExtensionality</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file rocq-runtime.plugins.ring ... done]
+[Loading ML file rocq-runtime.plugins.zify ... done]
+[Loading ML file rocq-runtime.plugins.micromega_core ... done]
+[Loading ML file rocq-runtime.plugins.micromega ... done]
+[Loading ML file rocq-runtime.plugins.btauto ... done]
+[Loading ML file rocq-runtime.plugins.nsatz_core ... done]
+[Loading ML file rocq-runtime.plugins.nsatz ... done]
+</span></dd>
+</dl>
+<span></span><dl>
+<dt><span class="kn">Axiom</span><span> </span><span class="nv">map2</span><span> </span><span class="o">:</span><span> </span><span class="o">(</span><span class="n">nat</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">nat</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">nat</span><span class="o">)</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">list</span><span> </span><span class="n">nat</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">list</span><span> </span><span class="n">nat</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">list</span><span> </span><span class="n">nat</span><span class="o">.</span><span>
+</span></dt><dd><span>map2 is declared
+</span></dd>
+<dt><span class="kn">Lemma</span><span> </span><span class="nf">easy_example</span><span> </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="nv">x</span><span class="o">,</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span> </span><span class="o">=</span><span> </span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> x : nat, x</span><span> +</span><span> 1</span><span> =</span><span> 1</span><span> +</span><span> x
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span>  </span><span class="nb">intros</span><span> </span><span class="n">x</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x : nat
+  ============================
+  x</span><span> +</span><span> 1</span><span> =</span><span> 1</span><span> +</span><span> x
+</span></dd>
+<dt><span>  </span><span class="c">(*</span><span class="c"> easy: x is bound by the proof context </span><span class="c">*)</span><span>
+  </span><span class="nb">replace</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span class="o">)</span><span> </span><span class="k">with</span><span> </span><span class="o">(</span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="bp">by</span><span> </span><span class="bp">ring</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  x : nat
+  ============================
+  1</span><span> +</span><span> x</span><span> =</span><span> 1</span><span> +</span><span> x
+</span></dd>
+<dt><span>  </span><span class="bp">reflexivity</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">hard_example</span><span> </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="nv">l</span><span class="o">,</span><span> </span><span class="n">map</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span class="o">)</span><span> </span><span class="n">l</span><span> </span><span class="o">=</span><span> </span><span class="n">map</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">=&gt;</span><span> </span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="n">l</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> l : list nat,
+  map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x</span><span> +</span><span> 1) l</span><span> =</span><span> map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; 1</span><span> +</span><span> x) l
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span>  </span><span class="nb">intros</span><span> </span><span class="n">l</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  l : list nat
+  ============================
+  map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x</span><span> +</span><span> 1) l</span><span> =</span><span> map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; 1</span><span> +</span><span> x) l
+</span></dd>
+<dt><span>  </span><span class="c">(*</span><span class="c"> hard: x is bound by a lambda in the goal </span><span class="c">*)</span><span>
+  </span><span class="kn">Fail</span><span> </span><span class="nb">replace</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span class="o">)</span><span> </span><span class="k">with</span><span> </span><span class="o">(</span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="bp">by</span><span> </span><span class="bp">ring</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+The variable x was not found in the current environment.
+</span></dd>
+<dt><span>  </span><span class="c">(*</span><span class="c"> fails and prints: The variable x was not found in the current environment.</span><span class="c">*)</span><span>
+
+  </span><span class="c">(*</span><span class="c"> This example implements a new repl tactic that will instead succeed. </span><span class="c">*)</span><span>
+</span><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Elpi provides a type of tactic argument called <code class="docutils literal notranslate"><span class="pre">open-trm</span></code> for terms with
+free variables. Since there is no such thing as free variables in Elpi, a
+pre-processor closes the term under binders and pairs the closed term with
+the number of such &quot;technical binders&quot;:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">show_open_term</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">The argument </span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>coq.term-&gt;string</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span>}</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">was closed under</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">binders</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Goal</span><span> </span><span class="n">map</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="n">nil</span><span> </span><span class="o">=</span><span> </span><span class="n">nil</span><span> </span><span class="o">:</span><span class="o">&gt;</span><span> </span><span class="n">list</span><span> </span><span class="n">nat</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x</span><span> +</span><span> x) nil</span><span> =</span><span> nil
+</span></dd>
+<dt><span class="nb">elpi</span><span> </span><span class="n">show_open_term</span><span> </span><span class="o">`</span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">_</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>The argument  fun x : ?e =&gt; x + ?e1 was closed under 1 binders
+</span></dd>
+<dt><span class="c">(*</span><span class="c"> prints: The argument fun x : ?e =&gt; x + ?e1 was closed under 1 binders </span><span class="c">*)</span><span>
+</span><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>A key step in the implementation of <code class="docutils literal notranslate"><span class="pre">repl</span></code> is to align the technical
+binders of the open term with the actual binders present in the goal. For
+this we use the names as written by the user; we call this operation
+<code class="docutils literal notranslate"><span class="pre">instantiate</span></code>. We put the code into a file, so that we can reuse it later:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="n">File</span><span> </span><span class="nb">instantiate</span><span class="o">.</span><span class="n">code</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span class="c">% [instantiate-replacement N Ty x L R L1 R1] is called when crossing
+</span><span class="c">% a goal binder for the variable x named N and of type Ty. The replacement
+</span><span class="c">% L with R  is instantiated (if possible) to  L1 with R1
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">instantiate-replacement</span><span class="w"> </span><span class="kt">name</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">argument</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">argument</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">argument</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">argument</span><span>.</span><span class="w">
+</span><span>instantiate-replacement</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="n n-ElpiVariable">L1</span><span class="w"> </span><span class="n n-ElpiVariable">R1</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>std.do!</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="w">
+  </span><span>instantiate</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">L1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>instantiate</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="n n-ElpiVariable">R1</span><span class="k k-ElpiKeyword">,</span><span class="w">
+</span><span class="k k-ElpiKeyword">]</span><span class="o">.</span><span class="w">
+
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">instantiate</span><span class="w"> </span><span class="kt">name</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">argument</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">argument</span><span>.</span><span class="w">
+</span><span>instantiate</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n n-ElpiVariable">A</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w">
+</span><span>instantiate</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">I</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">J</span><span class="w"> </span><span class="n n-ElpiVariable">F1</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>remove-binder-for</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="n n-ElpiVariable">F1</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">J</span><span class="w"> </span><span class="k k-ElpiKeyword">is</span><span class="w"> </span><span class="n n-ElpiVariable">I</span><span class="w"> </span><span class="k k-ElpiKeyword">-</span><span class="w"> </span><span class="mi">1</span><span class="o">.</span><span class="w">
+</span><span>instantiate</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="o">.</span><span class="w">
+
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">remove-binder-for</span><span class="w"> </span><span class="kt">name</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+</span><span class="c">% we found the binder
+</span><span>remove-binder-for</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N1</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">Res</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>{</span><span>coq.name-&gt;id</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span>}</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span>{</span><span>coq.name-&gt;id</span><span class="w"> </span><span class="n n-ElpiVariable">N1</span><span>}</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="c">% Remember that in Elpi all names are the same, eg `x` = `y`
+</span><span class="w">  </span><span class="c">% coq.name-&gt;id gives a string, the string used for printing, and as one expects
+</span><span class="w">  </span><span class="c">% not(&quot;x&quot; = &quot;y&quot;)
+</span><span class="w">  </span><span class="n n-ElpiVariable">Res</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="o">.</span><span class="w">
+</span><span class="c">% we cross the binder and look deeper
+</span><span>remove-binder-for</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N1</span><span class="w"> </span><span class="n n-ElpiVariable">T1</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N1</span><span class="w"> </span><span class="n n-ElpiVariable">T1</span><span class="w"> </span><span class="n n-ElpiVariable">F1</span><span class="p">)</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span class="k k-ElpiKeyword">&#64;</span><span>pi-decl</span><span class="w"> </span><span class="n n-ElpiVariable">N1</span><span class="w"> </span><span class="n n-ElpiVariable">T1</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="k k-ElpiKeyword">\</span><span class="w"> </span><span>remove-binder-for</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">F1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">test_instantiate</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="n">File</span><span> </span><span class="nb">instantiate</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+</span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">map2</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">F</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="o">=</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">LF</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">RF</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="p">)</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">old replacement:</span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>coq.term-&gt;string</span><span class="w"> </span><span class="n n-ElpiVariable">LF</span><span>}</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">with</span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>coq.term-&gt;string</span><span class="w"> </span><span class="n n-ElpiVariable">RF</span><span>}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="k k-ElpiKeyword">&#64;</span><span>pi-decl</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">x\</span><span class="w">
+    </span><span>instantiate-replacement</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">L1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">R1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">new replacement:</span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>coq.term-&gt;string</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">L1</span><span class="w"> </span><span>x</span><span class="p">)</span><span>}</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">with</span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>coq.term-&gt;string</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">R1</span><span class="w"> </span><span>x</span><span class="p">)</span><span>}</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Goal</span><span> </span><span class="n">map2</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="nv">y</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">-</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="n">nil</span><span> </span><span class="n">nil</span><span> </span><span class="o">=</span><span> </span><span class="n">nil</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  map2 (</span><span class="ansi-bold">fun</span><span> x y : nat =&gt; x</span><span> -</span><span> y) nil nil</span><span> =</span><span> nil
+</span></dd>
+<dt><span class="nb">elpi</span><span> </span><span class="n">test_instantiate</span><span> </span><span class="o">`</span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">-</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="o">`</span><span class="o">(</span><span class="n">y</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dd><span>old replacement: fun (x : ?e) (y : ?e0) =&gt; x - y with 
+fun (y : ?e1) (x : ?e2) =&gt; y + x
+new replacement: fun y : ?e0 =&gt; x - y with fun y : ?e1 =&gt; y + x
+</span></dd>
+<dt><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Remark that the technical binders are generated following a left-to-right
+traversal of the term, hence their order varies -- this is the reason why we
+need the second rule for <code class="docutils literal notranslate"><span class="pre">remove-binder-for</span></code>. Also remark that <code class="docutils literal notranslate"><span class="pre">L1</span></code> and
+<code class="docutils literal notranslate"><span class="pre">R1</span></code> need to see the variable we crossed, and that is bound by <code class="docutils literal notranslate"><span class="pre">pi</span></code>: we
+are capturing the free variable by it (or better removing the technical
+binding and replacing that bound variable by the variable bound by <code class="docutils literal notranslate"><span class="pre">pi</span></code>).</p>
+<p>We need a few helpers to cross the context:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Lemma</span><span> </span><span class="nf">congrP</span><span> </span><span class="o">(</span><span class="nv">A</span><span> </span><span class="o">:</span><span> </span><span class="kt">Type</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">B</span><span> </span><span class="o">:</span><span> </span><span class="n">A</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="kt">Type</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">f</span><span> </span><span class="nv">g</span><span> </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="nv">x</span><span> </span><span class="o">:</span><span> </span><span class="n">A</span><span class="o">,</span><span> </span><span class="n">B</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="o">:</span><span>
+  </span><span class="n">f</span><span> </span><span class="o">=</span><span> </span><span class="n">g</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="k">forall</span><span> </span><span class="nv">v1</span><span> </span><span class="nv">v2</span><span> </span><span class="o">(</span><span class="nv">p</span><span> </span><span class="o">:</span><span> </span><span class="n">v1</span><span> </span><span class="o">=</span><span> </span><span class="n">v2</span><span class="o">)</span><span class="o">,</span><span> </span><span class="k">match</span><span> </span><span class="n">p</span><span> </span><span class="k">in</span><span> </span><span class="n">_</span><span> </span><span class="o">=</span><span> </span><span class="n">x</span><span> </span><span class="k">return</span><span> </span><span class="n">B</span><span> </span><span class="n">x</span><span> </span><span class="k">with</span><span> </span><span class="n">eq_refl</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="n">f</span><span> </span><span class="n">v1</span><span> </span><span class="k">end</span><span> </span><span class="o">=</span><span> </span><span class="n">g</span><span> </span><span class="n">v2</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  A : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  B : A</span><span> -&gt;</span><span> </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  f, g : </span><span class="ansi-bold">forall</span><span> x : A, B x
+  ============================
+  f</span><span> =</span><span> g</span><span> -&gt;</span><span>
+  </span><span class="ansi-bold">forall</span><span> (v1 v2 : A) (p : v1</span><span> =</span><span> v2),
+  </span><span class="ansi-bold">match</span><span> p </span><span class="ansi-bold">in</span><span> _</span><span> =</span><span> x </span><span class="ansi-bold">return</span><span> B x </span><span class="ansi-bold">with</span><span>
+  | eq_refl =&gt; f v1
+  </span><span class="ansi-bold">end</span><span> =</span><span> g v2
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span> </span><span class="bp">now</span><span> </span><span class="nb">intros</span><span> </span><span class="n">fg</span><span> </span><span class="n">v1</span><span> </span><span class="n">v2</span><span> </span><span class="n">v1v2</span><span class="o">;</span><span> </span><span class="nb">rewrite</span><span> </span><span class="n">fg</span><span class="o">,</span><span> </span><span class="n">v1v2</span><span class="o">.</span><span> </span><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dd><span>
+No more goals.
+
+</span></dd>
+<dt><span class="kn">Lemma</span><span> </span><span class="nf">congrA</span><span> </span><span class="o">(</span><span class="nv">A</span><span> </span><span class="nv">B</span><span> </span><span class="o">:</span><span> </span><span class="kt">Type</span><span class="o">)</span><span> </span><span class="o">(</span><span class="nv">f</span><span> </span><span class="nv">g</span><span> </span><span class="o">:</span><span> </span><span class="n">A</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="n">B</span><span class="o">)</span><span> </span><span class="o">:</span><span>
+  </span><span class="n">f</span><span> </span><span class="o">=</span><span> </span><span class="n">g</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="k">forall</span><span> </span><span class="nv">v1</span><span> </span><span class="nv">v2</span><span> </span><span class="o">(</span><span class="nv">p</span><span> </span><span class="o">:</span><span> </span><span class="n">v1</span><span> </span><span class="o">=</span><span> </span><span class="n">v2</span><span class="o">)</span><span class="o">,</span><span> </span><span class="n">f</span><span> </span><span class="n">v1</span><span> </span><span class="o">=</span><span> </span><span class="n">g</span><span> </span><span class="n">v2</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  A : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  B : </span><span class="ansi-fg-yellow ansi-bold">Type</span><span>
+  f, g : A</span><span> -&gt;</span><span> B
+  ============================
+  f</span><span> =</span><span> g</span><span> -&gt;</span><span> </span><span class="ansi-bold">forall</span><span> v1 v2 : A, v1</span><span> =</span><span> v2</span><span> -&gt;</span><span> f v1</span><span> =</span><span> g v2
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span> </span><span class="bp">now</span><span> </span><span class="nb">intros</span><span> </span><span class="n">fg</span><span> </span><span class="n">v1</span><span> </span><span class="n">v2</span><span> </span><span class="n">v1v2</span><span class="o">;</span><span> </span><span class="nb">rewrite</span><span> </span><span class="n">fg</span><span class="o">,</span><span> </span><span class="n">v1v2</span><span class="o">.</span><span> </span><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dd><span>
+No more goals.
+
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="n">File</span><span> </span><span class="bp">congruence</span><span class="o">.</span><span class="n">code</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span class="c">% iterates congrA and congrP to prove f x1..xn = f y1..yn from proofs of xi = yi
+</span><span class="c">% [congruence F G PFG Ty XS YS PXYS R] starting from a proof PFG that F = G
+</span><span class="c">% it consumes X Y and PXY : X = Y to build a proof R : (F X = G Y). It needs to
+</span><span class="c">% look at the type of F (and G) in order to decide which congruence lemma to apply
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">conguence</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+</span><span>conguence</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w">
+</span><span>conguence</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">PFG</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">_</span><span> </span><span class="o">-</span><span class="o">&gt;</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Ty</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">XS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">Y</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">YS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">PXY</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">PS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">Q</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">PFXGY</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">congrA</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">F</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">G</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">PFG</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">X</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Y</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">PXY</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>conguence</span><span class="w"> </span><span>{</span><span>coq.mk-app</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">]</span><span>}</span><span class="w"> </span><span>{</span><span>coq.mk-app</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">Y</span><span class="k k-ElpiKeyword">]</span><span>}</span><span class="w"> </span><span class="n n-ElpiVariable">PFXGY</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">XS</span><span class="w"> </span><span class="n n-ElpiVariable">YS</span><span class="w"> </span><span class="n n-ElpiVariable">PS</span><span class="w"> </span><span class="n n-ElpiVariable">Q</span><span class="o">.</span><span class="w">
+</span><span>conguence</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">PFG</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="k">forall</span><span> </span><span class="nv">x</span><span class="o">,</span><span> </span><span class="si">lp:</span><span class="si">(</span><span class="n n-ElpiVariable">Ty</span><span> x</span><span class="si">)</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">XS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">Y</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">YS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">PXY</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">PS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="n n-ElpiVariable">Q</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span class="n n-ElpiVariable">PFXGY</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">congrP</span><span> </span><span class="n">_</span><span> </span><span class="n">_</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">F</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">G</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">PFG</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">X</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Y</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">PXY</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>conguence</span><span class="w"> </span><span>{</span><span>coq.mk-app</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">]</span><span>}</span><span class="w"> </span><span>{</span><span>coq.mk-app</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">Y</span><span class="k k-ElpiKeyword">]</span><span>}</span><span class="w"> </span><span class="n n-ElpiVariable">PFXGY</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">XS</span><span class="w"> </span><span class="n n-ElpiVariable">YS</span><span class="w"> </span><span class="n n-ElpiVariable">PS</span><span class="w"> </span><span class="n n-ElpiVariable">Q</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">test_congruence</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="n">File</span><span> </span><span class="bp">congruence</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">mk-refl</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+  </span><span>mk-refl</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="o">&#64;</span><span class="n">refl_equal</span><span> </span><span class="kt">Type</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.typecheck-ty</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w"> </span><span class="c">% we don't like Set
+</span><span class="w">  </span><span>mk-refl</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">refl_equal</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">T</span><span> </span><span class="si">}}</span><span class="o">.</span><span class="w">
+
+  </span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">A</span><span> </span><span class="o">=</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">B</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>std.do!</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="w">
+    </span><span class="n n-ElpiVariable">A</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">app</span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">HD</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">Args1</span><span class="k k-ElpiKeyword">]</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="n n-ElpiVariable">B</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="k k-ElpiKeyword">app</span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">HD</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">Args2</span><span class="k k-ElpiKeyword">]</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>std.map2</span><span class="w"> </span><span class="n n-ElpiVariable">Args1</span><span class="w"> </span><span class="n n-ElpiVariable">Args2</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">_\</span><span class="w"> </span><span>mk-refl</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">Proofs</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">HD</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>conguence</span><span class="w"> </span><span class="n n-ElpiVariable">HD</span><span class="w"> </span><span class="n n-ElpiVariable">HD</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">refl_equal</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">HD</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">Args1</span><span class="w"> </span><span class="n n-ElpiVariable">Args2</span><span class="w"> </span><span class="n n-ElpiVariable">Proofs</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>refine</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="k k-ElpiKeyword">,</span><span class="w">
+</span><span class="k k-ElpiKeyword">]</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Goal</span><span> </span><span class="k">forall</span><span> </span><span class="nv">l</span><span class="o">,</span><span> </span><span class="n">map</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="n">l</span><span> </span><span class="o">=</span><span> </span><span class="n">map</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="n">l</span><span> </span><span class="o">:</span><span class="o">&gt;</span><span> </span><span class="n">list</span><span> </span><span class="n">nat</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> l : list nat, map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x) l</span><span> =</span><span> map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x) l
+</span></dd>
+<dt><span class="nb">intros</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  l : list nat
+  ============================
+  map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x) l</span><span> =</span><span> map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x) l
+</span></dd>
+<dt><span class="nb">elpi</span><span> </span><span class="n">test_congruence</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>Finally, we build the tactic:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="nb">replace</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="n">File</span><span> </span><span class="nb">instantiate</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="n">File</span><span> </span><span class="bp">congruence</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span class="c">% [replace L R X Y P] replaces L by R in X obtaining Y and
+</span><span class="c">% a proof P that X = Y. P will contain holes (sub goals) for sub proofs
+</span><span class="c">% of L = R.
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">replace</span><span class="w"> </span><span class="kt">argument</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">argument</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+
+</span><span class="c">% all binders are crossed and we find a term identical to L.
+</span><span class="c">% the proof is a hole of type L = R.
+</span><span>replace</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="n n-ElpiVariable">TY</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">L</span><span> </span><span class="o">=</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">R</span><span> </span><span class="si">}}</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.typecheck-ty</span><span class="w"> </span><span class="n n-ElpiVariable">TY</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="w"> </span><span class="n n-ElpiVariable">TY</span><span class="w"> </span><span>ok</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% we cross the binder by functional extensionality
+</span><span>replace</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">F1</span><span class="p">)</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">functional_extensionality</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="si">}}</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">F1</span><span class="w"> </span><span class="si">}}</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span class="k k-ElpiKeyword">fun</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">Prf</span><span class="w"> </span><span class="si">}}</span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="k k-ElpiKeyword">&#64;</span><span>pi-decl</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span class="n n-ElpiVariable">x\</span><span class="w">
+    </span><span>instantiate-replacement</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="w"> </span><span>x</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">L1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">R1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>replace</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">L1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">R1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">F1</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">Prf</span><span class="w"> </span><span>x</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+</span><span>replace</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">app</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">HD</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">TS</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">app</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">HD</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">TS1</span><span class="k k-ElpiKeyword">]</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">Prf</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>replace-list</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="n n-ElpiVariable">TS</span><span class="w"> </span><span class="n n-ElpiVariable">TS1</span><span class="w"> </span><span class="n n-ElpiVariable">PS</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.typecheck</span><span class="w"> </span><span class="n n-ElpiVariable">HD</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>conguence</span><span class="w"> </span><span class="n n-ElpiVariable">HD</span><span class="w"> </span><span class="n n-ElpiVariable">HD</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">refl_equal</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">HD</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">TS</span><span class="w"> </span><span class="n n-ElpiVariable">TS1</span><span class="w"> </span><span class="n n-ElpiVariable">PS</span><span class="w"> </span><span class="n n-ElpiVariable">Prf</span><span class="o">.</span><span class="w">
+
+</span><span class="c">% base cases
+</span><span>replace</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">refl_equal</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">X</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>name</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w">
+</span><span>replace</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">global</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="o">&#64;</span><span class="n">refl_equal</span><span> </span><span class="kt">Type</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">C</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.typecheck-ty</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>ok</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w"> </span><span class="c">% we don't like Set
+</span><span>replace</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span class="k k-ElpiKeyword">global</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">refl_equal</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">C</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w">
+</span><span class="c">% we omit rules for primitive constants, fixpoints, let, forall, ...
+</span><span class="w">
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">replace-list</span><span class="w"> </span><span class="kt">argument</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">argument</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">term</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">term</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">term</span><span>.</span><span class="w">
+</span><span>replace-list</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="o">.</span><span class="w">
+</span><span>replace-list</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">X</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">XS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">Y</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">YS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="n n-ElpiVariable">P</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">PS</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>replace</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">Y</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>replace-list</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="n n-ElpiVariable">XS</span><span class="w"> </span><span class="n n-ElpiVariable">YS</span><span class="w"> </span><span class="n n-ElpiVariable">PS</span><span class="o">.</span><span class="w">
+
+</span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">X</span><span> </span><span class="o">=</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Y</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="p">(</span><span>open-trm</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="p">)</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>std.do!</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span class="w">
+  </span><span>replace</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="w"> </span><span class="n n-ElpiVariable">R</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="n n-ElpiVariable">X1</span><span class="w"> </span><span class="n n-ElpiVariable">P</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>refine</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="o">&#64;</span><span class="n">eq_trans</span><span> </span><span class="n">_</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">X</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">X1</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Y</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">P</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GL</span><span class="k k-ElpiKeyword">,</span><span class="w">
+</span><span class="k k-ElpiKeyword">]</span><span class="o">.</span><span class="w">
+
+</span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">_</span><span> </span><span class="o">=</span><span> </span><span class="n">_</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>coq.error</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">elpi: replace: the goal is not an equality</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+</span><span>solve</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>coq.error</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">elpi: replace: the two arguments must be open terms</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Tactic</span><span> </span><span class="kn">Notation</span><span> </span><span class="o">(</span><span class="kn">at level</span><span> </span><span class="mi">0</span><span class="o">)</span><span> </span><span class="s2">&quot;</span><span class="s2">repl</span><span class="s2">&quot;</span><span> </span><span class="kp">uconstr</span><span class="o">(</span><span class="n">x</span><span class="o">)</span><span> </span><span class="s2">&quot;</span><span class="s2">with</span><span class="s2">&quot;</span><span> </span><span class="kp">uconstr</span><span class="o">(</span><span class="n">y</span><span class="o">)</span><span> </span><span class="o">:</span><span class="o">=</span><span>
+  </span><span class="nb">elpi</span><span> </span><span class="nb">replace</span><span> </span><span class="n">ltac_open_term</span><span class="o">:</span><span class="o">(</span><span class="n">x</span><span class="o">)</span><span> </span><span class="n">ltac_open_term</span><span class="o">:</span><span class="o">(</span><span class="n">y</span><span class="o">)</span><span class="o">;</span><span> </span><span class="nb">simpl</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Tactic</span><span> </span><span class="kn">Notation</span><span> </span><span class="o">(</span><span class="kn">at level</span><span> </span><span class="mi">0</span><span class="o">)</span><span> </span><span class="s2">&quot;</span><span class="s2">repl</span><span class="s2">&quot;</span><span> </span><span class="kp">uconstr</span><span class="o">(</span><span class="n">x</span><span class="o">)</span><span> </span><span class="s2">&quot;</span><span class="s2">with</span><span class="s2">&quot;</span><span> </span><span class="kp">uconstr</span><span class="o">(</span><span class="n">y</span><span class="o">)</span><span> </span><span class="s2">&quot;</span><span class="s2">by</span><span class="s2">&quot;</span><span> </span><span class="n">tactic</span><span class="o">(</span><span class="n">t</span><span class="o">)</span><span> </span><span class="o">:</span><span class="o">=</span><span>
+  </span><span class="nb">elpi</span><span> </span><span class="nb">replace</span><span> </span><span class="n">ltac_open_term</span><span class="o">:</span><span class="o">(</span><span class="n">x</span><span class="o">)</span><span> </span><span class="n">ltac_open_term</span><span class="o">:</span><span class="o">(</span><span class="n">y</span><span class="o">)</span><span class="o">;</span><span> </span><span class="kp">try</span><span> </span><span class="o">(</span><span class="nb">simpl</span><span class="o">;</span><span> </span><span class="n">t</span><span class="o">)</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">hard_example</span><span> </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="nv">l</span><span class="o">,</span><span> </span><span class="n">map</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span class="o">)</span><span> </span><span class="n">l</span><span> </span><span class="o">=</span><span> </span><span class="n">map</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="o">=&gt;</span><span> </span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="n">l</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> l : list nat,
+  map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x</span><span> +</span><span> 1) l</span><span> =</span><span> map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; 1</span><span> +</span><span> x) l
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span>  </span><span class="nb">intros</span><span> </span><span class="n">l</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  l : list nat
+  ============================
+  map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; x</span><span> +</span><span> 1) l</span><span> =</span><span> map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; 1</span><span> +</span><span> x) l
+</span></dd>
+<dt><span>  </span><span class="n">repl</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">1</span><span class="o">)</span><span> </span><span class="k">with</span><span> </span><span class="o">(</span><span class="mi">1</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="bp">by</span><span> </span><span class="bp">ring</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  l : list nat
+  ============================
+  map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; 1</span><span> +</span><span> x) l</span><span> =</span><span> map (</span><span class="ansi-bold">fun</span><span> x : nat =&gt; 1</span><span> +</span><span> x) l
+</span></dd>
+<dt><span>  </span><span class="bp">reflexivity</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Lemma</span><span> </span><span class="nf">hard_example2</span><span> </span><span class="o">:</span><span> </span><span class="k">forall</span><span> </span><span class="nv">l</span><span class="o">,</span><span> </span><span class="n">map2</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="nv">y</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">0</span><span> </span><span class="o">+</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="n">l</span><span> </span><span class="n">l</span><span> </span><span class="o">=</span><span> </span><span class="n">map2</span><span> </span><span class="o">(</span><span class="k">fun</span><span> </span><span class="nv">x</span><span> </span><span class="nv">y</span><span> </span><span class="o">=&gt;</span><span> </span><span class="n">y</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="n">l</span><span> </span><span class="n">l</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-bold">forall</span><span> l : list nat,
+  map2 (</span><span class="ansi-bold">fun</span><span> x y : nat =&gt; x</span><span> +</span><span> 0</span><span> +</span><span> y) l l</span><span> =</span><span> map2 (</span><span class="ansi-bold">fun</span><span> x y : nat =&gt; y</span><span> +</span><span> x) l l
+</span></dd>
+<dt><span class="kn">Proof</span><span class="o">.</span><span>
+</span></dt><dt><span>  </span><span class="nb">intros</span><span> </span><span class="n">l</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  l : list nat
+  ============================
+  map2 (</span><span class="ansi-bold">fun</span><span> x y : nat =&gt; x</span><span> +</span><span> 0</span><span> +</span><span> y) l l</span><span> =</span><span> map2 (</span><span class="ansi-bold">fun</span><span> x y : nat =&gt; y</span><span> +</span><span> x) l l
+</span></dd>
+<dt><span>  </span><span class="n">repl</span><span> </span><span class="o">(</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="mi">0</span><span> </span><span class="o">+</span><span> </span><span class="n">y</span><span class="o">)</span><span> </span><span class="k">with</span><span> </span><span class="o">(</span><span class="n">y</span><span> </span><span class="o">+</span><span> </span><span class="n">x</span><span class="o">)</span><span> </span><span class="bp">by</span><span> </span><span class="bp">ring</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  l : list nat
+  ============================
+  map2 (</span><span class="ansi-bold">fun</span><span> x y : nat =&gt; y</span><span> +</span><span> x) l l</span><span> =</span><span> map2 (</span><span class="ansi-bold">fun</span><span> x y : nat =&gt; y</span><span> +</span><span> x) l l
+</span></dd>
+<dt><span>  </span><span class="bp">reflexivity</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Qed</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+<p>An extended version of this tactic by Y. Bertot can be found in the
+<code class="docutils literal notranslate"><span class="pre">tests/</span></code> directory, under the name <code class="docutils literal notranslate"><span class="pre">test_open_terms.v</span></code>.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="reduction-surgery.html" class="btn btn-neutral float-left" title="Reduction surgery" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reflexive-tactic.html" class="btn btn-neutral float-right" title="Reflexive tactic" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

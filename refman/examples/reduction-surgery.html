@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reduction surgery &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Open terms" href="open-terms.html" />
+    <link rel="prev" title="Record import" href="import-projections.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data-base.html">Data bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-expansion.html">Record expansion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-to-sigma.html">Record to sigma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fuzzer.html">Fuzzer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curry-howard-tactics.html">Curry-Howard tactics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalize.html">Generalize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abs-evars.html">Closing terms with holes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="import-projections.html">Record import</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Reduction surgery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="open-terms.html">Open terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reflexive-tactic.html">Reflexive tactic</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">Reduction surgery</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/reduction-surgery.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="reduction-surgery">
+<h1>Reduction surgery<a class="headerlink" href="#reduction-surgery" title="Link to this heading"></a></h1>
+<p>A tactic fine tuning <code class="docutils literal notranslate"><span class="pre">cbv</span></code> with a list of allowed unfoldings taken from a
+module: it mocks up a reduction tactic unfolding only constants from a given
+module.</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span class="rocqtop-reset"></span><dl>
+<dt><span class="kn">From</span><span> </span><span class="nb">elpi</span><span> </span><span class="kn">Require Import</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file ppx_deriving.runtime (implicit dependency) ... done]
+[Loading ML file re (implicit dependency) ... done]
+[Loading ML file re.str (implicit dependency) ... done]
+[Loading ML file elpi.util (implicit dependency) ... done]
+[Loading ML file elpi.lexer_config (implicit dependency) ... done]
+[Loading ML file menhirLib (implicit dependency) ... done]
+[Loading ML file stdlib-shims (implicit dependency) ... done]
+[Loading ML file elpi.parser (implicit dependency) ... done]
+[Loading ML file camlp-streams (implicit dependency) ... done]
+[Loading ML file easy-format (implicit dependency) ... done]
+[Loading ML file biniou (implicit dependency) ... done]
+[Loading ML file yojson (implicit dependency) ... done]
+[Loading ML file atdgen-runtime (implicit dependency) ... done]
+[Loading ML file elpi.trace.atd (implicit dependency) ... done]
+[Loading ML file elpi.trace.runtime (implicit dependency) ... done]
+[Loading ML file elpi.runtime (implicit dependency) ... done]
+[Loading ML file elpi.compiler (implicit dependency) ... done]
+[Loading ML file elpi (implicit dependency) ... done]
+[Loading ML file rocq-elpi.elpi ... done]
+</span></dd>
+</dl>
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="n">reduce</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+</span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">gref-&gt;redflag</span><span class="w"> </span><span class="kt">gref</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">coq.redflag</span><span>.</span><span class="w">
+</span><span>gref-&gt;redflag</span><span class="w"> </span><span class="p">(</span><span>const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>coq.redflags.const</span><span class="w"> </span><span class="n n-ElpiVariable">C</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+</span><span>solve</span><span class="w"> </span><span class="p">(</span><span>goal</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">as</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+  </span><span>coq.locate-module</span><span class="w"> </span><span class="n n-ElpiVariable">M</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.env.module</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="w"> </span><span class="n n-ElpiVariable">GREFS</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>std.map-filter</span><span class="w"> </span><span class="n n-ElpiVariable">GREFS</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">x\</span><span class="n n-ElpiVariable">r\</span><span>x</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span>gref</span><span class="w"> </span><span>r</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>r</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span><span class="p">(</span><span>const</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">CONSTANTS</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>std.map</span><span class="w"> </span><span class="n n-ElpiVariable">CONSTANTS</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">gr\</span><span class="n n-ElpiVariable">r\</span><span class="w"> </span><span>coq.env.transitive-dependencies</span><span class="w"> </span><span>gr</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span>r</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">DEPS</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>std.fold</span><span class="w"> </span><span class="n n-ElpiVariable">DEPS</span><span class="w"> </span><span>{</span><span>coq.gref.set.empty</span><span>}</span><span class="w"> </span><span>coq.gref.set.union</span><span class="w"> </span><span class="n n-ElpiVariable">ALLDEPS</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>std.append</span><span class="w"> </span><span class="n n-ElpiVariable">CONSTANTS</span><span class="w"> </span><span>{</span><span>coq.gref.set.elements</span><span class="w"> </span><span class="n n-ElpiVariable">ALLDEPS</span><span>}</span><span class="w"> </span><span class="n n-ElpiVariable">All</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>std.map-filter</span><span class="w"> </span><span class="n n-ElpiVariable">All</span><span class="w"> </span><span>gref-&gt;redflag</span><span class="w"> </span><span class="n n-ElpiVariable">DELTAFLAGS</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>coq.redflags.add</span><span class="w"> </span><span>coq.redflags.nored</span><span class="w">
+    </span><span class="k k-ElpiKeyword">[</span><span class="w"> </span><span>coq.redflags.beta</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>coq.redflags.fix</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>coq.redflags.match</span><span class="w"> </span><span class="k k-ElpiKeyword">|</span><span class="w"> </span><span class="n n-ElpiVariable">DELTAFLAGS</span><span class="w"> </span><span class="k k-ElpiKeyword">]</span><span class="w">
+    </span><span class="n n-ElpiVariable">F</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span class="p">(</span><span class="k k-ElpiKeyword">&#64;</span><span>redflags!</span><span class="w"> </span><span class="n n-ElpiVariable">F</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="k k-ElpiKeyword">=&gt;</span><span class="w"> </span><span>coq.reduction.cbv.norm</span><span class="w"> </span><span class="n n-ElpiVariable">Ty</span><span class="w"> </span><span class="n n-ElpiVariable">Ty1</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+  </span><span>refine</span><span class="w"> </span><span class="si">{{</span><span> </span><span class="n">_</span><span> </span><span class="o">:</span><span> </span><span class="si">lp:</span><span class="n n-ElpiVariable">Ty1</span><span> </span><span class="si">}}</span><span class="w"> </span><span class="n n-ElpiVariable">G</span><span class="w"> </span><span class="n n-ElpiVariable">GS</span><span class="o">.</span><span class="w"> </span><span class="c">% to leave a vmcast one needs to call ltac1
+</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Module</span><span> </span><span class="nf">ToRed</span><span class="o">.</span><span>
+</span></dt><dd><span>Interactive Module ToRed started
+</span></dd>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">x</span><span> </span><span class="o">:=</span><span> </span><span class="mi">1</span><span class="o">.</span><span>
+</span></dt><dd><span>x is defined
+</span></dd>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">y</span><span> </span><span class="o">:=</span><span> </span><span class="mi">1</span><span class="o">.</span><span>
+</span></dt><dd><span>y is defined
+</span></dd>
+<dt><span class="kn">Definition</span><span> </span><span class="nf">alias</span><span> </span><span class="o">:=</span><span> </span><span class="n">plus</span><span class="o">.</span><span>
+</span></dt><dd><span>alias is defined
+</span></dd>
+<dt><span class="kn">End</span><span> </span><span class="nf">ToRed</span><span class="o">.</span><span>
+</span></dt><dd><span>Module ToRed is defined
+</span></dd>
+<dt><span class="kn">Goal</span><span> </span><span class="n">ToRed</span><span class="o">.</span><span class="n">x</span><span> </span><span class="o">+</span><span> </span><span class="n">ToRed</span><span class="o">.</span><span class="n">y</span><span> </span><span class="o">=</span><span> </span><span class="k">let</span><span> </span><span class="nv">z</span><span> </span><span class="o">:=</span><span> </span><span class="mi">1</span><span> </span><span class="k">in</span><span> </span><span class="n">S</span><span> </span><span class="n">z</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  </span><span class="ansi-fg-light-magenta">ToRed</span><span>.</span><span class="ansi-fg-light-green">x</span><span> +</span><span> </span><span class="ansi-fg-light-magenta">ToRed</span><span>.</span><span class="ansi-fg-light-green">y</span><span> =</span><span> (</span><span class="ansi-bold">let</span><span> z := 1 </span><span class="ansi-bold">in</span><span> S z)
+</span></dd>
+<dt><span class="nb">elpi</span><span> </span><span class="n">reduce</span><span> </span><span class="s2">&quot;</span><span class="s2">ToRed</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dd><span>1 goal
+  
+  ============================
+  2</span><span> =</span><span> (</span><span class="ansi-bold">let</span><span> z := 1 </span><span class="ansi-bold">in</span><span> S z)
+</span></dd>
+<dt><span class="k">match goal with</span><span> </span><span class="o">|</span><span class="o">-</span><span> </span><span class="mi">2</span><span> </span><span class="o">=</span><span> </span><span class="k">let</span><span> </span><span class="nv">z</span><span> </span><span class="o">:=</span><span> </span><span class="mi">1</span><span> </span><span class="k">in</span><span> </span><span class="n">S</span><span> </span><span class="n">z</span><span> </span><span class="o">=</span><span class="o">&gt;</span><span> </span><span class="nb">trivial</span><span> </span><span class="k">end</span><span class="o">.</span><span>
+</span></dt><dd><span>No more goals.
+</span></dd>
+<dt><span class="kn">Show Proof</span><span class="o">.</span><span>
+</span></dt><dd><span>(eq_refl : 2</span><span> =</span><span> (</span><span class="ansi-bold">let</span><span> z := 1 </span><span class="ansi-bold">in</span><span> S z))
+</span></dd>
+<dt><span class="kn">Abort</span><span class="o">.</span><span>
+</span></dt></dl>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="import-projections.html" class="btn btn-neutral float-left" title="Record import" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="open-terms.html" class="btn btn-neutral float-right" title="Open terms" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

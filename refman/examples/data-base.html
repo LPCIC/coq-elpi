@@ -1,0 +1,268 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data bases &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Record expansion" href="record-expansion.html" />
+    <link rel="prev" title="Examples" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/vernacular.html">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data bases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-expansion.html">Record expansion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record-to-sigma.html">Record to sigma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fuzzer.html">Fuzzer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curry-howard-tactics.html">Curry-Howard tactics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalize.html">Generalize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abs-evars.html">Closing terms with holes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="import-projections.html">Record import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction-surgery.html">Reduction surgery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="open-terms.html">Open terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reflexive-tactic.html">Reflexive tactic</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">Data bases</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/data-base.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-bases">
+<h1>Data bases<a class="headerlink" href="#data-bases" title="Link to this heading"></a></h1>
+<p>Shows how Elpi programs can store data and reuse it across multiple runs. Data
+bases are accumulated by name, hence can be shared among multiple commands or
+across successive executions of the same command.</p>
+<p>Let's start with a db containing international phone prefixes:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span class="rocqtop-reset"></span><dl>
+<dt><span class="kn">From</span><span> </span><span class="nb">elpi</span><span> </span><span class="kn">Require Import</span><span> </span><span class="nb">elpi</span><span class="o">.</span><span>
+</span></dt><dd class="rocqtop-hidden"><span>[Loading ML file ppx_deriving.runtime (implicit dependency) ... done]
+[Loading ML file re (implicit dependency) ... done]
+[Loading ML file re.str (implicit dependency) ... done]
+[Loading ML file elpi.util (implicit dependency) ... done]
+[Loading ML file elpi.lexer_config (implicit dependency) ... done]
+[Loading ML file menhirLib (implicit dependency) ... done]
+[Loading ML file stdlib-shims (implicit dependency) ... done]
+[Loading ML file elpi.parser (implicit dependency) ... done]
+[Loading ML file camlp-streams (implicit dependency) ... done]
+[Loading ML file easy-format (implicit dependency) ... done]
+[Loading ML file biniou (implicit dependency) ... done]
+[Loading ML file yojson (implicit dependency) ... done]
+[Loading ML file atdgen-runtime (implicit dependency) ... done]
+[Loading ML file elpi.trace.atd (implicit dependency) ... done]
+[Loading ML file elpi.trace.runtime (implicit dependency) ... done]
+[Loading ML file elpi.runtime (implicit dependency) ... done]
+[Loading ML file elpi.compiler (implicit dependency) ... done]
+[Loading ML file elpi (implicit dependency) ... done]
+[Loading ML file rocq-elpi.elpi ... done]
+</span></dd>
+</dl>
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Db</span><span> </span><span class="n">phonebook</span><span class="o">.</span><span class="n">db</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">phone_prefix</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">string</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="kt">int</span><span>.</span><span class="w">
+  </span><span>phone_prefix</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">USA</span><span class="s2">&quot;</span><span class="w"> </span><span class="mi">1</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">print_db</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="kn">Db</span><span> </span><span class="n">phonebook</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>std.findall</span><span class="w"> </span><span class="p">(</span><span>phone_prefix</span><span class="w"> </span><span class="n n-ElpiVariable">S_</span><span class="w"> </span><span class="n n-ElpiVariable">N_</span><span class="p">)</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">The Db contains</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">L</span><span class="o">.</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">Phone prefix for</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">is</span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>phone_prefix</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span>}</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!</span><span class="o">.</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>coq.error</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">No prefix for</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">print_db</span><span class="o">.</span><span>
+</span></dt><dd><span>The Db contains [phone_prefix USA 1]
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="n">print_db</span><span> </span><span class="n">USA</span><span class="o">.</span><span>
+</span></dt><dd><span>Phone prefix for USA is 1
+</span></dd>
+<dt><span class="kn">Fail</span><span> </span><span class="kn">Elpi</span><span> </span><span class="n">print_db</span><span> </span><span class="n">Italy</span><span class="o">.</span><span>
+</span></dt><dd><span>The command has indeed failed with message:
+No prefix for Italy
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">add_db</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="kn">Db</span><span> </span><span class="n">phonebook</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="k k-ElpiKeyword">,</span><span class="w"> </span><span>int</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>coq.elpi.accumulate</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">phonebook.db</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span>clause</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span>phone_prefix</span><span class="w"> </span><span class="n n-ElpiVariable">S</span><span class="w"> </span><span class="n n-ElpiVariable">N</span><span class="p">)</span><span class="p">)</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">add_db</span><span> </span><span class="n">France</span><span> </span><span class="mi">33</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">add_db</span><span> </span><span class="n">Italy</span><span> </span><span class="mi">39</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">print_db</span><span class="o">.</span><span>
+</span></dt><dd><span>The Db contains 
+[phone_prefix USA 1, phone_prefix France 33, phone_prefix Italy 39]
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="n">print_db</span><span> </span><span class="n">France</span><span class="o">.</span><span>
+</span></dt><dd><span>Phone prefix for France is 33
+</span></dd>
+</dl>
+</div>
+<p>Data bases don't need to be that simple, they can contain arbitrary clauses,
+in particular conditional ones:</p>
+<div class="rocqtop literal-block highlight docutils container">
+<span></span><dl>
+<dt><span class="kn">Elpi</span><span> </span><span class="kn">Db</span><span> </span><span class="n">food</span><span class="o">.</span><span class="n">db</span><span> </span><span class="si">lp:{{</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">sweet</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">string</span><span>.</span><span class="w">
+  </span><span>sweet</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">apricot</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">tasty</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">string</span><span>.</span><span class="w">
+  </span><span>tasty</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">salmon</span><span class="s2">&quot;</span><span class="o">.</span><span class="w">
+
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">add_recipy</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="kn">Db</span><span> </span><span class="n">food</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">test-sweetness</span><span class="w"> </span><span class="kt">argument</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="k k-ElpiMode">(</span><span class="k k-ElpiKeyword">pred</span><span class="k k-ElpiMode">)</span><span>.</span><span class="w">
+  </span><span>test-sweetness</span><span class="w"> </span><span class="p">(</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>sweet</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+  </span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">test-tastiness</span><span class="w"> </span><span class="kt">argument</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="k k-ElpiMode">(</span><span class="k k-ElpiKeyword">pred</span><span class="k k-ElpiMode">)</span><span>.</span><span class="w">
+  </span><span>test-tastiness</span><span class="w"> </span><span class="p">(</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>tasty</span><span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="p">)</span><span class="o">.</span><span class="w">
+
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="k k-ElpiKeyword">|</span><span class="n n-ElpiVariable">Ingredients</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w">
+    </span><span>std.map</span><span class="w"> </span><span class="n n-ElpiVariable">Ingredients</span><span class="w"> </span><span>test-sweetness</span><span class="w"> </span><span class="n n-ElpiVariable">SweetConditions</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span class="c">% trick: &quot;:-&quot; accepts a list of propositions on the RHS
+</span><span class="w">    </span><span>coq.elpi.accumulate</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">food.db</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span>clause</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span>sweet</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span class="n n-ElpiVariable">SweetConditions</span><span class="p">)</span><span class="p">)</span><span class="k k-ElpiKeyword">,</span><span class="w">
+
+    </span><span>std.map</span><span class="w"> </span><span class="n n-ElpiVariable">Ingredients</span><span class="w"> </span><span>test-tastiness</span><span class="w"> </span><span class="n n-ElpiVariable">TastyConditions</span><span class="k k-ElpiKeyword">,</span><span class="w">
+    </span><span>std.forall</span><span class="w"> </span><span class="n n-ElpiVariable">TastyConditions</span><span class="w"> </span><span class="p">(</span><span class="n n-ElpiVariable">i\</span><span class="w">
+      </span><span>coq.elpi.accumulate</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">food.db</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">(</span><span>clause</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="p">(</span><span>tasty</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>i</span><span class="p">)</span><span class="p">)</span><span class="p">)</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">is_sweet</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="kn">Db</span><span> </span><span class="n">food</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>if</span><span class="w"> </span><span class="p">(</span><span>sweet</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">sweet!</span><span class="s2">&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">brr</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">is_tasty</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="kn">Db</span><span> </span><span class="n">food</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="kn">Accumulate</span><span> </span><span class="si">lp:{{</span><span class="w">
+  </span><span>main</span><span class="w"> </span><span class="k k-ElpiKeyword">[</span><span>str</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="k k-ElpiKeyword">]</span><span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span><span>if</span><span class="w"> </span><span class="p">(</span><span>tasty</span><span class="w"> </span><span class="n n-ElpiVariable">Name</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">yummy!</span><span class="s2">&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">bohf</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="w">
+</span><span class="si">}}</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">add_recipy</span><span> </span><span class="s2">&quot;</span><span class="s2">pie</span><span class="s2">&quot;</span><span>   </span><span class="s2">&quot;</span><span class="s2">potato</span><span class="s2">&quot;</span><span> </span><span class="s2">&quot;</span><span class="s2">salmon</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">add_recipy</span><span> </span><span class="s2">&quot;</span><span class="s2">jam</span><span class="s2">&quot;</span><span>   </span><span class="s2">&quot;</span><span class="s2">apricot</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">add_recipy</span><span> </span><span class="s2">&quot;</span><span class="s2">tart</span><span class="s2">&quot;</span><span>  </span><span class="s2">&quot;</span><span class="s2">jam</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">is_sweet</span><span> </span><span class="s2">&quot;</span><span class="s2">tart</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dd><span>sweet!
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="n">is_sweet</span><span> </span><span class="s2">&quot;</span><span class="s2">pie</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dd><span>brr
+</span></dd>
+<dt><span class="kn">Elpi</span><span> </span><span class="n">is_tasty</span><span> </span><span class="s2">&quot;</span><span class="s2">pie</span><span class="s2">&quot;</span><span class="o">.</span><span>
+</span></dt><dd><span>yummy!
+</span></dd>
+</dl>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="record-expansion.html" class="btn btn-neutral float-right" title="Record expansion" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

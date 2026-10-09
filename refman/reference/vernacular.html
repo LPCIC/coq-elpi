@@ -1,0 +1,210 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vernacular commands &mdash; Rocq-Elpi 83fdf44 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Separation of parsing from execution" href="synterp-interp.html" />
+    <link rel="prev" title="Adding builtin predicates via an OCaml plugin" href="../tutorials/plugin.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rocq-Elpi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/elpi-lang.html">The Elpi programming language</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-hoas.html">HOAS for Rocq terms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands.html">Writing commands in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-commands-advanced.html">Polishing a command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics.html">Writing tactics in Elpi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/coq-tactics-advanced.html">More tactic examples and the proof engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/plugin.html">Adding builtin predicates via an OCaml plugin</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Vernacular commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="synterp-interp.html">Separation of parsing from execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="invocation.html">Invocation of Elpi code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="builtins.html">Builtins and relevant files</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apps.html">Applications written in Rocq-Elpi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rocq-Elpi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Vernacular commands</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/vernacular.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="vernacular-commands">
+<h1>Vernacular commands<a class="headerlink" href="#vernacular-commands" title="Link to this heading"></a></h1>
+<p>In order to load Rocq-Elpi use <code class="docutils literal notranslate"><span class="pre">From</span> <span class="pre">elpi</span> <span class="pre">Require</span> <span class="pre">Import</span> <span class="pre">elpi</span></code>.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Command</span> <span class="pre">&lt;qname&gt;</span></code> creates command named <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> containing the
+preamble <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-command-template.elpi">elpi-command</a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Tactic</span> <span class="pre">&lt;qname&gt;</span></code> creates a tactic <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> containing the preamble
+<a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-tactic-template.elpi">elpi-tactic</a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Db</span> <span class="pre">&lt;dbname&gt;</span> <span class="pre">&lt;code&gt;</span></code> creates a Db (a program that is accumulated into
+other programs). <code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> is the initial contents of the Db, including the
+type declaration of its constituting predicates. It understands the
+<code class="docutils literal notranslate"><span class="pre">#[phase]</span></code> attribute, see <a class="reference internal" href="synterp-interp.html"><span class="doc">Separation of parsing from execution</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Program</span> <span class="pre">&lt;qname&gt;</span> <span class="pre">&lt;code&gt;</span></code> lower level primitive letting one create a
+command/tactic with a custom preamble <code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">From</span> <span class="pre">some.load.path</span> <span class="pre">Extra</span> <span class="pre">Dependency</span> <span class="pre">&lt;filename&gt;</span> <span class="pre">as</span> <span class="pre">&lt;fname&gt;</span></code> declares
+<code class="docutils literal notranslate"><span class="pre">&lt;fname&gt;</span></code> as a piece of code that can be accumulated via
+<code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Accumulate</span> <span class="pre">File</span></code>. The content is given in the external file
+<code class="docutils literal notranslate"><span class="pre">&lt;filename&gt;</span></code> to be found in the Rocq load path <code class="docutils literal notranslate"><span class="pre">some.load.path</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">File</span> <span class="pre">&lt;fname&gt;</span> <span class="pre">&lt;code&gt;.</span></code> declares <code class="docutils literal notranslate"><span class="pre">&lt;fname&gt;</span></code> as a piece of code that
+can be accumulated via <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Accumulate</span> <span class="pre">File</span></code>. This time the code is
+given in the .v file. It understands the <code class="docutils literal notranslate"><span class="pre">#[phase]</span></code> attribute, see
+<a class="reference internal" href="synterp-interp.html"><span class="doc">Separation of parsing from execution</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Accumulate</span> <span class="pre">[&lt;dbname&gt;|&lt;qname&gt;]</span> <span class="pre">[&lt;code&gt;|File</span> <span class="pre">[Signature]</span> <span class="pre">&lt;fname&gt;|Db</span> <span class="pre">[Header]</span> <span class="pre">&lt;dbname&gt;]</span></code>
+adds code to the current program (or <code class="docutils literal notranslate"><span class="pre">&lt;dbname&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> if
+specified). The code can be verbatim, from a file or a Db. File names
+<code class="docutils literal notranslate"><span class="pre">&lt;fname&gt;</span></code> must have been previously declared with <code class="docutils literal notranslate"><span class="pre">Extra</span> <span class="pre">Dependency</span></code> or
+<code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">File</span></code>. Accumulating <code class="docutils literal notranslate"><span class="pre">File</span> <span class="pre">Signature</span> <span class="pre">&lt;fname&gt;</span></code> only adds the
+signature declarations (kinds, types, modes, type abbreviations) from
+<code class="docutils literal notranslate"><span class="pre">&lt;fname&gt;</span></code> skipping the code (clauses/rules). Accumulating
+<code class="docutils literal notranslate"><span class="pre">Db</span> <span class="pre">Header</span> <span class="pre">&lt;dbname&gt;</span></code>, instead of <code class="docutils literal notranslate"><span class="pre">Db</span> <span class="pre">&lt;dbname&gt;</span></code>, accumulates only the
+first chunk of code associated with the Db, typically the type declaration
+of the predicates that live in the Db. When defining a command or tactic it
+can be useful to first accumulate the Db header, then some code (possibly
+calling the predicate living in the Db), and finally accumulating the
+(full) Db. Note that when a command is executed it may need to be
+(partially) recompiled, e.g. if the Db was updated. In this case all the
+code accumulated after the Db (but not after its header) may need to be
+recompiled. Hence we recommend to accumulate Dbs last. It understands the
+<code class="docutils literal notranslate"><span class="pre">#[skip=&quot;rex&quot;]</span></code> and <code class="docutils literal notranslate"><span class="pre">#[only=&quot;rex&quot;]</span></code> attributes which make the command a
+no-op if the Rocq version is matched (or not) by the given regular
+expression. It understands the <code class="docutils literal notranslate"><span class="pre">#[phase]</span></code> attribute, see
+<a class="reference internal" href="synterp-interp.html"><span class="doc">Separation of parsing from execution</span></a>. It understands the <code class="docutils literal notranslate"><span class="pre">#[local]</span></code>, <code class="docutils literal notranslate"><span class="pre">#[global]</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">#[superglobal]</span></code> scope attributes, although only when accumulating to a
+<code class="docutils literal notranslate"><span class="pre">&lt;dbname&gt;</span></code> (all accumulations to a program are <code class="docutils literal notranslate"><span class="pre">#[superglobal]</span></code>).
+Default accumulation to a db is the equivalent of <code class="docutils literal notranslate"><span class="pre">#[export]</span></code>. See the
+Rocq reference manual for the meaning of these scopes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Typecheck</span> <span class="pre">[&lt;qname&gt;]</span></code> typechecks the current program (or
+<code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> if specified). It understands the <code class="docutils literal notranslate"><span class="pre">#[phase]</span></code> attribute, see
+<a class="reference internal" href="synterp-interp.html"><span class="doc">Separation of parsing from execution</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Debug</span> <span class="pre">&lt;string&gt;</span></code> sets the variable <code class="docutils literal notranslate"><span class="pre">&lt;string&gt;</span></code>, relevant for
+conditional clause compilation (the <code class="docutils literal notranslate"><span class="pre">:if</span> <span class="pre">VARIABLE</span></code> clause attribute). It
+understands the <code class="docutils literal notranslate"><span class="pre">#[phase]</span></code> attribute, see <a class="reference internal" href="synterp-interp.html"><span class="doc">Separation of parsing from execution</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Trace</span> <span class="pre">[[&lt;start&gt;</span> <span class="pre">&lt;stop&gt;]</span> <span class="pre">&lt;predicate-filter&gt;*|Off]</span></code> enables/disables
+tracing, eventually limiting it to a specific range of execution steps or
+predicate names. It understands the <code class="docutils literal notranslate"><span class="pre">#[phase]</span></code> attribute, see
+<a class="reference internal" href="synterp-interp.html"><span class="doc">Separation of parsing from execution</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Trace</span> <span class="pre">Browser</span></code> enables/disables tracing for Elpi's trace browser.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Bound</span> <span class="pre">Steps</span> <span class="pre">&lt;number&gt;</span></code> limits the number of steps an Elpi program
+can make.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Print</span> <span class="pre">&lt;qname&gt;</span> <span class="pre">[&lt;string&gt;</span> <span class="pre">&lt;filter&gt;*]</span></code> prints the program <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code>
+to a text file called <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;.txt</span></code> (or <code class="docutils literal notranslate"><span class="pre">&lt;string&gt;</span></code> if provided)
+filtering out clauses whose file or clause-name matches <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code>. It
+understands the <code class="docutils literal notranslate"><span class="pre">#[phase]</span></code> attribute, see <a class="reference internal" href="synterp-interp.html"><span class="doc">Separation of parsing from execution</span></a>.</p></li>
+</ul>
+<p>where:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> is a qualified Rocq name, e.g. <code class="docutils literal notranslate"><span class="pre">derive.eq</span></code> or <code class="docutils literal notranslate"><span class="pre">my_program</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;dbname&gt;</span></code> is like <code class="docutils literal notranslate"><span class="pre">&lt;qname&gt;</span></code> but lives in a different namespace. By
+convention <code class="docutils literal notranslate"><span class="pre">&lt;dbname&gt;</span></code> ends in <code class="docutils literal notranslate"><span class="pre">.db</span></code>, e.g. <code class="docutils literal notranslate"><span class="pre">derive.eq.db</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;code&gt;</span></code> is verbatim Elpi code, either <code class="docutils literal notranslate"><span class="pre">lp:{{</span> <span class="pre">...</span> <span class="pre">}}</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">...</span> <span class="pre">&quot;</span></code> (in
+the latter case, string delimiters need to be escaped following Rocq
+rules, e.g. <code class="docutils literal notranslate"><span class="pre">lp:{{</span> <span class="pre">coq.say</span> <span class="pre">&quot;hello!&quot;</span> <span class="pre">}}</span></code> becomes <code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">coq.say</span> <span class="pre">&quot;&quot;hello!&quot;&quot;</span> <span class="pre">&quot;</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;filename&gt;</span></code> is a string containing the path of an external file, e.g.
+<code class="docutils literal notranslate"><span class="pre">&quot;this_file.elpi&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;fname&gt;</span></code> is a qualified Rocq name, e.g. <code class="docutils literal notranslate"><span class="pre">foo.elpi</span></code> (note that
+<code class="docutils literal notranslate"><span class="pre">Extra</span> <span class="pre">Dependency</span></code> only allows simple identifiers).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;start&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;stop&gt;</span></code> are numbers, e.g. <code class="docutils literal notranslate"><span class="pre">17</span> <span class="pre">24</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;predicate-filter&gt;</span></code> is a regexp against which the predicate name is
+matched, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;derive.*&quot;</span></code>.</p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../tutorials/plugin.html" class="btn btn-neutral float-left" title="Adding builtin predicates via an OCaml plugin" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="synterp-interp.html" class="btn btn-neutral float-right" title="Separation of parsing from execution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Enrico Tassi and the Rocq-Elpi contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
