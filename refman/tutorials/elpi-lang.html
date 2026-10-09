@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Elpi programming language &mdash; Rocq-Elpi 83fdf44 documentation</title>
+  <title>The Elpi programming language &mdash; Rocq-Elpi 5a92b91 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
@@ -14,7 +14,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/documentation_options.js?v=927cffc6"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -278,8 +278,8 @@ inputs (none here) from outputs. We will explain later the difference
 between inputs and outputs later.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L30"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> is the built-in data type of integers</p>
-<p>Integers come with usual arithmetic operators, see the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L93"><code class="docutils literal notranslate"><span class="pre">calc</span></code></a> built-in.</p>
+<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L30"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> is the built-in data type of integers</p>
+<p>Integers come with usual arithmetic operators, see the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L93"><code class="docutils literal notranslate"><span class="pre">calc</span></code></a> built-in.</p>
 </div>
 <p>In order to run our program we have to write a query,
 i.e. a predicate expression containing variables such as:</p>
@@ -316,12 +316,12 @@ Query assignments:
 </span></dd>
 </dl>
 </div>
-<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L579"><code class="docutils literal notranslate"><span class="pre">coq.say</span></code></a> is a built-in predicate provided by Rocq-Elpi which
+<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L579"><code class="docutils literal notranslate"><span class="pre">coq.say</span></code></a> is a built-in predicate provided by Rocq-Elpi which
 prints its arguments. You can look at the captured output above to see
 the value for <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">A</span></span></code>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L33"><code class="docutils literal notranslate"><span class="pre">string</span></code></a> is a built-in data type</p>
+<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L33"><code class="docutils literal notranslate"><span class="pre">string</span></code></a> is a built-in data type</p>
 <p>Strings are delimited by double quotes and <code class="docutils literal notranslate"><span class="pre">\</span></code> is the escape symbol.</p>
 </div>
 <p>The predicate <code class="code elpi docutils literal notranslate"><span class="pre">age</span></code> represents a <em>relation</em> (in contrast to a function)
@@ -727,8 +727,8 @@ the first argument of <code class="code elpi docutils literal notranslate"><span
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Pattern matching API</p>
-<p>As unification is available via the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L20"><code class="docutils literal notranslate"><span class="pre">(=)</span></code></a>, pattern matching
-is available via <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L22"><code class="docutils literal notranslate"><span class="pre">pattern_match</span></code></a>.</p>
+<p>As unification is available via the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L20"><code class="docutils literal notranslate"><span class="pre">(=)</span></code></a>, pattern matching
+is available via <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L22"><code class="docutils literal notranslate"><span class="pre">pattern_match</span></code></a>.</p>
 <div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>f<span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span>f<span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="c">% ok</span>
 f<span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="w"> </span><span class="k k-ElpiKeyword">=</span><span class="w"> </span>f<span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="c">% ok</span>
 pattern_match<span class="w"> </span><span class="p">(</span>f<span class="w"> </span><span class="n n-ElpiVariable">X</span><span class="p">)</span><span class="w"> </span><span class="p">(</span>f<span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="c">% ok</span>
@@ -741,7 +741,7 @@ is that it will prevent to use the predicate in the other direction, e.g. to
 find any person of age 23. For that one would need a different predicate,
 since Elpi does not support multiple signatures for the same symbol.
 We often use the <code class="docutils literal notranslate"><span class="pre">R</span></code> suffix to denote the non-function version of a predicate,
-for example see <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L549"><code class="docutils literal notranslate"><span class="pre">std.append</span></code></a> and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L553"><code class="docutils literal notranslate"><span class="pre">std.appendR</span></code></a>.</p>
+for example see <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L549"><code class="docutils literal notranslate"><span class="pre">std.append</span></code></a> and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L553"><code class="docutils literal notranslate"><span class="pre">std.appendR</span></code></a>.</p>
 </section>
 </section>
 </section>
@@ -1332,7 +1332,7 @@ message. Please report this inconvenience to the authors of the program.
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L13"><code class="docutils literal notranslate"><span class="pre">fail</span></code></a> is a predicate with no solution</p>
+<p><a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L13"><code class="docutils literal notranslate"><span class="pre">fail</span></code></a> is a predicate with no solution</p>
 </div>
 <p>See also the Wikipedia page on <a class="reference external" href="https://en.wikipedia.org/wiki/Constraint_Handling_Rules">Constraint Handling Rules</a>
 for an introduction to the sub language to manipulate constraints.</p>
@@ -1345,8 +1345,8 @@ typical of functional programming are available, with some caveats.</p>
 <section id="spilling-relation-composition">
 <h3><a class="toc-backref" href="#id16" role="doc-backlink">Spilling (relation composition)</a><a class="headerlink" href="#spilling-relation-composition" title="Link to this heading"></a></h3>
 <p>Chaining &quot;relations&quot; can be painful, especially when
-they look like functions. Here we use <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L549"><code class="docutils literal notranslate"><span class="pre">std.append</span></code></a>
-and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L534"><code class="docutils literal notranslate"><span class="pre">std.rev</span></code></a> to build a palindrome:</p>
+they look like functions. Here we use <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L549"><code class="docutils literal notranslate"><span class="pre">std.append</span></code></a>
+and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L534"><code class="docutils literal notranslate"><span class="pre">std.rev</span></code></a> to build a palindrome:</p>
 <div class="rocqtop literal-block highlight docutils container">
 <span></span><dl>
 <dt><span class="kn">Elpi</span><span> </span><span class="kn">Program</span><span> </span><span class="n">function</span><span> </span><span class="si">lp:{{</span><span class="w">
@@ -1400,7 +1400,7 @@ Actually the latter is elaborated into the former.</p>
 <section id="apis-for-built-in-data">
 <h3><a class="toc-backref" href="#id17" role="doc-backlink">APIs for built-in data</a><a class="headerlink" href="#apis-for-built-in-data" title="Link to this heading"></a></h3>
 <p>Functions about built-in data types are available via the
-<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L93"><code class="docutils literal notranslate"><span class="pre">calc</span></code></a> predicate or its infix version <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">is</span></span></code>. Example:</p>
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L93"><code class="docutils literal notranslate"><span class="pre">calc</span></code></a> predicate or its infix version <code class="code elpi docutils literal notranslate"><span class="keyword elpikeyword"><span class="pre">is</span></span></code>. Example:</p>
 <div class="rocqtop literal-block highlight docutils container">
 <span></span><dl>
 <dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w">
@@ -1417,7 +1417,7 @@ Query assignments:
 </span></dd>
 </dl>
 </div>
-<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L93"><code class="docutils literal notranslate"><span class="pre">calc</span></code></a> predicate works nicely with spilling:</p>
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L93"><code class="docutils literal notranslate"><span class="pre">calc</span></code></a> predicate works nicely with spilling:</p>
 <div class="rocqtop literal-block highlight docutils container">
 <span></span><dl>
 <dt><span class="kn">Elpi</span><span> </span><span class="kn">Query</span><span> </span><span class="si">lp:{{</span><span class="w"> </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">result =</span><span class="s2">&quot;</span><span class="w"> </span><span>{</span><span>calc</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="w"> </span><span class="k k-ElpiKeyword">+</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span>}</span><span class="w"> </span><span class="si">}}</span><span class="o">.</span><span>
@@ -2097,7 +2097,7 @@ may forget to use it. Elpi provides two mechanisms to help with that.</p>
 <p>The former one is functional predicates: by declaring a predicate as
 functional one is typically forced to use cut. This is the recommended
 way of writing code since Elpi 3.0.</p>
-<p>The latter mechanism is the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L753"><code class="docutils literal notranslate"><span class="pre">std.do!</span></code></a> predicate that can
+<p>The latter mechanism is the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L753"><code class="docutils literal notranslate"><span class="pre">std.do!</span></code></a> predicate that can
 be used as follows.</p>
 <div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">pred</span><span class="w"> </span><span class="n n-ElpiFunction">not-a-backtracking-one</span>.
 not-a-backtracking-one<span class="w"> </span><span class="k k-ElpiKeyword">:-</span><span class="w"> </span>condition<span class="k k-ElpiKeyword">,</span><span class="w"> </span><span class="k k-ElpiKeyword">!,</span><span class="w"> </span>std.do!<span class="w"> </span><span class="k k-ElpiKeyword">[</span>
@@ -2110,8 +2110,8 @@ not-a-backtracking-one<span class="w"> </span><span class="k k-ElpiKeyword">:-</
 <p>In the example above once <code class="code elpi docutils literal notranslate"><span class="pre">condition</span></code> holds we start a sequence of
 steps which we will not reconsider. Locally, backtracking is still
 available, e.g. between <code class="code elpi docutils literal notranslate"><span class="pre">generate</span></code> and <code class="code elpi docutils literal notranslate"><span class="pre">test</span></code>.</p>
-<p>See also the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L766"><code class="docutils literal notranslate"><span class="pre">std.spy-do!</span></code></a> predicate which prints each and every step,
-and the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L508"><code class="docutils literal notranslate"><span class="pre">std.spy</span></code></a> one which can be used to spy on a single one.</p>
+<p>See also the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L766"><code class="docutils literal notranslate"><span class="pre">std.spy-do!</span></code></a> predicate which prints each and every step,
+and the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L508"><code class="docutils literal notranslate"><span class="pre">std.spy</span></code></a> one which can be used to spy on a single one.</p>
 </section>
 <section id="unification-variables-v-s-imperative-variables">
 <h3><a class="toc-backref" href="#id27" role="doc-backlink">Unification variables v.s. Imperative variables</a><a class="headerlink" href="#unification-variables-v-s-imperative-variables" title="Link to this heading"></a></h3>
@@ -2139,7 +2139,7 @@ of <code class="code elpi docutils literal notranslate"><span class="name elpiva
 <h3><a class="toc-backref" href="#id28" role="doc-backlink">Allocation of variables</a><a class="headerlink" href="#allocation-of-variables" title="Link to this heading"></a></h3>
 <p>The language lets one use λ-abstraction also to write anonymous rules
 but one has to be wary of where variables are bound (allocated really).</p>
-<p>In our example we use the higher order predicate <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L597"><code class="docutils literal notranslate"><span class="pre">std.map</span></code></a>:</p>
+<p>In our example we use the higher order predicate <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L597"><code class="docutils literal notranslate"><span class="pre">std.map</span></code></a>:</p>
 <div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class="n n-ElpiFunction">std.map</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">A</span><span class="k k-ElpiMode">,</span><span class="w"> </span><span class="k k-ElpiMode">(</span><span class="k k-ElpiKeyword">func</span><span class="w"> </span><span class="kt">A</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">B</span><span class="k k-ElpiMode">)</span><span class="w"> </span><span class="k k-ElpiMode">-&gt;</span><span class="w"> </span><span class="kt">list</span><span class="w"> </span><span class="kt">B</span>.
 </pre></div>
 </div>
@@ -2181,7 +2181,7 @@ would do in a functional language by passing an anonymous function):</p>
 </dl>
 </div>
 <p>The problem with <code class="code elpi docutils literal notranslate"><span class="pre">bad</span></code> is that <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">TMP</span></span></code> is fresh each time the rule
-is used, but not every time the anonymous rule passed to <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L597"><code class="docutils literal notranslate"><span class="pre">map</span></code></a>
+is used, but not every time the anonymous rule passed to <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L597"><code class="docutils literal notranslate"><span class="pre">map</span></code></a>
 is used. Technically <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">TMP</span></span></code> is quantified (allocated) where <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">L</span></span></code>
 and <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Result</span></span></code> are.</p>
 <p>There are two ways to quantify <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">TMP</span></span></code> correctly, that is inside the

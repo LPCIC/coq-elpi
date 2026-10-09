@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Polishing a command &mdash; Rocq-Elpi 83fdf44 documentation</title>
+  <title>Polishing a command &mdash; Rocq-Elpi 5a92b91 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
@@ -14,7 +14,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/documentation_options.js?v=927cffc6"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -218,8 +218,8 @@ location in the source file of the command. Then we find an attribute for
 <code class="code elpi docutils literal notranslate"><span class="literal string double"><span class="pre">&quot;this&quot;</span></span></code> holding the empty string and an attribute for <code class="code elpi docutils literal notranslate"><span class="literal string double"><span class="pre">&quot;more.stuff&quot;</span></span></code> holding
 the string <code class="code elpi docutils literal notranslate"><span class="literal string double"><span class="pre">&quot;33&quot;</span></span></code>.</p>
 <p>Attributes are usually validated (parsed) and turned into regular options
-using <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib-common.elpi#L25"><code class="docutils literal notranslate"><span class="pre">coq.parse-attributes</span></code></a> and a description of their types using
-the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib-common.elpi#L72"><code class="docutils literal notranslate"><span class="pre">attribute-type</span></code></a> data type:</p>
+using <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/coq-lib-common.elpi#L25"><code class="docutils literal notranslate"><span class="pre">coq.parse-attributes</span></code></a> and a description of their types using
+the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/coq-lib-common.elpi#L72"><code class="docutils literal notranslate"><span class="pre">attribute-type</span></code></a> data type:</p>
 <div class="rocqtop literal-block highlight docutils container">
 <span></span><dl>
 <dt><span class="kn">Elpi</span><span> </span><span class="kn">Command</span><span> </span><span class="n">parse_attr</span><span class="o">.</span><span>
@@ -277,10 +277,10 @@ Please report this inconvenience to the authors of the program.
 </dl>
 </div>
 <p>If they just fail, as shown above, they produce a rather generic error
-message. You should use the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L594"><code class="docutils literal notranslate"><span class="pre">coq.error</span></code></a> API or the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/elpi-builtin.elpi#L498"><code class="docutils literal notranslate"><span class="pre">assert!</span></code></a> one
-to abort a program. There is a dedicated <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1711"><code class="docutils literal notranslate"><span class="pre">coq.ltac.fail</span></code></a> API to abort
+message. You should use the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L594"><code class="docutils literal notranslate"><span class="pre">coq.error</span></code></a> API or the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/elpi-builtin.elpi#L498"><code class="docutils literal notranslate"><span class="pre">assert!</span></code></a> one
+to abort a program. There is a dedicated <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L1711"><code class="docutils literal notranslate"><span class="pre">coq.ltac.fail</span></code></a> API to abort
 tactics.</p>
-<p>Warnings can be reported using the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L588"><code class="docutils literal notranslate"><span class="pre">coq.warning</span></code></a> which lets you
+<p>Warnings can be reported using the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L588"><code class="docutils literal notranslate"><span class="pre">coq.warning</span></code></a> which lets you
 pick a name and category. In turn these can be used to disable or make fatal
 your warnings (as any other Rocq warning).</p>
 </section>
@@ -409,17 +409,17 @@ we pass the name from one to the other.</p>
     </span><span>coq.say</span><span class="w"> </span><span class="s2">&quot;</span><span class="s2">The module is</span><span class="s2">&quot;</span><span class="w"> </span><span class="n n-ElpiVariable">MP</span><span class="o">.</span><span class="w">
 </span><span class="si">}}</span><span class="o">.</span><span>
 </span></dt><dt><span class="kn">Elpi</span><span> </span><span class="n">mk_random_module</span><span class="o">.</span><span>
-</span></dt><dd><span>The module is «Top.Module22»
+</span></dt><dd><span>The module is «Top.Module38»
 </span></dd>
 </dl>
 </div>
 <p>If the only data to be passed to the interp phase is the list of
 synterp actions, then a few APIs can come in handy.
-The synterp phase has access to the API <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin-synterp.elpi#L423"><code class="docutils literal notranslate"><span class="pre">coq.synterp-actions</span></code></a>
+The synterp phase has access to the API <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin-synterp.elpi#L423"><code class="docutils literal notranslate"><span class="pre">coq.synterp-actions</span></code></a>
 that lists the actions performed so far. The interp phase can use
-<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib.elpi#L879"><code class="docutils literal notranslate"><span class="pre">coq.replay-synterp-action</span></code></a> and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L2112"><code class="docutils literal notranslate"><span class="pre">coq.next-synterp-action</span></code></a> to
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/coq-lib.elpi#L879"><code class="docutils literal notranslate"><span class="pre">coq.replay-synterp-action</span></code></a> and <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L2112"><code class="docutils literal notranslate"><span class="pre">coq.next-synterp-action</span></code></a> to
 replay an action or peek the next one to be performed.</p>
-<p>An excerpt of the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L2094"><code class="docutils literal notranslate"><span class="pre">synterp-action</span></code></a>.</p>
+<p>An excerpt of the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L2094"><code class="docutils literal notranslate"><span class="pre">synterp-action</span></code></a>.</p>
 <div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span><span class="c">% Action executed during the parsing phase (aka synterp)</span>
 <span class="k k-ElpiKeyword">data</span><span class="w"> </span><span class="n n-ElpiFunction">synterp-action</span>.
 <span class="k k-ElpiKeyword">symb</span><span class="w"> </span><span class="n n-ElpiFunction">begin-module</span><span class="w"> </span><span class="k k-ElpiKeyword">:</span><span class="w"> </span><span class="kt">id</span><span class="w"> </span><span class="kt">-&gt;</span><span class="w"> </span><span class="kt">synterp-action</span>.

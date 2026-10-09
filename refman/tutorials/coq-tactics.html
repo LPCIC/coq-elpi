@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Writing tactics in Elpi &mdash; Rocq-Elpi 83fdf44 documentation</title>
+  <title>Writing tactics in Elpi &mdash; Rocq-Elpi 5a92b91 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
@@ -14,7 +14,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=181b4ed5"></script>
+      <script src="../_static/documentation_options.js?v=927cffc6"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -186,9 +186,9 @@ does behind the scenes is to synthesize this partial term.</p>
 <p>The first one <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Tactic</span> <span class="pre">show.</span></code> sets the current program to <code class="docutils literal notranslate"><span class="pre">show</span></code>.
 Since it is declared as a <code class="docutils literal notranslate"><span class="pre">Tactic</span></code> some code is loaded automatically:</p>
 <ul class="simple">
-<li><p>APIs (eg <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L579"><code class="docutils literal notranslate"><span class="pre">coq.say</span></code></a>) and data types (eg Rocq <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L216"><code class="docutils literal notranslate"><span class="pre">term</span></code></a> s) are loaded from
+<li><p>APIs (eg <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L579"><code class="docutils literal notranslate"><span class="pre">coq.say</span></code></a>) and data types (eg Rocq <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L216"><code class="docutils literal notranslate"><span class="pre">term</span></code></a> s) are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/builtin-doc/coq-builtin.elpi">coq-builtin.elpi</a></p></li>
-<li><p>some utilities, like <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/coq-lib.elpi#L86"><code class="docutils literal notranslate"><span class="pre">copy</span></code></a> or <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-reduction.elpi#L15"><code class="docutils literal notranslate"><span class="pre">whd1</span></code></a> are loaded from
+<li><p>some utilities, like <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/coq-lib.elpi#L86"><code class="docutils literal notranslate"><span class="pre">copy</span></code></a> or <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/elpi-reduction.elpi#L15"><code class="docutils literal notranslate"><span class="pre">whd1</span></code></a> are loaded from
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi">elpi-tactic-template.elpi</a></p></li>
 </ul>
 <p>The second one <code class="docutils literal notranslate"><span class="pre">Elpi</span> <span class="pre">Accumulate</span> <span class="pre">...</span></code> loads some extra code.
@@ -208,8 +208,8 @@ code does not contain the most frequent kind of mistakes, via some
 type checking and linting. Some mistakes are minor and Elpi only warns about
 them. You can pass <code class="docutils literal notranslate"><span class="pre">-w</span> <span class="pre">+elpi.typecheck</span></code> to <code class="docutils literal notranslate"><span class="pre">coqc</span></code> to turn these warnings into
 errors.</p>
-<p>The entry point for tactics is called <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L203"><code class="docutils literal notranslate"><span class="pre">solve</span></code></a> which maps a <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L405"><code class="docutils literal notranslate"><span class="pre">goal</span></code></a>
-into a list of <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L406"><code class="docutils literal notranslate"><span class="pre">sealed-goal</span></code></a> (representing subgoals).</p>
+<p>The entry point for tactics is called <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L203"><code class="docutils literal notranslate"><span class="pre">solve</span></code></a> which maps a <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L405"><code class="docutils literal notranslate"><span class="pre">goal</span></code></a>
+into a list of <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L406"><code class="docutils literal notranslate"><span class="pre">sealed-goal</span></code></a> (representing subgoals).</p>
 <p>Tactics written in Elpi can be invoked by prefixing its name with <code class="docutils literal notranslate"><span class="pre">elpi</span></code>.</p>
 <div class="rocqtop literal-block highlight docutils container">
 <span></span><dl>
@@ -250,7 +250,7 @@ the variable has <code class="code elpi docutils literal notranslate"><span clas
 <p>The <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">_Trigger</span></span></code> component, which we did not print, is a variable that, when
 assigned, triggers the elaboration of its value against the type of the goal
 and obtains a value for <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Proof</span></span></code> this way.</p>
-<p>Keeping in mind that the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L203"><code class="docutils literal notranslate"><span class="pre">solve</span></code></a> predicate relates one goal to a list of
+<p>Keeping in mind that the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L203"><code class="docutils literal notranslate"><span class="pre">solve</span></code></a> predicate relates one goal to a list of
 subgoals, we implement our first tactic which blindly tries to solve the goal.</p>
 <div class="rocqtop literal-block highlight docutils container">
 <span></span><dl>
@@ -314,12 +314,12 @@ developed further in <a class="reference internal" href="coq-tactics-advanced.ht
 <p>For a simple tactic like <code class="docutils literal notranslate"><span class="pre">blind</span></code> the list of subgoals is easy to write, since
 it is empty, but in general one should collect all the holes in
 the value of <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">Proof</span></span></code> (the checked proof term) and build goals out of them.</p>
-<p>There is a family of APIs named after <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a>, the mother of all
+<p>There is a family of APIs named after <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a>, the mother of all
 tactics, in
 <a class="reference external" href="https://github.com/LPCIC/coq-elpi/blob/master/elpi/elpi-ltac.elpi">elpi-ltac.elpi</a>
 which does this job for you.</p>
 <p>Usually a tactic builds a (possibly partial) term and calls
-<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a> on it.</p>
+<a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a> on it.</p>
 <p>Let's rewrite the <code class="docutils literal notranslate"><span class="pre">blind</span></code> tactic using this schema.</p>
 <div class="rocqtop literal-block highlight docutils container">
 <span></span><dl>
@@ -448,7 +448,7 @@ constraint triggered by assigning <code class="docutils literal notranslate"><sp
 its type <code class="docutils literal notranslate"><span class="pre">nat</span></code> is not of sort <code class="docutils literal notranslate"><span class="pre">Prop</span></code>, so it backtracks and picks <code class="docutils literal notranslate"><span class="pre">{{I}}</span></code>.</p>
 <p>Another common way to build an Elpi tactic is to synthesize a term and
 then call some Ltac piece of code finishing the work.</p>
-<p>The API <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L40"><code class="docutils literal notranslate"><span class="pre">coq.ltac.call</span></code></a> invokes some Ltac piece
+<p>The API <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/elpi-ltac.elpi#L40"><code class="docutils literal notranslate"><span class="pre">coq.ltac.call</span></code></a> invokes some Ltac piece
 of code passing to it the desired
 arguments. Then it builds the list of subgoals.</p>
 <p>Here we pass an integer, which in turn is passed to <code class="docutils literal notranslate"><span class="pre">fail</span></code>, and a term,
@@ -532,13 +532,13 @@ have to be put between parentheses.</p>
 <p class="admonition-title">Important</p>
 <p>terms are received in raw format, eg before elaboration</p>
 <p>Indeed the type argument to <code class="docutils literal notranslate"><span class="pre">eq</span></code> is a variable.
-One can use APIs like <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1574"><code class="docutils literal notranslate"><span class="pre">coq.elaborate-skeleton</span></code></a> to infer holes like
+One can use APIs like <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L1574"><code class="docutils literal notranslate"><span class="pre">coq.elaborate-skeleton</span></code></a> to infer holes like
 <code class="code elpi docutils literal notranslate"><span class="name elpivariable"><span class="pre">X0</span></span></code>.</p>
 </div>
-<p>See the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L81"><code class="docutils literal notranslate"><span class="pre">argument</span></code></a> data type
+<p>See the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L81"><code class="docutils literal notranslate"><span class="pre">argument</span></code></a> data type
 for a detailed description of all the arguments a tactic can receive.</p>
-<p>Now let's write a tactic which behaves pretty much like the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a>
-one from Rocq, but prints what it does using the API <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1920"><code class="docutils literal notranslate"><span class="pre">coq.term-&gt;string</span></code></a>.</p>
+<p>Now let's write a tactic which behaves pretty much like the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/elpi/elpi-ltac.elpi#L18"><code class="docutils literal notranslate"><span class="pre">refine</span></code></a>
+one from Rocq, but prints what it does using the API <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L1920"><code class="docutils literal notranslate"><span class="pre">coq.term-&gt;string</span></code></a>.</p>
 <div class="rocqtop literal-block highlight docutils container">
 <span></span><dl>
 <dt><span class="kn">Elpi</span><span> </span><span class="kn">Tactic</span><span> </span><span class="nb">refine</span><span class="o">.</span><span>
@@ -655,14 +655,14 @@ No more goals.
 </section>
 <section id="failure">
 <h2><a class="toc-backref" href="#id6" role="doc-backlink">Failure</a><a class="headerlink" href="#failure" title="Link to this heading"></a></h2>
-<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L594"><code class="docutils literal notranslate"><span class="pre">coq.error</span></code></a> aborts the execution of both
+<p>The <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L594"><code class="docutils literal notranslate"><span class="pre">coq.error</span></code></a> aborts the execution of both
 Elpi and any enclosing Ltac context. This failure cannot be caught
 by Ltac.</p>
-<p>On the contrary the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L1711"><code class="docutils literal notranslate"><span class="pre">coq.ltac.fail</span></code></a> builtin can be used to
+<p>On the contrary the <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L1711"><code class="docutils literal notranslate"><span class="pre">coq.ltac.fail</span></code></a> builtin can be used to
 abort the execution of Elpi code in such a way that Ltac can catch it.
 This API takes an integer akin to Ltac's fail depth together with
 the error message to be displayed to the user.</p>
-<p>Library functions of the <code class="docutils literal notranslate"><span class="pre">assert!</span></code> family call, by default, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/83fdf44a7f95a00f76ece958a553eb4b2b24ac39/builtin-doc/coq-builtin.elpi#L594"><code class="docutils literal notranslate"><span class="pre">coq.error</span></code></a>.
+<p>Library functions of the <code class="docutils literal notranslate"><span class="pre">assert!</span></code> family call, by default, <a class="ghref reference external" href="https://github.com/LPCIC/coq-elpi/blob/5a92b91d98c2088e7fd59ccce6c11cbf11301a44/builtin-doc/coq-builtin.elpi#L594"><code class="docutils literal notranslate"><span class="pre">coq.error</span></code></a>.
 The flag <code class="docutils literal notranslate"><span class="pre">&#64;ltacfail!</span> <span class="pre">N</span></code> can be set to alter this behavior and turn errors into
 calls to <code class="docutils literal notranslate"><span class="pre">coq.ltac.fail</span> <span class="pre">N</span></code>.</p>
 <div class="rocqtop literal-block highlight docutils container">
