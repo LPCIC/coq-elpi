@@ -1,0 +1,46 @@
+Reduction surgery
+=================
+
+A tactic fine tuning ``cbv`` with a list of allowed unfoldings taken from a
+module: it mocks up a reduction tactic unfolding only constants from a given
+module.
+
+.. rocqtop:: in reset
+
+   From elpi Require Import elpi.
+
+.. rocqtop:: all
+
+   Elpi Tactic reduce.
+   Elpi Accumulate lp:{{
+
+   pred gref->redflag gref -> coq.redflag.
+   gref->redflag (const C) (coq.redflags.const C).
+
+   solve (goal _ _ Ty _ [str M] as G) GS :-
+     coq.locate-module M MP,
+     coq.env.module MP GREFS,
+     std.map-filter GREFS (x\r\x = gref r, r = (const _)) CONSTANTS,
+     std.map CONSTANTS (gr\r\ coq.env.transitive-dependencies gr _ r) DEPS,
+     std.fold DEPS {coq.gref.set.empty} coq.gref.set.union ALLDEPS,
+     std.append CONSTANTS {coq.gref.set.elements ALLDEPS} All,
+     std.map-filter All gref->redflag DELTAFLAGS,
+     coq.redflags.add coq.redflags.nored
+       [ coq.redflags.beta, coq.redflags.fix, coq.redflags.match | DELTAFLAGS ]
+       F,
+     (@redflags! F ==> coq.reduction.cbv.norm Ty Ty1),
+     refine {{ _ : lp:Ty1 }} G GS. % to leave a vmcast one needs to call ltac1
+
+   }}.
+
+   Module ToRed.
+   Definition x := 1.
+   Definition y := 1.
+   Definition alias := plus.
+   End ToRed.
+
+   Goal ToRed.x + ToRed.y = let z := 1 in S z.
+   elpi reduce "ToRed".
+   match goal with |- 2 = let z := 1 in S z => trivial end.
+   Show Proof.
+   Abort.

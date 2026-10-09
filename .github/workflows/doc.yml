@@ -34,22 +34,40 @@ jobs:
         opam repo add coq-dev https://coq.inria.fr/opam/core-dev
         opam repo add extra-dev https://coq.inria.fr/opam/extra-dev
         opam update
-        opam install rocq-core.9.0.0 vsrocq-language-server coq-core rocq-stdlib.9.0.0 coq-stdlib
+        opam install rocq-core.9.2.0 vsrocq-language-server coq-core rocq-stdlib.9.2.0 coq-stdlib
         opam install ./rocq-elpi.opam
         sudo apt-get update
         sudo apt-get install python3-pip -y
+        sudo pip3 install Sphinx sphinx-rtd-theme
 
-    - name: build doc
+    - name: build alectryon tutorials
       run: opam exec -- make doc
+
+    - name: build sphinx reference manual
+      run: opam exec -- make refman-build
+
+    # Combined GH Pages layout: the older Alectryon-rendered tutorials keep
+    # their existing root-level paths
+    # (https://lpcic.github.io/coq-elpi/tutorial_*.html -- already linked
+    # from both README.md and the new manual's own tutorial pages, via
+    # ".. seealso::" notes), and the new Sphinx reference manual (the one
+    # linked as "the reference manual" from README.md) is added alongside
+    # under refman/.
+    - name: combine docs for deployment
+      run: |
+        mkdir -p site
+        cp -r doc/. site/
+        mkdir -p site/refman
+        cp -r docs/build/. site/refman/
 
     - name: Save artifact
       uses: actions/upload-artifact@v4
       with:
-        path: doc
+        path: site
 
     - name: deploy
       uses: JamesIves/github-pages-deploy-action@4.1.4
       if: ${{ github.ref == 'refs/heads/master' }}
       with:
         branch: gh-pages
-        folder: doc
+        folder: site

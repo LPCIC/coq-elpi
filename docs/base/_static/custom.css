@@ -1,0 +1,101 @@
+/* ANSI color classes used by the .. rocqtop:: directive's output coloring
+   (docs/base/_rocqtop_elpi.py's AnsiColorsParser/parse_ansi).
+   Vendored from the Rocq Prover manual's doc/sphinx/_static/ansi.css,
+   Copyright INRIA, CNRS and contributors, LGPL-2.1-or-later. */
+.ansi-bold { font-weight: bold; }
+.ansi-italic { font-style: italic; }
+.ansi-negative { filter: invert(100%); }
+.ansi-underline { text-decoration: underline; }
+.ansi-no-bold { font-weight: normal; }
+.ansi-no-italic { font-style: normal; }
+.ansi-no-negative { filter: invert(0%); }
+.ansi-no-underline { text-decoration: none; }
+
+.ansi-fg-black { color: #babdb6; }
+.ansi-fg-red { color: #a40000; }
+.ansi-fg-green { color: #4e9a06; }
+.ansi-fg-yellow { color: #ce5c00; }
+.ansi-fg-blue { color: #204a87; }
+.ansi-fg-magenta { color: #5c3566; }
+.ansi-fg-cyan { color: #8f5902; }
+.ansi-fg-white { color: #2e3436; }
+.ansi-fg-light-black { color: #babdb6; }
+.ansi-fg-light-red { color: #cc0000; }
+.ansi-fg-light-green { color: #346604; }
+.ansi-fg-light-yellow { color: #f57900; }
+.ansi-fg-light-blue { color: #3465a4; }
+.ansi-fg-light-magenta { color: #75507b; }
+.ansi-fg-light-cyan { color: #06989a; }
+.ansi-fg-light-white { color: #555753; }
+.ansi-fg-default { color: #2e3436; }
+
+.ansi-bg-black { background-color: #babdb6; }
+.ansi-bg-red { background-color: #a40000; }
+.ansi-bg-green { background-color: #4e9a06; }
+.ansi-bg-yellow { background-color: #ce5c00; }
+.ansi-bg-blue { background-color: #204a87; }
+.ansi-bg-magenta { background-color: #5c3566; }
+.ansi-bg-cyan { background-color: #8f5902; }
+.ansi-bg-white { background-color: #eeeeec; }
+.ansi-bg-default { background-color: transparent; }
+
+/* .. rocqtop:: rendering: a definition list of (input sentence, captured
+   output) pairs. Vendored/adapted from the Rocq manual's
+   doc/sphinx/_static/notations.css (same license as above). */
+.rocqtop dt,
+.rocqtop dd {
+    border: none !important;
+    display: block !important;
+    font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console",
+                 "Lucida Sans Typewriter", "DejaVu Sans Mono",
+                 "Bitstream Vera Sans Mono", "Liberation Mono",
+                 "Nimbus Mono L", Monaco, "Courier New", Courier, monospace !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+    white-space: pre-wrap;
+}
+.rocqtop dt {
+    background: none !important;
+    color: #333 !important;
+    font-weight: normal !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.rocqtop dd {
+    background: #eeeeee !important;
+    color: #2e3436 !important;
+    padding: 0.5em;
+    margin-left: 0 !important;
+    margin-top: 0.5em !important;
+}
+.rocqtop dl {
+    margin: 12px;
+}
+.rocqtop.rocqtop-hidden, dd.rocqtop-hidden, dt.rocqtop-hidden {
+    display: none !important;
+}
+
+/* :builtin:/:stdlib:/:type:/... roles (docs/base/_roles_elpi.py): a link to
+   the declaration of a predicate/type in one of the builtin-doc/*.elpi or
+   elpi/*.elpi files, styled like coq-elpi's previous Alectryon-based
+   tutorials (etc/tutorial_style.rst). */
+a.ghref code.literal {
+    font-family: 'Iosevka Slab Web', 'Iosevka Web', 'Iosevka Slab', 'Iosevka',
+                 'Fira Code', monospace;
+}
+a.ghref {
+    text-decoration: underline dotted;
+}
+
+/* Elpi-specific token colors, for both `.. code-block:: elpi`/`coq` (Sphinx's
+   own Pygments pipeline) and `.. rocqtop::` (docs/base/_rocqtop_elpi.py's
+   highlight_using_pygments, which emits the same compound class names).
+   Ported from the previous Alectryon-based tutorials' palette
+   (etc/tutorial_style.rst); sphinx_rtd_theme's bundled pygments.css already
+   covers the plain Coq/Gallina token classes (.k, .kn, .kt, .s2, .mi, ...)
+   used alongside these. */
+.n-ElpiFunction { color: #795E26; }
+.n-ElpiVariable { color: #0000ff; }
+.k-ElpiKeyword { color: #AF00DB; }
+.k-ElpiMode { color: #811f3f; }
+.si { color: rgb(94, 93, 93); }
