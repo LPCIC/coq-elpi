@@ -253,6 +253,16 @@ Module P''.
 
 End P''.
 
+Module P'''.
+  #[local] Set Primitive Projections.
+  #[local] Set Universe Polymorphism.
+  Record s@{u} (T : Type@{u}) := { p : T }.
+  Elpi Query lp:{{
+    _ = {{ p }},
+    _ = {{ p@{Set} }}
+  }}.
+End P'''.
+
 
 Elpi Command primitive_proj.
 Elpi Accumulate lp:{{
