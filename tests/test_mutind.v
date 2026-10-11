@@ -125,3 +125,11 @@ Module Type GeneratedMutualInductives.
 End GeneratedMutualInductives.
 
 Module GeneratedMatches <: GeneratedMutualInductives := Generated.
+
+Elpi Query lp:{{
+  coq.locate "tree" (indt Tree), coq.env.indt Tree _ _ _ _ TreeKs _,
+  coq.locate "forest" (indt Forest), coq.env.indt Forest _ _ _ _ ForestKs _,
+  std.forall [Tree, Forest] (i\ sigma Ks\
+    coq.env.indt-block i _ _ _ _ _ Ks _,
+    std.assert! (Ks = [TreeKs, ForestKs]) "coq.env.indt-block: wrong constructors").
+}}.
