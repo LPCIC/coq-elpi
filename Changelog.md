@@ -12,6 +12,8 @@
 - New `coq.primitive.array.make`, `coq.primitive.array.size`,
   `coq.primitive.array.get`, `coq.primitive.array.set`,
   `coq.primitive.array.dflt`, `coq.list->parray`, `coq.parray->list`
+- Fix `coq.env.indt-block` returning the constructors of the queried inductive
+  for every member of a mutual block
 
 ### LIB:
 - New `coq.primitive.array.fold`, `coq.primitive.array.map`

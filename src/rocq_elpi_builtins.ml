@@ -2198,8 +2198,8 @@ Supported attributes:
     let arity = if_keep arity (fun () ->
       mind.mind_packets |> CArray.map_to_list (fun ind -> Inductive.type_of_inductive ((mind,ind),uinst) |> EConstr.of_constr)) in
     let knames = if_keep knames (fun () ->
-      mind.mind_packets |> CArray.map_to_list (fun ind -> 
-        CList.(init (Array.length Declarations.(ind.mind_consnames)) (fun k -> i,k+1)))) in
+      mind.mind_packets |> Array.to_list |> List.mapi (fun n ind ->
+        CList.(init (Array.length Declarations.(ind.mind_consnames)) (fun k -> (fst i, n),k+1)))) in
     let ktypes = if_keep ktypes (fun () ->
       mind.mind_packets |> CArray.map_to_list (fun ind -> 
       Inductive.type_of_constructors (i,uinst) (mind,ind)
