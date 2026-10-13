@@ -14,6 +14,8 @@
   `coq.primitive.array.dflt`, `coq.list->parray`, `coq.parray->list`
 - Fix `coq.env.indt-block` returning the constructors of the queried inductive
   for every member of a mutual block
+- Change `coq.arguments.scope` and `coq.arguments.set-scope`
+  according to https://github.com/rocq-prover/rocq/pull/22545
 
 ### LIB:
 - New `coq.primitive.array.fold`, `coq.primitive.array.map`
