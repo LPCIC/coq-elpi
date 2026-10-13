@@ -127,7 +127,18 @@ module Solver = struct
             sub_goals = [], sigma
         | API.Execute.NoMoreSteps -> CErrors.user_err Pp.(str "elpi run out of steps")
         | API.Execute.Failure -> elpi_fails program
+        (* note in case of a search failure: LtacFail, we raise Not_found, telling
+           the Rocq class solver that the current tactic has failed to find a solution *)
         | exception (Rocq_elpi_utils.LtacFail (level, msg)) -> raise Not_found
+        (* In the case of a different exception (e.g., a compilation error),
+          the exception is caught by Rocq, and the resulting error message is a generic one
+          (for example: "cannot apply lemma xxx").
+          We prefer to print the original error message before re-raising the exception so that
+          the user receives more informative feedback.
+        *)
+        | exception e ->
+            Format.eprintf "%s@." (Printexc.to_string e);
+            raise e
 
   [%%if coq = "9.0" || coq = "9.1"]
   let solve_TC program = let open Class_tactics in { solver = fun env sigma ~depth ~unique ~best_effort ~goals ->
