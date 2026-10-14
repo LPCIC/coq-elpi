@@ -226,7 +226,7 @@ let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi
       List.map (fun (dbname,asts,vs,scope) ->
         let base = P.get_and_compile_existing_db ~loc dbname in
         (* maybe this should be a fold otherwise all clauses have to be independent (the second cannot mention the first one) *)
-        let scoped_asts = List.concat (List.map (EC.scope_ast ~elpi) asts) in
+        let scoped_asts = List.concat (List.map (fun ast -> fst (EC.scope_ast ~flags:(P.cc_flags ()) ~elpi ast)) asts) in
         let units = scoped_asts |> List.map (P.unit_from_ast ~error_header:(Format.asprintf "accumulating clause to %s" (String.concat "." dbname)) ~elpi ~base ~loc) in
       dbname,units,vs,scope) in
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->

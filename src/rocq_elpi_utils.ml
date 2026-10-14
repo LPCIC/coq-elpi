@@ -89,8 +89,9 @@ let handle_elpi_compiler_errors ~loc ?error_header f =
   with
   | Sys_error msg ->
     CErrors.user_err ~loc (w_header (Pp.str msg))
-  | Elpi.API.Compile.CompileError(oloc, msg) as e ->
+  | Elpi.API.Compile.CompileError ({ Elpi.API.Compile.loc = oloc } as err) as e ->
     let _,info = Exninfo.capture e in
+    let msg = Format.asprintf "%a" Elpi.API.Compile.pp_error_message err in
     let msg, loc = patch_loc_source loc (Option.map to_coq_loc oloc) (Pp.str msg) in
     CErrors.user_err ~info ~loc (w_header msg)
   | Elpi.API.Parse.ParseError(oloc, msg) as e ->

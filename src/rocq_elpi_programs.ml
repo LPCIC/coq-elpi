@@ -390,7 +390,8 @@ let debug_vars = Summary.ref ~name:"elpi-debug" EC.StrSet.empty
 let set_debug_vars v = Summary.(debug_vars := v)
 
 let cc_flags () =
-  { EC.default_flags with EC.defined_variables = Summary.(!debug_vars) }
+  (* the first error of the compiler is an exception (CompileError, ParseError) *)
+  { EC.default_flags with EC.defined_variables = Summary.(!debug_vars); EC.max_errors = 0 }
 
 let source_cache1 = Summary.local_ref ~name:"elpi-units1" Names.KNmap.empty
 let source_cache2 = Summary.local_ref ~name:"elpi-units2" CString.Map.empty
@@ -437,7 +438,7 @@ let unit_from_ast ?error_header ~elpi ~flags ~base ~loc ast =
     Full(kn,u)
   with Not_found ->
     handle_elpi_compiler_errors ~loc ?error_header (fun () ->
-      let u = EC.unit ~elpi ~flags ~base ast in
+      let u, _ = EC.unit ~elpi ~flags ~base ast in
       let kn, u = intern u flags in
       Full(kn,u))
 
@@ -447,7 +448,7 @@ let unit_signature_from_ast ~elpi ~flags ~base ~loc ast =
     Signature (kn,EC.signature u)
   with Not_found ->
   handle_elpi_compiler_errors ~loc (fun () ->
-    let u = EC.unit ~elpi ~flags ~base ast in
+    let u, _ = EC.unit ~elpi ~flags ~base ast in
     let kn, u = intern u flags in
     Signature (kn,EC.signature u))
         
@@ -460,8 +461,8 @@ let unit_from_plugin ?error_header ~elpi ~base ~loc builtins ~flags : cunit =
 let assemble_unit ~loc base u =
   handle_elpi_compiler_errors ~loc (fun () ->
     match u with
-    | Full(_, u) -> EC.extend ~base ~flags:(cc_flags ()) u
-    | Signature(_, s) -> EC.extend_signature ~base ~flags:(cc_flags ()) s)
+    | Full(_, u) -> fst (EC.extend ~base ~flags:(cc_flags ()) u)
+    | Signature(_, s) -> fst (EC.extend_signature ~base ~flags:(cc_flags ()) s))
     
 let assemble_units ~base ~loc units =
   List.fold_left (assemble_unit ~loc) base units
@@ -473,8 +474,8 @@ let extend_with_unit ~base ~loc u = assemble_units ~base ~loc [u]
 let private__units_from_file ~elpi ~base ~loc x : cunit list =
   handle_elpi_compiler_errors ~loc (fun () ->
     let flags = cc_flags () in
-    let ast = EP.program ~elpi ~file:x in
-    let ast = EC.scope_ast ~elpi ast in
+    let ast, _ = EP.program ~flags ~elpi x in
+    let ast, _ = EC.scope_ast ~flags ~elpi ast in
     let _, units_rev =
       List.fold_left (fun (base,acc) ast ->
         let u = unit_from_ast ~elpi ~flags ~base ~loc ast in
@@ -486,8 +487,8 @@ let private__units_from_file ~elpi ~base ~loc x : cunit list =
 let private__units_from_string ~elpi ~base ~loc xloc x : cunit list =
   handle_elpi_compiler_errors ~loc (fun () ->
     let flags = cc_flags () in
-    let ast = EP.program_from ~elpi ~loc:xloc ~digest:(Digest.string x) (Lexing.from_string x) in
-    let ast = EC.scope_ast ~elpi ast in
+    let ast, _ = EP.program_from ~flags ~elpi ~loc:xloc ~digest:(Digest.string x) (Lexing.from_string x) in
+    let ast, _ = EC.scope_ast ~flags ~elpi ast in
     let _, units_rev =
       List.fold_left (fun (base,acc) ast ->
         let u = unit_from_ast ~elpi ~flags ~base ~loc ast in
@@ -664,8 +665,9 @@ let get ?(fail_if_not_exists=false) p =
   let init_file p ~loc (sloc, s) =
   handle_elpi_compiler_errors ~loc begin fun () ->
     let elpi = ensure_initialized () in
-    let ast = EP.program_from ~elpi ~loc:sloc ~digest:(Digest.string s) (Lexing.from_string s) in
-    let asts = EC.scope_ast ~elpi ast in
+    let flags = cc_flags () in
+    let ast, _ = EP.program_from ~flags ~elpi ~loc:sloc ~digest:(Digest.string s) (Lexing.from_string s) in
+    let asts, _ = EC.scope_ast ~flags ~elpi ast in
      init_file p asts
   end
 
@@ -932,15 +934,17 @@ let get_and_compile ~loc ?even_if_empty name : (EC.program * bool) option =
 
 let asts_from_file ~elpi ~base ~loc x : EC.scoped_program list =
     handle_elpi_compiler_errors ~loc (fun () ->
-      let ast = EP.program ~elpi ~file:x in
-      EC.scope_ast ~elpi ast)
+      let flags = cc_flags () in
+      let ast, _ = EP.program ~flags ~elpi x in
+      fst (EC.scope_ast ~flags ~elpi ast))
 
 let asts_from_string ~loc (sloc,s) : EC.scoped_program list =
   handle_elpi_compiler_errors ~loc (fun () ->
     let elpi = ensure_initialized () in
     let digest = Digest.(string s) in
-    let ast = EP.program_from ~elpi ~loc:sloc ~digest (Lexing.from_string s) in
-    EC.scope_ast ~elpi ast)
+    let flags = cc_flags () in
+    let ast, _ = EP.program_from ~flags ~elpi ~loc:sloc ~digest (Lexing.from_string s) in
+    fst (EC.scope_ast ~flags ~elpi ast))
 
   let accumulate_ast_to_X ~get_and_compile ~accumulate ~loc ~x ~what ast =
     handle_elpi_compiler_errors ~loc begin fun () -> 
@@ -1199,7 +1203,7 @@ module Synterp : Programs = struct
     let clauses_to_add = clauses_to_add |> group_clauses |>
       List.map (fun (dbname,asts,vs,scope) ->
         let base = get_and_compile_existing_db ~loc dbname in
-        let scoped_asts = List.concat (List.map (EC.scope_ast ~elpi) asts) in
+        let scoped_asts = List.concat (List.map (fun ast -> fst (EC.scope_ast ~flags:(cc_flags ()) ~elpi ast)) asts) in
         let units = List.map (fun x ->
             unit_from_ast ~error_header:(Format.asprintf "accumulating clause to %s" (String.concat "." dbname)) ~elpi ~base ~loc x) scoped_asts in
         dbname,units,vs,scope) in
@@ -1222,7 +1226,7 @@ let () = Rocq_elpi_builtins.set_accumulate_to_db_interp (fun ~loc clauses_to_add
   let clauses_to_add = clauses_to_add |> group_clauses |>
     List.map (fun (dbname,asts,vs,scope) ->
       let base = get_and_compile_existing_db ~loc dbname in
-      let scoped_asts = List.concat (List.map (EC.scope_ast ~elpi) asts) in
+      let scoped_asts = List.concat (List.map (fun ast -> fst (EC.scope_ast ~flags:(cc_flags ()) ~elpi ast)) asts) in
       let units = List.map (fun x -> unit_from_ast ~error_header:(Format.asprintf "accumulating clause to %s" (String.concat "." dbname)) ~elpi ~base ~loc x) scoped_asts in
       dbname,units,vs,scope) in
   clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->
