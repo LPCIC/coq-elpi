@@ -96,7 +96,7 @@ Fail Check Vector.t_eqb : forall A, (A -> A -> bool) -> forall n, Vector.t A n -
 
 (* ---------------------------------------------------- *)
 
-Inductive W A := B (f : A -> W).
+Inductive W A := B (f : A -> W A).
 
 Elpi derive W.
 (* Not implemented yet :-/ *)
@@ -111,14 +111,14 @@ Fail Check W_constructP : forall (A:Type) (l:W A), W_construct A (W_tag A l) (W_
 
 (* ---------------------------------------------------- *)
 
-Inductive horror A (a : A) : forall T, T -> Type := K W w (k : horror W w) : horror W w.
+Inductive horror A (a : A) : forall T, T -> Type := K W w (k : horror A a W w) : horror A a W w.
 Fail #[only(eqbOK)] derive horror.
 
 (* TODO add test for fields? *)
 (* ---------------------------------------------------- *)
 
 Inductive rtree A : Type :=
-  Leaf (n : A) | Node (l : list rtree).
+  Leaf (n : A) | Node (l : list (rtree A)).
 
 Module XXX.
 derive list.
