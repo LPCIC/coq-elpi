@@ -170,11 +170,11 @@ let add_universe_constraint state c =
       raise API.BuiltInPredicate.No_clause
 [%%endif]
 
-let new_univ_level_variable ?(flexible=false) state =
+let new_univ_level_variable ?(flexible=false) ?name state =
   S.update_return (Option.get !pre_engine) state (fun ({ sigma } as e) ->
     (* ~name: really mean the universe level is a binder as in Definition f@{x} *)
     let rigidity = if flexible then UState.univ_flexible_alg else UState.univ_rigid in
-    let sigma, v = Evd.new_univ_level_variable ?name:None rigidity sigma in
+    let sigma, v = Evd.new_univ_level_variable ?name rigidity sigma in
     let u = Univ.Universe.make v in
     (*
     let sigma = Evd.add_universe_constraints sigma
