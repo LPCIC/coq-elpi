@@ -581,6 +581,12 @@ module SynterpAction = struct
 
   let interp_close_section = Declaremods.Interp.close_section
 
+  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+  let dump_end_section ?loc id = Dumpglob.dump_reference ?loc id "<>" "sec"
+  [%%else]
+  let dump_end_section ?loc id = Dumpglob.dump_end_section ?loc id
+  [%%endif]
+
   let replay1 action state =
     match action with
     | BeginModule((name,_,_),binders_ast,ty) ->
@@ -615,8 +621,8 @@ module SynterpAction = struct
         (state, None)
     | EndSection ->
         let loc = to_coq_loc @@ State.get invocation_site_loc state in
-        Dumpglob.dump_reference ~loc
-          (DirPath.to_string (Lib.current_dirpath true)) "<>" "sec";
+        dump_end_section ~loc
+          (DirPath.to_string (Lib.current_dirpath true));
         interp_close_section ();
         (Rocq_elpi_HOAS.grab_global_env_drop_sigma state, None)
     | ImportModule mp ->
