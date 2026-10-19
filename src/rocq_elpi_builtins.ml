@@ -2118,6 +2118,26 @@ let coq_elpi_add_predicate functional dbname indexing predname spec ~depth:_ ctx
   f ~loc dbname text scope;
   state, (), []
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let empty_notation_interp_env = Notation_term.{
+  ninterp_var_type = Id.Map.empty;
+  ninterp_rec_vars = Id.Map.empty
+}
+[%%else]
+let empty_notation_interp_env = Notation_term.{
+  ninterp_var_type = Id.Map.empty;
+  ninterp_raw_types = [];
+}
+[%%endif]
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let ntn_type_var_constr =
+  ((Notation_ops.constr_some_level,empty_subscopes),Id.Set.empty,Notation_term.NtnTypeConstr)
+[%%else]
+let ntn_type_var_constr =
+  Notation_term.((NtnTypeVar (((Notation_ops.constr_some_level,empty_subscopes),Id.Set.empty),NtnTypeVarConstr NtnConstrForConstrAndPatternForPattern)))
+[%%endif]
+
 let coq_rest_builtins =
   let open API.BuiltIn in
   let open Pred in
@@ -3953,7 +3973,7 @@ Supported attributes:
                { nenv with Notation_term.ninterp_var_type =
                    Id.Map.add id (Notation_term.NtnInternTypeAny None)
                      nenv.Notation_term.ninterp_var_type },
-               (id, ((Notation_ops.constr_some_level, empty_subscopes),Id.Set.empty,Notation_term.NtnTypeConstr)) :: vars in
+               (id, ntn_type_var_constr) :: vars in
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
@@ -3961,11 +3981,7 @@ Supported attributes:
                (Printf.sprintf "coq.notation.add-abbreviation: term with %d more lambdas expected" n)
          in
          let vars = [] in
-         let nenv =
-           {
-              Notation_term.ninterp_var_type = Id.Map.empty;
-              ninterp_rec_vars = Id.Map.empty;
-           } in
+         let nenv = empty_notation_interp_env in
          aux vars nenv env nargs term
      in
      let local = locality_of_options options in
