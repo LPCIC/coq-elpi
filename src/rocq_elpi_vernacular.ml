@@ -143,8 +143,8 @@ let run ~loc program query =
   let query =
     handle_elpi_compiler_errors ~loc (fun () ->
     match query with
-    | Ast (f,query_ast) -> API.RawQuery.compile_ast program query_ast f
-    | Fun query_builder -> API.RawQuery.compile_raw_term program query_builder) in
+    | Ast (f,query_ast) -> query_or_error (API.RawQuery.compile_ast program query_ast f)
+    | Fun query_builder -> query_or_error (API.RawQuery.compile_raw_term program query_builder)) in
   let t2 = Unix.gettimeofday () in
   let _ = API.Setup.trace [] in
   let t3 = Unix.gettimeofday () in
@@ -226,7 +226,7 @@ let run_and_print ~print ~loc program_name program_ast query_ast : _ * Rocq_elpi
       List.map (fun (dbname,asts,vs,scope) ->
         let base = P.get_and_compile_existing_db ~loc dbname in
         (* maybe this should be a fold otherwise all clauses have to be independent (the second cannot mention the first one) *)
-        let scoped_asts = List.concat (List.map (fun ast -> fst (EC.scope_ast ~flags:(P.cc_flags ()) ~elpi ast)) asts) in
+        let scoped_asts = List.concat (List.map (fun ast -> with_warnings (EC.scope_ast ~flags:(P.cc_flags ()) ~elpi ast)) asts) in
         let units = scoped_asts |> List.map (P.unit_from_ast ~error_header:(Format.asprintf "accumulating clause to %s" (String.concat "." dbname)) ~elpi ~base ~loc) in
       dbname,units,vs,scope) in
     clauses_to_add |> List.iter (fun (dbname,units,vs,scope) ->

@@ -18,7 +18,22 @@ val elpi_depr_cat : CWarnings.category
 
 val err : ?loc:Elpi.API.Ast.Loc.t -> Pp.t -> 'a
 
-(* CompileError, ParserError, Gramlib.Error (coq parser inside quotations) and Sys_error *)
+(* the errors of the builtins of Rocq-Elpi (user errors) *)
+val elpi_type_error : ?loc:Elpi.API.Ast.Loc.t -> string -> 'a
+val elpi_anomaly : ?loc:Elpi.API.Ast.Loc.t -> string -> 'a
+
+(* the warnings returned by the parser and the compiler of Elpi, emitted as
+   Rocq warnings *)
+val elpi_warnings : Elpi.API.Error.warning list -> unit
+(* [with_warnings (x, errors, ws)] emits [ws] and returns [x], for a pass run
+   with max_errors = 0 (the first error is raised, [errors] is empty) *)
+val with_warnings : 'a * Elpi.API.Error.t list * Elpi.API.Error.warning list -> 'a
+(* a compiled query: its warnings are emitted, its error is raised *)
+val query_or_error :
+  (Elpi.API.Compile.query, Elpi.API.Error.t) result * Elpi.API.Error.warning list ->
+  Elpi.API.Compile.query
+
+(* Error.ElpiError, ParserError, Gramlib.Error (coq parser inside quotations) and Sys_error *)
 val handle_elpi_compiler_errors :
   loc:Loc.t -> ?error_header:string -> (unit -> 'b) -> 'b
 

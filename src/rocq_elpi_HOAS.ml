@@ -746,9 +746,9 @@ let assert_in_coq_gref_consistent ~poly gr =
   | true, true -> ()
   | false, false -> ()
   | true, false ->
-    U.type_error Printf.(sprintf "Universe polymorphic gref %s used with the 'global' term constructor" (GROrd.show gr))
+    elpi_type_error Printf.(sprintf "Universe polymorphic gref %s used with the 'global' term constructor" (GROrd.show gr))
   | false, true ->
-    U.type_error Printf.(sprintf "Non universe polymorphic gref %s used with the 'pglobal' term constructor" (GROrd.show gr))
+    elpi_type_error Printf.(sprintf "Non universe polymorphic gref %s used with the 'pglobal' term constructor" (GROrd.show gr))
 ;;
 
 let assert_in_elpi_gref_consistent ~poly gr =
@@ -756,9 +756,9 @@ let assert_in_elpi_gref_consistent ~poly gr =
   | true, true -> ()
   | false, false -> ()
   | true, false ->
-    U.anomaly Printf.(sprintf "Universe polymorphic gref %s used with the 'global' term constructor" (GROrd.show gr))
+    elpi_anomaly Printf.(sprintf "Universe polymorphic gref %s used with the 'global' term constructor" (GROrd.show gr))
   | false, true ->
-    U.anomaly Printf.(sprintf "Non universe polymorphic gref %s used with the 'pglobal' term constructor" (GROrd.show gr))
+    elpi_anomaly Printf.(sprintf "Non universe polymorphic gref %s used with the 'pglobal' term constructor" (GROrd.show gr))
 ;;
 
 
@@ -1592,14 +1592,14 @@ let get_options ~depth hyps state =
         assert (gl = []);
         begin match ud with
         | Cumul ud -> Cumulative ud
-        | NonCumul _ -> U.type_error "@udecl-cumul! containing a non-cumulative declaration"
+        | NonCumul _ -> elpi_type_error "@udecl-cumul! containing a non-cumulative declaration"
         end
     | None, Some (t,depth) ->
       let _, ud, gl = universe_decl.Elpi.API.Conversion.readback ~depth state t in
       assert (gl = []);
       begin match ud with
       | NonCumul ud -> NonCumulative ud
-      | Cumul _ -> U.type_error "@udecl! containing a cumulative declaration"
+      | Cumul _ -> elpi_type_error "@udecl! containing a cumulative declaration"
       end
     in
   let get_redflags_option () =
@@ -2046,7 +2046,7 @@ let mk_global state gr inst_opt = S.update_return engine state (fun x ->
       let actual = UVars.Instance.length ui in
       if not (UVars.eq_sizes expected actual) then begin
         let plen (qlen,ulen) = Pp.(prlist_with_sep (fun () -> str ", ") int [qlen;ulen]) in
-        U.type_error Pp.(string_of_ppcmds
+        elpi_type_error Pp.(string_of_ppcmds
           (str"Global reference " ++ Printer.pr_global gr ++
            str " takes a univ-instance of size " ++ plen expected ++
            str " but was given an instance of size " ++ plen actual))
@@ -2442,7 +2442,7 @@ and lp2constr ~calldepth syntactic_constraints coq_ctx ~depth state ?(on_ty=fals
               let state, xs, gl2 = API.Utils.map_acc (aux ~depth ~on_ty:false) state xs in
               state, EC.mkApp (x, Array.of_list xs), gl1 @ gl2
           end
-       | _ -> U.type_error "the app term constructor expects a non empty list"
+       | _ -> elpi_type_error "the app term constructor expects a non empty list"
        end
   
   (* match *)

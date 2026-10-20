@@ -89,9 +89,9 @@ let handle_elpi_compiler_errors ~loc ?error_header f =
   with
   | Sys_error msg ->
     CErrors.user_err ~loc (w_header (Pp.str msg))
-  | Elpi.API.Compile.CompileError ({ Elpi.API.Compile.loc = oloc } as err) as e ->
+  | Elpi.API.Error.ElpiError ({ Elpi.API.Error.loc = oloc } as err) as e ->
     let _,info = Exninfo.capture e in
-    let msg = Format.asprintf "%a" Elpi.API.Compile.pp_error_message err in
+    let msg = Format.asprintf "%a" Elpi.API.Error.pp_message err in
     let msg, loc = patch_loc_source loc (Option.map to_coq_loc oloc) (Pp.str msg) in
     CErrors.user_err ~info ~loc (w_header msg)
   | Elpi.API.Parse.ParseError(oloc, msg) as e ->
@@ -131,9 +131,20 @@ let elpi_depr_cat =
 let elpi_tc_cat =
   CWarnings.create_category ~from:[ elpi_cat ] ~name:"elpi.typecheck" ()
   
-let () = API.Setup.set_error (fun ?loc s -> err ?loc Pp.(str s))
-let () = API.Setup.set_anomaly (fun ?loc s -> err ?loc Pp.(str s))
-let () = API.Setup.set_type_error (fun ?loc s -> err ?loc Pp.(str s))
+(* the errors of the builtins of Elpi are user errors, with their location *)
+let runtime_error = { Elpi.Builtin.f = fun ?loc s -> err ?loc Pp.(str s) }
+let () = Elpi.Builtin.set_runtime_error runtime_error
+let () = Elpi.Builtin.set_runtime_anomaly runtime_error
+let () = Elpi.Builtin.set_runtime_type_error runtime_error
+
+(* the errors of the builtins of Rocq-Elpi *)
+let elpi_type_error ?loc s = err ?loc Pp.(str s)
+let elpi_anomaly ?loc s = err ?loc Pp.(str s)
+
+(* the other errors of Elpi (e.g. of its runtime) are the exception ElpiError *)
+let () = CErrors.register_handler (function
+  | Elpi.API.Error.ElpiError e -> Some Pp.(str (Elpi.API.Error.show e))
+  | _ -> None)
 let warn = CWarnings.create ~name:"elpi.runtime" ~category:elpi_cat (fun x -> x)
 let warn_impl = CWarnings.create ~name:"elpi.implication-precedence" ~category:elpi_cat (fun x -> x)
 let warn_linear = CWarnings.create ~name:"elpi.linear-variable" ~category:elpi_tc_cat (fun x -> x)
@@ -141,15 +152,34 @@ let warn_missing_types = CWarnings.create ~name:"elpi.missing-types" ~category:e
 let warn_flex_clause = CWarnings.create ~name:"elpi.flex-clause" ~category:elpi_tc_cat (fun x -> x)
 let warn_nested_accumulate = CWarnings.create ~default:CWarnings.AsError ~name:"elpi.nested-accumulate" ~category:elpi_depr_cat (fun x -> x)
 
-let () = API.Setup.set_warn (fun ?loc ~id x ->
+let elpi_warn ?loc ~id x =
   let loc = Option.map to_coq_loc loc in
   let msg = Pp.(hv 0 (Option.cata (fun loc -> Loc.pr loc ++ spc ()) (mt()) loc ++ str x)) in
   match id with
-  | API.Setup.ImplicationPrecedence -> warn_impl ?loc msg
+  | API.Error.ImplicationPrecedence -> warn_impl ?loc msg
   | LinearVariable -> warn_linear ?loc msg
   | UndeclaredGlobal -> warn_missing_types ?loc msg
   | FlexClause -> warn_flex_clause ?loc msg
-  | NestedAccumulate -> warn_nested_accumulate ?loc msg)
+  | NestedAccumulate -> warn_nested_accumulate ?loc msg
+
+(* the warnings at run time (of the builtins) *)
+let () = Elpi.Builtin.set_runtime_warn elpi_warn
+
+(* the warnings returned by the parser and the compiler *)
+let elpi_warnings ws =
+  List.iter (fun { API.Error.warning_id; warning = { API.Error.loc; message } } ->
+    elpi_warn ?loc ~id:warning_id message) ws
+
+(* the result of a pass run with max_errors = 0 (the first error is raised,
+   the list of the errors is empty), its warnings are emitted *)
+let with_warnings (x, _, ws) = elpi_warnings ws; x
+
+(* a query: its warnings are emitted, its error is raised *)
+let query_or_error (q, ws) =
+  elpi_warnings ws;
+  match q with
+  | Ok q -> q
+  | Error { API.Error.component; loc; message } -> API.Error.error ~component ?loc message
 let () = API.Setup.set_std_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let () = API.Setup.set_err_formatter (Format.make_formatter feedback_fmt_write feedback_fmt_flush)
 let nYI s = err Pp.(str "Not Yet Implemented: " ++ str s)

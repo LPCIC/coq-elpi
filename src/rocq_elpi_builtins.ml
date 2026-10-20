@@ -366,7 +366,7 @@ let goal_embed ~depth _ csts state { caller = tac; proof_context; evar; tac_args
             ++ fnl () ++ str "Output context:" ++ fnl ()
             ++ with_pp_options proof_context.options.pp (fun flags -> pr_named_context_flagged flags old_env (get_sigma state) env))
         in
-        U.type_error msg
+        elpi_type_error msg
 
 let goal : ( goal , API.Data.hyps, API.Data.constraints) CConv.t = {
   CConv.ty = Conv.TyName "goal";
@@ -558,7 +558,7 @@ let abbreviation_declare = Abbreviation.declare
 [%%if coq = "9.0" || coq = "9.1"]
 let for_scheme = function
 | GlobRef.ConstRef c -> c
-| _ -> U.type_error "Register Scheme: expecing a constant."
+| _ -> elpi_type_error "Register Scheme: expecing a constant."
 let lookup_scheme_opt k gr =
   match gr with
   | GlobRef.IndRef ind ->
@@ -581,7 +581,7 @@ let lookup_scheme_opt k gr =
 let declare_scheme_for local k x gr =
   let ind = match x with
     | GlobRef.IndRef i -> i
-    | _ -> U.type_error "Register_scheme: expecting an inductive" in
+    | _ -> elpi_type_error "Register_scheme: expecting an inductive" in
   DeclareScheme.declare_scheme local k (ind, for_scheme gr)
 [%%else]
 let declare_scheme_for local k x gr =
@@ -1755,7 +1755,7 @@ let apply_ltac1 ~depth tac tac_args =
         ltac1closure (Tacinterp.default_ist ()) tacexpr
     | E.CData t when Rocq_elpi_arg_HOAS.is_ltac_tactic t ->
         Rocq_elpi_arg_HOAS.to_ltac_tactic t
-    | _ -> U.type_error ("coq.ltac.call-ltac1: string or ltac1-tactic are expected as the tactic to call")
+    | _ -> elpi_type_error ("coq.ltac.call-ltac1: string or ltac1-tactic are expected as the tactic to call")
   in
   Tacinterp.Value.apply tac tac_args
 
@@ -2976,7 +2976,7 @@ denote the same x as before.|};
       | _, Data (Variable c) -> raise No_clause
       | Data p, Data (Constant c) ->
           if Environ.QConstant.equal conv_context.env (get_projection_constant conv_context.env (Projection.repr p)) c then ?: None +? None +! Names.Projection.(arg p + npars p) else raise No_clause
-      | NoData, NoData -> U.type_error "coq.env.primitive-projection?: got no input data"
+      | NoData, NoData -> elpi_type_error "coq.env.primitive-projection?: got no input data"
       | Data p, NoData -> ?: None +! (Constant (get_projection_constant conv_context.env (Projection.repr p))) +! Names.Projection.(arg p + npars p)
       | NoData, Data (Constant c) ->
           (match Environ.constant_opt_value_in conv_context.env (UVars.in_punivs c) with
@@ -3325,7 +3325,7 @@ declared as cumulative.|};
       match p, q with
       | Data p, Data q ->
           if Environ.QProjection.Repr.equal conv_context.env (Projection.repr p) (Projection.repr q) then ?: None +? None else raise No_clause
-      | NoData, NoData -> U.type_error "coq.projection.unfolded: got no input data"
+      | NoData, NoData -> elpi_type_error "coq.projection.unfolded: got no input data"
       | Data p, NoData -> ?: None +! Projection.(make (repr p) true)
       | NoData, Data q -> !: Projection.(make (repr q) false) +? None
       )),
@@ -3356,7 +3356,7 @@ declared as cumulative.|};
     (fun size default _ ~depth _ _ state ->
        let sigma = get_sigma state in
        if not (is_valid_primitive_value sigma default) then
-         U.type_error "coq.primitive.array.make: Default is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
+         elpi_type_error "coq.primitive.array.make: Default is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
        else
          !: (Array.make (max size 0) default, default, classify_primitive_value sigma default))),
   DocAbove);
@@ -3394,9 +3394,9 @@ declared as cumulative.|};
        let env = get_global_env state and sigma = get_sigma state in
        if i < 0 || i >= Array.length data then !: (data,dflt,ty)
        else if not (is_valid_primitive_value sigma x) then
-         U.type_error "coq.primitive.array.set: X is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
+         elpi_type_error "coq.primitive.array.set: X is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
        else if classify_primitive_value sigma x <> ty
-       then U.type_error (Printf.sprintf "coq.primitive.array.set: %s is not a primitive value of the expected kind %s"
+       then elpi_type_error (Printf.sprintf "coq.primitive.array.set: %s is not a primitive value of the expected kind %s"
               (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma x))
               (Pp.string_of_ppcmds (Printer.pr_econstr_env env sigma (econstr_of_array_element_ty env ty))))
        else let data1 = Array.copy data in data1.(i) <- x; !: (data1,dflt,ty))),
@@ -3410,14 +3410,14 @@ declared as cumulative.|};
     (fun default l _ ~depth _ _ state ->
        let sigma = get_sigma state in
        if not (is_valid_primitive_value sigma default) then
-         U.type_error "coq.list->parray: Default is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
+         elpi_type_error "coq.list->parray: Default is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
        else if not (List.for_all (is_valid_primitive_value sigma) l) then
-         U.type_error "coq.list->parray: an element of L is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
+         elpi_type_error "coq.list->parray: an element of L is not a ground, closed, primitive value (uint63/float64/pstring, or an array thereof)"
        else
          let ty = classify_primitive_value sigma default in
          if List.for_all (fun x -> classify_primitive_value sigma x = ty) l
          then !: (Array.of_list l, default, ty)
-         else U.type_error "coq.list->parray: not all elements of L share the same type as Default")),
+         else elpi_type_error "coq.list->parray: not all elements of L share the same type as Default")),
   DocAbove);
 
   MLCode(Pred("coq.parray->list",
@@ -3904,7 +3904,7 @@ Supported attributes:
              let env = EConstr.push_rel (Context.Rel.Declaration.LocalAssum(name,ty)) env in
              aux vars nenv env (n-1) t
          | _ ->
-             U.type_error
+             elpi_type_error
                (Printf.sprintf "coq.notation.add-abbreviation: term with %d more lambdas expected" n)
          in
          let vars = [] in
@@ -4609,13 +4609,13 @@ Supported attributes:
         let diags =
           match diags with
           | [] -> []
-          | _ :: _ :: _ -> U.type_error "coq.ltac.call-ltac1: too many arguments"
+          | _ :: _ :: _ -> elpi_type_error "coq.ltac.call-ltac1: too many arguments"
           | _ -> [Some B.mkOK] in
         Univ.ContextSet.empty, state, !: subgoals +! diags, assignments
       | Result.Error ie ->
         match diags with
         | [] -> raise No_clause (* optimization: don't print the error if caller wants OK *)
-        | _ :: _ :: _ -> U.type_error "coq.ltac.call-ltac1: too many arguments"
+        | _ :: _ :: _ -> elpi_type_error "coq.ltac.call-ltac1: too many arguments"
         | [Data B.OK] -> raise No_clause (* optimization: don't print the error if caller wants OK *)
         | _ ->
           let error = string_of_ppcmds proof_context.options @@ CErrors.iprint_no_report ie in
@@ -4915,7 +4915,7 @@ Supported attributes:
       | Inline ->
         begin match gr with
         | GlobRef.ConstRef c -> Global.register_inline c
-        | _ -> U.type_error "Register Inline: expecting a constant."
+        | _ -> elpi_type_error "Register Inline: expecting a constant."
         end;
         state, (), []
       | Rocqlib x ->
@@ -5018,7 +5018,7 @@ Supported attributes:
       try
         Elpi.API.RawQuery.global_name_to_constant state name |> ignore;
         state, (), []
-      with Elpi_compiler.Compiler_data.CompileError _ -> raise No_clause
+      with Elpi.API.Error.ElpiError _ | Not_found -> raise No_clause
       )),
   DocAbove);
 
@@ -5033,7 +5033,7 @@ Supported attributes:
         match args with
         | [] -> state, !: (E.mkGlobal c), []
         | x :: xs -> state, !: (E.mkApp c x xs), []
-      with Not_found -> U.type_error ("predicate name expected, got " ^ name)
+      with Not_found -> elpi_type_error ("predicate name expected, got " ^ name)
       )),
   DocAbove);
 
