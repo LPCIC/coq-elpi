@@ -499,7 +499,7 @@ let private__units_from_string ~elpi ~base ~loc xloc x : cunit list =
 
 let parse_goal ~elpi ~loc tloc text =
   handle_elpi_compiler_errors ~loc (fun () ->
-    EP.goal ~elpi ~loc:tloc ~text)
+    query_or_error (EP.query ~elpi ~loc:tloc ~text))
 
 let program_src : program SLMap.t Summary.ref =
   Summary.ref ~name:("elpi-programs-src") SLMap.empty
