@@ -846,7 +846,7 @@ we pass the name from one to the other.
 Elpi Command mk_random_module.
 #[synterp] Elpi Accumulate lp:{{
   main-synterp [] M :-
-    random.self_init,
+    random.init 0, % or random.self_init
     random.int 99 N,
     M is "Module" ^ {std.any->string N},
     coq.env.begin-module M none,
