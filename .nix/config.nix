@@ -1,7 +1,19 @@
 with builtins; with (import <nixpkgs> {}).lib;
 let
-  default-elpi-version = "3.8.0";
-  min-elpi-version = "3.8.0";
+  inherit (import <nixpkgs> {}) fetchurl;
+  default-elpi-version = "4.0.0";
+  min-elpi-version = "4.0.0";
+  # elpi 4.0.0 is not in nixpkgs yet: override its version and source.
+  # Remove once nixpkgs knows it.
+  ocaml-common-bundles = {
+    elpi.overrideAttrs = old: {
+      version = "4.0.0";
+      src = fetchurl {
+        url = "https://github.com/LPCIC/elpi/releases/download/v4.0.0/elpi-4.0.0.tbz";
+        hash = "sha256-kx7z6w1tk/0GYe+TcYsMTkTBpVD3SoZOg/b1fECLJRQ=";
+      };
+    };
+  };
   master = [
     "hierarchy-builder"
     "mathcomp"
@@ -72,6 +84,7 @@ in
       micromega-plugin.job = false;
       mathcomp-algebra-tactics.override.version = "master";
     };
+    "rocq-9.1".ocamlPackages = ocaml-common-bundles;
 
     "rocq-9.2".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.2";
@@ -81,6 +94,7 @@ in
       mathcomp-zify.job = false;  # not available yet
       jasmin.job = false;  # not available yet
     };
+    "rocq-9.2".ocamlPackages = ocaml-common-bundles;
 
     "rocq-9.3".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.3";
@@ -93,6 +107,7 @@ in
       mathcomp-word.job = false;  # not available yet
       trakt.job = false;  # not available yet
     };
+    "rocq-9.3".ocamlPackages = ocaml-common-bundles;
 
     "rocq-master".rocqPackages = common-bundles // {
       rocq-core.override.version = "master";
@@ -103,6 +118,7 @@ in
       bignums.override.version = "master";
       jasmin.job = false;
     };
+    "rocq-master".ocamlPackages = ocaml-common-bundles;
 
   } // optionalAttrs (min-elpi-version != default-elpi-version) {
     "rocq-master-min-elpi".rocqPackages = common-bundles // {
