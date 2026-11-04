@@ -1,5 +1,9 @@
+# [3.6.0] 04/11/2026
 
-# UNRELEASED
+Requires Elpi 4.0.0 and Rocq 9.0, 9.1, 9.2 and 9.3.
+
+### DOC:
+- New user manual
 
 ### HOAS:
 - New `cofix` and `mcofix`
