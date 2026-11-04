@@ -968,8 +968,10 @@ let asts_from_string ~loc (sloc,s) : EC.scoped_program list =
     handle_elpi_compiler_errors ~loc begin fun () -> 
       let elpi = ensure_initialized () in
       let base = get_and_compile ~loc x in
-      let asts = asts_from_file ~loc ~elpi ~base file in
-      List.iter (accumulate_ast_to_X ~get_and_compile ~accumulate ~loc ~x ~what) asts
+      (* information from [file] must not end up in the .glob; see #1079 *)
+      Dumpglob.with_glob_output Dumpglob.NoGlob (fun () ->
+        let asts = asts_from_file ~loc ~elpi ~base file in
+        List.iter (accumulate_ast_to_X ~get_and_compile ~accumulate ~loc ~x ~what) asts) ()
     end
 
   let accumulate_file_to_program ~loc ~program ~what ~file =
