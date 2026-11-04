@@ -591,7 +591,7 @@ let declare_scheme_for local k x gr =
 type scope_depth = Deep | Shallow
 
 let scope_depth =
-  let open Conv in let open API.AlgebraicData in let open Structures.ValuePattern in declare {
+  let open Conv in let open API.AlgebraicData in declare {
   ty = TyName "scope-depth";
   doc = "Notation scope depth";
   pp = (fun fmt -> function
