@@ -83,7 +83,7 @@ jobs:
           ssh-private-key: ${{ secrets.BOT_SSH_KEY }}
           
       - name: Install opam-publish
-        run: opam install -y -j 2 opam-publish=2.5.0
+        run: opam install -y -j 2 opam-publish
 
       - name: Publish
         run: |
