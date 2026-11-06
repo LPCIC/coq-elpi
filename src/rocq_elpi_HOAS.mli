@@ -393,8 +393,16 @@ val constraint_leq : Sorts.t -> Sorts.t -> UnivProblem.t
 val add_universe_constraint : state -> UnivProblem.t -> state
 val force_level_of_universe : state -> Univ.Universe.t -> state * Univ.Level.t * Univ.Universe.t * Sorts.t
 val purge_algebraic_univs_sort : state -> EConstr.ESorts.t -> state * Sorts.t
+
 val ideclc : constant
 val uideclc : constant
+
+(* the global symbols of this module declared in coq-arg-HOAS.elpi *)
+val arg_hoas_constants : constant list
+
+(* the global symbols declared in coq-HOAS.elpi (but tac): predicates whose
+   rules are in Elpi, and data constructors *)
+val hoas_constants : constant list
 val merge_universe_context : state -> UState.t -> state
 val restricted_sigma_of : Univ.Level.Set.t -> state -> Evd.evar_map
 val universes_of_term : state -> EConstr.t -> Univ.Level.Set.t

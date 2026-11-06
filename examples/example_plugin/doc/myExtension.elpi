@@ -1,9 +1,9 @@
 
 
 % description for the new elpi type
-builtin data myType.
-symb constant : int -> myType. 
-symb sumof    : myType -> myType -> myType. 
+data myType.
+symb constant : int -> myType = "my_extension.1". 
+symb sumof    : myType -> myType -> myType = "my_extension.1". 
 
 % [compute Expression Result] Result is the normal form of Expression
 builtin func compute myType -> myType.

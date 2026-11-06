@@ -920,7 +920,8 @@ let src_class_of_class env = function
   | Coercionops.CL_IND i -> GlobRef.IndRef i
   | Coercionops.CL_PROJ p -> GlobRef.ConstRef (get_projection_constant env p)
 
-let coercion = let open Conv in let open API.AlgebraicData in declare {
+(* coercion is also a constructor of field-attribute *)
+let coercion = let open Conv in let open API.AlgebraicData in declare ~variant:"rocq.1" {
   ty = TyName "coercion";
   doc = "Edge of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
@@ -1733,7 +1734,9 @@ let coq_header_builtins =
 
 |};
   LPCode Rocq_elpi_builtins_arg_HOAS.code;
+  MLConstants Rocq_elpi_arg_HOAS.arg_hoas_constants;
   LPCode Rocq_elpi_builtins_HOAS.code;
+  MLConstants (Rocq_elpi_arg_HOAS.tacc :: Rocq_elpi_HOAS.hoas_constants);
   MLData Rocq_elpi_HOAS.record_field_att;
   MLData Rocq_elpi_HOAS.coercion_status;
 
