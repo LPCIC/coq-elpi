@@ -249,10 +249,10 @@ builtin func coq.locate-module-type id -> modtypath.
 
 % Result of coq.locate-all
 builtin data located.
-builtin symb loc-gref         : gref -> located = "1". 
-builtin symb loc-modpath      : modpath -> located = "1". 
-builtin symb loc-modtypath    : modtypath -> located = "1". 
-builtin symb loc-abbreviation : abbreviation -> located = "1". 
+symb loc-gref         : gref -> located. 
+symb loc-modpath      : modpath -> located. 
+symb loc-modtypath    : modtypath -> located. 
+symb loc-abbreviation : abbreviation -> located. 
 
 % [coq.locate-all Name Located] finds all possible meanings of a string.
 % Does not fail.
@@ -260,9 +260,9 @@ builtin func coq.locate-all id -> list located.
 
 % Coq Module inline directive
 builtin data coq.inline.
-builtin symb coq.inline.no      : coq.inline = "1".  % Coq's [no inline] (aka !)
-builtin symb coq.inline.default : coq.inline = "1".  % The default, can be omitted
-builtin symb coq.inline.at      : int -> coq.inline = "1".  % Coq's [inline at <num>]
+symb coq.inline.no      : coq.inline.  % Coq's [no inline] (aka !)
+symb coq.inline.default : coq.inline.  % The default, can be omitted
+symb coq.inline.at      : int -> coq.inline.  % Coq's [inline at <num>]
 
 builtin func coq.env.begin-module-functor % Starts a functor *E*
   id,                        % The name of the functor
@@ -360,21 +360,21 @@ builtin func coq.env.current-section-path -> list string.
 % 
 % The name and the grafting specification can be left unspecified.
 builtin data clause.
-builtin symb clause : id -> grafting -> prop -> clause = "1". 
+symb clause : id -> grafting -> prop -> clause. 
 
 % Specify if the clause has to be grafted before, grafted after or replace
 % a named clause
 builtin data grafting.
-builtin symb before  : id -> grafting = "1". 
-builtin symb after   : id -> grafting = "1". 
-builtin symb remove  : id -> grafting = "1". 
-builtin symb replace : id -> grafting = "1". 
+symb before  : id -> grafting. 
+symb after   : id -> grafting. 
+symb remove  : id -> grafting. 
+symb replace : id -> grafting. 
 
 % Specify to which module the clause should be attached to
 builtin data scope.
-builtin symb execution-site : scope = "1".  % The module inside which the Elpi program is run
-builtin symb current        : scope = "1".  % The module being defined (see begin/end-module)
-builtin symb library        : scope = "1".  % The outermost module (carrying the file name)
+symb execution-site : scope.  % The module inside which the Elpi program is run
+symb current        : scope.  % The module being defined (see begin/end-module)
+symb library        : scope.  % The outermost module (carrying the file name)
 
 
 % see coq.elpi.accumulate-clauses
@@ -403,18 +403,18 @@ builtin func coq.elpi.accumulate-clauses scope, id, list clause.
 
 % Action executed during the parsing phase (aka synterp)
 builtin data synterp-action.
-builtin symb begin-module              : id -> synterp-action = "1". 
-builtin symb begin-module-type         : id -> synterp-action = "1". 
-builtin symb begin-section             : id -> synterp-action = "1". 
-builtin symb end-module                : modpath -> synterp-action = "1". 
-builtin symb end-module-type           : modtypath -> synterp-action = "1". 
-builtin symb end-section               : synterp-action = "1". 
-builtin symb apply-module-functor      : id -> synterp-action = "1". 
-builtin symb apply-module-type-functor : id -> synterp-action = "1". 
-builtin symb include-module            : modpath -> synterp-action = "1". 
-builtin symb include-module-type       : modtypath -> synterp-action = "1". 
-builtin symb import-module             : modpath -> synterp-action = "1". 
-builtin symb export-module             : modpath -> synterp-action = "1". 
+symb begin-module              : id -> synterp-action. 
+symb begin-module-type         : id -> synterp-action. 
+symb begin-section             : id -> synterp-action. 
+symb end-module                : modpath -> synterp-action. 
+symb end-module-type           : modtypath -> synterp-action. 
+symb end-section               : synterp-action. 
+symb apply-module-functor      : id -> synterp-action. 
+symb apply-module-type-functor : id -> synterp-action. 
+symb include-module            : modpath -> synterp-action. 
+symb include-module-type       : modtypath -> synterp-action. 
+symb import-module             : modpath -> synterp-action. 
+symb export-module             : modpath -> synterp-action. 
 
 % Synterp action group
 data group.
@@ -434,13 +434,13 @@ builtin func coq.end-synterp-group group.
 
 % Generic attribute value
 builtin data attribute-value.
-builtin symb leaf-str : string -> attribute-value = "1". 
-builtin symb leaf-loc : loc -> attribute-value = "1". 
-builtin symb node     : list attribute -> attribute-value = "1". 
+symb leaf-str : string -> attribute-value. 
+symb leaf-loc : loc -> attribute-value. 
+symb node     : list attribute -> attribute-value. 
 
 % Generic attribute
 builtin data attribute.
-builtin symb attribute : string -> attribute-value -> attribute = "1". 
+symb attribute : string -> attribute-value -> attribute. 
 
 
 
