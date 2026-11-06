@@ -19,12 +19,12 @@ open Programs
 let default_max_step = max_int
 
 let main_quotedc = ET.Constants.declare_global_symbol "main-quoted"
-let mainc = ET.Constants.declare_global_symbol "main"
-let main_interpc = ET.Constants.declare_global_symbol "main-interp"
-let main_interp_proofc = ET.Constants.declare_global_symbol "main-interp-proof"
-let main_interp_qedc = ET.Constants.declare_global_symbol "main-interp-qed"
-let main_synterpc = ET.Constants.declare_global_symbol "main-synterp"
-let attributesc = ET.Constants.declare_global_symbol "attributes"
+let mainc = Rocq_elpi_arg_HOAS.mainc
+let main_interpc = Rocq_elpi_arg_HOAS.main_interpc
+let main_interp_proofc = Rocq_elpi_arg_HOAS.main_interp_proofc
+let main_interp_qedc = Rocq_elpi_arg_HOAS.main_interp_qedc
+let main_synterpc = Rocq_elpi_arg_HOAS.main_synterpc
+let attributesc = Rocq_elpi_arg_HOAS.attributesc
 
 [%%if coq = "9.0" || coq = "9.1"]
 exception ParseError = Gramlib.Grammar.Error

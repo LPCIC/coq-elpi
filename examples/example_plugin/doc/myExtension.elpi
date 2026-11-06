@@ -1,7 +1,7 @@
 
 
 % description for the new elpi type
-builtin data myType.
+data myType.
 symb constant : int -> myType. 
 symb sumof    : myType -> myType -> myType. 
 

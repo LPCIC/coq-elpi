@@ -164,3 +164,15 @@ val in_coq_arg :
     Elpi.API.State.t * coq_arg * Elpi.API.Conversion.extra_goals
 
 val ltac1_of_arg : coq_arg -> Ltac_plugin.Tacinterp.value
+
+(* the global symbol tac, declared in coq-HOAS.elpi *)
+val tacc : Elpi.API.RawData.constant
+
+(* the global symbols declared in coq-arg-HOAS.elpi *)
+val arg_hoas_constants : Elpi.API.RawData.constant list
+val mainc : Elpi.API.RawData.constant
+val main_interpc : Elpi.API.RawData.constant
+val main_interp_proofc : Elpi.API.RawData.constant
+val main_interp_qedc : Elpi.API.RawData.constant
+val main_synterpc : Elpi.API.RawData.constant
+val attributesc : Elpi.API.RawData.constant

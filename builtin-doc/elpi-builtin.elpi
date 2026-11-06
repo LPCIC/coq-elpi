@@ -36,7 +36,7 @@ data string.
 data float.
 
 
-builtin pred (;) (pred), (pred).
+pred (;) (pred), (pred).
 
 (A ; _) :- A.
 
@@ -100,101 +100,101 @@ builtin func calc A -> A.
 
 %  --- Operators ---
 
-builtin symb (-) : A -> A -> A = "1". 
+symb (-) : A -> A -> A = "1". 
 
-builtin symb (i-) : int -> int -> int = "1". 
+symb (i-) : int -> int -> int = "1". 
 
-builtin symb (r-) : float -> float -> float = "1". 
+symb (r-) : float -> float -> float = "1". 
 
-builtin symb (+) : float -> float -> float = "2". 
+symb (+) : float -> float -> float = "2". 
 
-builtin symb (+) : int -> int -> int = "1". 
+symb (+) : int -> int -> int = "1". 
 
-builtin symb (i+) : int -> int -> int = "1". 
+symb (i+) : int -> int -> int = "1". 
 
-builtin symb (r+) : float -> float -> float = "1". 
+symb (r+) : float -> float -> float = "1". 
 
-builtin symb (*) : float -> float -> float = "2". 
+symb (*) : float -> float -> float = "2". 
 
-builtin symb (*) : int -> int -> int = "1". 
+symb (*) : int -> int -> int = "1". 
 
-builtin symb (/) : float -> float -> float = "1". 
+symb (/) : float -> float -> float = "1". 
 
-builtin symb (mod) : int -> int -> int = "1". 
+symb (mod) : int -> int -> int = "1". 
 
-builtin symb (div) : int -> int -> int = "1". 
+symb (div) : int -> int -> int = "1". 
 
-builtin symb (^) : string -> string -> string = "1". 
+symb (^) : string -> string -> string = "1". 
 
-builtin symb (~) : float -> float = "2". 
+symb (~) : float -> float = "2". 
 
-builtin symb (~) : int -> int = "1". 
+symb (~) : int -> int = "1". 
 
-builtin symb (i~) : int -> int = "1". 
+symb (i~) : int -> int = "1". 
 
-builtin symb (r~) : float -> float = "1". 
+symb (r~) : float -> float = "1". 
 
-builtin symb abs : float -> float = "2".
+symb abs : float -> float = "2".
 
-builtin symb abs : int -> int = "1".
+symb abs : int -> int = "1".
 
-builtin symb iabs : int -> int = "1".
+symb iabs : int -> int = "1".
 
-builtin symb rabs : float -> float = "1".
+symb rabs : float -> float = "1".
 
-builtin symb max : float -> float -> float = "2".
+symb max : float -> float -> float = "2".
 
-builtin symb max : int -> int -> int = "1".
+symb max : int -> int -> int = "1".
 
-builtin symb min : float -> float -> float = "2".
+symb min : float -> float -> float = "2".
 
-builtin symb min : int -> int -> int = "1".
+symb min : int -> int -> int = "1".
 
-builtin symb sqrt : float -> float = "1".
+symb sqrt : float -> float = "1".
 
-builtin symb sin : float -> float = "1".
+symb sin : float -> float = "1".
 
-builtin symb cos : float -> float = "1".
+symb cos : float -> float = "1".
 
-builtin symb arctan : float -> float = "1".
+symb arctan : float -> float = "1".
 
-builtin symb ln : float -> float = "1".
+symb ln : float -> float = "1".
 
-builtin symb exp : float -> float = "1".
+symb exp : float -> float = "1".
 
-builtin symb tan : float -> float = "1".
+symb tan : float -> float = "1".
 
-builtin symb arcsin : float -> float = "1".
+symb arcsin : float -> float = "1".
 
-builtin symb arccos : float -> float = "1".
+symb arccos : float -> float = "1".
 
-builtin symb arctan2 : float -> float -> float = "1".
+symb arctan2 : float -> float -> float = "1".
 
-builtin symb pow : float -> float -> float = "1".
+symb pow : float -> float -> float = "1".
 
-builtin symb int_to_real : int -> float = "1".
+symb int_to_real : int -> float = "1".
 
-builtin symb floor : float -> int = "1".
+symb floor : float -> int = "1".
 
-builtin symb ceil : float -> int = "1".
+symb ceil : float -> int = "1".
 
-builtin symb truncate : float -> int = "1".
+symb truncate : float -> int = "1".
 
-builtin symb size : string -> int = "1".
+symb size : string -> int = "1".
 
-builtin symb chr : int -> string = "1".
+symb chr : int -> string = "1".
 
-builtin symb rhc : string -> int = "1".
+symb rhc : string -> int = "1".
 
-builtin symb string_to_int : string -> int = "1".
+symb string_to_int : string -> int = "1".
 
-builtin symb int_to_string : int -> string = "1".
+symb int_to_string : int -> string = "1".
 
-builtin symb substring : string -> int -> int -> string = "1".
+symb substring : string -> int -> int -> string = "1".
 
-builtin symb real_to_string : float -> string = "1".
+symb real_to_string : float -> string = "1".
 
-builtin symb string_to_real : string -> float = "1".
+symb string_to_real : string -> float = "1".
 
 %  -- Arithmetic tests --
 
@@ -267,12 +267,12 @@ builtin symb (::) : X -> list X -> list X = "core".
 builtin symb ([]) : list X = "core".
 
 % Boolean values: tt and ff since true and false are predicates
-builtin data bool.
+data bool.
 symb tt : bool. 
 symb ff : bool. 
 
 % Pair: the constructor is pr, since ',' is for conjunction
-builtin data pair A B.
+data pair A B.
 symb pr : A -> B -> pair A B. 
 
 func fst  pair A B -> A.
@@ -284,7 +284,7 @@ func snd  pair A B -> B.
 snd (pr _ B) B.
 
 % Triple: the constructor is triple, since ',' is for conjunction
-builtin data triple A B C.
+data triple A B C.
 symb triple : A -> B -> C -> triple A B C. 
 
 
@@ -300,7 +300,7 @@ triple_3 (triple _ _ C) C.
 
 
 % Quadruple: the constructor is quadruple, since ',' is for conjunction
-builtin data quadruple A B C D.
+data quadruple A B C D.
 symb quadruple : A -> B -> C -> D -> quadruple A B C D. 
 
 
@@ -319,7 +319,7 @@ quadruple_4 (quadruple _ _ _ D) D.
 
 
 % The option type (aka Maybe)
-builtin data option A.
+data option A.
 symb none : option A. 
 symb some : A -> option A. 
 
@@ -371,13 +371,13 @@ quadruple.copy F G H I (quadruple X Y Z W) (quadruple X1 Y1 Z1 W1) :- F X X1, G 
 
 
 % Result of a comparison
-builtin data cmp.
+data cmp.
 symb eq : cmp. 
 symb lt : cmp. 
 symb gt : cmp. 
 
 % Used in builtin variants that return Coq's error rather than failing
-builtin data diagnostic.
+data diagnostic.
 symb ok    : diagnostic.  % Success
 symb error : string -> diagnostic.  % Failure
 
@@ -1667,12 +1667,12 @@ elements (node L E R _) Acc X :-
 
 data in_stream.
 
-builtin symb std_in : in_stream = "1".
+symb std_in : in_stream = "1".
 
 data out_stream.
 
-builtin symb std_err : out_stream = "1".
-builtin symb std_out : out_stream = "1".
+symb std_err : out_stream = "1".
+symb std_out : out_stream = "1".
 
 % [open_in FileName InStream] opens FileName for input
 builtin func open_in string -> in_stream.
@@ -1708,7 +1708,7 @@ builtin func eof in_stream.
 
 % A document laid out by OCaml's Format module. See the documentation of
 % Format for the meaning of boxes and breaks
-builtin data std.fmt.
+data std.fmt.
 symb std.fmt.txt    : string -> std.fmt.  % a string
 symb std.fmt.h      : list std.fmt -> std.fmt.  % horizontal box: breaks never split the line
 symb std.fmt.v      : int -> list std.fmt -> std.fmt.  % vertical box with indentation: every break splits the line
@@ -1792,7 +1792,7 @@ builtin func sys.readdir string -> list string, diagnostic.
 %  -- Unix --
 
 % gathers the standard file descriptors or a process
-builtin data unix.process.
+data unix.process.
 symb unix.process : out_stream -> in_stream -> in_stream -> unix.process. 
 
 % [unix.process.open Executable Arguments Environment P Diagnostic] OCaml's

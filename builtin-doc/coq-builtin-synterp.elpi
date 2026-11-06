@@ -60,13 +60,13 @@ builtin func coq.version -> string, int, int, int.
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
-builtin pred main list argument.
+pred main list argument.
 
 % Commands with a non-trivial parsing phase can thread data between
 % from the parsing phase to the interp one in an untyped way using the
 % following two entrypoints
-builtin pred main-interp list argument, any.
-builtin pred main-synterp list argument -> any.
+pred main-interp list argument, any.
+pred main-synterp list argument -> any.
 
 % Commands starting/closing proofs have to use the following entrypoints.
 % The minimal working snippet is:
@@ -84,14 +84,14 @@ builtin pred main-synterp list argument -> any.
 % a proof stated by a standard Rocq Lemma/Definition statement, the data from
 % the proof opening command is the lemma name, _GL is the empty list and P the
 % proof term.
-builtin pred main-interp-proof
+pred main-interp-proof
   list argument,    % arguments passed to the command
   any              % data from the parsing phase (defaults to _)
   ->
   term,             % proof data for the corresponding proof-closing command
   list sealed-goal, % the sequents to prove
   any.              % any data for the corresponding proof-closing command
-builtin pred main-interp-qed
+pred main-interp-qed
   list argument,    % arguments passed to the command
   any,              % data from the parsing phase (defaults to _)
   term,             % proof data from the corresponding proof-opening command
@@ -99,31 +99,31 @@ builtin pred main-interp-qed
   any.              % any data from the corresponding proof-opening command
 
 pred usage.
-builtin func attributes -> list attribute.
+func attributes -> list attribute.
 
 % see coq-lib.elpi for coq.parse-attributes generating the options below
-builtin pred get-option -> string, A.
+pred get-option -> string, A.
 
 % The data type of arguments (for commands or tactics)
 data argument.
-builtin symb int      : int    -> argument. % Eg. 1 -2.
-builtin symb str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
-builtin symb trm      : term   -> argument. % Eg. (t).
-builtin symb open-trm : int -> term -> argument.
+symb int      : int    -> argument. % Eg. 1 -2.
+symb str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
+symb trm      : term   -> argument. % Eg. (t).
+symb open-trm : int -> term -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
 % Eg. Record or Inductive
-builtin symb indt-decl : indt-decl -> argument.
+symb indt-decl : indt-decl -> argument.
 % Eg. #[universes(polymorphic,...)] Record or Inductive
-builtin symb upoly-indt-decl : indt-decl -> upoly-decl -> argument.
+symb upoly-indt-decl : indt-decl -> upoly-decl -> argument.
 % Eg. Definition or Axiom (when the body is none)
-builtin symb const-decl : id -> option term -> arity -> argument.
+symb const-decl : id -> option term -> arity -> argument.
 % Eg. #[universes(polymorphic,...)] Definition or Axiom
-builtin symb upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
+symb upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
-builtin symb ctx-decl : context-decl -> argument.
+symb ctx-decl : context-decl -> argument.
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -151,19 +151,19 @@ data record-decl.
 % See also the arity->term predicate in coq-lib.elpi
 
 data arity.
-builtin symb parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "1".
-builtin symb arity       : term -> arity.
+symb parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "1".
+symb arity       : term -> arity.
 
-builtin symb parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
-builtin symb inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
-builtin symb minductive  : id -> bool -> arity -> (term -> indt-decl) -> indt-decl. % one type of a mutual block
-builtin symb mblock      : list (list indc-decl) -> indt-decl. % constructor blocks for minductive declarations
-builtin symb record      : id -> term -> id -> record-decl -> indt-decl.
+symb parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
+symb inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+symb minductive  : id -> bool -> arity -> (term -> indt-decl) -> indt-decl. % one type of a mutual block
+symb mblock      : list (list indc-decl) -> indt-decl. % constructor blocks for minductive declarations
+symb record      : id -> term -> id -> record-decl -> indt-decl.
 
-builtin symb constructor : id -> arity -> indc-decl.
+symb constructor : id -> arity -> indc-decl.
 
-builtin symb field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
-builtin symb end-record  : record-decl.
+symb field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
+symb end-record  : record-decl.
 
 % Example.
 % Remark that A is a regular parameter; y is a non-uniform parameter and t
@@ -204,8 +204,8 @@ builtin symb end-record  : record-decl.
 % Context declaration (used as an argument to Elpi commands)
 data context-decl.
 % Eg. (x : T) or (x := B), body is optional, type may be a variable
-builtin symb context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
-builtin symb context-end  : context-decl.
+symb context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
+symb context-end  : context-decl.
 
 typeabbrev field-attributes (list field-attribute).
 
@@ -248,7 +248,7 @@ builtin func coq.locate-module id -> modpath.
 builtin func coq.locate-module-type id -> modtypath.
 
 % Result of coq.locate-all
-builtin data located.
+data located.
 symb loc-gref         : gref -> located. 
 symb loc-modpath      : modpath -> located. 
 symb loc-modtypath    : modtypath -> located. 
@@ -259,7 +259,7 @@ symb loc-abbreviation : abbreviation -> located.
 builtin func coq.locate-all id -> list located.
 
 % Coq Module inline directive
-builtin data coq.inline.
+data coq.inline.
 symb coq.inline.no      : coq.inline.  % Coq's [no inline] (aka !)
 symb coq.inline.default : coq.inline.  % The default, can be omitted
 symb coq.inline.at      : int -> coq.inline.  % Coq's [inline at <num>]
@@ -359,19 +359,19 @@ builtin func coq.env.current-section-path -> list string.
 % that is exactly what one would load in the context using =>.
 % 
 % The name and the grafting specification can be left unspecified.
-builtin data clause.
+data clause.
 symb clause : id -> grafting -> prop -> clause. 
 
 % Specify if the clause has to be grafted before, grafted after or replace
 % a named clause
-builtin data grafting.
+data grafting.
 symb before  : id -> grafting. 
 symb after   : id -> grafting. 
 symb remove  : id -> grafting. 
 symb replace : id -> grafting. 
 
 % Specify to which module the clause should be attached to
-builtin data scope.
+data scope.
 symb execution-site : scope.  % The module inside which the Elpi program is run
 symb current        : scope.  % The module being defined (see begin/end-module)
 symb library        : scope.  % The outermost module (carrying the file name)
@@ -402,7 +402,7 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 builtin func coq.elpi.accumulate-clauses scope, id, list clause.
 
 % Action executed during the parsing phase (aka synterp)
-builtin data synterp-action.
+data synterp-action.
 symb begin-module              : id -> synterp-action. 
 symb begin-module-type         : id -> synterp-action. 
 symb begin-section             : id -> synterp-action. 
@@ -433,13 +433,13 @@ builtin func coq.begin-synterp-group id -> group.
 builtin func coq.end-synterp-group group.
 
 % Generic attribute value
-builtin data attribute-value.
+data attribute-value.
 symb leaf-str : string -> attribute-value. 
 symb leaf-loc : loc -> attribute-value. 
 symb node     : list attribute -> attribute-value. 
 
 % Generic attribute
-builtin data attribute.
+data attribute.
 symb attribute : string -> attribute-value -> attribute. 
 
 
