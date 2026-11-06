@@ -10,10 +10,9 @@
 % package.
 
 % Xml.xml
-builtin data xml.
-builtin symb xml.element : string -> list (pair string string) ->
-                           list xml -> xml = "1".  % Attributes are sorted by key
-builtin symb xml.pcdata  : string -> xml = "1". 
+data xml.
+symb xml.element : string -> list (pair string string) -> list xml -> xml.  % Attributes are sorted by key
+symb xml.pcdata  : string -> xml. 
 
 % [xml.parse_file File XML D] like Xml.parse_file reads XML from File.
 % If D is error then XML is not assigned.

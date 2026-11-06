@@ -965,6 +965,7 @@ let coq_synterp_builtins =
   let open CConv in
   [
     LPCode Rocq_elpi_builtins_arg_HOAS.code;
+    MLConstants Rocq_elpi_arg_HOAS.arg_hoas_constants;
     LPDoc "Coq terms are not visible at synterp time, they are always holes";
     LPCode "data term.";
     LPCode "data sealed-goal.";
