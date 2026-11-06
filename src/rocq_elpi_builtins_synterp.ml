@@ -905,7 +905,7 @@ let module_ast_of_modtypath x =
   CAst.make @@ CMident (qualid_of_dirpath (DirPath.make (dirpath_of_modpath x))),
   Declaremods.DefaultInline
 
-let attribute_decl a = let open API.AlgebraicData in Decl {
+let attribute a = let open API.AlgebraicData in declare {
   ty = Conv.TyName "attribute";
   doc = "Generic attribute";
   pp = (fun fmt a -> Format.fprintf fmt "TODO");
@@ -914,11 +914,7 @@ let attribute_decl a = let open API.AlgebraicData in Decl {
       B (fun s a -> s,a),
       M (fun ~ok ~ko -> function (s,a) -> ok s a));
   ]
-}
-let attribute_alloc = let open API.AlgebraicData in
-  allocate_constructors (Param (fun a -> attribute_decl a))
-
-let attribute a = let open API.AlgebraicData in declare_allocated attribute_alloc (attribute_decl a) |> CConv.(!<)
+} |> CConv.(!<)
 
 type attribute_data =
   | AttributeString of string
