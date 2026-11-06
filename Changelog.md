@@ -11,6 +11,10 @@
 - Fix `coq.ltac.collect-simple-goals` returning goals whose evar is applied
   to the wrong variables when the proof context is not empty
 
+### HOAS:
+- `cache` is an ordinary predicate (it was declared `builtin`, but OCaml
+  neither declares nor implements it)
+
 # [3.6.0] 04/11/2026
 
 Requires Elpi 4.0.0 and Rocq 9.0, 9.1, 9.2 and 9.3.

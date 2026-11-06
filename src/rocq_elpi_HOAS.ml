@@ -546,6 +546,7 @@ let sort : (Sorts.t, _ conv_context, API.Data.constraints) API.ContextualConvers
           state, Sorts.sort_of_univ u, []
         end
     | _ ->  raise API.Conversion.(TypeErr(TyName"sort",depth,t)));
+  constants = [];
 }
 
 let ast_sort ~loc = function
@@ -713,6 +714,7 @@ let gref : Names.GlobRef.t API.Conversion.t = {
         | _ -> raise API.Conversion.(TypeErr(TyName"constant",depth,t)); end
     | _ -> raise API.Conversion.(TypeErr(TyName"gref",depth,t));
   );
+  constants = [];
 }
 
 let abbreviation =

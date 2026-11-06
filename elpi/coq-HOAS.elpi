@@ -111,7 +111,7 @@ macro @cast T TY :- (let `cast` TY T x\x).
 
 builtin func decl term -> name, term. % Var Name Ty
 builtin func def  term -> name, term, term. % Var Name Ty Bo
-builtin func cache term -> term.
+func cache term -> term.
 
 builtin func declare-evar list (pred), term, term, term. % Ctx RawEvar Ty Evar
 
