@@ -511,10 +511,10 @@ let sort : (Sorts.t, _ conv_context, API.Data.constraints) API.ContextualConvers
   ty = API.Conversion.TyName "sort";
   pp_doc = (fun fmt () ->
     Format.fprintf fmt "%% Sorts (kinds of types)\n";
-    Format.fprintf fmt "builtin data sort.\n";
-    Format.fprintf fmt "builtin symb prop  : sort.         %% impredicative sort of propositions\n";
-    Format.fprintf fmt "builtin symb sprop : sort.         %% impredicative sort of propositions with definitional proof irrelevance\n";
-    Format.fprintf fmt "builtin symb typ   : univ -> sort. %% predicative sort of data (carries a universe level)\n";
+    Format.fprintf fmt "data sort.\n";
+    Format.fprintf fmt "symb prop  : sort.         %% impredicative sort of propositions\n";
+    Format.fprintf fmt "symb sprop : sort.         %% impredicative sort of propositions with definitional proof irrelevance\n";
+    Format.fprintf fmt "symb typ   : univ -> sort. %% predicative sort of data (carries a universe level)\n";
   );
   pp = ppsort;
   embed = (fun ~depth { options } _ state s ->
@@ -681,10 +681,10 @@ let gref : Names.GlobRef.t API.Conversion.t = {
   API.Conversion.ty = API.Conversion.TyName "gref";
   pp_doc = (fun fmt () ->
     Format.fprintf fmt "%% Global objects: inductive types, inductive constructors, definitions@\n";
-    Format.fprintf fmt "builtin data gref.@\n";
-    Format.fprintf fmt "builtin symb const : constant    -> gref. %% Nat.add, List.append, ...@\n";
-    Format.fprintf fmt "builtin symb indt  : inductive   -> gref. %% nat, list, ...@\n";
-    Format.fprintf fmt "builtin symb indc  : constructor -> gref. %% O, S, nil, cons, ...@\n";
+    Format.fprintf fmt "data gref.@\n";
+    Format.fprintf fmt "symb const : constant    -> gref. %% Nat.add, List.append, ...@\n";
+    Format.fprintf fmt "symb indt  : inductive   -> gref. %% nat, list, ...@\n";
+    Format.fprintf fmt "symb indc  : constructor -> gref. %% O, S, nil, cons, ...@\n";
     );
   pp = (fun fmt x ->
     Format.fprintf fmt "«%a»" Pp.pp_with (Printer.pr_global x));
@@ -2855,6 +2855,14 @@ let sealc = E.Constants.declare_global_symbol "seal"
 let openc = E.Constants.declare_global_symbol "coq.ltac.open"
 let allc = E.Constants.declare_global_symbol "coq.ltac.all"
 
+(* the global symbols declared in coq-HOAS.elpi (but tac): predicates whose
+   rules are in Elpi, and data constructors *)
+let hoas_constants = [
+  solvec; msolvec; declc; defc; declare_evc; rm_evarc; evarc;
+  sortc; globalc; pglobalc; lamc; prodc; letc; appc; matchc; fixc; mfixc;
+  cofixc; mcofixc; primitivec; mfix_tyc; mfix_boc; mcofix_tyc; mcofix_boc;
+  nablac; sealc; goalc; openc; allc ]
+
 let mk_goal hyps rev ty ev args =
   E.mkApp goalc hyps [rev ;ty; ev; U.list_to_lp_list args]
 
@@ -4224,8 +4232,18 @@ let drop_nparams_from_ctx n ctx =
   let ctx, _ = CList.chop (List.length ctx - n) ctx in
   ctx
 
+(* the constructors of sort and gref, printed by their pp_doc *)
+let sort_constants = [propc; spropc; typc]
+let gref_constants = [constc; indtc; indcc]
+
 let ideclc = E.Constants.declare_global_symbol "indt-decl"
 let uideclc = E.Constants.declare_global_symbol "upoly-indt-decl"
+
+(* the global symbols of this file declared in coq-arg-HOAS.elpi *)
+let arg_hoas_constants = [
+  get_optionc; ideclc; uideclc;
+  arity_parameterc; inductive_parameterc; arityc; constructorc; inductivec;
+  minductivec; mblockc; recordc; fieldc; end_recordc ]
 
 
 [%%if coq = "9.0" || coq = "9.1"]

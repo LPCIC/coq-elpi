@@ -1,3 +1,17 @@
+# Unreleased
+
+Requires the next Elpi (checked `builtin` declarations).
+
+### HOAS:
+- `cache` is an ordinary predicate (it was declared `builtin`, but OCaml
+  neither declares nor implements it)
+- The predicates (`solve`, `msolve`, `decl`, `def`, `declare-evar`,
+  `rm-evar`, `evar`, `main`, `get-option`, `attributes` ...) and the data
+  constructors (`global`, `app`, `fun`, `str`, `trm`, `parameter` ...) of
+  `coq-HOAS.elpi` and `coq-arg-HOAS.elpi` are declared with no `builtin`:
+  the OCaml side binds them (`MLConstants`)
+- `builtin data` is now written `data`
+
 # [3.6.0] 04/11/2026
 
 Requires Elpi 4.0.0 and Rocq 9.0, 9.1, 9.2 and 9.3.

@@ -1721,7 +1721,9 @@ let coq_header_builtins =
 
 |};
   LPCode Rocq_elpi_builtins_arg_HOAS.code;
+  MLConstants Rocq_elpi_arg_HOAS.arg_hoas_constants;
   LPCode Rocq_elpi_builtins_HOAS.code;
+  MLConstants (Rocq_elpi_arg_HOAS.tacc :: Rocq_elpi_HOAS.hoas_constants);
   MLData Rocq_elpi_HOAS.record_field_att;
   MLData Rocq_elpi_HOAS.coercion_status;
 
@@ -1984,6 +1986,7 @@ Note: [ctype "bla"] is an opaque data type and by convention it is written [@bla
     MLData inductive;
     MLData constructor;
     MLData gref;
+    MLConstants Rocq_elpi_HOAS.gref_constants;
     MLData id;
     MLData modpath;
     MLData modtypath;
@@ -3090,6 +3093,7 @@ able to handle algebraic universes consistently, making this purging
 phase unnecessary.|};
   MLData univ;
   MLDataC sort;
+  MLConstants Rocq_elpi_HOAS.sort_constants;
 
   MLCode(Pred("coq.sort.leq",
     CIn(sort, "S1",
