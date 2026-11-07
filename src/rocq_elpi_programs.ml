@@ -1196,7 +1196,8 @@ module Synterp : Programs = struct
     let init () =
       API.Setup.init ~versions
         ~state:synterp_state ~hoas:synterp_hoas
-        ~quotations:synterp_quotations ~builtins:[elpi_builtins;coq_synterp_builtins] ~file_resolver ()
+        ~quotations:synterp_quotations ~builtins:[elpi_builtins;coq_synterp_builtins] ~file_resolver
+        ~packages:Elpi_dynload.packages ()
   end
   include SourcesStorage(S)
 
@@ -1220,7 +1221,8 @@ module Interp : Programs = struct
     let init () =
       API.Setup.init ~versions
         ~state:interp_state ~hoas:interp_hoas
-        ~quotations:interp_quotations ~builtins:[elpi_builtins;coq_interp_builtins] ~file_resolver ()
+        ~quotations:interp_quotations ~builtins:[elpi_builtins;coq_interp_builtins] ~file_resolver
+        ~packages:Elpi_dynload.packages ()
   end)
 
 let () = Rocq_elpi_builtins.set_accumulate_to_db_interp (fun ~loc clauses_to_add ->

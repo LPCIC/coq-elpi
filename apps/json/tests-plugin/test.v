@@ -3,7 +3,7 @@ From elpi Require Import elpi json.
 From elpi Require json.tests.dummy. (* work around missing dune support for Extra Dependency *)
 
 Elpi Command test.
-Elpi Accumulate Plugin "json.elpi".
+Elpi Accumulate lp:{{ accumulate "elpi.json/all". }}.
 Fail Elpi Query lp:{{
   std.assert-ok! (json.from_file "foo.json" X) "json"
 }}.
@@ -22,3 +22,13 @@ Elpi Query lp:{{
 }}.
 
 
+
+(* the Elpi package json alone, with no Rocq wrapper *)
+Elpi Command test_bare.
+Elpi Accumulate lp:{{ accumulate "+json". }}.
+Elpi Query lp:{{
+  json.from_string "{ \"a\": [1, true] }" J ok,
+  std.assert! (J = json.assoc [pr "a" (json.list [json.int 1, json.bool tt])]) "json",
+  json.to_string J S ok,
+  coq.say S
+}}.

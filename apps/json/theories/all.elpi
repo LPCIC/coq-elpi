@@ -1,0 +1,10 @@
+% The loader of the app json: accumulate "elpi.json/all" (by convention the
+% file that loads an app is all.elpi). Rocq-Elpi APIs on json values, over
+% the Elpi package json (findlib package elpi-json).
+accumulate "+json".
+
+% [coq.extra-dep->json Dep J D] reads a json file declared as an extra
+% dependency, see the coq.extra-dep API.
+func coq.extra-dep->json string -> json, diagnostic.
+coq.extra-dep->json S J D :- coq.extra-dep S (some P), !, json.from_file P J D.
+coq.extra-dep->json S _ (error Msg) :- Msg is "unknown Extra Dependency " ^ S.

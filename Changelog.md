@@ -12,6 +12,21 @@ Requires the next Elpi (checked `builtin` declarations).
   the OCaml side binds them (`MLConstants`)
 - `builtin data` is now written `data`
 
+### Plugins:
+- `accumulate "+pkg"` loads the plugin of the Elpi package `pkg` (findlib
+  package `elpi-pkg`) on demand, with no `Declare ML Module`; `"+pkg/file"`
+  is a file of the package
+
+### Apps:
+- json: the OCaml plugin is replaced by the Elpi package `json` (opam
+  package `elpi-json`); the app is the Elpi file `all.elpi` (by convention
+  the loader of an app) with the Rocq
+  specific predicate `coq.extra-dep->json` (`coq.json->string` and
+  `coq.string->json` are gone: use `json.pretty_to_string` and
+  `json.from_string`), accumulated with
+  `Elpi Accumulate lp:{{ accumulate "elpi.json/all". }}` instead of
+  `Elpi Accumulate Plugin "json.elpi"`
+
 # [3.6.0] 04/11/2026
 
 Requires Elpi 4.0.0 and Rocq 9.0, 9.1, 9.2 and 9.3.
