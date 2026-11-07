@@ -38,8 +38,8 @@
 (package
  (name rocq-elpi-json)
  (synopsis "Yojson bindings for rocq-elpi")
- (description "This package provides basic support for reading and writing json files from Elpi programs running in Rocq")
- (depends rocq-elpi yojson))
+ (description "This package provides basic support for reading and writing json files from Elpi programs running in Rocq, over the Elpi package json (elpi-json)")
+ (depends rocq-elpi elpi-json))
 
 (package
  (name rocq-elpi-xml)

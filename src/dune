@@ -6,7 +6,7 @@
  (preprocessor_deps rocq_elpi_config.mlh)
  (preprocess
   (pps ppx_deriving.std ppx_optcomp -- -cookie "ppx_optcomp.env=env ~coq:(Defined \"%{coq:version.major}.%{coq:version.minor}\")"))
- (libraries rocq-runtime.plugins.ltac rocq-runtime.vernac elpi))
+ (libraries rocq-runtime.plugins.ltac rocq-runtime.vernac elpi elpi.dynload))
 
 (rule
   (target rocq_elpi_builtins_arg_HOAS.ml)
