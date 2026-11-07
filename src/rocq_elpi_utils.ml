@@ -512,6 +512,18 @@ let detype_relevance_info sigma na =
   | RelevanceVar q -> Some (Glob_term.GRelevanceVar (detype_qvar sigma q))
 *)
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let make_instance qs us = Some (qs, us)
+[%%else]
+let make_instance qs us = let open Glob_term in
+  Some {
+    qualities = qs;
+    extensible_qualities = false;
+    univlevels = us;
+    extensible_univlevels = false;
+  }
+[%%endif]
+
 let detype_instance ku sigma l =
   if not ku then None
   else
@@ -522,7 +534,7 @@ let detype_instance ku sigma l =
       let qs, us = UVars.Instance.to_array l in
       let qs = List.map (detype_quality sigma) (Array.to_list qs) in
       let us = List.map (detype_level sigma) (Array.to_list us) in
-      Some (qs, us)
+      make_instance qs us
 
 let it_destRLambda_or_LetIn_names l c =
   let open Glob_term in

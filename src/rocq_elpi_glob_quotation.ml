@@ -342,6 +342,12 @@ let is_elpi_code, get_elpi_code = tag_helpers elpi_code_tag
 let is_elpi_code_appArg, get_elpi_code_appArg = tag_helpers elpi_code_appArg_tag
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let unfold_glob_instance u = (false, fst u, snd u)
+[%%else]
+let unfold_glob_instance u = (u.extensible_univlevels||u.extensible_qualities, u.qualities, u.univlevels)
+[%%endif]
+
 let gterm2lpast ~pattern ~language state glob =
 
   let rec lookup_bound ~loc ~coqloc name state =
@@ -389,8 +395,8 @@ let gterm2lpast ~pattern ~language state glob =
     | None ->
       let s = A.Term.mkVar ~loc ~hdloc:loc (fresh_uv ()) [] in
       in_elpiast_poly_gr ~loc gr s
-    | Some (ql,l) ->
-      let () = if not (CList.is_empty ql) then nYI "sort poly" in
+    | Some u -> let (ext_flag, ql, l) = unfold_glob_instance u in 
+      let () = if ext_flag||(not (CList.is_empty ql)) then nYI "sort poly" in
       let l' = List.map (glob_level x.CAst.loc state) l in
       in_elpiast_poly_gr_instance ~loc gr (UVars.Instance.of_array ([||], Array.of_list l'))
     end
