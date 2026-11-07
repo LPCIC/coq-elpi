@@ -11,11 +11,11 @@
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
 % msolve is for tactics that operate on multiple goals (called via all: ).
-builtin pred solve goal -> list sealed-goal.
-builtin pred msolve list sealed-goal -> list sealed-goal.
+pred solve goal -> list sealed-goal.
+pred msolve list sealed-goal -> list sealed-goal.
 
 % Extra arguments for tactics
-builtin symb tac : ltac1-tactic -> argument.
+symb tac : ltac1-tactic -> argument.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
@@ -26,34 +26,34 @@ builtin symb tac : ltac1-tactic -> argument.
 % -- terms --------------------------------------------------------------------
 data term.
 
-builtin symb sort    : sort -> term. % Prop, Type@{i}
+symb sort    : sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-builtin symb global  : gref -> term.
-builtin symb pglobal : gref -> univ-instance -> term.
+symb global  : gref -> term.
+symb pglobal : gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
-builtin symb fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
-builtin symb prod    : name -> term -> (term -> term) -> term.         % forall x : t,
-builtin symb let     : name -> term -> term -> (term -> term) -> term. % let x : T := v in
+symb fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
+symb prod    : name -> term -> (term -> term) -> term.         % forall x : t,
+symb let     : name -> term -> term -> (term -> term) -> term. % let x : T := v in
 
 % other term formers: function application, pattern matching and recursion
-builtin symb app     : list term -> term.                   % app [hd|args]
-builtin symb match   : term -> term -> list term -> term.   % match t p [branch])
-builtin symb fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
-builtin symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno mfix-block
-builtin symb cofix   : name -> term -> (term -> term) -> term.        % cofix name ty bo
-builtin symb mcofix  : int -> mcofix-block -> term.       % mcofix block-idx mcofix-block
+symb app     : list term -> term.                   % app [hd|args]
+symb match   : term -> term -> list term -> term.   % match t p [branch])
+symb fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno mfix-block
+symb cofix   : name -> term -> (term -> term) -> term.        % cofix name ty bo
+symb mcofix  : int -> mcofix-block -> term.       % mcofix block-idx mcofix-block
 
-builtin symb primitive : primitive-value -> term.
+symb primitive : primitive-value -> term.
 
 data mfix-block.
-builtin symb mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
-builtin symb mfix-bo : list term -> mfix-block.
+symb mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
+symb mfix-bo : list term -> mfix-block.
 
 data mcofix-block.
-builtin symb mcofix-ty : name -> term -> (term -> mcofix-block) -> mcofix-block. % mcofix-ty name ty rest
-builtin symb mcofix-bo : list term -> mcofix-block.
+symb mcofix-ty : name -> term -> (term -> mcofix-block) -> mcofix-block. % mcofix-ty name ty rest
+symb mcofix-bo : list term -> mcofix-block.
 
 % Notes about (match Scrutinee TypingFunction Branches) when
 %   Inductive i A : A -> nat -> Type := K : forall a : A, i A a 0
@@ -109,11 +109,11 @@ macro @cast T TY :- (let `cast` TY T x\x).
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
 
-builtin func decl term -> name, term. % Var Name Ty
-builtin func def  term -> name, term, term. % Var Name Ty Bo
-builtin func cache term -> term.
+func decl term -> name, term. % Var Name Ty
+func def  term -> name, term, term. % Var Name Ty Bo
+func cache term -> term.
 
-builtin func declare-evar list (pred), term, term, term. % Ctx RawEvar Ty Evar
+func declare-evar list (pred), term, term, term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-
@@ -123,7 +123,7 @@ declare-evar Ctx RawEv Ty Ev :-
 % to only contain decl, def, pp.  For now no handling rules for this set of
 % constraints other than one to remove a constraint
 
-builtin func rm-evar term, term.
+func rm-evar term, term.
 rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
 rm-evar _ _.
 
@@ -145,7 +145,7 @@ constraint declare-evar evar def decl cache rm-evar {
 % elaborates to a term of type Ty that gets assigned to E.
 % In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
-builtin func evar term, term -> term. % Evar Ty RefinedSolution
+func evar term, term -> term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- var S _ VL, !,
   prune T VL, prune X VL, declare_constraint (evar X T S) [X, S].
 
@@ -215,11 +215,17 @@ macro @holes! :- get-option "HOAS:holes" tt.
 
 data goal.
 data sealed-goal.
-builtin symb nabla : (term -> sealed-goal) -> sealed-goal.
-builtin symb seal  : goal -> sealed-goal.
+symb nabla : (term -> sealed-goal) -> sealed-goal.
+symb seal  : goal -> sealed-goal.
 
 typeabbrev goal-ctx (list prop).
-builtin symb goal : goal-ctx -> term -> term -> term -> list argument -> goal.
+symb goal : goal-ctx -> term -> term -> term -> list argument -> goal.
+
+% The tacticals coq.ltac.all and coq.ltac.open, whose rules are in
+% elpi-ltac.elpi, are used by the OCaml code to run a tactic on many goals
+pred coq.ltac.all (pred sealed-goal -> list sealed-goal), list sealed-goal -> list sealed-goal.
+:index(_ 1)
+func coq.ltac.open (func goal -> list sealed-goal), sealed-goal -> list sealed-goal.
 
 % A sealed-goal closes with nabla the bound names of a
 % 
