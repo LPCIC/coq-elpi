@@ -33,13 +33,13 @@
 %   attributes [attribute "att" (leaf "true")]
 % holds. The encoding of terms is described below.
 % See also the coq.parse-attributes utility.
-builtin pred main list argument.
+pred main list argument.
 
 % Commands with a non-trivial parsing phase can thread data between
 % from the parsing phase to the interp one in an untyped way using the
 % following two entrypoints
-builtin pred main-interp list argument, any.
-builtin pred main-synterp list argument -> any.
+pred main-interp list argument, any.
+pred main-synterp list argument -> any.
 
 % Commands starting/closing proofs have to use the following entrypoints.
 % The minimal working snippet is:
@@ -57,14 +57,14 @@ builtin pred main-synterp list argument -> any.
 % a proof stated by a standard Rocq Lemma/Definition statement, the data from
 % the proof opening command is the lemma name, _GL is the empty list and P the
 % proof term.
-builtin pred main-interp-proof
+pred main-interp-proof
   list argument,    % arguments passed to the command
   any              % data from the parsing phase (defaults to _)
   ->
   term,             % proof data for the corresponding proof-closing command
   list sealed-goal, % the sequents to prove
   any.              % any data for the corresponding proof-closing command
-builtin pred main-interp-qed
+pred main-interp-qed
   list argument,    % arguments passed to the command
   any,              % data from the parsing phase (defaults to _)
   term,             % proof data from the corresponding proof-opening command
@@ -72,31 +72,31 @@ builtin pred main-interp-qed
   any.              % any data from the corresponding proof-opening command
 
 pred usage.
-builtin func attributes -> list attribute.
+func attributes -> list attribute.
 
 % see coq-lib.elpi for coq.parse-attributes generating the options below
-builtin pred get-option -> string, A.
+pred get-option -> string, A.
 
 % The data type of arguments (for commands or tactics)
 data argument.
-builtin symb int      : int    -> argument. % Eg. 1 -2.
-builtin symb str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
-builtin symb trm      : term   -> argument. % Eg. (t).
-builtin symb open-trm : int -> term -> argument.
+symb int      : int    -> argument. % Eg. 1 -2.
+symb str      : string -> argument. % Eg. x "y" z.w. or any Coq keyword/symbol
+symb trm      : term   -> argument. % Eg. (t).
+symb open-trm : int -> term -> argument.
 
 % Extra arguments for commands. [Definition], [Axiom], [Record] and [Context]
 % take precedence over the [str] argument above (when not "quoted").
 %
 % Eg. Record or Inductive
-builtin symb indt-decl : indt-decl -> argument.
+symb indt-decl : indt-decl -> argument.
 % Eg. #[universes(polymorphic,...)] Record or Inductive
-builtin symb upoly-indt-decl : indt-decl -> upoly-decl -> argument.
+symb upoly-indt-decl : indt-decl -> upoly-decl -> argument.
 % Eg. Definition or Axiom (when the body is none)
-builtin symb const-decl : id -> option term -> arity -> argument.
+symb const-decl : id -> option term -> arity -> argument.
 % Eg. #[universes(polymorphic,...)] Definition or Axiom
-builtin symb upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
+symb upoly-const-decl : id -> option term -> arity -> upoly-decl -> argument.
 % Eg. Context A (b : A).
-builtin symb ctx-decl : context-decl -> argument.
+symb ctx-decl : context-decl -> argument.
 
 % Declaration of inductive types %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -124,19 +124,19 @@ data record-decl.
 % See also the arity->term predicate in coq-lib.elpi
 
 data arity.
-builtin symb parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "1".
-builtin symb arity       : term -> arity.
+symb parameter   : id -> implicit_kind -> term -> (term -> arity) -> arity = "rocq.1".
+symb arity       : term -> arity.
 
-builtin symb parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "2".
-builtin symb inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
-builtin symb minductive  : id -> bool -> arity -> (term -> indt-decl) -> indt-decl. % one type of a mutual block
-builtin symb mblock      : list (list indc-decl) -> indt-decl. % constructor blocks for minductive declarations
-builtin symb record      : id -> term -> id -> record-decl -> indt-decl.
+symb parameter   : id -> implicit_kind -> term -> (term -> indt-decl) -> indt-decl = "rocq.2".
+symb inductive   : id -> bool -> arity -> (term -> list indc-decl) -> indt-decl. % tt means inductive, ff coinductive
+symb minductive  : id -> bool -> arity -> (term -> indt-decl) -> indt-decl. % one type of a mutual block
+symb mblock      : list (list indc-decl) -> indt-decl. % constructor blocks for minductive declarations
+symb record      : id -> term -> id -> record-decl -> indt-decl.
 
-builtin symb constructor : id -> arity -> indc-decl.
+symb constructor : id -> arity -> indc-decl.
 
-builtin symb field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
-builtin symb end-record  : record-decl.
+symb field       : field-attributes -> id -> term -> (term -> record-decl) -> record-decl.
+symb end-record  : record-decl.
 
 % Example.
 % Remark that A is a regular parameter; y is a non-uniform parameter and t
@@ -177,8 +177,8 @@ builtin symb end-record  : record-decl.
 % Context declaration (used as an argument to Elpi commands)
 data context-decl.
 % Eg. (x : T) or (x := B), body is optional, type may be a variable
-builtin symb context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
-builtin symb context-end  : context-decl.
+symb context-item : id -> implicit_kind -> term -> option term -> (term -> context-decl) -> context-decl.
+symb context-end  : context-decl.
 
 typeabbrev field-attributes (list field-attribute).
 
@@ -200,11 +200,11 @@ macro @local!    :- get-option "coq:locality" "local".
 % Where [str "foo", int 3, trm (app[f,x])] is part of <goal>.
 % The encoding of goals is described below.
 % msolve is for tactics that operate on multiple goals (called via all: ).
-builtin pred solve goal -> list sealed-goal.
-builtin pred msolve list sealed-goal -> list sealed-goal.
+pred solve goal -> list sealed-goal.
+pred msolve list sealed-goal -> list sealed-goal.
 
 % Extra arguments for tactics
-builtin symb tac : ltac1-tactic -> argument.
+symb tac : ltac1-tactic -> argument.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coq's terms
@@ -215,34 +215,34 @@ builtin symb tac : ltac1-tactic -> argument.
 % -- terms --------------------------------------------------------------------
 data term.
 
-builtin symb sort    : sort -> term. % Prop, Type@{i}
+symb sort    : sort -> term. % Prop, Type@{i}
 
 % constants: inductive types, inductive constructors, definitions
-builtin symb global  : gref -> term.
-builtin symb pglobal : gref -> univ-instance -> term.
+symb global  : gref -> term.
+symb pglobal : gref -> univ-instance -> term.
 
 % binders: to form functions, arities and local definitions
-builtin symb fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
-builtin symb prod    : name -> term -> (term -> term) -> term.         % forall x : t,
-builtin symb let     : name -> term -> term -> (term -> term) -> term. % let x : T := v in
+symb fun     : name -> term -> (term -> term) -> term.         % fun x : t =>
+symb prod    : name -> term -> (term -> term) -> term.         % forall x : t,
+symb let     : name -> term -> term -> (term -> term) -> term. % let x : T := v in
 
 % other term formers: function application, pattern matching and recursion
-builtin symb app     : list term -> term.                   % app [hd|args]
-builtin symb match   : term -> term -> list term -> term.   % match t p [branch])
-builtin symb fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
-builtin symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno mfix-block
-builtin symb cofix   : name -> term -> (term -> term) -> term.        % cofix name ty bo
-builtin symb mcofix  : int -> mcofix-block -> term.       % mcofix block-idx mcofix-block
+symb app     : list term -> term.                   % app [hd|args]
+symb match   : term -> term -> list term -> term.   % match t p [branch])
+symb fix     : name -> int -> term -> (term -> term) -> term. % fix name rno ty bo
+symb mfix    : int -> int -> mfix-block -> term.  % mfix block-idx rno mfix-block
+symb cofix   : name -> term -> (term -> term) -> term.        % cofix name ty bo
+symb mcofix  : int -> mcofix-block -> term.       % mcofix block-idx mcofix-block
 
-builtin symb primitive : primitive-value -> term.
+symb primitive : primitive-value -> term.
 
 data mfix-block.
-builtin symb mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
-builtin symb mfix-bo : list term -> mfix-block.
+symb mfix-ty : name -> int -> term -> (term -> mfix-block) -> mfix-block. % mfix-ty name rno ty rest
+symb mfix-bo : list term -> mfix-block.
 
 data mcofix-block.
-builtin symb mcofix-ty : name -> term -> (term -> mcofix-block) -> mcofix-block. % mcofix-ty name ty rest
-builtin symb mcofix-bo : list term -> mcofix-block.
+symb mcofix-ty : name -> term -> (term -> mcofix-block) -> mcofix-block. % mcofix-ty name ty rest
+symb mcofix-bo : list term -> mcofix-block.
 
 % Notes about (match Scrutinee TypingFunction Branches) when
 %   Inductive i A : A -> nat -> Type := K : forall a : A, i A a 0
@@ -298,11 +298,11 @@ macro @cast T TY :- (let `cast` TY T x\x).
 % When the program is over, a remaining syntactic constraint like the one above
 % is read back and transformed into the corresponding evar_info.
 
-builtin func decl term -> name, term. % Var Name Ty
-builtin func def  term -> name, term, term. % Var Name Ty Bo
-builtin func cache term -> term.
+func decl term -> name, term. % Var Name Ty
+func def  term -> name, term, term. % Var Name Ty Bo
+func cache term -> term.
 
-builtin func declare-evar list (pred), term, term, term. % Ctx RawEvar Ty Evar
+func declare-evar list (pred), term, term, term. % Ctx RawEvar Ty Evar
 
 :name "default-declare-evar"
 declare-evar Ctx RawEv Ty Ev :-
@@ -312,7 +312,7 @@ declare-evar Ctx RawEv Ty Ev :-
 % to only contain decl, def, pp.  For now no handling rules for this set of
 % constraints other than one to remove a constraint
 
-builtin func rm-evar term, term.
+func rm-evar term, term.
 rm-evar (uvar as X) (uvar as Y):- !, declare_constraint (rm-evar X Y) [X,Y].
 rm-evar _ _.
 
@@ -334,7 +334,7 @@ constraint declare-evar evar def decl cache rm-evar {
 % elaborates to a term of type Ty that gets assigned to E.
 % In tactic mode, elpi/coq-elaborator.elpi wires things up that way.
 
-builtin func evar term, term -> term. % Evar Ty RefinedSolution
+func evar term, term -> term. % Evar Ty RefinedSolution
 evar (uvar as X) T S :- var S _ VL, !,
   prune T VL, prune X VL, declare_constraint (evar X T S) [X, S].
 
@@ -404,11 +404,17 @@ macro @holes! :- get-option "HOAS:holes" tt.
 
 data goal.
 data sealed-goal.
-builtin symb nabla : (term -> sealed-goal) -> sealed-goal.
-builtin symb seal  : goal -> sealed-goal.
+symb nabla : (term -> sealed-goal) -> sealed-goal.
+symb seal  : goal -> sealed-goal.
 
 typeabbrev goal-ctx (list prop).
-builtin symb goal : goal-ctx -> term -> term -> term -> list argument -> goal.
+symb goal : goal-ctx -> term -> term -> term -> list argument -> goal.
+
+% The tacticals coq.ltac.all and coq.ltac.open, whose rules are in
+% elpi-ltac.elpi, are used by the OCaml code to run a tactic on many goals
+pred coq.ltac.all (pred sealed-goal -> list sealed-goal), list sealed-goal -> list sealed-goal.
+:index(_ 1)
+func coq.ltac.open (func goal -> list sealed-goal), sealed-goal -> list sealed-goal.
 
 % A sealed-goal closes with nabla the bound names of a
 % 
@@ -548,15 +554,15 @@ macro @coercion! :- [coercion reversible].
 
 % Attributes for a record field. Can be left unspecified, see defaults
 % below.
-builtin data field-attribute.
-builtin symb coercion  : coercion-status -> field-attribute = "1".  % default off
-builtin symb canonical : bool -> field-attribute = "1".  % default true, if field is named
+data field-attribute.
+symb coercion  : coercion-status -> field-attribute.  % default off
+symb canonical : bool -> field-attribute.  % default true, if field is named
 
 % Status of a record field w.r.t. coercions
-builtin data coercion-status.
-builtin symb regular    : coercion-status = "1". 
-builtin symb reversible : coercion-status = "1". 
-builtin symb off        : coercion-status = "1". 
+data coercion-status.
+symb regular    : coercion-status. 
+symb reversible : coercion-status. 
+symb off        : coercion-status. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -624,10 +630,10 @@ data constructor.
 
 
 % Global objects: inductive types, inductive constructors, definitions
-builtin data gref.
-builtin symb const : constant    -> gref. % Nat.add, List.append, ...
-builtin symb indt  : inductive   -> gref. % nat, list, ...
-builtin symb indc  : constructor -> gref. % O, S, nil, cons, ...
+data gref.
+symb const : constant    -> gref. % Nat.add, List.append, ...
+symb indt  : inductive   -> gref. % nat, list, ...
+symb indc  : constructor -> gref. % O, S, nil, cons, ...
 
 % [id] is a name that matters, we piggy back on Elpi's strings.
 % Note: [name] is a name that does not matter.
@@ -643,11 +649,11 @@ data modtypath.
 
 
 % Result of coq.locate-all
-builtin data located.
-builtin symb loc-gref         : gref -> located = "1". 
-builtin symb loc-modpath      : modpath -> located = "1". 
-builtin symb loc-modtypath    : modtypath -> located = "1". 
-builtin symb loc-abbreviation : abbreviation -> located = "1". 
+data located.
+symb loc-gref         : gref -> located. 
+symb loc-modpath      : modpath -> located. 
+symb loc-modtypath    : modtypath -> located. 
+symb loc-abbreviation : abbreviation -> located. 
 
 % [coq.locate-all Name Located] finds all possible meanings of a string.
 % Does not fail.
@@ -769,15 +775,12 @@ builtin func coq.locate-module id -> modpath.
 builtin func coq.locate-module-type id -> modtypath.
 
 % Contents of a module
-builtin data module-item.
-builtin symb submodule           : modpath -> list module-item ->
-                                   module-item = "1". 
-builtin symb module-type         : modtypath -> module-item = "1". 
-builtin symb gref                : gref -> module-item = "1". 
-builtin symb module-functor      : modpath -> list modtypath ->
-                                   module-item = "1". 
-builtin symb module-type-functor : modtypath -> list modtypath ->
-                                   module-item = "1". 
+data module-item.
+symb submodule           : modpath -> list module-item -> module-item. 
+symb module-type         : modtypath -> module-item. 
+symb gref                : gref -> module-item. 
+symb module-functor      : modpath -> list modtypath -> module-item. 
+symb module-type-functor : modtypath -> list modtypath -> module-item. 
 
 % [coq.env.module MP Contents] lists the contents of a module (recurses on
 % submodules) *E*
@@ -907,10 +910,10 @@ builtin func coq.env.add-indt indt-decl -> inductive.
 % Interactive module construction
 
 % Coq Module inline directive
-builtin data coq.inline.
-builtin symb coq.inline.no      : coq.inline = "1".  % Coq's [no inline] (aka !)
-builtin symb coq.inline.default : coq.inline = "1".  % The default, can be omitted
-builtin symb coq.inline.at      : int -> coq.inline = "1".  % Coq's [inline at <num>]
+data coq.inline.
+symb coq.inline.no      : coq.inline.  % Coq's [no inline] (aka !)
+symb coq.inline.default : coq.inline.  % The default, can be omitted
+symb coq.inline.at      : int -> coq.inline.  % Coq's [inline at <num>]
 
 % [coq.env.fresh-global-id ID FID] Generates an id FID which is fresh in
 % the current module and looks similar to ID, i.e. it is ID concatenated
@@ -1050,10 +1053,10 @@ data univ.
 
 
 % Sorts (kinds of types)
-builtin data sort.
-builtin symb prop  : sort.         % impredicative sort of propositions
-builtin symb sprop : sort.         % impredicative sort of propositions with definitional proof irrelevance
-builtin symb typ   : univ -> sort. % predicative sort of data (carries a universe level)
+data sort.
+symb prop  : sort.         % impredicative sort of propositions
+symb sprop : sort.         % impredicative sort of propositions with definitional proof irrelevance
+symb typ   : univ -> sort. % predicative sort of data (carries a universe level)
 
 % [coq.sort.leq S1 S2] constrains S1 <= S2
 builtin func coq.sort.leq sort, sort.
@@ -1151,25 +1154,25 @@ builtin func coq.univ-instance.unify-leq gref, univ-instance,
 % declared as cumulative.
 
 % Constraint between two universes level variables
-builtin data univ-constraint.
-builtin symb lt : univ.variable -> univ.variable -> univ-constraint = "2". 
-builtin symb le : univ.variable -> univ.variable -> univ-constraint = "1". 
-builtin symb eq : univ.variable -> univ.variable -> univ-constraint = "2". 
+data univ-constraint.
+symb lt : univ.variable -> univ.variable -> univ-constraint = "rocq.1". 
+symb le : univ.variable -> univ.variable -> univ-constraint = "rocq.1". 
+symb eq : univ.variable -> univ.variable -> univ-constraint = "rocq.1". 
 
 % Variance of a universe level variable
-builtin data univ-variance.
-builtin symb auto       : univ.variable -> univ-variance = "1". 
-builtin symb covariant  : univ.variable -> univ-variance = "1". 
-builtin symb invariant  : univ.variable -> univ-variance = "1". 
-builtin symb irrelevant : univ.variable -> univ-variance = "1". 
+data univ-variance.
+symb auto       : univ.variable -> univ-variance. 
+symb covariant  : univ.variable -> univ-variance. 
+symb invariant  : univ.variable -> univ-variance. 
+symb irrelevant : univ.variable -> univ-variance. 
 
 % Constraints for a non-cumulative declaration. Boolean tt means loose
 % (e.g. the '+' in f@{u v + | u < v +})
-builtin data upoly-decl.
-builtin symb upoly-decl       : list univ.variable -> bool ->
-                                list univ-constraint -> bool -> upoly-decl = "1". 
-builtin symb upoly-decl-cumul : list univ-variance -> bool ->
-                                list univ-constraint -> bool -> upoly-decl = "1". 
+data upoly-decl.
+symb upoly-decl       : list univ.variable -> bool ->
+                        list univ-constraint -> bool -> upoly-decl. 
+symb upoly-decl-cumul : list univ-variance -> bool ->
+                        list univ-constraint -> bool -> upoly-decl. 
 
 % -- Primitive --------------------------------------------------------
 
@@ -1189,12 +1192,12 @@ data parray.
 
 
 % Primitive values
-builtin data primitive-value.
-builtin symb uint63  : uint63 -> primitive-value = "1".  % unsigned integers over 63 bits
-builtin symb float64 : float64 -> primitive-value = "1".  % double precision foalting points
-builtin symb pstring : pstring -> primitive-value = "1".  % primitive string
-builtin symb proj    : projection -> int -> primitive-value = "1".  % primitive projection
-builtin symb array   : parray -> primitive-value = "1".  % primitive array
+data primitive-value.
+symb uint63  : uint63 -> primitive-value.  % unsigned integers over 63 bits
+symb float64 : float64 -> primitive-value.  % double precision foalting points
+symb pstring : pstring -> primitive-value.  % primitive string
+symb proj    : projection -> int -> primitive-value.  % primitive projection
+symb array   : parray -> primitive-value.  % primitive array
 
 % [coq.uint63->int U I] Transforms a primitive unsigned integer U into an
 % elpi integer I. Fails if it does not fit.
@@ -1263,15 +1266,15 @@ builtin func coq.parray->list parray -> list term.
 % -- Databases (TC, CS, Coercions) ------------------------------------
 
 % Pattern for canonical values
-builtin data cs-pattern.
-builtin symb cs-gref    : gref -> cs-pattern = "1". 
-builtin symb cs-prod    : cs-pattern = "1". 
-builtin symb cs-default : cs-pattern = "1". 
-builtin symb cs-sort    : sort -> cs-pattern = "1". 
+data cs-pattern.
+symb cs-gref    : gref -> cs-pattern. 
+symb cs-prod    : cs-pattern. 
+symb cs-default : cs-pattern. 
+symb cs-sort    : sort -> cs-pattern. 
 
 % Canonical Structure instances: (cs-instance Proj ValPat Inst)
-builtin data cs-instance.
-builtin symb cs-instance : gref -> cs-pattern -> gref -> cs-instance = "1". 
+data cs-instance.
+symb cs-instance : gref -> cs-pattern -> gref -> cs-instance. 
 
 % [coq.CS.declare-instance GR] Declares GR as a canonical structure
 % instance.
@@ -1298,8 +1301,8 @@ builtin func coq.TC.declare-class gref.
 builtin func coq.elpi.toposort list (pair A (list A)) -> list A.
 
 % Type class instance with priority
-builtin data tc-instance.
-builtin symb tc-instance : gref -> int -> tc-instance = "1". 
+data tc-instance.
+symb tc-instance : gref -> int -> tc-instance. 
 
 % [coq.TC.declare-instance GR Priority] Declare GR as a Global type class
 % instance with Priority.
@@ -1325,14 +1328,14 @@ builtin func coq.TC.get-inst-prio gref, gref -> int.
 builtin func coq.TC.class? gref.
 
 % Node of the coercion graph
-builtin data class.
-builtin symb funclass  : class = "1". 
-builtin symb sortclass : class = "1". 
-builtin symb grefclass : gref -> class = "1". 
+data class.
+symb funclass  : class. 
+symb sortclass : class. 
+symb grefclass : gref -> class. 
 
 % Edge of the coercion graph
-builtin data coercion.
-builtin symb coercion : gref -> int -> gref -> class -> coercion = "2".  % ref, nparams, src, tgt
+data coercion.
+symb coercion : gref -> int -> gref -> class -> coercion = "rocq.1".  % ref, nparams, src, tgt
 
 % [coq.coercion.declare C] Declares C = (coercion GR NParams From To) as a
 % coercion From >-> To.
@@ -1372,10 +1375,10 @@ coq.CS.canonical-projections I L :-
 % 
 
 % Hint Mode
-builtin data hint-mode.
-builtin symb mode-ground : hint-mode = "1".  % No Evar
-builtin symb mode-input  : hint-mode = "1".  % No Head Evar
-builtin symb mode-output : hint-mode = "1".  % Anything
+data hint-mode.
+symb mode-ground : hint-mode.  % No Evar
+symb mode-input  : hint-mode.  % No Head Evar
+symb mode-output : hint-mode.  % Anything
 
 % [coq.hints.add-mode GR DB Mode] Adds a mode declaration to DB about
 % GR.
@@ -1409,10 +1412,10 @@ builtin func coq.hints.add-resolve gref, string, int, term.
 % -- Coq's notational mechanisms -------------------------------------
 
 % Implicit status of an argument
-builtin data implicit_kind.
-builtin symb implicit : implicit_kind = "1".  % regular implicit argument, eg Arguments foo [x]
-builtin symb maximal  : implicit_kind = "1".  % maximally inserted implicit argument, eg Arguments foo {x}
-builtin symb explicit : implicit_kind = "1".  % explicit argument, eg Arguments foo x
+data implicit_kind.
+symb implicit : implicit_kind.  % regular implicit argument, eg Arguments foo [x]
+symb maximal  : implicit_kind.  % maximally inserted implicit argument, eg Arguments foo {x}
+symb explicit : implicit_kind.  % explicit argument, eg Arguments foo x
 
 % [coq.arguments.implicit GR Imps] reads the implicit arguments declarations
 % associated to a global reference. See also the [] and {} flags for the
@@ -1446,9 +1449,9 @@ builtin func coq.arguments.name gref -> list (option id).
 builtin func coq.arguments.set-name gref, list (option id).
 
 % Notation scope depth
-builtin data scope-depth.
-builtin symb deep    : scope-depth = "1". 
-builtin symb shallow : scope-depth = "1". 
+data scope-depth.
+symb deep    : scope-depth. 
+symb shallow : scope-depth. 
 
 % [coq.arguments.scope GR Scopes] reads the notation scope of the arguments
 % of a global reference.
@@ -1468,12 +1471,10 @@ builtin func coq.arguments.set-scope gref,
                                     list (list (pair scope-depth id)).
 
 % Strategy for simplification tactics
-builtin data simplification_strategy.
-builtin symb never        : simplification_strategy = "1".  % Arguments foo : simpl never
-builtin symb when         : list int -> option int ->
-                            simplification_strategy = "1".  % Arguments foo .. / .. ! ..
-builtin symb when-nomatch : list int -> option int ->
-                            simplification_strategy = "1".  % Arguments foo .. / .. ! .. : simpl nomatch
+data simplification_strategy.
+symb never        : simplification_strategy.  % Arguments foo : simpl never
+symb when         : list int -> option int -> simplification_strategy.  % Arguments foo .. / .. ! ..
+symb when-nomatch : list int -> option int -> simplification_strategy.  % Arguments foo .. / .. ! .. : simpl nomatch
 
 % [coq.arguments.simplification GR Strategy] reads the behavior of the
 % simplification tactics. Positions are 0 based. See also the ! and /
@@ -1538,14 +1539,14 @@ builtin func coq.notation.add-abbreviation-for-tactic string, string,
                                                      list argument.
 
 % Generic attribute value
-builtin data attribute-value.
-builtin symb leaf-str : string -> attribute-value = "1". 
-builtin symb leaf-loc : loc -> attribute-value = "1". 
-builtin symb node     : list attribute -> attribute-value = "1". 
+data attribute-value.
+symb leaf-str : string -> attribute-value. 
+symb leaf-loc : loc -> attribute-value. 
+symb node     : list attribute -> attribute-value. 
 
 % Generic attribute
-builtin data attribute.
-builtin symb attribute : string -> attribute-value -> attribute = "1". 
+data attribute.
+symb attribute : string -> attribute-value -> attribute. 
 
 % -- Coq's pretyper ---------------------------------------------------
 
@@ -1603,29 +1604,29 @@ builtin func coq.elaborate-ty-skeleton term -> sort, term, diagnostic.
 % -- Coq's reduction flags    ------------------------------------
 
 % Flags for lazy, cbv, ... reductions
-builtin data coq.redflag.
-builtin symb coq.redflags.beta  : coq.redflag = "2". 
-builtin symb coq.redflags.delta : coq.redflag = "2".  % if set then coq.redflags.const disables unfolding
-builtin symb coq.redflags.match : coq.redflag = "1". 
-builtin symb coq.redflags.fix   : coq.redflag = "1". 
-builtin symb coq.redflags.cofix : coq.redflag = "1". 
-builtin symb coq.redflags.zeta  : coq.redflag = "2". 
-builtin symb coq.redflags.const : constant -> coq.redflag = "1".  % enable/disable unfolding
-builtin symb coq.redflags.proj  : projection -> coq.redflag = "1".  % enable/disable unfolding
+data coq.redflag.
+symb coq.redflags.beta  : coq.redflag. 
+symb coq.redflags.delta : coq.redflag.  % if set then coq.redflags.const disables unfolding
+symb coq.redflags.match : coq.redflag. 
+symb coq.redflags.fix   : coq.redflag. 
+symb coq.redflags.cofix : coq.redflag. 
+symb coq.redflags.zeta  : coq.redflag. 
+symb coq.redflags.const : constant -> coq.redflag.  % enable/disable unfolding
+symb coq.redflags.proj  : projection -> coq.redflag.  % enable/disable unfolding
 
 % Set of flags for lazy, cbv, ... reductions
 data coq.redflags.
 
-builtin symb coq.redflags.nored : coq.redflags = "1".
-builtin symb coq.redflags.zeta : coq.redflags = "1".
-builtin symb coq.redflags.delta : coq.redflags = "1".
-builtin symb coq.redflags.betazeta : coq.redflags = "1".
-builtin symb coq.redflags.betaiotazeta : coq.redflags = "1".
-builtin symb coq.redflags.betaiota : coq.redflags = "1".
-builtin symb coq.redflags.betadeltazeta : coq.redflags = "1".
-builtin symb coq.redflags.beta : coq.redflags = "1".
-builtin symb coq.redflags.allnolet : coq.redflags = "1".
-builtin symb coq.redflags.all : coq.redflags = "1".
+symb coq.redflags.nored : coq.redflags = "rocq.1".
+symb coq.redflags.zeta : coq.redflags = "rocq.1".
+symb coq.redflags.delta : coq.redflags = "rocq.1".
+symb coq.redflags.betazeta : coq.redflags = "rocq.1".
+symb coq.redflags.betaiotazeta : coq.redflags = "rocq.1".
+symb coq.redflags.betaiota : coq.redflags = "rocq.1".
+symb coq.redflags.betadeltazeta : coq.redflags = "rocq.1".
+symb coq.redflags.beta : coq.redflags = "rocq.1".
+symb coq.redflags.allnolet : coq.redflags = "rocq.1".
+symb coq.redflags.all : coq.redflags = "rocq.1".
 
 % [coq.redflags.add Flags Options NewFlags] Updates reduction Flags by
 % adding Options
@@ -1699,10 +1700,10 @@ builtin func coq.reduction.eta-contract term -> term.
 
 % Strategy for conversion test
 % expand < ... < level -1 < level 0 < level 1 < ... < opaque
-builtin data conversion_strategy.
-builtin symb opaque : conversion_strategy = "1". 
-builtin symb expand : conversion_strategy = "1". 
-builtin symb level  : int -> conversion_strategy = "1".  % default is 0, aka transparent
+data conversion_strategy.
+symb opaque : conversion_strategy. 
+symb expand : conversion_strategy. 
+symb level  : int -> conversion_strategy.  % default is 0, aka transparent
 
 % [coq.strategy.set CL Level] Sets the unfolding priority for all the
 % constants in the list CL. See the command Strategy.
@@ -1829,10 +1830,10 @@ builtin func coq.ltac.fresh-id id, term -> id.
 % -- Coq's options system --------------------------------------------
 
 % Coq option value
-builtin data coq.option.
-builtin symb coq.option.int    : option int -> coq.option = "1".  % none means unset
-builtin symb coq.option.string : option string -> coq.option = "1".  % none means unset
-builtin symb coq.option.bool   : bool -> coq.option = "1". 
+data coq.option.
+symb coq.option.int    : option int -> coq.option.  % none means unset
+symb coq.option.string : option string -> coq.option.  % none means unset
+symb coq.option.bool   : bool -> coq.option. 
 
 % [coq.option.get Option Value] reads Option. Reading a non existing option
 % is a fatal error.
@@ -1960,41 +1961,41 @@ builtin func coq.goal->pp goal -> coq.pp.
 % -- Register -----------------------------------------------
 
 % Coq scheme kind (currently undocumented in Rocq)
-builtin data coq.register.scheme-kind.
-builtin symb coq.register.scheme.rect_dep       : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rec_dep        : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.ind_dep        : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.sind_dep       : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rect_nodep     : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rec_nodep      : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.ind_nodep      : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.sind_nodep     : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.case_dep       : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.case_nodep     : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.casep_dep      : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.casep_nodep    : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.sym_internal   : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.sym_involutive : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rew_r_dep      : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rew_dep        : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rew_fwd_dep    : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rew_fwd_r_dep  : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rew_r          : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.rew            : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.congr          : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.beq            : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.dec_bl         : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.dec_lb         : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.eq_dec         : coq.register.scheme-kind = "1". 
-builtin symb coq.register.scheme.other          : string ->
-                                                  coq.register.scheme-kind = "1". 
+data coq.register.scheme-kind.
+symb coq.register.scheme.rect_dep       : coq.register.scheme-kind. 
+symb coq.register.scheme.rec_dep        : coq.register.scheme-kind. 
+symb coq.register.scheme.ind_dep        : coq.register.scheme-kind. 
+symb coq.register.scheme.sind_dep       : coq.register.scheme-kind. 
+symb coq.register.scheme.rect_nodep     : coq.register.scheme-kind. 
+symb coq.register.scheme.rec_nodep      : coq.register.scheme-kind. 
+symb coq.register.scheme.ind_nodep      : coq.register.scheme-kind. 
+symb coq.register.scheme.sind_nodep     : coq.register.scheme-kind. 
+symb coq.register.scheme.case_dep       : coq.register.scheme-kind. 
+symb coq.register.scheme.case_nodep     : coq.register.scheme-kind. 
+symb coq.register.scheme.casep_dep      : coq.register.scheme-kind. 
+symb coq.register.scheme.casep_nodep    : coq.register.scheme-kind. 
+symb coq.register.scheme.sym_internal   : coq.register.scheme-kind. 
+symb coq.register.scheme.sym_involutive : coq.register.scheme-kind. 
+symb coq.register.scheme.rew_r_dep      : coq.register.scheme-kind. 
+symb coq.register.scheme.rew_dep        : coq.register.scheme-kind. 
+symb coq.register.scheme.rew_fwd_dep    : coq.register.scheme-kind. 
+symb coq.register.scheme.rew_fwd_r_dep  : coq.register.scheme-kind. 
+symb coq.register.scheme.rew_r          : coq.register.scheme-kind. 
+symb coq.register.scheme.rew            : coq.register.scheme-kind. 
+symb coq.register.scheme.congr          : coq.register.scheme-kind. 
+symb coq.register.scheme.beq            : coq.register.scheme-kind. 
+symb coq.register.scheme.dec_bl         : coq.register.scheme-kind. 
+symb coq.register.scheme.dec_lb         : coq.register.scheme-kind. 
+symb coq.register.scheme.eq_dec         : coq.register.scheme-kind. 
+symb coq.register.scheme.other          : string ->
+                                          coq.register.scheme-kind. 
 
 % Coq register value
-builtin data coq.register.
-builtin symb coq.register.inline : coq.register = "1". 
-builtin symb coq.register.lib    : string -> coq.register = "1". 
-builtin symb coq.register.scheme : gref -> coq.register.scheme-kind ->
-                                   coq.register = "1". 
+data coq.register.
+symb coq.register.inline : coq.register. 
+symb coq.register.lib    : string -> coq.register. 
+symb coq.register.scheme : gref -> coq.register.scheme-kind ->
+                           coq.register. 
 
 % [coq.register GR R] Registers GR as R (See Register Inline, Register
 % Scheme)
@@ -2021,22 +2022,22 @@ builtin func coq.extra-dep id -> option id.
 % that is exactly what one would load in the context using =>.
 % 
 % The name and the grafting specification can be left unspecified.
-builtin data clause.
-builtin symb clause : id -> grafting -> prop -> clause = "1". 
+data clause.
+symb clause : id -> grafting -> prop -> clause. 
 
 % Specify if the clause has to be grafted before, grafted after or replace
 % a named clause
-builtin data grafting.
-builtin symb before  : id -> grafting = "1". 
-builtin symb after   : id -> grafting = "1". 
-builtin symb remove  : id -> grafting = "1". 
-builtin symb replace : id -> grafting = "1". 
+data grafting.
+symb before  : id -> grafting. 
+symb after   : id -> grafting. 
+symb remove  : id -> grafting. 
+symb replace : id -> grafting. 
 
 % Specify to which module the clause should be attached to
-builtin data scope.
-builtin symb execution-site : scope = "1".  % The module inside which the Elpi program is run
-builtin symb current        : scope = "1".  % The module being defined (see begin/end-module)
-builtin symb library        : scope = "1".  % The outermost module (carrying the file name)
+data scope.
+symb execution-site : scope.  % The module inside which the Elpi program is run
+symb current        : scope.  % The module being defined (see begin/end-module)
+symb library        : scope.  % The outermost module (carrying the file name)
 
 
 % see coq.elpi.accumulate-clauses
@@ -2071,9 +2072,9 @@ coq.elpi.accumulate S N C :- coq.elpi.accumulate-clauses S N [C].
 builtin func coq.elpi.accumulate-clauses scope, id, list clause.
 
 % Specify if a predicate argument is in input or output mode
-builtin data argument_mode.
-builtin symb in  : argument_mode = "1". 
-builtin symb out : argument_mode = "1". 
+data argument_mode.
+symb in  : argument_mode. 
+symb out : argument_mode. 
 
 % [coq.elpi.add-predicate Functional Db Indexing PredName Spec] Declares a
 % new predicate PredName in the data base Db.
@@ -2100,19 +2101,19 @@ builtin func coq.elpi.predicate string, list any -> prop.
 % -- Synterp ----------------------------------------------------------
 
 % Action executed during the parsing phase (aka synterp)
-builtin data synterp-action.
-builtin symb begin-module              : id -> synterp-action = "1". 
-builtin symb begin-module-type         : id -> synterp-action = "1". 
-builtin symb begin-section             : id -> synterp-action = "1". 
-builtin symb end-module                : modpath -> synterp-action = "1". 
-builtin symb end-module-type           : modtypath -> synterp-action = "1". 
-builtin symb end-section               : synterp-action = "1". 
-builtin symb apply-module-functor      : id -> synterp-action = "1". 
-builtin symb apply-module-type-functor : id -> synterp-action = "1". 
-builtin symb include-module            : modpath -> synterp-action = "1". 
-builtin symb include-module-type       : modtypath -> synterp-action = "1". 
-builtin symb import-module             : modpath -> synterp-action = "1". 
-builtin symb export-module             : modpath -> synterp-action = "1". 
+data synterp-action.
+symb begin-module              : id -> synterp-action. 
+symb begin-module-type         : id -> synterp-action. 
+symb begin-section             : id -> synterp-action. 
+symb end-module                : modpath -> synterp-action. 
+symb end-module-type           : modtypath -> synterp-action. 
+symb end-section               : synterp-action. 
+symb apply-module-functor      : id -> synterp-action. 
+symb apply-module-type-functor : id -> synterp-action. 
+symb include-module            : modpath -> synterp-action. 
+symb include-module-type       : modtypath -> synterp-action. 
+symb import-module             : modpath -> synterp-action. 
+symb export-module             : modpath -> synterp-action. 
 
 % Synterp action group
 data group.
@@ -2453,11 +2454,11 @@ builtin func coq.univ.variable.map.fold coq.univ.variable.map A, C,
 % - Horizontal or Vertical block: breaks lead to new line only when
 %   necessary to print the content of the block (the contents flow
 %   inside the box)
-builtin data coq.pp.box.
-builtin symb coq.pp.v   : int -> coq.pp.box = "1". 
-builtin symb coq.pp.h   : coq.pp.box = "1". 
-builtin symb coq.pp.hv  : int -> coq.pp.box = "1". 
-builtin symb coq.pp.hov : int -> coq.pp.box = "1". 
+data coq.pp.box.
+symb coq.pp.v   : int -> coq.pp.box. 
+symb coq.pp.h   : coq.pp.box. 
+symb coq.pp.hv  : int -> coq.pp.box. 
+symb coq.pp.hov : int -> coq.pp.box. 
 
 % Coq box model for pretty printing. Items:
 % - empty
@@ -2470,16 +2471,16 @@ builtin symb coq.pp.hov : int -> coq.pp.box = "1".
 % - comment: embedded \\n are turned into nl (see below)
 % - tag: ignored
 % - nl: break the line (should not be used)
-builtin data coq.pp.
-builtin symb coq.pp.empty   : coq.pp = "1". 
-builtin symb coq.pp.spc     : coq.pp = "1". 
-builtin symb coq.pp.str     : string -> coq.pp = "1". 
-builtin symb coq.pp.brk     : int -> int -> coq.pp = "1". 
-builtin symb coq.pp.glue    : list coq.pp -> coq.pp = "1". 
-builtin symb coq.pp.box     : coq.pp.box -> list coq.pp -> coq.pp = "1". 
-builtin symb coq.pp.comment : list string -> coq.pp = "1". 
-builtin symb coq.pp.tag     : string -> coq.pp -> coq.pp = "1". 
-builtin symb coq.pp.nl      : coq.pp = "1". 
+data coq.pp.
+symb coq.pp.empty   : coq.pp. 
+symb coq.pp.spc     : coq.pp. 
+symb coq.pp.str     : string -> coq.pp. 
+symb coq.pp.brk     : int -> int -> coq.pp. 
+symb coq.pp.glue    : list coq.pp -> coq.pp. 
+symb coq.pp.box     : coq.pp.box -> list coq.pp -> coq.pp. 
+symb coq.pp.comment : list string -> coq.pp. 
+symb coq.pp.tag     : string -> coq.pp -> coq.pp. 
+symb coq.pp.nl      : coq.pp. 
 
 % [coq.pp->string B S] Prints a pp.t box expression B to a string S
 % Supported attributes:

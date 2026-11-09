@@ -31,7 +31,7 @@ module B = struct
     { CConv.embed; readback;
       ty = TyApp ("list",d.CConv.ty,[]);
       pp;
-      pp_doc = (fun fmt () -> ()) }
+      pp_doc = (fun fmt () -> ()); constants = []; }
 
 end
 module Pred = API.BuiltInPredicate
@@ -284,6 +284,7 @@ let term = {
   pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr;
   embed = constr2lp;
+  constants = [];
 }
 let failsafe_term = {
   CConv.ty = Conv.TyName "term";
@@ -291,6 +292,7 @@ let failsafe_term = {
   pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = (fun ~depth coq_ctx csts s t -> lp2constr ~depth { coq_ctx with options = { coq_ctx.options with failsafe = true }} csts s t);
   embed = constr2lp;
+  constants = [];
 }
 
 let proof_context : (full conv_context, API.Data.constraints) CConv.ctx_readback =
@@ -303,7 +305,8 @@ let closed_term = {
   pp_doc = (fun fmt () -> Format.fprintf fmt "A closed Coq term");
   pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr_closed;
-  embed = constr2lp_closed
+  embed = constr2lp_closed;
+  constants = [];
 }
 let global : (empty conv_context, API.Data.constraints) CConv.ctx_readback =
   fun ~depth hyps constraints state ->
@@ -315,7 +318,8 @@ let closed_ground_term = {
   pp_doc = (fun fmt () -> Format.fprintf fmt "A ground, closed, Coq term");
   pp = (fun fmt t -> Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_econstr_env (Global.env()) Evd.empty t)));
   readback = lp2constr_closed_ground;
-  embed = constr2lp_closed_ground
+  embed = constr2lp_closed_ground;
+  constants = [];
 }
 
 let term_skeleton =  {
@@ -327,6 +331,7 @@ let term_skeleton =  {
       Format.fprintf fmt "@[%a@]" Pp.pp_with ( (Printer.pr_glob_constr_env env sigma t)));
   readback = lp2skeleton;
   embed = (fun ~depth _ _ _ _ -> assert false);
+  constants = [];
 }
 
 let sealed_goal = {
@@ -335,6 +340,7 @@ let sealed_goal = {
   pp = (fun fmt _ -> Format.fprintf fmt "TODO");
   embed = sealed_goal2lp;
   readback = (fun ~depth _ _ -> assert false);
+  constants = [];
 }
 
 type goal = {
@@ -373,7 +379,8 @@ let goal : ( goal , API.Data.hyps, API.Data.constraints) CConv.t = {
   pp_doc = (fun fmt () -> ());
   pp = (fun fmt _ -> Format.fprintf fmt "TODO");
   embed = goal_embed;
-  readback = (fun ~depth hyps csts st g -> goal_readback ~depth (E.of_hyps hyps) csts st g)
+  readback = (fun ~depth hyps csts st g -> goal_readback ~depth (E.of_hyps hyps) csts st g);
+  constants = [];
 }
 let goal' : ( goal , Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context , API.Data.constraints) CConv.t = {
   CConv.ty = Conv.TyName "goal";
@@ -381,6 +388,7 @@ let goal' : ( goal , Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context , API.Data.
   pp = (fun fmt _ -> Format.fprintf fmt "TODO");
   embed = (fun ~depth hyps csts state x -> goal_embed ~depth hyps.hyps csts state x);
   readback = (fun ~depth hyps csts state g -> goal_readback ~depth hyps.hyps csts state g);
+  constants = [];
 }
 
 let tactic_arg : (Rocq_elpi_arg_HOAS.coq_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context, API.Data.constraints) CConv.t = {
@@ -389,6 +397,7 @@ let tactic_arg : (Rocq_elpi_arg_HOAS.coq_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS
   pp = (fun fmt _ -> Format.fprintf fmt "TODO");
   embed = (fun ~depth _ _ _ _ -> assert false);
   readback = Rocq_elpi_arg_HOAS.in_coq_arg;
+  constants = [];
 }
 
 let goals_of_term state proof_context proof =
@@ -438,6 +447,7 @@ let indt_decl_in = {
   pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
   readback = (fun ~depth ctx csts state t -> lp2inductive_entry ~depth ctx csts state t);
   embed = (fun ~depth ctx csts state t -> assert false);
+  constants = [];
 }
 let indt_decl_out = {
   CConv.ty = Conv.TyName "indt-decl";
@@ -445,6 +455,7 @@ let indt_decl_out = {
   pp = (fun fmt _ -> Format.fprintf fmt "mutual_inductive_entry");
   readback = (fun ~depth ctx csts state t -> assert false);
   embed = (fun ~depth ctx csts state t -> inductive_decl2lp ~depth ctx csts state t);
+  constants = [];
 }
 
 let is_ground sigma t = Evar.Set.is_empty (Evd.evars_of_term sigma t)
@@ -909,7 +920,8 @@ let src_class_of_class env = function
   | Coercionops.CL_IND i -> GlobRef.IndRef i
   | Coercionops.CL_PROJ p -> GlobRef.ConstRef (get_projection_constant env p)
 
-let coercion = let open Conv in let open API.AlgebraicData in declare {
+(* coercion is also a constructor of field-attribute *)
+let coercion = let open Conv in let open API.AlgebraicData in declare ~variant:"rocq.1" {
   ty = TyName "coercion";
   doc = "Edge of the coercion graph";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");
@@ -1553,6 +1565,7 @@ let hint_db : (string * Hints.Hint_db.t) Conv.t = {
     let state, x, _ = B.string.Conv.readback ~depth x state in
     state,(x, find_hint_db x),[]);
   embed = (fun ~depth _ _ -> assert false);
+  constants = B.string.Conv.constants;
 }
 
 let hint_locality (options : options) =
@@ -1721,7 +1734,9 @@ let coq_header_builtins =
 
 |};
   LPCode Rocq_elpi_builtins_arg_HOAS.code;
+  MLConstants Rocq_elpi_arg_HOAS.arg_hoas_constants;
   LPCode Rocq_elpi_builtins_HOAS.code;
+  MLConstants (Rocq_elpi_arg_HOAS.tacc :: Rocq_elpi_HOAS.hoas_constants);
   MLData Rocq_elpi_HOAS.record_field_att;
   MLData Rocq_elpi_HOAS.coercion_status;
 

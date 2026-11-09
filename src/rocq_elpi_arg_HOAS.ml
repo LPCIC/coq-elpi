@@ -945,6 +945,20 @@ let tacc = E.Constants.declare_global_symbol "tac"
 let intc = E.Constants.declare_global_symbol "int"
 let ctxc = E.Constants.declare_global_symbol "ctx-decl"
 
+let mainc = E.Constants.declare_global_symbol "main"
+let main_interpc = E.Constants.declare_global_symbol "main-interp"
+let main_interp_proofc = E.Constants.declare_global_symbol "main-interp-proof"
+let main_interp_qedc = E.Constants.declare_global_symbol "main-interp-qed"
+let main_synterpc = E.Constants.declare_global_symbol "main-synterp"
+let attributesc = E.Constants.declare_global_symbol "attributes"
+
+(* the global symbols declared in coq-arg-HOAS.elpi: data constructors, and
+   predicates whose rules are in Elpi *)
+let arg_hoas_constants = Rocq_elpi_HOAS.arg_hoas_constants @ [
+  mainc; main_interpc; main_interp_proofc; main_interp_qedc; main_synterpc;
+  attributesc; intc; strc; trmc; open_trmc; cdeclc; ucdeclc; ctxc;
+  ctxitemc; ctxendc ]
+
 let my_cast_to_string v =
   let open Ltac_plugin in
   try Taccoerce.Value.cast (Genarg.topwit Stdarg.wit_string) v
