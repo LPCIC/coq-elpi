@@ -15,7 +15,7 @@ let listC (d : ('a,'h,'cst) ContextualConversion.t) =
   { ContextualConversion.embed; readback;
     ty = TyApp ("list",d.ContextualConversion.ty,[]);
     pp;
-    pp_doc = (fun fmt () -> ()) }
+    pp_doc = (fun fmt () -> ()); constants = []; }
 
 
 open BuiltInData

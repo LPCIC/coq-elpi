@@ -134,8 +134,7 @@ pred try tactic, sealed-goal -> list sealed-goal.
 try T G GS :- T G GS.
 try _ G [G].
 
-:external
-pred all tactic, list sealed-goal -> list sealed-goal.
+% pred all tactic, list sealed-goal -> list sealed-goal. (in coq-HOAS.elpi)
 all T [G|Gs] O :- T G O1, all T Gs O2, std.append O1 O2 O.
 all _ [] [].
 
@@ -154,9 +153,7 @@ repeat! _ G [G].
 pred or list tactic, sealed-goal -> list sealed-goal.
 or TL G GS :- std.exists TL (t\ t G GS).
 
-% :index (_ 1) TODO
-:external :index(_ 1)
-func open func-open-tactic, sealed-goal -> list sealed-goal.
+% func open func-open-tactic, sealed-goal -> list sealed-goal. (in coq-HOAS.elpi)
 open T (nabla G) O :- (pi x\ open T (G x) (NG x)), private.distribute-nabla NG O.
 open _ (seal (goal _ _ _ Solution _)) [] :- not (var Solution), !. % solved by side effect
 open T (seal (goal Ctx _ _ _ _ as G)) O :-
