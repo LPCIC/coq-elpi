@@ -1,0 +1,63 @@
+pred binary_search i:K i:(pred i:K i:K o:cmp) i:int i:int i:list K o:int o:bool.
+binary_search A Cmp L R XS Out Approx :-
+  if (le_ L R)
+   	(M is L + ((R - L) div 2),
+   	std.nth M XS X,
+   	Cmp X A C,
+    !,
+   	if (C = lt)
+ 	     (!, binary_search A Cmp (M + 1) R XS Out Approx)
+ 	     (if (C = gt)
+ 	         (!, binary_search A Cmp L (M - 1) XS Out Approx)
+ 	         (!, Out is M, Approx = ff)))
+ 	  (Out is L, Approx = tt)
+    , !.
+
+kind custom_map type -> type -> type.
+type custom_map list (pair K V) -> (pred i:K i:K o:cmp) -> custom_map K V.
+
+pred custom_make i:(pred i:K, i:K, o:cmp), o:custom_map K V.
+custom_make Cmp (custom_map [] Cmp).
+
+pred cmp_fst_pair i:(pred i:K i:K o:cmp) i:pair K V i:pair K V o:cmp.
+cmp_fst_pair Cmp (pr K1 _) (pr K2 _) C :- Cmp K1 K2 C.
+
+pred custom_find i:K, i:custom_map K V, o:V.
+custom_find K (custom_map M Cmp) V :-
+  std.length M Len,
+  binary_search (pr K (_ /* dummy value */)) (cmp_fst_pair Cmp) 0 (Len - 1) M I ff,
+  !,
+  std.nth I M (pr KK V),
+  Cmp KK K eq,
+  !.
+
+pred insert_index i:int i:V i:list V o:list V.
+%% insert_index I V L O :- /* std.append F [ (pr K VI) | T  ] M1 */
+%%   std.split-at I L F T,
+%%   !,
+%%   std.append F [ V | T ] O.
+insert_index 0 V L [ V | L ].
+insert_index N V [ X | L ] [ X | O ] :-
+  NN is N - 1,
+  insert_index NN V L O.
+
+pred update_index i:int i:V i:list V o:list V.
+%% update_index I V L O :- /* T = [ pr KK _ | VS ] , Cmp KK K eq , std.append F [ (pr K VI) | VS ] M1 */
+%%   std.split-at I L F [ _ | T ],
+%%   !,
+%%   std.append F [ V | T ] O.
+update_index 0 V [ _ | L ] [ V | L ] :- !.
+update_index N V [ X | L ] [ X | O ] :-
+  NN is N - 1,
+  !,
+  update_index NN V L O,
+  !.
+
+pred custom_add i:K, i:V, i:custom_map K V, o:custom_map K V.
+custom_add K V (custom_map M Cmp) (custom_map M1 Cmp) :-
+  std.length M Len,
+  binary_search (pr K (_ /* dummy value */)) (cmp_fst_pair Cmp) 0 (Len - 1) M I Approx,
+  if (Approx = tt)
+     (insert_index I (pr K V) M M1) /* insert */
+     (update_index I (pr K V) M M1 ) /* update */
+  , !.
