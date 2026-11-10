@@ -2,6 +2,10 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "param1".
+accumulate "param1_functor.db".
+accumulate "induction.db".
+
 shorten std.{do!, assert!, last, appendR, rev, map}.
 
 namespace derive.induction {

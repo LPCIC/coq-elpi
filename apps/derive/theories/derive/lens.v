@@ -3,8 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "lens.elpi" as lens.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "lens.db.elpi" as lensdb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Export derive.
@@ -30,14 +29,10 @@ Definition compose {a b c d e f} (l1 : Lens a b c d) (l2 : Lens c d e f) : Lens 
 Register compose as elpi.derive.lens.compose.
 
 (* Links the record, a field name (projection) and the lens focusing on that field *)
-Elpi Db derive.lens.db lp:{{
-  pred lens-db -> inductive, constant, constant.
-}}.
+Elpi Db derive.lens.db lp:{{ accumulate "elpi.apps.derive.elpi/lens.db". }}.
 
 (* standalone command *)
 Elpi Command derive.lens.
-Elpi Accumulate Db Header derive.lens.db.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate File lens.
 Elpi Accumulate Db derive.lens.db.
 Elpi Accumulate lp:{{ 

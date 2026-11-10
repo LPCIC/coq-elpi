@@ -1,24 +1,10 @@
 From elpi.apps.NES.elpi Extra Dependency "nes_synterp.elpi" as nes_synterp.
 From elpi.apps.NES.elpi Extra Dependency "nes_interp.elpi" as nes_interp.
+From elpi.apps.NES.elpi Extra Dependency "NES.db.elpi" as NESdb.
 
 From elpi Require Import elpi.
 
-#[phase="both"] Elpi Db NES.db lp:{{
-
-typeabbrev path (list string).
-
-:index (2)
-pred ns -> list string, modpath.
-
-}}.
-
-#[synterp] Elpi Accumulate NES.db lp:{{
-
-pred open-ns -> string, list string.
-:name "open-ns:begin"
-open-ns _ _ :- fail.
-
-}}.
+#[phase="both"] Elpi Db NES.db lp:{{ accumulate "elpi.apps.NES.elpi/NES.db". }}.
 
 Elpi Command NES.Status.
 #[synterp] Elpi Accumulate Db NES.db.

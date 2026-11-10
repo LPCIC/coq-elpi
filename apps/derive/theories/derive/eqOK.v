@@ -6,23 +6,20 @@
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive.elpi Extra Dependency "eqOK.elpi" as eqOK.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqOK.db.elpi" as eqOKdb.
+From elpi.apps.derive.elpi Extra Dependency "eqcorrect.db.elpi" as eqcorrectdb.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param1_trivial.db.elpi" as param1_trivialdb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From elpi.apps Require Import derive.param1 derive.param1_congr derive.param1_trivial derive.eqK derive.eqcorrect.
 
-Elpi Db derive.eqOK.db lp:{{
-  pred eqOK-done inductive.
-}}.
+Elpi Db derive.eqOK.db lp:{{ accumulate "elpi.apps.derive.elpi/eqOK.db". }}.
 
 
 (* standalone *)
 Elpi Command derive.eqOK.
-Elpi Accumulate File derive_hook.
-Elpi Accumulate File paramX.
-Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.trivial.db.

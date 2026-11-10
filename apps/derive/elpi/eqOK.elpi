@@ -2,6 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "param1".
+accumulate "param1_trivial.db".
+accumulate "eqcorrect.db".
+accumulate "eqOK.db".
+
 shorten std.{assert!, do!}.
 
 namespace derive.eqOK {

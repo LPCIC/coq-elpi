@@ -1,0 +1,10 @@
+% this is how one registers the fields_t, fields and construct[P]
+% constants to an inductive and let other elpi commands use that piece of info
+pred fields-for
+  o:inductive,
+  o:constant, % fields_t
+  o:constant, % fields
+  o:constant, % construct
+  o:constant. % constructP
+
+func box-for constructor -> inductive, constructor.

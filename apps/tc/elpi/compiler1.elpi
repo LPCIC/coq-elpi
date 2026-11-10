@@ -1,6 +1,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "ho_compile".
+accumulate "modes".
+
 namespace tc {
   % returns the classes on which the current gref depends
   func get-class-dependencies gref -> list gref.

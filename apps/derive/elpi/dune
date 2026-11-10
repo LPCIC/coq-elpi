@@ -17,3 +17,11 @@
   (glob_files (*.elpi with_prefix coq/user-contrib/elpi/apps/derive/elpi/)))
  (section lib_root)
  (package rocq-elpi))
+
+; also in the findlib directory of rocq-elpi, for an elpi.toml outside
+; rocq-elpi: "elpi.apps.derive.elpi" = "@rocq-elpi/derive"
+(install
+ (files
+  (glob_files (*.elpi with_prefix derive/)))
+ (section lib)
+ (package rocq-elpi))

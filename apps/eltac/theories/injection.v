@@ -1,4 +1,5 @@
 From elpi.apps.derive.elpi Extra Dependency "injection.elpi" as injection.
+From elpi.apps.derive.elpi Extra Dependency "projK.db.elpi" as projKdb.
 
 From elpi.apps Require Export derive.projK derive.bcongr.
 

@@ -1,7 +1,9 @@
-
 /* Boolean congruence lemmas                                                 */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+
+accumulate "injection".
+accumulate "bcongr.db".
 
 shorten std.{nth, map2, assert!, rev, do!}.
 

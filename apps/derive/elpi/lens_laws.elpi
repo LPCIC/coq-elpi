@@ -2,6 +2,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "lens.db".
+accumulate "lens_laws.db".
+
 namespace derive.lens-laws {
 
 func declare-law1 string, (pred).

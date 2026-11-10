@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "param1_inhab".
+
 shorten std.{assert!, do!, drop-last}.
 
 namespace derive.param1.trivial {

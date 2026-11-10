@@ -1,3 +1,5 @@
+accumulate "tc.db".
+
 % [Typeclass, Coq Instances, Elpi Instances]
 % the instances of the given typeclass should be in the same order as Coq
 func correct_instance_order_aux gref, (list tc-instance), (list gref).

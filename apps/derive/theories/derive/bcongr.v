@@ -5,8 +5,8 @@
 
 From elpi.apps.derive.elpi Extra Dependency "injection.elpi" as injection.
 From elpi.apps.derive.elpi Extra Dependency "bcongr.elpi" as bcongr.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "bcongr.db.elpi" as bcongrdb.
+From elpi.apps.derive.elpi Extra Dependency "projK.db.elpi" as projKdb.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.
@@ -20,26 +20,12 @@ Defined.
 
 Register eq_f as elpi.derive.eq_f.
 
-Elpi Db derive.bcongr.db lp:{{
-
-func bcongr-db constructor -> term.
-
-}}.
-#[superglobal] Elpi Accumulate derive.bcongr.db lp:{{
-
-:name "bcongr-db:fail"
-bcongr-db K _ :-
-  M is "derive.bcongr: can't find the boolean congruence for constructor " ^ {std.any->string K},
-  stop M.
-
-}}.
+Elpi Db derive.bcongr.db lp:{{ accumulate "elpi.apps.derive.elpi/bcongr.db". }}.
 
 (* standalone *)
 Elpi Command derive.bcongr.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.bcongr.db.
 Elpi Accumulate Db derive.projK.db.
-Elpi Accumulate File injection.
 Elpi Accumulate File bcongr.
 Elpi Accumulate lp:{{
   main [str I] :- !,
@@ -57,7 +43,6 @@ Elpi Accumulate lp:{{
       
 (* hook into derive *)
 Elpi Accumulate derive Db derive.bcongr.db.
-Elpi Accumulate derive File injection.
 Elpi Accumulate derive File bcongr.
 
 #[phases="both"] Elpi Accumulate derive lp:{{

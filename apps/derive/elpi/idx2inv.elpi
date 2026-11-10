@@ -2,6 +2,10 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "param1_functor".
+accumulate "invert.db".
+accumulate "idx2inv.db".
+
 shorten std.{last, assert!, do!}.
 
 namespace derive.idx2inv {

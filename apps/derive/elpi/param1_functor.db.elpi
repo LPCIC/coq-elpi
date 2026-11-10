@@ -1,0 +1,2 @@
+func param1-functor-db term, term -> term.
+func param1-functor-for inductive -> gref, list bool.

@@ -42,6 +42,12 @@
  (depends rocq-elpi elpi-json))
 
 (package
+ (name elpi-rocq-shim)
+ (synopsis "An approximation of the quotations of rocq-elpi, without Rocq")
+ (description "The plugin rocq-shim, preloaded by the elpi.toml of rocq-elpi, lets elpi-lsp check the Elpi files of rocq-elpi outside Rocq: a {{ ... }} is not parsed, only its antiquotations are")
+ (depends elpi))
+
+(package
  (name rocq-elpi-xml)
  (synopsis "Xml-light bindings for rocq-elpi")
  (description "DThis package provides basic support for reading xml files from Elpi programs running in Rocq")

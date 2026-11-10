@@ -1,0 +1,6 @@
+; an approximation of the quotations of rocq-elpi, without Rocq: the plugin
+; rocq-shim that elpi.toml preloads in elpi-lsp
+(library
+ (name elpi_rocq_shim)
+ (public_name elpi-rocq-shim)
+ (libraries elpi))

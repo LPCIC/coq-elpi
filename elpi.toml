@@ -1,0 +1,22 @@
+# The project of the Elpi files of rocq-elpi, for elpi-lsp (outside Rocq).
+# The prelude, given to each document as its builtins (as Rocq does), is the
+# plugin rocq-shim (findlib package elpi-rocq-shim, preloaded) that
+# approximates the quotations of rocq-elpi: a {{ ... }} is not parsed, only
+# its antiquotations lp:X, lp:(F x) and lp:{{ ... }} are; then the
+# documentation of the builtins (builtin-doc), whose OCaml code is not here:
+# its macros (@pi-decl ...) are seen by every file. coq-builtin-synterp.elpi
+# is left out: it repeats a part of coq-builtin.elpi, with some differences.
+name = "rocq"
+prelude = ["+rocq-shim", "+/builtin-doc/coq-builtin", "+/elpi/elpi-command-template"]
+preload = ["rocq-shim"]
+
+[warnings]
+flex-clause = "off"
+
+# the logical paths (as Rocq's -Q) used by an accumulate of an .elpi file, e.g.
+# accumulate "elpi_elpi/coq-lib" reads elpi/coq-lib.elpi. A relative accumulate
+# is looked up in the directory of the accumulating file, and needs no entry.
+[paths]
+"elpi_elpi"             = "+/elpi"
+"elpi.apps.derive.elpi" = "+/apps/derive/elpi"
+"elpi.tests"            = "+/tests"

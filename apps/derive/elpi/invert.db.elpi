@@ -1,0 +1,1 @@
+type invert-db gref -> gref -> prop. 

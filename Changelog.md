@@ -17,7 +17,20 @@ Requires the next Elpi (checked `builtin` declarations).
   package `elpi-pkg`) on demand, with no `Declare ML Module`; `"+pkg/file"`
   is a file of the package
 
+### Vernacular:
+- `accumulate "file"` in a file looks first for `file.elpi` in the directory
+  of that file, as Elpi does, then as a logical path
+
+### Install:
+- the Elpi files of rocq-elpi (`elpi/`, and the ones of derive as `derive/`)
+  and `coq-builtin.elpi` are also installed in the findlib directory of
+  `rocq-elpi`, so that the `elpi.toml` of another project can name them,
+  e.g. `"elpi_elpi" = "@rocq-elpi/elpi"` in its `[paths]`
+
 ### Apps:
+- derive, tc, NES, rbuild: each `.elpi` file accumulates its dependencies, and the header of
+  each Db is a file `<name>.db.elpi`, so that the files can be checked
+  outside Rocq (e.g. by `elpi-lsp`)
 - json: the OCaml plugin is replaced by the Elpi package `json` (opam
   package `elpi-json`); the app is the Elpi file `all.elpi` (by convention
   the loader of an app) with the Rocq

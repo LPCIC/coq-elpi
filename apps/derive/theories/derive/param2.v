@@ -4,8 +4,8 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param2.elpi" as param2.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param2.db.elpi" as param2db.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -18,19 +18,8 @@ Register store_param as param2.store_param.
 
 (* Links a term (constant, inductive type, inductive constructor, record type,
    projection) with its parametricity translation *)
-Elpi Db derive.param2.db lp:{{
-    :index(3)
-    % param (t : T) is a function that returns t' and tr such that tr : [| T |] t t'
-    func param term -> term, term.
-
-    % param.gref implements param for global references.
-    % It is introduced to handle param on universe polymorphic definitions
-    func param.gref gref -> gref, gref.
-
-    % a database to store triples t, t', tr, such that tr : [| T |] t t'.
-    type paramR term -> term -> term -> prop.
-    pred param-done gref.
-}}.
+Elpi Db derive.param2.db lp:{{ accumulate "elpi.apps.derive.elpi/param2.db". }}.
+(* not in param2.db.elpi: these rules come after the ones of param2.elpi *)
 #[superglobal] Elpi Accumulate derive.param2.db lp:{{
 
     % queries param.gref and lifts answer to terms.
@@ -65,9 +54,6 @@ Elpi Db derive.param2.db lp:{{
 
 
 Elpi Command derive.param2.
-Elpi Accumulate File derive_hook.
-Elpi Accumulate File paramX.
-Elpi Accumulate Db Header derive.param2.db.
 Elpi Accumulate File param2.
 Elpi Accumulate Db derive.param2.db.
 Elpi Accumulate lp:{{
@@ -78,8 +64,6 @@ Elpi Accumulate lp:{{
 }}.
 
 Elpi Command derive.param2.register.
-Elpi Accumulate File paramX.
-Elpi Accumulate Db Header derive.param2.db.
 Elpi Accumulate File param2.
 Elpi Accumulate Db derive.param2.db.
 Elpi Accumulate lp:{{
@@ -92,8 +76,6 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File paramX.
-Elpi Accumulate derive Db Header derive.param2.db.
 Elpi Accumulate derive File param2.
 Elpi Accumulate derive Db derive.param2.db.
 

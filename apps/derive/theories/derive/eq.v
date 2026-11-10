@@ -3,8 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "eq.elpi" as eq.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eq.db.elpi" as eqdb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -15,36 +14,9 @@ From elpi.apps.derive Require Import PrimStringEqb.
 Register Corelib.Numbers.Cyclic.Int63.PrimInt63.eqb as elpi.derive.eq_unit63.
 Register Corelib.Floats.PrimFloat.eqb as elpi.derive.eq_float64.
 
-Elpi Db derive.eq.db lp:{{
-
-% full resolution (composes with eq functions for parameters)
-func eq-db term, term -> term.
-eq-db {{ lib:num.int63.type }} {{ lib:num.int63.type }} {{ lib:elpi.derive.eq_unit63 }} :- !.
-eq-db {{ lib:num.float.type }} {{ lib:num.float.type }} {{ lib:elpi.derive.eq_float64 }} :- !.
-eq-db {{ lib:elpi.pstring }} {{ lib:elpi.pstring }} {{ lib:elpi.pstring_eqb }} :- !.
-
-% quick access
-type eq-for inductive -> constant -> prop.
-
-}}.
-#[superglobal] Elpi Accumulate derive.eq.db lp:{{
-
-func whd1 term -> term.
-
-:name "eq-db:fail"
-eq-db A B F :-
-  ((whd1 A A1, B1 = B); (whd1 B B1, A1 = A)), !,
-  eq-db A1 B1 F.
-
-eq-db A B _ :-
-  M is "derive.eq: can't find the comparison function for terms of type " ^
-          {coq.term->string A} ^ " and " ^ {coq.term->string B} ^ " respectively",
-  stop M.
-
-}}.
+Elpi Db derive.eq.db lp:{{ accumulate "elpi.apps.derive.elpi/eq.db". }}.
 
 Elpi Command derive.eq.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.eq.db.
 Elpi Accumulate File eq.
 Elpi Accumulate lp:{{

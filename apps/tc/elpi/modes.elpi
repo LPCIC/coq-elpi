@@ -1,3 +1,5 @@
+accumulate "tc_aux".
+
 namespace tc {
   shorten tc.{pending-mode}.
 

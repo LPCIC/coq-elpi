@@ -18,3 +18,10 @@
   elpi-builtin.elpi)
  (section doc)
  (package rocq-elpi))
+
+; also in the findlib directory of rocq-elpi, for an elpi.toml outside
+; rocq-elpi: "@rocq-elpi/coq-builtin"
+(install
+ (files coq-builtin.elpi)
+ (section lib)
+ (package rocq-elpi))

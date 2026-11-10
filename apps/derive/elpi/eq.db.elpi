@@ -1,0 +1,20 @@
+% full resolution (composes with eq functions for parameters)
+func eq-db term, term -> term.
+eq-db {{ lib:num.int63.type }} {{ lib:num.int63.type }} {{ lib:elpi.derive.eq_unit63 }} :- !.
+eq-db {{ lib:num.float.type }} {{ lib:num.float.type }} {{ lib:elpi.derive.eq_float64 }} :- !.
+eq-db {{ lib:elpi.pstring }} {{ lib:elpi.pstring }} {{ lib:elpi.pstring_eqb }} :- !.
+
+% quick access
+type eq-for inductive -> constant -> prop.
+
+func whd1 term -> term.
+
+:name "eq-db:fail"
+eq-db A B F :-
+  ((whd1 A A1, B1 = B); (whd1 B B1, A1 = A)), !,
+  eq-db A1 B1 F.
+
+eq-db A B _ :-
+  M is "derive.eq: can't find the comparison function for terms of type " ^
+          {coq.term->string A} ^ " and " ^ {coq.term->string B} ^ " respectively",
+  stop M.

@@ -5,8 +5,10 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "discriminate.elpi" as discriminate.
 From elpi.apps.derive.elpi Extra Dependency "eqK.elpi" as eqK.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqK.db.elpi" as eqKdb.
+From elpi.apps.derive.elpi Extra Dependency "bcongr.db.elpi" as bcongrdb.
+From elpi.apps.derive.elpi Extra Dependency "eq.db.elpi" as eqdb.
+From elpi.apps.derive.elpi Extra Dependency "isK.db.elpi" as isKdb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -33,23 +35,10 @@ Qed.
 
 Register bool_discr as elpi.bool_discr.
 
-Elpi Db derive.eqK.db lp:{{
-
-func eqK-db constructor -> term.
-
-}}.
-#[superglobal] Elpi Accumulate derive.eqK.db lp:{{
-
-:name "eqK-db:fail"
-eqK-db K _ :-
-  M is "derive.eqK: can't find the eq.axiom for constructor " ^ {std.any->string K},
-  stop M.
-
-}}.
+Elpi Db derive.eqK.db lp:{{ accumulate "elpi.apps.derive.elpi/eqK.db". }}.
 
 (* standalone *)
 Elpi Command derive.eqK.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File discriminate.
 Elpi Accumulate Db derive.bcongr.db.
@@ -67,7 +56,6 @@ Elpi Accumulate lp:{{
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.eqK.db.
-Elpi Accumulate derive File discriminate.
 Elpi Accumulate derive File eqK.
 
 #[phases="both"] Elpi Accumulate derive lp:{{

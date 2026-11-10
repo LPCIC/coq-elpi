@@ -1,0 +1,7 @@
+func eqK-db constructor -> term.
+
+:name "eqK-db:fail"
+eqK-db K _ :-
+  M is "derive.eqK: can't find the eq.axiom for constructor " ^ {std.any->string K},
+  stop M.
+

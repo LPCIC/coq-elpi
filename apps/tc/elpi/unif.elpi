@@ -1,3 +1,5 @@
+accumulate "tc_aux".
+
 namespace tc{
   namespace unif{
     shorten std.{rev, append, ignore-failure!, mem, map2, split-at, map, assert!}.

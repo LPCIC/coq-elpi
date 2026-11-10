@@ -13,6 +13,9 @@ From elpi.apps.tc.elpi Extra Dependency "unif.elpi" as unif.
 From elpi.apps.tc.elpi Extra Dependency "ho_link.elpi" as ho_link.
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
+From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
+From elpi.apps.tc.elpi Extra Dependency "tc.db.elpi" as tcdb.
+From elpi.apps.tc.elpi Extra Dependency "tc_options.db.elpi" as tc_optionsdb.
 
 From elpi.apps Require Import db.
 From elpi.apps Require Export add_commands.
@@ -47,15 +50,8 @@ Elpi Accumulate lp:{{
 Elpi Tactic TC.Solver.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
 (* Elpi Accumulate File compiler. *)
-Elpi Accumulate File ho_precompile.
-Elpi Accumulate File ho_compile.
-Elpi Accumulate File compiler1.
-Elpi Accumulate File modes.
-Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate File solver.
 Elpi Query lp:{{
   sigma Options\ 
@@ -78,12 +74,7 @@ Elpi Query lp:{{
 Elpi Command TC.Compiler.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
-Elpi Accumulate File ho_precompile.
-Elpi Accumulate File ho_compile.
-Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
 Elpi Accumulate File compiler1.
 Elpi Accumulate lp:{{

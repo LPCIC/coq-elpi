@@ -1,0 +1,54 @@
+namespace tc {
+  func oTC-eta-reduce-proof -> list string. 
+  oTC-eta-reduce-proof ["TC", "Eta", "Reduce", "Proof"].
+
+  % Time taken by only instance search (we time tc-recursive-search) 
+  func oTC-time-instance-search -> list string. 
+  oTC-time-instance-search ["TC", "Time", "Instance", "Search"].
+
+  func oTC-time-compile-goal -> list string. 
+  oTC-time-compile-goal ["TC", "Time", "Compile", "Query"].
+
+  func oTC-time-mode-check -> list string. 
+  oTC-time-mode-check ["TC", "Time", "Mode", "Check"].
+
+  % Time taken by the whole search in tc
+  func oTC-time-msolve -> list string.
+  oTC-time-msolve ["TC", "Time"].
+
+  % Time taken to refine the solution
+  func oTC-time-refine -> list string. 
+  oTC-time-refine ["TC", "Time", "Refine"].
+
+  func oTC-time-compile-instance -> list string. 
+  oTC-time-compile-instance ["TC", "Time", "Compile", "Instance"].
+
+  func oTC-time-compile-class -> list string. 
+  oTC-time-compile-class ["TC", "Time", "Compile", "Class"].
+
+  func oTC-clauseNameShortName -> list string. 
+  oTC-clauseNameShortName ["TC", "NameShortPath"].
+
+  func oTC-debug -> list string.
+  oTC-debug ["TC", "Debug"].
+
+  func oTC-use-pattern-fragment-compiler -> list string. 
+  oTC-use-pattern-fragment-compiler ["TC", "CompilerWithPatternFragment"].
+
+  func all-options -> list (func -> (list string)).
+  all-options [
+    oTC-eta-reduce-proof, oTC-time-refine, oTC-time-msolve,
+    oTC-clauseNameShortName, oTC-time-instance-search, oTC-debug, 
+    oTC-use-pattern-fragment-compiler, oTC-time-compile-goal,
+    oTC-time-mode-check, oTC-time-compile-instance, 
+    oTC-time-compile-class
+  ].
+
+  func is-option-active (func (list string) ->) ->.
+  is-option-active uvar :- !, fail.
+  is-option-active Opt :-
+    Opt X, coq.option.get X (coq.option.bool tt).
+
+  func warning-name -> string.
+  warning-name "[TC] Warning".
+}

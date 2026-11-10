@@ -6,20 +6,19 @@
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1_functor.elpi" as param1_functor.
 From elpi.apps.derive.elpi Extra Dependency "idx2inv.elpi" as idx2inv.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "idx2inv.db.elpi" as idx2invdb.
+From elpi.apps.derive.elpi Extra Dependency "invert.db.elpi" as invertdb.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param1_functor.db.elpi" as param1_functordb.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export derive.
 From elpi.apps Require Export derive.param1 derive.param1_functor derive.invert.
 
-Elpi Db derive.idx2inv.db lp:{{
-  type idx2inv-db inductive -> inductive -> constant -> constant -> prop.
-}}.
+Elpi Db derive.idx2inv.db lp:{{ accumulate "elpi.apps.derive.elpi/idx2inv.db". }}.
 
 (* standalone *)
 Elpi Command derive.idx2inv.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.
@@ -39,7 +38,6 @@ Elpi Accumulate lp:{{
 (* hook into derive *)
 Elpi Accumulate derive Db derive.idx2inv.db.
 Elpi Accumulate derive File idx2inv.
-Elpi Accumulate File paramX.
 
 #[phases="both"] Elpi Accumulate derive lp:{{
 dep1 "idx2inv" "invert".

@@ -2,6 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "tag.db".
+accumulate "eqType".
+accumulate "fields".
+accumulate "eqb.db".
+
 macro @pi-trm N T F :-
   pi x xx\ decl x N T => (feqb.trm->term xx x :- !) => F xx x.
 

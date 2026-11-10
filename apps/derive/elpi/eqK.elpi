@@ -2,6 +2,11 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "discriminate".
+accumulate "bcongr.db".
+accumulate "eq.db".
+accumulate "eqK.db".
+
 shorten std.{assert!, do!, last, map2}.
 
 namespace derive.eqK {

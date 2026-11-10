@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "tag.db".
+
 % not necessary, but gives pointers to relevant files
 shorten std.{ fold-map , do! , last }. % from elpi-builtin.elpi
 shorten coq.{ build-match , bind-ind-arity }.   % from coq-lib.elpi

@@ -13,19 +13,17 @@ From elpi.apps.tc.elpi Extra Dependency "ho_link.elpi" as ho_link.
 From elpi.apps.tc.elpi Extra Dependency "parser_addInstances.elpi" as parser_addInstances.
 From elpi.apps.tc.elpi Extra Dependency "solver.elpi" as solver.
 From elpi.apps.tc.elpi Extra Dependency "create_tc_predicate.elpi" as create_tc_predicate.
+From elpi.apps.tc.elpi Extra Dependency "base.elpi" as base.
+From elpi.apps.tc.elpi Extra Dependency "tc.db.elpi" as tcdb.
+From elpi.apps.tc.elpi Extra Dependency "tc_options.db.elpi" as tc_optionsdb.
 
 (* Set Warnings "+elpi". *)
 
 Elpi Command TC.AddAllInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File ho_precompile.
-Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
-Elpi Accumulate File ho_compile.
 Elpi Accumulate File compiler1.
-Elpi Accumulate File modes.
 Elpi Accumulate lp:{{  
   main L :- 
     args->str-list L L1,
@@ -36,13 +34,7 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddInstances.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File ho_precompile.
-Elpi Accumulate File ho_compile.
-Elpi Accumulate File unif.
 Elpi Accumulate File ho_link.
-Elpi Accumulate File compiler1.
-Elpi Accumulate File modes.
 Elpi Accumulate File parser_addInstances.
 Elpi Accumulate lp:{{
   main Arguments :- 
@@ -53,8 +45,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddAllClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   % Ignore is the list of classes we do not want to add
@@ -67,8 +57,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.AddClasses.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   pred tc.add-all-classes list argument, tc.search-mode.
@@ -116,8 +104,6 @@ Elpi Accumulate lp:{{
 Elpi Command TC.Declare.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main _ :- coq.warning "TC.Declare" {tc.warning-name} 
@@ -131,8 +117,6 @@ with implicit arguments (those implicits will be neglected)", fail.
 Elpi Command TC.Pending_mode.
 Elpi Accumulate Db tc.db.
 Elpi Accumulate Db tc_options.db.
-Elpi Accumulate File tc_aux.
-Elpi Accumulate File modes.
 Elpi Accumulate File create_tc_predicate.
 Elpi Accumulate lp:{{
   main M :- 

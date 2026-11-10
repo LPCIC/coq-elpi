@@ -4,27 +4,15 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "isK.elpi" as isK.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "isK.db.elpi" as isKdb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 
 (* Links the @gref of the constructor K to the isK constant *)
-Elpi Db derive.isK.db lp:{{
-  func isK-db constructor -> term.
-}}.
-#[superglobal] Elpi Accumulate derive.isK.db lp:{{
-
-  :name "isK-db:fail"
-  isK-db K _ :-
-    M is "No isK entry for constructor " ^ {std.any->string K} ^ ". Did you run derive.isK?",
-    stop M.
-
-}}.
+Elpi Db derive.isK.db lp:{{ accumulate "elpi.apps.derive.elpi/isK.db". }}.
 
 Elpi Command derive.isK.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.isK.db.
 Elpi Accumulate File isK.
 Elpi Accumulate lp:{{

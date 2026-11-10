@@ -1,6 +1,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "modes".
+
 namespace tc {
 shorten tc.{search-mode}.
 

@@ -4,8 +4,7 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -55,12 +54,8 @@ Register is_pstring as elpi.derive.is_pstring.
 
 (* Links a term (constant, inductive type, inductive constructor) with
    its parametricity translation *)
-Elpi Db derive.param1.db lp:{{
-:index(3)
-func reali term -> term.
-type realiR term -> term -> prop.
-pred reali-done gref.
-}}.
+Elpi Db derive.param1.db lp:{{ accumulate "elpi.apps.derive.elpi/param1.db". }}.
+(* not in param1.db.elpi: these rules come after the ones of param1.elpi *)
 #[superglobal] Elpi Accumulate derive.param1.db lp:{{
 
 reali {{ lib:num.int63.type }} {{ lib:elpi.derive.is_uint63 }} :- !.
@@ -86,9 +81,6 @@ realiR T TR :-
 
 (* standalone *)
 Elpi Command derive.param1.
-Elpi Accumulate File derive_hook.
-Elpi Accumulate File paramX.
-Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate lp:{{
@@ -115,8 +107,6 @@ Register is_false as elpi.derive.is_false.
 Register is_is_true as elpi.derive.is_is_true.
 
 (* hook into derive *)
-Elpi Accumulate derive File paramX.
-Elpi Accumulate derive Db Header derive.param1.db.
 Elpi Accumulate derive File param1.
 Elpi Accumulate derive Db derive.param1.db.
 

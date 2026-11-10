@@ -1,0 +1,21 @@
+func whd1 term -> term.
+
+pred eqb-done -> gref.
+
+pred eqb-for
+  o:term, % type1
+  o:term, % type2
+  o:term. % comparison function
+
+pred eqb-fields
+  o:term, % type1
+  o:term, % type2
+  o:term. % eq_fields_type
+
+eqb-for {{ PrimFloat.float }} {{ PrimFloat.float }} {{ PrimFloat.eqb }}.
+eqb-for {{ PrimInt63.int }} {{ PrimInt63.int }} {{ PrimInt63.eqb }}.
+eqb-for {{ lib:elpi.pstring }} {{ lib:elpi.pstring }} {{ lib:elpi.pstring_eqb }}.
+
+:name "eqb-for:whd"
+eqb-for T1 T2 X :- whd1 T1 T1', !, eqb-for T1' T2 X. 
+eqb-for T1 T2 X :- whd1 T2 T2', !, eqb-for T1 T2' X. 

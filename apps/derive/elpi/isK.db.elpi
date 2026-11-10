@@ -1,0 +1,6 @@
+func isK-db constructor -> term.
+
+:name "isK-db:fail"
+isK-db K _ :-
+  M is "No isK entry for constructor " ^ {std.any->string K} ^ ". Did you run derive.isK?",
+  stop M.

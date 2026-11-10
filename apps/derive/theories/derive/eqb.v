@@ -6,48 +6,24 @@ From Corelib Require Import PosDef.
 From elpi.apps.derive.elpi Extra Dependency "fields.elpi" as fields.
 From elpi.apps.derive.elpi Extra Dependency "eqb.elpi" as eqb.
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqType.db.elpi" as eqTypedb.
+From elpi.apps.derive.elpi Extra Dependency "eqb.db.elpi" as eqbdb.
+From elpi.apps.derive.elpi Extra Dependency "fields.db.elpi" as fieldsdb.
+From elpi.apps.derive.elpi Extra Dependency "tag.db.elpi" as tagdb.
 
 Require Import eqb_core_defs.
 Require Import eqType_ast tag fields.
 
 Register eqb_body as elpi.derive.eqb_body.
 
-Elpi Db derive.eqb.db lp:{{
-  func whd1 term -> term.
-  
-  pred eqb-done -> gref.
-
-  pred eqb-for
-    o:term, % type1
-    o:term, % type2
-    o:term. % comparison function
-  
-  pred eqb-fields
-    o:term, % type1
-    o:term, % type2
-    o:term. % eq_fields_type
-  
-  eqb-for {{ PrimFloat.float }} {{ PrimFloat.float }} {{ PrimFloat.eqb }}.
-  eqb-for {{ PrimInt63.int }} {{ PrimInt63.int }} {{ PrimInt63.eqb }}.
-  eqb-for {{ lib:elpi.pstring }} {{ lib:elpi.pstring }} {{ lib:elpi.pstring_eqb }}.
-
-  :name "eqb-for:whd"
-  eqb-for T1 T2 X :- whd1 T1 T1', !, eqb-for T1' T2 X. 
-  eqb-for T1 T2 X :- whd1 T2 T2', !, eqb-for T1 T2' X. 
-  
-}}.
+Elpi Db derive.eqb.db lp:{{ accumulate "elpi.apps.derive.elpi/eqb.db". }}.
 
 (* standalone *)
 Elpi Command derive.eqb.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.fields.db.
 Elpi Accumulate Db derive.eqb.db.
-Elpi Accumulate File eqType.
-Elpi Accumulate File fields.
 Elpi Accumulate File eqb.
 
 Elpi Accumulate lp:{{

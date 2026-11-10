@@ -1,4 +1,5 @@
 From elpi.apps.derive.elpi Extra Dependency "discriminate.elpi" as discriminate.
+From elpi.apps.derive.elpi Extra Dependency "isK.db.elpi" as isKdb.
 
 From elpi.apps Require Export derive.isK derive.bcongr derive.eqK.
 

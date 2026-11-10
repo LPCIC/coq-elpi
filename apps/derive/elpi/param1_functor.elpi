@@ -1,6 +1,11 @@
 /* map over a container                                                      */
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
+
+accumulate "paramX_lib".
+accumulate "param1.db".
+accumulate "param1_functor.db".
+
 shorten std.{assert!, do!, length, split-at, drop-last, rev, append}.
 
 param1-functor-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-

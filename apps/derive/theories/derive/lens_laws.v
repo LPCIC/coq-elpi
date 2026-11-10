@@ -3,8 +3,8 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "lens_laws.elpi" as lens_laws.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "lens.db.elpi" as lensdb.
+From elpi.apps.derive.elpi Extra Dependency "lens_laws.db.elpi" as lens_lawsdb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.lens.
@@ -34,15 +34,10 @@ Register set_view_on as elpi.derive.lens.set_view_on.
 Register exchange as elpi.derive.lens.exchange.
 Register exchange_on as elpi.derive.lens.exchange_on.
 
-Elpi Db derive.lens_laws.db lp:{{
-  pred lens-laws-done inductive.
-}}.
+Elpi Db derive.lens_laws.db lp:{{ accumulate "elpi.apps.derive.elpi/lens_laws.db". }}.
 
 (* standalone *)
 Elpi Command derive.lens_laws.
-Elpi Accumulate Db Header derive.lens.db.
-Elpi Accumulate Db Header derive.lens_laws.db.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate File lens_laws.
 Elpi Accumulate Db derive.lens.db.
 Elpi Accumulate Db derive.lens_laws.db.

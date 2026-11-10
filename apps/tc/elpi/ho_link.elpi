@@ -1,3 +1,5 @@
+accumulate "unif".
+
 namespace tc {
   namespace link {
     func get-vars term -> list term.

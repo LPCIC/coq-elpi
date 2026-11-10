@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "map.db".
+
 shorten std.{split-at, length, rev, append, do!, drop-last, assert!}.
 
 map-db (app[global (indt GR1)|A1]) (app[global (indt GR2)|A2]) R :-

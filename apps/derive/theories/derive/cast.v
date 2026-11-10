@@ -4,10 +4,11 @@
    ------------------------------------------------------------------------- *)
 
 From elpi.apps.derive.elpi Extra Dependency "cast.elpi" as cast.
+From elpi.apps.derive.elpi Extra Dependency "cast.db.elpi" as castdb.
    
 From elpi Require Export elpi.
 
-Elpi Db derive.cast.db lp:{{ func cast-db int -> term. }}.
+Elpi Db derive.cast.db lp:{{ accumulate "elpi.apps.derive.elpi/cast.db". }}.
 
 
 Elpi Command derive.cast.
