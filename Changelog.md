@@ -26,7 +26,21 @@
   as findlib does, e.g. `"+elpi-json"`) on demand, with no `Declare ML
   Module`; `"+pkg/file"` is a file of the package
 
+### Vernacular:
+- `accumulate "file"` in a file looks first for `file.elpi` in the directory
+  of that file, as Elpi does, then as a logical path
+
+### Install:
+- `elpi.toml` is installed next to the META of `rocq-elpi`, with the Elpi
+  files it names at the same place as in the sources (`elpi/`,
+  `apps/derive/elpi/`, `builtin-doc/coq-builtin.elpi`): the `elpi.toml` of
+  another project has `use = ["+rocq-elpi"]` to get its paths, prelude and
+  preload
+
 ### Apps:
+- derive, tc, NES, rbuild: each `.elpi` file accumulates its dependencies, and the header of
+  each Db is a file `<name>.db.elpi`, so that the files can be checked
+  outside Rocq (e.g. by `elpi-lsp`)
 - json: the OCaml plugin is replaced by the Elpi package `json` (opam
   package `elpi-json`); the app is the Elpi file `all.elpi` (by convention
   the loader of an app) with the Rocq

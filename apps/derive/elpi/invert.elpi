@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "invert.db".
+
 shorten std.{assert!, do!, map-i, map}.
 
 namespace derive.invert {

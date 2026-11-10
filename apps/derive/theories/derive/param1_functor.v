@@ -8,19 +8,15 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1_functor.elpi" as param1_functor.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param1_functor.db.elpi" as param1_functordb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive derive.param1.
 
-Elpi Db derive.param1.functor.db lp:{{
-  func param1-functor-db term, term -> term.
-  func param1-functor-for inductive -> gref, list bool.
-}}.
+Elpi Db derive.param1.functor.db lp:{{ accumulate "elpi.apps.derive.elpi/param1_functor.db". }}.
 
 Elpi Command derive.param1.functor.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate File paramX.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.

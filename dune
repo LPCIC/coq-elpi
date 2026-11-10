@@ -2,3 +2,11 @@
  (dev
   (flags (:standard -w -9 -w -32 -w -27 -w -6 -w -37 -warn-error -A))
   (coq (flags -w -register-all -w -notation-for-abbreviation -w +elpi.deprecated -w +elpi.implication-precedence -w -elpi.flex-clause -w +elpi.missing-types -bt))))
+
+; the project of rocq-elpi, for elpi-lsp, installed next to META: another
+; project has use = ["+rocq-elpi"] (the files it names are installed where
+; the sources have them)
+(install
+ (files elpi.toml)
+ (section lib)
+ (package rocq-elpi))

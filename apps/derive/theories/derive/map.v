@@ -3,8 +3,7 @@
    license: GNU Lesser General Public License Version 2.1 or later           
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "map.elpi" as map.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "map.db.elpi" as mapdb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -12,14 +11,10 @@ From elpi.apps Require Import derive.
 (* Links the source and target type with the corresponding map function,
    eg. "map-db (list A) (list B) (list_map f_A_B)"
 *)
-Elpi Db derive.map.db lp:{{
-  pred map-done inductive.
-  pred map-db term, term -> term.
-}}.
+Elpi Db derive.map.db lp:{{ accumulate "elpi.apps.derive.elpi/map.db". }}.
 
 (* standalone command *)
 Elpi Command derive.map.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.map.db.
 Elpi Accumulate File map.
 Elpi Accumulate lp:{{ 

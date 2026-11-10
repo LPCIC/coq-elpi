@@ -2,6 +2,13 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "param1.db".
+accumulate "induction.db".
+accumulate "param1_functor.db".
+accumulate "eq.db".
+accumulate "eqK.db".
+accumulate "eqcorrect.db".
+
 shorten std.{map, rev, assert!, do!, appendR}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

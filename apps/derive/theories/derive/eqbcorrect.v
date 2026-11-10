@@ -7,8 +7,15 @@ From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
 From elpi.apps.derive.elpi Extra Dependency "eqbcorrect.elpi" as eqbcorrect.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqType.db.elpi" as eqTypedb.
+From elpi.apps.derive.elpi Extra Dependency "eqb.db.elpi" as eqbdb.
+From elpi.apps.derive.elpi Extra Dependency "eqbcorrect.db.elpi" as eqbcorrectdb.
+From elpi.apps.derive.elpi Extra Dependency "fields.db.elpi" as fieldsdb.
+From elpi.apps.derive.elpi Extra Dependency "induction.db.elpi" as inductiondb.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param1_functor.db.elpi" as param1_functordb.
+From elpi.apps.derive.elpi Extra Dependency "param1_trivial.db.elpi" as param1_trivialdb.
+From elpi.apps.derive.elpi Extra Dependency "tag.db.elpi" as tagdb.
 
 Module Export exports.
 Export ssreflect ssrbool eqb_core_defs. (* go ask the ltac gurus... *)
@@ -57,33 +64,11 @@ Proof.
    by case: PrimString.compare => // _ /(_ erefl).
 Qed.
 
-Elpi Db derive.eqbcorrect.db lp:{{
-
-  func eqcorrect-for
-    gref ->
-    constant, % correct
-    constant. % reflexive
-  
-  eqcorrect-for {{:gref PrimInt63.int }} C R :-
-    {{:gref uint63_eqb_correct}} = const C,
-    {{:gref uint63_eqb_refl}} = const R.
-
-  :index(2)
-  pred correct-lemma-for term -> term.
-  correct-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_correct }}.
-  correct-lemma-for {{ PrimString.string }} {{ @pstring_eqb_correct }}.
-
-  :index(2)
-  pred refl-lemma-for term -> term.
-  refl-lemma-for {{ PrimInt63.int }} {{ @uint63_eqb_refl }}.
-  refl-lemma-for {{ PrimString.string }} {{ @pstring_eqb_refl }}.
-
-}}.
+Elpi Db derive.eqbcorrect.db lp:{{ accumulate "elpi.apps.derive.elpi/eqbcorrect.db". }}.
 
 
 (* standalone *)
 Elpi Command derive.eqbcorrect.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate Db derive.eqb.db.
@@ -93,9 +78,6 @@ Elpi Accumulate Db derive.induction.db.
 Elpi Accumulate Db derive.param1.trivial.db.
 Elpi Accumulate Db derive.param1.functor.db.
 Elpi Accumulate File eqbcorrect.
-Elpi Accumulate File paramX.
-Elpi Accumulate File param1.
-Elpi Accumulate File eqType.
 Elpi Accumulate Db derive.param1.db.
 
 Elpi Accumulate lp:{{

@@ -84,7 +84,6 @@ Elpi Accumulate lp:{{
   get_name (record N _ _ _) N.
 }}.
 
-#[synterp] Elpi Accumulate File derive_synterp_hook.
 #[synterp] Elpi Accumulate File derive_synterp.
 #[synterp] Elpi Accumulate lp:{{
   main [str TypeName] :- !,
@@ -97,7 +96,6 @@ Elpi Accumulate lp:{{
   main _.
 }}.
 
-Elpi Accumulate File derive_hook.
 Elpi Accumulate File derive.
 Elpi Accumulate lp:{{
   main [str I] :- !,

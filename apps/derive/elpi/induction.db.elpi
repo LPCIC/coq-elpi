@@ -1,0 +1,6 @@
+pred induction-db inductive -> term.
+
+:name "induction-db:fail"
+induction-db T _ :-
+  M is "derive.induction: can't find the induction principle for " ^ {std.any->string T},
+  stop M.

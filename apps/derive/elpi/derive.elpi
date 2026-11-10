@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "derive_hook".
+
 namespace derive {
 
 func exists-indc inductive, (func constructor ->).

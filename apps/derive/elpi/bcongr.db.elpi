@@ -1,0 +1,6 @@
+func bcongr-db constructor -> term.
+
+:name "bcongr-db:fail"
+bcongr-db K _ :-
+  M is "derive.bcongr: can't find the boolean congruence for constructor " ^ {std.any->string K},
+  stop M.

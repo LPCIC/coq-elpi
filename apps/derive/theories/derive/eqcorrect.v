@@ -4,8 +4,12 @@
    ------------------------------------------------------------------------- *)
 
 From elpi.apps.derive.elpi Extra Dependency "eqcorrect.elpi" as eqcorrect.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqK.db.elpi" as eqKdb.
+From elpi.apps.derive.elpi Extra Dependency "eq.db.elpi" as eqdb.
+From elpi.apps.derive.elpi Extra Dependency "eqcorrect.db.elpi" as eqcorrectdb.
+From elpi.apps.derive.elpi Extra Dependency "induction.db.elpi" as inductiondb.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param1_functor.db.elpi" as param1_functordb.
   
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.
@@ -36,21 +40,7 @@ by case: PrimStringEqb.eqb => [-> // _| _ abs]; constructor=> // /abs.
 Qed.
 Register pstring_eq_correct as elpi.derive.pstring_eq_correct.
 
-Elpi Db derive.eqcorrect.db lp:{{
-  type eqcorrect-db gref -> term -> prop.
-}}.
-#[superglobal] Elpi Accumulate derive.eqcorrect.db lp:{{
-  
-eqcorrect-db {{:gref lib:num.int63.type }} {{ lib:elpi.derive.uint63_eq_correct }} :- !.
-eqcorrect-db {{:gref lib:elpi.pstring }} {{ lib:elpi.derive.pstring_eq_correct }} :- !.
-eqcorrect-db X _ :- {{ lib:num.float.type }} = global X, !, stop "float64 comparison is not syntactic".
-
-:name "eqcorrect-db:fail"
-eqcorrect-db T _ :-
-  M is "derive.eqcorrect: can't find the correctness proof for the comparison function on " ^ {coq.gref->string T},
-  stop M.
-
-}}.
+Elpi Db derive.eqcorrect.db lp:{{ accumulate "elpi.apps.derive.elpi/eqcorrect.db". }}.
 
 (* standalone *)
 Elpi Command derive.eqcorrect.
@@ -71,7 +61,6 @@ Elpi Accumulate lp:{{
 
 
 (* hook into derive *)
-Elpi Accumulate derive File derive_hook.
 Elpi Accumulate derive Db derive.eqcorrect.db.
 Elpi Accumulate derive File eqcorrect.
 

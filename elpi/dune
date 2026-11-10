@@ -16,3 +16,11 @@
   (glob_files (*.elpi with_prefix coq/user-contrib/elpi_elpi/)))
  (section lib_root)
  (package rocq-elpi))
+
+; also in the findlib directory of rocq-elpi, where the sources have it, for
+; "elpi_elpi" = "+/elpi" in its elpi.toml (installed next to META)
+(install
+ (files
+  (glob_files (*.elpi with_prefix elpi/)))
+ (section lib)
+ (package rocq-elpi))

@@ -18,3 +18,10 @@
   elpi-builtin.elpi)
  (section doc)
  (package rocq-elpi))
+
+; also in the findlib directory of rocq-elpi, where the sources have it, for
+; "+/builtin-doc/coq-builtin" in its elpi.toml (installed next to META)
+(install
+ (files (coq-builtin.elpi as builtin-doc/coq-builtin.elpi))
+ (section lib)
+ (package rocq-elpi))

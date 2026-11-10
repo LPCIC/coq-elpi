@@ -1176,8 +1176,19 @@ let resolve_file_path ~must_exist ~allow_absolute ~only_elpi file =
   in
   CErrors.user_err (Pp.str msg)
 
-let file_resolver ?cwd:_ ~unit:file () =
-  resolve_file_path ~must_exist:true ~allow_absolute:true ~only_elpi:true file
+(* As in Elpi, a relative accumulate is first looked up in the directory of
+   the accumulating file (cwd), then as a logical path *)
+let file_resolver ?cwd ~unit:file () =
+  let in_cwd =
+    match cwd with
+    | Some dir when Filename.is_relative file ->
+        let f = Filename.concat dir file in
+        let f = if Filename.check_suffix f ".elpi" then f else f ^ ".elpi" in
+        if Sys.file_exists f then Some f else None
+    | _ -> None in
+  match in_cwd with
+  | Some f -> f
+  | None -> resolve_file_path ~must_exist:true ~allow_absolute:true ~only_elpi:true file
 
 (***********************************************************************)
 

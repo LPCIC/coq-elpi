@@ -2,6 +2,10 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "paramX_lib".
+accumulate "param1.db".
+accumulate "param1_congr.db".
+
 shorten std.{forall, map2-filter, do!}.
 
 namespace derive.param1.congr {

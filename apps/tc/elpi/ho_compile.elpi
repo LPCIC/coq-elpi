@@ -1,3 +1,5 @@
+accumulate "ho_precompile".
+
 namespace tc {
   shorten tc.{r-ar, range-arity}.
 

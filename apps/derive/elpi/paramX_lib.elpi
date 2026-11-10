@@ -2,9 +2,7 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
-/* Declared by derive.param1.db in programs that use translated-members. */
-:index(3)
-func reali term -> term.
+accumulate "param1.db".
 
 namespace paramX {
 

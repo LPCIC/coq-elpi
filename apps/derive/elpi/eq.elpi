@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "eq.db".
+
 shorten std.{assert!, do!, append}.
 
 namespace derive.eq {
