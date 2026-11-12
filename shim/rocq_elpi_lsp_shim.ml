@@ -1,4 +1,4 @@
-(* elpi-rocq-shim: an approximation of the quotations of rocq-elpi, for
+(* rocq-elpi-lsp-shim: an approximation of the quotations of rocq-elpi, for
    checking Elpi programs outside Rocq (elpi-lsp, see elpi.toml).
    license: GNU Lesser General Public License Version 2.1 or later
 
@@ -113,8 +113,8 @@ let () =
   ignore (Quotation.register_named_quotation ~name:"name" (constant rocq_namec));
   ignore (Quotation.declare_backtick ~name:"Name.t" (constant rocq_namec))
 
-let builtins : Setup.builtins = Plugin.register ~name:"elpi-rocq-shim" [
-    BuiltIn.LPDoc "The quotations of rocq-elpi, approximated (the plugin of findlib package elpi-rocq-shim): the type checker only sees the antiquotations of a {{ ... }}";
+let builtins : Setup.builtins = Plugin.register ~name:"rocq-elpi-lsp-shim" [
+    BuiltIn.LPDoc "The quotations of rocq-elpi, approximated (the plugin of findlib package rocq-elpi-lsp-shim): the type checker only sees the antiquotations of a {{ ... }}";
     (* coq-builtin.elpi uses the quotations too: its types are declared here,
        the plugin comes first in the prelude *)
     BuiltIn.LPCode "data term.";

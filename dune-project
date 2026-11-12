@@ -42,9 +42,9 @@
  (depends rocq-elpi elpi-json))
 
 (package
- (name elpi-rocq-shim)
+ (name rocq-elpi-lsp-shim)
  (synopsis "An approximation of the quotations of rocq-elpi, without Rocq")
- (description "The plugin elpi-rocq-shim, preloaded by the elpi.toml of rocq-elpi, lets elpi-lsp check the Elpi files of rocq-elpi outside Rocq: a {{ ... }} is not parsed, only its antiquotations are")
+ (description "The plugin rocq-elpi-lsp-shim, preloaded by the elpi.toml of rocq-elpi, lets elpi-lsp check the Elpi files of rocq-elpi outside Rocq: a {{ ... }} is not parsed, only its antiquotations are")
  (depends elpi))
 
 (package

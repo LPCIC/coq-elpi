@@ -20,7 +20,7 @@ build-apps:
 .PHONY: build-apps
 
 build:
-	$(call dune,build) -p rocq-elpi @install
+	$(call dune,build) -p rocq-elpi,rocq-elpi-lsp-shim @install
 	$(call dune,build) builtin-doc
 .PHONY: build
 
@@ -94,7 +94,7 @@ doc:
 # `rocq top` resolves against (not just dune-built-in-place), and
 # builtin-doc/*.elpi must exist on disk (read by docs/base/_roles_elpi.py).
 refman-build:
-	$(call dune,build) -p rocq-elpi @install
+	$(call dune,build) -p rocq-elpi,rocq-elpi-lsp-shim @install
 	$(call dune,build) builtin-doc
 	$(call dune,install) rocq-elpi
 	rm -rf docs/source docs/build
@@ -112,7 +112,7 @@ clean:
 .PHONY: clean
 
 install:
-	$(call dune,install) rocq-elpi
+	$(call dune,install) rocq-elpi rocq-elpi-lsp-shim
 .PHONY: install
 
 nix:

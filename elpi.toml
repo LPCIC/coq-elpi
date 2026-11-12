@@ -2,15 +2,15 @@
 # installed next to the META of rocq-elpi: another project has
 # use = ["+rocq-elpi"] to get its prelude, preload and paths.
 # The prelude, given to each document as its builtins (as Rocq does), is the
-# plugin of the findlib package elpi-rocq-shim (preloaded) that
+# plugin of the findlib package rocq-elpi-lsp-shim (preloaded) that
 # approximates the quotations of rocq-elpi: a {{ ... }} is not parsed, only
 # its antiquotations lp:X, lp:(F x) and lp:{{ ... }} are; then the
 # documentation of the builtins (builtin-doc), whose OCaml code is not here:
 # its macros (@pi-decl ...) are seen by every file. coq-builtin-synterp.elpi
 # is left out: it repeats a part of coq-builtin.elpi, with some differences.
 name = "rocq-elpi"
-prelude = ["+elpi-rocq-shim", "+/builtin-doc/coq-builtin", "+/elpi/elpi-command-template"]
-preload = ["elpi-rocq-shim"]
+prelude = ["+rocq-elpi-lsp-shim", "+/builtin-doc/coq-builtin", "+/elpi/elpi-command-template"]
+preload = ["rocq-elpi-lsp-shim"]
 
 [warnings]
 flex-clause = "off"

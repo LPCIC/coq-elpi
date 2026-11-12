@@ -41,6 +41,10 @@
   `apps/derive/elpi/`, `builtin-doc/coq-builtin.elpi`): the `elpi.toml` of
   another project has `use = ["+rocq-elpi"]` to get its paths, prelude and
   preload
+- the package `rocq-elpi-lsp-shim`, built and installed by `make build` and
+  `make install`: a plugin approximating the quotations of rocq-elpi, that
+  the `elpi.toml` of rocq-elpi preloads so that `elpi-lsp` can check its
+  Elpi files without Rocq
 
 ### Apps:
 - derive, tc, NES, rbuild: each `.elpi` file accumulates its dependencies, and the header of
