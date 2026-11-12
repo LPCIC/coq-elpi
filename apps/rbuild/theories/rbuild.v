@@ -9,7 +9,7 @@ Inductive unresolved_record :=
   | Stop 
   | More (T : Type) : T -> unresolved_record -> unresolved_record.
 Inductive named_field (S: Type) :=
-  | Label (T : Type) : (S -> T) -> T -> named_field.
+  | Label (T : Type) : (S -> T) -> T -> named_field S.
 
 Declare Scope label_scope.
 Delimit Scope label_scope with lbl.
