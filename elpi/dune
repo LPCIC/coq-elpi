@@ -11,16 +11,25 @@
    (progn
      (run rocq_elpi_shafile %{deps})))))
 
+; The files installed are the ones that a program can accumulate, not:
+; - coq-HOAS.elpi and coq-arg-HOAS.elpi, compiled in the builtins of the
+;   plugin (src/dune), whose documentation is builtin-doc/coq-builtin.elpi;
+; - coq-elpi-checker.elpi, an extension of the type checker written in Elpi,
+;   which Elpi no longer has.
+; A new file is installed if its name matches the glob.
+
 (install
  (files
-  (glob_files (*.elpi with_prefix coq/user-contrib/elpi_elpi/)))
+  (glob_files ({elpi*,coq-lib*,coq-elaborator}.elpi with_prefix coq/user-contrib/elpi_elpi/)))
  (section lib_root)
  (package rocq-elpi))
 
 ; also in the findlib directory of rocq-elpi, where the sources have it, for
-; "elpi_elpi" = "+/elpi" in its elpi.toml (installed next to META)
+; "elpi_elpi" = "+/elpi" in its elpi.toml (installed next to META), but
+; elpi_elaborator.elpi: an alternative to coq-elaborator.elpi, which the
+; prelude of elpi.toml has (in the template of Elpi Tactic)
 (install
  (files
-  (glob_files (*.elpi with_prefix elpi/)))
+  (glob_files ({elpi-*,coq-lib*,coq-elaborator}.elpi with_prefix elpi/)))
  (section lib)
  (package rocq-elpi))

@@ -8,8 +8,10 @@
 # documentation of the builtins (builtin-doc), whose OCaml code is not here:
 # its macros (@pi-decl ...) are seen by every file. coq-builtin-synterp.elpi
 # is left out: it repeats a part of coq-builtin.elpi, with some differences.
+# Then the templates of Elpi Command and, on top of it as in Rocq, of Elpi
+# Tactic: a file can graft rules on the ones of a tactic (coq-elaborator).
 name = "rocq-elpi"
-prelude = ["+rocq-elpi-lsp-shim", "+/builtin-doc/coq-builtin", "+/elpi/elpi-command-template"]
+prelude = ["+rocq-elpi-lsp-shim", "+/builtin-doc/coq-builtin", "+/elpi/elpi-command-template", "+/elpi/elpi-tactic-template"]
 preload = ["rocq-elpi-lsp-shim"]
 
 [warnings]
@@ -21,4 +23,8 @@ flex-clause = "off"
 [paths]
 "elpi_elpi"             = "+/elpi"
 "elpi.apps.derive.elpi" = "+/apps/derive/elpi"
-"elpi.tests"            = "+/tests"
+
+# the logical path of the tests, for coq-elpi itself: not installed, so not
+# used by a project that has use = ["+rocq-elpi"]
+[dev-only-paths]
+"elpi.tests" = "+/tests"
