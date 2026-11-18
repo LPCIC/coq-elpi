@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Invocation of Elpi code &mdash; Rocq-Elpi 518e848 documentation</title>
+  <title>Invocation of Elpi code &mdash; Rocq-Elpi fc9d05b documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=61ed4235" />
@@ -14,7 +14,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=97d362a0"></script>
+      <script src="../_static/documentation_options.js?v=44cf0e74"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/js/theme.js"></script>
@@ -62,6 +62,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#ltac-variables">Ltac variables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#attributes">Attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#terms-as-arguments">Terms as arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parsing-arguments-from-strings">Parsing arguments from strings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#testing-debugging">Testing/debugging</a></li>
 </ul>
 </li>
@@ -232,6 +233,23 @@ arguments and insert coercions on raw terms.</p>
 <p>Terms passed to Elpi tactics via tactic notations can be forced to be
 elaborated beforehand by declaring the parameters to be of type <code class="docutils literal notranslate"><span class="pre">constr</span></code>
 or <code class="docutils literal notranslate"><span class="pre">open_constr</span></code>. Arguments of type <code class="docutils literal notranslate"><span class="pre">uconstr</span></code> are passed raw.</p>
+</section>
+<section id="parsing-arguments-from-strings">
+<h2>Parsing arguments from strings<a class="headerlink" href="#parsing-arguments-from-strings" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">coq.parse.argument</span> <span class="pre">S</span> <span class="pre">Raw</span> <span class="pre">Scope</span> <span class="pre">Arg</span> <span class="pre">Diagnostic</span></code> API runs the parser
+of command arguments on the string <code class="docutils literal notranslate"><span class="pre">S</span></code>. It returns the <code class="docutils literal notranslate"><span class="pre">argument</span></code> a
+command would receive. Pass <code class="docutils literal notranslate"><span class="pre">tt</span></code> as <code class="docutils literal notranslate"><span class="pre">Raw</span></code> to get it in raw format, as
+with <code class="docutils literal notranslate"><span class="pre">#[arguments(raw)]</span></code>, or <code class="docutils literal notranslate"><span class="pre">ff</span></code> to get it elaborated. Terms in
+parentheses are interpreted in the notation scope <code class="docutils literal notranslate"><span class="pre">Scope</span></code>, given by name
+or by delimiter (<code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> means no scope). Terms can refer to variables
+bound in the Elpi context. If parsing or elaboration fails, <code class="docutils literal notranslate"><span class="pre">Diagnostic</span></code>
+is <code class="docutils literal notranslate"><span class="pre">error</span> <span class="pre">Msg</span></code>.</p>
+<div class="highlight-elpi notranslate"><div class="highlight"><pre><span></span>coq.parse.argument<span class="w"> </span><span class="s2">&quot;(1 + 2)&quot;</span><span class="w"> </span>ff<span class="w"> </span><span class="s2">&quot;nat&quot;</span><span class="w"> </span><span class="p">(</span>trm<span class="w"> </span><span class="n n-ElpiVariable">T</span><span class="p">)</span><span class="w"> </span>ok<span class="k k-ElpiKeyword">,</span>
+coq.parse.argument<span class="w"> </span><span class="s2">&quot;Definition d : nat := 1&quot;</span><span class="w"> </span>ff<span class="w"> </span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="p">(</span>const-decl<span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="w"> </span><span class="n n-ElpiVariable">_</span><span class="p">)</span><span class="w"> </span>ok<span class="k k-ElpiKeyword">,</span>
+<span class="k k-ElpiKeyword">pi</span><span class="w"> </span><span class="n n-ElpiVariable">x</span>\<span class="w"> </span>decl<span class="w"> </span>x<span class="w"> </span>`x`<span class="w"> </span><span class="si">{{</span><span class="w"> </span><span class="n">nat</span> <span class="si">}}</span><span class="w"> </span><span class="k k-ElpiKeyword">=&gt;</span>
+<span class="w">  </span>coq.parse.argument<span class="w"> </span><span class="s2">&quot;(x + 1)&quot;</span><span class="w"> </span>tt<span class="w"> </span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="p">(</span>trm<span class="w"> </span><span class="si">{{</span><span class="w"> </span><span class="si">lp:</span><span class="n n-ElpiVariable">x</span><span class="w"> </span><span class="o">+</span> <span class="mi">1</span> <span class="si">}}</span><span class="p">)</span><span class="w"> </span>ok
+</pre></div>
+</div>
 </section>
 <section id="testing-debugging">
 <h2>Testing/debugging<a class="headerlink" href="#testing-debugging" title="Link to this heading"></a></h2>
