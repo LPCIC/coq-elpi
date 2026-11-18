@@ -570,8 +570,8 @@ module Interp = struct
         let state = Rocq_elpi_HOAS.set_initial_sigma state sigma in
         let depth = 0 in
         let state, args, gls = EU.map_acc
-          (Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:program ~raw:raw_args
-            Rocq_elpi_HOAS.(empty_conv_context ~options:(default_options ()) state))
+          (Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:(Rocq_elpi_glob_quotation.Query program) ~raw:raw_args
+            Rocq_elpi_HOAS.(upcast @@ empty_conv_context ~options:(default_options ()) state))
           state args in
         let loc = Rocq_elpi_utils.of_coq_loc loc in
 
@@ -738,6 +738,7 @@ let run_tactic_common ~loc program ~main ?(atts=[]) () =
     let state, main_query, gls = main ~base sigma gls state in
     let state, main_query = atts2impl ~depth loc Summary.Stage.Interp state atts main_query in
     let state = API.State.set Rocq_elpi_builtins.tactic_mode state true in
+    let state = API.State.set Rocq_elpi_builtins.base state (Some base) in
     let state = API.State.set Rocq_elpi_builtins_synterp.invocation_site_loc state loc in
     state, main_query, gls
     in
@@ -753,7 +754,7 @@ let run_tactic_common ~loc program ~main ?(atts=[]) () =
 
 let run_tactic ~loc program ~atts _ist args =
   run_tactic_common ~loc program ~atts ~main:(fun ~base sigma gls state ->
-    Rocq_elpi_HOAS.solvegoals2query sigma gls (Rocq_elpi_utils.of_coq_loc loc) ~main:args ~base
+    Rocq_elpi_HOAS.solvegoals2query sigma gls (Rocq_elpi_utils.of_coq_loc loc) ~main:args ~base:(Rocq_elpi_glob_quotation.Query base)
         ~in_elpi_tac_arg:Rocq_elpi_arg_HOAS.(in_elpi_tac ~loc) ~depth:0 state) ()
 
 let run_in_tactic ~loc ?(program = Interp.current_program ()) (qloc,query) _ist =

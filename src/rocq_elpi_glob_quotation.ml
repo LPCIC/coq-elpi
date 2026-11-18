@@ -689,6 +689,10 @@ let _ = API.Quotation.register_named_quotation ~name:"gref" ~descriptor:interp_q
     in_elpiast_gref ~loc gr)
 ;;
    
+type base =
+  | Query of API.Compile.program
+  | Runtime of API.Compile.program
+
 let gterm2lp ~loc ~base glob ~depth state =
   let t = gterm2lpast ~pattern:false ~language:coq state glob in
   let coq_ctx, _ = Option.default (upcast @@ empty_conv_context ~options:(default_options ()) state,[]) (get_ctx state) in
@@ -696,7 +700,9 @@ let gterm2lp ~loc ~base glob ~depth state =
     API.Ast.Scope.Map.add (API.Ast.Name.from_string @@ Names.Id.to_string id,coq) i m
     ) coq_ctx.name2db API.Ast.Scope.Map.empty in
   handle_elpi_compiler_errors ~loc (fun () ->
-    API.RawQuery.term_to_raw_term ~ctx state base ~depth t)
+    match base with
+    | Query base -> API.RawQuery.term_to_raw_term ~ctx state base ~depth t
+    | Runtime base -> state, API.Utils.term_to_raw_term ~ctx state base ~depth t)
 
 let runtime_gterm2lp ~loc ~base glob ~depth state =
   let t = gterm2lpast ~pattern:false ~language:coq state glob in

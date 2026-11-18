@@ -1036,7 +1036,7 @@ let in_elpi_tac_econstr ~base:() ~depth ?calldepth coq_ctx hyps sigma state x =
 let in_elpi_elab_term_arg ~depth ?calldepth state coq_ctx hyps sigma ist glob_or_expr =
   let sigma, t = Ltac_plugin.Tacinterp.interp_open_constr_with_classes ist coq_ctx.env sigma glob_or_expr in
   let state, gls0 = set_current_sigma ~depth state sigma in
-  let state, t, gls1 = constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints state t in
+  let state, t, gls1 = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state t in
   state, E.mkApp trmc t [], gls0 @ gls1
   
 let singleton (state,x,gls) = state,[x],gls
@@ -1163,9 +1163,11 @@ let dest_idecl raw_indt =
 let interp_mutual_inductive ~flags ~env ~uniform ~private_ind ?typing_flags ~udecl x =
   ComInductive.interp_mutual_inductive ~env ~flags ~uniform ~private_ind ?typing_flags udecl x
 
-let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
+let in_elpi_cmd ~loc ~depth ~base ?calldepth (coq_ctx : full conv_context) state ~raw (x : Cmd.top) =
   let open Cmd in
-  let hyps = [] in
+  let hyps = coq_ctx.hyps in
+  (* inductives and records are elaborated by Rocq in the global environment *)
+  let closed_ctx () = empty_conv_context ~options:coq_ctx.options state in
   match x with
   | RecordDecl (_ist,(glob_sign,raw_rdecl)) when raw ->
       let raw_rdecl = of_coq_record_definition raw_rdecl in
@@ -1179,7 +1181,7 @@ let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       (* Definitional type classes cannot be interpreted using this function (why?) *)
       let kind = if kind = Vernacexpr.Class true then Vernacexpr.Class false else kind in
       let e = interp_structure ~flags udecl kind ~primitive_proj records in
-      record_entry2lp ~depth coq_ctx E.no_constraints state ~loose_udecl:(udecl = None) e
+      record_entry2lp ~depth (closed_ctx ()) E.no_constraints state ~loose_udecl:(udecl = None) e
   | IndtDecl (_ist,(glob_sign,raw_indt)) when raw ->
       let raw_indt = of_coq_inductive_definition raw_indt in
       let glob_indt = raw_indt_decl_to_glob glob_sign raw_indt in
@@ -1192,10 +1194,10 @@ let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
       let e =
         match inductives with
         | [mind_w_not] ->
-            interp_mutual_inductive ~flags ~env:coq_ctx.env ~uniform ~private_ind ?typing_flags ~udecl [mind_w_not]
+            interp_mutual_inductive ~flags ~env:(closed_ctx ()).env ~uniform ~private_ind ?typing_flags ~udecl [mind_w_not]
         | _ -> nYI "(HOAS) mutual inductives"
       in
-      inductive_entry2lp ~depth coq_ctx E.no_constraints state ~loose_udecl:(udecl = None) e
+      inductive_entry2lp ~depth (closed_ctx ()) E.no_constraints state ~loose_udecl:(udecl = None) e
   | ConstantDecl (_ist,(glob_sign,raw_cdecl)) when raw ->
       let state, glob_cdecl = raw_constant_decl_to_glob glob_sign raw_cdecl state in
       let state = Rocq_elpi_glob_quotation.set_coq_ctx_hyps state (coq_ctx,hyps) in
@@ -1203,9 +1205,9 @@ let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   | ConstantDecl (_ist,(glob_sign,({ name; typ = (bl,_) } as raw_cdecl))) ->
       let state, udecl, typ, body, gls0 =
         raw_constant_decl_to_constr ~depth coq_ctx state raw_cdecl in
-      let state, typ, gls1 = constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints state typ in
+      let state, typ, gls1 = constr2lp ~depth ?calldepth coq_ctx E.no_constraints state typ in
       let state, body, gls2 =
-        option_map_acc2 (constr2lp_closed ~depth ?calldepth coq_ctx E.no_constraints) state body in
+        option_map_acc2 (constr2lp ~depth ?calldepth coq_ctx E.no_constraints) state body in
       let state, typ = best_effort_recover_arity ~depth state glob_sign typ bl in
       let state, body, _ = in_option ~depth state body in
       let c = decl_name2lp (raw_decl_name_to_glob name) in
@@ -1224,7 +1226,7 @@ let in_elpi_cmd ~loc ~depth ~base ?calldepth coq_ctx state ~raw (x : Cmd.top) =
   | Context (_ist,(glob_sign,raw_ctx)) ->
       let sigma, ctx = ComAssumption.interp_context coq_ctx.env (get_sigma state) raw_ctx in
       let state, gls0 = set_current_sigma ~depth state sigma in
-      let state, t, gls1 = do_context_constr (upcast coq_ctx) E.no_constraints ctx ~depth state in
+      let state, t, gls1 = do_context_constr coq_ctx E.no_constraints ctx ~depth state in
       state, E.mkApp ctxc t [], gls0 @ gls1
   | Int x -> in_elpi_int_arg ~depth state x
   | String x -> in_elpi_string_arg ~depth state x

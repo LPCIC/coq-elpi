@@ -16,31 +16,37 @@ val under_ctx :
   k:(depth:int -> State.t -> State.t * 'b * 'c) ->
   depth:int -> State.t -> State.t * 'b * 'c
 
+(* gterm2lp and friends can be used both when building a query and at
+   run time, e.g. by a builtin predicate *)
+type base =
+  | Query of Compile.program
+  | Runtime of Compile.program
+
 val gterm2lp :
   loc:Loc.t ->
-  base:Compile.program -> 
+  base:base -> 
   Glob_term.glob_constr ->
   depth:int -> State.t -> State.t * term
 val gindparams2lp :
   loc:Loc.t ->
-  base:Compile.program -> 
+  base:base -> 
   Glob_term.glob_decl list ->
   k:(depth:int -> State.t -> State.t * term) ->
   depth:int -> State.t -> State.t * term
 val garityparams2lp :
   loc:Loc.t ->
-  base:Compile.program -> 
+  base:base -> 
   Glob_term.glob_decl list ->
   k:(depth:int -> State.t -> State.t * term) ->
   depth:int -> State.t -> State.t * term
 val garity2lp :
   loc:Loc.t ->
-  base:Compile.program -> 
+  base:base -> 
   Glob_term.glob_constr ->
   depth:int -> State.t -> State.t * term
 val grecord2lp :
   loc:Loc.t ->
-  base:Compile.program -> 
+  base:base -> 
   name:string list * Names.Id.t ->
   constructorname:Names.Id.t option ->
   Glob_term.glob_constr ->

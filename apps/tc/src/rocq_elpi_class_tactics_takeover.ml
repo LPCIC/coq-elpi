@@ -111,7 +111,7 @@ module Solver = struct
       let depth = 0 in
       let state, q, gls =
         Rocq_elpi_HOAS.solvegoals2query sigma gls loc ~main:[]
-          ~in_elpi_tac_arg:Rocq_elpi_arg_HOAS.(in_elpi_tac ~loc:(to_coq_loc loc)) ~depth ~base state in
+          ~in_elpi_tac_arg:Rocq_elpi_arg_HOAS.(in_elpi_tac ~loc:(to_coq_loc loc)) ~depth ~base:(Rocq_elpi_glob_quotation.Query base) state in
       let state, qatts = Rocq_elpi_vernacular.atts2impl loc Summary.Stage.Interp ~depth state atts q in
       let state = API.State.set Rocq_elpi_builtins.tactic_mode state true in
       state, qatts, gls

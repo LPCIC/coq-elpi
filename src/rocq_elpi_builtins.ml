@@ -391,6 +391,47 @@ let tactic_arg : (Rocq_elpi_arg_HOAS.coq_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS
   readback = Rocq_elpi_arg_HOAS.in_coq_arg;
 }
 
+(* The dual of tactic_arg: embedding of command arguments, see in_elpi_cmd.
+   If raw is true the argument is passed in raw format, as
+   with #[arguments(raw)], otherwise it is elaborated *)
+type cmd_arg = { raw : bool; arg : Rocq_elpi_arg_HOAS.Cmd.top }
+let cmd_arg : (cmd_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context, API.Data.constraints) CConv.t = {
+  CConv.ty = Conv.TyName "argument";
+  pp_doc = (fun fmt () -> ());
+  pp = (fun fmt _ -> Format.fprintf fmt "TODO");
+  embed = (fun ~depth coq_ctx _ state { raw; arg } ->
+    let base = Option.get @@ State.get base state in
+    let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
+    Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:(Rocq_elpi_glob_quotation.Runtime base) coq_ctx state ~raw arg);
+  readback = (fun ~depth _ _ _ t -> raise (Conv.TypeErr(Conv.TyName "argument",depth,t)));
+}
+
+(* coq.parse.argument *)
+let elpi_cmd_arg_eoi = Procq.eoi_entry Rocq_elpi_arg_syntax.elpi_cmd_arg
+
+let parse_cmd_arg s : Rocq_elpi_arg_HOAS.Cmd.raw =
+  Procq.Entry.parse elpi_cmd_arg_eoi (Procq.Parsable.make (Gramlib.Stream.of_string s))
+
+(* (t)%key where key is the delimiter of scope sc (given by name or delimiter) *)
+let cmd_arg_in_scope sc (arg : Rocq_elpi_arg_HOAS.Cmd.raw) : Rocq_elpi_arg_HOAS.Cmd.raw =
+  if sc = "" then arg else
+  let sc = CNotation.normalize_scope sc in
+  let key =
+    match CNotation.scope_delimiters (CNotation.find_scope sc) with
+    | Some key -> key
+    | None -> err Pp.(str "coq.parse.argument: scope " ++ str sc ++ str " has no delimiting key") in
+  match arg with
+  | Rocq_elpi_arg_HOAS.Cmd.Term t ->
+      Rocq_elpi_arg_HOAS.Cmd.Term (CAst.make ?loc:t.CAst.loc @@
+        Constrexpr.CDelimiters(Constrexpr.DelimUnboundedScope, key, t))
+  | x -> x
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+let empty_glob_sign env = Genintern.empty_glob_sign ~strict:true env
+[%%else]
+let empty_glob_sign env = Genintern.empty_glob_sign ~strict:true env UnivNames.empty_binders
+[%%endif]
+
 let goals_of_term state proof_context proof =
   let env = proof_context.env in
   let sigma = get_sigma state in
@@ -4059,6 +4100,45 @@ Supported attributes:
     let teta = Rocq_elpi_glob_quotation.runtime_gterm2lp ~loc ~base ~depth geta state in
     state, !: nargs +! teta, []
   )),
+  DocAbove);
+
+  MLCode(Pred("coq.parse.argument",
+    In(B.string,"S",
+    In(B.bool,"Raw",
+    In(id,"Scope",
+    Out(B.poly "argument","Arg",
+    Out(B.diagnostic,"Diagnostic",
+    Full(proof_context, {|parses S as an argument of an Elpi command.
+Examples of S are "3", "foo", "(f x)" or "Definition d := t".
+If Raw is tt, Arg is in raw format (see the #[arguments(raw)]
+attribute), otherwise it is elaborated.
+Terms in parentheses are interpreted in the notation Scope, given
+by name or delimiter ("" for none).
+Variables bound in the Elpi context can be used.
+If parsing or elaboration fails, Diagnostic is (error Msg) and Arg
+is not assigned.
+Limitations:
+- Scope only applies to terms in parentheses, not to the terms
+  inside declarations (e.g. Definition), and it must have a
+  delimiting key;
+- elaborated (Raw = ff) Inductive and Record declarations are
+  interpreted in the global environment, hence they cannot
+  refer to variables bound in the Elpi context;
+- only available in the interp phase.|})))))),
+  (fun s raw scope _ _ ~depth proof_context csts state ->
+    try
+      let arg = parse_cmd_arg s in
+      let arg = cmd_arg_in_scope scope arg in
+      let env = proof_context.env in
+      let sigma = get_sigma state in
+      let arg = Rocq_elpi_arg_HOAS.Cmd.glob (empty_glob_sign env) arg in
+      let arg = Rocq_elpi_arg_HOAS.Cmd.interp (Ltac_plugin.Tacinterp.default_ist ()) env sigma arg in
+      let state, t, gls = cmd_arg.CConv.embed ~depth proof_context csts state { raw; arg } in
+      state, !: t +! B.mkOK, gls
+    with e when CErrors.noncritical e ->
+      let e = Exninfo.capture e in
+      let error = string_of_ppcmds proof_context.options @@ CErrors.iprint_no_report e in
+      state, ?: None +! B.mkERROR error, [])),
   DocAbove);
 
   MLCode(Pred("coq.notation.add-abbreviation-for-tactic",
