@@ -1522,6 +1522,26 @@ builtin func coq.notation.abbreviation abbreviation, list term -> term.
 % body of an abbreviation
 builtin func coq.notation.abbreviation-body abbreviation -> int, term.
 
+% [coq.parse.argument S Raw Scope Arg Diagnostic] parses S as an argument of
+% an Elpi command.
+% Examples of S are "3", "foo", "(f x)" or "Definition d := t".
+% If Raw is tt, Arg is in raw format (see the #[arguments(raw)]
+% attribute), otherwise it is elaborated.
+% Terms in parentheses are interpreted in the notation Scope, given
+% by name or delimiter ("" for none).
+% Variables bound in the Elpi context can be used.
+% If parsing or elaboration fails, Diagnostic is (error Msg) and Arg
+% is not assigned.
+% Limitations:
+% - Scope only applies to terms in parentheses, not to the terms
+%   inside declarations (e.g. Definition), and it must have a
+%   delimiting key;
+% - elaborated (Raw = ff) Inductive and Record declarations are
+%   interpreted in the global environment, hence they cannot
+%   refer to variables bound in the Elpi context;
+% - only available in the interp phase.
+builtin func coq.parse.argument string, bool, id -> argument, diagnostic.
+
 % [coq.notation.add-abbreviation-for-tactic Name TacticName FixedArgs]
 % Declares a parsing rule similar to
 %   Notation Name X1..Xn := ltac:(elpi TacticName FixedArgs (X1)..(Xn))

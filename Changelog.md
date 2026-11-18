@@ -1,3 +1,10 @@
+# Unreleased
+
+### API:
+- New `coq.parse.argument` to parse (and elaborate) a command argument from a
+  string; terms can refer to variables bound in the Elpi context and be
+  interpreted in a given notation scope
+
 # [3.6.0] 04/11/2026
 
 Requires Elpi 4.0.0 and Rocq 9.0, 9.1, 9.2 and 9.3.

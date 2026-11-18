@@ -413,3 +413,86 @@ solve (goal _ _ _ _ [open-trm N X]) _ :- coq.say N X.
 Goal True.
 elpi open `(x + y).
 Abort.
+
+(* coq.parse.argument *)
+
+Declare Scope my_scope.
+Delimit Scope my_scope with my.
+Notation "x + y" := (Nat.sub x y) : my_scope.
+Declare Scope nodelim_scope.
+
+Elpi Query lp:{{
+  coq.parse.argument "3" tt "" A1 D1,
+  std.assert! (A1 = int 3, D1 = ok) "int",
+  coq.parse.argument "foo.bar" ff "" A2 D2,
+  std.assert! (A2 = str "foo.bar", D2 = ok) "qualid",
+  coq.parse.argument "\"a b\"" ff "" A3 D3,
+  std.assert! (A3 = str "a b", D3 = ok) "string",
+  coq.parse.argument "(1 + 2)" ff "" A4 D4,
+  std.assert! (A4 = trm {{ Nat.add 1 2 }}, D4 = ok) "term",
+  coq.parse.argument "(1 + 2)" tt "" A5 D5,
+  std.assert! (A5 = trm {{ Nat.add 1 2 }}, D5 = ok) "raw term",
+  coq.parse.argument "(1 + 2)" ff "my" A6 D6,
+  std.assert! (A6 = trm {{ Nat.sub 1 2 }}, D6 = ok) "term in scope (delimiter)",
+  coq.parse.argument "(1 + 2)" tt "my_scope" A7 D7,
+  std.assert! (A7 = trm {{ Nat.sub 1 2 }}, D7 = ok) "raw term in scope (name)"
+}}.
+
+Elpi Query lp:{{
+  coq.parse.argument "Definition d : nat := 1" ff "" A1 D1,
+  std.assert! (A1 = const-decl "d" (some {{ 1 }}) (arity {{ nat }}), D1 = ok) "definition",
+  coq.parse.argument "Definition d (n : nat) := n" tt "" A2 D2,
+  std.assert! (A2 = const-decl "d" (some (fun `n` {{ nat }} n\ n)) (parameter "n" explicit {{ nat }} _\ arity _), D2 = ok) "raw definition",
+  coq.parse.argument "Inductive i := K" tt "" (indt-decl _) ok,
+  coq.parse.argument "Inductive i := K" ff "" (indt-decl _) ok,
+  coq.parse.argument "Record r := { f : nat }" ff "" (indt-decl _) ok,
+  coq.parse.argument "Context (T : Type) (t : T)" ff "" (ctx-decl _) ok
+}}.
+
+(* variables bound in the elpi context *)
+Elpi Query lp:{{
+  pi x\ decl x `x` {{ nat }} => (
+    coq.parse.argument "(x + 1)" tt "" (A1 x) ok,
+    std.assert! (A1 x = trm {{ lp:x + 1 }}) "raw term with free var",
+    coq.parse.argument "(x + 1)" ff "" (A2 x) ok,
+    std.assert! (A2 x = trm {{ lp:x + 1 }}) "term with free var",
+    coq.parse.argument "(x + 1)" ff "my" (A3 x) ok,
+    std.assert! (A3 x = trm {{ Nat.sub lp:x 1 }}) "term with free var in scope",
+    coq.parse.argument "Definition d := x" tt "" (A4 x) ok,
+    std.assert! (A4 x = const-decl "d" (some x) _) "raw definition with free var",
+    coq.parse.argument "Definition d : nat := x" ff "" (A5 x) ok,
+    std.assert! (A5 x = const-decl "d" (some x) (arity {{ nat }})) "definition with free var",
+    coq.parse.argument "Context (y : x = x)" ff "" (A6 x) ok,
+    std.assert! (A6 x = ctx-decl (context-item "y" _ {{ lp:x = lp:x }} none _\ context-end)) "context with free var",
+    coq.parse.argument "Inductive i : Prop := K : x = x -> i" tt "" (indt-decl _) ok,
+    coq.parse.argument "Inductive i : Prop := K : x = x -> i" ff "" _ (error _),
+    coq.parse.argument "Record r : Prop := { f : x = x }" ff "" _ (error _)
+  ).
+}}.
+
+Elpi Query lp:{{
+  coq.parse.argument "(1 + true)" tt "" (trm _) ok,
+  std.forall [
+    triple "(" ff "",
+    triple "3 4" ff "",
+    triple "(1 + 2)" ff "no_such_scope",
+    triple "(1 + 2)" ff "nodelim_scope",
+    triple "(1 + true)" ff "",
+    triple "(x + 1)" tt "",
+    triple "Definition d : nat := true" ff ""
+  ] (x\ sigma S R Sc D M\ x = triple S R Sc,
+    coq.parse.argument S R Sc _ D,
+    std.assert! (D = error M, not (M = "")) S,
+    coq.say S "->" D).
+}}.
+
+Elpi Tactic parse_arg.
+Elpi Accumulate lp:{{
+solve (goal Ctx _ _ _ [str S]) _ :-
+  coq.parse.argument S ff "" A ok,
+  std.assert! (A = trm (app [global _, X, _]), Ctx = [decl X _ _]) "goal context".
+}}.
+Goal forall n : nat, True.
+intro n.
+elpi parse_arg "(n + 1)".
+Abort.

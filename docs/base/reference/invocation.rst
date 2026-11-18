@@ -136,6 +136,25 @@ Terms passed to Elpi tactics via tactic notations can be forced to be
 elaborated beforehand by declaring the parameters to be of type ``constr``
 or ``open_constr``. Arguments of type ``uconstr`` are passed raw.
 
+Parsing arguments from strings
+-------------------------------
+
+The ``coq.parse.argument S Raw Scope Arg Diagnostic`` API runs the parser
+of command arguments on the string ``S``. It returns the ``argument`` a
+command would receive. Pass ``tt`` as ``Raw`` to get it in raw format, as
+with ``#[arguments(raw)]``, or ``ff`` to get it elaborated. Terms in
+parentheses are interpreted in the notation scope ``Scope``, given by name
+or by delimiter (``""`` means no scope). Terms can refer to variables
+bound in the Elpi context. If parsing or elaboration fails, ``Diagnostic``
+is ``error Msg``.
+
+.. code-block:: elpi
+
+   coq.parse.argument "(1 + 2)" ff "nat" (trm T) ok,
+   coq.parse.argument "Definition d : nat := 1" ff "" (const-decl _ _ _) ok,
+   pi x\ decl x `x` {{ nat }} =>
+     coq.parse.argument "(x + 1)" tt "" (trm {{ lp:x + 1 }}) ok
+
 Testing/debugging
 -------------------
 
