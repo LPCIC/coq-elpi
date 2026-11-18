@@ -131,7 +131,7 @@ type accumulation_item = qualified_name * Ast.program * Id.t list * Rocq_elpi_ut
 val accumulate_clauses :
   clauses_for_later:accumulation_item list State.component ->
   accumulate_to_db:(loc:Loc.t -> accumulation_item list -> unit) ->
-  preprocess_clause:(depth:int -> Data.term -> Id.t list * Data.term) ->
+  preprocess_clause:(depth:int -> State.t -> Data.term -> Id.t list * Data.term) ->
   scope:scope Elpi.Builtin.unspec ->
   dbname:string ->
   clause list ->

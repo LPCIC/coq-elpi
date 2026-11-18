@@ -165,7 +165,7 @@ let accumulate_clauses ~clauses_for_later ~accumulate_to_db ~preprocess_clause ~
   let dbname = Rocq_elpi_utils.string_split_on_char '.' dbname in
   let clauses scope =
    clauses |> CList.rev_map (fun (name,graft,clause) ->
-     let vars, clause = preprocess_clause ~depth clause in
+     let vars, clause = preprocess_clause ~depth state clause in
      let graft = compat_graft graft in
      let clause = U.clause_of_term ?name ?graft ~depth loc clause in
      (dbname,clause,vars,scope)) in
@@ -1218,7 +1218,7 @@ Supported attributes:
     accumulate_clauses
       ~clauses_for_later:clauses_for_later_synterp
       ~accumulate_to_db:(get_accumulate_to_db_synterp())
-      ~preprocess_clause:(fun ~depth x -> [], x)
+      ~preprocess_clause:(fun ~depth _ x -> [], x)
       ~scope ~dbname clauses ~depth ~options state)),
   DocAbove);
 

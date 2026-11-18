@@ -12,6 +12,12 @@ Requires Elpi 4.1.0 and Rocq 9.0, 9.1, 9.2 and 9.3.
   goals (evars) and find them by name, like `?[foo]` and `[foo]:` in Rocq
 - Fix `coq.ltac.collect-simple-goals` returning goals whose evar is applied
   to the wrong variables when the proof context is not empty
+- Adapt to https://github.com/rocq-prover/rocq/pull/22643, where fresh
+  universe levels are unification levels that only make sense in the current
+  command: when a clause is accumulated, the unification levels it mentions
+  that a declaration replaced by global levels are replaced by them, and the
+  universe instances and `univ.variable` that still mention unification levels
+  are abstracted with `pi`, like non-global universes
 
 ### Build:
 - Change to `rocq.theory` (`using rocq 0.11`) so dune 3.21 or

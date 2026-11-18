@@ -117,3 +117,7 @@ val push_named : Constr.named_declaration -> Environ.env -> Environ.env
 val get_projection_constant : Environ.env -> Names.Projection.Repr.t -> Names.Constant.t
 
 val prune_uvar : Elpi.API.State.t -> Elpi.API.FlexibleData.Elpi.t -> Elpi.API.RawData.term list -> Elpi.API.State.t * Elpi.API.Conversion.extra_goal
+(** A fresh instance of a global, its unification levels taken from the
+    supply of the evar map, into which the context must be merged *)
+val fresh_global_instance : ?names:UVars.Instance.t -> Environ.env -> Evd.evar_map ->
+  Names.GlobRef.t -> Constr.t * UnivGen.sort_context_set

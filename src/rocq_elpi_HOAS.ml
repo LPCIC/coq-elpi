@@ -219,8 +219,8 @@ let isuniv, univout, univino, (univ : Univ.Universe.t API.Conversion.t) =
 }
 
 
-let universe_level_variable =
-  let { CD.cin = levelin }, universe_level_variable_to_patch = CD.declare {
+let islevel, levelout, universe_level_variable =
+  let { CD.cin = levelin; isc = islevel; cout = levelout }, universe_level_variable_to_patch = CD.declare {
     CD.name = "univ.variable";
     doc = "universe level variable";
     pp = (fun fmt x ->
@@ -231,7 +231,7 @@ let universe_level_variable =
     hconsed = false;
     constants = [];
   } in
-  { universe_level_variable_to_patch with
+  islevel, levelout, { universe_level_variable_to_patch with
   API.Conversion.readback = begin fun ~depth state t ->
     match E.look ~depth t with
     | E.UnifVar (b,args) ->
@@ -2075,7 +2075,7 @@ let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
     Global.body_of_constant_body (Library.indirect_accessor[@alert "-deprecated"]) (Environ.lookup_constant c x.global_env)
   with
   | Some (bo, priv, ctx) ->
-     let c, ctx = UnivGen.fresh_global_instance x.global_env (ConstRef c) ?names:inst_opt  in
+     let c, ctx = fresh_global_instance x.global_env x.sigma (ConstRef c) ?names:inst_opt  in
      let c, inst = Constr.destConst c in
      let bo = Vars.subst_instance_constr inst bo in
      let sigma = evd_merge_ctx_set Evd.univ_rigid x.sigma ctx in
@@ -2246,7 +2246,7 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
         let u = UIM.host b m in
         s, u, []
       with Not_found ->
-        let u, ctx = UnivGen.fresh_global_instance (get_global_env s) t in
+        let u, ctx = fresh_global_instance (get_global_env s) (get_sigma s) t in
         let s = update_sigma s (fun sigma -> evd_merge_ctx_set UState.univ_flexible_alg sigma ctx) in
         let u =
           match C.kind u with

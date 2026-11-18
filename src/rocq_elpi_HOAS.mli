@@ -268,6 +268,8 @@ val canonical_array_instance : UVars.Instance.t
 val canonical_array_einstance : EConstr.EInstance.t
 
 val uinstance : UVars.Instance.t Conversion.t
+val isuinstance : RawOpaqueData.t -> bool
+val uinstanceout : RawOpaqueData.t -> UVars.Instance.t
 
 [%%if coq = "9.0" || coq = "9.1"]
 val universe_constraint : Univ.univ_constraint Conversion.t
@@ -300,6 +302,8 @@ val compute_with_uinstance :
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val universe_level_variable : Univ.Level.t Conversion.t
+val islevel : RawOpaqueData.t -> bool
+val levelout : RawOpaqueData.t -> Univ.Level.t
 val univ : Univ.Universe.t Conversion.t
 val isuniv : RawOpaqueData.t -> bool
 val univout : RawOpaqueData.t -> Univ.Universe.t
