@@ -459,3 +459,18 @@ Proof.
   intros.
   Fail elpi simple_call "myrefl".
 Abort.
+
+(* the goals of coq.ltac.collect-simple-goals refer to the variables of the
+   current context *)
+Elpi Tactic collect_simple.
+Elpi Accumulate lp:{{
+solve (goal _ _ _ _ _) _ :-
+  std.assert-ok! (coq.elaborate-skeleton {{ S _ }} {{ nat }} T) "",
+  T = {{ S lp:X }},
+  coq.ltac.collect-simple-goals T [goal _ _ _ E _] _,
+  std.assert! (same_term E X) "wrong goal".
+}}.
+Goal forall m : nat, True.
+intro m.
+elpi collect_simple.
+Abort.

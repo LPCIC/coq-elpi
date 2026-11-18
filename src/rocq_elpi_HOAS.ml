@@ -1928,9 +1928,11 @@ and under_coq2elpi_ctx ~calldepth state ctx ?(mk_ctx_item=fun decl -> mk_pi_arro
   let t = List.fold_left (fun rest hyp -> mk_ctx_item hyp.E.hsrc rest) t coq_ctx.hyps in
   state, t, !gls
   
-and in_elpi_evar_concl evar_concl ~raw_uvar elpi_evk coq_ctx ~calldepth ~depth state =
+and in_elpi_evar_concl ?args evar_concl ~raw_uvar elpi_evk coq_ctx ~calldepth ~depth state =
   let state, evar_concl, gls_evar_concl = constr2lp coq_ctx ~calldepth ~depth state evar_concl in
-  let args = CList.init coq_ctx.proof_len (fun i -> E.mkConst @@ i + calldepth) in
+  let args = match args with
+    | Some args -> args
+    | None -> CList.init coq_ctx.proof_len (fun i -> E.mkConst @@ i + calldepth) in
   debug Pp.(fun () -> str"in_elpi_evar_concl: moving Ctx down to" ++ int depth);
   let hyps = List.map (fun { E.hsrc = ctx_entry; hdepth = from } ->
     U.move ~from ~to_:depth ctx_entry) coq_ctx.hyps
@@ -3004,6 +3006,16 @@ let get_goal_ref ~depth syntactic_constraints state t =
      end
   | _ -> Not_a_goal
   
+let uvar2evar ~depth syntactic_constraints state t =
+  match E.look ~depth t with
+  | E.UnifVar(ev,_) ->
+     begin try
+       let uv = find_evar ev (E.constraints syntactic_constraints) in
+       Some (UVMap.host_failsafe uv state)
+     with Not_found -> None
+     end
+  | _ -> None
+
 let rec get_sealed_goal_ref ~depth syntactic_constraints state t =
   match E.look ~depth t with
   | E.App(c,g,[]) when c == nablac ->
@@ -4709,8 +4721,14 @@ let goal2lp ~depth syntactic_constraints state coq_ctx k =
     CList.equal eq_named_declaration c1 c2 in
   
   if same_ctx sigma coq_ctx.proof goal_ctx then
+    (* the proof variables are not necessarily bound right after calldepth,
+       hence we pass them explicitly, oldest first *)
+    let args =
+      List.rev_map (fun d ->
+        E.mkConst @@ Names.Id.Map.find (Context.Named.Declaration.get_id d) coq_ctx.name2db)
+        coq_ctx.proof in
     let state, hyps, raw_ev, ev, goal_ty, gls =
-      in_elpi_evar_concl evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
+      in_elpi_evar_concl ~args evar_concl ~raw_uvar:elpi_raw_goal_evar elpi_goal_evar
         coq_ctx ~calldepth ~depth state in
     Result.Ok (state, in_elpi_goal state ~args:[] ~hyps ~raw_ev ~ty:goal_ty ~ev, evar_decls@gls)
   else

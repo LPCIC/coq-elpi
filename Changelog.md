@@ -4,6 +4,12 @@
 - New `coq.parse.argument` to parse (and elaborate) a command argument from a
   string; terms can refer to variables bound in the Elpi context and be
   interpreted in a given notation scope
+- New `coq.ltac.name-uvar`, `coq.ltac.name-goal`, `coq.ltac.name-sealed-goal`,
+  `coq.ltac.goal-name-free?`, `coq.ltac.fresh-goal-name`,
+  `coq.ltac.goal-name->goal` and `coq.ltac.goal-name->sealed-goal` to name
+  goals (evars) and find them by name, like `?[foo]` and `[foo]:` in Rocq
+- Fix `coq.ltac.collect-simple-goals` returning goals whose evar is applied
+  to the wrong variables when the proof context is not empty
 
 # [3.6.0] 04/11/2026
 
