@@ -169,6 +169,9 @@ val sealed_maybe_solved_goal2lp : depth:int -> State.t -> Evar.t -> State.t * te
 val lp2goal : depth:int -> hyps -> constraints -> State.t -> term -> 
   State.t * (full conv_context * Evar.t * term list) * Conversion.extra_goals
 
+(* the Rocq evar linked to the Elpi unification variable t, if any *)
+val uvar2evar : depth:int -> constraints -> State.t -> term -> Evar.t option
+
 (* checks the evar context is the same as the one in input *)
 val goal2lp : depth:int -> constraints -> State.t -> full conv_context -> Evar.t -> 
   (State.t * term * Conversion.extra_goals,EConstr.named_context) Result.t
