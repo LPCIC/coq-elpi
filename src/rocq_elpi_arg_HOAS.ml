@@ -480,6 +480,19 @@ let interp_assumption ~program_mode poly =
   ComAssumption.interp_assumption ~program_mode ~poly:(PolyFlags.of_univ_poly poly)
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let interp_univ_decl_in_state state udecl =
+  let sigma, udecl = interp_univ_decl_opt (get_global_env state) (Some udecl) in
+  merge_universe_context state (Evd.ustate sigma), udecl
+[%%else]
+(* The universe declaration is interpreted in the evar map of the state, not merged
+   into it: its unification levels must not clash with the ones of the state *)
+let interp_univ_decl_in_state state udecl =
+  let sigma, udecl =
+    Constrintern.interp_univ_decl_opt ~sigma:(get_sigma state) (get_global_env state) (Some udecl) in
+  update_sigma state (fun _ -> sigma), udecl
+[%%endif]
+
 let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); body; red; udecl; atts } =
   let env = coq_ctx.env in
   let poly =
@@ -491,10 +504,8 @@ let raw_constant_decl_to_constr ~depth coq_ctx state { name; typ = (bl,typ); bod
     | Some _, false -> nYI "only universe polymorphic definitions can take universe binders"
     | None, true -> state, NonCumulative (([],true),(empty_univ_csts,true))
     | Some udecl, true ->
-        let sigma, udecl = interp_univ_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
+        let state, udecl = interp_univ_decl_in_state state udecl in
         let univ_decl_extensible_instance, univ_decl_extensible_constraints, univ_decl_univ_constraints, univ_decl_instance = dest_udecl udecl in
-        let ustate = Evd.ustate sigma in
-        let state = merge_universe_context state ustate in
         state, NonCumulative ((univ_decl_instance,univ_decl_extensible_instance),(univ_decl_univ_constraints,univ_decl_extensible_constraints)) in
   let sigma = get_sigma state in
   match body, typ with
@@ -546,10 +557,8 @@ let raw_constant_decl_to_glob glob_sign ({ name; atts; udecl; typ = (params,typ)
     | Some _, false -> nYI "only universe polymorphic definitions can take universe binders"
     | None, true -> state, NonCumulative (([],true),(empty_univ_csts,true))
     | Some udecl, true ->
-        let sigma, udecl = interp_univ_decl_opt (Rocq_elpi_HOAS.get_global_env state) (Some udecl) in
+        let state, udecl = interp_univ_decl_in_state state udecl in
         let univ_decl_extensible_instance, univ_decl_extensible_constraints, univ_decl_univ_constraints, univ_decl_instance = dest_udecl udecl in
-        let ustate = Evd.ustate sigma in
-        let state = merge_universe_context state ustate in
         state, NonCumulative ((univ_decl_instance,univ_decl_extensible_instance),(univ_decl_univ_constraints,univ_decl_extensible_constraints)) in
   state, { name = raw_decl_name_to_glob name; params; typ; udecl; body }
 let intern_constant_decl glob_sign (it : raw_constant_decl) = glob_sign, it

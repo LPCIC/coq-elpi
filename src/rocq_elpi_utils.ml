@@ -1047,10 +1047,12 @@ let prune_uvar state ev args =
   state, API.Conversion.Unify(mkLam args,API.RawData.mkUnifVar ev ~args:[] state)
   
 [%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
-let fresh_global_instance ?names env _sigma gr = UnivGen.fresh_global_instance ?names env gr
+let fresh_global_instance ?names ~rigid env sigma gr =
+  let c, ctx = UnivGen.fresh_global_instance ?names env gr in
+  Evd.merge_sort_context_set rigid sigma ctx, c
 [%%else]
-(* The unification levels of the instance come from the supply of [sigma]:
-   the returned context must be merged into [sigma] *)
-let fresh_global_instance ?names env sigma gr =
-  snd (Evd.with_supply sigma (fun s -> UnivGen.fresh_global_instance ?names s env gr))
+let fresh_global_instance ?names ~rigid env sigma gr =
+  let sigma, (c, ctx) =
+    Evd.with_supply sigma (fun s -> UnivGen.fresh_global_instance ?names s env gr) in
+  Evd.merge_sort_context_set rigid sigma ctx, c
 [%%endif]

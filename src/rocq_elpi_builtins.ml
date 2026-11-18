@@ -530,17 +530,14 @@ let default_polyflags = PolyFlags.default
 let handle_uinst_option_for_inductive ~depth options i state =
   match options.uinstance with
   | NoInstance ->
-      let term, ctx = fresh_global_instance (get_global_env state) (get_sigma state) (GlobRef.IndRef i) in
-      let state = update_sigma state (fun sigma -> evd_merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
+      let state, term = fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg state (GlobRef.IndRef i) in
       snd @@ Constr.destInd term, state, []
   | ConcreteInstance i -> i, state, []
   | VarInstance (v_head, v_args, v_depth) ->
       let v' = U.move ~from:v_depth ~to_:depth (E.mkUnifVar v_head ~args:v_args state) in
-      let term, ctx =
-        fresh_global_instance (get_global_env state) (get_sigma state) (GlobRef.IndRef i) in
+      let state, term = fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg state (GlobRef.IndRef i) in
       let uinst = snd @@ Constr.destInd term in
       let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
-      let state = update_sigma state (fun sigma -> evd_merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
       uinst, state, API.Conversion.Unify (v', lp_uinst) :: extra_goals
 
 (* FIXME PARTIAL API
@@ -1273,16 +1270,12 @@ let get_entry_context = function
 (* The unification levels of a monomorphic declaration were replaced by global
    levels: record their equalities in the [sigma] of further declarations *)
 let demote_entry (entry, _) sigma =
-  Evd.set_universe_context sigma (UState.demote_global_univ_entry entry (Evd.ustate sigma))
-(* [declare_definition_full] returns the universes before their replacement by global
-   levels: we take the global ones from the environment *)
+  Evd.set_ustate sigma (UState.demote_global_univ_entry entry (Evd.ustate sigma))
+(* [declare_definition_full] returns the universes of the declaration, which
+   [demote_entry] records in the universe state *)
 let declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma =
-  let kn, _uctx, subst = Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma in
-  let demote sigma =
-    let sigma = Evd.update_sigma_univs (Environ.universes (Global.env ())) sigma in
-    demote_entry (UState.Monomorphic_entry (Univ.ContextSet.empty, subst), ()) sigma
-  in
-  kn, Univ.ContextSet.empty, demote
+  let kn, univs = Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma in
+  kn, Univ.ContextSet.empty, demote_entry (univs, ())
 [%%endif]
 
 [%%if coq = "9.0" || coq = "9.1"]
@@ -2480,24 +2473,19 @@ Supported attributes:
       match options.uinstance with
       | NoInstance ->
         if keep ty then
-          let term, ctx =
-            fresh_global_instance (get_global_env state) (get_sigma state) (GlobRef.ConstructRef kon) in
-          snd @@ Constr.destConstruct term,
-          update_sigma state
-            (fun sigma -> evd_merge_sort_context_set UState.univ_flexible_alg sigma ctx),
-          []
+          let state, term =
+            fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg state (GlobRef.ConstructRef kon) in
+          snd @@ Constr.destConstruct term, state, []
         else
           UVars.Instance.empty, state, []
       | ConcreteInstance i -> i, state, []
       | VarInstance (v_head, v_args, v_depth) ->
         let v' = U.move ~from:v_depth ~to_:depth (E.mkUnifVar v_head ~args:v_args state) in
-        let term, ctx =
-          fresh_global_instance (get_global_env state) (get_sigma state) (GlobRef.ConstructRef kon) in
+        let state, term =
+          fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg state (GlobRef.ConstructRef kon) in
         let uinst = snd @@ Constr.destConstruct term in
         let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
-        uinst,
-        update_sigma state
-          (fun sigma -> evd_merge_sort_context_set UState.univ_flexible_alg sigma ctx),
+        uinst, state,
         API.Conversion.Unify (v', lp_uinst) :: extra_goals
     in
     let ty = if_keep ty (fun () ->

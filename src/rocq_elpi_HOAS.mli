@@ -376,6 +376,8 @@ val mk_def :
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map
 val update_sigma : State.t -> (Evd.evar_map -> Evd.evar_map) -> State.t
+val fresh_global_instance_in_state : rigid:Evd.rigid -> State.t -> Names.GlobRef.t ->
+  State.t * Constr.t
 
 val solvegoals2query :
   Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:'a list ->
@@ -410,7 +412,10 @@ val arg_hoas_constants : constant list
 (* the global symbols declared in coq-HOAS.elpi (but tac): predicates whose
    rules are in Elpi, and data constructors *)
 val hoas_constants : constant list
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
 val merge_universe_context : state -> UState.t -> state
+[%%endif]
 val restricted_sigma_of : Univ.Level.Set.t -> state -> Evd.evar_map
 val universes_of_term : state -> EConstr.t -> Univ.Level.Set.t
 

@@ -1306,6 +1306,10 @@ let in_elpiast_sort ~loc state s =
 
 let get_sigma s = (S.get engine s).sigma
 let update_sigma s f = (S.update engine s (fun e -> { e with sigma = f e.sigma }))
+let fresh_global_instance_in_state ~rigid s gr =
+  let e = S.get engine s in
+  let sigma, c = fresh_global_instance ~rigid e.global_env e.sigma gr in
+  S.set engine s { e with sigma }, c
 let get_global_env s = (S.get engine s).global_env
 
 let norm_array s (x,y,z) =
@@ -2075,10 +2079,9 @@ let body_of_constant state c inst_opt = S.update_return engine state (fun x ->
     Global.body_of_constant_body (Library.indirect_accessor[@alert "-deprecated"]) (Environ.lookup_constant c x.global_env)
   with
   | Some (bo, priv, ctx) ->
-     let c, ctx = fresh_global_instance x.global_env x.sigma (ConstRef c) ?names:inst_opt  in
+     let sigma, c = fresh_global_instance ~rigid:Evd.univ_rigid x.global_env x.sigma (ConstRef c) ?names:inst_opt in
      let c, inst = Constr.destConst c in
      let bo = Vars.subst_instance_constr inst bo in
-     let sigma = evd_merge_ctx_set Evd.univ_rigid x.sigma ctx in
      let sigma = match priv with
      | Opaqueproof.PrivateMonomorphic () -> sigma
      | Opaqueproof.PrivatePolymorphic ctx ->
@@ -2246,8 +2249,7 @@ let in_coq_poly_gref ~depth ~origin ~failsafe s t i =
         let u = UIM.host b m in
         s, u, []
       with Not_found ->
-        let u, ctx = fresh_global_instance (get_global_env s) (get_sigma s) t in
-        let s = update_sigma s (fun sigma -> evd_merge_ctx_set UState.univ_flexible_alg sigma ctx) in
+        let s, u = fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg s t in
         let u =
           match C.kind u with
           | C.Const (_, u) -> u
@@ -4664,8 +4666,10 @@ let lp2record_field_spec { name; is_coercion; is_canonical } =
   }
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let merge_universe_context state uctx =
   S.update engine state (fun e -> { e with sigma = Evd.merge_universe_context e.sigma uctx })
+[%%endif]
 
 (* ********************************* }}} ********************************** *)
 (* ****************************** API ********************************** *)
