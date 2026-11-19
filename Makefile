@@ -36,10 +36,10 @@ test-core:
 
 # Check for build reproducibility
 test-repro: test-core
-	$(dune_wrap) dune coq top --toplevel coqc tests/accumulate1.v -- tests/accumulate1.v
+	$(dune_wrap) dune rocq top --toplevel coqc tests/accumulate1.v -- tests/accumulate1.v
 	md5sum tests/accumulate1.vo > md5sum_accumulate1vo_1
 	rm -f tests/accumulate1.vo tests/accumulate1.glob
-	$(dune_wrap) dune coq top --toplevel coqc tests/accumulate1.v -- tests/accumulate1.v
+	$(dune_wrap) dune rocq top --toplevel coqc tests/accumulate1.v -- tests/accumulate1.v
 	md5sum tests/accumulate1.vo > md5sum_accumulate1vo_2
 	rm -f tests/accumulate1.vo tests/accumulate1.glob
 	diff md5sum_accumulate1vo_1 md5sum_accumulate1vo_2
