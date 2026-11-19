@@ -413,6 +413,7 @@ let cmd_arg : (cmd_arg, Rocq_elpi_HOAS.full Rocq_elpi_HOAS.conv_context, API.Dat
     let loc = to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state in
     Rocq_elpi_arg_HOAS.in_elpi_cmd ~loc ~depth ~base:(Rocq_elpi_glob_quotation.Runtime base) coq_ctx state ~raw arg);
   readback = (fun ~depth _ _ _ t -> raise (Conv.TypeErr(Conv.TyName "argument",depth,t)));
+  constants = [];
 }
 
 (* coq.parse.argument *)
