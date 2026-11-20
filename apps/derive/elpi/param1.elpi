@@ -2,6 +2,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "paramX_lib".
+accumulate "param1.db".
+
 % Author: Cyril Cohen
 
 shorten std.{forall, forall2, do!, rev, map2, map, append}.

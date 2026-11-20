@@ -2,6 +2,10 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "param1".
+accumulate "param1_congr.db".
+accumulate "param1_trivial.db".
+
 shorten std.{zip, assert!, do!, map, map2, rev}.
 
 namespace derive.param1.inhab {

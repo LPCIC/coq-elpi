@@ -2,6 +2,16 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "tag.db".
+accumulate "fields.db".
+accumulate "eqb.db".
+accumulate "induction.db".
+accumulate "param1_trivial.db".
+accumulate "param1_functor.db".
+accumulate "param1".
+accumulate "eqType".
+accumulate "eqbcorrect.db".
+
 func feqb.trm->term eqb.trm -> term.
 
 macro @pi-trm N T F :-

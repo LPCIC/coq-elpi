@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (name elpi.json.tests)
  (package rocq-elpi-json-tests)
  (theories elpi elpi.json))

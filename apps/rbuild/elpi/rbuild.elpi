@@ -1,3 +1,5 @@
+accumulate "elpi.apps.derive.elpi/lens.db".
+
 namespace rbuild {
 
 func unresolved_record->list term -> list term.

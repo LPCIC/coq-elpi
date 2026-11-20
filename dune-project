@@ -1,5 +1,5 @@
-(lang dune 3.13)
-(using coq 0.8)
+(lang dune 3.21)
+(using rocq 0.11)
 (name rocq-elpi)
 ;(generate_opam_files)
 
@@ -38,8 +38,14 @@
 (package
  (name rocq-elpi-json)
  (synopsis "Yojson bindings for rocq-elpi")
- (description "This package provides basic support for reading and writing json files from Elpi programs running in Rocq")
- (depends rocq-elpi yojson))
+ (description "This package provides basic support for reading and writing json files from Elpi programs running in Rocq, over the Elpi package json (elpi-json)")
+ (depends rocq-elpi elpi-json))
+
+(package
+ (name rocq-elpi-lsp-shim)
+ (synopsis "An approximation of the quotations of rocq-elpi, without Rocq")
+ (description "The plugin rocq-elpi-lsp-shim, preloaded by the elpi.toml of rocq-elpi, lets elpi-lsp check the Elpi files of rocq-elpi outside Rocq: a {{ ... }} is not parsed, only its antiquotations are")
+ (depends elpi))
 
 (package
  (name rocq-elpi-xml)
@@ -70,11 +76,3 @@
  (synopsis "Technical package to run tests depending on Stdlib")
  (description "Do not install")
  (depends rocq-elpi rocq-stdlib))
-
-(package
- (name coq-elpi)
- (allow_empty)
- (depends
-  coq-core
-  (rocq-elpi (= :version)))
- (synopsis "Compatibility metapackage for Elpi extension language after the Rocq renaming"))

@@ -1,0 +1,30 @@
+# The project of the Elpi files of rocq-elpi, for elpi-lsp (outside Rocq),
+# installed next to the META of rocq-elpi: another project has
+# use = ["+rocq-elpi"] to get its prelude, preload and paths.
+# The prelude, given to each document as its builtins (as Rocq does), is the
+# plugin of the findlib package rocq-elpi-lsp-shim (preloaded) that
+# approximates the quotations of rocq-elpi: a {{ ... }} is not parsed, only
+# its antiquotations lp:X, lp:(F x) and lp:{{ ... }} are; then the
+# documentation of the builtins (builtin-doc), whose OCaml code is not here:
+# its macros (@pi-decl ...) are seen by every file. coq-builtin-synterp.elpi
+# is left out: it repeats a part of coq-builtin.elpi, with some differences.
+# Then the templates of Elpi Command and, on top of it as in Rocq, of Elpi
+# Tactic: a file can graft rules on the ones of a tactic (coq-elaborator).
+name = "rocq-elpi"
+prelude = ["+rocq-elpi-lsp-shim", "+/builtin-doc/coq-builtin", "+/elpi/elpi-command-template", "+/elpi/elpi-tactic-template"]
+preload = ["rocq-elpi-lsp-shim"]
+
+[warnings]
+flex-clause = "off"
+
+# the logical paths (as Rocq's -Q) used by an accumulate of an .elpi file, e.g.
+# accumulate "elpi_elpi/coq-lib" reads elpi/coq-lib.elpi. A relative accumulate
+# is looked up in the directory of the accumulating file, and needs no entry.
+[paths]
+"elpi_elpi"             = "+/elpi"
+"elpi.apps.derive.elpi" = "+/apps/derive/elpi"
+
+# the logical path of the tests, for coq-elpi itself: not installed, so not
+# used by a project that has use = ["+rocq-elpi"]
+[dev-only-paths]
+"elpi.tests" = "+/tests"

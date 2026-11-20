@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (name elpi.xml)
  (theories elpi_elpi elpi)
  (plugins rocq-elpi-xml.elpi_xml_plugin)

@@ -1,3 +1,5 @@
+accumulate "NES.db".
+
 namespace nes {
 
 % Print a namespace

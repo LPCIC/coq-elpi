@@ -1,0 +1,2 @@
+pred map-done inductive.
+pred map-db term, term -> term.

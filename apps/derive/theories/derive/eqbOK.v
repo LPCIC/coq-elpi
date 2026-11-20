@@ -8,14 +8,14 @@ From elpi.apps.derive Require Import tag eqType_ast fields eqb eqbcorrect derive
 
 From elpi.apps.derive.elpi Extra Dependency "eqbOK.elpi" as eqbOK.
 From elpi.apps.derive.elpi Extra Dependency "eqType.elpi" as eqType.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "eqType.db.elpi" as eqTypedb.
+From elpi.apps.derive.elpi Extra Dependency "eqbOK.db.elpi" as eqbOKdb.
+From elpi.apps.derive.elpi Extra Dependency "eqb.db.elpi" as eqbdb.
+From elpi.apps.derive.elpi Extra Dependency "eqbcorrect.db.elpi" as eqbcorrectdb.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param1_trivial.db.elpi" as param1_trivialdb.
 
-Elpi Db derive.eqbOK.db lp:{{
-
-  pred eqbok-for -> gref, constant.
-
-}}.
+Elpi Db derive.eqbOK.db lp:{{ accumulate "elpi.apps.derive.elpi/eqbOK.db". }}.
 
 Lemma reflectEq {A} {x y : A} : reflect (x = y) true -> x = y.
 Proof.
@@ -42,13 +42,11 @@ Definition dec_reflect : forall a (H : forall x y : a, {x=y}+{x<>y}), forall x y
 
 (* standalone *)
 Elpi Command derive.eqbOK.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate Db derive.eqb.db.
 Elpi Accumulate Db derive.eqbcorrect.db.
 Elpi Accumulate Db derive.eqType.db.
 Elpi Accumulate Db derive.eqbOK.db.
 Elpi Accumulate File eqbOK.
-Elpi Accumulate File eqType.
 Elpi Accumulate lp:{{
   main [str I] :- !, 
     coq.locate I GR,

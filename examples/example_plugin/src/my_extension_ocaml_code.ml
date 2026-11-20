@@ -8,12 +8,16 @@ let rec compute (s : myType) = match s with
   | SumOf (s1, s2) -> compute s1 + compute s2
 
 (* Declaring the elpi symbol corresponding to the constructors of myType
-   is optional, only needed if one users the RawData APIs *)
-let constant = E.Constants.declare_global_symbol "constant"
-let sumof = E.Constants.declare_global_symbol "sumof"
+   is optional, only needed if one users the RawData APIs. Their variant,
+   the name of the plugin followed by a dot and a name, keeps them apart
+   from the symbols of other libraries with the same name (e.g. the builtin
+   predicate constant) *)
+let variant = "my_extension.1"
+let constant = E.Constants.declare_global_symbol ~variant "constant"
+let sumof = E.Constants.declare_global_symbol ~variant "sumof"
 
 (* declaring the embed/readback function linking OCaml and Elpi *)
-let myType : myType API.Conversion.t = API.(AlgebraicData.declare {
+let myType : myType API.Conversion.t = API.(AlgebraicData.declare ~variant {
   ty = TyName "myType";
   doc = "description for the new elpi type";
   pp = (fun fmt _ -> Format.fprintf fmt "<todo>");

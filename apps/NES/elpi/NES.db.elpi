@@ -1,0 +1,9 @@
+typeabbrev path (list string).
+
+:index (2)
+pred ns -> list string, modpath.
+
+% used by the synterp phase only
+pred open-ns -> string, list string.
+:name "open-ns:begin"
+open-ns _ _ :- fail.

@@ -2,6 +2,10 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "eqb.db".
+accumulate "eqbcorrect.db".
+accumulate "eqType".
+accumulate "eqbOK.db".
 
 func feqb.trm->term eqb.trm -> term.
 

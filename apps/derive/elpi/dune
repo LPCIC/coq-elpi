@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (name elpi.apps.derive.elpi)
  (package rocq-elpi)
  (theories elpi))
@@ -16,4 +16,12 @@
  (files
   (glob_files (*.elpi with_prefix coq/user-contrib/elpi/apps/derive/elpi/)))
  (section lib_root)
+ (package rocq-elpi))
+
+; also in the findlib directory of rocq-elpi, where the sources have it, for
+; "elpi.apps.derive.elpi" = "+/apps/derive/elpi" in its elpi.toml (installed next to META)
+(install
+ (files
+  (glob_files (*.elpi with_prefix apps/derive/elpi/)))
+ (section lib)
  (package rocq-elpi))

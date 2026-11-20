@@ -2,25 +2,16 @@ From elpi Require Import elpi.
 From elpi.apps Require Import derive.
 From Corelib Require Import PosDef.
 From elpi.apps.derive.elpi Extra Dependency "tag.elpi" as tag.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "tag.db.elpi" as tagdb.
 
 Register positive as elpi.derive.positive.
 
 Local Open Scope positive_scope.
 
-Elpi Db derive.tag.db lp:{{
-
-% this is how one registers the tag function to an inductive and let other
-% elpi commands use that piece of info
-pred tag-for -> inductive, constant.
-
-}}.
+Elpi Db derive.tag.db lp:{{ accumulate "elpi.apps.derive.elpi/tag.db". }}.
 
 (* standalone *)
 Elpi Command derive.tag.
-Elpi Accumulate Db Header derive.tag.db.
-Elpi Accumulate File derive_hook.
 Elpi Accumulate File tag.
 Elpi Accumulate Db derive.tag.db.
 Elpi Accumulate lp:{{

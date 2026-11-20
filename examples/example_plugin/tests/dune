@@ -1,4 +1,4 @@
-(coq.theory
+(rocq.theory
  (name myExtension.tests)
  (package myExtension-tests)
   ; the tests folder depends on ext

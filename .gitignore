@@ -60,6 +60,7 @@ tmp.out
 rocq-elpi-tests.opam
 rocq-elpi-tests.install
 rocq-elpi.install
+rocq-elpi-lsp-shim.install
 coq-elpi.install
 
 theories-stdlib/dune

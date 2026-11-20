@@ -1,16 +1,16 @@
 with builtins; with (import <nixpkgs> {}).lib;
 let
   inherit (import <nixpkgs> {}) fetchurl;
-  default-elpi-version = "4.0.0";
-  min-elpi-version = "4.0.0";
-  # elpi 4.0.0 is not in nixpkgs yet: override its version and source.
+  default-elpi-version = "4.1.1";
+  min-elpi-version = "4.1.1";
+  # elpi 4.1.1 is not in nixpkgs yet: override its version and source.
   # Remove once nixpkgs knows it.
   ocaml-common-bundles = {
     elpi.overrideAttrs = old: {
-      version = "4.0.0";
+      version = "4.1.1";
       src = fetchurl {
-        url = "https://github.com/LPCIC/elpi/releases/download/v4.0.0/elpi-4.0.0.tbz";
-        hash = "sha256-kx7z6w1tk/0GYe+TcYsMTkTBpVD3SoZOg/b1fECLJRQ=";
+        url = "https://github.com/LPCIC/elpi/releases/download/v4.1.1/elpi-4.1.1.tbz";
+        hash = "sha256-B8200zPmJ+V2RO5F5D7fqkogHSHvr9iSLo5eDUZJ+2g=";
       };
     };
   };

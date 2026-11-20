@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "isK.db".
+
 shorten std.{ do! }.
 
 namespace ltac {

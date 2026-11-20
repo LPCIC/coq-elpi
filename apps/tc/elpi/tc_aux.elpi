@@ -1,6 +1,9 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "tc.db".
+accumulate "tc_options.db".
+
 namespace tc {
 
   namespace lettify {
@@ -80,7 +83,7 @@ namespace tc {
   func add-tc-db id, grafting, (pred) ->.
   add-tc-db _          _     Clause :- not (ground_term Clause), coq.error "[TC] anomaly: open rule:" Clause, !.
   add-tc-db ClauseName Graft Clause :- coq.elpi.accumulate _ "tc.db" (clause ClauseName Graft Clause), !.
-  add-tc-db _          _     Clause :- coq.error "cannot add " PR " to tc.db".
+  add-tc-db _          _     Clause :- coq.error "cannot add " Clause " to tc.db".
 
   % takes a tc-instance and return the gref of the inst
   func inst->gref tc-instance -> gref.

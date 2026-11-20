@@ -11,6 +11,54 @@
 - Fix `coq.ltac.collect-simple-goals` returning goals whose evar is applied
   to the wrong variables when the proof context is not empty
 
+### Build:
+- the Rocq rules of dune (`rocq.theory`, `using rocq 0.11`), so dune 3.21 or
+  later is needed (3.24 dropped the Coq rules); the empty compatibility
+  package `coq-elpi` is gone
+
+### HOAS:
+- `cache` is an ordinary predicate (it was declared `builtin`, but OCaml
+  neither declares nor implements it)
+- The predicates (`solve`, `msolve`, `decl`, `def`, `declare-evar`,
+  `rm-evar`, `evar`, `main`, `get-option`, `attributes` ...) and the data
+  constructors (`global`, `app`, `fun`, `str`, `trm`, `parameter` ...) of
+  `coq-HOAS.elpi` and `coq-arg-HOAS.elpi` are declared with no `builtin`:
+  the OCaml side binds them (`MLConstants`)
+- `builtin data` is now written `data`
+
+### Plugins:
+- `accumulate "+pkg"` loads the plugin of the findlib package `pkg` (named
+  as findlib does, e.g. `"+elpi-json"`) on demand, with no `Declare ML
+  Module`; `"+pkg/file"` is a file of the package
+
+### Vernacular:
+- `accumulate "file"` in a file looks first for `file.elpi` in the directory
+  of that file, as Elpi does, then as a logical path
+
+### Install:
+- `elpi.toml` is installed next to the META of `rocq-elpi`, with the Elpi
+  files it names at the same place as in the sources (`elpi/`,
+  `apps/derive/elpi/`, `builtin-doc/coq-builtin.elpi`): the `elpi.toml` of
+  another project has `use = ["+rocq-elpi"]` to get its paths, prelude and
+  preload
+- the package `rocq-elpi-lsp-shim`, built and installed by `make build` and
+  `make install`: a plugin approximating the quotations of rocq-elpi, that
+  the `elpi.toml` of rocq-elpi preloads so that `elpi-lsp` can check its
+  Elpi files without Rocq
+
+### Apps:
+- derive, tc, NES, rbuild: each `.elpi` file accumulates its dependencies, and the header of
+  each Db is a file `<name>.db.elpi`, so that the files can be checked
+  outside Rocq (e.g. by `elpi-lsp`)
+- json: the OCaml plugin is replaced by the Elpi package `json` (opam
+  package `elpi-json`); the app is the Elpi file `all.elpi` (by convention
+  the loader of an app) with the Rocq
+  specific predicate `coq.extra-dep->json` (`coq.json->string` and
+  `coq.string->json` are gone: use `json.pretty_to_string` and
+  `json.from_string`), accumulated with
+  `Elpi Accumulate lp:{{ accumulate "elpi.json/all". }}` instead of
+  `Elpi Accumulate Plugin "json.elpi"`
+
 # [3.6.0] 04/11/2026
 
 Requires Elpi 4.0.0 and Rocq 9.0, 9.1, 9.2 and 9.3.

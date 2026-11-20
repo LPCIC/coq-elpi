@@ -5,29 +5,17 @@
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive.elpi Extra Dependency "induction.elpi" as induction.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "induction.db.elpi" as inductiondb.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param1_functor.db.elpi" as param1_functordb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive derive.param1 derive.param1_functor.
 
-Elpi Db derive.induction.db lp:{{
-pred induction-db inductive -> term.
-}}.
-#[superglobal] Elpi Accumulate derive.induction.db lp:{{
-
-:name "induction-db:fail"
-induction-db T _ :-
-  M is "derive.induction: can't find the induction principle for " ^ {std.any->string T},
-  stop M.
-
-}}.
+Elpi Db derive.induction.db lp:{{ accumulate "elpi.apps.derive.elpi/induction.db". }}.
 
 (* standalone *)
 Elpi Command derive.induction.
-Elpi Accumulate File derive_hook.
-Elpi Accumulate File paramX.
-Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.functor.db.

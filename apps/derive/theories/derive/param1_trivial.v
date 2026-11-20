@@ -10,83 +10,22 @@ From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1.elpi" as param1.
 From elpi.apps.derive.elpi Extra Dependency "param1_inhab.elpi" as param1_inhab.
 From elpi.apps.derive.elpi Extra Dependency "param1_trivial.elpi" as param1_trivial.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "param1_congr.db.elpi" as param1_congrdb.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
+From elpi.apps.derive.elpi Extra Dependency "param1_trivial.db.elpi" as param1_trivialdb.
 
 From elpi Require Import elpi.
 From elpi.apps Require Import derive.param1 derive.param1_congr.
 
-  Elpi Db derive.param1.trivial.db lp:{{
-
-  func param1-trivial-done gref ->.
-  type param1-trivial-db term -> term -> prop.
-  type param1-trivial-db-args list term -> list term -> prop.
-
-  func param1-inhab-done gref ->.
-  type param1-inhab-db term -> term -> prop.
-  type param1-inhab-db-args list term -> list term -> prop.
-
-}}.
-#[superglobal] Elpi Accumulate derive.param1.trivial.db Db Header derive.param1.db.
-#[superglobal] Elpi Accumulate derive.param1.trivial.db lp:{{
-
-  :name "param1:inhab:start"
-  param1-inhab-db (fun `f` (prod `_` S _\ T) f\
-              prod `x` S x\ prod `px` (RS x) _)
-            (fun `f` (prod `_` S _\ T) f\
-              fun `x` S x\
-                fun `px` (RS x) _\ P f x) :-
-            pi f x\
-              reali T R,
-              param1-inhab-db R PT,
-              coq.mk-app PT [{coq.mk-app f [x]}] (P f x).
-
-  param1-inhab-db (app [Hd|Args]) (app[P|PArgs]) :-
-    param1-inhab-db Hd P, !,
-    param1-inhab-db-args Args PArgs.
-  
-  param1-inhab-db-args [] [].
-  param1-inhab-db-args [T,P|Args] R :-
-    std.assert-ok! (coq.typecheck T Ty) "param1-inhab-db: cannot work illtyped term",
-    if (coq.sort? Ty)
-       (param1-inhab-db P Q, R = [T,P,Q|PArgs], param1-inhab-db-args Args PArgs)
-       (R = [T,P|PArgs], param1-inhab-db-args Args PArgs).
-   
-  :name "param1:trivial:start"
-  param1-trivial-db (fun `f` (prod `_` S _\ T) f\
-              prod `x` S x\ prod `px` (RS x) _)
-            (fun `f` (prod `_` S _\ T) f\
-              fun `x` S x\
-                fun `px` (RS x) _\ P f x) :-
-            pi f x\
-              reali T R,
-              param1-trivial-db R PT,
-              coq.mk-app PT [{coq.mk-app f [x]}] (P f x).
-
-  param1-trivial-db (app [Hd|Args]) (app[P|PArgs]) :-
-    param1-trivial-db Hd P, !,
-    param1-trivial-db-args Args PArgs.
-
-  param1-trivial-db-args [] [].
-  param1-trivial-db-args [T,P|Args] R :-
-    std.assert-ok! (coq.typecheck T Ty) "param1-trivial-db: cannot work on illtyped term",
-    if (coq.sort? Ty)
-      (param1-trivial-db P Q, R = [T,P,Q|PArgs], param1-trivial-db-args Args PArgs)
-      (R = [T,P|PArgs], param1-trivial-db-args Args PArgs).
-
-}}.
+Elpi Db derive.param1.trivial.db lp:{{ accumulate "elpi.apps.derive.elpi/param1_trivial.db". }}.
   
 
 (* standalone *)
 Elpi Command derive.param1.trivial.
-Elpi Accumulate File derive_hook.
-Elpi Accumulate File paramX.
-Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.congr.db.
 Elpi Accumulate Db derive.param1.trivial.db.
-Elpi Accumulate File param1_inhab.
 Elpi Accumulate File param1_trivial.
 Elpi Accumulate lp:{{
   main [str I] :- coq.locate I IsGR, !,
@@ -102,9 +41,6 @@ Elpi Accumulate lp:{{
 
  
 Elpi Command derive.param1.inhab.
-Elpi Accumulate File derive_hook.
-Elpi Accumulate File paramX.
-Elpi Accumulate Db Header derive.param1.db.
 Elpi Accumulate File param1.
 Elpi Accumulate Db derive.param1.db.
 Elpi Accumulate Db derive.param1.congr.db.
@@ -250,7 +186,6 @@ Elpi Accumulate derive.param1.trivial.db lp:{{
 
 (* hook into derive *)
 Elpi Accumulate derive Db derive.param1.trivial.db.
-Elpi Accumulate derive File param1_inhab.
 Elpi Accumulate derive File param1_trivial.
 
 #[phases="both"] Elpi Accumulate derive lp:{{

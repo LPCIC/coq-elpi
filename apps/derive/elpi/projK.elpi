@@ -2,6 +2,8 @@
 /* license: GNU Lesser General Public License Version 2.1 or later           */
 /* ------------------------------------------------------------------------- */
 
+accumulate "projK.db".
+
 shorten std.{append, any->string, zip, map, map2, nth, do!, assert!, flatten}.
 
 % TODO: instead of using a context and integers one could

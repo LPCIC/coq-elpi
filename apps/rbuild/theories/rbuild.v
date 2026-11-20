@@ -1,4 +1,5 @@
 From elpi.apps.rbuild.elpi Extra Dependency "rbuild.elpi" as rbuild.
+From elpi.apps.derive.elpi Extra Dependency "lens.db.elpi" as lensdb.
 
 From elpi Require Import elpi.
 From elpi.apps.derive Require Export lens.

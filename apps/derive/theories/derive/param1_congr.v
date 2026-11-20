@@ -8,16 +8,13 @@
    ------------------------------------------------------------------------- *)
 From elpi.apps.derive.elpi Extra Dependency "paramX_lib.elpi" as paramX.
 From elpi.apps.derive.elpi Extra Dependency "param1_congr.elpi" as param1_congr.
-From elpi.apps.derive.elpi Extra Dependency "derive_hook.elpi" as derive_hook.
-From elpi.apps.derive.elpi Extra Dependency "derive_synterp_hook.elpi" as derive_synterp_hook.
+From elpi.apps.derive.elpi Extra Dependency "param1_congr.db.elpi" as param1_congrdb.
+From elpi.apps.derive.elpi Extra Dependency "param1.db.elpi" as param1db.
 
 From elpi Require Export elpi.
 From elpi.apps Require Export  derive.param1.
 
-Elpi Db derive.param1.congr.db lp:{{
-  func param1-congr-db constructor -> term. 
-  func param1-congr-done gref. 
-}}.
+Elpi Db derive.param1.congr.db lp:{{ accumulate "elpi.apps.derive.elpi/param1_congr.db". }}.
 
 Elpi Command derive.param1.congr.
 Elpi Accumulate File paramX.

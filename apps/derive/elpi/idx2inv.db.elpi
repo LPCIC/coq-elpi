@@ -1,0 +1,1 @@
+type idx2inv-db inductive -> inductive -> constant -> constant -> prop.
