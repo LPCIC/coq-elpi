@@ -42,6 +42,8 @@ jobs:
 
     - name: build alectryon tutorials
       run: opam exec -- make doc
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: build sphinx reference manual
       run: opam exec -- make refman-build
