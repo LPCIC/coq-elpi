@@ -12,6 +12,10 @@ let
         url = "https://github.com/LPCIC/elpi/releases/download/v4.1.1/elpi-4.1.1.tbz";
         hash = "sha256-B8200zPmJ+V2RO5F5D7fqkogHSHvr9iSLo5eDUZJ+2g=";
       };
+      # elpi.dynload (new in 4.1) needs the library findlib.dynload: findlib
+      # is only a build tool of buildDunePackage, here it is also a library
+      propagatedBuildInputs = old.propagatedBuildInputs
+        ++ filter (p: hasSuffix "findlib" (p.pname or "")) old.nativeBuildInputs;
     };
   };
   master = [
@@ -69,6 +73,8 @@ let
     ConCert.job = false;
 
     ITree.job = false;  # only a dependency of jasmin
+
+    multinomials.job = false;  # often broken
 };
 in
 {
@@ -83,6 +89,7 @@ in
       micromega-plugin.override.version = "master";  # to be removed at some point
       micromega-plugin.job = false;
       mathcomp-algebra-tactics.override.version = "master";
+      coqeal.job = false;  # needs multinomials, whose master needs Rocq 9.2
     };
     "rocq-9.1".ocamlPackages = ocaml-common-bundles;
 

@@ -821,7 +821,7 @@ the list itself. We see something like:
 :constructor:`nabla` binds all proof variables, then :constructor:`seal`
 holds a regular goal, which in turn carries the proof context.
 
-In order to operate inside a goal one can use the :libtac:`coq.ltac.open` utility,
+In order to operate inside a goal one can use the :builtin:`coq.ltac.open` utility,
 which postulates all proof variables using :e:`pi x\ ` and loads the proof
 context using :e:`=>`.
 

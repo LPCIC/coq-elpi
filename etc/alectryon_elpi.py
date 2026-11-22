@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 from os.path import join, dirname
 
@@ -321,8 +322,13 @@ def ghref_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
     else:
         from urllib import request
         apiuri = "https://api.github.com/repos/{}/{}/commits/{}/branches-where-head".format(org,repo,branch)
+        # unauthenticated calls to the GitHub API are limited to 60 per hour
+        req = request.Request(apiuri)
+        token = os.environ.get('GITHUB_TOKEN')
+        if token:
+            req.add_header('Authorization', 'Bearer ' + token)
         try:
-            with request.urlopen(apiuri) as f:
+            with request.urlopen(req) as f:
                 json = f.read().decode('utf-8')
         except:
             msg = inliner.reporter.error("{}: could not download: {}".format(role,apiuri), line=lineno)
