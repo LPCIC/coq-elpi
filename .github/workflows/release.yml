@@ -86,6 +86,16 @@ jobs:
       - name: Install opam-publish
         run: opam install -y -j 2 opam-publish
 
+      # opam-publish pushes to the fork (over https, with the token) a branch
+      # based on upstream master: if upstream changed .github/workflows since
+      # the fork was last synced, GitHub rejects the push, since the token has
+      # no workflow scope. Syncing master over ssh avoids that.
+      - name: Sync the fork
+        run: |
+          git clone -q --bare https://github.com/rocq-prover/opam.git ~/opam-upstream.git
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git -C ~/opam-upstream.git push git@github.com:coqelpibot/opam.git master:master
+
       - name: Publish
         run: |
           eval $(opam env)
