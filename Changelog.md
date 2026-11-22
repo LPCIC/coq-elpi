@@ -1,4 +1,6 @@
-# Unreleased
+# [3.7.0] 22/11/2026
+
+Requires Elpi 4.1.0 and Rocq 9.0, 9.1, 9.2 and 9.3.
 
 ### API:
 - New `coq.parse.argument` to parse (and elaborate) a command argument from a
@@ -12,9 +14,8 @@
   to the wrong variables when the proof context is not empty
 
 ### Build:
-- the Rocq rules of dune (`rocq.theory`, `using rocq 0.11`), so dune 3.21 or
-  later is needed (3.24 dropped the Coq rules); the empty compatibility
-  package `coq-elpi` is gone
+- Change to `rocq.theory` (`using rocq 0.11`) so dune 3.21 or
+  later is needed; the empty compatibility package `coq-elpi` is gone
 
 ### HOAS:
 - `cache` is an ordinary predicate (it was declared `builtin`, but OCaml
