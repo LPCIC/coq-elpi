@@ -30,12 +30,20 @@ jobs:
       fail-fast: false  # don't stop jobs if one fails
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # the tags, for the version given by dune subst
       - uses: coq-community/docker-coq-action@v1
         with:
           opam_file: 'rocq-elpi.opam'
           custom_image: ${{ matrix.image }}
           install: |
             sudo apt-get update -y -q
+            # opam builds a copy of the sources without .git, where dune subst
+            # fails (since lang dune 3.21): we run it here, before pinning (the
+            # sources belong to another user, as in before_script)
+            sudo chmod -R a+w $WORKDIR
+            git config --global --add safe.directory "$(cd $WORKDIR && pwd)"
+            (cd $WORKDIR && opam exec -- dune subst)
             opam pin add -n -y -k path rocq-elpi $WORKDIR
             opam pin add -n -y -k path rocq-elpi-json $WORKDIR
             opam pin add -n -y -k path rocq-elpi-xml $WORKDIR

@@ -35,7 +35,15 @@ cat > .wrappers/coqpp <<EOF
 exec rocq pp-mlg "\$@"
 EOF
 
-chmod +x .wrappers/coqc .wrappers/coqdep .wrappers/coqdoc .wrappers/coqpp
+# dune < 3.24 runs rocq --config, which Rocq 9.0 lacks (it has rocq c --config)
+cat > .wrappers/rocq <<EOF
+#!/bin/sh
+# hash = $rocqhash
+if [ "\$1" = "--config" ]; then shift; exec "$rocq" c --config "\$@"; fi
+exec "$rocq" "\$@"
+EOF
+
+chmod +x .wrappers/coqc .wrappers/coqdep .wrappers/coqdoc .wrappers/coqpp .wrappers/rocq
 
 ln -s "$(ocamlfind query rocq-runtime.kernel)" .wrappers/kernel
 
