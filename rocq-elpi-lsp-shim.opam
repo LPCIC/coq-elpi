@@ -21,9 +21,10 @@ build: [
     name
     "-j"
     jobs
-    "@install"
-    "@runtest" {with-test}
-    "@doc" {with-doc}
+    # not @install: it loads all the directories, and the Rocq ones fail
+    # without rocq (this package does not depend on Rocq)
+    "%{name}%.install"
+    "@shim/runtest" {with-test}
   ]
 ]
 dev-repo: "git+https://github.com/LPCIC/coq-elpi.git"
