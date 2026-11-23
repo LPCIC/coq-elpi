@@ -1,6 +1,6 @@
-{ rocq-elpi, rocqPackages }:
+{ rocq-elpi, lib }:
 
-rocqPackages.lib.overrideRocqDerivation {
+lib.overrideRocqDerivation {
 
   pname = "rocq-elpi-tests";
 
