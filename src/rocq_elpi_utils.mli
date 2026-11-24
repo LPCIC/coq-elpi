@@ -117,3 +117,6 @@ val push_named : Constr.named_declaration -> Environ.env -> Environ.env
 val get_projection_constant : Environ.env -> Names.Projection.Repr.t -> Names.Constant.t
 
 val prune_uvar : Elpi.API.State.t -> Elpi.API.FlexibleData.Elpi.t -> Elpi.API.RawData.term list -> Elpi.API.State.t * Elpi.API.Conversion.extra_goal
+(** A fresh instance of a global, whose universes are added to the evar map *)
+val fresh_global_instance : ?names:UVars.Instance.t -> rigid:Evd.rigid -> Environ.env ->
+  Evd.evar_map -> Names.GlobRef.t -> Evd.evar_map * Constr.t

@@ -530,17 +530,14 @@ let default_polyflags = PolyFlags.default
 let handle_uinst_option_for_inductive ~depth options i state =
   match options.uinstance with
   | NoInstance ->
-      let term, ctx = UnivGen.fresh_global_instance (get_global_env state) (GlobRef.IndRef i) in
-      let state = update_sigma state (fun sigma -> evd_merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
+      let state, term = fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg state (GlobRef.IndRef i) in
       snd @@ Constr.destInd term, state, []
   | ConcreteInstance i -> i, state, []
   | VarInstance (v_head, v_args, v_depth) ->
       let v' = U.move ~from:v_depth ~to_:depth (E.mkUnifVar v_head ~args:v_args state) in
-      let term, ctx =
-        UnivGen.fresh_global_instance (get_global_env state) (GlobRef.IndRef i) in
+      let state, term = fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg state (GlobRef.IndRef i) in
       let uinst = snd @@ Constr.destInd term in
       let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
-      let state = update_sigma state (fun sigma -> evd_merge_sort_context_set UState.univ_flexible_alg sigma ctx) in
       uinst, state, API.Conversion.Unify (v', lp_uinst) :: extra_goals
 
 (* FIXME PARTIAL API
@@ -855,7 +852,44 @@ let is_global_level env u =
   | Ok () -> true
   | Error _ -> false
 
-let err_if_contains_alg_univ ~depth t =
+module CDSet = Set.Make(API.RawOpaqueData)
+module CDMap = Map.Make(API.RawOpaqueData)
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let normalize_clause_univs ~depth:_ _state clause = clause
+let mentions_unif_levels _ = false
+[%%else]
+(* Unification levels are only meaningful in the evar map of the current
+   command, while the clause outlives it. Those defined to global levels (e.g.
+   by a declaration) are replaced by them, the others are abstracted by
+   [preprocess_clause]. *)
+let normalize_clause_univs ~depth state clause =
+  let uctx = Evd.ustate (get_sigma state) in
+  let embed ~depth conv x = let _, t, _ = conv.API.Conversion.embed ~depth state x in t in
+  let rec map ~depth t =
+    match E.look ~depth t with
+    | E.CData c when isuniv c -> embed ~depth univ (UState.nf_universe uctx (univout c))
+    | E.CData c when isuinstance c ->
+        let qs, us = UVars.Instance.to_array (uinstanceout c) in
+        embed ~depth uinstance (UVars.Instance.of_array (qs, Array.map (UState.nf_level uctx) us))
+    | E.CData c when islevel c -> embed ~depth universe_level_variable (UState.nf_level uctx (levelout c))
+    | E.App(c,x,xs) -> E.mkApp c (map ~depth x) (List.map (map ~depth) xs)
+    | E.Cons(x,xs) -> E.mkCons (map ~depth x) (map ~depth xs)
+    | E.Lam x -> E.mkLam (map ~depth:(depth+1) x)
+    | E.Builtin(c,xs) -> E.mkBuiltin c (List.map (map ~depth) xs)
+    | E.UnifVar _ | E.Const _ | E.Nil | E.CData _ -> t
+  in
+  map ~depth clause
+
+let mentions_unif_levels c =
+  if isuinstance c then Array.exists Univ.Level.is_unif (snd (UVars.Instance.to_array (uinstanceout c)))
+  else islevel c && Univ.Level.is_unif (levelout c)
+[%%endif]
+
+(* The data of the clause that are abstracted: universes that are non-global
+   levels, and universe instances and level variables that mention unification
+   levels *)
+let cdata_to_abstract ~depth t =
   let env = Global.env () in
   let is_global u =
     match Univ.Universe.level u with
@@ -871,20 +905,21 @@ let err_if_contains_alg_univ ~depth t =
           | None ->
             err Pp.(strbrk "The hypothetical clause contains terms of type univ which are not global, you should abstract them out or replace them by global ones: " ++
               Univ.Universe.pr UnivNames.pr_level_with_global_universes u)
-          | _ -> Univ.Universe.Set.add u acc
+          | _ -> CDSet.add c acc
           end
+    | E.CData c when mentions_unif_levels c -> CDSet.add c acc
     | x -> Rocq_elpi_utils.fold_elpi_term aux acc ~depth x
   in
-  let univs = aux ~depth Univ.Universe.Set.empty t in
-  univs
+  aux ~depth CDSet.empty t
 
-let preprocess_clause ~depth clause =
-  let levels_to_abstract = err_if_contains_alg_univ ~depth clause in
-  let levels_to_abstract_no = Univ.Universe.Set.cardinal levels_to_abstract in
+let preprocess_clause ~depth state clause =
+  let clause = normalize_clause_univs ~depth state clause in
+  let to_abstract = cdata_to_abstract ~depth clause in
+  let to_abstract_no = CDSet.cardinal to_abstract in
   let rec subst ~depth m t =
     match E.look ~depth t with
-    | E.CData c when isuniv c ->
-        begin try E.mkBound (Univ.Universe.Map.find (univout c) m)
+    | E.CData c ->
+        begin try E.mkBound (CDMap.find c m)
         with Not_found -> t end
     | E.App(c,x,xs) ->
         E.mkApp c (subst ~depth m x) (List.map (subst ~depth m) xs)
@@ -895,19 +930,18 @@ let preprocess_clause ~depth clause =
     | E.Builtin(c,xs) ->
         E.mkBuiltin c (List.map (subst ~depth m) xs)
     | E.UnifVar _ -> CErrors.user_err Pp.(str"The clause being accumulated contains unification variables, this is forbidden. You must quantify them out using 'pi'.")
-    | E.Const _ | E.Nil | E.CData _ -> t
+    | E.Const _ | E.Nil -> t
     in
   let clause =
     let rec bind d map = function
      | [] ->
          subst ~depth:d map
-           (API.Utils.move ~from:depth ~to_:(depth + levels_to_abstract_no) clause)
-     | l :: ls ->
+           (API.Utils.move ~from:depth ~to_:(depth + to_abstract_no) clause)
+     | c :: cs ->
        E.mkBuiltin E.Pi [E.mkLam (*   pi x\  *)
-           (bind (d+1) (Univ.Universe.Map.add l d map) ls)]
+           (bind (d+1) (CDMap.add c d map) cs)]
      in
-       bind depth Univ.Universe.Map.empty
-         (Univ.Universe.Set.elements levels_to_abstract)
+       bind depth CDMap.empty (CDSet.elements to_abstract)
   in
   let vars = collect_term_variables ~depth clause in
   vars, clause
@@ -1221,9 +1255,28 @@ let eval_to_oeval = Evaluable.to_kevaluable
 let mkCLocalAssum x y z = Constrexpr.CLocalAssum(x,None,y,z)
 let pattern_of_glob_constr env g = Patternops.pattern_of_glob_constr env g
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let get_entry_context = function
 | UState.Monomorphic_entry x, _ -> x
 | _ -> Univ.ContextSet.empty
+let demote_entry _ sigma = sigma
+let declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma =
+  let kn, uctx = Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma in
+  kn, uctx, (fun sigma -> sigma)
+[%%else]
+let get_entry_context = function
+| UState.Monomorphic_entry (x, _), _ -> x
+| _ -> Univ.ContextSet.empty
+(* The unification levels of a monomorphic declaration were replaced by global
+   levels: record their equalities in the [sigma] of further declarations *)
+let demote_entry (entry, _) sigma =
+  Evd.set_ustate sigma (UState.demote_global_univ_entry entry (Evd.ustate sigma))
+(* [declare_definition_full] returns the universes of the declaration, which
+   [demote_entry] records in the universe state *)
+let declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma =
+  let kn, univs = Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma in
+  kn, Univ.ContextSet.empty, demote_entry (univs, ())
+[%%endif]
 
 [%%if coq = "9.0" || coq = "9.1"]
 let make_polyflags poly cumul = poly
@@ -1234,8 +1287,7 @@ let make_polyflags poly cumul =
 
 let declare_definition using ~cinfo ~info ~opaque ~body sigma =
   let using = Option.map Proof_using.using_from_string using in
-  let (kn, uctx) = Declare.declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma in
-  kn, uctx
+  declare_definition_full ~cinfo ~info ~opaque ~body ?using sigma
 
 let warns_of_options options = options.user_warns |> Option.map UserWarn.with_empty_qf
 
@@ -1268,7 +1320,7 @@ let add_axiom_or_variable api id ty local_bkind options state =
       end
   in
   let ucsts = get_entry_context univs in
-  gr, ucsts
+  gr, ucsts, demote_entry univs
   ;;
 
 type tac_abbrev = {
@@ -2108,6 +2160,18 @@ let next_name_away_with_default_using_types _ _ id na names ty =
 let next_name_away_with_default_using_types = Namegen.next_name_away_with_default_using_types
 [%%endif]
 
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+let globalize_mono_ind_univs uctx =
+  uctx, UState.Monomorphic_entry uctx, (fun c -> c), (fun sigma -> sigma)
+[%%else]
+(* The unification levels of a monomorphic inductive become global levels *)
+let globalize_mono_ind_univs uctx =
+  let uctx, subst = UnivGen.globalize_context_set uctx in
+  let entry = UState.Monomorphic_entry (uctx, subst) in
+  uctx, entry, Vars.subst_univs_level_constr (Sorts.QVar.Map.empty, subst),
+  demote_entry (entry, ())
+[%%endif]
+
 [%%if coq = "9.0" ]
 let univ_binder_compat_820 a b = a
 [%%else]
@@ -2409,24 +2473,19 @@ Supported attributes:
       match options.uinstance with
       | NoInstance ->
         if keep ty then
-          let term, ctx =
-            UnivGen.fresh_global_instance (get_global_env state) (GlobRef.ConstructRef kon) in
-          snd @@ Constr.destConstruct term,
-          update_sigma state
-            (fun sigma -> evd_merge_sort_context_set UState.univ_flexible_alg sigma ctx),
-          []
+          let state, term =
+            fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg state (GlobRef.ConstructRef kon) in
+          snd @@ Constr.destConstruct term, state, []
         else
           UVars.Instance.empty, state, []
       | ConcreteInstance i -> i, state, []
       | VarInstance (v_head, v_args, v_depth) ->
         let v' = U.move ~from:v_depth ~to_:depth (E.mkUnifVar v_head ~args:v_args state) in
-        let term, ctx =
-          UnivGen.fresh_global_instance (get_global_env state) (GlobRef.ConstructRef kon) in
+        let state, term =
+          fresh_global_instance_in_state ~rigid:UState.univ_flexible_alg state (GlobRef.ConstructRef kon) in
         let uinst = snd @@ Constr.destConstruct term in
         let state, lp_uinst, extra_goals = uinstance.Conv.embed ~depth state uinst in
-        uinst,
-        update_sigma state
-          (fun sigma -> evd_merge_sort_context_set UState.univ_flexible_alg sigma ctx),
+        uinst, state,
         API.Conversion.Unify (v', lp_uinst) :: extra_goals
     in
     let ty = if_keep ty (fun () ->
@@ -2764,7 +2823,8 @@ Supported attributes:
          err Pp.(str "coq.env.add-const: both Type and Body are unspecified")
        | B.Given ty ->
        warn_deprecated_add_axiom ();
-       let gr, uctx = add_axiom_or_variable "coq.env.add-const" id ty local_bkind options state in
+       let gr, uctx, demote = add_axiom_or_variable "coq.env.add-const" id ty local_bkind options state in
+       let state = update_sigma state demote in
        uctx, state, !: (global_constant_of_globref gr), []
      end
     | B.Given body ->
@@ -2801,7 +2861,8 @@ Supported attributes:
        let used = Univ.Level.Set.union used (universes_of_udecl state udecl) in
        let sigma = restricted_sigma_of used state in
 
-       let gr, uctx = declare_definition options.using ~cinfo ~info ~opaque ~body sigma in
+       let gr, uctx, demote = declare_definition options.using ~cinfo ~info ~opaque ~body sigma in
+       let state = update_sigma state demote in
        let () =
         let lid = CAst.make ~loc:(to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state) (Id.of_string id) in
         match scope with
@@ -2824,7 +2885,8 @@ Supported attributes:
 - @inline! (default: no inlining)
 - @inline-at! N (default: no inlining)|})))),
   (fun id ty _ ~depth {options} _ -> grab_global_env "coq.env.add-axiom" (fun state ->
-     let gr, uctx = add_axiom_or_variable "coq.env.add-axiom" id ty None options state in
+     let gr, uctx, demote = add_axiom_or_variable "coq.env.add-axiom" id ty None options state in
+     let state = update_sigma state demote in
      uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -2838,7 +2900,8 @@ and the current module.
 |}))))),
   (fun id bkind ty _ ~depth {options} _ -> grab_global_env_drop_sigma_keep_univs "coq.env.add-section-variable" (fun state ->
      let bkind = Option.default Glob_term.Explicit (unspec2opt bkind) in
-     let gr, uctx = add_axiom_or_variable "coq.env.add-section-variable" id ty (Some bkind) options state in
+     let gr, uctx, demote = add_axiom_or_variable "coq.env.add-section-variable" id ty (Some bkind) options state in
+     let state = update_sigma state demote in
      uctx, state, !: (global_constant_of_globref gr), []))),
   DocAbove);
 
@@ -2865,13 +2928,16 @@ Supported attributes:
      if not (is_mutual_inductive_entry_ground me sigma) then
        err Pp.(str"coq.env.add-indt: the inductive type declaration must be ground. Did you forget to call coq.typecheck-indt-decl?");
      let primitive_expected = match record_info with Some(p, _) -> p | _ -> false in
-     let (uentry, uentry', ubinders) =
+     let (uentry, uentry', ubinders, uctx, glob, demote) =
        let open Entries in
        match me.mind_entry_universes with
-       | Monomorphic_ind_entry -> (Monomorphic_entry, UState.Monomorphic_entry uctx, univ_binders)
+       | Monomorphic_ind_entry ->
+          let uctx, uentry', glob, demote = globalize_mono_ind_univs uctx in
+          (Monomorphic_entry, uentry', univ_binders, uctx, glob, demote)
        | Template_ind_entry _ -> nYI "template polymorphic inductives"
-       | Polymorphic_ind_entry uctx ->
-          (Polymorphic_entry uctx, ustate_univs_of_ind_entry uctx, univ_binders)
+       | Polymorphic_ind_entry uctx' ->
+          (Polymorphic_entry uctx', ustate_univs_of_ind_entry uctx', univ_binders, uctx,
+           (fun c -> c), (fun sigma -> sigma))
        in
      let () = Global.push_context_set uctx in
      let mind =
@@ -2894,7 +2960,7 @@ Supported attributes:
          in
          let is_implicit = List.map (fun _ -> []) names in
          let open Entries in
-         let k_ty = List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
+         let k_ty = glob List.(hd (hd me.mind_entry_inds).mind_entry_lc) in
          let fields_as_relctx = Term.prod_decls k_ty in
          let projections =
            declare_projections ind ~kind:Decls.Definition
@@ -2909,7 +2975,7 @@ Supported attributes:
            | Names.Name id -> Dumpglob.dump_definition (lid_of id) false "proj"
            | Names.Anonymous -> ()) names;
       end;
-      uctx,state, !: ind, []))),
+      uctx, update_sigma state demote, !: ind, []))),
   DocAbove);
 
   LPDoc "Interactive module construction";

@@ -268,6 +268,8 @@ val canonical_array_instance : UVars.Instance.t
 val canonical_array_einstance : EConstr.EInstance.t
 
 val uinstance : UVars.Instance.t Conversion.t
+val isuinstance : RawOpaqueData.t -> bool
+val uinstanceout : RawOpaqueData.t -> UVars.Instance.t
 
 [%%if coq = "9.0" || coq = "9.1"]
 val universe_constraint : Univ.univ_constraint Conversion.t
@@ -300,6 +302,8 @@ val compute_with_uinstance :
 
 (* CData relevant for other modules, e.g the one exposing Coq's API *)
 val universe_level_variable : Univ.Level.t Conversion.t
+val islevel : RawOpaqueData.t -> bool
+val levelout : RawOpaqueData.t -> Univ.Level.t
 val univ : Univ.Universe.t Conversion.t
 val isuniv : RawOpaqueData.t -> bool
 val univout : RawOpaqueData.t -> Univ.Universe.t
@@ -372,6 +376,8 @@ val mk_def :
 val get_global_env : State.t -> Environ.env
 val get_sigma : State.t -> Evd.evar_map
 val update_sigma : State.t -> (Evd.evar_map -> Evd.evar_map) -> State.t
+val fresh_global_instance_in_state : rigid:Evd.rigid -> State.t -> Names.GlobRef.t ->
+  State.t * Constr.t
 
 val solvegoals2query :
   Evd.evar_map -> Evar.t list -> Elpi.API.Ast.Loc.t -> main:'a list ->
@@ -406,7 +412,10 @@ val arg_hoas_constants : constant list
 (* the global symbols declared in coq-HOAS.elpi (but tac): predicates whose
    rules are in Elpi, and data constructors *)
 val hoas_constants : constant list
+
+[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
 val merge_universe_context : state -> UState.t -> state
+[%%endif]
 val restricted_sigma_of : Univ.Level.Set.t -> state -> Evd.evar_map
 val universes_of_term : state -> EConstr.t -> Univ.Level.Set.t
 
