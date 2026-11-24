@@ -2,9 +2,7 @@ Examples
 ========
 
 A cookbook of short, self-contained proofs of concept, each demonstrating one
-technique. Every code sample on these pages is run through a real ``rocq
-top`` at build time (see :doc:`/index`), so what you read is guaranteed to
-actually work.
+technique.
 
 - :doc:`data-base` stores data and shares it across commands and runs via a Db.
 - :doc:`record-expansion` translates a term abstracted over a record into one
