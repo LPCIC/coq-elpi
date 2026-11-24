@@ -1,11 +1,11 @@
-{ rocq-elpi, rocqPackages }:
+{ rocq-elpi, stdlib, lib }:
 
-rocqPackages.lib.overrideRocqDerivation {
+lib.overrideRocqDerivation {
 
   pname = "rocq-elpi-tests-stdlib";
 
   propagatedBuildInputs = rocq-elpi.propagatedBuildInputs
-    ++ [ rocqPackages.stdlib ];
+    ++ [ stdlib ];
 
   buildPhase = ''
     export COQPATH=$ROCQPATH

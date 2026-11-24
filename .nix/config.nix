@@ -3,21 +3,6 @@ let
   inherit (import <nixpkgs> {}) fetchurl;
   default-elpi-version = "4.1.1";
   min-elpi-version = "4.1.1";
-  # elpi 4.1.1 is not in nixpkgs yet: override its version and source.
-  # Remove once nixpkgs knows it.
-  ocaml-common-bundles = {
-    elpi.overrideAttrs = old: {
-      version = "4.1.1";
-      src = fetchurl {
-        url = "https://github.com/LPCIC/elpi/releases/download/v4.1.1/elpi-4.1.1.tbz";
-        hash = "sha256-B8200zPmJ+V2RO5F5D7fqkogHSHvr9iSLo5eDUZJ+2g=";
-      };
-      # elpi.dynload (new in 4.1) needs the library findlib.dynload: findlib
-      # is only a build tool of buildDunePackage, here it is also a library
-      propagatedBuildInputs = old.propagatedBuildInputs
-        ++ filter (p: hasSuffix "findlib" (p.pname or "")) old.nativeBuildInputs;
-    };
-  };
   master = [
     "hierarchy-builder"
     "mathcomp"
@@ -73,8 +58,6 @@ let
     ConCert.job = false;
 
     ITree.job = false;  # only a dependency of jasmin
-
-    multinomials.job = false;  # often broken
 };
 in
 {
@@ -89,9 +72,9 @@ in
       micromega-plugin.override.version = "master";  # to be removed at some point
       micromega-plugin.job = false;
       mathcomp-algebra-tactics.override.version = "master";
+      multinomials.job = false;  # needs Rocq 9.2
       coqeal.job = false;  # needs multinomials, whose master needs Rocq 9.2
     };
-    "rocq-9.1".ocamlPackages = ocaml-common-bundles;
 
     "rocq-9.2".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.2";
@@ -101,7 +84,6 @@ in
       mathcomp-zify.job = false;  # not available yet
       jasmin.job = false;  # not available yet
     };
-    "rocq-9.2".ocamlPackages = ocaml-common-bundles;
 
     "rocq-9.3".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.3";
@@ -114,7 +96,6 @@ in
       mathcomp-word.job = false;  # not available yet
       trakt.job = false;  # not available yet
     };
-    "rocq-9.3".ocamlPackages = ocaml-common-bundles;
 
     "rocq-master".rocqPackages = common-bundles // {
       rocq-core.override.version = "master";
@@ -125,7 +106,6 @@ in
       bignums.override.version = "master";
       jasmin.job = false;
     };
-    "rocq-master".ocamlPackages = ocaml-common-bundles;
 
   } // optionalAttrs (min-elpi-version != default-elpi-version) {
     "rocq-master-min-elpi".rocqPackages = common-bundles // {
@@ -136,7 +116,6 @@ in
       stdlib.override.version = "master";
       jasmin.job = false;
     };
-    "rocq-master-min-elpi".ocamlPackages = ocaml-common-bundles;
   };
 
   cachix.coq = {};
