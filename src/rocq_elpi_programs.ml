@@ -21,16 +21,9 @@ let eq_cunit x y =
   | Signature(k1,_), Signature(k2,_) -> Names.KerName.equal k1 k2
   | _ -> false
 
-[%%if coq = "9.0"]
-let my_filtered_open = Libobject.simple_open
-let my_simple_open ?cat f = my_filtered_open ?cat (fun i v -> if Int.equal i 1 then f v)
-let is_in_section = Lib.is_in_section
-[%%else]
 let my_filtered_open = Libobject.filtered_open
 let my_simple_open = Libobject.simple_open
 let is_in_section = Global.is_in_section
-[%%endif]
-
 
 module SLMap = Map.Make(struct type t = qualified_name let compare = compare_qualified_name end)
 module SLSet = Set.Make(struct type t = qualified_name let compare = compare_qualified_name end)
@@ -296,7 +289,7 @@ module SourcesStorage(S : Stage) = struct
     }
   end
 
-  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
+  [%%if coq = "9.1" || coq = "9.2" ||coq = "9.3"]
   module Summary = struct
     include Summary
     type 'a ref = 'a Stdlib.ref

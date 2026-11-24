@@ -21,7 +21,7 @@ module U = Rocq_elpi_utils
 (* Anti-quotation ******************************************************** *)
 
 {
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
   let pr_elpi_code _ _ _ (s : Elpi.API.Ast.Loc.t * string) = Pp.str (snd s)
 }
 
@@ -80,7 +80,7 @@ let warning_legacy_accumulate_gen =
 let warning_legacy_accumulate ?loc () = warning_legacy_accumulate_gen ?loc true
 let warning_legacy_accumulate2 ?loc () = warning_legacy_accumulate_gen ?loc false
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let lookahead_lib_colon kwstate strm =
   match Gramlib.LStream.peek_nth kwstate 0 strm with
   | Tok.IDENT "lib" ->

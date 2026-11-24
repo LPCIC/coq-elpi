@@ -577,11 +577,11 @@ module SynterpAction = struct
       | Error `Empty ->
         synterp_interp_error Pp.(hov 0 (strbrk ("The command did perform no (more) actions during the parsing phase (aka synterp), while during the execution phase (aka interp) it tried to perform a") ++ spc() ++ str case ++ spc() ++ str "action." ++ spc() ++ strbrk common_err)))
 
-  type 'a replay = 'a -> State.t -> State.t * ModPath.t option 
+  type 'a replay = 'a -> State.t -> State.t * ModPath.t option
 
   let interp_close_section = Declaremods.Interp.close_section
 
-  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+  [%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
   let dump_end_section ?loc id = Dumpglob.dump_reference ?loc id "<>" "sec"
   [%%else]
   let dump_end_section ?loc id = Dumpglob.dump_end_section ?loc id

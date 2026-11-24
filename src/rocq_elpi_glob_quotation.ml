@@ -307,8 +307,6 @@ let glob_intros_prod ctx bo =
       | None -> GProd(name,r,Explicit,ty,bo)
       | Some v -> GLetIn(name,r,v,Some ty,bo)))
     ctx bo
-    
-    
 
 let name_of_id id = A.Name.from_string (Names.Id.to_string id)
 
@@ -316,7 +314,7 @@ let name_of = function
   | Names.Name.Anonymous -> None
   | Names.Name.Name id -> Some (name_of_id id)
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let is_elpi_code_r = ref (fun _ -> assert false)
 let get_elpi_code_r = ref (fun _ -> assert false)
 let is_elpi_code_appArg_r = ref (fun _ -> assert false)
@@ -342,7 +340,7 @@ let is_elpi_code, get_elpi_code = tag_helpers elpi_code_tag
 let is_elpi_code_appArg, get_elpi_code_appArg = tag_helpers elpi_code_appArg_tag
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let unfold_glob_instance u = (false, false, fst u, snd u)
 [%%else]
 let unfold_glob_instance u = (u.extensible_qualities, u.extensible_univlevels, u.qualities, u.univlevels)
@@ -367,7 +365,7 @@ let gterm2lpast ~pattern ~language state glob =
 
   and under_binders ~loc names tys bos state ts ~k =
     under_glob_ctxn names ~tyasts:(List.map2 (fun ty bo -> mk_tyast ~loc ~ty ~bo) tys bos) ~k state ts []
-            
+
   and mk_tyast ~loc ~ty ~bo id =
     match bo with
     | None -> mk_decl state ~loc id ~ty

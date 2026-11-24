@@ -18,7 +18,7 @@ depends: [
   "dune" {>= "3.21"}
   "ocaml" {>= "4.10.0"}
   "elpi" {>= "4.1.1" & < "4.2.0~"}
-  "rocq-core" {>= "9.0+rc1" & < "9.4~" | = "dev"}
+  "rocq-core" {>= "9.1" & < "9.4~" | = "dev"}
   "ppx_optcomp"
   "ocaml-lsp-server" {with-dev-setup}
   "odoc" {with-doc}

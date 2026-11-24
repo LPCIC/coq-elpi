@@ -77,16 +77,6 @@ type top_indt_decl = interp_sign * glob_indt_decl
 
 type univpoly = Mono | Poly | CumulPoly
 
-[%%if coq = "9.0"]
-type raw_record_decl_elpi = {
-  name : qualified_name;
-  parameters : Constrexpr.local_binder_expr list;
-  sort : Constrexpr.sort_expr option;
-  constructor : Names.Id.t option;
-  fields : (Vernacexpr.local_decl_expr * Vernacexpr.record_field_attr) list;
-  univpoly : univpoly;
-}
-[%%else]
 type raw_record_decl_elpi = {
   name : qualified_name;
   parameters : Constrexpr.local_binder_expr list;
@@ -95,7 +85,6 @@ type raw_record_decl_elpi = {
   fields : (Vernacexpr.local_decl_expr * Record.Data.projection_flags * Vernacexpr.notation_declaration list) list;
   univpoly : univpoly;
 }
-[%%endif]
 type glob_record_decl_elpi = {
   name : string list * Names.Id.t;
   constructorname : Names.Id.t option;
@@ -133,7 +122,7 @@ let pr_raw_indt_decl _ _ _ = Pp.str "TODO: pr_raw_indt_decl"
 let pr_glob_indt_decl _ _ _ = Pp.str "TODO: pr_glob_indt_decl"
 let pr_top_indt_decl _ _ _ = Pp.str "TODO: pr_top_indt_decl"
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 type raw_red_expr = Genredexpr.raw_red_expr
 [%%else]
 type raw_red_expr = Redexpr.raw_red_expr
@@ -147,7 +136,7 @@ type raw_constant_decl = {
   body : Constrexpr.constr_expr option;
   red : raw_red_expr option;
 }
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let empty_univ_csts = Univ.Constraints.empty
 let dest_udecl ({ UState.univdecl_instance ; univdecl_extensible_instance; univdecl_extensible_constraints; univdecl_constraints } : UState.universe_decl) =
   univdecl_extensible_instance, univdecl_extensible_constraints, univdecl_constraints, univdecl_instance
@@ -243,7 +232,7 @@ let univpoly_of ~poly ~cumulative =
   | true, false -> Poly
   | false, _ -> Mono
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let univpoly_of_flags flags =
   univpoly_of ~poly:flags.ComInductive.poly ~cumulative:flags.ComInductive.cumulative
 [%%else]
@@ -307,55 +296,6 @@ let dest_entry (_,_,_,_,x) = x
 
 let expr_Type_sort = Constrexpr_ops.expr_Type_sort
 
-[%%if coq = "9.0"]
-let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
-  let name, space = sep_last_qualid name in
-  let params = intern_global_context_synterp parameters in
-  let params = List.rev params in
-  let arity = mkGHole in
-  let fields =
-    List.fold_left (fun acc -> function
-    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_coercion = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
-        if nots <> [] then Rocq_elpi_utils.nYI "notation in record fields";
-        if pr <> None then Rocq_elpi_utils.nYI "priority in record fields";
-        let atts = { Rocq_elpi_HOAS.is_canonical = canon; is_coercion = if inst = Vernacexpr.AddCoercion then Reversible else Off; name } in
-        let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
-        let entry = intern_global_context_synterp [mkCLocalAssum [fn] (Constrexpr.Default Glob_term.Explicit) x] in
-        let x = match entry with
-          | [x] -> dest_entry x
-          | _ -> assert false in
-        (x, atts) :: acc
-    | Vernacexpr.DefExpr _, _ -> Rocq_elpi_utils.nYI "DefExpr")
-        [] fields in
-  { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields; univpoly }
-
-
-let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
-  let name, space = sep_last_qualid name in
-  let sort = match sort with
-    | Some x -> Constrexpr.CSort x
-    | None -> Constrexpr.(CSort expr_Type_sort) in
-  let intern_env, params = intern_global_context glob_sign ~intern_env:Constrintern.empty_internalization_env parameters in
-  let glob_sign_params = push_glob_ctx params glob_sign in
-  let params = List.rev params in
-  let arity = intern_global_constr_ty ~intern_env glob_sign_params @@ CAst.make sort in
-  let _, _, fields =
-    List.fold_left (fun (gs,intern_env,acc) -> function
-    | Vernacexpr.AssumExpr ({ CAst.v = name } as fn,bl,x), { Vernacexpr.rf_coercion = inst; rf_priority = pr; rf_notation = nots; rf_canonical = canon } ->
-        if nots <> [] then Rocq_elpi_utils.nYI "notation in record fields";
-        if pr <> None then Rocq_elpi_utils.nYI "priority in record fields";
-        let atts = { Rocq_elpi_HOAS.is_canonical = canon; is_coercion = if inst = Vernacexpr.AddCoercion then Reversible else Off; name } in
-        let x = if bl = [] then x else Constrexpr_ops.mkCProdN bl x in
-        let intern_env, entry = intern_global_context ~intern_env gs [mkCLocalAssum [fn] (Constrexpr.Default Glob_term.Explicit) x] in
-        let x = match entry with
-          | [x] -> dest_entry x
-          | _ -> assert false in
-        let gs = push_glob_ctx entry gs in
-        gs, intern_env, (x, atts) :: acc
-    | Vernacexpr.DefExpr _, _ -> Rocq_elpi_utils.nYI "DefExpr")
-        (glob_sign_params,intern_env,[]) fields in
-  { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields; univpoly }
-[%%else]
 let raw_record_decl_to_glob_synterp ({ name; sort; parameters; constructor; fields; univpoly } : raw_record_decl_elpi) : glob_record_decl_elpi =
   let name, space = sep_last_qualid name in
   let params = intern_global_context_synterp parameters in
@@ -408,7 +348,6 @@ let raw_record_decl_to_glob glob_sign ({ name; sort; parameters; constructor; fi
     | Vernacexpr.DefExpr _, _, _ -> Rocq_elpi_utils.nYI "DefExpr")
         (glob_sign_params,intern_env,[]) fields in
   { name = (space, Names.Id.of_string name); arity; params; constructorname = constructor; fields = List.rev fields; univpoly }
-[%%endif]
 
 let raw_indt_decl_to_glob_synterp ({ finiteness; name; parameters; non_uniform_parameters; arity; constructors; univpoly } : raw_indt_decl_elpi) : glob_indt_decl_elpi =
   let name, space = sep_last_qualid name in
@@ -470,7 +409,7 @@ let raw_decl_name_to_glob name =
 
 let interp_red_expr = Redexpr.interp_redexp_no_ltac
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let interp_definition ~program_mode poly = ComDefinition.interp_definition ~program_mode
 let interp_assumption ~program_mode poly = ComAssumption.interp_assumption ~program_mode
 [%%else]
@@ -589,7 +528,7 @@ type top_ltac_term = interp_sign * Names.Id.t
 
 type raw_ltac_tactic = Ltac_plugin.Tacexpr.raw_tactic_expr
 type glob_ltac_tactic = Ltac_plugin.Tacexpr.glob_tactic_expr
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 type top_ltac_tactic = Ltac_plugin.Tacinterp.value
 [%%else]
 type top_ltac_tactic = Ltac_plugin.Tacarg.tacvalue
@@ -667,11 +606,11 @@ let subst mod_subst = function
   | OpenTerm t ->
       OpenTerm (Ltac_plugin.Tacsubst.subst_glob_constr_and_expr mod_subst t)
   | LTac(ty,t) ->
-      LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))        
+      LTac(ty,(Detyping.subst_glob_constr (Global.env()) mod_subst t))
   | LTacTactic t ->
       LTacTactic (Ltac_plugin.Tacsubst.subst_tactic mod_subst t)
-  
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+
+[%%if coq = "9.1" || coq = "9.2"]
 let ltac1closure = Ltac_plugin.Tacinterp.Value.of_closure
 [%%else]
 let ltac1closure = Ltac_plugin.Tacinterp.Value.closure
@@ -690,7 +629,7 @@ let interp ist = function
         LTac(ty,(ist,id))
   | LTacTactic t -> LTacTactic (ltac1closure ist t)
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let register_interp0 wit f = Geninterp.register_interp0 wit (fun ist x ->
     Ftactic.bind (f ist x) @@ fun v ->
     Ftactic.return (Geninterp.Val.inject (Geninterp.val_tag (Topwit wit)) v))
@@ -1278,7 +1217,7 @@ let in_coq_arg ~depth proof_context constraints state t =
     end
   | _ -> raise API.Conversion.(TypeErr (TyName"argument",depth,t))
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let ltac1ofvalue x = x
 [%%else]
 let ltac1ofvalue = Ltac_plugin.Taccoerce.Value.of_tacvalue

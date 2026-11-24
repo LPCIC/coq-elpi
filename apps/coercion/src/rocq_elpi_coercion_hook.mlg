@@ -55,7 +55,7 @@ let elpi_coercion_hook program env sigma ~flags v ~inferred ~expected =
     | API.Execute.Failure -> None
     | exception (Rocq_elpi_utils.LtacFail (level, msg)) -> None
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" ||coq = "9.3"]
 module Summary = struct
   let ref ~name x = Summary.ref ~name x
   let (!) = (!)
