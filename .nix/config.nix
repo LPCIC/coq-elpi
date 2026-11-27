@@ -107,7 +107,7 @@ in
       wasmcert.job = false;  # needs Rocq 9.1
       mathcomp-word.job = false;  # needs Rocq 9.1
       jasmin.job = false;  # needs Rocq 9.1
-      odd-order.job = false;  # needs Rocq 9.1
+      odd-order.job = false;  # needs Rocq 9.2
     };
 
     "rocq-9.1".rocqPackages = common-bundles // {
@@ -118,6 +118,7 @@ in
       mathcomp-algebra-tactics.override.version = "master";
       multinomials.job = false;  # needs Rocq 9.2
       coqeal.job = false;  # needs multinomials, whose master needs Rocq 9.2
+      odd-order.job = false;  # needs Rocq 9.2
     };
 
     "rocq-9.2".rocqPackages = common-bundles // {
