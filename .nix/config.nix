@@ -66,6 +66,50 @@ in
   default-bundle = "rocq-9.2";
   bundles = {
 
+    "rocq-9.0".rocqPackages = common-bundles // {
+      rocq-core.override.version = "9.0";
+      coq.override.version = "9.0";
+      micromega-plugin.override.version = "master";  # to be removed at some point
+      micromega-plugin.job = false;
+      mathcomp-algebra-tactics.override.version = "master";
+      multinomials.job = false;  # needs Rocq 9.2
+      coqeal.job = false;  # needs multinomials, whose master needs Rocq 9.2
+      mathcomp.job = false;  # needs Rocq 9.1
+      mathcomp-character.job = false;  # needs Rocq 9.1
+      mathcomp-field.job = false;  # needs Rocq 9.1
+      mathcomp-solvable.job = false;  # needs Rocq 9.1
+      mathcomp-algebra.job = false;  # needs Rocq 9.1
+      mathcomp-fingroup.job = false;  # needs Rocq 9.1
+      mathcomp-order.job = false;  # needs Rocq 9.1
+      mathcomp-ssreflect.job = false;  # needs Rocq 9.1
+      mathcomp-boot.job = false;  # needs Rocq 9.1
+      extructures.job = false;  # needs Rocq 9.1
+      fcsl-pcm.job = false;  # needs Rocq 9.1
+      fourcolor.job = false;  # needs Rocq 9.1
+      gaia.job = false;  # needs Rocq 9.1
+      graph-theory.job = false;  # needs Rocq 9.1
+      mathcomp-zify.job = false;  # needs Rocq 9.1
+      mathcomp-algebra-tactics.job = false;  # needs Rocq 9.1
+      libvalidsdp.job = false;  # needs Rocq 9.1
+      validsdp.job = false;  # needs Rocq 9.1
+      mathcomp-bigenough.job = false;  # needs Rocq 9.1
+      mathcomp-finmap.job = false;  # needs Rocq 9.1
+      mathcomp-real-closed.job = false;  # needs Rocq 9.1
+      mathcomp-classical.job = false;  # needs Rocq 9.1
+      mathcomp-reals.job = false;  # needs Rocq 9.1
+      mathcomp-reals-stdlib.job = false;  # needs Rocq 9.1
+      mathcomp-analysis.job = false;  # needs Rocq 9.1
+      mathcomp-analysis-stdlib.job = false;  # needs Rocq 9.1
+      mathcomp-experimental-reals.job = false;  # needs Rocq 9.1
+      mathcomp-infotheo.job = false;  # needs Rocq 9.1
+      mathcomp-tarjan.job = false;  # needs Rocq 9.1
+      ssprove.job = false;  # needs Rocq 9.1
+      wasmcert.job = false;  # needs Rocq 9.1
+      mathcomp-word.job = false;  # needs Rocq 9.1
+      jasmin.job = false;  # needs Rocq 9.1
+      odd-order.job = false;  # needs Rocq 9.2
+    };
+
     "rocq-9.1".rocqPackages = common-bundles // {
       rocq-core.override.version = "9.1";
       coq.override.version = "9.1";
@@ -74,6 +118,7 @@ in
       mathcomp-algebra-tactics.override.version = "master";
       multinomials.job = false;  # needs Rocq 9.2
       coqeal.job = false;  # needs multinomials, whose master needs Rocq 9.2
+      odd-order.job = false;  # needs Rocq 9.2
     };
 
     "rocq-9.2".rocqPackages = common-bundles // {
