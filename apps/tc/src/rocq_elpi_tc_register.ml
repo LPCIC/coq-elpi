@@ -83,7 +83,7 @@ let observer_instance =
       ~cache:(fun (run,inst) -> run @@ observer_instance inst)
       ~discharge:(fun (_,inst as x) -> if inst.locality = Local then None else Some x)
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let observer_class_disp rp c = (observer_class (rp,None,c)) 
 [%%else]
 let observer_class_disp rp (omode,c) = (observer_class (rp,omode,c)) 
@@ -100,7 +100,7 @@ module StringMap = Map.Make(String)
 
 type observers = observer StringMap.t
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" ||coq = "9.3"]
 module Summary = struct
   type 'a ref = 'a Stdlib.ref
   let ref ~name x = Summary.ref ~name x

@@ -60,7 +60,7 @@ val runtime_gterm2lp :
   depth:int -> State.t -> term
   
 (* Used for anti-quotations *)
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 val is_elpi_code_r : (Genarg.glob_generic_argument -> bool) ref
 val get_elpi_code_r : (Genarg.glob_generic_argument -> Ast.Loc.t * string) ref
 val is_elpi_code_appArg_r : (Genarg.glob_generic_argument -> bool) ref

@@ -26,7 +26,7 @@ let main_interp_qedc = Rocq_elpi_arg_HOAS.main_interp_qedc
 let main_synterpc = Rocq_elpi_arg_HOAS.main_synterpc
 let attributesc = Rocq_elpi_arg_HOAS.attributesc
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 exception ParseError = Gramlib.Grammar.Error
 [%%else]
 exception ParseError = Gramlib.Grammar.ParseError
@@ -100,7 +100,7 @@ let warn_scope_not_regular ~loc = function
 
 module Compiler(P : Programs) = struct
 
-  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
+  [%%if coq = "9.1" || coq = "9.2" ||coq = "9.3"]
    module Summary = struct
     include Summary
     let ref ~name x = Summary.ref ~stage:P.stage ~name:(P.in_stage name) x
@@ -544,7 +544,7 @@ module Interp = struct
     fnl() ++
     strbrk "The command lacks code for the synterp phase. In order to add code to this phase use '#[synterp] Elpi Accumulate'. See also https://lpcic.github.io/coq-elpi/tutorial_coq_elpi_command.html#parsing-and-execution"
 
-  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+  [%%if coq = "9.1" || coq = "9.2"]
   let empty_glob_sign env = Genintern.empty_glob_sign ~strict:true env
   [%%else]
   let empty_glob_sign env = Genintern.empty_glob_sign ~strict:true env UnivNames.empty_binders
@@ -631,13 +631,8 @@ let get_stash ~default_name =
   | None -> (fun ~target ~depth -> Ok(API.RawOpaqueData.of_string (Names.Id.to_string default_name))), [], None
   | Some x -> stash := None; x
 
-[%%if coq = "9.0"]
-let compat_typ sigma typ = EConstr.to_constr ~abort_on_undefined_evars:false sigma typ
-let void () = UnivGen.constr_of_monomorphic_global (Global.env ()) (Rocqlib.lib_ref "core.False.type")
-[%%else]
 let compat_typ _sigma typ = typ
 let void () = EConstr.of_constr @@ UnivGen.constr_of_monomorphic_global (Global.env ()) (Rocqlib.lib_ref "core.False.type")
-[%%endif]
 
 let run_program_open_proof ~loc name ~atts ~syndata args : Declare.Proof.t =
   let syn, syndata =
@@ -772,20 +767,6 @@ let has_att s l =
     | { CAst.v = s',VernacFlagEmpty } -> String.equal s s'
     | _ -> false)
 
-[%%if coq = "9.0"]
-let classifier proof _loc0 _args _loc1 =
-  match proof with
-  | Some (Begin None) -> Vernacextend.(VtStartProof (Doesn'tGuaranteeOpacity,[]))
-  | Some End -> Vernacextend.(VtQed (VtKeep VtKeepAxiom))
-  | _ -> Vernacextend.VtSideff ([], VtNow)
-let execution proof p loc0 args loc1 ?loc ~atts () =
-  let loc = Option.default (loc_merge loc0 loc1) loc in
-  let syndata = Synterp.run_program ~loc p ~atts args in
-  match proof with
-  | Some (Begin None) -> Vernactypes.vtopenproof (fun () -> Interp.run_program_open_proof ~loc p ~atts ~syndata args)
-  | Some End -> Vernactypes.vtcloseproof (fun ~lemma ~pm -> Interp.run_program_close_proof ~loc p ~atts ~syndata args ~lemma; pm)
-  | _ -> Vernactypes.vtdefault (fun () -> Interp.run_program ~loc p ~atts ~syndata args)
-[%%else]
 let classifier proof _loc0 _args _loc1 ~atts =
   match proof with
   | Some (Begin None) -> Vernacextend.(VtStartProof (Doesn'tGuaranteeOpacity,[]))
@@ -800,9 +781,8 @@ let execution proof p loc0 args loc1 ?loc ~atts () =
   | Some (Begin (Some a)) when has_att a atts -> Vernactypes.vtopenproof (fun () -> Interp.run_program_open_proof ~loc p ~atts ~syndata args)
   | Some End -> Vernactypes.vtcloseproof (fun ~lemma ~pm -> Interp.run_program_close_proof ~loc p ~atts ~syndata args ~lemma; pm)
   | _ -> Vernactypes.vtdefault (fun () -> Interp.run_program ~loc p ~atts ~syndata args)
-[%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let extend_vernac_command_grammar ext : unit =
   Egramml.extend_vernac_command_grammar ~undoable:true ext
 [%%else]
@@ -874,7 +854,7 @@ let get_lib_ref ?loc qid =
           ++ str " (you may need to require some .v file with \
                   `Register ... as " ++ str id ++ str ".`).")
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let lib_ref ?loc ~expl qid =
   let ref = get_lib_ref qid in
   let path = Nametab.path_of_global ref in

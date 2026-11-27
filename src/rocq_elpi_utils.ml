@@ -74,7 +74,7 @@ let patch_loc_source execution_loc error_loc msg =
       (* external file *)
       Pp.(hv 0 (Loc.pr elpiloc ++ spc () ++ msg)), execution_loc
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 exception ParseError = Gramlib.Grammar.Error
 [%%else]
 exception ParseError = Gramlib.Grammar.ParseError
@@ -238,7 +238,7 @@ let manual_implicit_of_gdecl (name, _, bk, _, _) = manual_implicit_of_binding_ki
 let lookup_inductive env i =
   Inductive.lookup_mind_specif env i
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let abbreviation_find_interp = Abbreviation.search_abbreviation
 [%%else]
 let abbreviation_find_interp = Abbreviation.find_interp
@@ -439,7 +439,7 @@ let rec list_map_acc f acc = function
 
 let rec fix_detype x = match DAst.get x with Glob_term.GEvar _ -> mkGHole | _ -> Glob_ops.map_glob_constr fix_detype x
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let gqvar q = Glob_term.GQVar q
 [%%else]
 let gqvar q = Glob_term.GQuality (QVar q)
@@ -451,7 +451,7 @@ let detype_qvar sigma q =
   | Some id -> GLocalQVar (CAst.make (Names.Name.Name id))
   | None -> gqvar q
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let detype_quality sigma q =
   let open Glob_term in
   let open Sorts.Quality in
@@ -475,7 +475,7 @@ let detype_level sigma l =
   let open Glob_term in
   UNamed (detype_level_name sigma l)
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let detype_universe sigma u =
   Glob_term.UNamed (List.map (Util.on_fst (detype_level_name sigma)) (Univ.Universe.repr u))
 let detype_sort ku sigma x =
@@ -512,7 +512,7 @@ let detype_relevance_info sigma na =
   | RelevanceVar q -> Some (Glob_term.GRelevanceVar (detype_qvar sigma q))
 *)
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let make_instance qs us = Some (qs, us)
 [%%else]
 let make_instance qs us = let open Glob_term in
@@ -550,7 +550,7 @@ let rec decompose accu c = match DAst.get c with
 | Glob_term.GLambda (na, _, _, _, c) -> decompose (na :: accu) c
 | _ -> List.rev accu, c
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let get_projection_constant _env p =
   Names.Projection.Repr.constant p
 [%%else]
@@ -913,7 +913,7 @@ let detype ?(keepunivs = false) env sigma t =
   let x = aux (names_of_env env, env) t in
   x
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let pr_constr_expr = Ppconstr.pr_constr_expr
 let detype_closed_glob = Detyping.detype_closed_glob
 [%%else]
@@ -925,7 +925,7 @@ let detype_closed_glob env sigma closure =
   let gbody = detype_closed_glob env sigma closure in
   fix_detype gbody
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let detype_to_pattern env sigma c =
   let c = detype env sigma c in
   Patternops.pattern_of_glob_constr env c
@@ -1027,7 +1027,7 @@ let eta_contract env sigma t =
     (*Printf.eprintf "------------- %s\n" Pp.(string_of_ppcmds @@ Printer.pr_econstr_env env sigma t);*)
     map env t
 
-[%%if coq = "8.20" || coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let is_sync_anomaly = function
   | Control.Timeout | Sys.Break | Out_of_memory | Stack_overflow -> false
   | e -> if Memprof_coq.is_interrupted() then false else CErrors.is_anomaly e
@@ -1035,7 +1035,7 @@ let is_sync_anomaly = function
 let is_sync_anomaly = CErrors.is_sync_anomaly
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let push_named = Environ.push_named
 [%%else]
 let push_named = Environ.push_named ProofVar
@@ -1045,4 +1045,4 @@ let prune_uvar state ev args =
   let state, ev1 = API.FlexibleData.Elpi.make state in
   let rec mkLam = function [] -> API.RawData.mkUnifVar ev1 ~args:[] state | _ :: rest -> API.RawData.mkLam (mkLam rest) in
   state, API.Conversion.Unify(mkLam args,API.RawData.mkUnifVar ev ~args:[] state)
-  
+

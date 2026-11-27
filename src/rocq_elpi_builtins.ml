@@ -53,7 +53,7 @@ let string_of_ppcmds options pp =
   Buffer.contents b
 
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let with_pp_options o f =
   let raw_print = !Flags.raw_print in
   let print_universes = !Detyping.print_universes in
@@ -152,7 +152,7 @@ let empty_extern_env () = Constrextern.empty_extern_env ~flags:(PrintingFlags.Ex
 [%%endif]
 
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let pr_named_context_of options env sigma =
   let make_decl_list env d pps =
     with_pp_options options.pp (fun flags -> pr_named_decl_flagged flags env sigma d) :: pps in
@@ -244,7 +244,7 @@ let univ_super state u v =
   let state, u = match u with
   | Sorts.(Set | Prop | SProp) -> state, u
   | _ ->
-    let ul = Rocq_elpi_HOAS.univ_of_sort u in
+    let ul = Sorts.univ_of_sort u in
     if Univ.Universe.is_level ul then state, u
     else
       let state, (_,w) = new_univ_level_variable state in
@@ -436,7 +436,7 @@ let cmd_arg_in_scope sc (arg : Rocq_elpi_arg_HOAS.Cmd.raw) : Rocq_elpi_arg_HOAS.
         Constrexpr.CDelimiters(Constrexpr.DelimUnboundedScope, key, t))
   | x -> x
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let empty_glob_sign env = Genintern.empty_glob_sign ~strict:true env
 [%%else]
 let empty_glob_sign env = Genintern.empty_glob_sign ~strict:true env UnivNames.empty_binders
@@ -511,7 +511,7 @@ let is_mutual_inductive_entry_ground { Entries.mind_entry_params; mind_entry_ind
   List.for_all (is_ground_rel_ctx_entry sigma) mind_entry_params &&
   List.for_all (is_ground_one_inductive_entry sigma) mind_entry_inds
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let evd_merge_sort_context_set rigid = Evd.merge_sort_context_set rigid
 let check_univ_decl =  UState.check_univ_decl
 let univ_csts_to_list = Univ.Constraints.elements
@@ -568,19 +568,6 @@ let handle_uinst_option_for_inductive ~depth options i state =
  *     unify-list-eq R1 R2.
  *
  *)
-[%%if coq = "9.0"]
-let build_of_sort = API.AlgebraicData.B (fun s -> Structures.ValuePattern.Sort_cs (Sorts.family s))
-let match_of_sort =
-  let open API.AlgebraicData in let open Structures.ValuePattern in
-  MS (fun ~ok ~ko p state -> match p with
-        | Sort_cs Sorts.InSet -> ok Sorts.set state
-        | Sort_cs Sorts.InProp -> ok Sorts.prop state
-        | Sort_cs Sorts.InType ->
-              let state, (_,u) = new_univ_level_variable state in
-              let u = Sorts.sort_of_univ u in
-              ok u state
-        | _ -> ko state)
-[%%else]
 let build_of_sort = API.AlgebraicData.B (fun s -> Structures.ValuePattern.Sort_cs (UnivGen.QualityOrSet.of_sort s))
 let match_of_sort =
   let open API.AlgebraicData in let open Structures.ValuePattern in
@@ -592,15 +579,14 @@ let match_of_sort =
               let u = Sorts.sort_of_univ u in
               ok u state
         | _ -> ko state)
-[%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let hint_globref = Hints.hint_globref
 [%%else]
 let hint_globref gr = gr
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let abbreviation_find_interp = Abbreviation.search_abbreviation
 let abbreviation_declare = Abbreviation.declare_abbreviation
 [%%else]
@@ -608,7 +594,7 @@ let abbreviation_find_interp = Abbreviation.find_interp
 let abbreviation_declare = Abbreviation.declare
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let for_scheme = function
 | GlobRef.ConstRef c -> c
 | _ -> elpi_type_error "Register Scheme: expecing a constant."
@@ -630,7 +616,7 @@ let lookup_scheme_opt k gr =
   DeclareScheme.lookup_scheme_opt k gr
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let declare_scheme_for local k x gr =
   let ind = match x with
     | GlobRef.IndRef i -> i
@@ -698,7 +684,7 @@ let cs_instance = let open Conv in let open API.AlgebraicData in let open Struct
 }
 
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let cs_entries_for_proj env p =
   Structures.CSTable.entries_for ~projection:p
 
@@ -718,13 +704,13 @@ let find_arguments_scope env c =
   CNotation.find_arguments_scope env c
 [%%endif]
 
-[%%if coq = "9.0" || coq= "9.1" || coq= "9.2" || coq= "9.3"]
+[%%if coq= "9.1" || coq= "9.2" || coq= "9.3"]
 let find_arguments_scope env gref =
   List.map (List.map (fun sc -> Constrexpr.DelimOnlyTmpScope, sc))
     (find_arguments_scope env gref)
 [%%endif]
 
-[%%if coq = "9.0" || coq= "9.1" || coq= "9.2" || coq= "9.3"]
+[%%if coq= "9.1" || coq= "9.2" || coq= "9.3"]
 let declare_arguments_scope local gref scopes =
   let scopes = scopes |> List.map (List.map (fun (_, k) ->
     try ignore (CNotation.find_scope k); k
@@ -742,7 +728,7 @@ let declare_arguments_scope local gref scopes =
   CNotation.declare_arguments_scope local gref scopes
 [%%endif]
 
-[%%if coq = "9.0" || coq= "9.1" || coq= "9.2" || coq= "9.3"]
+[%%if coq= "9.1" || coq= "9.2" || coq= "9.3"]
 let empty_subscopes = [], []
 [%%else]
 let empty_subscopes = []
@@ -753,7 +739,7 @@ type type_class_instance = {
   priority : int;
 }
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let tc_is_class env gr =
   Typeclasses.is_class gr
 [%%else]
@@ -810,7 +796,7 @@ let get_instance env class_gr inst_gr : type_class_instance =
 
 let warning_tc_hints = CWarnings.create ~name:"elpi.TC.hints" ~category:elpi_cat Pp.str
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let hints_map_all env ~secvars tc db =
   Hints.Hint_db.map_all ~secvars tc db
 [%%else]
@@ -1196,17 +1182,10 @@ let warn_deprecated_add_axiom =
 
 let comAssumption_declare_variable coe ~kind ty ~univs ~impargs impl ~name =
   ComAssumption.declare_variable ~coe ~kind ty ~univs ~impargs ~impl ~name:name.CAst.v
-[%%if coq = "9.0"]
-let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ty =
-  ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name:name.CAst.v ty
-let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
-  DeclareInd.declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z
-[%%else]
 let comAssumption_declare_axiom coe ~local ~kind ~univs ~impargs ~inline ~name ty =
   ComAssumption.declare_axiom ~coe ~local ~kind ~univs ~impargs ~inline ~name ty
 let declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim x y z =
   DeclareInd.declare_mutual_inductive_with_eliminations ~default_dep_elim x y z
-[%%endif]
 
 let cinfo_make _ _ _using =
   Declare.CInfo.make
@@ -1225,7 +1204,7 @@ let get_entry_context = function
 | UState.Monomorphic_entry x, _ -> x
 | _ -> Univ.ContextSet.empty
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let make_polyflags poly cumul = poly
 [%%else]
 let make_polyflags poly cumul =
@@ -1279,7 +1258,7 @@ type tac_abbrev = {
 
 type ('a,'d) gbpmp = Gbpmp : ('d, _, 'b, Loc.t -> 'd) Procq.Rule.t * ('a -> 'b) -> ('a,'d) gbpmp
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let exact_ident x = Tok.PIDENT (Some x)
 [%%else]
 let exact_ident x = Tok.PIDENT (Exact x)
@@ -1292,13 +1271,7 @@ let rec gbpmp f = function
       Gbpmp (Procq.Rule.next r (Procq.Symbol.token (Tok.PFIELD (Some x))), (fun a _ -> f a))
   | [] -> assert false
 
-[%%if coq = "9.0"]
-let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_tactic
-[%%else]
-let wit_ltac_in_term = Ltac_plugin.Tacarg.wit_ltac_in_term
-[%%endif]
-
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let with_hack_synterp f () = f ()
 
 let grammar_extend e ext : unit = Procq.grammar_extend e ext
@@ -1309,12 +1282,12 @@ let with_hack_synterp f () =
 let grammar_extend e ext : unit = Procq.grammar_extend ~ignore_kw:false e ext
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let mk_ltac_in_term ?loc tac =
-   CAst.make ?loc @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit wit_ltac_in_term) tac)
+   CAst.make ?loc @@ Constrexpr.CGenarg (Genarg.in_gen (Genarg.rawwit Ltac_plugin.Tacarg.wit_ltac_in_term) tac)
 [%%else]
 let mk_ltac_in_term ?loc tac =
-  CAst.make ?loc @@ Constrexpr.CGenarg (Raw (wit_ltac_in_term, tac))
+  CAst.make ?loc @@ Constrexpr.CGenarg (Raw (Ltac_plugin.Tacarg.wit_ltac_in_term, tac))
 [%%endif]
 
 let cache_abbrev_for_tac { abbrev_name; tac_name = tacname; tac_fixed_args = more_args } =
@@ -1432,7 +1405,7 @@ module WMsg = Set.Make(struct
   let compare = Stdlib.compare
 end)
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 module Summary = struct
   type 'a ref = 'a Stdlib.ref
   let ref ~name x = Summary.ref ~name x
@@ -1590,14 +1563,8 @@ let find_hint_db s =
   with Not_found ->
     err Pp.(str "Hint DB not found: " ++ str s)
 
-[%%if coq = "9.0"]
-let hint_mode env gr db =
-  let modes = Hints.Hint_db.modes db in
-  List.map (fun a -> Array.to_list a) @@ GlobRef.Map.find gr modes
-[%%else]
 let hint_mode env gr db =
   List.map (fun a -> Array.to_list a) @@ Hints.Hint_db.find_mode env gr db
-[%%endif]
 
 let hint_db : (string * Hints.Hint_db.t) Conv.t = {
   Conv.ty = B.string.Conv.ty;
@@ -1620,7 +1587,7 @@ let hint_locality_doc = {|
 - @local! (default is export)
 - @global! (discouraged, may become deprecated)|}
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let explain_incon sigma p =
   UGraph.explain_universe_inconsistency
     (Termops.pr_evd_qvar sigma)
@@ -1815,25 +1782,14 @@ Supported attributes:
      | _ -> err Pp.(str "reset-simplification must be called on constant")))),
   DocAbove)]
 
-[%%if coq = "9.0"]
-let declare_projections ind ~kind univs id flags implicits fields =
-  Record.Internal.declare_projections ind ~kind univs id flags implicits fields
-[%%else]
 let declare_projections ind ~kind _ id flags implicits _ =
   Record.Internal.declare_projections ind ~kind ~inhabitant_id:id flags implicits
-[%%endif]
 
-[%%if coq = "9.0"]
-let apply_proof ~name ~poly env tac pf =
-  let (), pv, _, _ = Proofview.apply ~name ~poly env tac pf in
-  pv
-[%%else]
 let apply_proof ~name ~poly env tac pf =
   let (), pv, _, _, _ = Proofview.apply ~name ~poly env tac pf in
   pv
-[%%endif]
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let ltac1closure = Ltac_plugin.Tacinterp.Value.of_closure
 [%%else]
 let ltac1closure = Ltac_plugin.Tacinterp.Value.closure
@@ -1894,11 +1850,7 @@ let call_tactic ~depth state ~no_tc proof_context goal tactic =
     Result.Ok (state, subgoals, assignments)
   with TacticFails e -> Result.Error e
 
-[%%if coq = "9.0"]
-let section_close_section x =
-  let a,b,_,_ = Section.close_section x in
-  a, b
-[%%elif coq = "9.1"]
+[%%if coq = "9.1"]
 let section_close_section x =
   let a,b,_,_,_ = Section.close_section x in
   a, b
@@ -2084,7 +2036,7 @@ It's a fatal error if Name cannot be located.|})),
   DocAbove);
 ]
 
-[%%if coq = "9.0" || coq= "9.1"]
+[%%if coq= "9.1"]
 let locality_of_options (o : options) = o.local <> Some false
 [%%else]
 let locality_of_options (o : options) = match o.local with
@@ -2093,7 +2045,7 @@ let locality_of_options (o : options) = match o.local with
   | None -> Libobject.Export
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let find_structure_from_projection env ind = Structures.Structure.find_from_projection ind
 let find_structure_projections env ind = Structures.Structure.find_projections ind
 [%%else]
@@ -2101,26 +2053,20 @@ let find_structure_from_projection env ind = Structures.Structure.find_from_proj
 let find_structure_projections env ind = Structures.Structure.find_projections env ind
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let next_name_away_with_default_using_types _ _ id na names ty =
   Namegen.next_name_away_with_default_using_types id na names ty
 [%%else]
 let next_name_away_with_default_using_types = Namegen.next_name_away_with_default_using_types
 [%%endif]
 
-[%%if coq = "9.0" ]
-let univ_binder_compat_820 a b = a
-[%%else]
-let univ_binder_compat_820 a b = b
-[%%endif]
-
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let ustate_univs_of_ind_entry uctx = UState.Polymorphic_entry uctx
 [%%else]
 let ustate_univs_of_ind_entry uctx = UState.Polymorphic_entry (UVars.AbstractContext.repr uctx)
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let mis_is_recursive { Declarations.mind_recargs } =
   Rtree.is_infinite Declareops.eq_recarg mind_recargs
 [%%else]
@@ -2175,7 +2121,7 @@ let coq_elpi_add_predicate functional dbname indexing predname spec ~depth:_ ctx
   f ~loc dbname text scope;
   state, (), []
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let empty_notation_interp_env = Notation_term.{
   ninterp_var_type = Id.Map.empty;
   ninterp_rec_vars = Id.Map.empty
@@ -2187,7 +2133,7 @@ let empty_notation_interp_env = Notation_term.{
 }
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let ntn_type_var_constr =
   ((Notation_ops.constr_some_level,empty_subscopes),Id.Set.empty,Notation_term.NtnTypeConstr)
 [%%else]
@@ -2197,7 +2143,7 @@ let ntn_type_var_constr =
 
 (* Goal (evar) names, as in ?[foo]. Rocq has hierarchical names, as in
    ?p.foo, but they are not supported here *)
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let evar_key id sigma = Evd.evar_key id sigma
 let add_evar_name ev id sigma = Evd.rename ev id sigma
 [%%else]
@@ -2875,7 +2821,6 @@ Supported attributes:
        in
      let () = Global.push_context_set uctx in
      let mind =
-       let univ_binders = univ_binder_compat_820 (uentry', ubinders) univ_binders in
        declare_mutual_inductive_with_eliminations ~primitive_expected ~default_dep_elim me univ_binders ind_impls in
      let ind = mind, 0 in
      let lid_of id = CAst.make ~loc:(to_coq_loc @@ State.get Rocq_elpi_builtins_synterp.invocation_site_loc state) id in

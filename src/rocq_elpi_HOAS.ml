@@ -103,7 +103,7 @@ let constraint_eq u1 u2 =
   let open UnivProblem in
   ULe (u1, u2)
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let add_constraints state c = S.update (Option.get !pre_engine) state (fun ({ sigma } as x) ->
   { x with sigma = Evd.add_universe_constraints sigma c })
 [%%else]
@@ -111,7 +111,7 @@ let add_constraints state c = S.update (Option.get !pre_engine) state (fun ({ si
   { x with sigma = Evd.add_constraints sigma c })
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let add_universe_constraint state c =
   let open UnivProblem in
   try add_constraints state (Set.singleton c)
@@ -249,7 +249,7 @@ let universe_level_variable =
   end
 }
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 type univ_cst = Univ.univ_constraint
 type univ_csts = Univ.Constraints.t
 
@@ -490,7 +490,7 @@ let propc   = E.Constants.declare_global_symbol "prop"
 let spropc   = E.Constants.declare_global_symbol "sprop"
 let typc   = E.Constants.declare_global_symbol "typ"
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let ppsort fmt = function
   | Sorts.Type _ -> Format.fprintf fmt "Type"
   | Sorts.Set -> Format.fprintf fmt "Set"
@@ -641,7 +641,7 @@ let compare_instances x y =
   and qy, uy = UVars.Instance.to_array y in
   Util.Compare.(compare [(CArray.compare Sorts.Quality.compare, qx, qy); (CArray.compare Univ.Level.compare, ux, uy)])
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let ppinst u = UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes u
 [%%else]
 let ppinst u = UVars.Instance.pr Sorts.raw_printer u
@@ -1263,20 +1263,12 @@ let force_level_of_universe state u =
       let w = Sorts.sort_of_univ v in
       add_universe_constraint state (constraint_eq (Sorts.sort_of_univ u) w), l, v, w
 
-[%%if coq = "9.0"]
-let univ_of_sort = let open Sorts in function
-  | SProp | Prop | Set -> Univ.Universe.type0
-  | Type u | QSort (_, u) -> u
-[%%else]
-let univ_of_sort = Sorts.univ_of_sort
-[%%endif]
-
 let purge_algebraic_univs_sort state s =
   let sigma = (S.get engine state).sigma in
   match EConstr.ESorts.kind sigma s with
   | Set | Prop | SProp as x -> state, x
   | s ->
-      let state, _, _, s = force_level_of_universe state (univ_of_sort s) in
+      let state, _, _, s = force_level_of_universe state (Sorts.univ_of_sort s) in
       state, s
 
 let in_elpi_flex_sort t = E.mkApp sortc (E.mkApp typc t []) []
@@ -1366,14 +1358,8 @@ let rec is_primitive_shaped sigma t = match EC.kind sigma t with
 let is_valid_primitive_value sigma t =
   EC.Vars.closed0 sigma t && Evarutil.is_ground_term sigma t && is_primitive_shaped sigma t
 
-[%%if coq = "9.0"]
-let get_retroknowledge env = env.Environ.retroknowledge
-[%%else]
-let get_retroknowledge env = Environ.retroknowledge env
-[%%endif]
-
 let describes_primitive_ty env sigma ty : Rocq_elpi_utils.array_element_ty option =
-  let retro = get_retroknowledge env in
+  let retro = Environ.retroknowledge env in
   let is_retro_const oc t = match oc, EC.kind sigma t with
     | Some c, C.Const (c',_) -> Names.Constant.CanOrd.equal c c'
     | _ -> false
@@ -2062,7 +2048,7 @@ let mk_global state gr inst_opt = S.update_return engine state (fun x ->
       x, (EConstr.mkRef (gr,i), None)
 ) |> (fun (x,(y,z)) -> x,y,z)
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let merge_universe_context_set rigid sigma uctx =
   Evd.merge_context_set rigid sigma uctx
 [%%else]
@@ -2223,7 +2209,7 @@ module UIM = F.Map(struct
   type t = UVars.Instance.t
   let compare = compare_instances
 
-  [%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+  [%%if coq = "9.1" || coq = "9.2"]
   let ppinst u = UVars.Instance.pr Sorts.QVar.raw_pr UnivNames.pr_level_with_global_universes u
   [%%else]
   let ppinst u = UVars.Instance.pr UnivNames.(sort_printer empty_binders) u
@@ -3557,7 +3543,7 @@ let inference_nonuniform_params_off =
     ~name:"elpi.unsupported-nonuniform-parameters-inference"
     ~category:Rocq_elpi_utils.elpi_cat Pp.(fun () ->
       strbrk"Inference of non-uniform parameters is not available in Elpi, please use the explicit | mark in the inductive declaration or Set Uniform Inductive Parameters")
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let collapse = UState.collapse_sort_variables
 [%%else]
 let collapse = UState.collapse_sort_variables ~only_above_prop:false
@@ -3613,20 +3599,7 @@ let poly_cumul_udecl_variance_of_options state options =
     mk_universe_decl univdecl_extensible_instance univdecl_extensible_constraints univdecl_constraints univdecl_instance,
     Array.of_list variance
 
-[%%if coq = "9.0"]
-let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite ~indnames =
-  let flags = {
-    ComInductive.poly;
-    cumulative;
-    template = Some false;
-    finite;
-    mode = None;
-  }
-  in
-  let arities_explicit = List.map (fun _ -> true) indnames in
-  let template_syntax = List.map (fun _ -> ComInductive.SyntaxAllowsTemplatePoly) indnames in
-  ComInductive.interp_mutual_inductive_constr ~indnames ~arities_explicit ~template_syntax ~flags
-[%%elif coq = "9.1"]
+[%%if coq = "9.1"]
 let comInductive_interp_mutual_inductive_constr ~cumulative ~poly ~template ~finite ~ctx_params ~env_ar_params ~indnames =
   let flags = {
     ComInductive.poly;
@@ -4100,7 +4073,7 @@ let under_coq2elpi_relctx ~calldepth state (ctx : 'a ctx_entry list) ~coq_ctx ~m
     state, t, !gls
 ;;
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let inst_opt_names inst_opt = inst_opt
 [%%else]
 let inst_opt_names inst_opt = Option.map EConstr.EInstance.make inst_opt
@@ -4259,20 +4232,20 @@ let arg_hoas_constants = [
   minductivec; mblockc; recordc; fieldc; end_recordc ]
 
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let mind_record (mib,_) = mib.Declarations.mind_record
 [%%else]
 let mind_record (_,mip) = mip.Declarations.mind_record
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let find_structure env ind = Structures.Structure.find ind
 [%%else]
 let find_structure env ind = Structures.Structure.find env ind
 [%%endif]
 
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2"]
+[%%if coq = "9.1" || coq = "9.2"]
 let get_template_instance mind uinst = uinst
 [%%else]
 let get_template_instance mind uinst = match mind.Declarations.mind_template with
@@ -4389,7 +4362,7 @@ let inductive_decl2lp ~depth coq_ctx constraints state (mutind,uinst,mind,(i_imp
   let ind = { params; decl } in
   hoas_ind2lp ~depth coq_ctx state ind
 ;;
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let ucontext_of_mind_entry _ubinders mie =
   let open Entries in
   match mie.mind_entry_universes with
@@ -4446,7 +4419,7 @@ let upoly_decl_of ~depth state ~loose_udecl mie upoly =
           state, (fun i -> E.mkApp uideclc i [up]), gls
       end
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let merge_ucontext sigma cs =
   Evd.merge_context_set UState.univ_flexible sigma (snd (UVars.UContext.to_context_set cs))
 [%%else]
@@ -4516,78 +4489,6 @@ let inductive_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
   state, upoly_decl_of i, gls @ upoly_decl_gls
 ;;
 
-[%%if coq = "9.0"]
-let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl e =
-  let open Record.Record_decl in
-  let open Record.Data in
-  let open Entries in
-  let { mie; impls; ubinders; globnames; global_univ_decls; records; _ } = e in
-  let i_impls, k_impls = match impls with
-    | [i,k] ->
-      List.map binding_kind_of_manual_implicit i,
-      List.map (List.map binding_kind_of_manual_implicit) k
-    | _ -> nYI "mutual record" in
-  let ind = match mie.mind_entry_inds with
-  | [ x ] -> x
-  | _ -> nYI "mutual record" in
-  let record = match records with
-  | [ x ] -> x
-  | _ -> nYI "mutual record" in
-  let indno = 1 in
-    
-  let state = global_univ_decls |> Option.cata (fun ctx ->
-      S.update engine state (fun e ->
-        { e with sigma = Evd.merge_context_set UState.univ_flexible e.sigma ctx})) state in
-
-  let upoly = ucontext_of_mind_entry ubinders mie in
-  let mie = unabstract_mind_entry ubinders mie in
-  let state = match upoly with
-    | None -> state
-    | Some cs -> S.update engine state (fun e ->
-      { e with sigma = merge_ucontext e.sigma cs }) (* ???? *) in
-
-  let state, upoly_decl_of, upoly_decl_gls = upoly_decl_of ~depth state ~loose_udecl mie upoly in
-
-  let params = mie.mind_entry_params in
-  let params = Vars.lift_rel_context indno params in
-
-  let params = EConstr.of_rel_context params in
-  let params = safe_combine2_impls params i_impls ~default2:Glob_term.Explicit |> param2ctx in
-  let _paramsno = List.length params in
-
-  let id = ind.mind_entry_typename in
-  let typ = EConstr.of_constr ind.mind_entry_arity in
-  let kid = List.hd ind.mind_entry_consnames in
-
-  let fieldsno = List.length record.proj_flags in
-  let kctx, _ = Term.decompose_prod_decls @@ List.hd ind.mind_entry_lc in
-  let kctx = EConstr.of_rel_context kctx in
-  if (List.length kctx != fieldsno) then CErrors.anomaly Pp.(str"record fields number != projections");
-
-  let fields = List.map2 (fun { pf_coercion; pf_reversible; pf_canonical } -> 
-    let open Context.Rel.Declaration in
-    let coe_status = if pf_coercion then if pf_reversible then Reversible else Regular else Off in
-    function
-    | LocalAssum( { Context.binder_name = Anonymous },typ) ->
-        { id = Id.of_string "_"; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
-    | LocalAssum( { Context.binder_name = Name id },typ) ->
-        { id; typ; extra = [Coercion coe_status; Canonical pf_canonical] }
-    | _ -> nYI "let-in in record fields"
-    ) (List.rev record.proj_flags) kctx in
-
-  let ind = { params; decl = Record { id; kid; typ; fields } } in
-  let state, i, gls = hoas_ind2lp ~depth coq_ctx state ind in
-  state, upoly_decl_of i, gls @ upoly_decl_gls
-
-let lp2record_field_spec { name; is_coercion; is_canonical } =
-  name,
-  { Record.Internal.pf_coercion = is_coercion <> Off ;
-    pf_reversible = is_coercion = Reversible ;
-    pf_canonical = is_canonical;
-    pf_instance = false;
-    pf_priority = None;
-    pf_locality = OptDefault }
-[%%else]
 let record_entry2lp ~depth coq_ctx constraints state ~loose_udecl (decl:Record.Record_decl.t) =
   let open Record.Record_decl in
   let open Record.Data in
@@ -4662,7 +4563,6 @@ let lp2record_field_spec { name; is_coercion; is_canonical } =
     pf_canonical = is_canonical;
     pf_instance = None;
   }
-[%%endif]
 
 let merge_universe_context state uctx =
   S.update engine state (fun e -> { e with sigma = Evd.merge_universe_context e.sigma uctx })
@@ -4804,17 +4704,6 @@ type module_item =
   | Functor of Names.ModPath.t * Names.ModPath.t list
   | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
-[%%if coq = "9.0"]
-type 'a generic_module_body = 'a Declarations.generic_module_body
-let module_view m = m.Declarations.mod_type
-let mod_type m = m.Declarations.mod_type
-
-let rec functor_params x =
-  let open Declarations in
-  match x with
-  | MoreFunctor(_,{ mod_type_alg = Some (MENoFunctor (MEident mod_mp)) },rest) -> mod_mp :: functor_params rest
-  | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
-[%%else]
 type 'a generic_module_body = 'a Mod_declarations.generic_module_body
 let module_view m = Mod_declarations.mod_type m
 let mod_type = Mod_declarations.mod_type
@@ -4828,7 +4717,6 @@ let rec functor_params x =
     | _ -> [] (* XXX *)
     end
   | _ -> [] (* XXX non trivial functors, eg P : X with type a = nat, are badly described (no params) *)
-[%%endif]
 
 let rec in_elpi_module_item ~depth path state (name, item) =
   let open Declarations in

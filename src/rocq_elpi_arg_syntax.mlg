@@ -34,7 +34,7 @@ let rec strip_square loc s =
   if s.[0] = '[' then strip_square (trim_loc loc) String.(sub s 1 (length s - 2))
   else Rocq_elpi_utils.of_coq_loc loc, s
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let streamOk x = x
 let streamFail () = raise Gramlib.Stream.Failure
 [%%else]
@@ -42,7 +42,7 @@ let streamOk x = Ok x
 let streamFail () = Error ()
 [%%endif]
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" || coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" || coq = "9.3"]
 let get_next_loc strm = LStream.get_loc (LStream.count strm) strm
 [%%else]
 let get_next_loc strm = LStream.get_relative_loc 0 strm

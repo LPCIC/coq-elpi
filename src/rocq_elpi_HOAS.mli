@@ -24,7 +24,7 @@ type uinstanceoption =
   | VarInstance of (FlexibleData.Elpi.t * RawData.term list * inv_rel_key)
     (* a variable was provided, the command will compute the instance to unify with it *)
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 type univ_cst = Univ.univ_constraint
 type univ_csts = Univ.Constraints.t
 [%%else]
@@ -124,21 +124,11 @@ val lp2skeleton :
 type coercion_status = Regular | Off | Reversible
 type record_field_spec = { name : Name.t; is_coercion : coercion_status; is_canonical : bool }
 
-[%%if coq = "9.0"]
-val lp2inductive_entry :
-  depth:int -> empty conv_context -> constraints -> State.t -> term ->
-  State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UnivNames.universe_binders * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
-[%%else]
 val lp2inductive_entry :
   depth:int -> empty conv_context -> constraints -> State.t -> term ->
   State.t * (DeclareInd.default_dep_elim list * Entries.mutual_inductive_entry * Univ.ContextSet.t * UState.named_universes_entry * (bool * record_field_spec list) option * DeclareInd.one_inductive_impls list) * Conversion.extra_goals
-[%%endif]
 
-[%%if coq = "9.0"]
-val lp2record_field_spec : record_field_spec -> Name.t * Record.Internal.projection_flags
-[%%else]
 val lp2record_field_spec : record_field_spec -> Name.t * Record.Data.projection_flags
-[%%endif]
 
 val inductive_decl2lp :
   depth:int -> empty conv_context -> constraints -> State.t -> (Names.MutInd.t * UVars.Instance.t * Declarations.mutual_inductive_body * (Glob_term.binding_kind list list * Glob_term.binding_kind list list list)) ->
@@ -269,7 +259,7 @@ val canonical_array_einstance : EConstr.EInstance.t
 
 val uinstance : UVars.Instance.t Conversion.t
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 val universe_constraint : Univ.univ_constraint Conversion.t
 [%%else]
 val universe_constraint : Univ.UnivConstraint.t Conversion.t
@@ -336,13 +326,8 @@ type module_item =
   | Functor of Names.ModPath.t * Names.ModPath.t list
   | FunctorType of Names.ModPath.t * Names.ModPath.t list
 
-[%%if coq = "9.0"]
-val in_elpi_module : depth:int -> State.t -> ModPath.t -> Declarations.module_body -> module_item list
-val in_elpi_module_type : Declarations.module_type_body -> string list
-[%%else]
 val in_elpi_module : depth:int -> State.t -> ModPath.t -> Mod_declarations.module_body -> module_item list
 val in_elpi_module_type : Mod_declarations.module_type_body -> string list
-[%%endif]
 
 val coercion_status : coercion_status Conversion.t
 type record_field_att =
@@ -414,5 +399,3 @@ val poly_cumul_udecl_variance_of_options : state -> options -> state * bool * bo
 val universes_of_udecl : state -> UState.universe_decl -> Univ.Level.Set.t
 
 val mind_record : Declarations.mind_specif -> Declarations.record_info
-
-val univ_of_sort : Sorts.t -> Univ.Universe.t

@@ -7,7 +7,7 @@ open Elpi_plugin
 open Rocq_elpi_arg_syntax
 open Rocq_elpi_vernacular
 
-[%%if coq = "9.0" || coq = "9.1"]
+[%%if coq = "9.1"]
 let structure_projection_nparams env ind = Structures.Structure.projection_nparams ind
 [%%else]
 let structure_projection_nparams env ind = Structures.Structure.projection_nparams env ind
@@ -65,7 +65,7 @@ let elpi_cs_hook program env sigma ((proji, u), params1, c1) (t2, args2) =
 		 | API.Execute.Failure -> None
 		 end
 
-[%%if coq = "9.0" || coq = "9.1" || coq = "9.2" ||coq = "9.3"]
+[%%if coq = "9.1" || coq = "9.2" ||coq = "9.3"]
 module Summary = struct
   let ref ~name x = Summary.ref ~name x
   let (!) = (!)
